@@ -21,6 +21,8 @@ from core.character import Character
 from data.life_path_events import (
     ALL_EVENTS_BY_SLOT, SLOT_TITLES, PHASE_FOR_SLOT, get_available_events,
 )
+from core.combat_engine import CombatState
+from ui.combat_ui import CombatUI
 
 FPS = 60
 PARTY_SIZE = 6
@@ -34,6 +36,8 @@ S_RANDOM      = 4
 S_CLASSSELECT = 5
 S_SUMMARY     = 6
 S_PARTY       = 7
+S_COMBAT      = 8
+S_POST_COMBAT = 9
 
 
 class Game:
@@ -62,6 +66,10 @@ class Game:
         self.quick = False
         self.fade = 255
         self.title_t = 0
+        # Combat
+        self.combat_state = None
+        self.combat_ui = None
+        self.enemy_turn_delay = 0
 
     def run(self):
         while self.running:
@@ -185,17 +193,18 @@ class Game:
                 elif e.button == 1:
                     r = pygame.Rect(SCREEN_W//2 - 150, SCREEN_H - 65, 300, 45)
                     if r.collidepoint(mx, my):
-                        print("\n========== YOUR PARTY ==========")
-                        for c in self.party:
-                            print(f"\n{c.name} — {c.class_name} (Level {c.level})")
-                            for s in STAT_NAMES:
-                                print(f"  {s}: {c.stats[s]}")
-                            for rn, rv in c.resources.items():
-                                print(f"  {rn}: {rv}")
-                            print(f"  Abilities: {[a['name'] for a in c.abilities]}")
-                            print(f"  {c.get_backstory_text()}")
-                        print("\n=== The adventure begins... ===\n")
-                        self.running = False
+                        self.start_combat("tutorial")
+
+        elif self.state == S_COMBAT:
+            if e.type == pygame.MOUSEBUTTONDOWN:
+                if e.button == 1:
+                    action = self.combat_ui.handle_click(mx, my)
+                    if action:
+                        self.process_combat_action(action)
+                elif e.button == 4:
+                    self.combat_ui.handle_scroll(-1)
+                elif e.button == 5:
+                    self.combat_ui.handle_scroll(1)
 
     # ══════════════════════════════════════════════════════════
     #  LOGIC
@@ -265,6 +274,7 @@ class Game:
         elif self.state == S_CLASSSELECT: self.draw_class(mx, my)
         elif self.state == S_SUMMARY:  self.draw_summary(mx, my)
         elif self.state == S_PARTY:    self.draw_party(mx, my)
+        elif self.state == S_COMBAT:   self.draw_combat(mx, my)
 
     # ── Title Screen ──────────────────────────────────────────
 
@@ -625,6 +635,54 @@ class Game:
         # Begin button
         r = pygame.Rect(SCREEN_W//2 - 150, SCREEN_H - 65, 300, 45)
         draw_button(self.screen, r, "Begin Adventure!", hover=r.collidepoint(mx,my), size=18)
+
+    # ══════════════════════════════════════════════════════════
+    #  COMBAT
+    # ══════════════════════════════════════════════════════════
+
+    def start_combat(self, encounter_key):
+        """Initialize combat with an encounter."""
+        self.combat_state = CombatState(self.party, encounter_key)
+        self.combat_ui = CombatUI(self.combat_state)
+        self.enemy_turn_delay = 0
+        self.go(S_COMBAT)
+
+    def draw_combat(self, mx, my):
+        """Draw the combat screen and handle enemy AI timing."""
+        self.combat_ui.draw(self.screen, mx, my)
+
+        # Auto-execute enemy turns with a small delay for readability
+        if (self.combat_state.phase not in ("victory", "defeat") and
+                not self.combat_state.is_player_turn()):
+            self.enemy_turn_delay += self.clock.get_time()
+            self.combat_ui.enemy_anim_timer += self.clock.get_time()
+            if self.enemy_turn_delay > 600:  # 600ms delay between enemy actions
+                self.combat_state.execute_enemy_turn()
+                self.enemy_turn_delay = 0
+                self.combat_ui.enemy_anim_timer = 0
+
+    def process_combat_action(self, action):
+        """Process a player combat action from the UI."""
+        if action["type"] == "end_combat":
+            if action["result"] == "victory":
+                # Return to party screen (future: apply XP, loot)
+                self.go(S_PARTY)
+            else:
+                # Defeat — retry or return to party
+                self.start_combat("tutorial")
+            return
+
+        if action["type"] == "attack":
+            self.combat_state.execute_player_action("attack", target=action["target"])
+        elif action["type"] == "defend":
+            self.combat_state.execute_player_action("defend")
+        elif action["type"] == "ability":
+            self.combat_state.execute_player_action(
+                "ability", target=action["target"], ability=action["ability"]
+            )
+
+        # Reset UI mode after action
+        self.combat_ui.action_mode = "main"
 
 
 # ── Entry Point ───────────────────────────────────────────────
