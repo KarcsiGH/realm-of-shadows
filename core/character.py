@@ -7,12 +7,21 @@ from core.classes import (
     get_all_resources, get_class_fit,
 )
 
+# XP required per level: level 2 = 100, level 3 = 250, etc.
+XP_TABLE = {i: int(100 * (i - 1) ** 1.4) for i in range(2, 51)}
+
+# Stat growth per level based on growth tier
+GROWTH_AMOUNTS = {"high": (1, 2), "medium": (0, 1), "low": (0, 0)}
+
 
 class Character:
     def __init__(self, name="", class_name=None):
         self.name = name
         self.class_name = class_name
         self.level = 1
+        self.xp = 0
+        self.gold = 0
+        self.inventory = []       # list of item dicts
         self.stats = {s: 5 for s in STAT_NAMES}  # base before life path
         self.life_path = []       # list of event dicts chosen
         self.backstory_parts = [] # narrative snippets
@@ -67,13 +76,58 @@ class Character:
     def stat_total(self):
         return sum(self.stats.values())
 
+    def xp_to_next_level(self):
+        """XP needed for the next level."""
+        return XP_TABLE.get(self.level + 1, 99999)
+
+    def xp_progress(self):
+        """Returns (current_xp, xp_needed) for progress display."""
+        return self.xp, self.xp_to_next_level()
+
+    def add_xp(self, amount):
+        """Add XP and check for level up. Returns list of level-up dicts
+        with stat gains for each level gained."""
+        self.xp += amount
+        level_ups = []
+        while self.xp >= self.xp_to_next_level() and self.level < 50:
+            self.xp -= self.xp_to_next_level()
+            level_ups.append(self._level_up())
+        return level_ups
+
+    def _level_up(self):
+        """Process a single level up. Returns dict of stat gains."""
+        self.level += 1
+        cls = CLASSES[self.class_name]
+        growth = cls.get("stat_growth", {})
+        gains = {}
+        for stat in STAT_NAMES:
+            tier = growth.get(stat, "low")
+            lo, hi = GROWTH_AMOUNTS.get(tier, (0, 0))
+            gain = random.randint(lo, hi)
+            if gain > 0:
+                self.stats[stat] += gain
+                gains[stat] = gain
+        # Recalculate resources at new level
+        self.resources = get_all_resources(self.class_name, self.stats, self.level)
+        return {"level": self.level, "gains": gains}
+
+    def add_gold(self, amount):
+        self.gold += amount
+
+    def add_item(self, item):
+        """Add an item to inventory."""
+        self.inventory.append(item)
+
     def to_dict(self):
         """Serialize for save/display."""
         return {
             "name": self.name,
             "class": self.class_name,
             "level": self.level,
+            "xp": self.xp,
+            "gold": self.gold,
             "stats": dict(self.stats),
             "resources": dict(self.resources),
             "abilities": [a["name"] for a in self.abilities],
+            "inventory": len(self.inventory),
         }

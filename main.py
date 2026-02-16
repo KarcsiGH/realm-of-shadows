@@ -23,6 +23,7 @@ from data.life_path_events import (
 )
 from core.combat_engine import CombatState
 from ui.combat_ui import CombatUI
+from ui.post_combat_ui import PostCombatUI
 
 FPS = 60
 PARTY_SIZE = 6
@@ -70,6 +71,8 @@ class Game:
         self.combat_state = None
         self.combat_ui = None
         self.enemy_turn_delay = 0
+        # Post-combat
+        self.post_combat_ui = None
 
     def run(self):
         while self.running:
@@ -206,6 +209,19 @@ class Game:
                 elif e.button == 5:
                     self.combat_ui.handle_scroll(1)
 
+        elif self.state == S_POST_COMBAT:
+            if e.type == pygame.MOUSEBUTTONDOWN:
+                if e.button == 1:
+                    result = self.post_combat_ui.handle_click(mx, my)
+                    if result == "continue":
+                        self.party_scroll = 0
+                        self.go(S_PARTY)
+                elif e.button == 4:
+                    self.post_combat_ui.handle_scroll(-1)
+                elif e.button == 5:
+                    self.post_combat_ui.handle_scroll(1)
+                    self.combat_ui.handle_scroll(1)
+
     # ══════════════════════════════════════════════════════════
     #  LOGIC
     # ══════════════════════════════════════════════════════════
@@ -275,6 +291,7 @@ class Game:
         elif self.state == S_SUMMARY:  self.draw_summary(mx, my)
         elif self.state == S_PARTY:    self.draw_party(mx, my)
         elif self.state == S_COMBAT:   self.draw_combat(mx, my)
+        elif self.state == S_POST_COMBAT: self.draw_post_combat(mx, my)
 
     # ── Title Screen ──────────────────────────────────────────
 
@@ -661,14 +678,27 @@ class Game:
                 self.enemy_turn_delay = 0
                 self.combat_ui.enemy_anim_timer = 0
 
+    def start_post_combat(self):
+        """Initialize the post-combat screen with rewards."""
+        rewards = getattr(self.combat_state, "rewards", {})
+        self.post_combat_ui = PostCombatUI(
+            self.party, rewards, self.combat_state.players
+        )
+        self.go(S_POST_COMBAT)
+
+    def draw_post_combat(self, mx, my):
+        """Draw the post-combat results screen."""
+        dt = self.clock.get_time()
+        self.post_combat_ui.draw(self.screen, mx, my, dt)
+
     def process_combat_action(self, action):
         """Process a player combat action from the UI."""
         if action["type"] == "end_combat":
             if action["result"] == "victory":
-                # Return to party screen (future: apply XP, loot)
-                self.go(S_PARTY)
+                # Go to post-combat screen
+                self.start_post_combat()
             else:
-                # Defeat — retry or return to party
+                # Defeat — retry
                 self.start_combat("tutorial")
             return
 
