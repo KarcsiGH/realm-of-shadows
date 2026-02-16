@@ -1,7 +1,13 @@
 """
 Realm of Shadows — Inventory & Equipment UI
 Accessible from the party screen. Shows equipment slots, inventory list,
-and allows equip/unequip/swap.
+and allows equip/unequip/swap/transfer.
+
+Controls:
+  Left-click equipped slot  → unequip that item
+  Left-click inventory item → equip it (if equippable)
+  Right-click inventory item → enter "give to" mode, then click a character tab
+  ESC → cancel give-to mode or exit inventory
 """
 import pygame
 from ui.renderer import *
@@ -26,7 +32,6 @@ INV_BG        = (15, 12, 28)
 EQUIP_COL     = (80, 180, 255)
 STAT_UP       = (80, 255, 120)
 STAT_DOWN     = (255, 80, 80)
-STAT_SAME     = GREY
 
 RARITY_COLORS = {
     "common":    CREAM,
@@ -37,44 +42,125 @@ RARITY_COLORS = {
 }
 
 
+# ═══════════════════════════════════════════════════════════════
+#  ITEM SLOT DETECTION
+# ═══════════════════════════════════════════════════════════════
+
+def resolve_item_slot(item):
+    """Figure out which equipment slot an item belongs to.
+    Handles items with explicit 'slot' fields AND loot items
+    that only have 'type'/'subtype'."""
+    slot = item.get("slot", "")
+    if slot and slot in SLOT_ORDER:
+        return slot
+    if slot == "accessory":
+        return "accessory1"
+
+    item_type = item.get("type", "")
+    if item_type == "weapon":
+        return "weapon"
+    elif item_type == "shield":
+        return "off_hand"
+    elif item_type == "armor":
+        return item.get("armor_slot", "body")
+    elif item_type == "accessory":
+        return "accessory1"
+    elif item_type in ("helmet", "head"):
+        return "head"
+    elif item_type in ("gloves", "hands"):
+        return "hands"
+    elif item_type in ("boots", "feet"):
+        return "feet"
+
+    return ""
+
+
+def item_is_equippable(item):
+    """Check if an item can go in an equipment slot."""
+    return resolve_item_slot(item) != ""
+
+
+# ═══════════════════════════════════════════════════════════════
+#  INVENTORY UI CLASS
+# ═══════════════════════════════════════════════════════════════
+
 class InventoryUI:
     """Full-screen inventory and equipment management."""
 
     def __init__(self, party):
         self.party = party
         self.selected_char = 0
-        self.selected_slot = -1       # index into SLOT_ORDER
-        self.selected_inv_item = -1   # index into character inventory
+        self.selected_slot = -1
+        self.selected_inv_item = -1
         self.inv_scroll = 0
+        self.mode = "normal"          # normal, give_to
+        self.give_item = None
         self.message = ""
         self.message_timer = 0
         self.message_color = CREAM
         self.finished = False
 
+    # ─────────────────────────────────────────────────────────
+    #  DRAWING
+    # ─────────────────────────────────────────────────────────
+
     def draw(self, surface, mx, my, dt):
         self.message_timer = max(0, self.message_timer - dt)
         surface.fill(BG_COLOR)
 
+        char = self.party[self.selected_char]
+        cls = CLASSES[char.class_name]
+
         # ── Header ──
         draw_text(surface, "Equipment & Inventory", 20, 12, GOLD, 22, bold=True)
-
-        # Back button
         back_btn = pygame.Rect(SCREEN_W - 160, 8, 140, 36)
-        hover_back = back_btn.collidepoint(mx, my)
-        draw_button(surface, back_btn, "← Back to Party", hover=hover_back, size=13)
+        draw_button(surface, back_btn, "Back to Party",
+                    hover=back_btn.collidepoint(mx, my), size=13)
 
         # ── Character tabs ──
+        self._draw_char_tabs(surface, mx, my)
+
+        # ── Give-to banner ──
+        content_y = 100
+        if self.mode == "give_to" and self.give_item:
+            banner = pygame.Rect(20, 92, SCREEN_W - 40, 28)
+            pygame.draw.rect(surface, (50, 35, 15), banner, border_radius=3)
+            pygame.draw.rect(surface, ORANGE, banner, 2, border_radius=3)
+            name = get_item_display_name(self.give_item)
+            draw_text(surface,
+                      f"Click a character tab to give: {name}   (ESC to cancel)",
+                      banner.x + 12, banner.y + 6, ORANGE, 13)
+            content_y = 126
+
+        # ── Left: Equipment slots ──
+        self._draw_equipment(surface, mx, my, char, content_y)
+
+        # ── Stat summary ──
+        self._draw_stat_summary(surface, char, content_y + 480)
+
+        # ── Right: Inventory ──
+        self._draw_inventory(surface, mx, my, char, content_y)
+
+        # ── Message bar ──
+        if self.message and self.message_timer > 0:
+            draw_text(surface, self.message, SCREEN_W // 2 - 200,
+                      SCREEN_H - 30, self.message_color, 15)
+
+    def _draw_char_tabs(self, surface, mx, my):
         tab_y = 50
-        for i, char in enumerate(self.party):
-            cls = CLASSES[char.class_name]
+        for i, ch in enumerate(self.party):
+            cl = CLASSES[ch.class_name]
             tab_w = (SCREEN_W - 40) // len(self.party)
             tab_rect = pygame.Rect(20 + i * tab_w, tab_y, tab_w - 4, 36)
             is_sel = (i == self.selected_char)
             is_hover = tab_rect.collidepoint(mx, my)
 
-            if is_sel:
+            if self.mode == "give_to" and not is_sel:
+                bg = (40, 30, 20) if is_hover else (30, 22, 15)
+                border = ORANGE if is_hover else DIM_GOLD
+            elif is_sel:
                 bg = (50, 40, 85)
-                border = cls["color"]
+                border = cl["color"]
             elif is_hover:
                 bg = (35, 30, 60)
                 border = HIGHLIGHT
@@ -84,31 +170,27 @@ class InventoryUI:
 
             pygame.draw.rect(surface, bg, tab_rect, border_radius=3)
             pygame.draw.rect(surface, border, tab_rect, 2, border_radius=3)
-            draw_text(surface, f"{char.name} ({char.class_name})",
-                      tab_rect.x + 8, tab_rect.y + 9,
-                      cls["color"] if is_sel else GREY, 13, bold=is_sel)
 
-        char = self.party[self.selected_char]
-        cls = CLASSES[char.class_name]
+            label = f"{ch.name} ({ch.class_name})"
+            if self.mode == "give_to" and not is_sel and is_hover:
+                label += " <- Give"
+            draw_text(surface, label, tab_rect.x + 8, tab_rect.y + 9,
+                      cl["color"] if is_sel else GREY, 13, bold=is_sel)
 
-        # ── Left: Equipment slots ──
-        equip_panel = pygame.Rect(20, 100, 420, 500)
-        draw_panel(surface, equip_panel, bg_color=INV_BG)
-        draw_text(surface, "Equipment", equip_panel.x + 12, equip_panel.y + 8,
-                  GOLD, 16, bold=True)
+    def _draw_equipment(self, surface, mx, my, char, top_y):
+        panel = pygame.Rect(20, top_y, 420, 470)
+        draw_panel(surface, panel, bg_color=INV_BG)
+        draw_text(surface, "Equipment", panel.x + 12, panel.y + 8, GOLD, 16, bold=True)
+        draw_text(surface, "Click a slot to unequip", panel.x + 160, panel.y + 10,
+                  DARK_GREY, 11)
 
-        slot_y = equip_panel.y + 35
+        slot_y = panel.y + 35
         for si, slot_key in enumerate(SLOT_ORDER):
-            slot_rect = pygame.Rect(equip_panel.x + 8, slot_y,
-                                    equip_panel.width - 16, 52)
+            rect = pygame.Rect(panel.x + 8, slot_y, panel.width - 16, 48)
             item = char.equipment.get(slot_key) if char.equipment else None
-            is_hover = slot_rect.collidepoint(mx, my)
-            is_sel = (si == self.selected_slot)
+            is_hover = rect.collidepoint(mx, my)
 
-            if is_sel:
-                bg = SLOT_SELECTED
-                border = GOLD
-            elif is_hover:
+            if is_hover and item:
                 bg = SLOT_HOVER
                 border = HIGHLIGHT
             elif item:
@@ -118,180 +200,161 @@ class InventoryUI:
                 bg = SLOT_EMPTY
                 border = (40, 35, 55)
 
-            pygame.draw.rect(surface, bg, slot_rect, border_radius=3)
-            pygame.draw.rect(surface, border, slot_rect, 2, border_radius=3)
+            pygame.draw.rect(surface, bg, rect, border_radius=3)
+            pygame.draw.rect(surface, border, rect, 2, border_radius=3)
 
-            # Slot label
             slot_name = SLOT_NAMES.get(slot_key, slot_key)
-            draw_text(surface, slot_name, slot_rect.x + 8, slot_rect.y + 4,
-                      DIM_GOLD, 12)
+            draw_text(surface, slot_name, rect.x + 8, rect.y + 4, DIM_GOLD, 12)
 
             if item:
                 rarity = item.get("rarity", "common")
                 name_col = RARITY_COLORS.get(rarity, CREAM)
-                display_name = get_item_display_name(item)
-                draw_text(surface, display_name, slot_rect.x + 100, slot_rect.y + 4,
-                          name_col, 14, bold=True)
+                draw_text(surface, get_item_display_name(item),
+                          rect.x + 100, rect.y + 4, name_col, 14, bold=True)
 
-                # Key stats
                 parts = []
-                if item.get("defense", 0) > 0:
+                if item.get("defense", 0):
                     parts.append(f"DEF +{item['defense']}")
-                if item.get("magic_resist", 0) > 0:
+                if item.get("magic_resist", 0):
                     parts.append(f"MRES +{item['magic_resist']}")
-                if item.get("speed_mod", 0) != 0:
-                    sign = "+" if item["speed_mod"] > 0 else ""
-                    parts.append(f"SPD {sign}{item['speed_mod']}")
+                if item.get("speed_mod", 0):
+                    s = "+" if item["speed_mod"] > 0 else ""
+                    parts.append(f"SPD {s}{item['speed_mod']}")
                 for stat, val in item.get("stat_bonuses", {}).items():
                     parts.append(f"{stat} +{val}")
+                if item.get("damage"):
+                    parts.append(f"DMG {item['damage']}")
                 if parts:
                     draw_text(surface, "  ".join(parts),
-                              slot_rect.x + 100, slot_rect.y + 24, GREY, 11)
+                              rect.x + 100, rect.y + 26, GREY, 11)
+
+                if is_hover:
+                    draw_text(surface, "[unequip]",
+                              rect.x + rect.width - 70, rect.y + 4, DARK_GREY, 10)
             else:
-                draw_text(surface, "— empty —", slot_rect.x + 100, slot_rect.y + 18,
+                draw_text(surface, "- empty -", rect.x + 100, rect.y + 16,
                           DARK_GREY, 13)
 
-            slot_y += 56
+            slot_y += 52
 
-        # Unequip button (if a slot with an item is selected)
-        if (self.selected_slot >= 0 and self.selected_slot < len(SLOT_ORDER)):
-            sel_slot_key = SLOT_ORDER[self.selected_slot]
-            sel_item = char.equipment.get(sel_slot_key) if char.equipment else None
-            if sel_item:
-                unequip_btn = pygame.Rect(equip_panel.x + 8, slot_y + 4,
-                                          180, 36)
-                hover_unequip = unequip_btn.collidepoint(mx, my)
-                draw_button(surface, unequip_btn, "Unequip",
-                            hover=hover_unequip, size=14)
-
-        # ── Stat summary below equipment ──
-        stat_panel = pygame.Rect(20, 610, 420, 160)
-        draw_panel(surface, stat_panel, bg_color=INV_BG)
-        draw_text(surface, "Combat Stats", stat_panel.x + 12, stat_panel.y + 8,
+    def _draw_stat_summary(self, surface, char, top_y):
+        panel = pygame.Rect(20, top_y, 420, 140)
+        draw_panel(surface, panel, bg_color=INV_BG)
+        draw_text(surface, "Combat Stats", panel.x + 12, panel.y + 8,
                   GOLD, 14, bold=True)
 
         base_def = int(char.stats["CON"] * 0.5)
-        equip_def = calc_equipment_defense(char)
-        base_mres = int(char.stats["WIS"] * 0.5)
-        equip_mres = calc_equipment_magic_resist(char)
-        equip_spd = calc_equipment_speed(char)
-        equip_stats = calc_equipment_stat_bonuses(char)
+        eq_def = calc_equipment_defense(char)
+        base_mr = int(char.stats["WIS"] * 0.5)
+        eq_mr = calc_equipment_magic_resist(char)
+        eq_spd = calc_equipment_speed(char)
+        eq_stats = calc_equipment_stat_bonuses(char)
 
-        sy = stat_panel.y + 30
-        draw_text(surface, f"Defense: {base_def} + {equip_def} = {base_def + equip_def}",
-                  stat_panel.x + 12, sy, CREAM, 13)
+        sy = panel.y + 30
+        draw_text(surface, f"Defense: {base_def} base + {eq_def} equip = {base_def + eq_def}",
+                  panel.x + 12, sy, CREAM, 13)
         sy += 20
-        draw_text(surface, f"Magic Resist: {base_mres} + {equip_mres} = {base_mres + equip_mres}",
-                  stat_panel.x + 12, sy, CREAM, 13)
+        draw_text(surface, f"Magic Resist: {base_mr} base + {eq_mr} equip = {base_mr + eq_mr}",
+                  panel.x + 12, sy, CREAM, 13)
         sy += 20
-        if equip_spd != 0:
-            sign = "+" if equip_spd > 0 else ""
-            draw_text(surface, f"Speed modifier: {sign}{equip_spd}",
-                      stat_panel.x + 12, sy, CREAM, 13)
+        if eq_spd:
+            s = "+" if eq_spd > 0 else ""
+            draw_text(surface, f"Speed modifier: {s}{eq_spd}",
+                      panel.x + 12, sy, CREAM, 13)
             sy += 20
-        if equip_stats:
-            bonus_parts = [f"{stat} +{val}" for stat, val in equip_stats.items()]
-            draw_text(surface, f"Stat bonuses: {', '.join(bonus_parts)}",
-                      stat_panel.x + 12, sy, STAT_UP, 13)
+        if eq_stats:
+            parts = [f"{st} +{v}" for st, v in eq_stats.items()]
+            draw_text(surface, f"Stat bonuses: {', '.join(parts)}",
+                      panel.x + 12, sy, STAT_UP, 13)
 
-        # ── Right: Inventory ──
-        inv_panel = pygame.Rect(460, 100, SCREEN_W - 480, 670)
-        draw_panel(surface, inv_panel, bg_color=INV_BG)
-        draw_text(surface, f"Inventory ({len(char.inventory)} items)  |  Gold: {char.gold}",
-                  inv_panel.x + 12, inv_panel.y + 8, GOLD, 16, bold=True)
+    def _draw_inventory(self, surface, mx, my, char, top_y):
+        panel = pygame.Rect(460, top_y, SCREEN_W - 480, 660)
+        draw_panel(surface, panel, bg_color=INV_BG)
+        draw_text(surface, f"Inventory ({len(char.inventory)})  |  Gold: {char.gold}",
+                  panel.x + 12, panel.y + 8, GOLD, 16, bold=True)
+        draw_text(surface, "Left=Equip  Right=Give", panel.x + panel.width - 180,
+                  panel.y + 10, DARK_GREY, 11)
 
         if not char.inventory:
             draw_text(surface, "Inventory is empty.",
-                      inv_panel.x + 20, inv_panel.y + 45, DARK_GREY, 15)
-        else:
-            iy = inv_panel.y + 35
-            max_visible = 10
-            start = self.inv_scroll
-            end = min(len(char.inventory), start + max_visible)
+                      panel.x + 20, panel.y + 45, DARK_GREY, 15)
+            return
 
-            if self.inv_scroll > 0:
-                draw_text(surface, "▲ scroll up", inv_panel.x + inv_panel.width // 2 - 40,
-                          iy - 14, DIM_GOLD, 11)
+        iy = panel.y + 35
+        max_vis = 9
+        start = self.inv_scroll
+        end = min(len(char.inventory), start + max_vis)
 
-            for idx in range(start, end):
-                item = char.inventory[idx]
-                item_rect = pygame.Rect(inv_panel.x + 8, iy,
-                                        inv_panel.width - 16, 58)
-                is_hover = item_rect.collidepoint(mx, my)
-                is_sel = (idx == self.selected_inv_item)
+        if self.inv_scroll > 0:
+            draw_text(surface, "^ scroll up",
+                      panel.x + panel.width // 2 - 40, iy - 14, DIM_GOLD, 11)
 
-                # Check if equippable
-                can_eq, reason = can_equip(char, item)
-                item_slot = item.get("slot", "")
-                is_equippable = item_slot in SLOT_ORDER or item_slot == "accessory"
+        for idx in range(start, end):
+            item = char.inventory[idx]
+            rect = pygame.Rect(panel.x + 8, iy, panel.width - 16, 64)
+            is_hover = rect.collidepoint(mx, my)
+            equippable = item_is_equippable(item)
 
-                if is_sel:
-                    bg = SLOT_SELECTED
-                    border = GOLD
-                elif is_hover:
-                    bg = SLOT_HOVER
-                    border = HIGHLIGHT
-                else:
-                    bg = (22, 18, 40)
-                    border = PANEL_BORDER
+            if is_hover:
+                bg = SLOT_HOVER
+                border = HIGHLIGHT
+            else:
+                bg = (22, 18, 40)
+                border = PANEL_BORDER
 
-                pygame.draw.rect(surface, bg, item_rect, border_radius=3)
-                pygame.draw.rect(surface, border, item_rect, 2, border_radius=3)
+            pygame.draw.rect(surface, bg, rect, border_radius=3)
+            pygame.draw.rect(surface, border, rect, 2, border_radius=3)
 
-                # Item name
-                display_name = get_item_display_name(item)
-                rarity = item.get("rarity", "common")
-                name_col = RARITY_COLORS.get(rarity, CREAM) if item.get("identified") else GREY
-                draw_text(surface, display_name, item_rect.x + 10, item_rect.y + 4,
-                          name_col, 14, bold=True)
+            display_name = get_item_display_name(item)
+            rarity = item.get("rarity", "common")
+            name_col = RARITY_COLORS.get(rarity, CREAM) if item.get("identified") else GREY
+            draw_text(surface, display_name, rect.x + 10, rect.y + 4,
+                      name_col, 14, bold=True)
 
-                # Type + slot info
-                item_type = item.get("type", "misc")
-                slot_label = item.get("slot", "")
-                type_str = f"{item_type}"
-                if slot_label:
-                    type_str += f" ({slot_label})"
-                draw_text(surface, type_str, item_rect.x + 10, item_rect.y + 22,
-                          DARK_GREY, 11)
+            # Type label
+            item_type = item.get("type", "misc")
+            slot = resolve_item_slot(item)
+            type_str = item_type
+            if slot:
+                type_str += f" [{slot}]"
+            draw_text(surface, type_str, rect.x + 10, rect.y + 22, DARK_GREY, 11)
 
-                # Quick stats
-                parts = []
-                if item.get("damage"):
-                    parts.append(f"DMG {item['damage']}")
-                if item.get("defense", 0) > 0:
-                    parts.append(f"DEF +{item['defense']}")
-                for stat, val in item.get("stat_bonuses", {}).items():
-                    parts.append(f"{stat} +{val}")
-                if parts:
-                    draw_text(surface, "  ".join(parts),
-                              item_rect.x + 10, item_rect.y + 38, GREY, 11)
+            # Stats
+            parts = []
+            if item.get("damage"):
+                parts.append(f"DMG {item['damage']}")
+            if item.get("defense", 0):
+                parts.append(f"DEF +{item['defense']}")
+            for stat, val in item.get("stat_bonuses", {}).items():
+                parts.append(f"{stat} +{val}")
+            if parts:
+                draw_text(surface, "  ".join(parts),
+                          rect.x + 10, rect.y + 38, GREY, 11)
 
-                # Equip hint on hover
-                if is_hover and is_equippable:
-                    if can_eq:
-                        draw_text(surface, "Click to equip",
-                                  item_rect.x + item_rect.width - 100, item_rect.y + 4,
-                                  EQUIP_COL, 11)
-                    else:
-                        draw_text(surface, reason,
-                                  item_rect.x + item_rect.width - 200, item_rect.y + 4,
-                                  STAT_DOWN, 11)
+            # Hover hints
+            if is_hover:
+                hx = rect.x + rect.width - 10
+                if equippable:
+                    lbl = "L-Click: Equip"
+                    draw_text(surface, lbl, hx - get_font(11).size(lbl)[0],
+                              rect.y + 4, EQUIP_COL, 11)
+                lbl2 = "R-Click: Give"
+                draw_text(surface, lbl2, hx - get_font(11).size(lbl2)[0],
+                          rect.y + 48, DIM_GOLD, 11)
 
-                iy += 62
+            iy += 68
 
-            if end < len(char.inventory):
-                draw_text(surface, "▼ scroll down",
-                          inv_panel.x + inv_panel.width // 2 - 45,
-                          iy + 4, DIM_GOLD, 11)
+        if end < len(char.inventory):
+            draw_text(surface, "v scroll down",
+                      panel.x + panel.width // 2 - 45, iy + 4, DIM_GOLD, 11)
 
-        # ── Status message ──
-        if self.message and self.message_timer > 0:
-            alpha = min(255, int(self.message_timer * 0.25))
-            draw_text(surface, self.message, SCREEN_W // 2 - 150,
-                      SCREEN_H - 30, self.message_color, 15)
+    # ─────────────────────────────────────────────────────────
+    #  EVENT HANDLING
+    # ─────────────────────────────────────────────────────────
 
-    def handle_click(self, mx, my):
-        """Handle click. Returns 'back' to exit inventory."""
+    def handle_click(self, mx, my, button=1):
+        """Handle mouse click. button: 1=left, 3=right.
+        Returns 'back' to exit inventory."""
         char = self.party[self.selected_char]
 
         # Back button
@@ -300,7 +363,30 @@ class InventoryUI:
             self.finished = True
             return "back"
 
-        # Character tabs
+        # ── Give-to mode ──
+        if self.mode == "give_to" and self.give_item:
+            tab_y = 50
+            for i in range(len(self.party)):
+                if i == self.selected_char:
+                    continue
+                tab_w = (SCREEN_W - 40) // len(self.party)
+                tab_rect = pygame.Rect(20 + i * tab_w, tab_y, tab_w - 4, 36)
+                if tab_rect.collidepoint(mx, my):
+                    target = self.party[i]
+                    if self.give_item in char.inventory:
+                        char.inventory.remove(self.give_item)
+                        target.inventory.append(self.give_item)
+                        name = get_item_display_name(self.give_item)
+                        self._show_message(f"Gave {name} to {target.name}", STAT_UP)
+                    self.mode = "normal"
+                    self.give_item = None
+                    return None
+            # Click elsewhere cancels
+            self.mode = "normal"
+            self.give_item = None
+            return None
+
+        # ── Character tabs (normal mode) ──
         tab_y = 50
         for i in range(len(self.party)):
             tab_w = (SCREEN_W - 40) // len(self.party)
@@ -312,62 +398,67 @@ class InventoryUI:
                 self.inv_scroll = 0
                 return None
 
-        # Equipment slot clicks
-        equip_panel = pygame.Rect(20, 100, 420, 500)
-        slot_y = equip_panel.y + 35
+        content_y = 100
+
+        # ── Equipment slot clicks → unequip ──
+        panel_l = pygame.Rect(20, content_y, 420, 470)
+        slot_y = panel_l.y + 35
         for si, slot_key in enumerate(SLOT_ORDER):
-            slot_rect = pygame.Rect(equip_panel.x + 8, slot_y,
-                                    equip_panel.width - 16, 52)
-            if slot_rect.collidepoint(mx, my):
-                self.selected_slot = si
-                self.selected_inv_item = -1
-                return None
-            slot_y += 56
-
-        # Unequip button
-        if self.selected_slot >= 0 and self.selected_slot < len(SLOT_ORDER):
-            sel_slot_key = SLOT_ORDER[self.selected_slot]
-            sel_item = char.equipment.get(sel_slot_key) if char.equipment else None
-            if sel_item:
-                unequip_btn = pygame.Rect(equip_panel.x + 8, slot_y + 4,
-                                          180, 36)
-                if unequip_btn.collidepoint(mx, my):
-                    ok, item, msg = unequip_item(char, sel_slot_key)
+            rect = pygame.Rect(panel_l.x + 8, slot_y, panel_l.width - 16, 48)
+            if rect.collidepoint(mx, my):
+                item = char.equipment.get(slot_key) if char.equipment else None
+                if item:
+                    ok, unequipped, msg = unequip_item(char, slot_key)
                     self._show_message(msg, CREAM if ok else STAT_DOWN)
-                    return None
+                return None
+            slot_y += 52
 
-        # Inventory item clicks
-        inv_panel = pygame.Rect(460, 100, SCREEN_W - 480, 670)
+        # ── Inventory clicks ──
+        panel_r = pygame.Rect(460, content_y, SCREEN_W - 480, 660)
         if char.inventory:
-            iy = inv_panel.y + 35
-            max_visible = 10
+            iy = panel_r.y + 35
+            max_vis = 9
             start = self.inv_scroll
-            end = min(len(char.inventory), start + max_visible)
+            end = min(len(char.inventory), start + max_vis)
             for idx in range(start, end):
                 item = char.inventory[idx]
-                item_rect = pygame.Rect(inv_panel.x + 8, iy,
-                                        inv_panel.width - 16, 58)
-                if item_rect.collidepoint(mx, my):
-                    # Try to equip
-                    item_slot = item.get("slot", "")
-                    if item_slot in SLOT_ORDER or item_slot == "accessory":
-                        target_slot = None
-                        if self.selected_slot >= 0:
-                            target_slot = SLOT_ORDER[self.selected_slot]
-                        ok, old_item, msg = equip_item(char, item, target_slot)
-                        self._show_message(msg, EQUIP_COL if ok else STAT_DOWN)
-                        if ok:
-                            self.selected_inv_item = -1
+                rect = pygame.Rect(panel_r.x + 8, iy, panel_r.width - 16, 64)
+                if rect.collidepoint(mx, my):
+                    if button == 3:
+                        # Right-click → give to another character
+                        self.mode = "give_to"
+                        self.give_item = item
+                        name = get_item_display_name(item)
+                        self._show_message(f"Click a character to give: {name}", DIM_GOLD)
+                        return None
                     else:
-                        self.selected_inv_item = idx
+                        # Left-click → equip if possible
+                        slot = resolve_item_slot(item)
+                        if slot:
+                            item["slot"] = slot  # ensure slot field exists
+                            ok, old, msg = equip_item(char, item, slot)
+                            self._show_message(msg, EQUIP_COL if ok else STAT_DOWN)
+                        else:
+                            self._show_message("This item cannot be equipped", DARK_GREY)
                     return None
-                iy += 62
+                iy += 68
 
+        return None
+
+    def handle_event(self, event):
+        """Handle raw pygame events (ESC key)."""
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            if self.mode == "give_to":
+                self.mode = "normal"
+                self.give_item = None
+                return None
+            self.finished = True
+            return "back"
         return None
 
     def handle_scroll(self, direction):
         char = self.party[self.selected_char]
-        max_scroll = max(0, len(char.inventory) - 10)
+        max_scroll = max(0, len(char.inventory) - 9)
         if direction > 0:
             self.inv_scroll = min(max_scroll, self.inv_scroll + 1)
         else:
@@ -376,4 +467,4 @@ class InventoryUI:
     def _show_message(self, msg, color=CREAM):
         self.message = msg
         self.message_color = color
-        self.message_timer = 2000
+        self.message_timer = 2500

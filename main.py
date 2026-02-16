@@ -225,9 +225,14 @@ class Game:
                             self.start_combat("tutorial")
 
         elif self.state == S_INVENTORY:
-            if e.type == pygame.MOUSEBUTTONDOWN:
-                if e.button == 1:
-                    result = self.inventory_ui.handle_click(mx, my)
+            # Pass keyboard events (ESC)
+            if e.type == pygame.KEYDOWN:
+                result = self.inventory_ui.handle_event(e)
+                if result == "back":
+                    self.go(S_PARTY)
+            elif e.type == pygame.MOUSEBUTTONDOWN:
+                if e.button in (1, 3):  # left or right click
+                    result = self.inventory_ui.handle_click(mx, my, button=e.button)
                     if result == "back":
                         self.go(S_PARTY)
                 elif e.button == 4:
