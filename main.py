@@ -73,6 +73,10 @@ class Game:
         self.enemy_turn_delay = 0
         # Post-combat
         self.post_combat_ui = None
+        # Debug
+        self.debug_mode = False
+        self.debug_encounter = "tutorial"
+        self.debug_enc_hover = -1
 
     def run(self):
         while self.running:
@@ -194,9 +198,21 @@ class Game:
                 elif e.button == 5:
                     self.party_scroll = min(max(0, len(self.party) - 3), self.party_scroll + 1)
                 elif e.button == 1:
-                    r = pygame.Rect(SCREEN_W//2 - 150, SCREEN_H - 65, 300, 45)
-                    if r.collidepoint(mx, my):
-                        self.start_combat("tutorial")
+                    if self.debug_mode:
+                        # Check encounter buttons
+                        from data.enemies import ENCOUNTERS
+                        enc_keys = list(ENCOUNTERS.keys())
+                        for i, key in enumerate(enc_keys):
+                            bx = 40 + (i % 3) * 220
+                            by = SCREEN_H - 180 + (i // 3) * 50
+                            btn_rect = pygame.Rect(bx, by, 210, 42)
+                            if btn_rect.collidepoint(mx, my):
+                                self.start_combat(key)
+                                return
+                    else:
+                        r = pygame.Rect(SCREEN_W//2 - 150, SCREEN_H - 65, 300, 45)
+                        if r.collidepoint(mx, my):
+                            self.start_combat("tutorial")
 
         elif self.state == S_COMBAT:
             if e.type == pygame.MOUSEBUTTONDOWN:
@@ -215,6 +231,11 @@ class Game:
                     result = self.post_combat_ui.handle_click(mx, my)
                     if result == "continue":
                         self.party_scroll = 0
+                        # Heal party for next fight
+                        for char in self.party:
+                            char.resources = get_all_resources(
+                                char.class_name, char.stats, char.level
+                            )
                         self.go(S_PARTY)
                 elif e.button == 4:
                     self.post_combat_ui.handle_scroll(-1)
@@ -649,9 +670,28 @@ class Game:
                       cx + 10, cy + card_h - 25, DARK_GREY, 10,
                       max_width=card_w - 20)
 
-        # Begin button
-        r = pygame.Rect(SCREEN_W//2 - 150, SCREEN_H - 65, 300, 45)
-        draw_button(self.screen, r, "Begin Adventure!", hover=r.collidepoint(mx,my), size=18)
+        # Begin button (or encounter picker in debug)
+        if self.debug_mode:
+            from data.enemies import ENCOUNTERS
+            enc_keys = list(ENCOUNTERS.keys())
+            draw_text(self.screen, "Pick an encounter:", SCREEN_W//2 - 100,
+                      SCREEN_H - 210, GOLD, 16, bold=True)
+            for i, key in enumerate(enc_keys):
+                enc = ENCOUNTERS[key]
+                bx = 40 + (i % 3) * 220
+                by = SCREEN_H - 180 + (i // 3) * 50
+                btn_rect = pygame.Rect(bx, by, 210, 42)
+                hover = btn_rect.collidepoint(mx, my)
+                diff_col = {"easy": GREEN, "medium": ORANGE, "hard": RED,
+                            "boss": PURPLE}.get(enc["difficulty"], CREAM)
+                label = f"{enc['name']}"
+                draw_button(self.screen, btn_rect, label, hover=hover, size=13)
+                draw_text(self.screen, enc["difficulty"],
+                          bx + 215, by + 14, diff_col, 11)
+        else:
+            r = pygame.Rect(SCREEN_W//2 - 150, SCREEN_H - 65, 300, 45)
+            draw_button(self.screen, r, "Begin Adventure!",
+                        hover=r.collidepoint(mx, my), size=18)
 
     # ══════════════════════════════════════════════════════════
     #  COMBAT
@@ -719,6 +759,31 @@ class Game:
 
 # ── Entry Point ───────────────────────────────────────────────
 
+DEBUG_PARTY_CLASSES = ["Fighter", "Mage", "Cleric", "Thief", "Ranger", "Monk"]
+DEBUG_PARTY_NAMES = ["Aldric", "Lyra", "Sera", "Kael", "Wren", "Zhen"]
+
+
+def make_debug_party():
+    """Quick-roll a full party for testing."""
+    party = []
+    for name, cls in zip(DEBUG_PARTY_NAMES, DEBUG_PARTY_CLASSES):
+        c = Character(name)
+        c.quick_roll(cls)
+        party.append(c)
+    return party
+
+
 if __name__ == "__main__":
+    debug = "--debug" in sys.argv or "-d" in sys.argv
     game = Game()
+
+    if debug:
+        game.debug_mode = True
+        game.party = make_debug_party()
+        game.char_index = PARTY_SIZE
+        game.state = S_PARTY
+        print("\n══════ DEBUG MODE ══════")
+        print("Auto-generated party — pick encounters in-game!")
+        print("════════════════════════\n")
+
     game.run()
