@@ -139,10 +139,11 @@ class PostCombatUI:
         # Phase indicator
         phases = [("XP", self.PHASE_XP), ("Identify", self.PHASE_ID),
                   ("Loot", self.PHASE_LOOT), ("Done", self.PHASE_DONE)]
+        current_idx = next((i for i, (_, pk) in enumerate(phases) if pk == self.phase), 0)
         px = SCREEN_W // 2 - 150
         for i, (label, phase_key) in enumerate(phases):
             is_current = (self.phase == phase_key)
-            is_past = phases.index((label, self.phase)) > i if not is_current else False
+            is_past = i < current_idx
             col = GOLD if is_current else GREEN if is_past else DARK_GREY
             draw_text(surface, label, px + i * 90, 18, col, 15, bold=is_current)
             if i < len(phases) - 1:
