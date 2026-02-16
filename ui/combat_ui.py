@@ -90,7 +90,7 @@ class CombatUI:
 
     def __init__(self, combat_state):
         self.combat = combat_state
-        self.action_mode = "main"  # main, target_attack, target_ability, choose_ability
+        self.action_mode = "main"  # main, target_attack, target_ability, choose_ability, choose_move
         self.selected_ability = None
         self.hover_target = -1
         self.hover_action = -1
@@ -375,6 +375,8 @@ class CombatUI:
                 col = GOLD
             elif "empowered" in msg or "War Cry" in msg:
                 col = (255, 120, 40)
+            elif "moves from" in msg:
+                col = (100, 180, 255)
             elif "regenerates" in msg:
                 col = KI_PURPLE
             else:
@@ -408,6 +410,8 @@ class CombatUI:
             draw_button(surface, back_rect, "Back", hover=hover, size=14)
         elif self.action_mode == "choose_ability":
             self._draw_ability_menu(surface, mx, my, actor)
+        elif self.action_mode == "choose_move":
+            self._draw_move_menu(surface, mx, my, actor)
 
     def _draw_main_actions(self, surface, mx, my, actor):
         """Draw the main action buttons."""
@@ -420,6 +424,10 @@ class CombatUI:
         # Add abilities if any
         if actor.get("abilities"):
             actions.append(("Abilities", "Use a combat skill or spell"))
+
+        # Add move option with current position shown
+        row_label = actor["row"].capitalize()
+        actions.append(("Move", f"Change position (now: {row_label})"))
 
         bx = 15
         by = ACTION_Y + 36
@@ -488,6 +496,58 @@ class CombatUI:
         back_rect = pygame.Rect(SCREEN_W - 140, ACTION_Y + 8, 120, 34)
         hover = back_rect.collidepoint(mx, my)
         draw_button(surface, back_rect, "Back", hover=hover, size=14)
+
+    def _draw_move_menu(self, surface, mx, my, actor):
+        """Draw position movement options."""
+        current_row = actor["row"]
+        row_col = ROW_COLORS.get(current_row, DARK_GREY)
+        draw_text(surface, f"Current position: {current_row.upper()}", 15, ACTION_Y + 32,
+                  row_col, 16, bold=True)
+        draw_text(surface, "Move costs your full action this turn.", 15, ACTION_Y + 52,
+                  DARK_GREY, 13)
+
+        self.hover_action = -1
+        bx = 15
+        by = ACTION_Y + 76
+        btn_w = 250
+        btn_h = 48
+
+        # Build available directions
+        directions = []
+        if current_row != FRONT:
+            target_row = MID if current_row == BACK else FRONT
+            target_col = ROW_COLORS.get(target_row, DARK_GREY)
+            directions.append(("forward", f"Move Forward → {target_row.upper()}", target_col))
+        if current_row != BACK:
+            target_row = MID if current_row == FRONT else BACK
+            target_col = ROW_COLORS.get(target_row, DARK_GREY)
+            directions.append(("backward", f"Move Back → {target_row.upper()}", target_col))
+
+        for i, (direction, label, dir_col) in enumerate(directions):
+            rect = pygame.Rect(bx + i * (btn_w + 12), by, btn_w, btn_h)
+            hover = rect.collidepoint(mx, my)
+            if hover:
+                self.hover_action = i
+
+            bg = ACTION_HOVER if hover else (30, 25, 50)
+            border = GOLD if hover else PANEL_BORDER
+            pygame.draw.rect(surface, bg, rect, border_radius=3)
+            pygame.draw.rect(surface, border, rect, 2, border_radius=3)
+
+            col = GOLD if hover else CREAM
+            draw_text(surface, label, rect.x + 12, rect.y + 14, col, 16, bold=True)
+
+        # Store directions for click handling
+        self._move_directions = [d[0] for d in directions]
+
+        if not directions:
+            draw_text(surface, "Cannot move from this position!", bx, by + 10,
+                      HP_RED, 16)
+
+        # Back button
+        back_rect = pygame.Rect(SCREEN_W - 140, ACTION_Y + 8, 120, 34)
+        bhover = back_rect.collidepoint(mx, my)
+        draw_button(surface, back_rect, "Back", hover=bhover, size=14)
 
     # ─────────────────────────────────────────────────────────
     #  ENEMY THINKING INDICATOR
@@ -647,8 +707,17 @@ class CombatUI:
                 # Defend
                 return {"type": "defend"}
             elif self.hover_action == 2:
-                # Abilities
-                self.action_mode = "choose_ability"
+                # Abilities (if present) or Move
+                actor = self.combat.get_current_combatant()
+                if actor and actor.get("abilities"):
+                    self.action_mode = "choose_ability"
+                else:
+                    # No abilities — action index 2 is Move
+                    self.action_mode = "choose_move"
+                return None
+            elif self.hover_action == 3:
+                # Move (when abilities exist, move is index 3)
+                self.action_mode = "choose_move"
                 return None
 
         elif self.action_mode == "choose_ability":
@@ -669,6 +738,15 @@ class CombatUI:
                         self.selected_ability = ab
                         self.action_mode = "target_ability"
                     return None
+
+        elif self.action_mode == "choose_move":
+            if self.hover_action >= 0:
+                directions = getattr(self, "_move_directions", [])
+                if self.hover_action < len(directions):
+                    direction = directions[self.hover_action]
+                    self.action_mode = "main"
+                    return {"type": "move", "direction": direction}
+            return None
 
         elif self.action_mode in ("target_attack", "target_ability"):
             if self.hover_target >= 0:

@@ -505,6 +505,33 @@ def resolve_defend(combatant):
     }
 
 
+def resolve_move_position(combatant, direction):
+    """Move a combatant one row forward or backward. Costs full action.
+    direction: 'forward' or 'backward'
+    Returns result dict with messages."""
+    row_order = [BACK, MID, FRONT]
+    current_idx = row_order.index(combatant["row"])
+
+    if direction == "forward" and current_idx < len(row_order) - 1:
+        new_row = row_order[current_idx + 1]
+    elif direction == "backward" and current_idx > 0:
+        new_row = row_order[current_idx - 1]
+    else:
+        return {
+            "action": "move",
+            "combatant": combatant,
+            "messages": [f"{combatant['name']} can't move further {direction}!"],
+        }
+
+    old_row = combatant["row"]
+    combatant["row"] = new_row
+    return {
+        "action": "move",
+        "combatant": combatant,
+        "messages": [f"{combatant['name']} moves from {old_row} to {new_row} row."],
+    }
+
+
 def resolve_ability(attacker, target, ability):
     """Resolve a spell/ability use. Returns result dict."""
     result = {
@@ -838,6 +865,38 @@ def enemy_choose_action(enemy, players, enemies):
     ai_type = enemy.get("ai_type", "random")
     attack_type = enemy.get("attack_type", "melee")
 
+    # ── Position correction: move toward preferred row if mispositioned ──
+    # Skip for boss AI (they hold position) and supportive AI (they stay safe)
+    preferred = enemy.get("preferred_row", FRONT)
+    if ai_type not in ("boss", "supportive") and enemy["row"] != preferred:
+        # Decide if repositioning is worth it
+        should_move = False
+        if attack_type == "ranged" and enemy["row"] == FRONT:
+            # Ranged enemy stuck in front — big penalty, definitely move
+            should_move = True
+        elif attack_type == "melee" and enemy["row"] == BACK:
+            # Melee enemy in back — huge damage penalty, move forward
+            should_move = True
+        elif enemy["row"] != preferred:
+            # General preference to be in right row, 30% chance to reposition
+            should_move = random.random() < 0.30
+
+        if should_move:
+            row_order = [BACK, MID, FRONT]
+            current_idx = row_order.index(enemy["row"])
+            preferred_idx = row_order.index(preferred)
+            if preferred_idx > current_idx:
+                return "move", "forward", None
+            elif preferred_idx < current_idx:
+                return "move", "backward", None
+
+    # Supportive AI repositions only if in front row (get to safety)
+    if ai_type == "supportive" and enemy["row"] == FRONT:
+        return "move", "backward", None
+    if ai_type == "supportive" and enemy["row"] == MID and preferred == BACK:
+        if random.random() < 0.50:
+            return "move", "backward", None
+
     # ── Supportive AI (Shamans, Healers) ──────────────────────
     if ai_type == "supportive" or (ai_type == "tactical" and
             any(a.get("type") == "heal" for a in enemy.get("abilities", []))):
@@ -1145,6 +1204,8 @@ class CombatState:
             result = resolve_defend(actor)
         elif action_type == "ability":
             result = resolve_ability(actor, target, ability)
+        elif action_type == "move":
+            result = resolve_move_position(actor, target)  # target is direction string
         else:
             return
 
@@ -1174,6 +1235,12 @@ class CombatState:
                 actor["_temp_dmg_buff"] = ENEMY_BUFF_DMG_MULT
             result = resolve_enemy_attack(actor, target)
             actor.pop("_temp_dmg_buff", None)
+            for msg in result.get("messages", []):
+                self.log(msg)
+
+        elif action == "move" and target:
+            # target is direction string for move action
+            result = resolve_move_position(actor, target)
             for msg in result.get("messages", []):
                 self.log(msg)
 

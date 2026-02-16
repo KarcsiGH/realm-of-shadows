@@ -680,6 +680,8 @@ class Game:
             self.combat_state.execute_player_action(
                 "ability", target=action["target"], ability=action["ability"]
             )
+        elif action["type"] == "move":
+            self.combat_state.execute_player_action("move", target=action["direction"])
 
         # Reset UI mode after action
         self.combat_ui.action_mode = "main"

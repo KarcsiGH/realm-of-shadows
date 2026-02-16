@@ -465,6 +465,7 @@ def create_enemy_instance(enemy_key, uid):
         "phys_type": template["phys_type"],
         "accuracy_bonus": template["accuracy_bonus"],
         "row": template["preferred_row"],
+        "preferred_row": template["preferred_row"],
         "ai_type": template["ai_type"],
         "resistances": dict(template["resistances"]),
         "status_immunities": list(template["status_immunities"]),
