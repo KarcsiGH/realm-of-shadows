@@ -250,3 +250,53 @@ POTION_DIMINISH = [1.00, 0.75, 0.56, 0.42, 0.32]
 # ═══════════════════════════════════════════════════════════════
 
 MACE_ARMOR_BYPASS = 0.30  # maces ignore 30% of defense
+
+
+# ═══════════════════════════════════════════════════════════════
+#  STATUS EFFECT TICK DAMAGE (end of round)
+# ═══════════════════════════════════════════════════════════════
+
+# Status effects that deal damage each round.
+# Value is flat damage per tick.  Tunable here.
+STATUS_TICK_DAMAGE = {
+    "Poisoned":     4,
+    "Burning":      6,
+    "Frostbitten":  3,
+    "Shocked":      5,
+}
+
+# Status effects that prevent action (Speed = 0 handles skipping,
+# these are listed for the tick system to decrement duration only)
+STATUS_INCAPACITATE = {"Stunned", "Frozen", "Petrified", "Sleep"}
+
+# All statuses that should tick down each round
+STATUS_DURATION_TICK = (
+    set(STATUS_TICK_DAMAGE.keys())
+    | STATUS_INCAPACITATE
+    | {"Blinded", "Fear", "Silenced", "Slowed", "Hasted"}
+)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  ENEMY AI — THREAT ASSESSMENT
+# ═══════════════════════════════════════════════════════════════
+
+# Threat rating by class archetype.  Higher = scarier to enemies.
+# Used by tactical/boss AI to pick targets intelligently.
+CLASS_THREAT = {
+    # Healers are top priority — they undo your work
+    "Cleric": 10,
+    # Big damage casters next
+    "Mage":   9,
+    # Hybrid ranged/magic
+    "Ranger": 6,
+    # Melee damage dealers
+    "Thief":  5,
+    "Monk":   5,
+    "Fighter": 4,
+}
+CLASS_THREAT_DEFAULT = 4
+
+# Buff/debuff durations applied by enemy abilities
+ENEMY_BUFF_DURATION = 3   # rounds for War Cry etc.
+ENEMY_BUFF_DMG_MULT = 1.2  # War Cry damage multiplier

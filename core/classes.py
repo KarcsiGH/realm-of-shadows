@@ -147,7 +147,7 @@ CLASS_ORDER = ["Fighter", "Mage", "Cleric", "Thief", "Ranger", "Monk"]
 # ── Resource Calculations ─────────────────────────────────────
 
 def calc_hp(base_hp, con, level):
-    return base_hp + (con * 5) + (level * 8)
+    return base_hp + (con * 3) + (level * 5)
 
 def calc_ki(class_name, stats, level):
     return CLASSES[class_name]["ki_formula"](stats, level)

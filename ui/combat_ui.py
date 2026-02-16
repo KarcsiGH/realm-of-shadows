@@ -255,6 +255,18 @@ class CombatUI:
                 # Defending indicator
                 if p.get("is_defending"):
                     draw_text(surface, "DEF", cx + card_w - 36, cy + 38, GOLD, 12, bold=True)
+
+                # Status effects (compact, right side)
+                sx = cx + card_w - 6
+                sy = cy + 54
+                for status in p.get("status_effects", []):
+                    sname = status["name"][:3].upper()
+                    sdur = status["duration"]
+                    s_col = self._status_color(status["name"])
+                    label = f"{sname}:{sdur}"
+                    tw = get_font(11).size(label)[0]
+                    draw_text(surface, label, sx - tw, sy, s_col, 11)
+                    sy += 14
             else:
                 draw_text(surface, "UNCONSCIOUS", cx + 30, cy + 48, DEAD_COLOR, 14)
 
@@ -314,6 +326,18 @@ class CombatUI:
                     draw_text(surface, "DEAD", cx + 6, ey, DEAD_COLOR, 11)
                     ey += 18
 
+            # Status effects for the group (show for first living member)
+            first_living = next((m for m in group["members"] if m["alive"]), None)
+            if first_living and first_living.get("status_effects"):
+                sx = cx + 6
+                for status in first_living["status_effects"]:
+                    sname = status["name"][:3].upper()
+                    sdur = status["duration"]
+                    s_col = self._status_color(status["name"])
+                    label = f"{sname}:{sdur}"
+                    draw_text(surface, label, sx, cy + card_h - 16, s_col, 11)
+                    sx += get_font(11).size(label)[0] + 6
+
     # ─────────────────────────────────────────────────────────
     #  COMBAT LOG
     # ─────────────────────────────────────────────────────────
@@ -343,8 +367,14 @@ class CombatUI:
                 col = HEAL_COLOR
             elif "fallen" in msg or "unconscious" in msg:
                 col = ENEMY_RED
+            elif "Poisoned" in msg or "Burning" in msg or "Frostbitten" in msg or "Shocked" in msg:
+                col = (80, 200, 80) if "Poisoned" in msg else (255, 120, 40) if "Burning" in msg else (100, 180, 255)
+            elif "wears off" in msg:
+                col = (140, 140, 180)
             elif "═══" in msg or "──" in msg:
                 col = GOLD
+            elif "empowered" in msg or "War Cry" in msg:
+                col = (255, 120, 40)
             elif "regenerates" in msg:
                 col = KI_PURPLE
             else:
@@ -484,21 +514,63 @@ class CombatUI:
         pygame.draw.rect(surface, PANEL_BORDER, action_rect, 1)
 
         if self.combat.phase == "victory":
-            draw_text(surface, "VICTORY!", 15, ACTION_Y + 8, GOLD, 24, bold=True)
             rewards = getattr(self.combat, "rewards", {})
-            draw_text(surface, f"XP: {rewards.get('xp', 0)}    Gold: {rewards.get('gold', 0)}",
-                      15, ACTION_Y + 40, CREAM, 17)
+            draw_text(surface, "VICTORY!", 15, ACTION_Y + 8, GOLD, 24, bold=True)
+
+            # Gold
+            gold_each = rewards.get("gold_each", 0)
+            draw_text(surface, f"Gold: {rewards.get('total_gold', 0)} ({gold_each} each)",
+                      15, ACTION_Y + 38, CREAM, 15)
+
+            # XP per character
+            xp_awards = rewards.get("xp_awards", {})
+            xy = ACTION_Y + 58
+            for uid, info in xp_awards.items():
+                pct = f"{info['share_pct']*100:.0f}%"
+                rounds_str = f"{info['rounds_alive']}/{info['total_rounds']}r"
+                status = "  [KO]" if not info["alive"] else ""
+                col = DEAD_COLOR if not info["alive"] else CREAM
+                draw_text(surface, f"{info['name']}: {info['xp']} XP ({pct}, {rounds_str}){status}",
+                          30, xy, col, 13)
+                xy += 18
+
+            # Loot drops
+            loot = rewards.get("loot_drops", [])
+            if loot:
+                draw_text(surface, f"Loot ({len(loot)} items):", 420, ACTION_Y + 38, GOLD, 15, bold=True)
+                ly = ACTION_Y + 58
+                for item in loot:
+                    if item.get("identified"):
+                        label = item["name"]
+                        col = self._rarity_color(item.get("rarity", "common"))
+                    else:
+                        label = f"??? {item.get('type', 'Item')}"
+                        col = GREY
+                    draw_text(surface, label, 435, ly, col, 13)
+                    ly += 18
+
             # Continue button
-            btn = pygame.Rect(SCREEN_W // 2 - 120, ACTION_Y + 65, 240, 42)
+            btn = pygame.Rect(SCREEN_W // 2 - 120, ACTION_Y + ACTION_H - 52, 240, 42)
             hover = btn.collidepoint(mx, my)
             draw_button(surface, btn, "Continue", hover=hover, size=18)
         else:
             draw_text(surface, "DEFEAT", 15, ACTION_Y + 8, HP_RED, 24, bold=True)
             draw_text(surface, "Your party has fallen...", 15, ACTION_Y + 40, GREY, 17)
             # Retry button
-            btn = pygame.Rect(SCREEN_W // 2 - 120, ACTION_Y + 65, 240, 42)
+            btn = pygame.Rect(SCREEN_W // 2 - 120, ACTION_Y + ACTION_H - 52, 240, 42)
             hover = btn.collidepoint(mx, my)
             draw_button(surface, btn, "Retry", hover=hover, size=18)
+
+    RARITY_COLORS = {
+        "common":    CREAM,
+        "uncommon":  (80, 220, 80),
+        "rare":      (80, 140, 255),
+        "epic":      (180, 80, 255),
+        "legendary": (255, 180, 40),
+    }
+
+    def _rarity_color(self, rarity):
+        return self.RARITY_COLORS.get(rarity, CREAM)
 
     # ─────────────────────────────────────────────────────────
     #  FLASH MESSAGES (floating combat text)
@@ -522,13 +594,37 @@ class CombatUI:
         self.flash_messages.append((msg, color, 1000))
 
     # ─────────────────────────────────────────────────────────
+    #  STATUS EFFECT COLORS
+    # ─────────────────────────────────────────────────────────
+
+    STATUS_COLORS = {
+        "Poisoned":    (80, 200, 80),
+        "Burning":     (255, 120, 40),
+        "Frostbitten": (100, 180, 255),
+        "Shocked":     (255, 255, 80),
+        "Stunned":     (200, 200, 60),
+        "Frozen":      (80, 160, 255),
+        "Petrified":   (140, 130, 120),
+        "Blinded":     (120, 100, 80),
+        "Fear":        (180, 80, 180),
+        "Silenced":    (160, 80, 160),
+        "Slowed":      (100, 100, 200),
+        "Hasted":      (80, 255, 80),
+        "Sleep":       (140, 140, 200),
+        "WarCry":      (255, 80, 40),
+    }
+
+    def _status_color(self, name):
+        return self.STATUS_COLORS.get(name, GREY)
+
+    # ─────────────────────────────────────────────────────────
     #  INPUT HANDLING
     # ─────────────────────────────────────────────────────────
 
     def handle_click(self, mx, my):
         """Handle a mouse click. Returns an action dict or None."""
         if self.combat.phase in ("victory", "defeat"):
-            btn = pygame.Rect(SCREEN_W // 2 - 100, ACTION_Y + 55, 200, 38)
+            btn = pygame.Rect(SCREEN_W // 2 - 120, ACTION_Y + ACTION_H - 52, 240, 42)
             if btn.collidepoint(mx, my):
                 return {"type": "end_combat", "result": self.combat.phase}
             return None

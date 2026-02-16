@@ -10,6 +10,11 @@ References: Combat_System_Design_v3.md, Weapon_System_Design_v2.md
 import random
 import math
 from core.combat_config import *
+from core.combat_config import (
+    STATUS_TICK_DAMAGE, STATUS_INCAPACITATE, STATUS_DURATION_TICK,
+    CLASS_THREAT, CLASS_THREAT_DEFAULT,
+    ENEMY_BUFF_DURATION, ENEMY_BUFF_DMG_MULT,
+)
 from data.weapons import get_weapon, is_proficient, STARTING_WEAPONS, WEAPONS
 from data.weapons import NON_PROFICIENT_DAMAGE_MULT, NON_PROFICIENT_ACCURACY, NON_PROFICIENT_SPEED
 
@@ -460,6 +465,10 @@ def resolve_enemy_attack(attacker, defender):
     raw = (base_dmg + str_bonus) * pos_dmg
     raw *= random.uniform(DAMAGE_VARIANCE_MIN, DAMAGE_VARIANCE_MAX)
 
+    # War Cry damage buff
+    if attacker.get("_temp_dmg_buff"):
+        raw *= attacker["_temp_dmg_buff"]
+
     # Physical type vs resistance
     phys_type = attacker.get("phys_type", "slashing")
     type_mod = defender.get("resistances", {}).get(phys_type, NEUTRAL)
@@ -640,57 +649,301 @@ def resolve_ability(attacker, target, ability):
 
 
 # ═══════════════════════════════════════════════════════════════
-#  ENEMY AI
+#  STATUS EFFECT HELPERS
+# ═══════════════════════════════════════════════════════════════
+
+def apply_status_effect(target, status_name, duration, chance=1.0):
+    """Try to apply a status effect to a target. Respects immunities.
+    Returns True if applied, False if resisted/immune."""
+    # Immunity check
+    if status_name in target.get("status_immunities", []):
+        return False
+
+    # Chance check
+    if chance < 1.0 and random.random() > chance:
+        return False
+
+    # Check if already afflicted — refresh duration if longer
+    for existing in target.get("status_effects", []):
+        if existing["name"] == status_name:
+            existing["duration"] = max(existing["duration"], duration)
+            return True
+
+    target.setdefault("status_effects", []).append({
+        "name": status_name,
+        "duration": duration,
+    })
+    return True
+
+
+def tick_status_effects(combatant):
+    """Process end-of-round status ticks: deal damage, decrement duration,
+    remove expired effects. Returns list of log messages."""
+    messages = []
+    remaining = []
+
+    for status in combatant.get("status_effects", []):
+        name = status["name"]
+
+        # Tick damage (Poison, Burn, etc.)
+        tick_dmg = STATUS_TICK_DAMAGE.get(name, 0)
+        if tick_dmg > 0:
+            combatant["hp"] = max(0, combatant["hp"] - tick_dmg)
+            messages.append(
+                f"{combatant['name']} takes {tick_dmg} damage from {name}!"
+            )
+            if combatant["hp"] <= 0:
+                combatant["alive"] = False
+                messages.append(f"{combatant['name']} has fallen to {name}!")
+
+        # Decrement duration
+        status["duration"] -= 1
+        if status["duration"] > 0:
+            remaining.append(status)
+        else:
+            messages.append(f"{name} wears off {combatant['name']}.")
+
+    combatant["status_effects"] = remaining
+    return messages
+
+
+def has_status(combatant, status_name):
+    """Check if a combatant currently has a given status effect."""
+    return any(s["name"] == status_name for s in combatant.get("status_effects", []))
+
+
+# ═══════════════════════════════════════════════════════════════
+#  ENEMY AI — THREAT ASSESSMENT
+# ═══════════════════════════════════════════════════════════════
+
+def _calc_player_threat(player):
+    """Score how threatening a player is to enemies.
+    Higher = more dangerous = higher priority target."""
+    base = CLASS_THREAT.get(player.get("class_name", ""), CLASS_THREAT_DEFAULT)
+
+    # Wounded players are less threatening (and less worth targeting
+    # unless you can finish them)
+    hp_ratio = player["hp"] / max(1, player["max_hp"])
+
+    # Scale threat by HP — full HP = full threat
+    threat = base * (0.5 + 0.5 * hp_ratio)
+
+    # Bonus threat if they're in a dangerous position (back row caster)
+    if player["row"] == BACK and base >= 8:
+        threat += 2  # casters in back row are extra valuable targets
+
+    return threat
+
+
+def _calc_finish_bonus(player, enemy):
+    """If an enemy can likely one-shot a player, that's very attractive."""
+    estimated_dmg = enemy.get("attack_damage", 5) + enemy["stats"].get("STR", 0) * 0.3
+    if player["hp"] <= estimated_dmg * 1.2:
+        return 8  # big bonus for finishable targets
+    return 0
+
+
+def _row_weight(attack_type, attacker_row, target_row):
+    """How much does position favor this target? Melee strongly prefers
+    front row. Ranged slightly prefers mid/back targets."""
+    if attack_type == "melee":
+        weights = {FRONT: 3.0, MID: 1.5, BACK: 0.5}
+    elif attack_type == "ranged":
+        weights = {FRONT: 1.0, MID: 1.5, BACK: 1.2}
+    else:
+        weights = {FRONT: 1.0, MID: 1.0, BACK: 1.0}
+    return weights.get(target_row, 1.0)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  ENEMY AI — ABILITY DECISION LOGIC
+# ═══════════════════════════════════════════════════════════════
+
+def _should_use_heal(enemy, enemies):
+    """Check if a healing ability should be used. Returns (should_heal, target, ability) or (False, None, None)."""
+    heal_abilities = [a for a in enemy.get("abilities", []) if a.get("type") == "heal"]
+    if not heal_abilities:
+        return False, None, None
+
+    # Find wounded allies below 50% HP
+    wounded = [e for e in enemies if e["alive"] and e["hp"] < e["max_hp"] * 0.50
+               and e["uid"] != enemy["uid"]]
+    if not wounded:
+        return False, None, None
+
+    target = min(wounded, key=lambda e: e["hp"] / max(1, e["max_hp"]))
+    return True, target, heal_abilities[0]
+
+
+def _should_use_buff(enemy, enemies):
+    """Check if a buff ability should be used. Returns (should_buff, targets, ability) or (False, None, None)."""
+    buff_abilities = [a for a in enemy.get("abilities", []) if a.get("type") == "buff"]
+    if not buff_abilities:
+        return False, None, None
+
+    ability = buff_abilities[0]
+
+    # Don't buff if most allies already have the buff active
+    living_allies = [e for e in enemies if e["alive"] and e["uid"] != enemy["uid"]]
+    if not living_allies:
+        return False, None, None
+
+    already_buffed = sum(1 for a in living_allies if has_status(a, "WarCry"))
+    if already_buffed >= len(living_allies) * 0.6:
+        return False, None, None
+
+    return True, living_allies, ability
+
+
+def _should_use_offensive_ability(enemy, players):
+    """Check if an offensive ability should be used. Returns (should_use, target, ability) or (False, None, None)."""
+    offense_abilities = [a for a in enemy.get("abilities", [])
+                         if a.get("type") == "damage"]
+    if not offense_abilities:
+        return False, None, None
+
+    ability = offense_abilities[0]
+    living_players = [p for p in players if p["alive"]]
+    if not living_players:
+        return False, None, None
+
+    # 60% chance to use offensive ability when available
+    if random.random() > 0.60:
+        return False, None, None
+
+    # Prefer high-threat targets
+    target = max(living_players, key=lambda p: _calc_player_threat(p))
+    return True, target, ability
+
+
+# ═══════════════════════════════════════════════════════════════
+#  ENEMY AI — MAIN DECISION FUNCTION
 # ═══════════════════════════════════════════════════════════════
 
 def enemy_choose_action(enemy, players, enemies):
-    """Simple AI: choose action and target for an enemy."""
+    """AI decision-making for enemy turns. Returns (action_type, target, ability).
+    
+    AI Types:
+      random     — picks a random living player
+      aggressive — targets the highest-threat player
+      defensive  — targets the weakest player (finish them off)
+      tactical   — smart targeting: threat + position + finish potential
+      supportive — healer AI: heal first, offense second, melee fallback
+      boss       — buff allies, smart targeting, can't be kited
+    """
     living_players = [p for p in players if p["alive"]]
     if not living_players:
         return None, None, None
 
     ai_type = enemy.get("ai_type", "random")
+    attack_type = enemy.get("attack_type", "melee")
 
-    # Check if enemy has usable abilities (healing, buffs)
-    for ability in enemy.get("abilities", []):
-        if ability.get("type") == "heal":
-            # Heal most wounded ally
-            living_allies = [e for e in enemies if e["alive"] and e["hp"] < e["max_hp"] * 0.6]
-            if living_allies:
-                target = min(living_allies, key=lambda e: e["hp"] / e["max_hp"])
-                return "ability", target, ability
+    # ── Supportive AI (Shamans, Healers) ──────────────────────
+    if ai_type == "supportive" or (ai_type == "tactical" and
+            any(a.get("type") == "heal" for a in enemy.get("abilities", []))):
 
-    # Basic attack — choose target
+        # Priority 1: Heal wounded allies
+        should_heal, heal_target, heal_ability = _should_use_heal(enemy, enemies)
+        if should_heal:
+            return "ability", heal_target, heal_ability
+
+        # Priority 2: Offensive ability
+        should_attack, atk_target, atk_ability = _should_use_offensive_ability(enemy, living_players)
+        if should_attack:
+            return "ability", atk_target, atk_ability
+
+        # Priority 3: Basic attack on highest-threat target
+        target = max(living_players, key=lambda p: _calc_player_threat(p))
+        return "attack", target, None
+
+    # ── Boss AI ───────────────────────────────────────────────
+    if ai_type == "boss":
+        # Priority 1: Buff allies if available and not already buffed
+        should_buff, buff_targets, buff_ability = _should_use_buff(enemy, enemies)
+        if should_buff:
+            return "ability", buff_targets, buff_ability
+
+        # Priority 2: Tactical targeting (threat + finish potential)
+        target = _pick_tactical_target(enemy, living_players)
+        return "attack", target, None
+
+    # ── Tactical AI ───────────────────────────────────────────
+    if ai_type == "tactical":
+        # Check for offensive abilities first
+        should_attack, atk_target, atk_ability = _should_use_offensive_ability(enemy, living_players)
+        if should_attack:
+            return "ability", atk_target, atk_ability
+
+        target = _pick_tactical_target(enemy, living_players)
+        return "attack", target, None
+
+    # ── Aggressive AI ─────────────────────────────────────────
     if ai_type == "aggressive":
-        # Target highest damage dealer (approximate: class-based)
-        target = random.choice(living_players)
-    elif ai_type == "defensive":
-        # Target lowest HP player
-        target = min(living_players, key=lambda p: p["hp"])
-    elif ai_type == "tactical":
-        # Target healers/mages first (back row)
-        back_row = [p for p in living_players if p["row"] == BACK]
-        if back_row:
-            target = random.choice(back_row)
-        else:
-            target = random.choice(living_players)
-    else:
-        target = random.choice(living_players)
-
-    # Melee enemies prefer front-row targets (weighted)
-    if enemy.get("attack_type") == "melee":
-        weighted = []
+        # Target the most threatening player, weighted by position
+        scored = []
         for p in living_players:
-            if p["row"] == FRONT:
-                weighted.extend([p] * 5)
-            elif p["row"] == MID:
-                weighted.extend([p] * 3)
-            else:
-                weighted.extend([p] * 2)
-        if weighted:
-            target = random.choice(weighted)
+            threat = _calc_player_threat(p)
+            row_w = _row_weight(attack_type, enemy["row"], p["row"])
+            scored.append((p, threat * row_w))
+        scored.sort(key=lambda x: -x[1])
 
+        # Pick from top 2 with some randomness
+        top = scored[:min(2, len(scored))]
+        target = random.choices(
+            [t[0] for t in top],
+            weights=[t[1] for t in top],
+            k=1
+        )[0]
+        return "attack", target, None
+
+    # ── Defensive AI ──────────────────────────────────────────
+    if ai_type == "defensive":
+        # Target lowest HP player (finish them off)
+        # Bonus for targets we can actually kill
+        scored = []
+        for p in living_players:
+            score = (1.0 - p["hp"] / max(1, p["max_hp"])) * 10
+            score += _calc_finish_bonus(p, enemy)
+            score *= _row_weight(attack_type, enemy["row"], p["row"])
+            scored.append((p, score))
+        scored.sort(key=lambda x: -x[1])
+        target = scored[0][0]
+        return "attack", target, None
+
+    # ── Random AI (fallback) ──────────────────────────────────
+    # Still slightly weighted by position (melee prefers front)
+    weighted = []
+    for p in living_players:
+        w = _row_weight(attack_type, enemy["row"], p["row"])
+        weighted.append((p, w))
+    target = random.choices(
+        [t[0] for t in weighted],
+        weights=[t[1] for t in weighted],
+        k=1
+    )[0]
     return "attack", target, None
+
+
+def _pick_tactical_target(enemy, living_players):
+    """Smart target selection combining threat, position, and finish potential."""
+    attack_type = enemy.get("attack_type", "melee")
+    scored = []
+    for p in living_players:
+        threat = _calc_player_threat(p)
+        finish = _calc_finish_bonus(p, enemy)
+        row_w = _row_weight(attack_type, enemy["row"], p["row"])
+        total = (threat + finish) * row_w
+        scored.append((p, total))
+
+    scored.sort(key=lambda x: -x[1])
+
+    # Pick from top 2 with weighted randomness (not purely deterministic)
+    top = scored[:min(2, len(scored))]
+    return random.choices(
+        [t[0] for t in top],
+        weights=[t[1] for t in top],
+        k=1
+    )[0]
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -779,6 +1032,9 @@ class CombatState:
         self.all_combatants = self.players + self.enemies
         self.turn_order = build_turn_order(self.all_combatants)
 
+        # XP tracking: count rounds each player was alive (conscious)
+        self.rounds_alive = {p["uid"]: 0 for p in self.players}
+
         self.log(f"═══ {self.encounter_name} ═══")
         self.log(f"Round {self.round_num}")
 
@@ -836,8 +1092,26 @@ class CombatState:
             self._end_round()
 
     def _end_round(self):
-        """Handle end-of-round: regen, status ticks, rebuild turn order."""
+        """Handle end-of-round: status ticks, regen, rebuild turn order."""
         self.round_num += 1
+
+        # Status effect ticks FIRST (poison can kill)
+        for c in self.all_combatants:
+            if c["alive"]:
+                status_msgs = tick_status_effects(c)
+                for m in status_msgs:
+                    self.log(m)
+
+        # Check for deaths from status ticks
+        if not any(p["alive"] for p in self.players):
+            self.phase = "defeat"
+            self.log("═══ DEFEAT — Your party has fallen! ═══")
+            return
+        if not any(e["alive"] for e in self.enemies):
+            self.phase = "victory"
+            self.log("═══ VICTORY! ═══")
+            self._calc_rewards()
+            return
 
         # Regeneration for all living combatants
         for c in self.all_combatants:
@@ -851,6 +1125,11 @@ class CombatState:
         # Rebuild turn order
         self.turn_order = build_turn_order(self.all_combatants)
         self.current_turn_index = 0
+
+        # Tally XP: credit players who were alive this round
+        for p in self.players:
+            if p["alive"] and p["uid"] in self.rounds_alive:
+                self.rounds_alive[p["uid"]] += 1
 
         self.log(f"── Round {self.round_num} ──")
 
@@ -880,9 +1159,9 @@ class CombatState:
         if not actor or actor["type"] != "enemy":
             return
 
-        # Skip stunned/frozen
+        # Skip stunned/frozen/petrified/sleeping
         for status in actor.get("status_effects", []):
-            if status["name"] in ("Stunned", "Frozen", "Petrified"):
+            if status["name"] in STATUS_INCAPACITATE:
                 self.log(f"{actor['name']} is {status['name']} and cannot act!")
                 self.advance_turn()
                 return
@@ -890,26 +1169,101 @@ class CombatState:
         action, target, ability = enemy_choose_action(actor, self.players, self.enemies)
 
         if action == "attack" and target:
+            # Apply War Cry damage buff if active
+            if has_status(actor, "WarCry"):
+                actor["_temp_dmg_buff"] = ENEMY_BUFF_DMG_MULT
             result = resolve_enemy_attack(actor, target)
+            actor.pop("_temp_dmg_buff", None)
             for msg in result.get("messages", []):
                 self.log(msg)
-        elif action == "ability" and target and ability:
-            # Simple enemy ability resolution
-            if ability.get("type") == "heal":
+
+        elif action == "ability" and ability:
+            ab_type = ability.get("type", "")
+
+            if ab_type == "heal" and target:
+                # Healing ability
                 power = ability.get("power", 10)
                 amount = power + random.randint(0, 5)
                 old_hp = target["hp"]
                 target["hp"] = min(target["max_hp"], target["hp"] + amount)
                 actual = target["hp"] - old_hp
                 self.log(f"{actor['name']} uses {ability['name']} on {target['name']} — heals {actual} HP!")
+
+            elif ab_type == "damage" and target:
+                # Offensive ability (e.g., Poison Dart)
+                power = ability.get("power", 8)
+                element = ability.get("element", "arcane")
+
+                # Accuracy check — magic-style
+                casting_val = actor["stats"].get("INT", 0)
+                def_wis = target["stats"].get("WIS", 0)
+                acc = ACCURACY_BASE_MAGIC + (casting_val - def_wis) * ACCURACY_STAT_SCALE
+                acc = max(ACCURACY_MIN, min(ACCURACY_MAX, acc))
+                hit = roll_hit(acc)
+
+                if not hit:
+                    self.log(f"{actor['name']} uses {ability['name']} on {target['name']} — RESISTED!")
+                else:
+                    # Damage: power + INT scaling
+                    raw = power + casting_val * 0.5
+                    raw *= random.uniform(MAGIC_VARIANCE_MIN, MAGIC_VARIANCE_MAX)
+
+                    # Elemental resistance
+                    type_mod = target.get("resistances", {}).get(element, NEUTRAL)
+                    raw *= type_mod
+
+                    # Magic resistance
+                    m_resist = target.get("magic_resist", 0)
+                    damage = max(MINIMUM_DAMAGE, int(raw - m_resist))
+
+                    target["hp"] = max(0, target["hp"] - damage)
+                    if target["hp"] <= 0:
+                        target["alive"] = False
+
+                    self.log(f"{actor['name']} uses {ability['name']} on {target['name']} for {damage} damage!")
+
+                    if not target["alive"]:
+                        self.log(f"{target['name']} falls unconscious!")
+
+                    # Apply status effect if ability has one
+                    status_name = ability.get("status")
+                    status_chance = ability.get("status_chance", 0)
+                    status_dur = ability.get("status_duration", 2)
+                    if status_name and target["alive"]:
+                        applied = apply_status_effect(
+                            target, status_name, status_dur, status_chance
+                        )
+                        if applied:
+                            self.log(f"{target['name']} is now {status_name}!")
+
+            elif ab_type == "buff":
+                # Buff ability (e.g., War Cry — targets all allies)
+                if isinstance(target, list):
+                    # Multi-target buff
+                    buff_targets = [t for t in target if t["alive"]]
+                    for t in buff_targets:
+                        apply_status_effect(t, "WarCry", ENEMY_BUFF_DURATION, 1.0)
+                    self.log(f"{actor['name']} uses {ability['name']}! Allies are empowered!")
+                elif target:
+                    apply_status_effect(target, "WarCry", ENEMY_BUFF_DURATION, 1.0)
+                    self.log(f"{actor['name']} uses {ability['name']} on {target['name']}!")
         else:
             self.log(f"{actor['name']} hesitates...")
 
         self.advance_turn()
 
     def _calc_rewards(self):
-        """Calculate XP and gold from defeated enemies."""
+        """Calculate XP (round-conscious %), gold (even split), and loot drops."""
         from data.enemies import ENEMIES
+
+        # ── Flush final round: credit alive players ──
+        for p in self.players:
+            if p["alive"] and p["uid"] in self.rounds_alive:
+                self.rounds_alive[p["uid"]] += 1
+
+        total_rounds = max(1, self.round_num)
+
+        # ── Total XP and gold from enemies ──
         total_xp = 0
         total_gold = 0
         for e in self.enemies:
@@ -918,8 +1272,67 @@ class CombatState:
             gold_range = template.get("gold_reward", (0, 0))
             total_gold += random.randint(gold_range[0], gold_range[1])
 
-        self.rewards = {"xp": total_xp, "gold": total_gold}
-        self.log(f"Earned {total_xp} XP and {total_gold} gold!")
+        # ── XP distribution: percentage-based on rounds alive ──
+        # Formula: share_pct = max(0.25, rounds_alive / total_rounds)
+        #          character_xp = share_pct × (total_xp / party_size)
+        XP_FLOOR = 0.25
+        party_size = len(self.players)
+        per_member_full = total_xp / max(1, party_size)
+
+        xp_awards = {}
+        for p in self.players:
+            alive_rounds = self.rounds_alive.get(p["uid"], 0)
+            share_pct = max(XP_FLOOR, alive_rounds / total_rounds)
+            awarded = int(per_member_full * share_pct)
+            xp_awards[p["uid"]] = {
+                "name": p["name"],
+                "xp": awarded,
+                "rounds_alive": alive_rounds,
+                "total_rounds": total_rounds,
+                "share_pct": share_pct,
+                "alive": p["alive"],
+            }
+
+        # ── Gold: even split across all party members ──
+        gold_each = total_gold // max(1, party_size)
+        gold_remainder = total_gold % max(1, party_size)
+
+        # ── Loot drops from enemies ──
+        loot_drops = []
+        for e in self.enemies:
+            template = ENEMIES.get(e["template_key"], {})
+            loot_table = template.get("loot_table", [])
+            for entry in loot_table:
+                if random.random() <= entry.get("drop_chance", 0):
+                    item = dict(entry["item"])
+                    item["identified"] = False  # all drops start unidentified
+                    item["source"] = e["name"]
+                    loot_drops.append(item)
+
+        # ── Store results ──
+        self.rewards = {
+            "total_xp": total_xp,
+            "total_gold": total_gold,
+            "gold_each": gold_each,
+            "gold_remainder": gold_remainder,
+            "xp_awards": xp_awards,
+            "loot_drops": loot_drops,
+            "loot_assigned": {},  # uid → list of items (filled by UI)
+        }
+
+        # ── Log summary ──
+        self.log(f"Gold: {total_gold} ({gold_each} each)")
+        self.log(f"XP distribution:")
+        for uid, info in xp_awards.items():
+            status = "" if info["alive"] else " (unconscious)"
+            pct_str = f"{info['share_pct']*100:.0f}%"
+            rounds_str = f"{info['rounds_alive']}/{info['total_rounds']} rounds"
+            self.log(f"  {info['name']}: {info['xp']} XP ({pct_str} — {rounds_str}){status}")
+
+        if loot_drops:
+            self.log(f"{len(loot_drops)} item(s) dropped!")
+            for item in loot_drops:
+                self.log(f"  ??? {item.get('type', 'Item')} (unidentified)")
 
     def get_living_enemies(self):
         return [e for e in self.enemies if e["alive"]]
