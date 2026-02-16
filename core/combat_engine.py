@@ -25,12 +25,34 @@ from data.weapons import NON_PROFICIENT_DAMAGE_MULT, NON_PROFICIENT_ACCURACY, NO
 
 def make_player_combatant(character, row=FRONT):
     """Wrap a Character object into a combatant dict for combat."""
-    weapon_key = STARTING_WEAPONS.get(character.class_name, "Unarmed")
-    weapon = get_weapon(weapon_key)
+    # Use equipped weapon if available, otherwise starting weapon
+    equipped_weapon = None
+    if hasattr(character, "equipment") and character.equipment:
+        equipped_weapon = character.equipment.get("weapon")
+    if equipped_weapon:
+        weapon = dict(equipped_weapon)
+    else:
+        weapon_key = STARTING_WEAPONS.get(character.class_name, "Unarmed")
+        weapon = get_weapon(weapon_key)
 
     # Monk unarmed scaling
     if weapon.get("special", {}).get("monk_scaling"):
         weapon["damage"] = 3 + (character.level * 2)
+
+    # Use effective stats (base + equipment bonuses)
+    if hasattr(character, "effective_stats"):
+        stats = character.effective_stats()
+    else:
+        stats = dict(character.stats)
+
+    # Equipment defense/resist/speed bonuses
+    equip_def = 0
+    equip_mres = 0
+    equip_speed = 0
+    if hasattr(character, "equipment_defense"):
+        equip_def = character.equipment_defense()
+        equip_mres = character.equipment_magic_resist()
+        equip_speed = character.equipment_speed()
 
     return {
         "type": "player",
@@ -38,7 +60,7 @@ def make_player_combatant(character, row=FRONT):
         "name": character.name,
         "class_name": character.class_name,
         "level": character.level,
-        "stats": dict(character.stats),
+        "stats": stats,
         "hp": character.resources["HP"],
         "max_hp": character.resources["HP"],
         "resources": dict(character.resources),  # current values
@@ -46,8 +68,9 @@ def make_player_combatant(character, row=FRONT):
         "abilities": [dict(a) for a in character.abilities],
         "weapon": weapon,
         "row": row,
-        "defense": int(character.stats["CON"] * DEF_CON_MULT),
-        "magic_resist": int(character.stats["WIS"] * MRES_WIS_MULT),
+        "defense": int(stats["CON"] * DEF_CON_MULT) + equip_def,
+        "magic_resist": int(stats["WIS"] * MRES_WIS_MULT) + equip_mres,
+        "equip_speed_bonus": equip_speed,
         "status_effects": [],
         "is_defending": False,
         "alive": True,
@@ -64,6 +87,7 @@ def calc_combatant_speed(combatant):
     if combatant["type"] == "player":
         base = calc_speed(combatant["stats"], combatant.get("level", 1))
         base += combatant["weapon"].get("speed_mod", 0)
+        base += combatant.get("equip_speed_bonus", 0)
         # Non-proficient penalty
         if not is_proficient(combatant["class_name"], combatant["weapon"]["type"]):
             base += NON_PROFICIENT_SPEED

@@ -24,6 +24,7 @@ from data.life_path_events import (
 from core.combat_engine import CombatState
 from ui.combat_ui import CombatUI
 from ui.post_combat_ui import PostCombatUI
+from ui.inventory_ui import InventoryUI
 
 FPS = 60
 PARTY_SIZE = 6
@@ -39,6 +40,7 @@ S_SUMMARY     = 6
 S_PARTY       = 7
 S_COMBAT      = 8
 S_POST_COMBAT = 9
+S_INVENTORY   = 10
 
 
 class Game:
@@ -73,6 +75,8 @@ class Game:
         self.enemy_turn_delay = 0
         # Post-combat
         self.post_combat_ui = None
+        # Inventory
+        self.inventory_ui = None
         # Debug
         self.debug_mode = False
         self.debug_encounter = "tutorial"
@@ -198,6 +202,12 @@ class Game:
                 elif e.button == 5:
                     self.party_scroll = min(max(0, len(self.party) - 3), self.party_scroll + 1)
                 elif e.button == 1:
+                    # Inventory button
+                    inv_btn = pygame.Rect(SCREEN_W - 200, SCREEN_H - 65, 180, 45)
+                    if inv_btn.collidepoint(mx, my) and self.party:
+                        self.inventory_ui = InventoryUI(self.party)
+                        self.go(S_INVENTORY)
+                        return
                     if self.debug_mode:
                         # Check encounter buttons
                         from data.enemies import ENCOUNTERS
@@ -213,6 +223,17 @@ class Game:
                         r = pygame.Rect(SCREEN_W//2 - 150, SCREEN_H - 65, 300, 45)
                         if r.collidepoint(mx, my):
                             self.start_combat("tutorial")
+
+        elif self.state == S_INVENTORY:
+            if e.type == pygame.MOUSEBUTTONDOWN:
+                if e.button == 1:
+                    result = self.inventory_ui.handle_click(mx, my)
+                    if result == "back":
+                        self.go(S_PARTY)
+                elif e.button == 4:
+                    self.inventory_ui.handle_scroll(-1)
+                elif e.button == 5:
+                    self.inventory_ui.handle_scroll(1)
 
         elif self.state == S_COMBAT:
             if e.type == pygame.MOUSEBUTTONDOWN:
@@ -313,6 +334,7 @@ class Game:
         elif self.state == S_PARTY:    self.draw_party(mx, my)
         elif self.state == S_COMBAT:   self.draw_combat(mx, my)
         elif self.state == S_POST_COMBAT: self.draw_post_combat(mx, my)
+        elif self.state == S_INVENTORY: self.draw_inventory(mx, my)
 
     # ── Title Screen ──────────────────────────────────────────
 
@@ -693,6 +715,12 @@ class Game:
             draw_button(self.screen, r, "Begin Adventure!",
                         hover=r.collidepoint(mx, my), size=18)
 
+        # Inventory button (always visible)
+        if self.party:
+            inv_btn = pygame.Rect(SCREEN_W - 200, SCREEN_H - 65, 180, 45)
+            draw_button(self.screen, inv_btn, "Inventory",
+                        hover=inv_btn.collidepoint(mx, my), size=16)
+
     # ══════════════════════════════════════════════════════════
     #  COMBAT
     # ══════════════════════════════════════════════════════════
@@ -730,6 +758,11 @@ class Game:
         """Draw the post-combat results screen."""
         dt = self.clock.get_time()
         self.post_combat_ui.draw(self.screen, mx, my, dt)
+
+    def draw_inventory(self, mx, my):
+        """Draw the inventory/equipment screen."""
+        dt = self.clock.get_time()
+        self.inventory_ui.draw(self.screen, mx, my, dt)
 
     def process_combat_action(self, action):
         """Process a player combat action from the UI."""

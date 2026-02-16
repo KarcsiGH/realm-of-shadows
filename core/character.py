@@ -6,6 +6,12 @@ from core.classes import (
     STAT_NAMES, CLASSES, CLASS_ORDER,
     get_all_resources, get_class_fit,
 )
+from core.equipment import (
+    empty_equipment, STARTING_EQUIPMENT, ARMOR,
+    equip_item, calc_equipment_stat_bonuses,
+    calc_equipment_defense, calc_equipment_magic_resist,
+    calc_equipment_speed,
+)
 
 # XP required per level: level 2 = 100, level 3 = 250, etc.
 XP_TABLE = {i: int(100 * (i - 1) ** 1.4) for i in range(2, 51)}
@@ -22,6 +28,7 @@ class Character:
         self.xp = 0
         self.gold = 0
         self.inventory = []       # list of item dicts
+        self.equipment = empty_equipment()
         self.stats = {s: 5 for s in STAT_NAMES}  # base before life path
         self.life_path = []       # list of event dicts chosen
         self.backstory_parts = [] # narrative snippets
@@ -56,10 +63,38 @@ class Character:
         self._finalize()
 
     def _finalize(self):
-        """Calculate resources and assign starting abilities."""
+        """Calculate resources and assign starting abilities and equipment."""
         cls = CLASSES[self.class_name]
         self.resources = get_all_resources(self.class_name, self.stats, self.level)
         self.abilities = [a.copy() for a in cls["starting_abilities"]]
+        # Equip starting gear
+        self.equipment = empty_equipment()
+        starting = STARTING_EQUIPMENT.get(self.class_name, {})
+        for slot, armor_key in starting.items():
+            if armor_key in ARMOR:
+                armor_item = dict(ARMOR[armor_key])
+                armor_item["identified"] = True
+                self.equipment[slot] = armor_item
+
+    def effective_stats(self):
+        """Base stats + equipment bonuses. Used for combat calculations."""
+        bonuses = calc_equipment_stat_bonuses(self)
+        result = {}
+        for stat in STAT_NAMES:
+            result[stat] = self.stats[stat] + bonuses.get(stat, 0)
+        return result
+
+    def equipment_defense(self):
+        """Total defense from equipped armor/shields."""
+        return calc_equipment_defense(self)
+
+    def equipment_magic_resist(self):
+        """Total magic resist from equipment."""
+        return calc_equipment_magic_resist(self)
+
+    def equipment_speed(self):
+        """Total speed modifier from equipment."""
+        return calc_equipment_speed(self)
 
     def get_backstory_text(self):
         """Compile life path choices into a narrative paragraph."""
