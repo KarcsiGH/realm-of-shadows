@@ -904,9 +904,13 @@ class Game:
                 self.town_ui = TownUI(self.party)
                 self.go(S_TOWN)
             elif loc["type"] == LOC_DUNGEON:
-                # For now, start a combat encounter for dungeons
                 enc_key = loc.get("encounter_key", "tutorial")
                 self.start_combat(enc_key)
+            elif loc["type"] == "port":
+                # Port — show message for now (full port UI later)
+                self.world_map_ui._show_event(
+                    f"You arrive at {loc['name']}. (Boat travel coming soon!)",
+                    (80, 180, 220))
 
         elif event["type"] == "discovery":
             pass  # handled by world_map_ui message display

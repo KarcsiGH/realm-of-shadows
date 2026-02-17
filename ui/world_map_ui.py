@@ -11,9 +11,10 @@ from ui.renderer import *
 from data.world_map import (
     WorldState, TERRAIN_DATA, LOCATIONS, IMPASSABLE,
     T_GRASS, T_FOREST, T_DENSE_FOREST, T_MOUNTAIN, T_HILL,
-    T_SWAMP, T_DESERT, T_WATER, T_RIVER, T_ROAD, T_BRIDGE, T_SHORE,
-    LOC_TOWN, LOC_DUNGEON, LOC_POI, LOC_SECRET,
-    MAP_W, MAP_H,
+    T_SWAMP, T_DESERT, T_SCRUBLAND, T_WATER, T_LAKE, T_RIVER,
+    T_ROAD, T_BRIDGE, T_SHORE,
+    LOC_TOWN, LOC_DUNGEON, LOC_POI, LOC_SECRET, LOC_PORT,
+    MAP_W, MAP_H, PORT_ROUTES,
 )
 from core.classes import CLASSES
 
@@ -38,7 +39,9 @@ TERRAIN_COLORS = {
     T_HILL:         ((90, 130, 70),  (100, 145, 80),  "gentle"),
     T_SWAMP:        ((50, 80, 40),   (35, 65, 30),    "wavy"),
     T_DESERT:       ((190, 170, 110),(210, 190, 130),  "sand"),
+    T_SCRUBLAND:    ((140, 150, 80), (120, 135, 70),   "scrub"),
     T_WATER:        ((30, 60, 140),  (25, 50, 120),   "waves"),
+    T_LAKE:         ((35, 75, 155),  (30, 65, 140),   "waves"),
     T_RIVER:        ((40, 80, 160),  (50, 95, 180),   "flow"),
     T_ROAD:         ((140, 120, 80), (160, 140, 95),   "path"),
     T_BRIDGE:       ((120, 90, 50),  (100, 75, 40),    "planks"),
@@ -53,6 +56,7 @@ LOC_TOWN_COL    = (255, 220, 80)
 LOC_DUNGEON_COL = (200, 60, 60)
 LOC_POI_COL     = (80, 200, 255)
 LOC_SECRET_COL  = (180, 120, 255)
+LOC_PORT_COL    = (80, 180, 220)
 
 HUD_BG          = (12, 10, 24, 200)
 
@@ -219,6 +223,8 @@ class WorldMapUI:
             col = LOC_DUNGEON_COL
         elif loc_type == LOC_SECRET:
             col = LOC_SECRET_COL
+        elif loc_type == LOC_PORT:
+            col = LOC_PORT_COL
         else:
             col = LOC_POI_COL
 
@@ -292,6 +298,11 @@ class WorldMapUI:
         total_gold = sum(c.gold for c in self.world.party)
         draw_text(surface, f"Gold: {total_gold}", SCREEN_W - 150, 12, DIM_GOLD, 14)
 
+        # Travel mode indicator
+        mode = self.world.travel.travel_mode.title()
+        mode_col = GOLD if mode != "Walk" else GREY
+        draw_text(surface, f"[{mode}]", SCREEN_W - 260, 12, mode_col, 14)
+
         # Bottom buttons
         btn_y = SCREEN_H - 55
         camp_btn = pygame.Rect(SCREEN_W - 320, btn_y, 140, 42)
@@ -302,15 +313,29 @@ class WorldMapUI:
         draw_button(surface, menu_btn, "Menu",
                     hover=menu_btn.collidepoint(mx, my), size=16)
 
-        # Hint for standing on a location
+        # Travel mode toggle button (if has horse or carpet)
+        if self.world.travel.has_horse or self.world.travel.has_carpet:
+            travel_btn = pygame.Rect(SCREEN_W - 480, btn_y, 140, 42)
+            draw_button(surface, travel_btn, f"Mode: {mode}",
+                        hover=travel_btn.collidepoint(mx, my), size=14)
+
+        # Location-specific hints
         if loc_id and loc_id in LOCATIONS:
             loc = LOCATIONS[loc_id]
             if loc["type"] == LOC_TOWN:
                 draw_text(surface, "Press ENTER to enter town",
                           SCREEN_W // 2 - 120, SCREEN_H - 90, LOC_TOWN_COL, 15)
             elif loc["type"] == LOC_DUNGEON:
-                draw_text(surface, "Press ENTER to enter dungeon",
-                          SCREEN_W // 2 - 130, SCREEN_H - 90, LOC_DUNGEON_COL, 15)
+                can_enter, reason = self.world.can_enter_dungeon(loc_id)
+                if can_enter:
+                    draw_text(surface, "Press ENTER to enter dungeon",
+                              SCREEN_W // 2 - 130, SCREEN_H - 90, LOC_DUNGEON_COL, 15)
+                else:
+                    draw_text(surface, reason,
+                              SCREEN_W // 2 - 100, SCREEN_H - 90, RED, 15)
+            elif loc["type"] == LOC_PORT:
+                draw_text(surface, "Press ENTER to access port",
+                          SCREEN_W // 2 - 120, SCREEN_H - 90, LOC_PORT_COL, 15)
 
         # Controls hint
         draw_text(surface, "Arrow keys / WASD to move",
@@ -412,6 +437,11 @@ class WorldMapUI:
             loc_id = tile.get("location_id")
             if loc_id and loc_id in LOCATIONS:
                 loc = LOCATIONS[loc_id]
+                if loc["type"] == LOC_DUNGEON:
+                    can, reason = self.world.can_enter_dungeon(loc_id)
+                    if not can:
+                        self._show_event(reason, RED)
+                        return None
                 return {"type": "enter_location", "id": loc_id, "data": loc}
             return None
         elif key == pygame.K_c:
@@ -460,6 +490,21 @@ class WorldMapUI:
         menu_btn = pygame.Rect(SCREEN_W - 160, btn_y, 140, 42)
         if menu_btn.collidepoint(mx, my):
             return {"type": "menu"}
+
+        # Travel mode toggle
+        if self.world.travel.has_horse or self.world.travel.has_carpet:
+            travel_btn = pygame.Rect(SCREEN_W - 480, btn_y, 140, 42)
+            if travel_btn.collidepoint(mx, my):
+                modes = ["walk"]
+                if self.world.travel.has_horse:
+                    modes.append("horse")
+                if self.world.travel.has_carpet:
+                    modes.append("carpet")
+                cur = self.world.travel.travel_mode
+                idx = modes.index(cur) if cur in modes else 0
+                self.world.travel.travel_mode = modes[(idx + 1) % len(modes)]
+                self._show_event(f"Travel mode: {self.world.travel.travel_mode.title()}", GOLD)
+                return None
 
         return None
 
