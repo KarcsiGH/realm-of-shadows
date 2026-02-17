@@ -118,6 +118,64 @@ def build_turn_order(all_combatants):
     return [entry[0] for entry in order]
 
 
+def get_adjusted_position_mods(weapon_range, attacker, defender, enemies, is_crossbow=False):
+    """Get position modifiers with adjustment for empty intervening rows.
+    If there are no living enemies in the rows between attacker and defender,
+    penalties are reduced (attacker can move through freely)."""
+    pos_dmg, pos_acc = get_position_mods(
+        weapon_range, attacker["row"], defender["row"], is_crossbow
+    )
+
+    # Only adjust for melee/reach attacks (ranged already shoot over)
+    if weapon_range not in ("melee", "reach"):
+        return pos_dmg, pos_acc
+
+    # Check if any living enemies exist in intervening rows
+    atk_row = attacker["row"]
+    def_row = defender["row"]
+
+    # Determine which side's enemies to check (attacker hits defenders)
+    atk_type = attacker["type"]
+    # Get the opposing side's combatants
+    if atk_type == "player":
+        blockers = enemies  # check if enemy rows between are empty
+    else:
+        # Enemy attacking player — not applicable (enemies don't have row blocking issues the same way)
+        return pos_dmg, pos_acc
+
+    row_order = [FRONT, MID, BACK]
+    atk_idx = row_order.index(atk_row) if atk_row in row_order else 0
+    def_idx = row_order.index(def_row) if def_row in row_order else 0
+
+    # Find intervening rows (rows between attacker's target side and defender)
+    # For player attacking enemies: if no enemies in front, mid-row enemies are easier to reach
+    if atk_idx < def_idx:
+        # Attacker is closer to front, defender is further back
+        between_rows = row_order[atk_idx + 1:def_idx]
+    elif atk_idx > def_idx:
+        between_rows = row_order[def_idx + 1:atk_idx]
+    else:
+        between_rows = []
+
+    if not between_rows:
+        return pos_dmg, pos_acc
+
+    # Check if any living enemies exist in the intervening rows
+    has_blockers = False
+    for enemy in blockers:
+        if enemy["alive"] and enemy["row"] in between_rows:
+            has_blockers = True
+            break
+
+    if not has_blockers:
+        # No blockers — reduce the penalty by moving toward 1.0/+0
+        # Halve the penalty (move halfway toward no-penalty)
+        pos_dmg = pos_dmg + (1.0 - pos_dmg) * 0.6
+        pos_acc = int(pos_acc * 0.4)  # reduce accuracy penalty by 60%
+
+    return pos_dmg, pos_acc
+
+
 # ═══════════════════════════════════════════════════════════════
 #  ACCURACY
 # ═══════════════════════════════════════════════════════════════
@@ -380,18 +438,23 @@ def check_crit(attacker, attack_type="physical", weapon=None):
 #  ACTION RESOLUTION
 # ═══════════════════════════════════════════════════════════════
 
-def resolve_basic_attack(attacker, defender):
+def resolve_basic_attack(attacker, defender, enemies=None):
     """Resolve a basic physical attack. Returns a result dict."""
     weapon = attacker.get("weapon")
     if not weapon:
         weapon = get_weapon("Unarmed")
 
-    # Position modifiers
+    # Position modifiers (adjusted for empty rows if enemies list provided)
     weapon_range = weapon.get("range", "melee")
     is_xbow = weapon.get("special", {}).get("is_crossbow", False)
-    pos_dmg, pos_acc = get_position_mods(
-        weapon_range, attacker["row"], defender["row"], is_xbow
-    )
+    if enemies is not None:
+        pos_dmg, pos_acc = get_adjusted_position_mods(
+            weapon_range, attacker, defender, enemies, is_xbow
+        )
+    else:
+        pos_dmg, pos_acc = get_position_mods(
+            weapon_range, attacker["row"], defender["row"], is_xbow
+        )
 
     # Accuracy check
     accuracy = calc_physical_accuracy(attacker, defender, weapon, pos_acc)
@@ -1223,7 +1286,7 @@ class CombatState:
             return
 
         if action_type == "attack":
-            result = resolve_basic_attack(actor, target)
+            result = resolve_basic_attack(actor, target, enemies=self.enemies)
         elif action_type == "defend":
             result = resolve_defend(actor)
         elif action_type == "ability":

@@ -25,6 +25,10 @@ from core.combat_engine import CombatState
 from ui.combat_ui import CombatUI
 from ui.post_combat_ui import PostCombatUI
 from ui.inventory_ui import InventoryUI
+from ui.town_ui import TownUI
+from ui.world_map_ui import WorldMapUI
+from data.world_map import WorldState, LOCATIONS, LOC_TOWN, LOC_DUNGEON
+from core.save_load import save_game, load_game
 
 FPS = 60
 PARTY_SIZE = 6
@@ -41,6 +45,8 @@ S_PARTY       = 7
 S_COMBAT      = 8
 S_POST_COMBAT = 9
 S_INVENTORY   = 10
+S_TOWN        = 11
+S_WORLD_MAP   = 12
 
 
 class Game:
@@ -77,7 +83,16 @@ class Game:
         self.post_combat_ui = None
         # Inventory
         self.inventory_ui = None
-        self.inventory_return_state = S_PARTY  # where to go back to
+        self.inventory_return_state = S_PARTY
+        # Town
+        self.town_ui = None
+        # Save/Load
+        self.save_msg = ""
+        self.save_msg_timer = 0
+        self.save_msg_color = CREAM
+        # World Map
+        self.world_state = None
+        self.world_map_ui = None  # where to go back to
         # Debug
         self.debug_mode = False
         self.debug_encounter = "tutorial"
@@ -210,6 +225,39 @@ class Game:
                         self.inventory_return_state = S_PARTY
                         self.go(S_INVENTORY)
                         return
+                    # Town button
+                    town_btn = pygame.Rect(SCREEN_W - 400, 40, 180, 40)
+                    if town_btn.collidepoint(mx, my) and self.party:
+                        self.town_ui = TownUI(self.party)
+                        self.go(S_TOWN)
+                        return
+                    # Save button
+                    save_btn = pygame.Rect(20, 40, 120, 40)
+                    if save_btn.collidepoint(mx, my) and self.party:
+                        ok, path, msg = save_game(self.party)
+                        self.save_msg = msg
+                        self.save_msg_color = GREEN if ok else RED
+                        self.save_msg_timer = 3000
+                        return
+                    # Load button
+                    load_btn = pygame.Rect(150, 40, 120, 40)
+                    if load_btn.collidepoint(mx, my):
+                        ok, party, msg = load_game()
+                        if ok:
+                            self.party = party
+                            self.save_msg = msg
+                            self.save_msg_color = GREEN
+                        else:
+                            self.save_msg = msg
+                            self.save_msg_color = RED
+                        self.save_msg_timer = 3000
+                        return
+                    # World Map button
+                    world_btn = pygame.Rect(290, 40, 160, 40)
+                    if world_btn.collidepoint(mx, my) and self.party:
+                        self._init_world_map()
+                        self.go(S_WORLD_MAP)
+                        return
                     if self.debug_mode:
                         # Check encounter buttons
                         from data.enemies import ENCOUNTERS
@@ -242,6 +290,25 @@ class Game:
                 elif e.button == 5:
                     self.inventory_ui.handle_scroll(1)
 
+        elif self.state == S_TOWN:
+            if e.type == pygame.MOUSEBUTTONDOWN:
+                if e.button == 1:
+                    result = self.town_ui.handle_click(mx, my)
+                    if result == "exit":
+                        self.go(S_WORLD_MAP)
+                elif e.button == 4:
+                    self.town_ui.handle_scroll(-1)
+                elif e.button == 5:
+                    self.town_ui.handle_scroll(1)
+
+        elif self.state == S_WORLD_MAP:
+            if e.type == pygame.KEYDOWN:
+                event = self.world_map_ui.handle_key(e.key)
+                self._process_world_event(event)
+            elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                event = self.world_map_ui.handle_click(mx, my)
+                self._process_world_event(event)
+
         elif self.state == S_COMBAT:
             if e.type == pygame.MOUSEBUTTONDOWN:
                 if e.button == 1:
@@ -266,12 +333,10 @@ class Game:
                     result = self.post_combat_ui.handle_click(mx, my)
                     if result == "continue":
                         self.party_scroll = 0
-                        # Heal party for next fight
-                        for char in self.party:
-                            char.resources = get_all_resources(
-                                char.class_name, char.stats, char.level
-                            )
-                        self.go(S_PARTY)
+                        if self.world_state:
+                            self.go(S_WORLD_MAP)
+                        else:
+                            self.go(S_PARTY)
                 elif e.button == 4:
                     self.post_combat_ui.handle_scroll(-1)
                 elif e.button == 5:
@@ -349,6 +414,8 @@ class Game:
         elif self.state == S_COMBAT:   self.draw_combat(mx, my)
         elif self.state == S_POST_COMBAT: self.draw_post_combat(mx, my)
         elif self.state == S_INVENTORY: self.draw_inventory(mx, my)
+        elif self.state == S_TOWN:      self.draw_town(mx, my)
+        elif self.state == S_WORLD_MAP: self.draw_world_map(mx, my)
 
     # ── Title Screen ──────────────────────────────────────────
 
@@ -729,11 +796,29 @@ class Game:
             draw_button(self.screen, r, "Begin Adventure!",
                         hover=r.collidepoint(mx, my), size=18)
 
-        # Inventory button (always visible, top-right of party screen)
+        # Top buttons (always visible)
         if self.party:
             inv_btn = pygame.Rect(SCREEN_W - 200, 40, 180, 40)
             draw_button(self.screen, inv_btn, "Inventory",
                         hover=inv_btn.collidepoint(mx, my), size=16)
+            town_btn = pygame.Rect(SCREEN_W - 400, 40, 180, 40)
+            draw_button(self.screen, town_btn, "Town",
+                        hover=town_btn.collidepoint(mx, my), size=16)
+            save_btn = pygame.Rect(20, 40, 120, 40)
+            draw_button(self.screen, save_btn, "Save",
+                        hover=save_btn.collidepoint(mx, my), size=16)
+            load_btn = pygame.Rect(150, 40, 120, 40)
+            draw_button(self.screen, load_btn, "Load",
+                        hover=load_btn.collidepoint(mx, my), size=16)
+            world_btn = pygame.Rect(290, 40, 160, 40)
+            draw_button(self.screen, world_btn, "World Map",
+                        hover=world_btn.collidepoint(mx, my), size=16)
+
+            # Save/load message
+            if hasattr(self, 'save_msg') and self.save_msg_timer > 0:
+                self.save_msg_timer -= self.clock.get_time()
+                draw_text(self.screen, self.save_msg, 290, 52,
+                          self.save_msg_color, 14)
 
     # ══════════════════════════════════════════════════════════
     #  COMBAT
@@ -777,6 +862,58 @@ class Game:
         """Draw the inventory/equipment screen."""
         dt = self.clock.get_time()
         self.inventory_ui.draw(self.screen, mx, my, dt)
+
+    def draw_town(self, mx, my):
+        """Draw the town hub screen."""
+        dt = self.clock.get_time()
+        self.town_ui.draw(self.screen, mx, my, dt)
+
+    def draw_world_map(self, mx, my):
+        """Draw the world map."""
+        dt = self.clock.get_time()
+        self.world_map_ui.draw(self.screen, mx, my, dt)
+
+    def _init_world_map(self):
+        """Initialize world state if needed."""
+        if not self.world_state:
+            self.world_state = WorldState(self.party)
+        self.world_map_ui = WorldMapUI(self.world_state)
+
+    def _process_world_event(self, event):
+        """Handle events from the world map."""
+        if event is None:
+            return
+
+        if event["type"] == "encounter":
+            self.start_combat(event["key"])
+
+        elif event["type"] == "camp":
+            result = self.world_state.camp()
+            if result["type"] == "camp_ambush":
+                self.world_map_ui._show_event("Ambush during rest!", RED)
+                self.start_combat(result["key"])
+            else:
+                healed = result.get("healed", {})
+                parts = [f"{name} +{hp}HP" for name, hp in healed.items() if hp > 0]
+                msg = "Rested safely. " + ", ".join(parts) if parts else "Rested safely. Already at full health."
+                self.world_map_ui._show_event(msg, GREEN)
+
+        elif event["type"] == "enter_location":
+            loc = event["data"]
+            if loc["type"] == LOC_TOWN:
+                self.town_ui = TownUI(self.party)
+                self.go(S_TOWN)
+            elif loc["type"] == LOC_DUNGEON:
+                # For now, start a combat encounter for dungeons
+                enc_key = loc.get("encounter_key", "tutorial")
+                self.start_combat(enc_key)
+
+        elif event["type"] == "discovery":
+            pass  # handled by world_map_ui message display
+
+        elif event["type"] == "menu":
+            # Go to party screen (inventory, etc.)
+            self.go(S_PARTY)
 
     def process_combat_action(self, action):
         """Process a player combat action from the UI."""
@@ -852,9 +989,13 @@ if __name__ == "__main__":
         game.debug_mode = True
         game.party = make_debug_party()
         game.char_index = PARTY_SIZE
-        game.state = S_PARTY
+        # Initialize world map and go there directly
+        game.world_state = WorldState(game.party)
+        game.world_map_ui = WorldMapUI(game.world_state)
+        game.state = S_WORLD_MAP
         print("\n══════ DEBUG MODE ══════")
-        print("Auto-generated party — pick encounters in-game!")
+        print("Auto-generated party — exploring the world!")
+        print("Arrow keys/WASD to move, ENTER on locations, C to camp")
         print("════════════════════════\n")
 
     game.run()
