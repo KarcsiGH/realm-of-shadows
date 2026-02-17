@@ -90,7 +90,7 @@ class CombatUI:
 
     def __init__(self, combat_state):
         self.combat = combat_state
-        self.action_mode = "main"  # main, target_attack, target_ability, choose_ability, choose_move
+        self.action_mode = "main"  # main, target_attack, target_ability, target_heal, choose_ability, choose_move
         self.selected_ability = None
         self.hover_target = -1
         self.hover_action = -1
@@ -210,10 +210,18 @@ class CombatUI:
 
             rect = pygame.Rect(cx, cy, card_w, card_h)
             is_active = (p == self.combat.get_current_combatant())
+            is_heal_target = (self.action_mode == "target_heal" and p["alive"])
+            is_heal_hover = is_heal_target and rect.collidepoint(mx, my)
 
             if not p["alive"]:
                 bg = (20, 15, 15)
                 border = DEAD_COLOR
+            elif is_heal_hover:
+                bg = (25, 50, 30)
+                border = (80, 255, 80)
+            elif is_heal_target:
+                bg = (20, 35, 25)
+                border = (60, 180, 60)
             elif is_active:
                 bg = (35, 30, 55)
                 border = ACTIVE_GLOW
@@ -275,7 +283,7 @@ class CombatUI:
         row_positions = {FRONT: 2, MID: 1, BACK: 0}
         groups = self.combat.get_enemy_groups()
 
-        is_targeting = self.action_mode in ("target_attack", "target_ability")
+        is_targeting = self.action_mode in ("target_attack", "target_ability", "target_heal")
         self.hover_target = -1
 
         for gi, group in enumerate(groups):
@@ -404,6 +412,13 @@ class CombatUI:
         elif self.action_mode in ("target_attack", "target_ability"):
             draw_text(surface, "Select a target (click an enemy group above)",
                       15, ACTION_Y + 36, CREAM, 16)
+            # Back button
+            back_rect = pygame.Rect(SCREEN_W - 140, ACTION_Y + 8, 120, 34)
+            hover = back_rect.collidepoint(mx, my)
+            draw_button(surface, back_rect, "Back", hover=hover, size=14)
+        elif self.action_mode == "target_heal":
+            draw_text(surface, "Select an ally to heal (click a party member above)",
+                      15, ACTION_Y + 36, GREEN, 16)
             # Back button
             back_rect = pygame.Rect(SCREEN_W - 140, ACTION_Y + 8, 120, 34)
             hover = back_rect.collidepoint(mx, my)
@@ -728,12 +743,8 @@ class CombatUI:
                     ab = abilities[self.hover_action]
                     # Check if it's a heal (target allies) or offensive (target enemies)
                     if "heal" in ab["name"].lower():
-                        # For now, auto-target lowest HP ally
-                        living = self.combat.get_living_players()
-                        if living:
-                            target = min(living, key=lambda p: p["hp"] / max(1, p["max_hp"]))
-                            self.action_mode = "main"
-                            return {"type": "ability", "ability": ab, "target": target}
+                        self.selected_ability = ab
+                        self.action_mode = "target_heal"
                     else:
                         self.selected_ability = ab
                         self.action_mode = "target_ability"
@@ -763,6 +774,25 @@ class CombatUI:
                         if action_type == "ability":
                             result["ability"] = self.selected_ability
                         return result
+
+        elif self.action_mode == "target_heal":
+            # Click on a player card to heal them
+            from core.combat_config import BACK, MID, FRONT
+            row_positions = {BACK: 0, MID: 1, FRONT: 2}
+            for p in self.combat.players:
+                if not p["alive"]:
+                    continue
+                row_idx = row_positions.get(p["row"], 0)
+                same_row = [pp for pp in self.combat.players if pp["row"] == p["row"]]
+                pos_in_row = same_row.index(p)
+                card_w = 220
+                card_h = 115
+                cx = PLAYER_ZONE_X + pos_in_row * (card_w + 10)
+                cy = BATTLEFIELD_Y + 10 + row_idx * 135
+                rect = pygame.Rect(cx, cy, card_w, card_h)
+                if rect.collidepoint(mx, my):
+                    self.action_mode = "main"
+                    return {"type": "ability", "ability": self.selected_ability, "target": p}
 
         return None
 

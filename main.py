@@ -203,7 +203,7 @@ class Game:
                     self.party_scroll = min(max(0, len(self.party) - 3), self.party_scroll + 1)
                 elif e.button == 1:
                     # Inventory button
-                    inv_btn = pygame.Rect(SCREEN_W - 200, SCREEN_H - 65, 180, 45)
+                    inv_btn = pygame.Rect(SCREEN_W - 200, 40, 180, 40)
                     if inv_btn.collidepoint(mx, my) and self.party:
                         self.inventory_ui = InventoryUI(self.party)
                         self.go(S_INVENTORY)
@@ -720,9 +720,9 @@ class Game:
             draw_button(self.screen, r, "Begin Adventure!",
                         hover=r.collidepoint(mx, my), size=18)
 
-        # Inventory button (always visible)
+        # Inventory button (always visible, top-right of party screen)
         if self.party:
-            inv_btn = pygame.Rect(SCREEN_W - 200, SCREEN_H - 65, 180, 45)
+            inv_btn = pygame.Rect(SCREEN_W - 200, 40, 180, 40)
             draw_button(self.screen, inv_btn, "Inventory",
                         hover=inv_btn.collidepoint(mx, my), size=16)
 
