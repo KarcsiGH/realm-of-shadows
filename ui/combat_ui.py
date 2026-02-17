@@ -427,6 +427,8 @@ class CombatUI:
             self._draw_ability_menu(surface, mx, my, actor)
         elif self.action_mode == "choose_move":
             self._draw_move_menu(surface, mx, my, actor)
+        elif self.action_mode == "choose_item":
+            self._draw_item_menu(surface, mx, my, actor)
 
     def _draw_main_actions(self, surface, mx, my, actor):
         """Draw the main action buttons."""
@@ -444,9 +446,14 @@ class CombatUI:
         row_label = actor["row"].capitalize()
         actions.append(("Move", f"Change position (now: {row_label})"))
 
+        # Add items option if character has usable inventory
+        char_ref = actor.get("character_ref")
+        if char_ref and (char_ref.inventory or any(char_ref.equipment.get(s) for s in ("weapon",))):
+            actions.append(("Items", "Switch weapon or use an item"))
+
         bx = 15
         by = ACTION_Y + 36
-        btn_w = 200
+        btn_w = 190
         btn_h = 48
 
         for i, (name, desc) in enumerate(actions):
@@ -564,9 +571,62 @@ class CombatUI:
         bhover = back_rect.collidepoint(mx, my)
         draw_button(surface, back_rect, "Back", hover=bhover, size=14)
 
-    # ─────────────────────────────────────────────────────────
-    #  ENEMY THINKING INDICATOR
-    # ─────────────────────────────────────────────────────────
+    def _draw_item_menu(self, surface, mx, my, actor):
+        """Draw combat item menu — weapon switching and usable items."""
+        draw_text(surface, "Items (switching weapon costs your action)",
+                  15, ACTION_Y + 32, CREAM, 14)
+
+        self.hover_action = -1
+        char_ref = actor.get("character_ref")
+        if not char_ref:
+            return
+
+        bx = 15
+        by = ACTION_Y + 56
+        btn_w = 280
+        btn_h = 38
+        self._combat_items = []
+
+        # Current weapon display
+        cur_weapon = actor.get("weapon", {})
+        draw_text(surface, f"Equipped: {cur_weapon.get('name', 'Unarmed')}",
+                  15, ACTION_Y + 32, DIM_GOLD, 13)
+
+        # List equippable weapons from inventory
+        idx = 0
+        for item in char_ref.inventory:
+            item_type = item.get("type", "")
+            if item_type == "weapon":
+                name = item.get("name", item.get("unidentified_name", "Unknown"))
+                dmg = item.get("damage", "?")
+                label = f"Switch to: {name} (DMG {dmg})"
+                rect = pygame.Rect(bx + (idx % 2) * (btn_w + 10),
+                                   by + (idx // 2) * (btn_h + 6),
+                                   btn_w, btn_h)
+                hover = rect.collidepoint(mx, my)
+                if hover:
+                    self.hover_action = idx
+
+                bg = ACTION_HOVER if hover else (30, 25, 50)
+                border = GOLD if hover else PANEL_BORDER
+                pygame.draw.rect(surface, bg, rect, border_radius=3)
+                pygame.draw.rect(surface, border, rect, 2, border_radius=3)
+                draw_text(surface, label, rect.x + 10, rect.y + 10,
+                          GOLD if hover else CREAM, 13)
+
+                self._combat_items.append(("weapon", item))
+                idx += 1
+
+            # Future: consumables (potions, scrolls) would go here
+
+        if idx == 0:
+            draw_text(surface, "No weapons or usable items in inventory.",
+                      bx, by + 10, DARK_GREY, 14)
+
+        # Back button
+        back_rect = pygame.Rect(SCREEN_W - 140, ACTION_Y + 8, 120, 34)
+        bhover = back_rect.collidepoint(mx, my)
+        draw_button(surface, back_rect, "Back", hover=bhover, size=14)
 
     def draw_enemy_thinking(self, surface):
         action_rect = pygame.Rect(0, ACTION_Y, SCREEN_W, ACTION_H)
@@ -714,26 +774,29 @@ class CombatUI:
             return None
 
         if self.action_mode == "main":
-            if self.hover_action == 0:
-                # Attack → enter targeting mode
-                self.action_mode = "target_attack"
-                return None
-            elif self.hover_action == 1:
-                # Defend
-                return {"type": "defend"}
-            elif self.hover_action == 2:
-                # Abilities (if present) or Move
-                actor = self.combat.get_current_combatant()
-                if actor and actor.get("abilities"):
+            actor = self.combat.get_current_combatant()
+            # Rebuild action list to get the label at hover_action
+            action_labels = ["Attack", "Defend"]
+            if actor and actor.get("abilities"):
+                action_labels.append("Abilities")
+            action_labels.append("Move")
+            char_ref = actor.get("character_ref") if actor else None
+            if char_ref and (char_ref.inventory or any(char_ref.equipment.get(s) for s in ("weapon",))):
+                action_labels.append("Items")
+
+            if self.hover_action >= 0 and self.hover_action < len(action_labels):
+                label = action_labels[self.hover_action]
+                if label == "Attack":
+                    self.action_mode = "target_attack"
+                elif label == "Defend":
+                    return {"type": "defend"}
+                elif label == "Abilities":
                     self.action_mode = "choose_ability"
-                else:
-                    # No abilities — action index 2 is Move
+                elif label == "Move":
                     self.action_mode = "choose_move"
-                return None
-            elif self.hover_action == 3:
-                # Move (when abilities exist, move is index 3)
-                self.action_mode = "choose_move"
-                return None
+                elif label == "Items":
+                    self.action_mode = "choose_item"
+            return None
 
         elif self.action_mode == "choose_ability":
             actor = self.combat.get_current_combatant()
@@ -757,6 +820,17 @@ class CombatUI:
                     direction = directions[self.hover_action]
                     self.action_mode = "main"
                     return {"type": "move", "direction": direction}
+            return None
+
+        elif self.action_mode == "choose_item":
+            if self.hover_action >= 0:
+                items = getattr(self, "_combat_items", [])
+                if self.hover_action < len(items):
+                    action_type, item = items[self.hover_action]
+                    if action_type == "weapon":
+                        # Switch weapon — costs action
+                        self.action_mode = "main"
+                        return {"type": "switch_weapon", "item": item}
             return None
 
         elif self.action_mode in ("target_attack", "target_ability"):

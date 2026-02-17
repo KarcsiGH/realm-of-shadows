@@ -77,6 +77,7 @@ class Game:
         self.post_combat_ui = None
         # Inventory
         self.inventory_ui = None
+        self.inventory_return_state = S_PARTY  # where to go back to
         # Debug
         self.debug_mode = False
         self.debug_encounter = "tutorial"
@@ -206,6 +207,7 @@ class Game:
                     inv_btn = pygame.Rect(SCREEN_W - 200, 40, 180, 40)
                     if inv_btn.collidepoint(mx, my) and self.party:
                         self.inventory_ui = InventoryUI(self.party)
+                        self.inventory_return_state = S_PARTY
                         self.go(S_INVENTORY)
                         return
                     if self.debug_mode:
@@ -229,12 +231,12 @@ class Game:
             if e.type == pygame.KEYDOWN:
                 result = self.inventory_ui.handle_event(e)
                 if result == "back":
-                    self.go(S_PARTY)
+                    self.go(self.inventory_return_state)
             elif e.type == pygame.MOUSEBUTTONDOWN:
                 if e.button in (1, 3):  # left or right click
                     result = self.inventory_ui.handle_click(mx, my, button=e.button)
                     if result == "back":
-                        self.go(S_PARTY)
+                        self.go(self.inventory_return_state)
                 elif e.button == 4:
                     self.inventory_ui.handle_scroll(-1)
                 elif e.button == 5:
@@ -254,6 +256,13 @@ class Game:
         elif self.state == S_POST_COMBAT:
             if e.type == pygame.MOUSEBUTTONDOWN:
                 if e.button == 1:
+                    # Check inventory button first
+                    inv_btn = pygame.Rect(SCREEN_W - 160, 8, 140, 36)
+                    if inv_btn.collidepoint(mx, my) and self.party:
+                        self.inventory_ui = InventoryUI(self.party)
+                        self.inventory_return_state = S_POST_COMBAT
+                        self.go(S_INVENTORY)
+                        return
                     result = self.post_combat_ui.handle_click(mx, my)
                     if result == "continue":
                         self.party_scroll = 0
@@ -790,6 +799,30 @@ class Game:
             )
         elif action["type"] == "move":
             self.combat_state.execute_player_action("move", target=action["direction"])
+        elif action["type"] == "switch_weapon":
+            # Weapon switch — swap weapon in combatant and character, costs action
+            item = action["item"]
+            actor = self.combat_state.get_current_combatant()
+            if actor:
+                char_ref = actor.get("character_ref")
+                if char_ref:
+                    old_weapon = actor.get("weapon")
+                    # Put old weapon back in inventory (if it's a real item, not starting)
+                    if old_weapon and old_weapon.get("name") != "Unarmed":
+                        old_copy = dict(old_weapon)
+                        old_copy["type"] = "weapon"
+                        old_copy["slot"] = "weapon"
+                        char_ref.inventory.append(old_copy)
+                    # Remove new weapon from inventory
+                    if item in char_ref.inventory:
+                        char_ref.inventory.remove(item)
+                    # Equip new weapon on combatant
+                    actor["weapon"] = dict(item)
+                    self.combat_state.log.append(
+                        f"{actor['name']} switches to {item.get('name', 'a weapon')}!"
+                    )
+                    # Advance turn (costs action)
+                    self.combat_state._advance_turn()
 
         # Reset UI mode after action
         self.combat_ui.action_mode = "main"
