@@ -84,7 +84,7 @@ LOCATIONS = {
     },
     "goblin_warren": {
         "name": "Goblin Warren", "type": LOC_DUNGEON,
-        "x": 50, "y": 62, "region": "briarhollow",
+        "x": 55, "y": 66, "region": "briarhollow",
         "visible": True, "icon": "D",
         "description": "A cave system infested with goblins.",
         "encounter_key": "easy_goblins", "floors": 3, "difficulty": "easy",
@@ -435,6 +435,7 @@ def generate_world_map(seed=42):
         ("briarhollow", "ironhearth"),
         ("briarhollow", "briarhollow_dock"),
         ("briarhollow", "pale_coast_dock"),
+        ("briarhollow", "goblin_warren"),
         ("woodhaven", "ironhearth"),
     ]
     for a, b in town_pairs:
@@ -444,12 +445,13 @@ def generate_world_map(seed=42):
 
     # ── Step 11: Clear and discover starting area ──
     sx, sy = LOCATIONS["briarhollow"]["x"], LOCATIONS["briarhollow"]["y"]
-    for dy in range(-4, 5):
-        for dx in range(-4, 5):
+    for dy in range(-7, 8):
+        for dx in range(-7, 8):
             ny, nx = sy + dy, sx + dx
             if 0 <= ny < MAP_H and 0 <= nx < MAP_W:
                 if tiles[ny][nx]["terrain"] in IMPASSABLE:
-                    tiles[ny][nx]["terrain"] = T_GRASS
+                    if abs(dy) <= 4 and abs(dx) <= 4:
+                        tiles[ny][nx]["terrain"] = T_GRASS
                 tiles[ny][nx]["discovered"] = True
 
     return tiles

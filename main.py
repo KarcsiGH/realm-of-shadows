@@ -27,7 +27,9 @@ from ui.post_combat_ui import PostCombatUI
 from ui.inventory_ui import InventoryUI
 from ui.town_ui import TownUI
 from ui.world_map_ui import WorldMapUI
+from ui.dungeon_ui import DungeonUI
 from data.world_map import WorldState, LOCATIONS, LOC_TOWN, LOC_DUNGEON
+from data.dungeon import DungeonState, DUNGEONS
 from core.save_load import save_game, load_game
 
 FPS = 60
@@ -47,6 +49,7 @@ S_POST_COMBAT = 9
 S_INVENTORY   = 10
 S_TOWN        = 11
 S_WORLD_MAP   = 12
+S_DUNGEON     = 13
 
 
 class Game:
@@ -92,7 +95,11 @@ class Game:
         self.save_msg_color = CREAM
         # World Map
         self.world_state = None
-        self.world_map_ui = None  # where to go back to
+        self.world_map_ui = None
+        # Dungeon
+        self.dungeon_state = None
+        self.dungeon_ui = None
+        self.pre_dungeon_state = None  # state to return to after dungeon  # where to go back to
         # Debug
         self.debug_mode = False
         self.debug_encounter = "tutorial"
@@ -222,15 +229,20 @@ class Game:
                     inv_btn = pygame.Rect(SCREEN_W - 200, 40, 180, 40)
                     if inv_btn.collidepoint(mx, my) and self.party:
                         self.inventory_ui = InventoryUI(self.party)
-                        self.inventory_return_state = S_PARTY
+                        # Return to where we came from
+                        if self.dungeon_state:
+                            self.inventory_return_state = S_DUNGEON
+                        else:
+                            self.inventory_return_state = S_PARTY
                         self.go(S_INVENTORY)
                         return
-                    # Town button
-                    town_btn = pygame.Rect(SCREEN_W - 400, 40, 180, 40)
-                    if town_btn.collidepoint(mx, my) and self.party:
-                        self.town_ui = TownUI(self.party)
-                        self.go(S_TOWN)
-                        return
+                    # Town button (only if not in dungeon)
+                    if not self.dungeon_state:
+                        town_btn = pygame.Rect(SCREEN_W - 400, 40, 180, 40)
+                        if town_btn.collidepoint(mx, my) and self.party:
+                            self.town_ui = TownUI(self.party)
+                            self.go(S_TOWN)
+                            return
                     # Save button
                     save_btn = pygame.Rect(20, 40, 120, 40)
                     if save_btn.collidepoint(mx, my) and self.party:
@@ -252,11 +264,14 @@ class Game:
                             self.save_msg_color = RED
                         self.save_msg_timer = 3000
                         return
-                    # World Map button
+                    # World Map / Back button
                     world_btn = pygame.Rect(290, 40, 160, 40)
                     if world_btn.collidepoint(mx, my) and self.party:
-                        self._init_world_map()
-                        self.go(S_WORLD_MAP)
+                        if self.dungeon_state:
+                            self.go(S_DUNGEON)
+                        else:
+                            self._init_world_map()
+                            self.go(S_WORLD_MAP)
                         return
                     if self.debug_mode:
                         # Check encounter buttons
@@ -309,6 +324,14 @@ class Game:
                 event = self.world_map_ui.handle_click(mx, my)
                 self._process_world_event(event)
 
+        elif self.state == S_DUNGEON:
+            if e.type == pygame.KEYDOWN:
+                event = self.dungeon_ui.handle_key(e.key)
+                self._process_dungeon_event(event)
+            elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                event = self.dungeon_ui.handle_click(mx, my)
+                self._process_dungeon_event(event)
+
         elif self.state == S_COMBAT:
             if e.type == pygame.MOUSEBUTTONDOWN:
                 if e.button == 1:
@@ -333,7 +356,9 @@ class Game:
                     result = self.post_combat_ui.handle_click(mx, my)
                     if result == "continue":
                         self.party_scroll = 0
-                        if self.world_state:
+                        if self.dungeon_state:
+                            self.go(S_DUNGEON)
+                        elif self.world_state:
                             self.go(S_WORLD_MAP)
                         else:
                             self.go(S_PARTY)
@@ -416,6 +441,7 @@ class Game:
         elif self.state == S_INVENTORY: self.draw_inventory(mx, my)
         elif self.state == S_TOWN:      self.draw_town(mx, my)
         elif self.state == S_WORLD_MAP: self.draw_world_map(mx, my)
+        elif self.state == S_DUNGEON:   self.draw_dungeon(mx, my)
 
     # ── Title Screen ──────────────────────────────────────────
 
@@ -801,9 +827,10 @@ class Game:
             inv_btn = pygame.Rect(SCREEN_W - 200, 40, 180, 40)
             draw_button(self.screen, inv_btn, "Inventory",
                         hover=inv_btn.collidepoint(mx, my), size=16)
-            town_btn = pygame.Rect(SCREEN_W - 400, 40, 180, 40)
-            draw_button(self.screen, town_btn, "Town",
-                        hover=town_btn.collidepoint(mx, my), size=16)
+            if not self.dungeon_state:
+                town_btn = pygame.Rect(SCREEN_W - 400, 40, 180, 40)
+                draw_button(self.screen, town_btn, "Town",
+                            hover=town_btn.collidepoint(mx, my), size=16)
             save_btn = pygame.Rect(20, 40, 120, 40)
             draw_button(self.screen, save_btn, "Save",
                         hover=save_btn.collidepoint(mx, my), size=16)
@@ -811,8 +838,9 @@ class Game:
             draw_button(self.screen, load_btn, "Load",
                         hover=load_btn.collidepoint(mx, my), size=16)
             world_btn = pygame.Rect(290, 40, 160, 40)
-            draw_button(self.screen, world_btn, "World Map",
-                        hover=world_btn.collidepoint(mx, my), size=16)
+            back_label = "Back to Dungeon" if self.dungeon_state else "World Map"
+            draw_button(self.screen, world_btn, back_label,
+                        hover=world_btn.collidepoint(mx, my), size=14 if self.dungeon_state else 16)
 
             # Save/load message
             if hasattr(self, 'save_msg') and self.save_msg_timer > 0:
@@ -873,6 +901,11 @@ class Game:
         dt = self.clock.get_time()
         self.world_map_ui.draw(self.screen, mx, my, dt)
 
+    def draw_dungeon(self, mx, my):
+        """Draw the dungeon."""
+        dt = self.clock.get_time()
+        self.dungeon_ui.draw(self.screen, mx, my, dt)
+
     def _init_world_map(self):
         """Initialize world state if needed."""
         if not self.world_state:
@@ -885,6 +918,7 @@ class Game:
             return
 
         if event["type"] == "encounter":
+            print(f"[DEBUG] World encounter triggered: {event['key']}")
             self.start_combat(event["key"])
 
         elif event["type"] == "camp":
@@ -900,12 +934,30 @@ class Game:
 
         elif event["type"] == "enter_location":
             loc = event["data"]
+            print(f"[DEBUG] enter_location: id={event.get('id')}, type={loc['type']}")
             if loc["type"] == LOC_TOWN:
                 self.town_ui = TownUI(self.party)
                 self.go(S_TOWN)
             elif loc["type"] == LOC_DUNGEON:
-                enc_key = loc.get("encounter_key", "tutorial")
-                self.start_combat(enc_key)
+                # Find matching dungeon ID
+                loc_id = event.get("id", "")
+                dungeon_id = loc_id  # location ID matches dungeon ID
+                print(f"[DEBUG] Dungeon entry: loc_id={loc_id}, in DUNGEONS={loc_id in DUNGEONS}")
+                if dungeon_id in DUNGEONS:
+                    can, reason = self.world_state.can_enter_dungeon(loc_id)
+                    print(f"[DEBUG] Can enter: {can}, reason: {reason}")
+                    if can:
+                        self.dungeon_state = DungeonState(dungeon_id, self.party)
+                        self.dungeon_ui = DungeonUI(self.dungeon_state)
+                        self.pre_dungeon_state = S_WORLD_MAP
+                        self.go(S_DUNGEON)
+                        print(f"[DEBUG] Entered dungeon! State={self.state}")
+                    else:
+                        self.world_map_ui._show_event(reason, RED)
+                else:
+                    # Dungeon not yet defined — generic combat
+                    enc_key = loc.get("encounter_key", "tutorial")
+                    self.start_combat(enc_key)
             elif loc["type"] == "port":
                 # Port — show message for now (full port UI later)
                 self.world_map_ui._show_event(
@@ -917,6 +969,98 @@ class Game:
 
         elif event["type"] == "menu":
             # Go to party screen (inventory, etc.)
+            self.go(S_PARTY)
+
+    def _process_dungeon_event(self, event):
+        """Handle events from the dungeon."""
+        if event is None:
+            return
+
+        if event["type"] == "random_encounter":
+            enc_key = self.dungeon_state.get_encounter_key()
+            self.pre_dungeon_state = S_DUNGEON
+            self.start_combat(enc_key)
+
+        elif event["type"] == "fixed_encounter":
+            enc_key = self.dungeon_state.get_encounter_key()
+            self.pre_dungeon_state = S_DUNGEON
+            self.start_combat(enc_key)
+
+        elif event["type"] == "stairs_down":
+            if self.dungeon_state.go_downstairs():
+                floor = self.dungeon_state.current_floor
+                self.dungeon_ui.show_event(f"Descended to Floor {floor}.", GOLD)
+
+        elif event["type"] == "stairs_up":
+            if self.dungeon_state.go_upstairs():
+                floor = self.dungeon_state.current_floor
+                self.dungeon_ui.show_event(f"Ascended to Floor {floor}.", (80, 180, 220))
+
+        elif event["type"] == "exit_dungeon":
+            self.dungeon_state = None
+            self.dungeon_ui = None
+            if self.world_state:
+                self.go(S_WORLD_MAP)
+            else:
+                self.go(S_PARTY)
+
+        elif event["type"] == "treasure":
+            data = event["data"]
+            gold = data.get("gold", 0)
+            items = data.get("items", [])
+            if gold > 0:
+                self.party[0].gold += gold
+            for item in items:
+                self.party[0].inventory.append(dict(item))
+            parts = []
+            if gold > 0:
+                parts.append(f"{gold} gold")
+            for item in items:
+                parts.append(item["name"])
+            msg = "Found: " + ", ".join(parts) if parts else "The chest is empty."
+            self.dungeon_ui.show_event(msg, GOLD)
+
+        elif event["type"] == "trap":
+            data = event["data"]
+            dmg = data.get("damage", 10)
+            trap_name = data.get("name", "Trap")
+            # Damage random party member
+            import random
+            target = random.choice(self.party)
+            target.resources["HP"] = max(0, target.resources.get("HP", 0) - dmg)
+            self.dungeon_ui.show_event(
+                f"{trap_name}! {target.name} takes {dmg} damage!", RED)
+
+        elif event["type"] == "camp":
+            # Camping in dungeon — higher ambush risk
+            import random
+            ambush_chance = 25 + self.dungeon_state.current_floor * 5
+            for c in self.party:
+                if c.class_name == "Ranger":
+                    ambush_chance -= 5
+                if c.class_name == "Cleric":
+                    ambush_chance -= 3
+
+            if random.randint(1, 100) <= ambush_chance:
+                enc_key = self.dungeon_state.get_encounter_key()
+                self.dungeon_ui.show_event("Ambush during rest!", RED)
+                self.pre_dungeon_state = S_DUNGEON
+                self.start_combat(enc_key)
+            else:
+                from core.classes import get_all_resources
+                for c in self.party:
+                    max_res = get_all_resources(c.class_name, c.stats, c.level)
+                    max_hp = max_res.get("HP", 1)
+                    c.resources["HP"] = min(max_hp, c.resources.get("HP", 0) + int(max_hp * 0.25))
+                    for res in c.resources:
+                        if res != "HP":
+                            max_val = max_res.get(res, 0)
+                            c.resources[res] = min(max_val, c.resources[res] + int(max_val * 0.15))
+                self.dungeon_ui.show_event("Rested safely in the dungeon.", GREEN)
+
+        elif event["type"] == "menu":
+            self.pre_dungeon_state = S_DUNGEON
+            self.inventory_return_state = S_DUNGEON
             self.go(S_PARTY)
 
     def process_combat_action(self, action):
