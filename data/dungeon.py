@@ -35,29 +35,29 @@ DUNGEONS = {
         "floors": 3,
         "width": 30, "height": 25,
         "encounter_table": {
-            1: ["tutorial", "easy_goblins"],
-            2: ["easy_goblins", "wolves"],
-            3: ["medium_goblins", "easy_goblins"],
+            1: ["medium_goblins", "wolves"],
+            2: ["medium_goblins", "wolves"],
+            3: ["medium_goblins", "medium_bandits"],
         },
         "boss_floor": 3,
-        "boss_encounter": "medium_goblins",
+        "boss_encounter": "medium_bandits",
         "theme": "cave",
-        "encounter_rate": 12,
+        "encounter_rate": 9,
     },
     "spiders_nest": {
         "name": "Spider's Nest",
         "floors": 4,
         "width": 35, "height": 28,
         "encounter_table": {
-            1: ["wolves"],
-            2: ["wolves", "medium_goblins"],
-            3: ["medium_bandits", "wolves"],
-            4: ["medium_bandits"],
+            1: ["medium_goblins", "wolves"],
+            2: ["medium_bandits", "wolves"],
+            3: ["medium_bandits", "hard_mixed"],
+            4: ["hard_mixed"],
         },
         "boss_floor": 4,
-        "boss_encounter": "medium_bandits",
+        "boss_encounter": "hard_mixed",
         "theme": "cave",
-        "encounter_rate": 10,
+        "encounter_rate": 8,
     },
     "abandoned_mine": {
         "name": "Abandoned Mine",
@@ -347,6 +347,7 @@ class DungeonState:
         self.party_x = nx
         self.party_y = ny
         self._update_fog()
+        self._check_trap_detection(nx, ny)
 
         # Check tile events
         if tile["type"] == DT_STAIRS_DOWN:
@@ -364,8 +365,8 @@ class DungeonState:
                 return {"type": "treasure", "data": ev}
         elif tile["type"] == DT_TRAP and tile.get("event"):
             ev = tile["event"]
-            if not ev.get("detected"):
-                ev["detected"] = True
+            if not ev.get("disarmed", False):
+                # Trap fires if not disarmed, regardless of detection
                 return {"type": "trap", "data": ev}
         elif tile.get("event") and tile["event"].get("type") == "fixed_encounter":
             if not tile["event"].get("triggered"):
@@ -430,6 +431,54 @@ class DungeonState:
                 if 0 <= nx < floor["width"] and 0 <= ny < floor["height"]:
                     if math.sqrt(dx * dx + dy * dy) <= sight:
                         floor["tiles"][ny][nx]["discovered"] = True
+
+    def _check_trap_detection(self, px, py):
+        """Roll detection for traps on current and adjacent tiles.
+        Thief/Ranger get bonuses. Detection just reveals the trap;
+        the trap still fires unless disarmed."""
+        floor = self.floors[self.current_floor]
+        # Detection bonus from party composition
+        detect_bonus = 0
+        for c in self.party:
+            if c.class_name == "Thief":
+                detect_bonus += 25 + c.level * 3
+            elif c.class_name == "Ranger":
+                detect_bonus += 15 + c.level * 2
+            # DEX/WIS contribute
+            detect_bonus += c.stats.get("WIS", 0)
+            detect_bonus += c.stats.get("DEX", 0) // 2
+
+        base_chance = 30 + detect_bonus  # base 30% + bonuses
+
+        for dy in range(-1, 2):
+            for dx in range(-1, 2):
+                tx, ty = px + dx, py + dy
+                if 0 <= tx < floor["width"] and 0 <= ty < floor["height"]:
+                    tile = floor["tiles"][ty][tx]
+                    if tile["type"] == DT_TRAP and tile.get("event"):
+                        ev = tile["event"]
+                        if not ev.get("detected"):
+                            if random.randint(1, 100) <= min(90, base_chance):
+                                ev["detected"] = True
+
+    def disarm_trap(self, x, y):
+        """Attempt to disarm a detected trap. Returns success bool."""
+        floor = self.floors[self.current_floor]
+        if 0 <= x < floor["width"] and 0 <= y < floor["height"]:
+            tile = floor["tiles"][y][x]
+            if tile["type"] == DT_TRAP and tile.get("event"):
+                ev = tile["event"]
+                if ev.get("detected") and not ev.get("disarmed"):
+                    # Disarm chance based on party
+                    chance = 40
+                    for c in self.party:
+                        if c.class_name == "Thief":
+                            chance += 30 + c.level * 4
+                        chance += c.stats.get("DEX", 0)
+                    if random.randint(1, 100) <= min(95, chance):
+                        ev["disarmed"] = True
+                        return True
+        return False
 
     def get_visible_tiles(self, view_w=22, view_h=18):
         """Get tiles visible in viewport, centered on party."""

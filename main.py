@@ -1008,8 +1008,13 @@ class Game:
             data = event["data"]
             gold = data.get("gold", 0)
             items = data.get("items", [])
+            # Distribute gold evenly across party
             if gold > 0:
-                self.party[0].gold += gold
+                share = gold // len(self.party)
+                remainder = gold % len(self.party)
+                for i, c in enumerate(self.party):
+                    c.gold += share + (1 if i < remainder else 0)
+            # Items go to party leader's inventory with a message
             for item in items:
                 self.party[0].inventory.append(dict(item))
             parts = []
@@ -1018,18 +1023,30 @@ class Game:
             for item in items:
                 parts.append(item["name"])
             msg = "Found: " + ", ".join(parts) if parts else "The chest is empty."
+            if items:
+                msg += f" (Check {self.party[0].name}'s inventory)"
             self.dungeon_ui.show_event(msg, GOLD)
 
         elif event["type"] == "trap":
             data = event["data"]
             dmg = data.get("damage", 10)
             trap_name = data.get("name", "Trap")
-            # Damage random party member
+            was_detected = data.get("detected", False)
             import random
-            target = random.choice(self.party)
-            target.resources["HP"] = max(0, target.resources.get("HP", 0) - dmg)
-            self.dungeon_ui.show_event(
-                f"{trap_name}! {target.name} takes {dmg} damage!", RED)
+            if was_detected:
+                # Detected trap still fires — reduced damage, warning shown
+                dmg = max(1, dmg // 2)
+                target = random.choice(self.party)
+                target.resources["HP"] = max(0, target.resources.get("HP", 0) - dmg)
+                self.dungeon_ui.show_event(
+                    f"Triggered {trap_name}! {target.name} takes {dmg} damage (reduced — detected)!", ORANGE)
+            else:
+                # Undetected — full damage
+                data["detected"] = True  # now they know
+                target = random.choice(self.party)
+                target.resources["HP"] = max(0, target.resources.get("HP", 0) - dmg)
+                self.dungeon_ui.show_event(
+                    f"{trap_name}! {target.name} takes {dmg} damage!", RED)
 
         elif event["type"] == "camp":
             # Camping in dungeon — higher ambush risk
