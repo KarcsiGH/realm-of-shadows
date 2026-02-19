@@ -113,9 +113,9 @@ class PostCombatUI:
 
             if award:
                 xp_amount = award["xp"]
-                level_ups = char.add_xp(xp_amount)
+                ready = char.add_xp(xp_amount)
                 char.add_gold(gold_each)
-                self.xp_results.append((char, xp_amount, level_ups))
+                self.xp_results.append((char, xp_amount, ready))
             else:
                 char.add_gold(gold_each)
                 self.xp_results.append((char, 0, []))
@@ -132,9 +132,14 @@ class PostCombatUI:
         pygame.draw.rect(surface, SECTION_BG, (0, 0, SCREEN_W, 50))
         draw_text(surface, "VICTORY", 20, 12, GOLD, 24, bold=True)
 
+        # Inventory button
+        inv_btn = pygame.Rect(SCREEN_W - 160, 8, 140, 36)
+        inv_hover = inv_btn.collidepoint(mx, my)
+        draw_button(surface, inv_btn, "Inventory", hover=inv_hover, size=13)
+
         # Gold display
         gold_total = self.rewards.get("total_gold", 0)
-        draw_text(surface, f"Gold earned: {gold_total}", SCREEN_W - 250, 18, DIM_GOLD, 16)
+        draw_text(surface, f"Gold earned: {gold_total}", SCREEN_W - 350, 18, DIM_GOLD, 16)
 
         # Phase indicator
         phases = [("XP", self.PHASE_XP), ("Identify", self.PHASE_ID),
@@ -171,7 +176,7 @@ class PostCombatUI:
 
         y = 100
         card_h = 120
-        for i, (char, xp_amt, level_ups) in enumerate(self.xp_results):
+        for i, (char, xp_amt, ready_to_level) in enumerate(self.xp_results):
             cls = CLASSES[char.class_name]
             rect = pygame.Rect(40, y, SCREEN_W - 80, card_h)
             draw_panel(surface, rect, border_color=cls["color"])
@@ -200,21 +205,10 @@ class PostCombatUI:
             draw_text(surface, f"{xp_cur}/{xp_need}", bar_x + bar_w + 10, bar_y,
                       GREY, 13)
 
-            # Level up gains
-            if level_ups:
-                lx = rect.x + 12
-                ly = rect.y + 55
-                for lu in level_ups:
-                    draw_text(surface, f"LEVEL UP! → Level {lu['level']}",
-                              lx, ly, LEVEL_UP_COL, 16, bold=True)
-                    ly += 22
-                    gains = lu["gains"]
-                    if gains:
-                        gain_parts = [f"{STAT_FULL_NAMES.get(s, s)} +{v}"
-                                      for s, v in gains.items()]
-                        draw_text(surface, "  ".join(gain_parts),
-                                  lx, ly, GAIN_COL, 14)
-                        ly += 20
+            # Ready to level up notice
+            if ready_to_level:
+                draw_text(surface, "★ Ready to Level Up! Visit the Inn to train. ★",
+                          rect.x + 12, rect.y + 55, LEVEL_UP_COL, 16, bold=True)
             else:
                 # Show gold
                 draw_text(surface, f"+{self.rewards.get('gold_each', 0)} gold",

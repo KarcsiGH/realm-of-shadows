@@ -349,6 +349,13 @@ class DungeonState:
         self._update_fog()
         self._check_trap_detection(nx, ny)
 
+        # Per-step resource trickle
+        from core.progression import apply_step_regen
+        from core.classes import get_all_resources
+        for c in self.party:
+            max_res = get_all_resources(c.class_name, c.stats, c.level)
+            apply_step_regen(c, max_res)
+
         # Check tile events
         if tile["type"] == DT_STAIRS_DOWN:
             return {"type": "stairs_down"}

@@ -772,6 +772,13 @@ class WorldState:
         self.party_y = ny
         self._update_fog()
 
+        # Per-step resource trickle
+        from core.progression import apply_step_regen
+        from core.classes import get_all_resources
+        for c in self.party:
+            max_res = get_all_resources(c.class_name, c.stats, c.level)
+            apply_step_regen(c, max_res)
+
         # Location check
         loc_id = tile.get("location_id")
         if loc_id and loc_id in LOCATIONS:

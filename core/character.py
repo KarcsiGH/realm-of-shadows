@@ -14,7 +14,7 @@ from core.equipment import (
 )
 
 # XP required per level: level 2 = 100, level 3 = 250, etc.
-XP_TABLE = {i: int(100 * (i - 1) ** 1.4) for i in range(2, 51)}
+from core.progression import XP_TABLE
 
 # Stat growth per level based on growth tier
 GROWTH_AMOUNTS = {"high": (1, 2), "medium": (0, 1), "low": (0, 0)}
@@ -120,31 +120,15 @@ class Character:
         return self.xp, self.xp_to_next_level()
 
     def add_xp(self, amount):
-        """Add XP and check for level up. Returns list of level-up dicts
-        with stat gains for each level gained."""
+        """Add XP. Leveling now happens at the inn, not automatically.
+        Returns True if character is now eligible to level up."""
         self.xp += amount
-        level_ups = []
-        while self.xp >= self.xp_to_next_level() and self.level < 50:
-            self.xp -= self.xp_to_next_level()
-            level_ups.append(self._level_up())
-        return level_ups
+        return self.xp >= self.xp_to_next_level() and self.level < 30
 
     def _level_up(self):
-        """Process a single level up. Returns dict of stat gains."""
-        self.level += 1
-        cls = CLASSES[self.class_name]
-        growth = cls.get("stat_growth", {})
-        gains = {}
-        for stat in STAT_NAMES:
-            tier = growth.get(stat, "low")
-            lo, hi = GROWTH_AMOUNTS.get(tier, (0, 0))
-            gain = random.randint(lo, hi)
-            if gain > 0:
-                self.stats[stat] += gain
-                gains[stat] = gain
-        # Recalculate resources at new level
-        self.resources = get_all_resources(self.class_name, self.stats, self.level)
-        return {"level": self.level, "gains": gains}
+        """DEPRECATED — use core.progression.apply_level_up instead.
+        Kept for backwards compatibility but should not be called."""
+        pass
 
     def add_gold(self, amount):
         self.gold += amount

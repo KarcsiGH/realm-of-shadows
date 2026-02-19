@@ -49,6 +49,8 @@ class TownUI:
     VIEW_SHOP_SELL = "shop_sell"
     VIEW_TEMPLE = "temple"
     VIEW_TAVERN = "tavern"
+    VIEW_INN = "inn"
+    VIEW_INN_LEVELUP = "inn_levelup"
 
     def __init__(self, party):
         self.party = party
@@ -67,6 +69,12 @@ class TownUI:
         # Temple state
         self.id_char = 0
         self.id_scroll = 0
+
+        # Inn state
+        self.inn_result = None  # stores rest result for display
+        self.levelup_queue = []  # characters ready to level up
+        self.levelup_current = 0  # index in queue
+        self.levelup_free_stat = None  # selected stat for free point
 
         # Tavern state
         self.current_rumor = random.choice(TAVERN["rumors"])
@@ -91,6 +99,10 @@ class TownUI:
             self._draw_temple(surface, mx, my)
         elif self.view == self.VIEW_TAVERN:
             self._draw_tavern(surface, mx, my)
+        elif self.view == self.VIEW_INN:
+            self._draw_inn(surface, mx, my)
+        elif self.view == self.VIEW_INN_LEVELUP:
+            self._draw_inn_levelup(surface, mx, my)
 
         # Message bar
         if self.message and self.msg_timer > 0:
@@ -114,9 +126,11 @@ class TownUI:
 
         # Location buttons
         locations = [
+            ("The Weary Traveler Inn", "Rest, recover, train, and save your progress",
+             (100, 80, 40), (220, 180, 80)),
             ("General Store", "Buy and sell weapons, armor, and supplies",
              (120, 100, 50), SELL_COL),
-            ("Temple of Light", "Rest, heal, identify items, remove curses",
+            ("Temple of Light", "Heal, identify items, remove curses",
              (50, 100, 120), HEAL_COL),
             ("The Shadowed Flagon", "Hear rumors and rest your feet",
              (100, 60, 100), RUMOR_COL),
@@ -124,9 +138,9 @@ class TownUI:
              (80, 40, 40), RED),
         ]
 
-        by = 160
+        by = 140
         for i, (name, desc, bg_tint, accent) in enumerate(locations):
-            btn_rect = pygame.Rect(SCREEN_W // 2 - 250, by + i * 120, 500, 100)
+            btn_rect = pygame.Rect(SCREEN_W // 2 - 250, by + i * 100, 500, 85)
             hover = btn_rect.collidepoint(mx, my)
 
             bg = (bg_tint[0] + 20, bg_tint[1] + 20, bg_tint[2] + 20) if hover else bg_tint
@@ -423,6 +437,178 @@ class TownUI:
         self._draw_party_bar(surface, mx, my)
 
     # ─────────────────────────────────────────────────────────
+    #  INN
+    # ─────────────────────────────────────────────────────────
+
+    def _draw_inn(self, surface, mx, my):
+        from core.progression import INN_TIERS, INN_TIER_ORDER, can_level_up, training_cost
+        draw_text(surface, "The Weary Traveler Inn", SCREEN_W // 2 - 150, 20, GOLD, 24, bold=True)
+        draw_text(surface, "Rest your bones, train your skills, save your progress.",
+                  SCREEN_W // 2 - 220, 55, GREY, 14)
+
+        back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
+        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+
+        total_gold = sum(c.gold for c in self.party)
+        party_size = len(self.party)
+        draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 60, 80, DIM_GOLD, 14)
+
+        # Check for characters ready to level up
+        lvl_ready = [c for c in self.party if can_level_up(c)]
+
+        by = 110
+        for i, tier_key in enumerate(INN_TIER_ORDER):
+            tier = INN_TIERS[tier_key]
+            total_cost = tier["cost_per_char"] * party_size
+
+            # Training cost if leveling available
+            train_cost = 0
+            if tier["allows_level_up"] and lvl_ready:
+                for c in lvl_ready:
+                    train_cost += training_cost(c.level + 1)
+
+            btn = pygame.Rect(SCREEN_W // 2 - 280, by + i * 95, 560, 85)
+            hover = btn.collidepoint(mx, my)
+            can_afford = total_gold >= total_cost
+
+            bg = (50, 40, 25) if hover and can_afford else (30, 24, 18)
+            border = (220, 180, 80) if hover and can_afford else PANEL_BORDER
+            if not can_afford:
+                bg = (25, 20, 15)
+
+            pygame.draw.rect(surface, bg, btn, border_radius=5)
+            pygame.draw.rect(surface, border, btn, 2, border_radius=5)
+
+            name_col = GOLD if can_afford else DARK_GREY
+            draw_text(surface, tier["name"], btn.x + 15, btn.y + 8, name_col, 18, bold=True)
+
+            cost_str = "Free" if total_cost == 0 else f"{total_cost}g ({tier['cost_per_char']}g × {party_size})"
+            draw_text(surface, cost_str, btn.x + 250, btn.y + 10, DIM_GOLD if can_afford else DARK_GREY, 13)
+
+            draw_text(surface, tier["description"], btn.x + 15, btn.y + 35, GREY, 12)
+
+            if tier["allows_level_up"] and lvl_ready:
+                draw_text(surface, f"Training available: +{train_cost}g for {len(lvl_ready)} character(s)",
+                          btn.x + 15, btn.y + 55, (180, 220, 120), 12)
+            elif not tier["allows_level_up"] and lvl_ready:
+                draw_text(surface, "No training available at this tier", btn.x + 15, btn.y + 55, DARK_GREY, 11)
+
+            if tier.get("buff"):
+                draw_text(surface, f"Bonus: {tier['buff']['name']} (+{tier['buff']['hp_bonus_pct']}% HP next dungeon)",
+                          btn.x + 15, btn.y + 68, (150, 200, 255), 11)
+
+        # Show inn result if just rested
+        if self.inn_result:
+            rp = pygame.Rect(SCREEN_W // 2 - 250, by + len(INN_TIER_ORDER) * 95 + 10, 500, 60)
+            pygame.draw.rect(surface, (20, 30, 15), rp, border_radius=5)
+            pygame.draw.rect(surface, GREEN, rp, 1, border_radius=5)
+            draw_text(surface, self.inn_result, rp.x + 15, rp.y + 10, GREEN, 14, max_width=470)
+
+        self._draw_party_bar(surface, mx, my)
+
+    def _draw_inn_levelup(self, surface, mx, my):
+        """Level up screen for a character at the inn."""
+        from core.progression import can_level_up, apply_level_up, training_cost
+        from core.classes import STAT_NAMES
+
+        if not self.levelup_queue:
+            self.view = self.VIEW_INN
+            return
+
+        c = self.levelup_queue[self.levelup_current]
+        cost = training_cost(c.level + 1)
+
+        draw_text(surface, f"Training: {c.name}", SCREEN_W // 2 - 120, 20, GOLD, 24, bold=True)
+        draw_text(surface, f"Level {c.level} → {c.level + 1}  |  Training cost: {cost}g",
+                  SCREEN_W // 2 - 160, 55, CREAM, 16)
+
+        # Current stats
+        draw_text(surface, "Current Stats:", 60, 100, GOLD, 16, bold=True)
+        for i, stat in enumerate(STAT_NAMES):
+            val = c.stats[stat]
+            sy = 130 + i * 30
+            draw_text(surface, f"{stat}: {val}", 80, sy, CREAM, 15)
+
+        # Free stat point selection
+        draw_text(surface, "Assign 1 free stat point:", SCREEN_W // 2 - 50, 100, GOLD, 16, bold=True)
+        for i, stat in enumerate(STAT_NAMES):
+            btn = pygame.Rect(SCREEN_W // 2 - 30, 130 + i * 38, 200, 32)
+            selected = self.levelup_free_stat == stat
+            hover = btn.collidepoint(mx, my)
+            bg = (60, 50, 30) if selected else (40, 35, 25) if hover else (25, 20, 15)
+            border = GOLD if selected else PANEL_BORDER
+            pygame.draw.rect(surface, bg, btn, border_radius=3)
+            pygame.draw.rect(surface, border, btn, 1, border_radius=3)
+            label = f"+1 {stat} ({c.stats[stat]} → {c.stats[stat]+1})"
+            draw_text(surface, label, btn.x + 10, btn.y + 6, CREAM if hover or selected else GREY, 14)
+
+        # Confirm button
+        can_train = self.levelup_free_stat is not None and sum(cc.gold for cc in self.party) >= cost
+        confirm = pygame.Rect(SCREEN_W // 2 + 200, 350, 180, 45)
+        draw_button(surface, confirm, "Train!", hover=confirm.collidepoint(mx, my) and can_train, size=16)
+        if not can_train and self.levelup_free_stat:
+            draw_text(surface, "Not enough gold!", confirm.x, confirm.y + 50, RED, 12)
+
+        # Skip button
+        skip = pygame.Rect(SCREEN_W // 2 + 200, 410, 180, 40)
+        draw_button(surface, skip, "Skip", hover=skip.collidepoint(mx, my), size=14)
+
+    def _rest_at_inn(self, tier_key):
+        """Process inn rest for the party."""
+        from core.progression import INN_TIERS, can_level_up
+        from core.classes import get_all_resources
+
+        tier = INN_TIERS[tier_key]
+        party_size = len(self.party)
+        total_cost = tier["cost_per_char"] * party_size
+        total_gold = sum(c.gold for c in self.party)
+
+        if total_gold < total_cost:
+            return False
+
+        # Deduct gold evenly
+        if total_cost > 0:
+            per_char = total_cost // party_size
+            remainder = total_cost % party_size
+            for i, c in enumerate(self.party):
+                deduct = per_char + (1 if i < remainder else 0)
+                c.gold = max(0, c.gold - deduct)
+
+        # Restore resources
+        for c in self.party:
+            max_res = get_all_resources(c.class_name, c.stats, c.level)
+            for res_name, max_val in max_res.items():
+                current = c.resources.get(res_name, 0)
+                if res_name == "HP":
+                    restore = tier["hp_restore"]
+                elif "MP" in res_name or res_name == "Ki":
+                    restore = tier["mp_restore"]
+                else:
+                    restore = tier["sp_restore"]
+                gain = int(max_val * restore)
+                c.resources[res_name] = min(max_val, current + gain)
+
+        # Clear resurrection sickness
+        for c in self.party:
+            if hasattr(c, 'status_effects'):
+                c.status_effects = [s for s in c.status_effects
+                                    if s.get("type") != "resurrection_sickness"]
+
+        # Check for level ups
+        if tier["allows_level_up"]:
+            self.levelup_queue = [c for c in self.party if can_level_up(c)]
+            self.levelup_current = 0
+            self.levelup_free_stat = None
+        else:
+            self.levelup_queue = []
+
+        cost_str = f"{total_cost}g" if total_cost > 0 else "free"
+        restore_str = f"{int(tier['hp_restore']*100)}%"
+        self.inn_result = f"Rested at {tier['name']} ({cost_str}). Restored {restore_str} HP/MP/SP. Progress saved."
+
+        return True
+
+    # ─────────────────────────────────────────────────────────
     #  TAVERN
     # ─────────────────────────────────────────────────────────
 
@@ -458,10 +644,10 @@ class TownUI:
 
         # ── Hub view ──
         if self.view == self.VIEW_HUB:
-            locations = ["shop", "temple", "tavern", "exit"]
-            by = 160
+            locations = ["inn", "shop", "temple", "tavern", "exit"]
+            by = 140
             for i, loc in enumerate(locations):
-                btn = pygame.Rect(SCREEN_W // 2 - 250, by + i * 120, 500, 100)
+                btn = pygame.Rect(SCREEN_W // 2 - 250, by + i * 100, 500, 85)
                 if btn.collidepoint(mx, my):
                     if loc == "exit":
                         self.finished = True
@@ -472,6 +658,8 @@ class TownUI:
                         self.view = self.VIEW_TEMPLE
                     elif loc == "tavern":
                         self.view = self.VIEW_TAVERN
+                    elif loc == "inn":
+                        self.view = self.VIEW_INN
                     return None
 
         # ── Shop menu ──
@@ -581,6 +769,86 @@ class TownUI:
                         self._temple_identify(ci, ii, item, char)
                         return None
                     uy += 44
+
+        # ── Inn ──
+        elif self.view == self.VIEW_INN:
+            from core.progression import INN_TIERS, INN_TIER_ORDER
+
+            back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
+            if back.collidepoint(mx, my):
+                self.view = self.VIEW_HUB
+                self.inn_result = None
+                return None
+
+            by = 110
+            for i, tier_key in enumerate(INN_TIER_ORDER):
+                btn = pygame.Rect(SCREEN_W // 2 - 280, by + i * 95, 560, 85)
+                if btn.collidepoint(mx, my):
+                    tier = INN_TIERS[tier_key]
+                    total_cost = tier["cost_per_char"] * len(self.party)
+                    total_gold = sum(c.gold for c in self.party)
+                    if total_gold >= total_cost:
+                        success = self._rest_at_inn(tier_key)
+                        if success and self.levelup_queue:
+                            self.view = self.VIEW_INN_LEVELUP
+                        return "inn_save"  # signal to main.py to auto-save
+                    else:
+                        self._msg(f"Not enough gold! Need {total_cost}g.", RED)
+                    return None
+
+        # ── Inn Level Up ──
+        elif self.view == self.VIEW_INN_LEVELUP:
+            from core.progression import apply_level_up, training_cost, can_level_up
+            from core.classes import STAT_NAMES, get_all_resources
+
+            if not self.levelup_queue:
+                self.view = self.VIEW_INN
+                return None
+
+            c = self.levelup_queue[self.levelup_current]
+
+            # Stat selection buttons
+            for i, stat in enumerate(STAT_NAMES):
+                btn = pygame.Rect(SCREEN_W // 2 - 30, 130 + i * 38, 200, 32)
+                if btn.collidepoint(mx, my):
+                    self.levelup_free_stat = stat
+                    return None
+
+            # Confirm
+            confirm = pygame.Rect(SCREEN_W // 2 + 200, 350, 180, 45)
+            if confirm.collidepoint(mx, my) and self.levelup_free_stat:
+                cost = training_cost(c.level + 1)
+                total_gold = sum(cc.gold for cc in self.party)
+                if total_gold >= cost:
+                    remaining = cost
+                    for cc in self.party:
+                        deduct = min(cc.gold, remaining)
+                        cc.gold -= deduct
+                        remaining -= deduct
+                        if remaining <= 0: break
+                    summary = apply_level_up(c, self.levelup_free_stat)
+                    if summary:
+                        max_res = get_all_resources(c.class_name, c.stats, c.level)
+                        for rn, mv in max_res.items():
+                            if c.resources.get(rn, 0) > mv:
+                                c.resources[rn] = mv
+                        gains = ", ".join(f"+{v} {k}" for k, v in summary["stat_gains"].items())
+                        self.inn_result = f"{c.name} reached level {c.level}! {gains}, +{summary['hp_gain']} base HP"
+                    self.levelup_current += 1
+                    self.levelup_free_stat = None
+                    if self.levelup_current >= len(self.levelup_queue):
+                        self.view = self.VIEW_INN
+                else:
+                    self._msg(f"Need {cost}g for training!", RED)
+                return None
+
+            skip = pygame.Rect(SCREEN_W // 2 + 200, 410, 180, 40)
+            if skip.collidepoint(mx, my):
+                self.levelup_current += 1
+                self.levelup_free_stat = None
+                if self.levelup_current >= len(self.levelup_queue):
+                    self.view = self.VIEW_INN
+                return None
 
         # ── Tavern ──
         elif self.view == self.VIEW_TAVERN:

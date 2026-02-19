@@ -108,7 +108,7 @@ CRIT_WEAPON_BONUS = {
 # ═══════════════════════════════════════════════════════════════
 
 # Physical Defense = (CON × DEF_CON_MULT) + Armor + Shield + Buffs
-DEF_CON_MULT            = 0.5
+DEF_CON_MULT            = 0.3
 
 # Magic Resistance = (WIS × MRES_WIS_MULT) + Equipment + Buffs
 MRES_WIS_MULT           = 0.5

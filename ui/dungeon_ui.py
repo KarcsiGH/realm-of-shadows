@@ -110,26 +110,80 @@ class DungeonUI:
             self._front_wall(surface, fl, ft, fr-fl, fb-ft, bright)
             return
 
-        left = self._gtype(cx-rdx, cy-rdy)
-        right = self._gtype(cx+rdx, cy+rdy)
-        fl2 = self._gtype(cx-rdx*2, cy-rdy*2)
-        fr2 = self._gtype(cx+rdx*2, cy+rdy*2)
+        # Scan left to find actual wall distance (for room width)
+        left_dist = 0
+        for d in range(1, 5):
+            t = self._gtype(cx - rdx*d, cy - rdy*d)
+            if t == DT_WALL or t is None:
+                break
+            left_dist = d
 
-        if left == DT_WALL or left is None:
-            self._side_wall(surface, nl, nt, nb, fl, ft, fb, bright, "L")
-        else:
-            self._side_open(surface, nl, nt, nb, fl, ft, fb, bright, fl2, "L")
-            lt = self.dungeon.get_tile(cx-rdx, cy-rdy)
-            if lt and lt["type"] not in (DT_WALL, DT_FLOOR, DT_CORRIDOR):
-                self._side_obj(surface, lt, nl, nt, nb, fl, ft, fb, bright, "L")
+        # Scan right to find actual wall distance
+        right_dist = 0
+        for d in range(1, 5):
+            t = self._gtype(cx + rdx*d, cy + rdy*d)
+            if t == DT_WALL or t is None:
+                break
+            right_dist = d
 
-        if right == DT_WALL or right is None:
-            self._side_wall(surface, nr, nt, nb, fr, ft, fb, bright, "R")
+        # Calculate wall positions pushed outward for rooms
+        # Each extra tile of openness pushes wall edge further out
+        wall_push_pct = 0.25  # each open tile pushes wall 25% of corridor width
+        corridor_half = (nr - nl) // 2
+
+        # Left wall
+        if left_dist == 0:
+            # Wall is right next to us
+            left = self._gtype(cx-rdx, cy-rdy)
+            if left == DT_WALL or left is None:
+                self._side_wall(surface, nl, nt, nb, fl, ft, fb, bright, "L")
+            else:
+                fl2 = self._gtype(cx-rdx*2, cy-rdy*2)
+                self._side_open(surface, nl, nt, nb, fl, ft, fb, bright, fl2, "L")
+                lt = self.dungeon.get_tile(cx-rdx, cy-rdy)
+                if lt and lt["type"] not in (DT_WALL, DT_FLOOR, DT_CORRIDOR):
+                    self._side_obj(surface, lt, nl, nt, nb, fl, ft, fb, bright, "L")
         else:
-            self._side_open(surface, nr, nt, nb, fr, ft, fb, bright, fr2, "R")
-            rt = self.dungeon.get_tile(cx+rdx, cy+rdy)
-            if rt and rt["type"] not in (DT_WALL, DT_FLOOR, DT_CORRIDOR):
-                self._side_obj(surface, rt, nr, nt, nb, fr, ft, fb, bright, "R")
+            # Room extends left — push wall further out
+            push = int(corridor_half * wall_push_pct * left_dist)
+            pushed_nl = nl - push
+            pushed_fl = fl - push
+            # Draw distant wall at pushed position
+            wall_bright = bright * max(0.4, 1.0 - left_dist * 0.15)
+            self._side_wall(surface, pushed_nl, nt, nb, pushed_fl, ft, fb, wall_bright, "L")
+            # Draw any objects in left tiles
+            for d in range(1, left_dist + 1):
+                lt = self.dungeon.get_tile(cx - rdx*d, cy - rdy*d)
+                if lt and lt["type"] not in (DT_WALL, DT_FLOOR, DT_CORRIDOR):
+                    frac = d / (left_dist + 1)
+                    obj_ne = int(nl - push * frac)
+                    obj_fe = int(fl - push * frac)
+                    self._side_obj(surface, lt, obj_ne, nt, nb, obj_fe, ft, fb, bright * 0.8, "L")
+
+        # Right wall
+        if right_dist == 0:
+            right = self._gtype(cx+rdx, cy+rdy)
+            if right == DT_WALL or right is None:
+                self._side_wall(surface, nr, nt, nb, fr, ft, fb, bright, "R")
+            else:
+                fr2 = self._gtype(cx+rdx*2, cy+rdy*2)
+                self._side_open(surface, nr, nt, nb, fr, ft, fb, bright, fr2, "R")
+                rt = self.dungeon.get_tile(cx+rdx, cy+rdy)
+                if rt and rt["type"] not in (DT_WALL, DT_FLOOR, DT_CORRIDOR):
+                    self._side_obj(surface, rt, nr, nt, nb, fr, ft, fb, bright, "R")
+        else:
+            push = int(corridor_half * wall_push_pct * right_dist)
+            pushed_nr = nr + push
+            pushed_fr = fr + push
+            wall_bright = bright * max(0.4, 1.0 - right_dist * 0.15)
+            self._side_wall(surface, pushed_nr, nt, nb, pushed_fr, ft, fb, wall_bright, "R")
+            for d in range(1, right_dist + 1):
+                rt = self.dungeon.get_tile(cx + rdx*d, cy + rdy*d)
+                if rt and rt["type"] not in (DT_WALL, DT_FLOOR, DT_CORRIDOR):
+                    frac = d / (right_dist + 1)
+                    obj_ne = int(nr + push * frac)
+                    obj_fe = int(fr + push * frac)
+                    self._side_obj(surface, rt, obj_ne, nt, nb, obj_fe, ft, fb, bright * 0.8, "R")
 
         tile = self.dungeon.get_tile(cx, cy)
         if tile and tile["type"] not in (DT_FLOOR, DT_CORRIDOR, DT_WALL):
@@ -384,7 +438,7 @@ class DungeonUI:
         draw_button(surface, tl, "◄ Turn", hover=tl.collidepoint(mx,my), size=14)
         tr = pygame.Rect(VP_X+400, by, 100, 42)
         draw_button(surface, tr, "Turn ►", hover=tr.collidepoint(mx,my), size=14)
-        draw_text(surface, "↑/W=Fwd  ↓/S=Back  ←→/QE=Turn  A/D=Strafe  C=Camp  ENTER=Use", VP_X, SCREEN_H-8, DARK_GREY, 11)
+        draw_text(surface, "↑/W=Fwd  ↓/S=Back  ←→/QE=Turn  A/D=Strafe  C=Camp  T=Disarm  ENTER=Use", VP_X, SCREEN_H-8, DARK_GREY, 11)
 
     # ── DIALOGS ──
     def _draw_camp_dlg(self, surface, mx, my):
@@ -445,6 +499,27 @@ class DungeonUI:
             return None
         elif key == pygame.K_c:
             self.show_camp_confirm = True; return None
+        elif key == pygame.K_t:
+            # Attempt to disarm adjacent detected trap
+            fdx, fdy = DIR_DX[self.facing], DIR_DY[self.facing]
+            rdx, rdy = DIR_DX[(self.facing+1)%4], DIR_DY[(self.facing+1)%4]
+            px, py = self.dungeon.party_x, self.dungeon.party_y
+            # Check all adjacent tiles
+            for dx, dy in [(fdx,fdy),(-fdx,-fdy),(rdx,rdy),(-rdx,-rdy)]:
+                tx, ty = px+dx, py+dy
+                tile = self.dungeon.get_tile(tx, ty)
+                if tile and tile["type"] == DT_TRAP:
+                    ev = tile.get("event") or {}
+                    if ev.get("detected") and not ev.get("disarmed"):
+                        success = self.dungeon.disarm_trap(tx, ty)
+                        if success:
+                            self.show_event("Trap disarmed!", (100, 255, 100))
+                        else:
+                            # Failed — trap triggers on the party
+                            return {"type": "trap", "data": ev}
+                        return None
+            self.show_event("No detected trap nearby.", CREAM)
+            return None
         return None
 
     def handle_click(self, mx, my):
