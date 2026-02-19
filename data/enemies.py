@@ -24,7 +24,7 @@ ENEMIES = {
         "accuracy_bonus": 0,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
-        "xp_reward": 15, "gold_reward": (3, 8),
+        "xp_reward": 15, "gold_reward": (5, 12),
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
             "fire": NEUTRAL, "ice": NEUTRAL, "lightning": NEUTRAL,
@@ -47,7 +47,7 @@ ENEMIES = {
                 "estimated_value": 4,
                 "description": "A goblin-forged shiv. Crude but sharp enough to draw blood.",
             }},
-            {"drop_chance": 0.25, "item": {
+            {"drop_chance": 0.35, "item": {
                 "name": "Goblin Ear", "type": "material",
                 "subtype": "trophy", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -76,7 +76,7 @@ ENEMIES = {
         "accuracy_bonus": 5,
         "preferred_row": MID,
         "ai_type": "aggressive",
-        "xp_reward": 18, "gold_reward": (4, 10),
+        "xp_reward": 18, "gold_reward": (6, 14),
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
             "fire": NEUTRAL, "ice": NEUTRAL, "lightning": NEUTRAL,
@@ -99,7 +99,7 @@ ENEMIES = {
                 "estimated_value": 5,
                 "description": "A goblin-made shortbow. Flimsy but functional.",
             }},
-            {"drop_chance": 0.30, "item": {
+            {"drop_chance": 0.40, "item": {
                 "name": "Bundle of Crude Arrows", "type": "consumable",
                 "subtype": "ammunition", "rarity": "common",
                 "identify_difficulty": 1,
@@ -128,7 +128,7 @@ ENEMIES = {
         "accuracy_bonus": 2,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
-        "xp_reward": 30, "gold_reward": (8, 20),
+        "xp_reward": 30, "gold_reward": (10, 25),
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
             "fire": NEUTRAL, "ice": NEUTRAL, "lightning": NEUTRAL,
@@ -151,7 +151,7 @@ ENEMIES = {
                 "estimated_value": 12,
                 "description": "A well-used blade with nicks along the edge. Carried by a bandit who won't need it anymore.",
             }},
-            {"drop_chance": 0.15, "item": {
+            {"drop_chance": 0.30, "item": {
                 "name": "Leather Scraps", "type": "material",
                 "subtype": "leather", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -180,7 +180,7 @@ ENEMIES = {
         "accuracy_bonus": 5,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
-        "xp_reward": 22, "gold_reward": (0, 2),  # wolves don't carry gold
+        "xp_reward": 22, "gold_reward": (2, 6),  # wolves carry some scraps
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
             "fire": VULNERABLE, "ice": RESISTANT, "lightning": NEUTRAL,
@@ -190,7 +190,7 @@ ENEMIES = {
         "status_immunities": [],
         "abilities": [],
         "loot_table": [
-            {"drop_chance": 0.25, "item": {
+            {"drop_chance": 0.40, "item": {
                 "name": "Wolf Pelt", "type": "material",
                 "subtype": "leather", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -199,10 +199,10 @@ ENEMIES = {
                 "appraised_name": "Wolf Pelt",
                 "material_desc": "Good-quality wolf hide. Tier 1 leather, suitable for light armor crafting.",
                 "magic_desc": "No magical properties.",
-                "estimated_value": 8,
+                "estimated_value": 15,
                 "description": "A thick grey pelt, still warm. Useful for crafting leather armor.",
             }},
-            {"drop_chance": 0.08, "item": {
+            {"drop_chance": 0.20, "item": {
                 "name": "Wolf Fang", "type": "material",
                 "subtype": "reagent", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -211,7 +211,7 @@ ENEMIES = {
                 "appraised_name": "Wolf Fang",
                 "material_desc": "A predator's tooth. Tier 1 reagent for weapon enchanting or potion brewing.",
                 "magic_desc": "Faint natural essence — could hold a minor enchantment.",
-                "estimated_value": 5,
+                "estimated_value": 10,
                 "description": "A sharp canine tooth. Useful for crafting and enchanting.",
             }},
         ],
@@ -279,7 +279,7 @@ ENEMIES = {
                 "estimated_value": 15,
                 "description": "A crude but heavy iron blade favored by orc warriors.",
             }},
-            {"drop_chance": 0.15, "item": {
+            {"drop_chance": 0.25, "item": {
                 "name": "Orc Hide Scraps", "type": "material",
                 "subtype": "leather", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -429,12 +429,138 @@ ENEMIES = {
             2: "Goblin Shaman — heals allies, casts poison. Priority target.",
         },
     },
+
+    # ═══════════════════════════════════════════════════════════
+    #  BOSS ENEMIES
+    # ═══════════════════════════════════════════════════════════
+
+    "Goblin King": {
+        "name": "Grak the Goblin King",
+        "hp": 180, "defense": 12, "magic_resist": 6,
+        "stats": {"STR": 18, "DEX": 10, "CON": 16, "INT": 6, "WIS": 8, "PIE": 4},
+        "speed_base": 12,
+        "attack_damage": 22, "attack_type": "melee", "phys_type": "blunt",
+        "accuracy_bonus": 8,
+        "preferred_row": FRONT,
+        "ai_type": "boss",
+        "xp_reward": 200, "gold_reward": (80, 150),
+        "resistances": {
+            "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": RESISTANT,
+            "fire": VULNERABLE, "ice": NEUTRAL, "lightning": NEUTRAL,
+            "divine": NEUTRAL, "shadow": NEUTRAL, "nature": NEUTRAL,
+            "arcane": NEUTRAL,
+        },
+        "status_immunities": ["stun"],
+        "abilities": ["Goblin King Smash", "Enrage"],
+        "loot_table": [
+            {"drop_chance": 1.0, "item": {
+                "name": "Goblin King's Crown", "type": "armor", "subtype": "helmet",
+                "rarity": "rare", "tier": 2, "defense": 5, "identified": True,
+                "estimated_value": 200,
+                "description": "A crude crown of bent metal and stolen gems. Surprisingly well-made.",
+            }},
+        ],
+        "description_tiers": {
+            0: "A massive goblin in crude armor, wielding an enormous club.",
+            1: "Grak the Goblin King",
+            2: "Grak — Boss. Heavy hitter, can enrage. Weak to fire.",
+        },
+    },
+
+    "Giant Spider Queen": {
+        "name": "Spider Queen",
+        "hp": 150, "defense": 8, "magic_resist": 10,
+        "stats": {"STR": 14, "DEX": 18, "CON": 14, "INT": 4, "WIS": 12, "PIE": 2},
+        "speed_base": 18,
+        "attack_damage": 18, "attack_type": "melee", "phys_type": "piercing",
+        "accuracy_bonus": 12,
+        "preferred_row": FRONT,
+        "ai_type": "boss",
+        "xp_reward": 220, "gold_reward": (60, 120),
+        "resistances": {
+            "piercing": RESISTANT, "slashing": NEUTRAL, "blunt": VULNERABLE,
+            "fire": VERY_VULNERABLE, "ice": NEUTRAL, "lightning": NEUTRAL,
+            "divine": NEUTRAL, "shadow": RESISTANT, "nature": IMMUNE,
+            "arcane": NEUTRAL,
+        },
+        "status_immunities": ["poison"],
+        "abilities": ["Poison Cloud"],
+        "loot_table": [
+            {"drop_chance": 1.0, "item": {
+                "name": "Spider Silk Mantle", "type": "armor", "subtype": "cloak",
+                "rarity": "rare", "tier": 2, "defense": 3, "magic_resist": 4, "identified": True,
+                "estimated_value": 180,
+                "description": "A shimmering cloak woven from spider silk. Light and magically resistant.",
+            }},
+        ],
+        "description_tiers": {
+            0: "A massive arachnid, dripping venom from its fangs.",
+            1: "Spider Queen",
+            2: "Spider Queen — Boss. Poison cloud, fast. Weak to fire and blunt.",
+        },
+    },
+
+    "Undead Foreman": {
+        "name": "The Foreman",
+        "hp": 200, "defense": 15, "magic_resist": 12,
+        "stats": {"STR": 20, "DEX": 8, "CON": 22, "INT": 10, "WIS": 14, "PIE": 2},
+        "speed_base": 8,
+        "attack_damage": 28, "attack_type": "melee", "phys_type": "blunt",
+        "accuracy_bonus": 6,
+        "preferred_row": FRONT,
+        "ai_type": "boss",
+        "xp_reward": 300, "gold_reward": (100, 200),
+        "resistances": {
+            "piercing": RESISTANT, "slashing": NEUTRAL, "blunt": VULNERABLE,
+            "fire": VULNERABLE, "ice": RESISTANT, "lightning": NEUTRAL,
+            "divine": VERY_VULNERABLE, "shadow": IMMUNE, "nature": NEUTRAL,
+            "arcane": NEUTRAL,
+        },
+        "status_immunities": ["poison", "stun", "fear"],
+        "abilities": ["Skull Crush", "Enrage"],
+        "loot_table": [
+            {"drop_chance": 1.0, "item": {
+                "name": "Foreman's Pickaxe", "type": "weapon", "subtype": "axe",
+                "rarity": "rare", "tier": 3, "damage": 22, "identified": True,
+                "estimated_value": 250,
+                "description": "A massive mining pick, still sharp after centuries. +22 base damage.",
+            }},
+        ],
+        "description_tiers": {
+            0: "A towering undead figure in tattered work clothes, clutching a massive pickaxe.",
+            1: "The Foreman",
+            2: "The Foreman — Boss. Undead. Slow but devastating. Weak to divine and fire.",
+        },
+    },
+
+    "Giant Spider": {
+        "name": "Giant Spider",
+        "hp": 35, "defense": 4, "magic_resist": 3,
+        "stats": {"STR": 10, "DEX": 16, "CON": 8, "INT": 2, "WIS": 8, "PIE": 1},
+        "speed_base": 20,
+        "attack_damage": 12, "attack_type": "melee", "phys_type": "piercing",
+        "accuracy_bonus": 8,
+        "preferred_row": FRONT,
+        "ai_type": "aggressive",
+        "xp_reward": 30, "gold_reward": (2, 5),
+        "resistances": {
+            "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
+            "fire": VULNERABLE, "ice": NEUTRAL, "lightning": NEUTRAL,
+            "divine": NEUTRAL, "shadow": NEUTRAL, "nature": RESISTANT,
+            "arcane": NEUTRAL,
+        },
+        "status_immunities": [],
+        "abilities": [],
+        "loot_table": [
+            {"drop_chance": 0.30, "item": {
+                "name": "Spider Silk", "type": "material", "subtype": "cloth",
+                "rarity": "common", "tier": 1, "estimated_value": 12, "identified": True,
+                "description": "Tough, lightweight silk from a giant spider.",
+            }},
+        ],
+        "description_tiers": {0: "A dog-sized spider.", 1: "Giant Spider", 2: "Giant Spider — fast, venomous."},
+    },
 }
-
-
-# ═══════════════════════════════════════════════════════════════
-#  ENCOUNTER TEMPLATES
-# ═══════════════════════════════════════════════════════════════
 #  Each encounter defines groups of enemies in rows.
 #  Format: list of {"enemy": key, "count": N, "row": row}
 
@@ -497,13 +623,126 @@ ENCOUNTERS = {
             {"enemy": "Bandit", "count": 1, "row": FRONT},
         ],
     },
+    # Boss encounters
+    "boss_goblin_king": {
+        "name": "Grak the Goblin King",
+        "difficulty": "boss",
+        "groups": [
+            {"enemy": "Goblin King", "count": 1, "row": FRONT},
+            {"enemy": "Goblin Warrior", "count": 2, "row": FRONT},
+            {"enemy": "Goblin Shaman", "count": 1, "row": BACK},
+        ],
+    },
+    "boss_spider_queen": {
+        "name": "Spider Queen's Lair",
+        "difficulty": "boss",
+        "groups": [
+            {"enemy": "Giant Spider Queen", "count": 1, "row": FRONT},
+            {"enemy": "Giant Spider", "count": 3, "row": FRONT},
+        ],
+    },
+    "boss_foreman": {
+        "name": "The Foreman's Chamber",
+        "difficulty": "boss",
+        "groups": [
+            {"enemy": "Undead Foreman", "count": 1, "row": FRONT},
+            {"enemy": "Skeleton Warrior", "count": 2, "row": FRONT},
+        ],
+    },
+    # Harder regular encounters for deeper floors
+    "hard_goblins": {
+        "name": "Goblin War Party",
+        "difficulty": "hard",
+        "groups": [
+            {"enemy": "Goblin Warrior", "count": 4, "row": FRONT},
+            {"enemy": "Goblin Archer", "count": 2, "row": MID},
+            {"enemy": "Goblin Shaman", "count": 1, "row": BACK},
+        ],
+    },
+    "orc_patrol": {
+        "name": "Orc Patrol",
+        "difficulty": "hard",
+        "groups": [
+            {"enemy": "Orc Fighter", "count": 3, "row": FRONT},
+        ],
+    },
+    "spider_swarm": {
+        "name": "Spider Swarm",
+        "difficulty": "medium",
+        "groups": [
+            {"enemy": "Giant Spider", "count": 5, "row": FRONT},
+        ],
+    },
 }
+
+
+# ═══════════════════════════════════════════════════════════════
+#  FLOOR-BASED ENCOUNTER SCALING
+# ═══════════════════════════════════════════════════════════════
+
+DUNGEON_ENCOUNTER_TABLES = {
+    "goblin_warren": {
+        1: ["easy_goblins", "medium_goblins", "wolves"],
+        2: ["medium_goblins", "hard_goblins", "medium_bandits"],
+        3: ["hard_goblins", "hard_mixed"],
+        "boss": "boss_goblin_king",
+    },
+    "spiders_nest": {
+        1: ["spider_swarm", "wolves"],
+        2: ["spider_swarm", "medium_bandits"],
+        3: ["spider_swarm", "hard_mixed"],
+        "boss": "boss_spider_queen",
+    },
+    "abandoned_mine": {
+        1: ["medium_goblins", "medium_bandits"],
+        2: ["hard_mixed", "orc_patrol"],
+        3: ["orc_patrol", "hard_mixed"],
+        "boss": "boss_foreman",
+    },
+    "sunken_crypt": {
+        1: ["hard_goblins", "hard_mixed"],
+        2: ["hard_mixed", "orc_patrol"],
+        3: ["boss_orc", "orc_patrol"],
+        "boss": "boss_foreman",  # reuse until more bosses
+    },
+    "ruins_ashenmoor": {
+        1: ["hard_mixed", "orc_patrol"],
+        2: ["boss_orc", "orc_patrol"],
+        3: ["boss_orc", "orc_patrol"],
+        "boss": "boss_foreman",
+    },
+}
+
+def get_floor_encounter(dungeon_id, floor_num, total_floors, is_boss_floor=False):
+    """Get a random encounter key appropriate for this dungeon floor."""
+    import random
+    table = DUNGEON_ENCOUNTER_TABLES.get(dungeon_id)
+    if not table:
+        return "medium_goblins"
+
+    if is_boss_floor or floor_num >= total_floors:
+        return table.get("boss", "hard_mixed")
+
+    floor_table = table.get(floor_num, table.get(1, ["medium_goblins"]))
+    return random.choice(floor_table)
 
 
 def create_enemy_instance(enemy_key, uid):
     """Create a live enemy instance from template data.
     uid is a unique int for this specific enemy in the encounter."""
+    from core.abilities import ENEMY_ABILITIES
     template = ENEMIES[enemy_key]
+
+    # Resolve ability references (strings → dicts)
+    abilities = []
+    for a in template.get("abilities", []):
+        if isinstance(a, str):
+            ab_def = ENEMY_ABILITIES.get(a)
+            if ab_def:
+                abilities.append(dict(ab_def))
+        elif isinstance(a, dict):
+            abilities.append(dict(a))
+
     return {
         "uid": uid,
         "type": "enemy",
@@ -521,10 +760,10 @@ def create_enemy_instance(enemy_key, uid):
         "accuracy_bonus": template["accuracy_bonus"],
         "row": template["preferred_row"],
         "preferred_row": template["preferred_row"],
-        "ai_type": template["ai_type"],
+        "ai_type": template.get("ai_type", "balanced"),
         "resistances": dict(template["resistances"]),
-        "status_immunities": list(template["status_immunities"]),
-        "abilities": [dict(a) for a in template["abilities"]],
+        "status_immunities": list(template.get("status_immunities", [])),
+        "abilities": abilities,
         "status_effects": [],
         "is_defending": False,
         "alive": True,

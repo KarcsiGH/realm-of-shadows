@@ -311,6 +311,13 @@ class Game:
                     result = self.town_ui.handle_click(mx, my)
                     if result == "exit":
                         self.go(S_WORLD_MAP)
+                    elif result == "inn_save":
+                        # Auto-save when resting at inn
+                        from core.save_load import save_game
+                        try:
+                            save_game(self.party, self.world_state, "inn_autosave")
+                        except Exception:
+                            pass  # save is best-effort
                 elif e.button == 4:
                     self.town_ui.handle_scroll(-1)
                 elif e.button == 5:
@@ -973,6 +980,13 @@ class Game:
 
     def _process_dungeon_event(self, event):
         """Handle events from the dungeon."""
+        # Show any step messages (poison ticks, curse effects, etc.)
+        step_msgs = getattr(self.dungeon_state, '_last_step_messages', [])
+        if step_msgs:
+            for msg in step_msgs[:3]:  # limit to 3 messages
+                self.dungeon_ui.show_event(msg, (120, 200, 50))  # green for poison
+            self.dungeon_state._last_step_messages = []
+
         if event is None:
             return
 
@@ -1029,24 +1043,61 @@ class Game:
 
         elif event["type"] == "trap":
             data = event["data"]
-            dmg = data.get("damage", 10)
+            dmg_base = data.get("damage", 10)
             trap_name = data.get("name", "Trap")
+            trap_target = data.get("target", "single")
             was_detected = data.get("detected", False)
-            import random
-            if was_detected:
-                # Detected trap still fires — reduced damage, warning shown
-                dmg = max(1, dmg // 2)
-                target = random.choice(self.party)
-                target.resources["HP"] = max(0, target.resources.get("HP", 0) - dmg)
-                self.dungeon_ui.show_event(
-                    f"Triggered {trap_name}! {target.name} takes {dmg} damage (reduced — detected)!", ORANGE)
+            import random as rmod
+            from data.dungeon import resolve_trap_saving_throw
+            from core.status_effects import add_poison, add_curse
+
+            # Determine targets
+            if trap_target == "area":
+                targets = list(self.party)
             else:
-                # Undetected — full damage
-                data["detected"] = True  # now they know
-                target = random.choice(self.party)
-                target.resources["HP"] = max(0, target.resources.get("HP", 0) - dmg)
-                self.dungeon_ui.show_event(
-                    f"{trap_name}! {target.name} takes {dmg} damage!", RED)
+                targets = [rmod.choice(self.party)]
+
+            # Apply damage with saving throws
+            results = []
+            for target in targets:
+                save = resolve_trap_saving_throw(target, data)
+                if save == "avoid":
+                    results.append(f"{target.name} dodges!")
+                elif save == "half":
+                    actual_dmg = max(1, dmg_base // 2)
+                    target.resources["HP"] = target.resources.get("HP", 0) - actual_dmg
+                    results.append(f"{target.name}: {actual_dmg} dmg (half)")
+                elif save == "crit_fail":
+                    actual_dmg = dmg_base
+                    target.resources["HP"] = target.resources.get("HP", 0) - actual_dmg
+                    results.append(f"{target.name}: {actual_dmg} dmg!")
+                    # Apply status effects on crit fail
+                    if data.get("poison"):
+                        add_poison(target, data["poison"])
+                        results.append(f"{target.name} poisoned!")
+                    if data.get("curse"):
+                        add_curse(target, data["curse"])
+                        results.append(f"{target.name} cursed!")
+                else:  # full damage
+                    actual_dmg = dmg_base
+                    target.resources["HP"] = target.resources.get("HP", 0) - actual_dmg
+                    results.append(f"{target.name}: {actual_dmg} dmg")
+                    # Poison traps also apply poison on full hit (50% chance)
+                    if data.get("poison") and rmod.random() < 0.5:
+                        add_poison(target, data["poison"])
+                        results.append(f"{target.name} poisoned!")
+
+            # Build display message
+            if was_detected:
+                prefix = f"Detected {trap_name} (Tier {data.get('tier',1)})!"
+                color = ORANGE
+            else:
+                prefix = f"{trap_name} (Tier {data.get('tier',1)})!"
+                data["detected"] = True
+                color = RED
+
+            msg = prefix + " " + " | ".join(results[:4])  # limit display length
+            self.dungeon_ui.show_event(msg, color)
 
         elif event["type"] == "camp":
             # Camping in dungeon — higher ambush risk
@@ -1084,11 +1135,42 @@ class Game:
         """Process a player combat action from the UI."""
         if action["type"] == "end_combat":
             if action["result"] == "victory":
-                # Go to post-combat screen
+                # Sync HP, resources, and status effects from combat back to characters
+                for p in self.combat_state.players:
+                    char = p.get("character_ref")
+                    if char:
+                        char.resources["HP"] = max(0, p["hp"])
+                        # Sync other resources (MP, SP, etc.)
+                        for rk, rv in p.get("resources", {}).items():
+                            char.resources[rk] = rv
+                        # Unconscious characters wake at 1 HP
+                        if char.resources["HP"] <= 0:
+                            char.resources["HP"] = 1
+                        # Sync combat status effects (poison, debuffs) back to character
+                        combat_statuses = p.get("status_effects", [])
+                        # Convert combat-style statuses to character-style if needed
+                        from core.status_effects import add_poison, get_status_effects
+                        for cs in combat_statuses:
+                            if cs.get("name") == "Poison" and cs.get("duration", 0) > 0:
+                                add_poison(char, "poison_weak")
                 self.start_post_combat()
             else:
-                # Defeat — retry
-                self.start_combat("tutorial")
+                # DEFEAT — TPK handling
+                # All characters wake at 1 HP with resurrection sickness at last inn
+                for c in self.party:
+                    c.resources["HP"] = 1
+                    # Lose 25% of gold
+                    c.gold = int(c.gold * 0.75)
+                from core.status_effects import add_resurrection_sickness
+                for c in self.party:
+                    add_resurrection_sickness(c)
+                # Return to town
+                self.dungeon_state = None
+                self.dungeon_ui = None
+                self.town_ui = TownUI(self.party)
+                self.town_ui.inn_result = "Your party has fallen... You awaken at the inn, battered and bruised. (25% gold lost)"
+                self.town_ui.view = self.town_ui.VIEW_INN
+                self.go(S_TOWN)
             return
 
         if action["type"] == "attack":

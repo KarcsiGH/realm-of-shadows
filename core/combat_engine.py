@@ -652,7 +652,12 @@ def resolve_ability(attacker, target, ability):
     is_offensive = not is_heal
 
     if is_heal:
-        # Healing ability
+        # Healing ability — can also revive downed allies
+        was_downed = not target["alive"]
+        if was_downed:
+            target["alive"] = True
+            target["hp"] = 0  # start from 0 for heal
+
         heal_spell = {"power": cost * 1.5}  # Scale heal power off cost
         is_crit, crit_data = check_crit(attacker, "heal")
         amount = calc_healing(attacker, heal_spell)
@@ -666,9 +671,14 @@ def resolve_ability(attacker, target, ability):
         result["healing"] = actual
 
         crit_str = " CRITICAL HEAL!" if is_crit else ""
-        result["messages"].append(
-            f"{attacker['name']} uses {ability['name']} on {target['name']} — heals {actual} HP!{crit_str}"
-        )
+        if was_downed:
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']} — {target['name']} revived with {actual} HP!{crit_str}"
+            )
+        else:
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']} on {target['name']} — heals {actual} HP!{crit_str}"
+            )
 
     elif is_offensive:
         # Offensive ability — check if magic or physical

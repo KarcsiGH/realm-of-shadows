@@ -215,13 +215,16 @@ def get_available_transitions(character):
 # ═══════════════════════════════════════════════════════════════
 
 def training_cost(level):
-    """Gold cost to train to this level (on top of inn room)."""
-    if level <= 5:   return level * 50
-    if level <= 10:  return level * 100
-    if level <= 15:  return level * 200
-    if level <= 20:  return level * 400
-    if level <= 25:  return level * 800
-    return level * 1500
+    """Gold cost to train to this level (on top of inn room).
+    Designed so a first dungeon run covers full party level 2 training."""
+    if level <= 3:   return level * 10     # 20g, 30g — very affordable early
+    if level <= 5:   return level * 30     # 120g, 150g
+    if level <= 8:   return level * 75     # 450-600g
+    if level <= 12:  return level * 150    # 1350-1800g
+    if level <= 16:  return level * 300    # 3900-4800g
+    if level <= 20:  return level * 500    # 8500-10000g
+    if level <= 25:  return level * 800    # 16800-20000g
+    return level * 1500                     # 39000-45000g
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -268,6 +271,17 @@ def apply_level_up(character, free_stat=None):
     # HP gain (fixed base + random bonus)
     hp_gain = gains["hp_base"] + random.randint(0, gains["hp_random"])
     summary["hp_gain"] = hp_gain
+
+    # Learn new abilities for this level
+    from core.abilities import CLASS_ABILITIES
+    class_abilities = CLASS_ABILITIES.get(cls, [])
+    known_names = {a["name"] for a in character.abilities}
+    new_abilities = []
+    for ab in class_abilities:
+        if ab["name"] not in known_names and ab.get("level", 1) <= new_level:
+            character.abilities.append(ab.copy())
+            new_abilities.append(ab["name"])
+    summary["new_abilities"] = new_abilities
 
     # Recalculate all resources to new maxes (but don't heal — inn rest does that)
     # The caller should recalculate resources after this

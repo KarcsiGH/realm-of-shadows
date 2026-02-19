@@ -210,7 +210,7 @@ class CombatUI:
 
             rect = pygame.Rect(cx, cy, card_w, card_h)
             is_active = (p == self.combat.get_current_combatant())
-            is_heal_target = (self.action_mode == "target_heal" and p["alive"])
+            is_heal_target = (self.action_mode == "target_heal")  # can heal downed allies too
             is_heal_hover = is_heal_target and rect.collidepoint(mx, my)
 
             if not p["alive"]:
@@ -850,12 +850,10 @@ class CombatUI:
                         return result
 
         elif self.action_mode == "target_heal":
-            # Click on a player card to heal them
+            # Click on a player card to heal them (including downed allies for revival)
             from core.combat_config import BACK, MID, FRONT
             row_positions = {BACK: 0, MID: 1, FRONT: 2}
             for p in self.combat.players:
-                if not p["alive"]:
-                    continue
                 row_idx = row_positions.get(p["row"], 0)
                 same_row = [pp for pp in self.combat.players if pp["row"] == p["row"]]
                 pos_in_row = same_row.index(p)

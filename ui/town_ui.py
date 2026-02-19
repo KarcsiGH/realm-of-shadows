@@ -173,6 +173,15 @@ class TownUI:
             draw_text(surface, f"HP: {hp}  Gold: {c.gold}  Items: {len(c.inventory)}",
                       cx, bar_y + 40, DIM_GREEN, 11)
 
+            # Status effect indicators
+            from core.status_effects import get_status_display
+            statuses = get_status_display(c)
+            if statuses:
+                sx = cx
+                for sname, scolor in statuses[:3]:  # max 3 shown
+                    draw_text(surface, sname, sx, bar_y + 56, scolor, 9)
+                    sx += 80
+
     # ─────────────────────────────────────────────────────────
     #  GENERAL STORE — Menu
     # ─────────────────────────────────────────────────────────
@@ -833,7 +842,10 @@ class TownUI:
                             if c.resources.get(rn, 0) > mv:
                                 c.resources[rn] = mv
                         gains = ", ".join(f"+{v} {k}" for k, v in summary["stat_gains"].items())
-                        self.inn_result = f"{c.name} reached level {c.level}! {gains}, +{summary['hp_gain']} base HP"
+                        ab_str = ""
+                        if summary.get("new_abilities"):
+                            ab_str = " Learned: " + ", ".join(summary["new_abilities"])
+                        self.inn_result = f"{c.name} reached level {c.level}! {gains}, +{summary['hp_gain']} base HP{ab_str}"
                     self.levelup_current += 1
                     self.levelup_free_stat = None
                     if self.levelup_current >= len(self.levelup_queue):
@@ -922,27 +934,71 @@ class TownUI:
         cost = svc["cost"]
         total_gold = sum(c.gold for c in self.party)
 
-        if cost > 0 and total_gold < cost:
-            self._msg(f"Not enough gold! Need {cost}g.", RED)
-            return
-
-        if service_key == "rest_heal":
-            from core.classes import get_all_resources
+        if service_key == "cure_poison":
+            # Find first poisoned character
+            from core.status_effects import get_status_effects, remove_all_poison
             for c in self.party:
-                c.resources = get_all_resources(c.class_name, c.stats, c.level)
-            self._msg("The temple's warm light washes over you. Party fully restored!", HEAL_COL)
-
-        elif service_key == "identify_item":
-            # Just show the message — actual identification is via item clicks below
-            self._msg("Click an unidentified item below to identify it (15g each).", DIM_GOLD)
+                effects = get_status_effects(c)
+                if any(s.get("type") == "poison" for s in effects):
+                    if total_gold < cost:
+                        self._msg(f"Not enough gold! Need {cost}g.", RED)
+                        return
+                    self._deduct_gold(cost)
+                    remove_all_poison(c)
+                    self._msg(f"{c.name}'s poison has been purged! ({cost}g)", HEAL_COL)
+                    return
+            self._msg("No one in your party is poisoned.", GREY)
 
         elif service_key == "remove_curse":
-            self._deduct_gold(cost)
-            self._msg("The priests perform a cleansing ritual. Curses removed!", HEAL_COL)
+            from core.status_effects import get_status_effects, remove_all_curses
+            for c in self.party:
+                effects = get_status_effects(c)
+                if any(s.get("type") == "curse" for s in effects):
+                    if total_gold < cost:
+                        self._msg(f"Not enough gold! Need {cost}g.", RED)
+                        return
+                    self._deduct_gold(cost)
+                    remove_all_curses(c)
+                    self._msg(f"{c.name}'s curses have been lifted! ({cost}g)", HEAL_COL)
+                    return
+            self._msg("No one in your party is cursed.", GREY)
 
         elif service_key == "resurrect":
+            # Find first dead character (HP <= 0 and marked dead)
+            # For now, resurrect any character at 0 HP
+            for c in self.party:
+                if c.resources.get("HP", 0) <= 0:
+                    actual_cost = 200 + 100 * c.level
+                    if total_gold < actual_cost:
+                        self._msg(f"Not enough gold! Need {actual_cost}g to resurrect {c.name}.", RED)
+                        return
+                    self._deduct_gold(actual_cost)
+                    c.resources["HP"] = 1
+                    from core.status_effects import add_resurrection_sickness, remove_all_poison
+                    remove_all_poison(c)  # resurrection clears poison
+                    add_resurrection_sickness(c)
+                    # 1% chance of 5% max HP loss
+                    import random
+                    if random.random() < 0.01:
+                        from core.classes import get_all_resources
+                        max_res = get_all_resources(c.class_name, c.stats, c.level)
+                        max_hp = max_res.get("HP", 100)
+                        loss = max(1, int(max_hp * 0.05))
+                        self._msg(f"{c.name} resurrected but weakened! (-{loss} max HP permanently) ({actual_cost}g)", ORANGE)
+                    else:
+                        self._msg(f"{c.name} has been resurrected! ({actual_cost}g) Rest at the inn to recover.", HEAL_COL)
+                    return
+            self._msg("No fallen party members to resurrect.", GREY)
+
+        elif service_key == "identify_item":
+            self._msg("Click an unidentified item below to identify it (15g each).", DIM_GOLD)
+
+        elif service_key == "blessing":
+            if total_gold < cost:
+                self._msg(f"Not enough gold! Need {cost}g.", RED)
+                return
             self._deduct_gold(cost)
-            self._msg("Divine light restores the fallen! Party member resurrected.", HEAL_COL)
+            self._msg("The priests bless your party. May the Light guide your path! (+5% accuracy)", HEAL_COL)
 
     def _temple_identify(self, char_idx, item_idx, item, char):
         """Identify an item at the temple for gold."""

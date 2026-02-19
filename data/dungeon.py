@@ -111,7 +111,116 @@ DUNGEONS = {
 #  FLOOR GENERATION
 # ═══════════════════════════════════════════════════════════════
 
-def generate_floor(width, height, floor_num, total_floors, theme, rng):
+# ═══════════════════════════════════════════════════════════════
+#  TIERED TRAP SYSTEM
+# ═══════════════════════════════════════════════════════════════
+
+TRAP_TIERS = {
+    1: {
+        "traps": [
+            {"name": "Pit Trap",        "damage": (5, 8),   "target": "single", "save_stat": "DEX", "detect_base": 70, "disarm_base": 60},
+            {"name": "Tripwire",        "damage": (4, 7),   "target": "single", "save_stat": "DEX", "detect_base": 70, "disarm_base": 60},
+            {"name": "Loose Stones",    "damage": (3, 6),   "target": "single", "save_stat": "DEX", "detect_base": 75, "disarm_base": 65},
+        ],
+    },
+    2: {
+        "traps": [
+            {"name": "Spike Trap",      "damage": (10, 16), "target": "single", "save_stat": "DEX", "detect_base": 50, "disarm_base": 45},
+            {"name": "Poison Needle",   "damage": (6, 10),  "target": "single", "save_stat": "CON", "detect_base": 50, "disarm_base": 45, "poison": "poison_weak"},
+            {"name": "Swinging Blade",  "damage": (12, 18), "target": "single", "save_stat": "DEX", "detect_base": 45, "disarm_base": 40},
+        ],
+    },
+    3: {
+        "traps": [
+            {"name": "Gas Cloud",       "damage": (10, 15), "target": "area",   "save_stat": "CON", "detect_base": 35, "disarm_base": 30, "poison": "poison_strong"},
+            {"name": "Collapsing Ceil", "damage": (20, 30), "target": "area",   "save_stat": "DEX", "detect_base": 35, "disarm_base": 30},
+            {"name": "Fire Jet",        "damage": (18, 28), "target": "area",   "save_stat": "DEX", "detect_base": 40, "disarm_base": 30},
+        ],
+    },
+    4: {
+        "traps": [
+            {"name": "Explosive Rune",  "damage": (30, 45), "target": "area",   "save_stat": "WIS", "detect_base": 20, "disarm_base": 20},
+            {"name": "Acid Spray",      "damage": (25, 40), "target": "area",   "save_stat": "DEX", "detect_base": 25, "disarm_base": 20, "poison": "poison_strong"},
+            {"name": "Blade Gauntlet",  "damage": (35, 50), "target": "single", "save_stat": "DEX", "detect_base": 20, "disarm_base": 15},
+        ],
+    },
+    5: {
+        "traps": [
+            {"name": "Soul Drain",      "damage": (40, 60), "target": "area",   "save_stat": "WIS", "detect_base": 10, "disarm_base": 10, "curse": "curse_weakness"},
+            {"name": "Petrify Glyph",   "damage": (30, 50), "target": "area",   "save_stat": "CON", "detect_base": 15, "disarm_base": 10, "curse": "curse_silence"},
+            {"name": "Teleport Trap",   "damage": (20, 35), "target": "area",   "save_stat": "WIS", "detect_base": 10, "disarm_base": 10},
+        ],
+    },
+}
+
+def _dungeon_trap_offset(dungeon_id):
+    """Trap tier offset based on dungeon difficulty."""
+    offsets = {
+        "goblin_warren": 0,     # Tier 1-3
+        "spiders_nest": 1,      # Tier 2-4
+        "abandoned_mine": 1,    # Tier 2-4
+        "sunken_crypt": 2,      # Tier 3-5
+        "ruins_ashenmoor": 2,   # Tier 3-5
+    }
+    return offsets.get(dungeon_id, 0)
+
+def _make_tiered_trap(tier, rng):
+    """Create a trap event dict of the given tier."""
+    tier = max(1, min(5, tier))
+    trap_def = rng.choice(TRAP_TIERS[tier]["traps"])
+    dmg = rng.randint(trap_def["damage"][0], trap_def["damage"][1])
+    event = {
+        "type": "trap",
+        "name": trap_def["name"],
+        "tier": tier,
+        "damage": dmg,
+        "target": trap_def["target"],
+        "save_stat": trap_def["save_stat"],
+        "detect_base": trap_def["detect_base"],
+        "disarm_base": trap_def["disarm_base"],
+        "detected": False,
+        "disarmed": False,
+    }
+    if "poison" in trap_def:
+        event["poison"] = trap_def["poison"]
+    if "curse" in trap_def:
+        event["curse"] = trap_def["curse"]
+    return event
+
+def resolve_trap_saving_throw(character, trap_event):
+    """Roll a saving throw for a character against a trap.
+    Returns: 'avoid' (no damage), 'half' (half damage), 'full' (full damage),
+             or 'crit_fail' (full + status effect)."""
+    import random as rmod
+    save_stat = trap_event.get("save_stat", "DEX")
+    stat_val = character.stats.get(save_stat, 10)
+
+    # Base threshold scales with trap tier
+    tier = trap_event.get("tier", 1)
+    threshold = 30 + tier * 10  # 40, 50, 60, 70, 80 for tiers 1-5
+
+    # Character bonuses
+    bonus = stat_val * 2
+    if character.class_name == "Thief":
+        bonus += 15
+    elif character.class_name == "Ranger":
+        bonus += 10
+    elif character.class_name in ("Knight", "Fighter"):
+        bonus -= 5  # heavy armor penalty
+
+    roll = rmod.randint(1, 100) + bonus
+
+    if roll >= threshold + 20:
+        return "avoid"
+    elif roll >= threshold:
+        return "half"
+    elif roll <= threshold - 30:
+        return "crit_fail"
+    else:
+        return "full"
+
+
+def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_id="goblin_warren"):
     """Generate a single dungeon floor grid.
     Returns 2D list of tile dicts and metadata."""
 
@@ -226,12 +335,8 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng):
                     break
                 if tiles[y][x]["type"] == DT_CORRIDOR and rng.random() < 0.03:
                     tiles[y][x]["type"] = DT_TRAP
-                    tiles[y][x]["event"] = {
-                        "type": "trap",
-                        "damage": 5 + floor_num * 3,
-                        "name": rng.choice(["Spike Trap", "Poison Dart", "Pitfall", "Gas Trap"]),
-                        "detected": False,
-                    }
+                    trap_tier = min(5, max(1, floor_num + _dungeon_trap_offset(dungeon_id)))
+                    tiles[y][x]["event"] = _make_tiered_trap(trap_tier, rng)
                     placed_traps += 1
 
         # ── Fixed encounters in some rooms ──
@@ -279,16 +384,25 @@ def _carve_v_corridor(tiles, y1, y2, x, max_h):
 
 
 def _make_treasure_event(floor_num, rng):
-    gold = rng.randint(10, 20) * floor_num
+    gold = rng.randint(15, 35) * floor_num
     items = []
-    if rng.random() < 0.3 + floor_num * 0.1:
+    # Higher chance of consumables on deeper floors
+    if rng.random() < 0.35 + floor_num * 0.1:
         items.append(rng.choice([
             {"name": "Minor Healing Potion", "type": "consumable", "subtype": "potion",
-             "heal_amount": 25, "identified": True},
+             "heal_amount": 25, "identified": True, "estimated_value": 15},
             {"name": "Healing Potion", "type": "consumable", "subtype": "potion",
-             "heal_amount": 50, "identified": True},
+             "heal_amount": 50, "identified": True, "estimated_value": 30},
             {"name": "Antidote", "type": "consumable", "subtype": "potion",
-             "cures": ["Poison"], "identified": True},
+             "cures": ["Poison"], "identified": True, "estimated_value": 20},
+        ]))
+    # Small chance of a bonus item on floor 2+
+    if floor_num >= 2 and rng.random() < 0.2:
+        items.append(rng.choice([
+            {"name": "Scroll of Protection", "type": "consumable", "subtype": "scroll",
+             "effect": "defense_buff", "identified": True, "estimated_value": 40},
+            {"name": "Mana Crystal", "type": "consumable", "subtype": "crystal",
+             "restore_mp": 30, "identified": True, "estimated_value": 35},
         ]))
     return {"type": "treasure", "gold": gold, "items": items, "opened": False}
 
@@ -329,6 +443,7 @@ class DungeonState:
                 self.total_floors,
                 self.theme,
                 rng,
+                self.dungeon_id,
             )
 
     def move(self, dx, dy):
@@ -355,6 +470,15 @@ class DungeonState:
         for c in self.party:
             max_res = get_all_resources(c.class_name, c.stats, c.level)
             apply_step_regen(c, max_res)
+
+        # Status effect ticking (poison, doom curse, etc.)
+        from core.status_effects import tick_step
+        step_messages = []
+        for c in self.party:
+            msgs = tick_step(c)
+            step_messages.extend(msgs)
+        if step_messages:
+            self._last_step_messages = step_messages
 
         # Check tile events
         if tile["type"] == DT_STAIRS_DOWN:
@@ -385,7 +509,22 @@ class DungeonState:
         rate = self.encounter_rate
         if self.step_counter >= random.randint(max(1, rate - 2), rate + 2):
             self.step_counter = 0
-            return {"type": "random_encounter"}
+            # Check if this is the boss floor trigger (near stairs on last floor)
+            is_boss = False
+            if self.current_floor == self.total_floors:
+                floor = self.floors[self.current_floor]
+                sd = floor.get("stairs_down")
+                if sd:
+                    dist = abs(nx - sd[0]) + abs(ny - sd[1])
+                    if dist <= 3:
+                        is_boss = True
+            return {
+                "type": "random_encounter",
+                "dungeon_id": self.dungeon_id,
+                "floor": self.current_floor,
+                "total_floors": self.total_floors,
+                "is_boss": is_boss,
+            }
 
         return None
 
