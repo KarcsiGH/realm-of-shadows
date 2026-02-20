@@ -69,12 +69,24 @@ class Character:
         self.abilities = [a.copy() for a in cls["starting_abilities"]]
         # Equip starting gear
         self.equipment = empty_equipment()
+        from core.party_knowledge import mark_item_identified
+        # Armor
         starting = STARTING_EQUIPMENT.get(self.class_name, {})
         for slot, armor_key in starting.items():
             if armor_key in ARMOR:
                 armor_item = dict(ARMOR[armor_key])
                 armor_item["identified"] = True
                 self.equipment[slot] = armor_item
+                mark_item_identified(armor_key)
+        # Weapon
+        from data.weapons import STARTING_WEAPONS, get_weapon
+        weapon_key = STARTING_WEAPONS.get(self.class_name)
+        if weapon_key:
+            weapon_data = get_weapon(weapon_key)
+            weapon_data["identified"] = True
+            weapon_data["slot"] = "weapon"
+            self.equipment["weapon"] = weapon_data
+            mark_item_identified(weapon_key)
 
     def effective_stats(self):
         """Base stats + equipment bonuses. Used for combat calculations."""

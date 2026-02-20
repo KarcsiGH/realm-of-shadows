@@ -90,6 +90,13 @@ class PostCombatUI:
         self.hover_btn = -1
         self.timer = 0
 
+        # ── Register enemy knowledge and auto-ID known loot ──
+        from core.party_knowledge import mark_enemy_encountered, auto_identify_if_known
+        for enemy_name in rewards.get("enemy_names", []):
+            mark_enemy_encountered(enemy_name, tier=1)
+        for item in self.loot_items:
+            auto_identify_if_known(item)
+
     # ─────────────────────────────────────────────────────────
     #  APPLY XP (called once when entering XP phase)
     # ─────────────────────────────────────────────────────────
@@ -722,6 +729,9 @@ class PostCombatUI:
         if item.get("identified"):
             full_name = item.get("name", "Unknown")
             self.id_log.append((f"  → Fully identified: {full_name}", GOLD))
+            # Register in party knowledge so future copies auto-identify
+            from core.party_knowledge import mark_item_identified
+            mark_item_identified(full_name)
 
     # ─────────────────────────────────────────────────────────
     #  LOOT FINALIZATION
@@ -729,9 +739,15 @@ class PostCombatUI:
 
     def _finalize_loot(self):
         """Move assigned items into character inventories."""
+        from core.party_knowledge import auto_identify_if_known, mark_item_identified
         for item_idx, char_idx in self.loot_assignments.items():
             if item_idx < len(self.loot_items) and char_idx < len(self.party):
                 item = self.loot_items[item_idx]
+                # Auto-identify if party already knows this item type
+                auto_identify_if_known(item)
+                # If identified, register in party knowledge
+                if item.get("identified"):
+                    mark_item_identified(item.get("name", ""))
                 self.party[char_idx].add_item(item)
 
     # ─────────────────────────────────────────────────────────

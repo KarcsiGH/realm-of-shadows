@@ -913,6 +913,10 @@ class TownUI:
         # Remove shop-specific fields
         new_item.pop("buy_price", None)
         new_item.pop("sell_price", None)
+        # Shop items are always identified
+        new_item["identified"] = True
+        from core.party_knowledge import mark_item_identified
+        mark_item_identified(new_item.get("name", ""))
         self.party[0].inventory.append(new_item)
 
         self._msg(f"Bought {shop_item['name']} for {price}g — added to {self.party[0].name}'s inventory", BUY_COL)
@@ -1013,6 +1017,9 @@ class TownUI:
         item["magic_identified"] = True
         item["material_identified"] = True
         name = get_item_display_name(item)
+        # Register in party knowledge
+        from core.party_knowledge import mark_item_identified
+        mark_item_identified(name)
         self._msg(f"Identified: {name} (15g)", HEAL_COL)
 
     def _deduct_gold(self, amount):

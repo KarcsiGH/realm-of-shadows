@@ -64,12 +64,17 @@ def save_game(party, slot_name="save1", metadata=None):
     """Save the party to a JSON file. Returns (success, filepath, message)."""
     ensure_save_dir()
 
+    # Party knowledge (identified items, known enemies)
+    from core.party_knowledge import get_save_data as get_knowledge_data
+    knowledge = get_knowledge_data()
+
     save_data = {
-        "version": 1,
+        "version": 2,
         "timestamp": datetime.now().isoformat(),
         "slot_name": slot_name,
         "metadata": metadata or {},
         "party": [serialize_character(c) for c in party],
+        "knowledge": knowledge,
     }
 
     # Add summary metadata
@@ -99,6 +104,13 @@ def load_game(slot_name="save1"):
             save_data = json.load(f)
 
         party = [deserialize_character(cd) for cd in save_data["party"]]
+
+        # Restore party knowledge
+        knowledge = save_data.get("knowledge")
+        if knowledge:
+            from core.party_knowledge import load_save_data as load_knowledge
+            load_knowledge(knowledge)
+
         return True, party, f"Loaded {slot_name}"
     except Exception as e:
         return False, None, f"Load failed: {e}"

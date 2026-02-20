@@ -1028,9 +1028,14 @@ class Game:
                 remainder = gold % len(self.party)
                 for i, c in enumerate(self.party):
                     c.gold += share + (1 if i < remainder else 0)
-            # Items go to party leader's inventory with a message
+            # Items go to party leader's inventory — auto-ID if known
+            from core.party_knowledge import auto_identify_if_known, mark_item_identified
             for item in items:
-                self.party[0].inventory.append(dict(item))
+                item_copy = dict(item)
+                auto_identify_if_known(item_copy)
+                if item_copy.get("identified"):
+                    mark_item_identified(item_copy.get("name", ""))
+                self.party[0].inventory.append(item_copy)
             parts = []
             if gold > 0:
                 parts.append(f"{gold} gold")
