@@ -526,10 +526,23 @@ class TownUI:
 
         c = self.levelup_queue[self.levelup_current]
         cost = training_cost(c.level + 1)
+        cls = CLASSES.get(c.class_name, {})
 
         draw_text(surface, f"Training: {c.name}", SCREEN_W // 2 - 120, 20, GOLD, 24, bold=True)
-        draw_text(surface, f"Level {c.level} → {c.level + 1}  |  Training cost: {cost}g",
-                  SCREEN_W // 2 - 160, 55, CREAM, 16)
+        class_col = cls.get("color", CREAM)
+        draw_text(surface, f"Level {c.level} → {c.level + 1}  |  {c.class_name}  |  Cost: {cost}g",
+                  SCREEN_W // 2 - 180, 55, CREAM, 16)
+        # Show class with color
+        draw_text(surface, c.class_name,
+                  SCREEN_W // 2 - 180 + get_font(16).size(f"Level {c.level} → {c.level + 1}  |  ")[0],
+                  55, class_col, 16, bold=True)
+
+        # Class stat recommendation hint
+        growth = cls.get("stat_growth", {})
+        primary_stats = [s for s, tier in growth.items() if tier == "high"]
+        if primary_stats:
+            draw_text(surface, f"Key stats for {c.class_name}: {', '.join(primary_stats)}",
+                      SCREEN_W // 2 - 180, 78, class_col, 13)
 
         # Current stats
         draw_text(surface, "Current Stats:", 60, 100, GOLD, 16, bold=True)

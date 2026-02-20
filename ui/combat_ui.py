@@ -274,8 +274,8 @@ class CombatUI:
                 raw = stat_d + w_dmg
                 d_lo, d_hi = max(1, int(raw * 0.85)), int(raw * 1.15)
                 dfn = p.get("defense", 0)
-                draw_text(surface, f"DMG:{d_lo}-{d_hi} AC:{dfn}",
-                          cx + 6, cy + card_h - 16, DARK_GREY, 10)
+                draw_text(surface, f"DMG:{d_lo}-{d_hi}  AC:{dfn}",
+                          cx + 6, cy + card_h - 18, (160, 160, 180), 12)
 
                 # Status effects (compact, right side)
                 sx = cx + card_w - 6
@@ -454,8 +454,17 @@ class CombatUI:
     def _draw_main_actions(self, surface, mx, my, actor):
         """Draw the main action buttons."""
         self.hover_action = -1
+
+        # Calculate weapon damage range for display
+        w = actor.get("weapon", {})
+        w_dmg = w.get("damage", 0)
+        stat_d = sum(actor["stats"].get(sk, 0) * wt
+                     for sk, wt in w.get("damage_stat", {}).items())
+        raw = stat_d + w_dmg
+        d_lo, d_hi = max(1, int(raw * 0.85)), int(raw * 1.15)
+
         actions = [
-            ("Attack", "Basic weapon attack"),
+            ("Attack", f"Weapon attack ({d_lo}-{d_hi} dmg)"),
             ("Defend", "+50% defense until next turn"),
         ]
 
@@ -531,7 +540,20 @@ class CombatUI:
             name_col = GOLD if hover else (CREAM if affordable else DEAD_COLOR)
             draw_text(surface, ab["name"], rect.x + 10, rect.y + 4, name_col, 15, bold=True)
 
+            # Cost + effect info
             cost_str = f"{cost} {resource_key}" if resource_key else "Free"
+            # Show damage or healing power if available
+            power = ab.get("power", 0)
+            ab_type = ab.get("type", "")
+            if power and ab_type == "attack":
+                w = actor.get("weapon", {})
+                w_dmg = w.get("damage", 0)
+                stat_d = sum(actor["stats"].get(sk, 0) * wt
+                             for sk, wt in w.get("damage_stat", {}).items())
+                ab_raw = (stat_d + w_dmg) * power
+                cost_str += f"  |  ~{int(ab_raw)} dmg"
+            elif power and ab_type == "heal":
+                cost_str += f"  |  ~{int(power * 10)} heal"
             cost_col = DARK_GREY if affordable else HP_RED
             draw_text(surface, cost_str, rect.x + 10, rect.y + 24, cost_col, 12)
 
