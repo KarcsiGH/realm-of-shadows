@@ -349,6 +349,7 @@ class Game:
                 if e.button == 1:
                     result = self.town_ui.handle_click(mx, my)
                     if result == "exit":
+                        self._init_world_map()
                         self.go(S_WORLD_MAP)
                     elif result == "inn_save":
                         # Auto-save when resting at inn
