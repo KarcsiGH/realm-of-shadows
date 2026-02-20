@@ -78,7 +78,12 @@ class TownUI:
         self.levelup_free_stat = None  # selected stat for free point
 
         # Tavern state
-        self.current_rumor = random.choice(TAVERN["rumors"])
+        from data.story_data import get_rumor
+        self.current_rumor = get_rumor()
+
+        # NPC dialogue state
+        self.active_dialogue = None  # DialogueUI when talking to an NPC
+        self.town_id = "briarhollow"  # which town we're in (for NPC lookup)
 
     # ─────────────────────────────────────────────────────────
     #  MAIN DRAW
@@ -86,6 +91,16 @@ class TownUI:
 
     def draw(self, surface, mx, my, dt):
         self.msg_timer = max(0, self.msg_timer - dt)
+
+        # If dialogue is active, render it instead
+        if self.active_dialogue and not self.active_dialogue.finished:
+            self.active_dialogue.draw(surface, mx, my, dt)
+            return
+
+        # Clear dialogue if finished
+        if self.active_dialogue and self.active_dialogue.finished:
+            self.active_dialogue = None
+
         surface.fill(TOWN_BG)
 
         if self.view == self.VIEW_HUB:
@@ -141,7 +156,7 @@ class TownUI:
 
         by = 140
         for i, (name, desc, bg_tint, accent) in enumerate(locations):
-            btn_rect = pygame.Rect(SCREEN_W // 2 - 250, by + i * 100, 500, 85)
+            btn_rect = pygame.Rect(SCREEN_W // 2 - 300, by + i * 90, 420, 78)
             hover = btn_rect.collidepoint(mx, my)
 
             bg = (bg_tint[0] + 20, bg_tint[1] + 20, bg_tint[2] + 20) if hover else bg_tint
@@ -150,10 +165,36 @@ class TownUI:
             pygame.draw.rect(surface, bg, btn_rect, border_radius=5)
             pygame.draw.rect(surface, border, btn_rect, 2, border_radius=5)
 
-            draw_text(surface, name, btn_rect.x + 20, btn_rect.y + 15,
-                      accent if hover else CREAM, 22, bold=True)
-            draw_text(surface, desc, btn_rect.x + 20, btn_rect.y + 50,
-                      GREY, 14)
+            draw_text(surface, name, btn_rect.x + 20, btn_rect.y + 12,
+                      accent if hover else CREAM, 20, bold=True)
+            draw_text(surface, desc, btn_rect.x + 20, btn_rect.y + 42,
+                      GREY, 12)
+
+        # ── NPC panel (right side) ──
+        from data.story_data import get_town_npcs
+        npcs = get_town_npcs(self.town_id)
+        if npcs:
+            npc_x = SCREEN_W // 2 + 150
+            draw_text(surface, "People in Town", npc_x, 140, GOLD, 16, bold=True)
+            for j, (npc_id, npc_data) in enumerate(npcs):
+                nr = pygame.Rect(npc_x, 168 + j * 62, 210, 54)
+                hover = nr.collidepoint(mx, my)
+                pc = npc_data.get("portrait_color", (80, 80, 80))
+                bg = (pc[0] // 4 + 10, pc[1] // 4 + 10, pc[2] // 4 + 10)
+                if hover:
+                    bg = (bg[0] + 15, bg[1] + 15, bg[2] + 15)
+                pygame.draw.rect(surface, bg, nr, border_radius=4)
+                pygame.draw.rect(surface, pc if hover else PANEL_BORDER, nr, 2, border_radius=4)
+                # Portrait indicator
+                pi = pygame.Rect(nr.x + 5, nr.y + 5, 44, 44)
+                pygame.draw.rect(surface, pc, pi, border_radius=3)
+                initial = npc_data["name"][0]
+                iw = get_font(22).size(initial)[0]
+                draw_text(surface, initial, pi.x + (44 - iw) // 2, pi.y + 10,
+                          WHITE, 22, bold=True)
+                draw_text(surface, npc_data["name"], nr.x + 56, nr.y + 6, CREAM, 14, bold=True)
+                draw_text(surface, npc_data.get("title", ""), nr.x + 56, nr.y + 24,
+                          DARK_GREY, 11)
 
         # Party summary at bottom
         self._draw_party_bar(surface, mx, my)
@@ -678,12 +719,19 @@ class TownUI:
     def handle_click(self, mx, my):
         """Returns 'exit' to leave town, or None."""
 
+        # Dialogue takes priority
+        if self.active_dialogue and not self.active_dialogue.finished:
+            result = self.active_dialogue.handle_click(mx, my)
+            if self.active_dialogue.finished:
+                self.active_dialogue = None
+            return None
+
         # ── Hub view ──
         if self.view == self.VIEW_HUB:
             locations = ["inn", "shop", "temple", "tavern", "exit"]
             by = 140
             for i, loc in enumerate(locations):
-                btn = pygame.Rect(SCREEN_W // 2 - 250, by + i * 100, 500, 85)
+                btn = pygame.Rect(SCREEN_W // 2 - 300, by + i * 90, 420, 78)
                 if btn.collidepoint(mx, my):
                     if loc == "exit":
                         self.finished = True
@@ -696,6 +744,22 @@ class TownUI:
                         self.view = self.VIEW_TAVERN
                     elif loc == "inn":
                         self.view = self.VIEW_INN
+                    return None
+
+            # NPC clicks
+            from data.story_data import get_town_npcs, NPC_DIALOGUES
+            from core.dialogue import select_dialogue
+            npcs = get_town_npcs(self.town_id)
+            npc_x = SCREEN_W // 2 + 150
+            for j, (npc_id, npc_data) in enumerate(npcs):
+                nr = pygame.Rect(npc_x, 168 + j * 62, 210, 54)
+                if nr.collidepoint(mx, my):
+                    dialogues = NPC_DIALOGUES.get(npc_id, [])
+                    if dialogues:
+                        from ui.dialogue_ui import DialogueUI
+                        ds = select_dialogue(npc_id, dialogues)
+                        if ds:
+                            self.active_dialogue = DialogueUI(ds)
                     return None
 
         # ── Shop menu ──

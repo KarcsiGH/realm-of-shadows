@@ -50,6 +50,8 @@ S_INVENTORY   = 10
 S_TOWN        = 11
 S_WORLD_MAP   = 12
 S_DUNGEON     = 13
+S_OPENING     = 14   # opening narrative sequence
+S_DIALOGUE    = 15   # standalone dialogue (e.g., boss pre-fight)
 
 
 class Game:
@@ -101,6 +103,17 @@ class Game:
         self.dungeon_ui = None
         self.pre_dungeon_state = None  # state to return to after dungeon  # where to go back to
         self.dungeon_cache = {}  # dungeon_id -> DungeonState (persistent between visits)
+        # Opening narrative
+        self.opening_lines = []
+        self.opening_idx = 0
+        self.opening_chars = 0
+        self.opening_speed = 1.5
+        # Standalone dialogue (boss pre-fight, dungeon events)
+        self.dialogue_ui = None
+        self.dialogue_return_state = None
+        self.dialogue_callback = None  # function to call after dialogue ends
+        # Quest log
+        self.quest_log_ui = None
         # Debug
         self.debug_mode = False
         self.debug_encounter = "tutorial"
@@ -213,7 +226,12 @@ class Game:
                     self.char_index += 1
                     if self.char_index >= PARTY_SIZE:
                         self.party_scroll = 0
-                        self.go(S_PARTY)
+                        # Show opening narrative on first playthrough
+                        from core.story_flags import has
+                        if not has("intro_seen"):
+                            self._start_opening()
+                        else:
+                            self.go(S_PARTY)
                     else:
                         self.go(S_MODE)
                 elif r_redo.collidepoint(mx, my):
@@ -221,6 +239,20 @@ class Game:
 
         elif self.state == S_PARTY:
             if e.type == pygame.MOUSEBUTTONDOWN:
+                # Quest log overlay
+                if self.quest_log_ui:
+                    if e.button == 1:
+                        result = self.quest_log_ui.handle_click(mx, my)
+                        if result == "close" or self.quest_log_ui.finished:
+                            self.quest_log_ui = None
+                    elif e.button == 4:
+                        self.quest_log_ui.handle_scroll(-1)
+                    elif e.button == 5:
+                        self.quest_log_ui.handle_scroll(1)
+                    return
+                if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE and self.quest_log_ui:
+                    self.quest_log_ui = None
+                    return
                 if e.button == 4:
                     self.party_scroll = max(0, self.party_scroll - 1)
                 elif e.button == 5:
@@ -236,6 +268,12 @@ class Game:
                         else:
                             self.inventory_return_state = S_PARTY
                         self.go(S_INVENTORY)
+                        return
+                    # Journal button
+                    journal_btn = pygame.Rect(SCREEN_W - 200, 85, 180, 34)
+                    if journal_btn.collidepoint(mx, my) and self.party:
+                        from ui.quest_log_ui import QuestLogUI
+                        self.quest_log_ui = QuestLogUI()
                         return
                     # Town button (only if not in dungeon)
                     if not self.dungeon_state:
@@ -376,6 +414,30 @@ class Game:
                     self.post_combat_ui.handle_scroll(1)
                     self.combat_ui.handle_scroll(1)
 
+        elif self.state == S_OPENING:
+            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                self._advance_opening()
+            elif e.type == pygame.KEYDOWN:
+                if e.key in (pygame.K_SPACE, pygame.K_RETURN):
+                    self._advance_opening()
+                elif e.key == pygame.K_ESCAPE:
+                    # Skip entire opening
+                    from core.story_flags import set_flag, start_quest
+                    set_flag("intro_seen", True)
+                    start_quest("main_meet_maren")
+                    self.go(S_PARTY)
+
+        elif self.state == S_DIALOGUE:
+            if self.dialogue_ui:
+                if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                    result = self.dialogue_ui.handle_click(mx, my)
+                    if self.dialogue_ui.finished:
+                        self._end_dialogue()
+                elif e.type == pygame.KEYDOWN:
+                    result = self.dialogue_ui.handle_event(e)
+                    if self.dialogue_ui and self.dialogue_ui.finished:
+                        self._end_dialogue()
+
     # ══════════════════════════════════════════════════════════
     #  LOGIC
     # ══════════════════════════════════════════════════════════
@@ -450,6 +512,8 @@ class Game:
         elif self.state == S_TOWN:      self.draw_town(mx, my)
         elif self.state == S_WORLD_MAP: self.draw_world_map(mx, my)
         elif self.state == S_DUNGEON:   self.draw_dungeon(mx, my)
+        elif self.state == S_OPENING:   self.draw_opening()
+        elif self.state == S_DIALOGUE:  self.draw_dialogue(mx, my)
 
     # ── Title Screen ──────────────────────────────────────────
 
@@ -759,6 +823,11 @@ class Game:
     # ── Party Review ──────────────────────────────────────────
 
     def draw_party(self, mx, my):
+        # Quest log overlay
+        if self.quest_log_ui:
+            self.quest_log_ui.draw(self.screen, mx, my)
+            return
+
         draw_text(self.screen, "Your Party", SCREEN_W//2 - 80, 20, GOLD, 24, bold=True)
         draw_text(self.screen, "The Realm of Shadows awaits...",
                   SCREEN_W//2 - 160, 55, GREY, 15)
@@ -835,6 +904,10 @@ class Game:
             inv_btn = pygame.Rect(SCREEN_W - 200, 40, 180, 40)
             draw_button(self.screen, inv_btn, "Inventory",
                         hover=inv_btn.collidepoint(mx, my), size=16)
+            # Journal button
+            journal_btn = pygame.Rect(SCREEN_W - 200, 85, 180, 34)
+            draw_button(self.screen, journal_btn, "Journal",
+                        hover=journal_btn.collidepoint(mx, my), size=14)
             if not self.dungeon_state:
                 town_btn = pygame.Rect(SCREEN_W - 400, 40, 180, 40)
                 draw_button(self.screen, town_btn, "Town",
@@ -859,6 +932,134 @@ class Game:
     # ══════════════════════════════════════════════════════════
     #  COMBAT
     # ══════════════════════════════════════════════════════════
+
+    # ══════════════════════════════════════════════════════════
+    #  OPENING NARRATIVE
+    # ══════════════════════════════════════════════════════════
+
+    def _start_opening(self):
+        """Begin the opening narrative sequence."""
+        from data.story_data import OPENING_SEQUENCE
+        from core.story_flags import set_flag, start_quest
+        self.opening_lines = OPENING_SEQUENCE
+        self.opening_idx = 0
+        self.opening_chars = 0
+        self.opening_speed = 1.5
+        set_flag("intro_seen", True)
+        start_quest("main_meet_maren")
+        self.go(S_OPENING)
+
+    def _advance_opening(self):
+        """Advance the opening text — show full text or go to next line."""
+        if self.opening_idx >= len(self.opening_lines):
+            self.go(S_PARTY)
+            return
+        text = self.opening_lines[self.opening_idx][1]
+        if self.opening_chars < len(text):
+            # Show full text immediately
+            self.opening_chars = len(text) + 1
+        else:
+            # Next line
+            self.opening_idx += 1
+            self.opening_chars = 0
+            if self.opening_idx >= len(self.opening_lines):
+                self.go(S_PARTY)
+
+    def draw_opening(self):
+        """Draw the opening narrative sequence."""
+        self.screen.fill((5, 3, 12))
+
+        if self.opening_idx >= len(self.opening_lines):
+            return
+
+        speaker, text = self.opening_lines[self.opening_idx]
+        self.opening_chars = min(self.opening_chars + self.opening_speed, len(text))
+        shown = text[:int(self.opening_chars)]
+
+        # Wrap and draw centered
+        font = get_font(18)
+        max_w = SCREEN_W - 200
+        words = shown.split()
+        lines = []
+        cur = ""
+        for w in words:
+            test = cur + (" " if cur else "") + w
+            if font.size(test)[0] <= max_w:
+                cur = test
+            else:
+                if cur:
+                    lines.append(cur)
+                cur = w
+        if cur:
+            lines.append(cur)
+        if not lines:
+            lines = [""]
+
+        total_h = len(lines) * 28
+        start_y = SCREEN_H // 2 - total_h // 2
+        for i, line in enumerate(lines):
+            lw = font.size(line)[0]
+            draw_text(self.screen, line,
+                      SCREEN_W // 2 - lw // 2,
+                      start_y + i * 28,
+                      (200, 190, 170), 18)
+
+        # Progress dots
+        dot_y = SCREEN_H - 60
+        for i in range(len(self.opening_lines)):
+            col = GOLD if i == self.opening_idx else (40, 35, 55) if i > self.opening_idx else (80, 70, 100)
+            pygame.draw.circle(self.screen, col,
+                               (SCREEN_W // 2 - (len(self.opening_lines) * 12) // 2 + i * 12, dot_y), 4)
+
+        if int(self.opening_chars) >= len(text):
+            draw_text(self.screen, "Click to continue" if self.opening_idx < len(self.opening_lines) - 1 else "Click to begin",
+                      SCREEN_W // 2 - 70, SCREEN_H - 35, (120, 110, 90), 13)
+
+    # ══════════════════════════════════════════════════════════
+    #  STANDALONE DIALOGUE
+    # ══════════════════════════════════════════════════════════
+
+    def start_dialogue(self, npc_id, return_state=None, callback=None):
+        """Start a standalone dialogue (boss pre-fight, dungeon NPC, etc.)."""
+        from data.story_data import NPC_DIALOGUES
+        from core.dialogue import select_dialogue
+        from ui.dialogue_ui import DialogueUI
+
+        dialogues = NPC_DIALOGUES.get(npc_id, [])
+        if not dialogues:
+            return False
+
+        ds = select_dialogue(npc_id, dialogues)
+        if not ds:
+            return False
+
+        self.dialogue_ui = DialogueUI(ds)
+        self.dialogue_return_state = return_state or self.state
+        self.dialogue_callback = callback
+        self.go(S_DIALOGUE)
+        return True
+
+    def _end_dialogue(self):
+        """Handle dialogue completion."""
+        result = None
+        if self.dialogue_ui:
+            result = self.dialogue_ui.result  # e.g., "fight" for boss combat
+        callback = self.dialogue_callback
+        return_state = self.dialogue_return_state
+
+        self.dialogue_ui = None
+        self.dialogue_callback = None
+        self.dialogue_return_state = None
+
+        if callback:
+            callback(result)
+        elif return_state is not None:
+            self.go(return_state)
+
+    def draw_dialogue(self, mx, my):
+        """Draw standalone dialogue."""
+        if self.dialogue_ui:
+            self.dialogue_ui.draw(self.screen, mx, my)
 
     def start_combat(self, encounter_key):
         """Initialize combat with an encounter."""
@@ -969,6 +1170,11 @@ class Game:
                         self.dungeon_ui = DungeonUI(self.dungeon_state)
                         self.pre_dungeon_state = S_WORLD_MAP
                         self.go(S_DUNGEON)
+                        # Show floor 1 story message
+                        from data.story_data import get_dungeon_floor_message
+                        msg = get_dungeon_floor_message(dungeon_id, 1)
+                        if msg:
+                            self.dungeon_ui.show_event(msg, (180, 160, 120))
                         print(f"[DEBUG] Entered dungeon! State={self.state}")
                     else:
                         self.world_map_ui._show_event(reason, RED)
@@ -1004,6 +1210,25 @@ class Game:
         if event["type"] == "random_encounter":
             enc_key = self.dungeon_state.get_encounter_key()
             self.pre_dungeon_state = S_DUNGEON
+
+            # Check for boss dialogue
+            if event.get("is_boss"):
+                from data.story_data import get_dungeon_boss_dialogue
+                boss_npc = get_dungeon_boss_dialogue(self.dungeon_state.dungeon_id)
+                if boss_npc:
+                    # Show dialogue first, then start combat after
+                    def after_boss_dialogue(result):
+                        if result == "fight" or result is None:
+                            # Grak killed path, or any "fight" outcome
+                            boss_enc = DUNGEONS[self.dungeon_state.dungeon_id].get(
+                                "boss_encounter", enc_key)
+                            self.start_combat(boss_enc)
+                        else:
+                            # Peaceful resolution (e.g., Grak spared)
+                            self.go(S_DUNGEON)
+                    self.start_dialogue(boss_npc, return_state=S_DUNGEON,
+                                        callback=after_boss_dialogue)
+                    return
             self.start_combat(enc_key)
 
         elif event["type"] == "fixed_encounter":
@@ -1015,6 +1240,11 @@ class Game:
             if self.dungeon_state.go_downstairs():
                 floor = self.dungeon_state.current_floor
                 self.dungeon_ui.show_event(f"Descended to Floor {floor}.", GOLD)
+                # Show story floor message if available
+                from data.story_data import get_dungeon_floor_message
+                msg = get_dungeon_floor_message(self.dungeon_state.dungeon_id, floor)
+                if msg:
+                    self.dungeon_ui.show_event(msg, (180, 160, 120))
 
         elif event["type"] == "stairs_up":
             if self.dungeon_state.go_upstairs():

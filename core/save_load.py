@@ -68,13 +68,18 @@ def save_game(party, slot_name="save1", metadata=None):
     from core.party_knowledge import get_save_data as get_knowledge_data
     knowledge = get_knowledge_data()
 
+    # Story flags
+    from core.story_flags import get_save_data as get_story_data
+    story = get_story_data()
+
     save_data = {
-        "version": 2,
+        "version": 3,
         "timestamp": datetime.now().isoformat(),
         "slot_name": slot_name,
         "metadata": metadata or {},
         "party": [serialize_character(c) for c in party],
         "knowledge": knowledge,
+        "story_flags": story,
     }
 
     # Add summary metadata
@@ -110,6 +115,12 @@ def load_game(slot_name="save1"):
         if knowledge:
             from core.party_knowledge import load_save_data as load_knowledge
             load_knowledge(knowledge)
+
+        # Restore story flags
+        story = save_data.get("story_flags")
+        if story:
+            from core.story_flags import load_save_data as load_story
+            load_story(story)
 
         return True, party, f"Loaded {slot_name}"
     except Exception as e:
