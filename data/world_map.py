@@ -28,20 +28,20 @@ T_BRIDGE       = "bridge"
 T_SHORE        = "shore"
 
 TERRAIN_DATA = {
-    T_GRASS:        {"name": "Grassland",     "passable": True,  "elevation": 1, "sight": 4, "encounter_rate": 15, "move_cost": 1},
-    T_FOREST:       {"name": "Forest",        "passable": True,  "elevation": 1, "sight": 3, "encounter_rate": 12, "move_cost": 1},
-    T_DENSE_FOREST: {"name": "Dense Forest",  "passable": True,  "elevation": 2, "sight": 2, "encounter_rate": 8,  "move_cost": 1},
+    T_GRASS:        {"name": "Grassland",     "passable": True,  "elevation": 1, "sight": 4, "encounter_rate": 28, "move_cost": 1},
+    T_FOREST:       {"name": "Forest",        "passable": True,  "elevation": 1, "sight": 3, "encounter_rate": 22, "move_cost": 1},
+    T_DENSE_FOREST: {"name": "Dense Forest",  "passable": True,  "elevation": 2, "sight": 2, "encounter_rate": 16, "move_cost": 1},
     T_MOUNTAIN:     {"name": "Mountain",      "passable": False, "elevation": 3, "sight": 5, "encounter_rate": 0,  "move_cost": 0},
-    T_HILL:         {"name": "Hills",         "passable": True,  "elevation": 2, "sight": 4, "encounter_rate": 12, "move_cost": 1},
-    T_SWAMP:        {"name": "Swamp",         "passable": True,  "elevation": 0, "sight": 3, "encounter_rate": 6,  "move_cost": 1},
-    T_DESERT:       {"name": "Desert",        "passable": True,  "elevation": 1, "sight": 5, "encounter_rate": 6,  "move_cost": 1},
-    T_SCRUBLAND:    {"name": "Scrubland",     "passable": True,  "elevation": 1, "sight": 4, "encounter_rate": 10, "move_cost": 1},
+    T_HILL:         {"name": "Hills",         "passable": True,  "elevation": 2, "sight": 4, "encounter_rate": 24, "move_cost": 1},
+    T_SWAMP:        {"name": "Swamp",         "passable": True,  "elevation": 0, "sight": 3, "encounter_rate": 14, "move_cost": 1},
+    T_DESERT:       {"name": "Desert",        "passable": True,  "elevation": 1, "sight": 5, "encounter_rate": 18, "move_cost": 1},
+    T_SCRUBLAND:    {"name": "Scrubland",     "passable": True,  "elevation": 1, "sight": 4, "encounter_rate": 22, "move_cost": 1},
     T_WATER:        {"name": "Ocean",         "passable": False, "elevation": 0, "sight": 5, "encounter_rate": 0,  "move_cost": 0},
     T_LAKE:         {"name": "Lake",          "passable": False, "elevation": 0, "sight": 4, "encounter_rate": 0,  "move_cost": 0},
-    T_RIVER:        {"name": "River",         "passable": True,  "elevation": 0, "sight": 4, "encounter_rate": 18, "move_cost": 2},
-    T_ROAD:         {"name": "Road",          "passable": True,  "elevation": 1, "sight": 4, "encounter_rate": 25, "move_cost": 1},
-    T_BRIDGE:       {"name": "Bridge",        "passable": True,  "elevation": 1, "sight": 4, "encounter_rate": 20, "move_cost": 1},
-    T_SHORE:        {"name": "Shore",         "passable": True,  "elevation": 0, "sight": 4, "encounter_rate": 18, "move_cost": 1},
+    T_RIVER:        {"name": "River",         "passable": True,  "elevation": 0, "sight": 4, "encounter_rate": 30, "move_cost": 2},
+    T_ROAD:         {"name": "Road",          "passable": True,  "elevation": 1, "sight": 4, "encounter_rate": 40, "move_cost": 1},
+    T_BRIDGE:       {"name": "Bridge",        "passable": True,  "elevation": 1, "sight": 4, "encounter_rate": 35, "move_cost": 1},
+    T_SHORE:        {"name": "Shore",         "passable": True,  "elevation": 0, "sight": 4, "encounter_rate": 30, "move_cost": 1},
 }
 
 IMPASSABLE = {T_MOUNTAIN, T_WATER, T_LAKE}
@@ -779,6 +779,11 @@ class WorldState:
             max_res = get_all_resources(c.class_name, c.stats, c.level)
             apply_step_regen(c, max_res)
 
+        # Status effect ticking (poison, doom curse, etc.)
+        from core.status_effects import tick_step
+        for c in self.party:
+            tick_step(c)
+
         # Location check
         loc_id = tile.get("location_id")
         if loc_id and loc_id in LOCATIONS:
@@ -799,7 +804,11 @@ class WorldState:
         if speed > 1:
             enc_rate = int(enc_rate * 1.5)  # faster = fewer encounters
 
-        if enc_rate > 0 and self.step_counter >= random.randint(max(1, enc_rate - 3), enc_rate + 3):
+        # No encounters on or adjacent to locations (safe zone)
+        if loc_id or self._near_location(nx, ny):
+            return None
+
+        if enc_rate > 0 and self.step_counter >= random.randint(max(3, enc_rate - 3), enc_rate + 5):
             self.step_counter = 0
             region = tile["region"]
             dist = math.sqrt((nx - 60) ** 2 + (ny - 70) ** 2)
@@ -808,6 +817,16 @@ class WorldState:
             return {"type": "encounter", "key": enc_key}
 
         return None
+
+    def _near_location(self, x, y, radius=2):
+        """Check if position is within radius of any discovered location."""
+        for dy in range(-radius, radius + 1):
+            for dx in range(-radius, radius + 1):
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < MAP_W and 0 <= ny < MAP_H:
+                    if self.tiles[ny][nx].get("location_id"):
+                        return True
+        return False
 
     def camp(self):
         """Rest the party. Returns event dict."""
