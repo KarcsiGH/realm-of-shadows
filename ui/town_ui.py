@@ -65,6 +65,7 @@ class TownUI:
         self.shop_scroll = 0
         self.sell_char = 0
         self.sell_scroll = 0
+        self.sold_items = []  # items sold by player, available for buyback
 
         # Temple state
         self.id_char = 0
@@ -237,8 +238,11 @@ class TownUI:
             draw_text(surface, label, tr.x + 10, tr.y + 7,
                       GOLD if is_sel else CREAM, 14, bold=is_sel)
 
-        # Item list
-        items = GENERAL_STORE.get(self.shop_tab, [])
+        # Item list — regular shop items + buyback items
+        items = list(GENERAL_STORE.get(self.shop_tab, []))
+        # Append sold items to current tab (they appear in all tabs under "Buyback")
+        buyback_start = len(items)
+        items.extend(self.sold_items)
         panel = pygame.Rect(20, 95, SCREEN_W - 40, SCREEN_H - 200)
         draw_panel(surface, panel, bg_color=SHOP_BG)
 
@@ -252,11 +256,21 @@ class TownUI:
 
             for idx in range(start, end):
                 item = items[idx]
+                is_buyback = idx >= buyback_start
                 row = pygame.Rect(panel.x + 8, iy, panel.width - 16, 68)
                 hover = row.collidepoint(mx, my)
-                bg = ITEM_HOVER if hover else ITEM_BG
+
+                if is_buyback:
+                    bg = (30, 28, 18) if hover else (22, 20, 12)
+                else:
+                    bg = ITEM_HOVER if hover else ITEM_BG
                 pygame.draw.rect(surface, bg, row, border_radius=3)
                 pygame.draw.rect(surface, HIGHLIGHT if hover else PANEL_BORDER, row, 1, border_radius=3)
+
+                # Buyback label
+                if is_buyback:
+                    draw_text(surface, "BUYBACK", row.x + row.width - 170, row.y + 26,
+                              (180, 150, 60), 10, bold=True)
 
                 # Name
                 rarity = item.get("rarity", "common")
@@ -717,8 +731,10 @@ class TownUI:
                     self.shop_scroll = 0
                     return None
 
-            # Item clicks
-            items = GENERAL_STORE.get(self.shop_tab, [])
+            # Item clicks — regular shop + buyback
+            items = list(GENERAL_STORE.get(self.shop_tab, []))
+            buyback_start = len(items)
+            items.extend(self.sold_items)
             panel = pygame.Rect(20, 95, SCREEN_W - 40, SCREEN_H - 200)
             iy = panel.y + 10
             start = self.shop_scroll
@@ -726,7 +742,11 @@ class TownUI:
             for idx in range(start, end):
                 row = pygame.Rect(panel.x + 8, iy, panel.width - 16, 68)
                 if row.collidepoint(mx, my):
-                    self._buy_item(items[idx])
+                    is_buyback = idx >= buyback_start
+                    if is_buyback:
+                        self._buy_back_item(idx - buyback_start)
+                    else:
+                        self._buy_item(items[idx])
                     return None
                 iy += 72
 
@@ -934,16 +954,49 @@ class TownUI:
 
         self._msg(f"Bought {shop_item['name']} for {price}g — added to {self.party[0].name}'s inventory", BUY_COL)
 
+    def _buy_back_item(self, sold_idx):
+        """Buy back a previously sold item."""
+        if sold_idx >= len(self.sold_items):
+            return
+        item = self.sold_items[sold_idx]
+        price = item.get("buy_price", 0)
+        total_gold = sum(c.gold for c in self.party)
+
+        if total_gold < price:
+            self._msg("Not enough gold!", RED)
+            return
+
+        # Deduct gold
+        self._deduct_gold(price)
+
+        # Remove from sold list
+        self.sold_items.pop(sold_idx)
+
+        # Create clean copy for inventory
+        new_item = dict(item)
+        new_item.pop("buy_price", None)
+        new_item.pop("sell_price", None)
+        new_item.pop("_buyback", None)
+        self.party[0].add_item(new_item)
+
+        name = get_item_display_name(new_item)
+        self._msg(f"Bought back {name} for {price}g — added to {self.party[0].name}'s inventory", BUY_COL)
+
     def _sell_item(self, char, item_idx):
         """Sell an item from a character's inventory."""
         if item_idx >= len(char.inventory):
             return
         item = char.inventory[item_idx]
-        price = get_sell_price(item)
+        sell_price = get_sell_price(item)
         char.inventory.pop(item_idx)
-        char.gold += price
+        char.gold += sell_price
         name = get_item_display_name(item)
-        self._msg(f"Sold {name} for {price}g", SELL_COL)
+        # Add to buyback list — buyback at sell price (same as what player received)
+        buyback = dict(item)
+        buyback["buy_price"] = sell_price
+        buyback["_buyback"] = True
+        self.sold_items.append(buyback)
+        self._msg(f"Sold {name} for {sell_price}g", SELL_COL)
 
     def _use_temple_service(self, service_key):
         """Use a temple service."""
