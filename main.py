@@ -1263,6 +1263,7 @@ class Game:
             if self.dungeon_state.go_downstairs():
                 floor = self.dungeon_state.current_floor
                 self.dungeon_ui.show_event(f"Descended to Floor {floor}.", GOLD)
+                self.dungeon_ui.on_floor_change()
                 # Show story floor message if available
                 from data.story_data import get_dungeon_floor_message
                 msg = get_dungeon_floor_message(self.dungeon_state.dungeon_id, floor)

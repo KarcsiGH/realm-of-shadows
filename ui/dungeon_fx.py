@@ -104,6 +104,17 @@ class ParticleSystem:
             self.particles.append(
                 Particle(px, py, vx, vy, life, (255, random.randint(140, 200), 40), 2))
 
+    def emit_fading(self, count=1):
+        """Purple Fading effect particles."""
+        for _ in range(count):
+            x = random.randint(self.vp_x + 20, self.vp_x + self.vp_w - 20)
+            y = random.randint(self.vp_y + 20, self.vp_y + self.vp_h - 20)
+            vx = random.uniform(-0.3, 0.3)
+            vy = random.uniform(-0.4, 0.4)
+            life = random.uniform(1.5, 3.5)
+            self.particles.append(
+                Particle(x, y, vx, vy, life, (120, 50, 180), 3))
+
     def update(self, dt_sec):
         alive = []
         for p in self.particles:

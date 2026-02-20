@@ -52,8 +52,26 @@ class DungeonUI:
         self.torch_brightness = 1.0
         self.particles = ParticleSystem(VP_X, VP_Y, VP_W, VP_H)
         self.dust_timer = 0.0
+        # Smooth movement animation
+        self.move_anim = 0.0       # 0 = no anim, >0 = animating forward
+        self.move_from_x = ds.party_x
+        self.move_from_y = ds.party_y
+        self.move_speed = 6.0      # tiles per second
+        # Turn animation
+        self.turn_anim = 0.0       # 0 = no anim, >0 = animating turn
+        self.turn_dir = 0          # -1 = left, +1 = right
+        # Fading effect (deeper floors = stronger)
+        self.fading_intensity = 0.0
+        self._update_fading()
         for sz in [128, 96, 64]:
             gen_wall_texture(self.th, sz, sz)
+
+    def _update_fading(self):
+        """Calculate Fading visual intensity based on floor depth."""
+        floor = self.dungeon.current_floor
+        total = self.dungeon.total_floors
+        # Fading gets stronger on deeper floors
+        self.fading_intensity = min(0.5, (floor - 1) / max(1, total) * 0.4)
 
     def _dim(self, c, f):
         return tuple(max(0, min(255, int(v * f))) for v in c)
@@ -83,11 +101,23 @@ class DungeonUI:
             self.dust_timer = 0; self.particles.emit_dust(1)
         self.particles.update(dt_sec)
         self.event_queue = [(m, c, tmr - dt) for m, c, tmr in self.event_queue if tmr - dt > 0]
+        # Advance movement animation
+        if self.move_anim > 0:
+            self.move_anim = max(0, self.move_anim - self.move_speed * dt_sec)
+        # Advance turn animation
+        if self.turn_anim > 0:
+            self.turn_anim = max(0, self.turn_anim - 8.0 * dt_sec)
+        # Fading particles on deeper floors
+        if self.fading_intensity > 0.1 and random.random() < self.fading_intensity * 0.15:
+            self.particles.emit_fading(1)
 
         surface.fill(self.th["fog"])
         self._draw_3d(surface)
         self.particles.draw(surface)
         draw_vignette(surface, VP_X, VP_Y, VP_W, VP_H)
+        # Fading overlay on deeper floors
+        if self.fading_intensity > 0.05:
+            self._draw_fading_overlay(surface)
         self._draw_minimap(surface)
         self._draw_hud(surface, mx, my)
         if self.show_camp_confirm: self._draw_camp_dlg(surface, mx, my)
@@ -110,24 +140,59 @@ class DungeonUI:
         for i, (msg, col) in enumerate(lines[:5]):
             draw_text(surface, msg, r.x + 18, r.y + 8 + i * 22, col, 14, max_width=r.w - 36)
 
+    def _draw_fading_overlay(self, surface):
+        """Purple shimmer overlay on deeper dungeon floors."""
+        ov = pygame.Surface((VP_W, VP_H), pygame.SRCALPHA)
+        t = self.torch_time
+        intensity = self.fading_intensity
+        # Pulsing purple tint
+        alpha = int(intensity * 40 * (0.7 + 0.3 * math.sin(t * 1.5)))
+        ov.fill((80, 20, 120, alpha))
+        # Shimmer bands that drift
+        for i in range(3):
+            band_y = int((math.sin(t * 0.8 + i * 2.1) * 0.5 + 0.5) * VP_H)
+            band_h = int(20 + intensity * 40)
+            band_alpha = int(intensity * 30 * (0.5 + 0.5 * math.sin(t * 2.3 + i)))
+            pygame.draw.rect(ov, (120, 40, 180, band_alpha), (0, band_y, VP_W, band_h))
+        surface.blit(ov, (VP_X, VP_Y))
+
     # ══════════════════════════════════════════════════════════
     #  3D VIEWPORT
     # ══════════════════════════════════════════════════════════
     def _draw_3d(self, surface):
         surface.set_clip(pygame.Rect(VP_X, VP_Y, VP_W, VP_H))
         tb = self.torch_brightness
+        # Turn wobble offset
+        turn_offset = 0
+        if self.turn_anim > 0:
+            ease = self.turn_anim  # 1.0 -> 0.0
+            turn_offset = int(self.turn_dir * ease * 40)
+        # Move bob (subtle vertical bob during movement)
+        move_bob = 0
+        if self.move_anim > 0:
+            move_bob = int(math.sin(self.move_anim * math.pi) * 4)
+
         # Ceiling
         for i in range(14):
             f = i / 14.0; b = max(0.06, 0.55 - f * 0.45) * tb
             ch = max(1, VP_H // 28 + 1)
-            surface.fill(self._dim(self.th["cl"], b), (VP_X, VP_CY - int(VP_H * 0.5 * (1 - f)), VP_W, ch))
-        # Floor
+            surface.fill(self._dim(self.th["cl"], b),
+                         (VP_X, VP_CY - int(VP_H * 0.5 * (1 - f)) + move_bob, VP_W, ch))
+        # Floor with perspective grid lines
         for i in range(14):
             f = i / 14.0; b = max(0.10, 0.80 - f * 0.60) * tb
-            fh = max(1, VP_H // 28 + 1); fy = VP_CY + int(VP_H * 0.5 * f)
+            fh = max(1, VP_H // 28 + 1); fy = VP_CY + int(VP_H * 0.5 * f) + move_bob
             surface.fill(self._dim(self.th["fl"], b), (VP_X, fy, VP_W, fh))
+            # Horizontal floor lines at intervals
             if i % 3 == 0 and i > 0:
-                pygame.draw.line(surface, self._dim(self.th["wd"], b * 0.5), (VP_X, fy), (VP_X + VP_W, fy), 1)
+                pygame.draw.line(surface, self._dim(self.th["wd"], b * 0.5),
+                                 (VP_X, fy), (VP_X + VP_W, fy), 1)
+        # Vertical floor perspective lines (converge toward center)
+        for vi in range(-3, 4):
+            x_near = VP_CX + turn_offset + vi * (VP_W // 6)
+            x_far = VP_CX + turn_offset + vi * 20
+            lc = self._dim(self.th["wd"], 0.15 * tb)
+            pygame.draw.line(surface, lc, (x_near, VP_Y + VP_H), (x_far, VP_CY + move_bob), 1)
 
         fdx, fdy = DIR_DX[self.facing], DIR_DY[self.facing]
         rdx, rdy = DIR_DX[(self.facing + 1) % 4], DIR_DY[(self.facing + 1) % 4]
@@ -482,12 +547,32 @@ class DungeonUI:
     # ══════════════════════════════════════════════════════════
     def handle_key(self, key):
         if self.show_camp_confirm or self.show_stairs_confirm: return None
-        if key in (pygame.K_UP, pygame.K_w): return self.dungeon.move(DIR_DX[self.facing], DIR_DY[self.facing])
-        elif key in (pygame.K_DOWN, pygame.K_s): return self.dungeon.move(-DIR_DX[self.facing], -DIR_DY[self.facing])
-        elif key in (pygame.K_LEFT, pygame.K_q): self.facing = (self.facing - 1) % 4; return None
-        elif key in (pygame.K_RIGHT, pygame.K_e): self.facing = (self.facing + 1) % 4; return None
-        elif key == pygame.K_a: lf = (self.facing - 1) % 4; return self.dungeon.move(DIR_DX[lf], DIR_DY[lf])
-        elif key == pygame.K_d: rf = (self.facing + 1) % 4; return self.dungeon.move(DIR_DX[rf], DIR_DY[rf])
+        if key in (pygame.K_UP, pygame.K_w):
+            result = self.dungeon.move(DIR_DX[self.facing], DIR_DY[self.facing])
+            self.move_anim = 1.0  # trigger move animation
+            return result
+        elif key in (pygame.K_DOWN, pygame.K_s):
+            result = self.dungeon.move(-DIR_DX[self.facing], -DIR_DY[self.facing])
+            self.move_anim = 1.0
+            return result
+        elif key in (pygame.K_LEFT, pygame.K_q):
+            self.facing = (self.facing - 1) % 4
+            self.turn_anim = 1.0; self.turn_dir = -1
+            return None
+        elif key in (pygame.K_RIGHT, pygame.K_e):
+            self.facing = (self.facing + 1) % 4
+            self.turn_anim = 1.0; self.turn_dir = 1
+            return None
+        elif key == pygame.K_a:
+            lf = (self.facing - 1) % 4
+            result = self.dungeon.move(DIR_DX[lf], DIR_DY[lf])
+            self.move_anim = 1.0
+            return result
+        elif key == pygame.K_d:
+            rf = (self.facing + 1) % 4
+            result = self.dungeon.move(DIR_DX[rf], DIR_DY[rf])
+            self.move_anim = 1.0
+            return result
         elif key == pygame.K_RETURN:
             tile = self.dungeon.get_tile(self.dungeon.party_x, self.dungeon.party_y)
             if tile:
@@ -531,10 +616,16 @@ class DungeonUI:
         by = SCREEN_H - 55
         if pygame.Rect(VP_X, by, 120, 42).collidepoint(mx, my): self.show_camp_confirm = True; return None
         if pygame.Rect(VP_X + 140, by, 120, 42).collidepoint(mx, my): return {"type": "menu"}
-        if pygame.Rect(VP_X + 280, by, 100, 42).collidepoint(mx, my): self.facing = (self.facing - 1) % 4; return None
-        if pygame.Rect(VP_X + 400, by, 100, 42).collidepoint(mx, my): self.facing = (self.facing + 1) % 4; return None
+        if pygame.Rect(VP_X + 280, by, 100, 42).collidepoint(mx, my):
+            self.facing = (self.facing - 1) % 4; self.turn_anim = 1.0; self.turn_dir = -1; return None
+        if pygame.Rect(VP_X + 400, by, 100, 42).collidepoint(mx, my):
+            self.facing = (self.facing + 1) % 4; self.turn_anim = 1.0; self.turn_dir = 1; return None
         return None
 
     def show_event(self, msg, color=CREAM):
         self.event_message = msg; self.event_color = color; self.event_timer = 3500
         self.event_queue.append((msg, color, 3500))
+
+    def on_floor_change(self):
+        """Call after descending/ascending to update Fading intensity."""
+        self._update_fading()
