@@ -17,7 +17,7 @@ from core.combat_config import (
 ENEMIES = {
     "Goblin Warrior": {
         "name": "Goblin Warrior",
-        "hp": 18, "defense": 2, "magic_resist": 1,
+        "hp": 32, "defense": 2, "magic_resist": 1,
         "stats": {"STR": 6, "DEX": 10, "CON": 5, "INT": 4, "WIS": 4, "PIE": 2},
         "speed_base": 14,
         "attack_damage": 12, "attack_type": "melee", "phys_type": "slashing",
@@ -69,7 +69,7 @@ ENEMIES = {
 
     "Goblin Archer": {
         "name": "Goblin Archer",
-        "hp": 14, "defense": 1, "magic_resist": 1,
+        "hp": 24, "defense": 1, "magic_resist": 1,
         "stats": {"STR": 4, "DEX": 12, "CON": 4, "INT": 5, "WIS": 5, "PIE": 2},
         "speed_base": 16,
         "attack_damage": 14, "attack_type": "ranged", "phys_type": "piercing",
@@ -121,7 +121,7 @@ ENEMIES = {
 
     "Bandit": {
         "name": "Bandit",
-        "hp": 30, "defense": 4, "magic_resist": 2,
+        "hp": 48, "defense": 4, "magic_resist": 2,
         "stats": {"STR": 12, "DEX": 10, "CON": 10, "INT": 7, "WIS": 6, "PIE": 4},
         "speed_base": 16,
         "attack_damage": 14, "attack_type": "melee", "phys_type": "slashing",
@@ -173,7 +173,7 @@ ENEMIES = {
 
     "Wolf": {
         "name": "Wolf",
-        "hp": 22, "defense": 2, "magic_resist": 1,
+        "hp": 36, "defense": 2, "magic_resist": 1,
         "stats": {"STR": 10, "DEX": 14, "CON": 8, "INT": 3, "WIS": 10, "PIE": 2},
         "speed_base": 22,
         "attack_damage": 15, "attack_type": "melee", "phys_type": "piercing",
@@ -224,7 +224,7 @@ ENEMIES = {
 
     "Skeleton Warrior": {
         "name": "Skeleton Warrior",
-        "hp": 28, "defense": 6, "magic_resist": 3,
+        "hp": 44, "defense": 6, "magic_resist": 3,
         "stats": {"STR": 10, "DEX": 8, "CON": 0, "INT": 2, "WIS": 4, "PIE": 0},
         "speed_base": 12,
         "attack_damage": 14, "attack_type": "melee", "phys_type": "slashing",
@@ -249,7 +249,7 @@ ENEMIES = {
 
     "Orc Fighter": {
         "name": "Orc Fighter",
-        "hp": 45, "defense": 7, "magic_resist": 3,
+        "hp": 70, "defense": 7, "magic_resist": 3,
         "stats": {"STR": 16, "DEX": 8, "CON": 14, "INT": 5, "WIS": 6, "PIE": 3},
         "speed_base": 13,
         "attack_damage": 24, "attack_type": "melee", "phys_type": "slashing",
@@ -301,7 +301,7 @@ ENEMIES = {
 
     "Orc Chieftain": {
         "name": "Orc Chieftain",
-        "hp": 80, "defense": 10, "magic_resist": 5,
+        "hp": 120, "defense": 10, "magic_resist": 5,
         "stats": {"STR": 20, "DEX": 10, "CON": 18, "INT": 8, "WIS": 8, "PIE": 4},
         "speed_base": 14,
         "attack_damage": 30, "attack_type": "melee", "phys_type": "slashing",
@@ -372,7 +372,7 @@ ENEMIES = {
 
     "Goblin Shaman": {
         "name": "Goblin Shaman",
-        "hp": 16, "defense": 1, "magic_resist": 6,
+        "hp": 28, "defense": 1, "magic_resist": 6,
         "stats": {"STR": 3, "DEX": 8, "CON": 4, "INT": 10, "WIS": 10, "PIE": 6},
         "speed_base": 14,
         "attack_damage": 8, "attack_type": "melee", "phys_type": "blunt",
@@ -436,7 +436,7 @@ ENEMIES = {
 
     "Goblin King": {
         "name": "Grak the Goblin King",
-        "hp": 180, "defense": 12, "magic_resist": 6,
+        "hp": 260, "defense": 12, "magic_resist": 6,
         "stats": {"STR": 18, "DEX": 10, "CON": 16, "INT": 6, "WIS": 8, "PIE": 4},
         "speed_base": 12,
         "attack_damage": 22, "attack_type": "melee", "phys_type": "blunt",
@@ -469,7 +469,7 @@ ENEMIES = {
 
     "Giant Spider Queen": {
         "name": "Spider Queen",
-        "hp": 150, "defense": 8, "magic_resist": 10,
+        "hp": 220, "defense": 8, "magic_resist": 10,
         "stats": {"STR": 14, "DEX": 18, "CON": 14, "INT": 4, "WIS": 12, "PIE": 2},
         "speed_base": 18,
         "attack_damage": 18, "attack_type": "melee", "phys_type": "piercing",

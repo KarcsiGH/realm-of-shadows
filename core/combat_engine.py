@@ -1474,6 +1474,7 @@ class CombatState:
                     loot_drops.append(item)
 
         # ── Store results ──
+        enemy_names = list(set(e["name"] for e in self.enemies))
         self.rewards = {
             "total_xp": total_xp,
             "total_gold": total_gold,
@@ -1482,6 +1483,7 @@ class CombatState:
             "xp_awards": xp_awards,
             "loot_drops": loot_drops,
             "loot_assigned": {},  # uid → list of items (filled by UI)
+            "enemy_names": enemy_names,
         }
 
         # ── Log summary ──

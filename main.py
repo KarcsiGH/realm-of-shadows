@@ -100,6 +100,7 @@ class Game:
         self.dungeon_state = None
         self.dungeon_ui = None
         self.pre_dungeon_state = None  # state to return to after dungeon  # where to go back to
+        self.dungeon_cache = {}  # dungeon_id -> DungeonState (persistent between visits)
         # Debug
         self.debug_mode = False
         self.debug_encounter = "tutorial"
@@ -954,7 +955,17 @@ class Game:
                     can, reason = self.world_state.can_enter_dungeon(loc_id)
                     print(f"[DEBUG] Can enter: {can}, reason: {reason}")
                     if can:
-                        self.dungeon_state = DungeonState(dungeon_id, self.party)
+                        # Use cached dungeon if revisiting, otherwise create new
+                        if dungeon_id in self.dungeon_cache:
+                            self.dungeon_state = self.dungeon_cache[dungeon_id]
+                            self.dungeon_state.party = self.party  # update party ref
+                            # Reset to entrance of floor 1
+                            floor = self.dungeon_state.floors[1]
+                            self.dungeon_state.party_x, self.dungeon_state.party_y = floor["entrance"]
+                            self.dungeon_state.current_floor = 1
+                        else:
+                            self.dungeon_state = DungeonState(dungeon_id, self.party)
+                            self.dungeon_cache[dungeon_id] = self.dungeon_state
                         self.dungeon_ui = DungeonUI(self.dungeon_state)
                         self.pre_dungeon_state = S_WORLD_MAP
                         self.go(S_DUNGEON)

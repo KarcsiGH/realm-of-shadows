@@ -146,8 +146,31 @@ class Character:
         self.gold += amount
 
     def add_item(self, item):
-        """Add an item to inventory."""
+        """Add an item to inventory. Stackable items (consumables, materials) merge."""
+        if _is_stackable(item):
+            # Find existing stack of same name
+            for inv_item in self.inventory:
+                if inv_item.get("name") == item.get("name") and _is_stackable(inv_item):
+                    inv_item["stack"] = inv_item.get("stack", 1) + item.get("stack", 1)
+                    return
+        # No existing stack or not stackable — add as new entry
+        if _is_stackable(item) and "stack" not in item:
+            item["stack"] = 1
         self.inventory.append(item)
+
+
+def _is_stackable(item):
+    """Items that can stack: consumables, materials, misc. NOT weapons/armor."""
+    item_type = item.get("type", "")
+    slot = item.get("slot", "")
+    # Equipment doesn't stack
+    if slot in ("weapon", "body", "head", "off_hand", "feet", "hands",
+                "accessory1", "accessory2", "accessory"):
+        return False
+    if item_type in ("weapon", "armor", "shield"):
+        return False
+    # Everything else stacks (potions, materials, misc loot)
+    return True
 
     def to_dict(self):
         """Serialize for save/display."""

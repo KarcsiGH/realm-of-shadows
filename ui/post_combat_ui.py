@@ -81,7 +81,7 @@ class PostCombatUI:
         self.id_scroll = 0
 
         # ── Loot Phase state ──
-        self.loot_selected_item = -1
+        self.loot_selected_items = set()  # set of item indices (multi-select)
         self.loot_hover_char = -1
         self.loot_assignments = {}   # item_index → char_index
         self.loot_scroll = 0
@@ -442,14 +442,21 @@ class PostCombatUI:
 
     def _draw_loot_phase(self, surface, mx, my):
         draw_text(surface, "Assign Loot", 40, 65, CREAM, 20, bold=True)
-        draw_text(surface, "Select an item, then click a party member to assign it.",
-                  40, 90, DARK_GREY, 14)
 
         # ── Top: Item list ──
         panel_items = pygame.Rect(20, 115, SCREEN_W - 40, 280)
         draw_panel(surface, panel_items, bg_color=SECTION_BG)
         draw_text(surface, "Dropped Items", panel_items.x + 10, panel_items.y + 8,
                   GOLD, 16, bold=True)
+
+        # Instruction text
+        sel_count = len(self.loot_selected_items)
+        if sel_count > 0:
+            draw_text(surface, f"{sel_count} item(s) selected — click a party member to assign.",
+                      40, 90, GOLD, 14)
+        else:
+            draw_text(surface, "Click items to select, then click a party member to assign.",
+                      40, 90, DARK_GREY, 13)
 
         if not self.loot_items:
             draw_text(surface, "No items to assign.", panel_items.x + 20,
@@ -467,7 +474,7 @@ class PostCombatUI:
                     col_w, 62
                 )
                 is_hover = item_rect.collidepoint(mx, my)
-                is_sel = (idx == self.loot_selected_item)
+                is_sel = idx in self.loot_selected_items
                 is_assigned = idx in self.loot_assignments
 
                 if is_assigned:
@@ -530,7 +537,7 @@ class PostCombatUI:
             if is_hover:
                 self.loot_hover_char = i
 
-            if is_hover and self.loot_selected_item >= 0:
+            if is_hover and len(self.loot_selected_items) > 0:
                 bg = (45, 38, 75)
                 border = cls["color"]
             else:
@@ -659,12 +666,14 @@ class PostCombatUI:
                 return None
 
         elif self.phase == self.PHASE_LOOT:
-            # Item selection
+            # Item selection (toggle multi-select)
             panel_items = pygame.Rect(20, 115, SCREEN_W - 40, 280)
             ix = panel_items.x + 10
             iy = panel_items.y + 35
             col_w = (panel_items.width - 30) // 2
             for idx in range(len(self.loot_items)):
+                if idx in self.loot_assignments:
+                    continue  # already assigned, skip
                 col_idx = idx % 2
                 row_idx = idx // 2
                 item_rect = pygame.Rect(
@@ -673,11 +682,15 @@ class PostCombatUI:
                     col_w, 62
                 )
                 if item_rect.collidepoint(mx, my):
-                    self.loot_selected_item = idx
+                    # Toggle selection
+                    if idx in self.loot_selected_items:
+                        self.loot_selected_items.discard(idx)
+                    else:
+                        self.loot_selected_items.add(idx)
                     return None
 
-            # Party member assignment
-            if self.loot_selected_item >= 0 and self.loot_hover_char >= 0:
+            # Party member assignment (assign all selected items)
+            if len(self.loot_selected_items) > 0 and self.loot_hover_char >= 0:
                 panel_party = pygame.Rect(20, 415, SCREEN_W - 40, 260)
                 cx = panel_party.x + 10
                 cy_start = panel_party.y + 35
@@ -692,8 +705,9 @@ class PostCombatUI:
                         card_w, card_h
                     )
                     if card_rect.collidepoint(mx, my):
-                        self.loot_assignments[self.loot_selected_item] = i
-                        self.loot_selected_item = -1
+                        for sel_idx in self.loot_selected_items:
+                            self.loot_assignments[sel_idx] = i
+                        self.loot_selected_items.clear()
                         return None
 
             # Continue button

@@ -62,7 +62,18 @@ def resolve_item_slot(item):
     elif item_type == "shield":
         return "off_hand"
     elif item_type == "armor":
-        return item.get("armor_slot", "body")
+        # Check subtype and armor_slot for specific armor pieces
+        subtype = item.get("subtype", "")
+        armor_slot = item.get("armor_slot", "")
+        if subtype in ("helmet", "helm", "head") or armor_slot == "head":
+            return "head"
+        elif subtype in ("gloves", "gauntlets", "hands") or armor_slot == "hands":
+            return "hands"
+        elif subtype in ("boots", "greaves", "feet") or armor_slot == "feet":
+            return "feet"
+        elif subtype in ("shield",) or armor_slot == "off_hand":
+            return "off_hand"
+        return armor_slot if armor_slot else "body"
     elif item_type == "accessory":
         return "accessory1"
     elif item_type in ("helmet", "head"):
@@ -238,30 +249,72 @@ class InventoryUI:
             slot_y += 52
 
     def _draw_stat_summary(self, surface, char, top_y):
-        panel = pygame.Rect(20, top_y, 420, 140)
+        panel = pygame.Rect(20, top_y, 420, 180)
         draw_panel(surface, panel, bg_color=INV_BG)
         draw_text(surface, "Combat Stats", panel.x + 12, panel.y + 8,
                   GOLD, 14, bold=True)
 
-        base_def = int(char.stats["CON"] * 0.5)
+        from core.combat_config import DEF_CON_MULT, MRES_WIS_MULT
+        from data.weapons import STARTING_WEAPONS, get_weapon
+
+        # Defense / AC
+        base_def = int(char.stats["CON"] * DEF_CON_MULT)
         eq_def = calc_equipment_defense(char)
-        base_mr = int(char.stats["WIS"] * 0.5)
+        total_def = base_def + eq_def
+        base_mr = int(char.stats["WIS"] * MRES_WIS_MULT)
         eq_mr = calc_equipment_magic_resist(char)
         eq_spd = calc_equipment_speed(char)
         eq_stats = calc_equipment_stat_bonuses(char)
 
-        sy = panel.y + 30
-        draw_text(surface, f"Defense: {base_def} base + {eq_def} equip = {base_def + eq_def}",
-                  panel.x + 12, sy, CREAM, 13)
-        sy += 20
-        draw_text(surface, f"Magic Resist: {base_mr} base + {eq_mr} equip = {base_mr + eq_mr}",
-                  panel.x + 12, sy, CREAM, 13)
-        sy += 20
+        # Weapon stats
+        weapon = char.equipment.get("weapon")
+        if not weapon:
+            wkey = STARTING_WEAPONS.get(char.class_name, "Unarmed")
+            weapon = get_weapon(wkey)
+        eff_stats = char.effective_stats()
+        stat_dmg = 0
+        for stat_key, weight in weapon.get("damage_stat", {}).items():
+            stat_dmg += eff_stats.get(stat_key, 0) * weight
+        weapon_base = weapon.get("damage", 0)
+        raw_dmg = stat_dmg + weapon_base
+        # Approximate range using variance (0.85-1.15)
+        dmg_low = max(1, int(raw_dmg * 0.85))
+        dmg_high = int(raw_dmg * 1.15)
+
+        # To-hit: base 75% + accuracy_mod + DEX scaling (shown vs avg enemy DEX 10)
+        from core.combat_config import ACCURACY_BASE_PHYSICAL, ACCURACY_DEX_SCALE
+        acc_mod = weapon.get("accuracy_mod", 0)
+        dex_val = eff_stats.get("DEX", 10)
+        # Show vs average enemy DEX of 10
+        dex_diff_bonus = int((dex_val - 10) * ACCURACY_DEX_SCALE)
+        to_hit = min(95, max(25, ACCURACY_BASE_PHYSICAL + acc_mod + dex_diff_bonus))
+
+        sy = panel.y + 28
+        # Row 1: AC and To-Hit
+        draw_text(surface, f"AC (Defense): {total_def}", panel.x + 12, sy, CREAM, 13)
+        draw_text(surface, f"({base_def} base + {eq_def} armor)", panel.x + 150, sy, DARK_GREY, 11)
+        sy += 18
+        draw_text(surface, f"Magic Resist: {base_mr + eq_mr}", panel.x + 12, sy, CREAM, 13)
+        draw_text(surface, f"({base_mr} base + {eq_mr} equip)", panel.x + 150, sy, DARK_GREY, 11)
+        sy += 22
+
+        # Row 2: Weapon damage
+        wname = weapon.get("name", "Unarmed")
+        draw_text(surface, f"Weapon: {wname}", panel.x + 12, sy, EQUIP_COL, 13, bold=True)
+        sy += 18
+        draw_text(surface, f"Damage: {dmg_low}-{dmg_high}", panel.x + 12, sy, CREAM, 13)
+        draw_text(surface, f"(stat {stat_dmg:.0f} + base {weapon_base})", panel.x + 140, sy, DARK_GREY, 11)
+        sy += 18
+        draw_text(surface, f"To-Hit: {to_hit}%", panel.x + 12, sy, CREAM, 13)
+        draw_text(surface, f"(base {ACCURACY_BASE_PHYSICAL} + weap {acc_mod:+d} + DEX {dex_diff_bonus:+d})", panel.x + 110, sy, DARK_GREY, 11)
+        sy += 22
+
+        # Row 3: Speed and stat bonuses
         if eq_spd:
             s = "+" if eq_spd > 0 else ""
             draw_text(surface, f"Speed modifier: {s}{eq_spd}",
                       panel.x + 12, sy, CREAM, 13)
-            sy += 20
+            sy += 18
         if eq_stats:
             parts = [f"{st} +{v}" for st, v in eq_stats.items()]
             draw_text(surface, f"Stat bonuses: {', '.join(parts)}",
@@ -306,6 +359,9 @@ class InventoryUI:
             pygame.draw.rect(surface, border, rect, 2, border_radius=3)
 
             display_name = get_item_display_name(item)
+            stack = item.get("stack", 1)
+            if stack > 1:
+                display_name = f"{display_name} x{stack}"
             rarity = item.get("rarity", "common")
             name_col = RARITY_COLORS.get(rarity, CREAM) if item.get("identified") else GREY
             draw_text(surface, display_name, rect.x + 10, rect.y + 4,
@@ -375,7 +431,7 @@ class InventoryUI:
                     target = self.party[i]
                     if self.give_item in char.inventory:
                         char.inventory.remove(self.give_item)
-                        target.inventory.append(self.give_item)
+                        target.add_item(self.give_item)
                         name = get_item_display_name(self.give_item)
                         self._show_message(f"Gave {name} to {target.name}", STAT_UP)
                     self.mode = "normal"

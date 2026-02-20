@@ -93,6 +93,7 @@ class CombatUI:
         self.action_mode = "main"  # main, target_attack, target_ability, target_heal, choose_ability, choose_move
         self.selected_ability = None
         self.hover_target = -1
+        self.hover_enemy = None
         self.hover_action = -1
         self.log_scroll = 0
         self.flash_timer = 0
@@ -264,6 +265,18 @@ class CombatUI:
                 if p.get("is_defending"):
                     draw_text(surface, "DEF", cx + card_w - 36, cy + 38, GOLD, 12, bold=True)
 
+                # Compact combat stats (damage range + defense)
+                w = p.get("weapon", {})
+                w_dmg = w.get("damage", 0)
+                stat_d = 0
+                for sk, wt in w.get("damage_stat", {}).items():
+                    stat_d += p["stats"].get(sk, 0) * wt
+                raw = stat_d + w_dmg
+                d_lo, d_hi = max(1, int(raw * 0.85)), int(raw * 1.15)
+                dfn = p.get("defense", 0)
+                draw_text(surface, f"DMG:{d_lo}-{d_hi} AC:{dfn}",
+                          cx + 6, cy + card_h - 16, DARK_GREY, 10)
+
                 # Status effects (compact, right side)
                 sx = cx + card_w - 6
                 sy = cy + 54
@@ -279,72 +292,80 @@ class CombatUI:
                 draw_text(surface, "UNCONSCIOUS", cx + 30, cy + 48, DEAD_COLOR, 14)
 
     def _draw_enemy_cards(self, surface, mx, my):
-        """Draw enemy cards on the right side."""
+        """Draw individual enemy cards on the right side (one per enemy)."""
         row_positions = {FRONT: 2, MID: 1, BACK: 0}
-        groups = self.combat.get_enemy_groups()
 
         is_targeting = self.action_mode in ("target_attack", "target_ability", "target_heal")
-        self.hover_target = -1
+        self.hover_enemy = None  # store the actual enemy dict on hover
 
-        for gi, group in enumerate(groups):
-            row_idx = row_positions.get(group["row"], 0)
-            # Position within row
-            same_row_groups = [g for g in groups if g["row"] == group["row"]]
-            pos_in_row = same_row_groups.index(group)
+        # Gather living enemies by row
+        enemies_by_row = {FRONT: [], MID: [], BACK: []}
+        for e in self.combat.enemies:
+            enemies_by_row.setdefault(e["row"], []).append(e)
 
-            card_w = 220
-            card_h = 110
-            cx = ENEMY_ZONE_X + pos_in_row * (card_w + 10)
-            cy = BATTLEFIELD_Y + 10 + row_idx * 135
+        for row_key in [BACK, MID, FRONT]:
+            row_enemies = enemies_by_row.get(row_key, [])
+            row_idx = row_positions.get(row_key, 0)
 
-            rect = pygame.Rect(cx, cy, card_w, card_h)
-            is_hover = rect.collidepoint(mx, my) and is_targeting
+            for pos_in_row, enemy in enumerate(row_enemies):
+                # Sizing: fit up to 4 enemies per row
+                max_per_row = max(1, len(row_enemies))
+                card_w = min(220, (ENEMY_ZONE_W - 10 * max_per_row) // max_per_row)
+                card_h = 80
+                cx = ENEMY_ZONE_X + pos_in_row * (card_w + 8)
+                cy = BATTLEFIELD_Y + 10 + row_idx * 100
 
-            if is_hover:
-                self.hover_target = gi
-                bg = (50, 25, 25)
-                border = (255, 100, 100)
-            else:
-                bg = (25, 15, 15)
-                border = ENEMY_BORDER
+                rect = pygame.Rect(cx, cy, card_w, card_h)
+                is_hover = rect.collidepoint(mx, my) and is_targeting and enemy["alive"]
 
-            pygame.draw.rect(surface, bg, rect, border_radius=3)
-            pygame.draw.rect(surface, border, rect, 2, border_radius=3)
-
-            # Group name + count
-            count = len(group["members"])
-            name = group["name"]
-            count_str = f" x{count}" if count > 1 else ""
-            draw_text(surface, f"{name}{count_str}", cx + 6, cy + 4, ENEMY_RED, 15, bold=True)
-
-            row_col = ROW_COLORS.get(group["row"], DARK_GREY)
-            draw_text(surface, f"[{group['row'][0].upper()}]", cx + card_w - 28, cy + 4,
-                      row_col, 13)
-
-            # Show HP for each member
-            ey = cy + 26
-            for member in group["members"]:
-                if member["alive"]:
-                    draw_hp_bar(surface, cx + 6, ey, card_w - 12, 10,
-                                member["hp"], member["max_hp"])
-                    draw_text(surface, f"{member['hp']}/{member['max_hp']}",
-                              cx + 6, ey + 12, get_hp_color(member["hp"], member["max_hp"]), 11)
-                    ey += 26
+                if not enemy["alive"]:
+                    bg = (15, 10, 10)
+                    border = DEAD_COLOR
+                elif is_hover:
+                    self.hover_enemy = enemy
+                    bg = (50, 25, 25)
+                    border = (255, 100, 100)
                 else:
-                    draw_text(surface, "DEAD", cx + 6, ey, DEAD_COLOR, 11)
-                    ey += 18
+                    bg = (25, 15, 15)
+                    border = ENEMY_BORDER
 
-            # Status effects for the group (show for first living member)
-            first_living = next((m for m in group["members"] if m["alive"]), None)
-            if first_living and first_living.get("status_effects"):
-                sx = cx + 6
-                for status in first_living["status_effects"]:
-                    sname = status["name"][:3].upper()
-                    sdur = status["duration"]
-                    s_col = self._status_color(status["name"])
-                    label = f"{sname}:{sdur}"
-                    draw_text(surface, label, sx, cy + card_h - 16, s_col, 11)
-                    sx += get_font(11).size(label)[0] + 6
+                pygame.draw.rect(surface, bg, rect, border_radius=3)
+                pygame.draw.rect(surface, border, rect, 2, border_radius=3)
+
+                # Name
+                name_str = enemy["name"]
+                # Append a letter suffix if multiple of same type (A, B, C...)
+                same_name = [e for e in self.combat.enemies if e["name"] == enemy["name"]]
+                if len(same_name) > 1:
+                    idx = same_name.index(enemy)
+                    name_str = f"{enemy['name']} {chr(65+idx)}"
+
+                name_col = ENEMY_RED if enemy["alive"] else DEAD_COLOR
+                draw_text(surface, name_str[:18], cx + 4, cy + 3, name_col, 12, bold=True)
+
+                row_col = ROW_COLORS.get(row_key, DARK_GREY)
+                draw_text(surface, f"[{row_key[0].upper()}]", cx + card_w - 22, cy + 3,
+                          row_col, 10)
+
+                # HP bar
+                if enemy["alive"]:
+                    draw_hp_bar(surface, cx + 4, cy + 22, card_w - 8, 9,
+                                enemy["hp"], enemy["max_hp"])
+                    draw_text(surface, f"{enemy['hp']}/{enemy['max_hp']}",
+                              cx + 4, cy + 33, get_hp_color(enemy["hp"], enemy["max_hp"]), 10)
+                else:
+                    draw_text(surface, "DEAD", cx + 4, cy + 24, DEAD_COLOR, 11)
+
+                # Status effects
+                if enemy["alive"] and enemy.get("status_effects"):
+                    sx = cx + 4
+                    for status in enemy["status_effects"][:2]:
+                        sname = status["name"][:3].upper()
+                        sdur = status["duration"]
+                        s_col = self._status_color(status["name"])
+                        label = f"{sname}:{sdur}"
+                        draw_text(surface, label, sx, cy + card_h - 16, s_col, 9)
+                        sx += get_font(9).size(label)[0] + 4
 
     # ─────────────────────────────────────────────────────────
     #  COMBAT LOG
@@ -410,7 +431,7 @@ class CombatUI:
         if self.action_mode == "main":
             self._draw_main_actions(surface, mx, my, actor)
         elif self.action_mode in ("target_attack", "target_ability"):
-            draw_text(surface, "Select a target (click an enemy group above)",
+            draw_text(surface, "Select a target (click an enemy above)",
                       15, ACTION_Y + 36, CREAM, 16)
             # Back button
             back_rect = pygame.Rect(SCREEN_W - 140, ACTION_Y + 8, 120, 34)
@@ -834,20 +855,14 @@ class CombatUI:
             return None
 
         elif self.action_mode in ("target_attack", "target_ability"):
-            if self.hover_target >= 0:
-                groups = self.combat.get_enemy_groups()
-                if self.hover_target < len(groups):
-                    group = groups[self.hover_target]
-                    # Pick first living member of the group
-                    living = [m for m in group["members"] if m["alive"]]
-                    if living:
-                        target = living[0]
-                        action_type = "attack" if self.action_mode == "target_attack" else "ability"
-                        self.action_mode = "main"
-                        result = {"type": action_type, "target": target}
-                        if action_type == "ability":
-                            result["ability"] = self.selected_ability
-                        return result
+            if self.hover_enemy and self.hover_enemy["alive"]:
+                target = self.hover_enemy
+                action_type = "attack" if self.action_mode == "target_attack" else "ability"
+                self.action_mode = "main"
+                result = {"type": action_type, "target": target}
+                if action_type == "ability":
+                    result["ability"] = self.selected_ability
+                return result
 
         elif self.action_mode == "target_heal":
             # Click on a player card to heal them (including downed allies for revival)

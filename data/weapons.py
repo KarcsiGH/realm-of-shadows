@@ -27,14 +27,14 @@ WEAPONS = {
     # ── FISTS / UNARMED ─────────────────────────────────────
     "Unarmed": {
         "name": "Unarmed", "type": "Fists",
-        "damage": 3, "damage_stat": {"STR": 0.5, "DEX": 0.5},
+        "damage": 4, "damage_stat": {"STR": 0.5, "DEX": 0.5},
         "range": "melee", "speed_mod": 2, "accuracy_mod": 5, "crit_mod": 0,
         "weight_class": "light", "phys_type": "blunt",
         "requirements": {}, "spell_bonus": 0, "special": {},
     },
     "Monk Unarmed": {
         "name": "Unarmed (Monk)", "type": "Fists",
-        "damage": 3, "damage_stat": {"STR": 0.5, "DEX": 0.5},
+        "damage": 5, "damage_stat": {"STR": 0.5, "DEX": 0.5},
         "range": "melee", "speed_mod": 2, "accuracy_mod": 5, "crit_mod": 0,
         "weight_class": "light", "phys_type": "blunt",
         "requirements": {}, "spell_bonus": 0,
@@ -44,14 +44,14 @@ WEAPONS = {
     # ── DAGGERS ──────────────────────────────────────────────
     "Rusty Knife": {
         "name": "Rusty Knife", "type": "Dagger",
-        "damage": 4, "damage_stat": {"DEX": 1.0},
+        "damage": 10, "damage_stat": {"DEX": 1.0},
         "range": "melee", "speed_mod": 2, "accuracy_mod": 5, "crit_mod": 5,
         "weight_class": "light", "phys_type": "piercing",
         "requirements": {}, "spell_bonus": 0, "special": {},
     },
     "Iron Dagger": {
         "name": "Iron Dagger", "type": "Dagger",
-        "damage": 6, "damage_stat": {"DEX": 1.0},
+        "damage": 14, "damage_stat": {"DEX": 1.0},
         "range": "melee", "speed_mod": 2, "accuracy_mod": 5, "crit_mod": 5,
         "weight_class": "light", "phys_type": "piercing",
         "requirements": {"DEX": 8}, "spell_bonus": 0, "special": {},
@@ -60,14 +60,14 @@ WEAPONS = {
     # ── SHORT SWORDS ─────────────────────────────────────────
     "Worn Short Sword": {
         "name": "Worn Short Sword", "type": "Short Sword",
-        "damage": 6, "damage_stat": {"DEX": 0.7, "STR": 0.3},
+        "damage": 12, "damage_stat": {"DEX": 0.7, "STR": 0.3},
         "range": "melee", "speed_mod": 1, "accuracy_mod": 0, "crit_mod": 0,
         "weight_class": "light", "phys_type": "slashing",
         "requirements": {"DEX": 8}, "spell_bonus": 0, "special": {},
     },
     "Iron Short Sword": {
         "name": "Iron Short Sword", "type": "Short Sword",
-        "damage": 9, "damage_stat": {"DEX": 0.7, "STR": 0.3},
+        "damage": 16, "damage_stat": {"DEX": 0.7, "STR": 0.3},
         "range": "melee", "speed_mod": 1, "accuracy_mod": 0, "crit_mod": 0,
         "weight_class": "light", "phys_type": "slashing",
         "requirements": {"DEX": 10}, "spell_bonus": 0, "special": {},
@@ -76,14 +76,14 @@ WEAPONS = {
     # ── LONGSWORDS ───────────────────────────────────────────
     "Worn Longsword": {
         "name": "Worn Longsword", "type": "Longsword",
-        "damage": 8, "damage_stat": {"STR": 0.7, "DEX": 0.3},
+        "damage": 16, "damage_stat": {"STR": 0.7, "DEX": 0.3},
         "range": "melee", "speed_mod": 0, "accuracy_mod": 0, "crit_mod": 0,
         "weight_class": "medium", "phys_type": "slashing",
         "requirements": {"STR": 10}, "spell_bonus": 0, "special": {},
     },
     "Iron Longsword": {
         "name": "Iron Longsword", "type": "Longsword",
-        "damage": 11, "damage_stat": {"STR": 0.7, "DEX": 0.3},
+        "damage": 20, "damage_stat": {"STR": 0.7, "DEX": 0.3},
         "range": "melee", "speed_mod": 0, "accuracy_mod": 0, "crit_mod": 0,
         "weight_class": "medium", "phys_type": "slashing",
         "requirements": {"STR": 12}, "spell_bonus": 0, "special": {},
@@ -92,7 +92,7 @@ WEAPONS = {
     # ── BROADSWORDS ──────────────────────────────────────────
     "Iron Broadsword": {
         "name": "Iron Broadsword", "type": "Broadsword",
-        "damage": 14, "damage_stat": {"STR": 1.0},
+        "damage": 24, "damage_stat": {"STR": 1.0},
         "range": "melee", "speed_mod": -2, "accuracy_mod": -5, "crit_mod": 2,
         "weight_class": "heavy", "phys_type": "slashing",
         "requirements": {"STR": 13}, "spell_bonus": 0, "special": {},
@@ -101,7 +101,7 @@ WEAPONS = {
     # ── MACES / HAMMERS ──────────────────────────────────────
     "Wooden Club": {
         "name": "Wooden Club", "type": "Mace",
-        "damage": 6, "damage_stat": {"STR": 1.0},
+        "damage": 12, "damage_stat": {"STR": 1.0},
         "range": "melee", "speed_mod": -1, "accuracy_mod": -5, "crit_mod": 2,
         "weight_class": "medium", "phys_type": "blunt",
         "requirements": {"STR": 8}, "spell_bonus": 0,
@@ -109,7 +109,7 @@ WEAPONS = {
     },
     "Iron Mace": {
         "name": "Iron Mace", "type": "Mace",
-        "damage": 10, "damage_stat": {"STR": 1.0},
+        "damage": 18, "damage_stat": {"STR": 1.0},
         "range": "melee", "speed_mod": -1, "accuracy_mod": -5, "crit_mod": 2,
         "weight_class": "medium", "phys_type": "blunt",
         "requirements": {"STR": 11}, "spell_bonus": 0,
@@ -119,21 +119,21 @@ WEAPONS = {
     # ── STAVES ───────────────────────────────────────────────
     "Walking Stick": {
         "name": "Walking Stick", "type": "Staff",
-        "damage": 3, "damage_stat": {"STR": 0.4, "INT": 0.6},
+        "damage": 6, "damage_stat": {"STR": 0.4, "INT": 0.6},
         "range": "melee", "speed_mod": 0, "accuracy_mod": 0, "crit_mod": 0,
         "weight_class": "medium", "phys_type": "blunt",
         "requirements": {}, "spell_bonus": 2, "special": {},
     },
     "Wooden Staff": {
         "name": "Wooden Staff", "type": "Staff",
-        "damage": 5, "damage_stat": {"STR": 0.4, "INT": 0.6},
+        "damage": 10, "damage_stat": {"STR": 0.4, "INT": 0.6},
         "range": "melee", "speed_mod": 0, "accuracy_mod": 0, "crit_mod": 0,
         "weight_class": "medium", "phys_type": "blunt",
         "requirements": {"INT": 8}, "spell_bonus": 4, "special": {},
     },
     "Sacred Staff": {
         "name": "Sacred Staff", "type": "Staff",
-        "damage": 7, "damage_stat": {"STR": 0.4, "WIS": 0.6},
+        "damage": 14, "damage_stat": {"STR": 0.4, "WIS": 0.6},
         "range": "melee", "speed_mod": 0, "accuracy_mod": 0, "crit_mod": 0,
         "weight_class": "medium", "phys_type": "blunt",
         "requirements": {"PIE": 12}, "spell_bonus": 8, "special": {},
@@ -142,14 +142,14 @@ WEAPONS = {
     # ── SPEARS ───────────────────────────────────────────────
     "Wooden Spear": {
         "name": "Wooden Spear", "type": "Spear",
-        "damage": 7, "damage_stat": {"STR": 0.6, "DEX": 0.4},
+        "damage": 14, "damage_stat": {"STR": 0.6, "DEX": 0.4},
         "range": "reach", "speed_mod": 0, "accuracy_mod": 5, "crit_mod": 0,
         "weight_class": "medium", "phys_type": "piercing",
         "requirements": {"STR": 9}, "spell_bonus": 0, "special": {},
     },
     "Iron Spear": {
         "name": "Iron Spear", "type": "Spear",
-        "damage": 10, "damage_stat": {"STR": 0.6, "DEX": 0.4},
+        "damage": 18, "damage_stat": {"STR": 0.6, "DEX": 0.4},
         "range": "reach", "speed_mod": 0, "accuracy_mod": 5, "crit_mod": 0,
         "weight_class": "medium", "phys_type": "piercing",
         "requirements": {"STR": 11, "DEX": 9}, "spell_bonus": 0, "special": {},
@@ -158,7 +158,7 @@ WEAPONS = {
     # ── SLINGS ───────────────────────────────────────────────
     "Simple Sling": {
         "name": "Simple Sling", "type": "Sling",
-        "damage": 4, "damage_stat": {"DEX": 1.0},
+        "damage": 8, "damage_stat": {"DEX": 1.0},
         "range": "ranged", "speed_mod": 0, "accuracy_mod": -5, "crit_mod": 0,
         "weight_class": "light", "phys_type": "blunt",
         "requirements": {"DEX": 8}, "spell_bonus": 0, "special": {},
@@ -167,14 +167,14 @@ WEAPONS = {
     # ── BOWS ─────────────────────────────────────────────────
     "Short Bow": {
         "name": "Short Bow", "type": "Bow",
-        "damage": 6, "damage_stat": {"DEX": 0.8, "STR": 0.2},
+        "damage": 14, "damage_stat": {"DEX": 0.8, "STR": 0.2},
         "range": "ranged", "speed_mod": 0, "accuracy_mod": 5, "crit_mod": 3,
         "weight_class": "medium", "phys_type": "piercing",
         "requirements": {"DEX": 10, "STR": 8}, "spell_bonus": 0, "special": {},
     },
     "Hunting Bow": {
         "name": "Hunting Bow", "type": "Bow",
-        "damage": 9, "damage_stat": {"DEX": 0.8, "STR": 0.2},
+        "damage": 18, "damage_stat": {"DEX": 0.8, "STR": 0.2},
         "range": "ranged", "speed_mod": 0, "accuracy_mod": 5, "crit_mod": 3,
         "weight_class": "medium", "phys_type": "piercing",
         "requirements": {"DEX": 12, "STR": 9}, "spell_bonus": 0, "special": {},
@@ -183,7 +183,7 @@ WEAPONS = {
     # ── CROSSBOWS ────────────────────────────────────────────
     "Light Crossbow": {
         "name": "Light Crossbow", "type": "Crossbow",
-        "damage": 12, "damage_stat": {"DEX": 0.2},  # mostly flat damage
+        "damage": 22, "damage_stat": {"DEX": 0.2},  # mostly flat damage
         "range": "ranged", "speed_mod": -3, "accuracy_mod": 10, "crit_mod": 0,
         "weight_class": "medium", "phys_type": "piercing",
         "requirements": {"DEX": 8}, "spell_bonus": 0,
@@ -193,14 +193,14 @@ WEAPONS = {
     # ── THROWN ────────────────────────────────────────────────
     "Throwing Knife": {
         "name": "Throwing Knife", "type": "Thrown",
-        "damage": 5, "damage_stat": {"DEX": 0.6, "STR": 0.4},
+        "damage": 10, "damage_stat": {"DEX": 0.6, "STR": 0.4},
         "range": "thrown", "speed_mod": 1, "accuracy_mod": 0, "crit_mod": 0,
         "weight_class": "light", "phys_type": "piercing",
         "requirements": {"DEX": 10}, "spell_bonus": 0, "special": {},
     },
     "Throwing Axe": {
         "name": "Throwing Axe", "type": "Thrown",
-        "damage": 8, "damage_stat": {"DEX": 0.6, "STR": 0.4},
+        "damage": 16, "damage_stat": {"DEX": 0.6, "STR": 0.4},
         "range": "thrown", "speed_mod": 1, "accuracy_mod": 0, "crit_mod": 0,
         "weight_class": "light", "phys_type": "slashing",
         "requirements": {"DEX": 11, "STR": 10}, "spell_bonus": 0, "special": {},
