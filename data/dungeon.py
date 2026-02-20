@@ -313,6 +313,19 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             tiles[sdy][sdx]["type"] = DT_STAIRS_DOWN
             stairs_down_pos = (sdx, sdy)
 
+        # ── Place boss encounter on last floor ──
+        boss_pos = None
+        if floor_num == total_floors and len(rooms) > 1:
+            last_room = rooms[-1]
+            bx = last_room[0] + last_room[2] // 2
+            by = last_room[1] + last_room[3] // 2
+            if tiles[by][bx]["type"] == DT_FLOOR:
+                tiles[by][bx]["event"] = {
+                    "type": "boss_encounter",
+                    "triggered": False,
+                }
+                boss_pos = (bx, by)
+
         # ── Place treasure ──
         treasure_count = max(1, floor_num)
         placed_treasure = 0
@@ -348,6 +361,26 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
                     tiles[ey][ex]["event"] = {
                         "type": "fixed_encounter",
                         "triggered": False,
+                    }
+
+        # ── Place journal/story pickups ──
+        from data.story_data import get_dungeon_journals
+        journals = get_dungeon_journals(dungeon_id, floor_num)
+        for ji, journal in enumerate(journals):
+            # Place in a room that doesn't already have an event
+            room_idx = min(ji + 1, len(rooms) - 1)
+            if room_idx < len(rooms):
+                room = rooms[room_idx]
+                jx = room[0] + rng.randint(1, max(1, room[2] - 2))
+                jy = room[1] + rng.randint(1, max(1, room[3] - 2))
+                if tiles[jy][jx]["type"] == DT_FLOOR and not tiles[jy][jx].get("event"):
+                    tiles[jy][jx]["event"] = {
+                        "type": "journal",
+                        "triggered": False,
+                        "title": journal["title"],
+                        "text": journal["text"],
+                        "lore_id": journal.get("lore_id"),
+                        "on_find": journal.get("on_find", []),
                     }
 
         return {
@@ -503,6 +536,20 @@ class DungeonState:
             if not tile["event"].get("triggered"):
                 tile["event"]["triggered"] = True
                 return {"type": "fixed_encounter"}
+        elif tile.get("event") and tile["event"].get("type") == "journal":
+            if not tile["event"].get("triggered"):
+                tile["event"]["triggered"] = True
+                return {"type": "journal", "data": tile["event"]}
+        elif tile.get("event") and tile["event"].get("type") == "boss_encounter":
+            if not tile["event"].get("triggered"):
+                tile["event"]["triggered"] = True
+                return {
+                    "type": "random_encounter",
+                    "dungeon_id": self.dungeon_id,
+                    "floor": self.current_floor,
+                    "total_floors": self.total_floors,
+                    "is_boss": True,
+                }
 
         # Random encounter check
         self.step_counter += 1

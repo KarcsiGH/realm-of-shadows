@@ -114,6 +114,8 @@ class Game:
         self.dialogue_callback = None  # function to call after dialogue ends
         # Quest log
         self.quest_log_ui = None
+        # Track current/last town for shortcuts
+        self.current_town_id = "briarhollow"
         # Debug
         self.debug_mode = False
         self.debug_encounter = "tutorial"
@@ -279,7 +281,7 @@ class Game:
                     if not self.dungeon_state:
                         town_btn = pygame.Rect(SCREEN_W - 400, 40, 180, 40)
                         if town_btn.collidepoint(mx, my) and self.party:
-                            self.town_ui = TownUI(self.party)
+                            self.town_ui = TownUI(self.party, town_id=self.current_town_id)
                             self.go(S_TOWN)
                             return
                     # Save button
@@ -1146,7 +1148,9 @@ class Game:
             loc = event["data"]
             print(f"[DEBUG] enter_location: id={event.get('id')}, type={loc['type']}")
             if loc["type"] == LOC_TOWN:
-                self.town_ui = TownUI(self.party)
+                town_id = event.get("id", "briarhollow")
+                self.current_town_id = town_id
+                self.town_ui = TownUI(self.party, town_id=town_id)
                 self.go(S_TOWN)
             elif loc["type"] == LOC_DUNGEON:
                 # Find matching dungeon ID
@@ -1236,6 +1240,24 @@ class Game:
             enc_key = self.dungeon_state.get_encounter_key()
             self.pre_dungeon_state = S_DUNGEON
             self.start_combat(enc_key)
+
+        elif event["type"] == "journal":
+            data = event["data"]
+            title = data.get("title", "Journal Entry")
+            text = data.get("text", "")
+            lore_id = data.get("lore_id")
+            on_find = data.get("on_find", [])
+            # Execute on_find actions (quest updates, etc.)
+            from core.dialogue import _execute_action
+            for action in on_find:
+                _execute_action(action)
+            # Discover lore if specified
+            if lore_id:
+                from core.story_flags import discover_lore
+                discover_lore(lore_id)
+            # Show journal text as dungeon event
+            self.dungeon_ui.show_event(f"📜 {title}", GOLD)
+            self.dungeon_ui.show_event(text, (180, 160, 120))
 
         elif event["type"] == "stairs_down":
             if self.dungeon_state.go_downstairs():
@@ -1414,7 +1436,7 @@ class Game:
                 # Return to town
                 self.dungeon_state = None
                 self.dungeon_ui = None
-                self.town_ui = TownUI(self.party)
+                self.town_ui = TownUI(self.party, town_id=self.current_town_id)
                 self.town_ui.inn_result = "Your party has fallen... You awaken at the inn, battered and bruised. (25% gold lost)"
                 self.town_ui.view = self.town_ui.VIEW_INN
                 self.go(S_TOWN)

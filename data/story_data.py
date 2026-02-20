@@ -573,6 +573,277 @@ NPC_DIALOGUES = {
             },
         },
     ],
+
+    # ─────────────────────────────────────────────────────────
+    #  ELDER THERON — Woodhaven (Keeper of the Grove)
+    # ─────────────────────────────────────────────────────────
+    "elder_theron": [
+        # After learning about the Fading
+        {
+            "conditions": [
+                {"flag": "lore.fading_basics", "op": "==", "value": True},
+                {"flag": "npc.elder_theron.met", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "theron_fading",
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Theron",
+                        "text": "You carry the weight of knowledge, I see. The Fading — yes, "
+                                "we feel it here too. The grove is dying. Trees that stood for "
+                                "a thousand years are dissolving like mist.",
+                        "on_enter": [{"action": "meet_npc", "npc": "elder_theron"}],
+                        "choices": [
+                            {"text": "Can the grove be saved?", "next": "grove"},
+                            {"text": "What do you know about the Wardens?", "next": "wardens"},
+                            {"text": "We're looking for Hearthstones.", "next": "stones"},
+                        ],
+                    },
+                    "grove": {
+                        "speaker": "Elder Theron",
+                        "text": "The grove is connected to the wards — it draws power from the same "
+                                "source. If you restore the Hearthstones, the grove will heal. "
+                                "If you fail... there will be nothing left to heal.",
+                        "end": True,
+                    },
+                    "wardens": {
+                        "speaker": "Elder Theron",
+                        "text": "My grandmother spoke of them. She said they walked among us "
+                                "like ordinary folk, but they could feel the boundaries of the world. "
+                                "When they vanished, we thought the danger had passed. We were wrong.",
+                        "end": True,
+                    },
+                    "stones": {
+                        "speaker": "Elder Theron",
+                        "text": "Hearthstones... the old word is 'ancorae' — anchors. "
+                                "I know of one. The Spider's Nest to the south — something "
+                                "powerful pulses at its heart. The spiders guard it fiercely. "
+                                "Perhaps that is why they've grown so large.",
+                        "on_enter": [{"action": "start_quest", "quest": "main_spiders_nest"}],
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Default
+        {
+            "conditions": [],
+            "tree": {
+                "id": "theron_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Theron",
+                        "text": "Welcome to Woodhaven. The grove provides shelter, but "
+                                "these are troubled times. How may I help you?",
+                        "on_enter": [{"action": "meet_npc", "npc": "elder_theron"}],
+                        "choices": [
+                            {"text": "Tell me about Woodhaven.", "next": "about"},
+                            {"text": "Goodbye.", "next": "bye"},
+                        ],
+                    },
+                    "about": {
+                        "speaker": "Elder Theron",
+                        "text": "Woodhaven has stood in the shadow of the Great Grove for "
+                                "generations. The trees protect us. But lately, even the oldest "
+                                "oaks seem... tired. As if the world itself is exhausted.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Elder Theron",
+                        "text": "Walk gently. The forest remembers those who respect it.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  SYLLA — Woodhaven Herbalist
+    # ─────────────────────────────────────────────────────────
+    "sylla": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "sylla_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Sylla",
+                        "text": "Ah, adventurers! You look like you could use a poultice. "
+                                "Or three. Come in, come in — mind the drying herbs.",
+                        "on_enter": [{"action": "meet_npc", "npc": "sylla"}],
+                        "choices": [
+                            {"text": "What herbs do you work with?", "next": "herbs"},
+                            {"text": "Have you noticed anything strange?", "next": "strange"},
+                            {"text": "Just browsing.", "next": "bye"},
+                        ],
+                    },
+                    "herbs": {
+                        "speaker": "Sylla",
+                        "text": "Everything the grove provides! Moonpetal for healing, "
+                                "thornroot for poisons, silverbark for wards. Though lately "
+                                "the moonpetal blooms have been... wrong. Grey instead of silver. "
+                                "They still work, but they taste of ash.",
+                        "end": True,
+                    },
+                    "strange": {
+                        "speaker": "Sylla",
+                        "text": "Strange? Ha! Everything is strange. My garden phases in and out "
+                                "some mornings — I can see right through my tomatoes to the ground "
+                                "below. Elder Theron says it's the Fading. I say it's deeply unsettling "
+                                "is what it is.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Sylla",
+                        "text": "Take care out there. And eat something green occasionally!",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  FORGEMASTER DUNN — Ironhearth
+    # ─────────────────────────────────────────────────────────
+    "forgemaster_dunn": [
+        # After finding Dwarven Inscription in Abandoned Mine
+        {
+            "conditions": [
+                {"flag": "quest.main_hearthstone_1.state", "op": ">", "value": 0},
+                {"flag": "npc.forgemaster_dunn.met", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "dunn_hearthstone",
+                "nodes": {
+                    "start": {
+                        "speaker": "Forgemaster Dunn",
+                        "text": "Hold. I know that look — you've been in the old mine. "
+                                "My grandfather worked those tunnels before they sealed them. "
+                                "Said there was something down there that wasn't ore.",
+                        "on_enter": [{"action": "meet_npc", "npc": "forgemaster_dunn"}],
+                        "choices": [
+                            {"text": "There are Warden runes in the mine.", "next": "runes"},
+                            {"text": "We're looking for a Hearthstone.", "next": "stone"},
+                            {"text": "Just here for supplies.", "next": "bye"},
+                        ],
+                    },
+                    "runes": {
+                        "speaker": "Forgemaster Dunn",
+                        "text": "Warden runes! Grandfather said the same. The dwarves who built "
+                                "those tunnels were partners with the Wardens — they forged the "
+                                "casings for the Hearthstones. Runesteel, they called it. I still "
+                                "have a few ingots if you ever need something... special... forged.",
+                        "end": True,
+                    },
+                    "stone": {
+                        "speaker": "Forgemaster Dunn",
+                        "text": "A Hearthstone? Down in my mine? Well. That explains why the "
+                                "deepest tunnels never collapsed, even when everything else did. "
+                                "There's a vault at the bottom — grandfather said it needed Warden "
+                                "blood to open. Looks like you're the right people for the job.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Forgemaster Dunn",
+                        "text": "Everything I sell is Ironhearth quality. No refunds.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Default
+        {
+            "conditions": [],
+            "tree": {
+                "id": "dunn_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Forgemaster Dunn",
+                        "text": "Welcome to the forge. I make the finest steel in Aldenmere. "
+                                "What do you need?",
+                        "on_enter": [{"action": "meet_npc", "npc": "forgemaster_dunn"}],
+                        "choices": [
+                            {"text": "Tell me about Ironhearth.", "next": "about"},
+                            {"text": "How's business?", "next": "business"},
+                            {"text": "Goodbye.", "next": "bye"},
+                        ],
+                    },
+                    "about": {
+                        "speaker": "Forgemaster Dunn",
+                        "text": "Built on iron and stubbornness. The mines run deep under the "
+                                "mountains. We've been forging here since before the old kingdom "
+                                "fell. Good people. Hard workers. Lately though, the ore comes up "
+                                "brittle. Grey. Like the life's been sucked out of it.",
+                        "end": True,
+                    },
+                    "business": {
+                        "speaker": "Forgemaster Dunn",
+                        "text": "Terrible, if you want the truth. The ore quality's dropped off "
+                                "a cliff. I can still make decent steel, but I'm working twice as "
+                                "hard for half the output. Something's wrong underground. "
+                                "Something deeper than mining can reach.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Forgemaster Dunn",
+                        "text": "Stay sharp. Literally.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  KIRA — Traveling Merchant, Ironhearth
+    # ─────────────────────────────────────────────────────────
+    "merchant_kira": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "kira_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Kira",
+                        "text": "Well met, travelers! Kira's Curiosities, at your service. "
+                                "I deal in the rare, the unusual, and the occasionally cursed. "
+                                "What catches your eye?",
+                        "on_enter": [{"action": "meet_npc", "npc": "merchant_kira"}],
+                        "choices": [
+                            {"text": "Where do you travel?", "next": "travel"},
+                            {"text": "Any news from the road?", "next": "news"},
+                            {"text": "Just looking.", "next": "bye"},
+                        ],
+                    },
+                    "travel": {
+                        "speaker": "Kira",
+                        "text": "Everywhere and nowhere, as they say. Briarhollow, Woodhaven, "
+                                "Ironhearth, and sometimes east to the ports — though the "
+                                "eastern roads have been... unpredictable lately. I lost an "
+                                "entire cart last month. Not stolen. Just gone. The road "
+                                "it was on vanished overnight.",
+                        "end": True,
+                    },
+                    "news": {
+                        "speaker": "Kira",
+                        "text": "The roads are dangerous, and I don't mean bandits. Whole "
+                                "stretches disappear and reappear. A merchant I know walked "
+                                "into a fog bank and came out three days later, convinced only "
+                                "minutes had passed. The world is coming apart at the seams, "
+                                "and nobody in charge seems to care.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Kira",
+                        "text": "Come back when you have coin! Or a good story. I accept both.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
 }
 
 

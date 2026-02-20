@@ -29,6 +29,22 @@ SELL_COL     = (220, 180, 80)
 HEAL_COL     = (80, 255, 180)
 RUMOR_COL    = (180, 160, 220)
 
+# Town display info
+TOWN_DISPLAY = {
+    "briarhollow": {
+        "name": "Town of Briarhollow",
+        "desc": "A quiet settlement at the edge of the wilds.",
+    },
+    "woodhaven": {
+        "name": "Woodhaven",
+        "desc": "A village sheltered beneath the ancient Great Grove.",
+    },
+    "ironhearth": {
+        "name": "Ironhearth",
+        "desc": "A mining town built on iron and stubbornness.",
+    },
+}
+
 RARITY_COLORS = {
     "common":    CREAM,
     "uncommon":  (80, 220, 80),
@@ -52,7 +68,7 @@ class TownUI:
     VIEW_INN = "inn"
     VIEW_INN_LEVELUP = "inn_levelup"
 
-    def __init__(self, party):
+    def __init__(self, party, town_id="briarhollow"):
         self.party = party
         self.view = self.VIEW_HUB
         self.message = ""
@@ -83,7 +99,7 @@ class TownUI:
 
         # NPC dialogue state
         self.active_dialogue = None  # DialogueUI when talking to an NPC
-        self.town_id = "briarhollow"  # which town we're in (for NPC lookup)
+        self.town_id = town_id
 
     # ─────────────────────────────────────────────────────────
     #  MAIN DRAW
@@ -130,9 +146,10 @@ class TownUI:
     # ─────────────────────────────────────────────────────────
 
     def _draw_hub(self, surface, mx, my):
-        draw_text(surface, "Town of Briarhollow", SCREEN_W // 2 - 130, 30,
+        town_info = TOWN_DISPLAY.get(self.town_id, TOWN_DISPLAY["briarhollow"])
+        draw_text(surface, town_info["name"], SCREEN_W // 2 - 130, 30,
                   GOLD, 28, bold=True)
-        draw_text(surface, "A quiet settlement at the edge of the wilds.",
+        draw_text(surface, town_info["desc"],
                   SCREEN_W // 2 - 190, 70, GREY, 15)
 
         # Party gold
