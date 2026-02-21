@@ -53,6 +53,11 @@ def make_player_combatant(character, row=FRONT):
         equip_def = character.equipment_defense()
         equip_mres = character.equipment_magic_resist()
         equip_speed = character.equipment_speed()
+        # Enchant resistance bonuses from armor
+        if hasattr(character, "equipment") and character.equipment:
+            for slot, item in character.equipment.items():
+                if item and item.get("enchant_resist_bonus"):
+                    equip_mres += item["enchant_resist_bonus"]
 
     return {
         "type": "player",
@@ -317,6 +322,14 @@ def calc_physical_damage(attacker, defender, weapon, position_dmg_mod=1.0,
     # Crit multiplier
     if is_crit and crit_data:
         final *= crit_data.get("multiplier", 1.5)
+
+    # Weapon enchant bonus (elemental damage added after defense)
+    enchant_elem = weapon.get("enchant_element")
+    enchant_bonus = weapon.get("enchant_bonus", 0)
+    if enchant_elem and enchant_bonus > 0:
+        elem_resist = defender.get("resistances", {}).get(enchant_elem, NEUTRAL)
+        enchant_dmg = enchant_bonus * elem_resist
+        final += enchant_dmg
 
     return max(MINIMUM_DAMAGE, int(final))
 

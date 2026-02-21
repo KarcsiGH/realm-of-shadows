@@ -68,6 +68,10 @@ class TownUI:
     VIEW_TAVERN = "tavern"
     VIEW_INN = "inn"
     VIEW_INN_LEVELUP = "inn_levelup"
+    VIEW_FORGE = "forge"
+    VIEW_FORGE_CRAFT = "forge_craft"
+    VIEW_FORGE_UPGRADE = "forge_upgrade"
+    VIEW_FORGE_ENCHANT = "forge_enchant"
 
     def __init__(self, party, town_id="briarhollow"):
         self.party = party
@@ -101,6 +105,12 @@ class TownUI:
         # NPC dialogue state
         self.active_dialogue = None  # DialogueUI when talking to an NPC
         self.town_id = town_id
+
+        # Forge state
+        self.forge_scroll = 0
+        self.forge_item_scroll = 0
+        self.forge_selected_item = None
+        self.forge_selected_enchant = None
 
     # ─────────────────────────────────────────────────────────
     #  MAIN DRAW
@@ -136,6 +146,9 @@ class TownUI:
             self._draw_inn(surface, mx, my)
         elif self.view == self.VIEW_INN_LEVELUP:
             self._draw_inn_levelup(surface, mx, my)
+        elif self.view in (self.VIEW_FORGE, self.VIEW_FORGE_CRAFT,
+                           self.VIEW_FORGE_UPGRADE, self.VIEW_FORGE_ENCHANT):
+            self._draw_forge(surface, mx, my)
 
         # Message bar
         if self.message and self.msg_timer > 0:
@@ -164,6 +177,8 @@ class TownUI:
              (100, 80, 40), (220, 180, 80)),
             ("General Store", "Buy and sell weapons, armor, and supplies",
              (120, 100, 50), SELL_COL),
+            ("Dunn's Forge", "Craft, upgrade, and enchant equipment",
+             (140, 80, 40), (255, 140, 40)),
             ("Temple of Light", "Heal, identify items, remove curses",
              (50, 100, 120), HEAL_COL),
             ("The Shadowed Flagon", "Hear rumors and rest your feet",
@@ -746,7 +761,7 @@ class TownUI:
 
         # ── Hub view ──
         if self.view == self.VIEW_HUB:
-            locations = ["inn", "shop", "temple", "tavern", "exit"]
+            locations = ["inn", "shop", "forge", "temple", "tavern", "exit"]
             by = 140
             for i, loc in enumerate(locations):
                 btn = pygame.Rect(SCREEN_W // 2 - 300, by + i * 90, 420, 78)
@@ -756,6 +771,9 @@ class TownUI:
                         return "exit"
                     elif loc == "shop":
                         self.view = self.VIEW_SHOP
+                    elif loc == "forge":
+                        self.view = self.VIEW_FORGE
+                        self.forge_scroll = 0
                     elif loc == "temple":
                         self.view = self.VIEW_TEMPLE
                     elif loc == "tavern":
@@ -1000,6 +1018,11 @@ class TownUI:
                     self._msg("You can't afford a drink!", RED)
                 return None
 
+        # ── Forge ──
+        elif self.view in (self.VIEW_FORGE, self.VIEW_FORGE_CRAFT,
+                           self.VIEW_FORGE_UPGRADE, self.VIEW_FORGE_ENCHANT):
+            return self._handle_forge_click(mx, my)
+
         return None
 
     # ─────────────────────────────────────────────────────────
@@ -1207,3 +1230,323 @@ class TownUI:
                 self.sell_scroll = min(max_s, self.sell_scroll + 1)
             else:
                 self.sell_scroll = max(0, self.sell_scroll - 1)
+        elif self.view in (self.VIEW_FORGE_CRAFT, self.VIEW_FORGE_UPGRADE,
+                           self.VIEW_FORGE_ENCHANT):
+            if direction > 0:
+                self.forge_scroll = min(self.forge_scroll + 1, 50)
+            else:
+                self.forge_scroll = max(0, self.forge_scroll - 1)
+
+    # ─────────────────────────────────────────────────────────
+    #  FORGE — Craft, Upgrade, Enchant
+    # ─────────────────────────────────────────────────────────
+
+    def _draw_forge(self, surface, mx, my):
+        from core.crafting import (
+            RECIPES, ENCHANTMENTS, UPGRADE_COSTS, MAX_UPGRADE,
+            can_afford_recipe, count_material, get_upgrade_level,
+            get_upgrade_cost, get_upgradeable_items, get_enchantable_items,
+            get_applicable_enchants, get_materials_of_tier,
+        )
+
+        FORGE_ORANGE = (255, 140, 40)
+        FORGE_DIM = (160, 100, 40)
+
+        draw_text(surface, "Dunn's Forge", SCREEN_W // 2 - 80, 15, FORGE_ORANGE, 24, bold=True)
+        total_gold = sum(c.gold for c in self.party)
+        draw_text(surface, f"Gold: {total_gold}", SCREEN_W - 150, 20, DIM_GOLD, 14)
+
+        # Tab bar
+        tabs = [("Craft", self.VIEW_FORGE_CRAFT),
+                ("Upgrade", self.VIEW_FORGE_UPGRADE),
+                ("Enchant", self.VIEW_FORGE_ENCHANT)]
+        for i, (label, view) in enumerate(tabs):
+            tr = pygame.Rect(20 + i * 140, 50, 130, 32)
+            active = self.view == view or (self.view == self.VIEW_FORGE and i == 0)
+            col = FORGE_ORANGE if active else FORGE_DIM
+            pygame.draw.rect(surface, col, tr, 0 if active else 1, 4)
+            tc = BLACK if active else col
+            draw_text(surface, label, tr.x + 35, tr.y + 7, tc, 15, bold=active)
+
+        # Back button
+        back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
+        pygame.draw.rect(surface, (100, 60, 60), back, 1, 4)
+        draw_text(surface, "Back", back.x + 40, back.y + 8, RED, 14)
+
+        # Materials summary bar
+        draw_text(surface, "Materials:", 20, 90, GREY, 12)
+        mx_pos = 100
+        shown_mats = {}
+        for c in self.party:
+            for item in c.inventory:
+                if item.get("type") == "material":
+                    n = item.get("name", "?")
+                    shown_mats[n] = shown_mats.get(n, 0) + item.get("quantity", 1)
+        for mat_name, count in list(shown_mats.items())[:8]:
+            short = mat_name[:12]
+            draw_text(surface, f"{short}×{count}", mx_pos, 90, CREAM, 11)
+            mx_pos += 110
+
+        active_view = self.view if self.view != self.VIEW_FORGE else self.VIEW_FORGE_CRAFT
+        y = 110
+
+        if active_view == self.VIEW_FORGE_CRAFT:
+            self._draw_forge_craft(surface, mx, my, y, RECIPES, total_gold, FORGE_ORANGE)
+        elif active_view == self.VIEW_FORGE_UPGRADE:
+            self._draw_forge_upgrade(surface, mx, my, y, total_gold, FORGE_ORANGE)
+        elif active_view == self.VIEW_FORGE_ENCHANT:
+            self._draw_forge_enchant(surface, mx, my, y, total_gold, FORGE_ORANGE)
+
+    def _draw_forge_craft(self, surface, mx, my, y, recipes, total_gold, accent):
+        from core.crafting import can_afford_recipe, count_material
+        visible = recipes[self.forge_scroll:self.forge_scroll + 7]
+        for i, recipe in enumerate(visible):
+            ry = y + i * 72
+            can = can_afford_recipe(self.party, recipe)
+            box = pygame.Rect(20, ry, SCREEN_W - 40, 66)
+            bc = (50, 40, 30) if can else (35, 30, 25)
+            pygame.draw.rect(surface, bc, box, 0, 6)
+            pygame.draw.rect(surface, accent if can else (60, 50, 40), box, 1, 6)
+
+            # Item name and description
+            res = recipe["result"]
+            draw_text(surface, res["name"], 30, ry + 4, GOLD if can else GREY, 16, bold=True)
+            desc = res.get("description", "")[:70]
+            draw_text(surface, desc, 30, ry + 24, CREAM if can else (80, 70, 60), 12)
+
+            # Cost
+            cost_parts = [f"{recipe['gold']}g"]
+            for mat, ct in recipe["materials"].items():
+                have = count_material(self.party, mat)
+                col_str = f"{mat}:{have}/{ct}"
+                cost_parts.append(col_str)
+            cost_text = "  |  ".join(cost_parts)
+            draw_text(surface, cost_text, 30, ry + 44, (140, 120, 80) if can else (70, 60, 50), 11)
+
+            # Craft button
+            if can:
+                btn = pygame.Rect(SCREEN_W - 120, ry + 16, 80, 30)
+                pygame.draw.rect(surface, accent, btn, 0, 4)
+                draw_text(surface, "Craft", btn.x + 18, btn.y + 6, BLACK, 14, bold=True)
+
+    def _draw_forge_upgrade(self, surface, mx, my, y, total_gold, accent):
+        from core.crafting import get_upgradeable_items, get_upgrade_cost, get_materials_of_tier
+        items = get_upgradeable_items(self.party)
+        if not items:
+            draw_text(surface, "No weapons or armor to upgrade.", 30, y + 20, GREY, 15)
+            draw_text(surface, "Equip or carry weapons/armor to upgrade them here.", 30, y + 45, (80, 70, 60), 13)
+            return
+
+        visible = items[self.forge_scroll:self.forge_scroll + 7]
+        for i, (char, idx, item, loc) in enumerate(visible):
+            ry = y + i * 62
+            cost = get_upgrade_cost(item)
+            if not cost:
+                continue
+            avail_mats = get_materials_of_tier(self.party, cost["min_material_tier"])
+            total_mats = sum(avail_mats.values())
+            can = total_gold >= cost["gold"] and total_mats >= cost["material_count"]
+
+            box = pygame.Rect(20, ry, SCREEN_W - 40, 56)
+            bc = (50, 40, 30) if can else (35, 30, 25)
+            pygame.draw.rect(surface, bc, box, 0, 6)
+            pygame.draw.rect(surface, accent if can else (60, 50, 40), box, 1, 6)
+
+            lvl = item.get("upgrade_level", 0)
+            draw_text(surface, f"{item['name']}", 30, ry + 4, GOLD if can else GREY, 15, bold=True)
+            draw_text(surface, f"{char.name} ({loc})  |  +{lvl} → +{lvl+1}", 30, ry + 24, CREAM if can else (80,70,60), 12)
+            draw_text(surface, f"Cost: {cost['gold']}g + {cost['material_count']} tier-{cost['min_material_tier']}+ materials (have {total_mats})",
+                      30, ry + 40, (140,120,80) if can else (70,60,50), 11)
+
+            if can:
+                btn = pygame.Rect(SCREEN_W - 130, ry + 12, 90, 30)
+                pygame.draw.rect(surface, accent, btn, 0, 4)
+                draw_text(surface, "Upgrade", btn.x + 12, btn.y + 6, BLACK, 14, bold=True)
+
+    def _draw_forge_enchant(self, surface, mx, my, y, total_gold, accent):
+        from core.crafting import get_enchantable_items, get_applicable_enchants, ENCHANTMENTS, count_material
+
+        items = get_enchantable_items(self.party)
+        if not items:
+            draw_text(surface, "No weapons or armor to enchant.", 30, y + 20, GREY, 15)
+            return
+
+        # Phase 1: item selection
+        if self.forge_selected_item is None:
+            draw_text(surface, "Select an item to enchant:", 30, y, CREAM, 14)
+            y += 22
+            visible = items[self.forge_scroll:self.forge_scroll + 8]
+            for i, (char, idx, item, loc) in enumerate(visible):
+                ry = y + i * 46
+                box = pygame.Rect(20, ry, SCREEN_W - 40, 40)
+                hover = box.collidepoint(mx, my)
+                bc = (55, 45, 35) if hover else (40, 35, 28)
+                pygame.draw.rect(surface, bc, box, 0, 5)
+                ench_str = f" [{item.get('enchant_name','')}]" if item.get('enchant_name') else ""
+                draw_text(surface, f"{item['name']}{ench_str}", 30, ry + 4, GOLD, 14)
+                draw_text(surface, f"{char.name} ({loc})", 30, ry + 22, GREY, 11)
+        else:
+            # Phase 2: enchant selection
+            item_idx = self.forge_selected_item
+            if item_idx >= len(items):
+                self.forge_selected_item = None
+                return
+            char, idx, item, loc = items[item_idx]
+            draw_text(surface, f"Enchant: {item['name']}", 30, y, GOLD, 16, bold=True)
+            draw_text(surface, f"({char.name})", 200, y + 2, GREY, 13)
+
+            enchants = get_applicable_enchants(item)
+            y += 26
+            for i, ench_name in enumerate(enchants):
+                ench = ENCHANTMENTS[ench_name]
+                ry = y + i * 52
+                # Check affordability
+                can = total_gold >= ench["gold"]
+                for mat, ct in ench["materials"].items():
+                    if count_material(self.party, mat) < ct:
+                        can = False
+
+                box = pygame.Rect(20, ry, SCREEN_W - 40, 46)
+                bc = (50, 40, 30) if can else (35, 30, 25)
+                pygame.draw.rect(surface, bc, box, 0, 5)
+                pygame.draw.rect(surface, accent if can else (60,50,40), box, 1, 5)
+
+                draw_text(surface, ench_name, 30, ry + 4, GOLD if can else GREY, 15, bold=True)
+                draw_text(surface, ench["desc"], 150, ry + 6, CREAM if can else (80,70,60), 12)
+                cost_parts = [f"{ench['gold']}g"]
+                for mat, ct in ench["materials"].items():
+                    have = count_material(self.party, mat)
+                    cost_parts.append(f"{mat}:{have}/{ct}")
+                draw_text(surface, "  |  ".join(cost_parts), 30, ry + 26, (140,120,80) if can else (70,60,50), 11)
+
+                if can:
+                    btn = pygame.Rect(SCREEN_W - 130, ry + 8, 90, 28)
+                    pygame.draw.rect(surface, accent, btn, 0, 4)
+                    draw_text(surface, "Enchant", btn.x + 10, btn.y + 5, BLACK, 13, bold=True)
+
+            # Cancel button
+            cancel = pygame.Rect(20, y + len(enchants) * 52 + 10, 100, 30)
+            pygame.draw.rect(surface, (80, 50, 50), cancel, 1, 4)
+            draw_text(surface, "Cancel", cancel.x + 25, cancel.y + 7, RED, 13)
+
+    def _handle_forge_click(self, mx, my):
+        from core.crafting import (
+            RECIPES, ENCHANTMENTS, can_afford_recipe, craft_item,
+            get_upgradeable_items, get_upgrade_cost, apply_upgrade,
+            consume_gold, consume_materials, get_materials_of_tier,
+            get_enchantable_items, get_applicable_enchants, apply_enchant,
+            count_material,
+        )
+
+        # Back button
+        back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
+        if back.collidepoint(mx, my):
+            self.view = self.VIEW_HUB
+            self.forge_selected_item = None
+            return None
+
+        # Tab clicks
+        tabs = [(self.VIEW_FORGE_CRAFT, 20), (self.VIEW_FORGE_UPGRADE, 160),
+                (self.VIEW_FORGE_ENCHANT, 300)]
+        for view, tx in tabs:
+            tr = pygame.Rect(tx, 50, 130, 32)
+            if tr.collidepoint(mx, my):
+                self.view = view
+                self.forge_scroll = 0
+                self.forge_selected_item = None
+                return None
+
+        active_view = self.view if self.view != self.VIEW_FORGE else self.VIEW_FORGE_CRAFT
+        y = 110
+
+        if active_view == self.VIEW_FORGE_CRAFT:
+            visible = RECIPES[self.forge_scroll:self.forge_scroll + 7]
+            for i, recipe in enumerate(visible):
+                ry = y + i * 72
+                if can_afford_recipe(self.party, recipe):
+                    btn = pygame.Rect(SCREEN_W - 120, ry + 16, 80, 30)
+                    if btn.collidepoint(mx, my):
+                        result = craft_item(self.party, recipe)
+                        if result:
+                            self.party[0].inventory.append(result)
+                            sfx.play("shop_buy")
+                            self._msg(f"Crafted {result['name']}! Added to {self.party[0].name}'s inventory.", (255, 200, 80))
+                        return None
+
+        elif active_view == self.VIEW_FORGE_UPGRADE:
+            items = get_upgradeable_items(self.party)
+            visible = items[self.forge_scroll:self.forge_scroll + 7]
+            for i, (char, idx, item, loc) in enumerate(visible):
+                ry = y + i * 62
+                cost = get_upgrade_cost(item)
+                if not cost:
+                    continue
+                avail_mats = get_materials_of_tier(self.party, cost["min_material_tier"])
+                total_mats = sum(avail_mats.values())
+                can = sum(c.gold for c in self.party) >= cost["gold"] and total_mats >= cost["material_count"]
+                if can:
+                    btn = pygame.Rect(SCREEN_W - 130, ry + 12, 90, 30)
+                    if btn.collidepoint(mx, my):
+                        # Consume gold
+                        consume_gold(self.party, cost["gold"])
+                        # Consume materials (pick from available tier mats)
+                        remaining = cost["material_count"]
+                        for mat_name, have in avail_mats.items():
+                            if remaining <= 0:
+                                break
+                            use = min(have, remaining)
+                            consume_materials(self.party, {mat_name: use})
+                            remaining -= use
+                        old_name = item["name"]
+                        apply_upgrade(item)
+                        sfx.play("shop_buy")
+                        self._msg(f"Upgraded {old_name} → {item['name']}!", (255, 200, 80))
+                        return None
+
+        elif active_view == self.VIEW_FORGE_ENCHANT:
+            items = get_enchantable_items(self.party)
+            if self.forge_selected_item is None:
+                # Item selection phase
+                visible = items[self.forge_scroll:self.forge_scroll + 8]
+                y_start = y + 22
+                for i, (char, idx, item, loc) in enumerate(visible):
+                    ry = y_start + i * 46
+                    box = pygame.Rect(20, ry, SCREEN_W - 40, 40)
+                    if box.collidepoint(mx, my):
+                        self.forge_selected_item = self.forge_scroll + i
+                        return None
+            else:
+                # Enchant selection phase
+                if self.forge_selected_item >= len(items):
+                    self.forge_selected_item = None
+                    return None
+                char, idx, item, loc = items[self.forge_selected_item]
+                enchants = get_applicable_enchants(item)
+                ey = y + 26
+                total_gold = sum(c.gold for c in self.party)
+                for i, ench_name in enumerate(enchants):
+                    ench = ENCHANTMENTS[ench_name]
+                    ry = ey + i * 52
+                    can = total_gold >= ench["gold"]
+                    for mat, ct in ench["materials"].items():
+                        if count_material(self.party, mat) < ct:
+                            can = False
+                    if can:
+                        btn = pygame.Rect(SCREEN_W - 130, ry + 8, 90, 28)
+                        if btn.collidepoint(mx, my):
+                            consume_gold(self.party, ench["gold"])
+                            consume_materials(self.party, ench["materials"])
+                            old_name = item["name"]
+                            apply_enchant(item, ench_name)
+                            sfx.play("quest_complete")
+                            self._msg(f"Enchanted! {old_name} → {item['name']}", (180, 140, 255))
+                            self.forge_selected_item = None
+                            return None
+
+                # Cancel button
+                cancel = pygame.Rect(20, ey + len(enchants) * 52 + 10, 100, 30)
+                if cancel.collidepoint(mx, my):
+                    self.forge_selected_item = None
+                    return None
+
+        return None
