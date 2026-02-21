@@ -34,7 +34,7 @@ ENEMIES = {
         "status_immunities": [],
         "abilities": [],  # basic attack only
         "loot_table": [
-            {"drop_chance": 0.40, "item": {
+            {"drop_chance": 0.15, "item": {
                 "name": "Goblin Shiv", "type": "weapon",
                 "subtype": "Dagger", "rarity": "common",
                 "damage": 3, "phys_type": "piercing",
@@ -47,7 +47,7 @@ ENEMIES = {
                 "estimated_value": 4,
                 "description": "A goblin-forged shiv. Crude but sharp enough to draw blood.",
             }},
-            {"drop_chance": 0.35, "item": {
+            {"drop_chance": 0.12, "item": {
                 "name": "Goblin Ear", "type": "material",
                 "subtype": "trophy", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -86,7 +86,7 @@ ENEMIES = {
         "status_immunities": [],
         "abilities": [],
         "loot_table": [
-            {"drop_chance": 0.35, "item": {
+            {"drop_chance": 0.12, "item": {
                 "name": "Crude Shortbow", "type": "weapon",
                 "subtype": "Shortbow", "rarity": "common",
                 "damage": 4, "phys_type": "piercing",
@@ -99,7 +99,7 @@ ENEMIES = {
                 "estimated_value": 5,
                 "description": "A goblin-made shortbow. Flimsy but functional.",
             }},
-            {"drop_chance": 0.40, "item": {
+            {"drop_chance": 0.15, "item": {
                 "name": "Bundle of Crude Arrows", "type": "consumable",
                 "subtype": "ammunition", "rarity": "common",
                 "identify_difficulty": 1,
@@ -138,7 +138,7 @@ ENEMIES = {
         "status_immunities": [],
         "abilities": [],
         "loot_table": [
-            {"drop_chance": 0.30, "item": {
+            {"drop_chance": 0.12, "item": {
                 "name": "Bandit's Shortsword", "type": "weapon",
                 "subtype": "Short Sword", "rarity": "common",
                 "damage": 6, "phys_type": "slashing",
@@ -151,7 +151,7 @@ ENEMIES = {
                 "estimated_value": 12,
                 "description": "A well-used blade with nicks along the edge. Carried by a bandit who won't need it anymore.",
             }},
-            {"drop_chance": 0.30, "item": {
+            {"drop_chance": 0.12, "item": {
                 "name": "Leather Scraps", "type": "material",
                 "subtype": "leather", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -190,7 +190,7 @@ ENEMIES = {
         "status_immunities": [],
         "abilities": [],
         "loot_table": [
-            {"drop_chance": 0.40, "item": {
+            {"drop_chance": 0.15, "item": {
                 "name": "Wolf Pelt", "type": "material",
                 "subtype": "leather", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -202,7 +202,7 @@ ENEMIES = {
                 "estimated_value": 15,
                 "description": "A thick grey pelt, still warm. Useful for crafting leather armor.",
             }},
-            {"drop_chance": 0.20, "item": {
+            {"drop_chance": 0.08, "item": {
                 "name": "Wolf Fang", "type": "material",
                 "subtype": "reagent", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -266,7 +266,7 @@ ENEMIES = {
         "status_immunities": [],
         "abilities": [],
         "loot_table": [
-            {"drop_chance": 0.20, "item": {
+            {"drop_chance": 0.08, "item": {
                 "name": "Orcish Blade", "type": "weapon",
                 "subtype": "Broadsword", "rarity": "common",
                 "damage": 9, "phys_type": "slashing",
@@ -279,7 +279,7 @@ ENEMIES = {
                 "estimated_value": 15,
                 "description": "A crude but heavy iron blade favored by orc warriors.",
             }},
-            {"drop_chance": 0.25, "item": {
+            {"drop_chance": 0.05, "item": {
                 "name": "Orc Hide Scraps", "type": "material",
                 "subtype": "leather", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -322,7 +322,7 @@ ENEMIES = {
              "description": "Rallies nearby orcs, boosting their damage."},
         ],
         "loot_table": [
-            {"drop_chance": 0.50, "item": {
+            {"drop_chance": 0.25, "item": {
                 "name": "Chieftain's Cleaver", "type": "weapon",
                 "subtype": "Broadsword", "rarity": "uncommon",
                 "damage": 12, "phys_type": "slashing",
@@ -336,7 +336,7 @@ ENEMIES = {
                 "estimated_value": 120,
                 "description": "A massive jagged blade imbued with orcish battle rage. +1 enhancement, +1 STR when equipped.",
             }},
-            {"drop_chance": 0.25, "item": {
+            {"drop_chance": 0.05, "item": {
                 "name": "Orcish War Totem", "type": "accessory",
                 "subtype": "trinket", "rarity": "uncommon",
                 "effect": {"str_bonus": 2},
@@ -349,7 +349,7 @@ ENEMIES = {
                 "estimated_value": 200,
                 "description": "A bone totem etched with crude symbols of power. +2 STR when equipped.",
             }},
-            {"drop_chance": 0.35, "item": {
+            {"drop_chance": 0.12, "item": {
                 "name": "Chieftain's Trophy Pouch", "type": "consumable",
                 "subtype": "gold_pouch", "rarity": "common",
                 "bonus_gold": 50,
@@ -397,7 +397,7 @@ ENEMIES = {
              "description": "Spits a venomous dart."},
         ],
         "loot_table": [
-            {"drop_chance": 0.20, "item": {
+            {"drop_chance": 0.08, "item": {
                 "name": "Shaman's Herb Pouch", "type": "consumable",
                 "subtype": "potion_ingredient", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -409,7 +409,7 @@ ENEMIES = {
                 "estimated_value": 8,
                 "description": "A pouch of dried herbs with a pungent smell. Useful for brewing healing potions.",
             }},
-            {"drop_chance": 0.10, "item": {
+            {"drop_chance": 0.05, "item": {
                 "name": "Crude Wand", "type": "weapon",
                 "subtype": "Wand", "rarity": "common",
                 "spell_bonus": 2,
@@ -453,7 +453,7 @@ ENEMIES = {
         "status_immunities": ["stun"],
         "abilities": ["Goblin King Smash", "Enrage"],
         "loot_table": [
-            {"drop_chance": 1.0, "item": {
+            {"drop_chance": 0.80, "item": {
                 "name": "Goblin King's Crown", "type": "armor", "subtype": "helmet",
                 "rarity": "rare", "tier": 2, "defense": 5, "identified": True,
                 "estimated_value": 200,
@@ -486,7 +486,7 @@ ENEMIES = {
         "status_immunities": ["poison"],
         "abilities": ["Poison Cloud"],
         "loot_table": [
-            {"drop_chance": 1.0, "item": {
+            {"drop_chance": 0.80, "item": {
                 "name": "Spider Silk Mantle", "type": "armor", "subtype": "cloak",
                 "rarity": "rare", "tier": 2, "defense": 3, "magic_resist": 4, "identified": True,
                 "estimated_value": 180,
@@ -519,7 +519,7 @@ ENEMIES = {
         "status_immunities": ["poison", "stun", "fear"],
         "abilities": ["Skull Crush", "Enrage"],
         "loot_table": [
-            {"drop_chance": 1.0, "item": {
+            {"drop_chance": 0.80, "item": {
                 "name": "Foreman's Pickaxe", "type": "weapon", "subtype": "axe",
                 "rarity": "rare", "tier": 3, "damage": 22, "identified": True,
                 "estimated_value": 250,
@@ -552,7 +552,7 @@ ENEMIES = {
         "status_immunities": [],
         "abilities": [],
         "loot_table": [
-            {"drop_chance": 0.30, "item": {
+            {"drop_chance": 0.12, "item": {
                 "name": "Spider Silk", "type": "material", "subtype": "cloth",
                 "rarity": "common", "tier": 1, "estimated_value": 12, "identified": True,
                 "description": "Tough, lightweight silk from a giant spider.",
