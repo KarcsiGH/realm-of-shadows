@@ -600,6 +600,17 @@ class DungeonState:
 
     def get_encounter_key(self):
         """Get random encounter key for current floor."""
+        from data.enemies import DUNGEON_ENCOUNTER_TABLES
+        table = DUNGEON_ENCOUNTER_TABLES.get(self.dungeon_id)
+        if table:
+            # Check for boss floor
+            if self.current_floor >= self.total_floors and "boss" in table:
+                return table["boss"]
+            keys = table.get(self.current_floor, table.get(1, ["tutorial"]))
+            if isinstance(keys, str):
+                return keys
+            return random.choice(keys)
+        # Fallback to old embedded table
         table = self.definition["encounter_table"]
         keys = table.get(self.current_floor, table.get(1, ["tutorial"]))
         return random.choice(keys)
