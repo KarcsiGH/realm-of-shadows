@@ -765,16 +765,27 @@ class DungeonState:
         self._check_secret_detection(px, py, floor, detect_bonus)
 
     def _check_secret_detection(self, px, py, floor, detect_bonus):
-        """Roll to detect secret doors within 2 tiles."""
-        # Secret door detection: harder than traps
-        secret_chance = 15 + detect_bonus  # lower base than traps
+        """Roll to detect secret doors within 2 tiles.
+        Harder than traps — only Thief/Ranger class bonuses count,
+        not raw party stats. Repeated rolls on each step nearby."""
+        # Only class bonuses matter for secrets (not raw stat stacking)
+        secret_bonus = 0
+        for c in self.party:
+            if c.class_name == "Thief":
+                secret_bonus += 15 + c.level * 3
+            elif c.class_name == "Ranger":
+                secret_bonus += 8 + c.level * 2
+            # Only best WIS in party contributes (not all)
+        best_wis = max((c.stats.get("WIS", 0) for c in self.party), default=0)
+        secret_chance = 8 + secret_bonus + best_wis // 3  # much lower base
+
         for dy in range(-2, 3):
             for dx in range(-2, 3):
                 tx, ty = px + dx, py + dy
                 if 0 <= tx < floor["width"] and 0 <= ty < floor["height"]:
                     tile = floor["tiles"][ty][tx]
                     if tile["type"] == DT_SECRET_DOOR and not tile.get("secret_found"):
-                        if random.randint(1, 100) <= min(75, secret_chance):
+                        if random.randint(1, 100) <= min(60, secret_chance):
                             tile["secret_found"] = True
 
     def disarm_trap(self, x, y):
