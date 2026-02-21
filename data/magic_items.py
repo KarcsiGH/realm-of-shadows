@@ -195,6 +195,7 @@ BOSS_BONUS_LOOT = {
             "description": "A crystallized fragment of the Fading. Whispers with dark knowledge. +3 INT, +2 WIS, +1 PIE.",
             "identified": True, "estimated_value": 400}},
     ],
+    # NOTE: Lingering Will boss loot is defined in tower_data.py
 }
 
 

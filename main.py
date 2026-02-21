@@ -1119,6 +1119,32 @@ class Game:
         dt = self.clock.get_time()
         self.post_combat_ui.draw(self.screen, mx, my, dt)
 
+    def _grant_boss_rewards(self, dungeon_id):
+        """Grant key items and story flags when a boss is defeated."""
+        # Map dungeon bosses to key rewards
+        BOSS_KEY_GRANTS = {
+            "goblin_warren":   "thornwood_map",    # unlocks Spider's Nest area
+            "spiders_nest":    "mine_key",          # unlocks Abandoned Mine
+            "abandoned_mine":  "ashenmoor_seal",    # unlocks Ruins of Ashenmoor
+            "sunken_crypt":    "spire_key",         # unlocks Valdris' Spire
+            "ruins_ashenmoor": "crypt_amulet",      # unlocks Sunken Crypt
+            "valdris_spire":   "dragon_scale",      # unlocks Dragon's Tooth (future)
+        }
+        key = BOSS_KEY_GRANTS.get(dungeon_id)
+        if key and self.world_state:
+            if not self.world_state.has_key(key):
+                self.world_state.add_key(key)
+                # Also make the target dungeon visible/discoverable
+                from data.world_map import LOCATIONS
+                for loc_id, loc in LOCATIONS.items():
+                    if loc.get("required_key") == key:
+                        loc["visible"] = True
+                        self.world_state.discovered_locations.add(loc_id)
+
+        # Set story flags
+        from core.story_flags import set_flag
+        set_flag(f"boss_defeated.{dungeon_id}", True)
+
     def draw_inventory(self, mx, my):
         """Draw the inventory/equipment screen."""
         dt = self.clock.get_time()
@@ -1459,6 +1485,11 @@ class Game:
                         for cs in combat_statuses:
                             if cs.get("name") == "Poison" and cs.get("duration", 0) > 0:
                                 add_poison(char, "poison_weak")
+
+                # ── Grant dungeon keys on boss victory ──
+                if self.dungeon_state:
+                    self._grant_boss_rewards(self.dungeon_state.dungeon_id)
+
                 self.start_post_combat()
             else:
                 # DEFEAT — TPK handling

@@ -107,6 +107,23 @@ DUNGEONS = {
         "theme": "ruins",
         "encounter_rate": 7,
     },
+    "valdris_spire": {
+        "name": "Valdris' Spire",
+        "floors": 6,
+        "width": 22, "height": 18,  # smaller, tighter tower floors
+        "encounter_table": {
+            1: ["vs_rats", "vs_guardian"],
+            2: ["vs_armor_pair", "vs_armor_sentry"],
+            3: ["vs_scholars", "vs_tomes"],
+            4: ["vs_golem", "vs_golem_wisps"],
+            5: ["vs_wraiths", "vs_fracture"],
+            6: ["vs_wraiths", "vs_fracture"],
+        },
+        "boss_floor": 6,
+        "boss_encounter": "boss_lingering_will",
+        "theme": "tower",
+        "encounter_rate": 7,
+    },
 }
 
 # ═══════════════════════════════════════════════════════════════
