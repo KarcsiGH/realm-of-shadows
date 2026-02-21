@@ -8,6 +8,7 @@ from ui.renderer import *
 from data.dungeon import (
     DungeonState, PASSABLE_TILES, DT_WALL, DT_FLOOR, DT_CORRIDOR,
     DT_DOOR, DT_STAIRS_DOWN, DT_STAIRS_UP, DT_TREASURE, DT_TRAP, DT_ENTRANCE,
+    DT_SECRET_DOOR,
 )
 
 # ── Layout ──
@@ -178,7 +179,10 @@ class DungeonUI:
                     b = FOG_B
 
                 tt = tile["type"]
-                if tt == DT_WALL:
+                # Undetected secret doors look like walls
+                if tt == DT_SECRET_DOOR and not tile.get("secret_found"):
+                    self._draw_wall(surface, sx, sy, b, tx, ty, tiles, fw, fh)
+                elif tt == DT_WALL:
                     self._draw_wall(surface, sx, sy, b, tx, ty, tiles, fw, fh)
                 else:
                     self._draw_floor_tile(surface, sx, sy, b, tt, tile)
@@ -324,6 +328,31 @@ class DungeonUI:
                 dc = self._dim((70, 70, 70), b)
                 pygame.draw.line(surface, dc, (cx - r, cy), (cx + r, cy), 1)
 
+        elif tt == DT_SECRET_DOOR:
+            found = tile.get("secret_found", False)
+            if found:
+                # Render as a special door with a "?" mark
+                dc = self._dim((100, 60, 140), b)  # purple-ish
+                m = TS // 5
+                pygame.draw.rect(surface, dc, (sx + m, sy + m, TS - m*2, TS - m*2), border_radius=2)
+                pygame.draw.rect(surface, self._dim((160, 100, 200), b),
+                                 (sx + m, sy + m, TS - m*2, TS - m*2), 2, border_radius=2)
+                # Question mark hint
+                if b > 0.3 and TS >= 12:
+                    fc = self._dim((200, 160, 240), b)
+                    try:
+                        font = pygame.font.Font(None, max(10, TS // 2))
+                        txt = font.render("?", True, fc)
+                        surface.blit(txt, (cx - txt.get_width() // 2, cy - txt.get_height() // 2))
+                    except Exception:
+                        pass
+                # Subtle glow
+                gl = int(self.pulse * 20) + 4
+                gs = pygame.Surface((TS, TS), pygame.SRCALPHA)
+                gs.fill((140, 80, 200, gl))
+                surface.blit(gs, (sx, sy))
+            # If not found, render as wall (handled by the wall check above)
+
         # ── Event overlays ──
         ev = tile.get("event")
         if ev and isinstance(ev, dict):
@@ -434,6 +463,11 @@ class DungeonUI:
                 elif tt == DT_TRAP:
                     ev = tile.get("event") or {}
                     c = C_TRAP if ev.get("detected") and not ev.get("disarmed") else (100, 90, 75)
+                elif tt == DT_SECRET_DOOR:
+                    if tile.get("secret_found"):
+                        c = (140, 80, 200)  # purple for found secret doors
+                    else:
+                        c = (45, 40, 35)  # looks like wall
                 else:
                     c = (80, 72, 60)
                 pygame.draw.rect(surface, c, (mx0 + tx * ms, my0 + ty * ms, ms, ms))

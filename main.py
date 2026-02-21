@@ -1312,6 +1312,7 @@ class Game:
         elif event["type"] == "treasure":
             sfx.play("treasure_open")
             data = event["data"]
+            is_secret = data.get("secret_chest", False)
             gold = data.get("gold", 0)
             items = data.get("items", [])
             # Distribute gold evenly across party
@@ -1324,6 +1325,9 @@ class Game:
             from core.party_knowledge import auto_identify_if_known, mark_item_identified
             for item in items:
                 item_copy = dict(item)
+                # Secret chest items come pre-identified
+                if is_secret:
+                    item_copy["identified"] = True
                 auto_identify_if_known(item_copy)
                 if item_copy.get("identified"):
                     mark_item_identified(item_copy.get("name", ""))
@@ -1333,10 +1337,12 @@ class Game:
                 parts.append(f"{gold} gold")
             for item in items:
                 parts.append(item["name"])
-            msg = "Found: " + ", ".join(parts) if parts else "The chest is empty."
+            prefix = "★ Secret chest! " if is_secret else ""
+            msg = prefix + ("Found: " + ", ".join(parts) if parts else "The chest is empty.")
             if items:
                 msg += f" (Check {self.party[0].name}'s inventory)"
-            self.dungeon_ui.show_event(msg, GOLD)
+            color = (200, 140, 255) if is_secret else GOLD
+            self.dungeon_ui.show_event(msg, color)
 
         elif event["type"] == "trap":
             sfx.play("trap_trigger")

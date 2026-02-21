@@ -1486,6 +1486,19 @@ class CombatState:
                     item["source"] = e["name"]
                     loot_drops.append(item)
 
+        # ── Boss bonus loot (unique magic items) ──
+        try:
+            from data.magic_items import get_boss_bonus_drops
+            for e in self.enemies:
+                if e.get("ai_type") == "boss" or ENEMIES.get(e["template_key"], {}).get("ai_type") == "boss":
+                    bonus = get_boss_bonus_drops(e["template_key"], random)
+                    for item in bonus:
+                        item["source"] = e["name"]
+                        item["identified"] = True  # boss uniques come identified
+                        loot_drops.append(item)
+        except ImportError:
+            pass
+
         # ── Store results ──
         enemy_names = list(set(e["name"] for e in self.enemies))
         self.rewards = {

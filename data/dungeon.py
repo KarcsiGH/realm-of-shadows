@@ -21,9 +21,11 @@ DT_STAIRS_UP   = "stairs_up"
 DT_TREASURE = "treasure"
 DT_TRAP     = "trap"
 DT_ENTRANCE = "entrance"   # floor 1 entrance from overworld
+DT_SECRET_DOOR = "secret_door"  # hidden door — looks like wall until found
 
 PASSABLE_TILES = {DT_FLOOR, DT_CORRIDOR, DT_DOOR, DT_STAIRS_DOWN,
-                  DT_STAIRS_UP, DT_TREASURE, DT_TRAP, DT_ENTRANCE}
+                  DT_STAIRS_UP, DT_TREASURE, DT_TRAP, DT_ENTRANCE,
+                  DT_SECRET_DOOR}
 
 # ═══════════════════════════════════════════════════════════════
 #  DUNGEON DEFINITIONS
@@ -220,6 +222,90 @@ def resolve_trap_saving_throw(character, trap_event):
         return "full"
 
 
+def _place_secret_room(tiles, rooms, width, height, floor_num, total_floors, rng, dungeon_id):
+    """Try to carve a secret room adjacent to an existing room.
+    The entrance is a DT_SECRET_DOOR tile that renders as wall until discovered."""
+    from data.magic_items import get_secret_item
+
+    # Pick a room to attach the secret room to (not first or last)
+    candidates = rooms[1:-1] if len(rooms) > 2 else rooms[1:]
+    if not candidates:
+        return
+    rng.shuffle(candidates)
+
+    for base_room in candidates:
+        rx, ry, rw, rh = base_room
+        # Try each direction: left, right, top, bottom
+        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+        rng.shuffle(directions)
+
+        for dx, dy in directions:
+            # Secret room size: small (3x3 to 4x4)
+            sw = rng.randint(3, 4)
+            sh = rng.randint(3, 4)
+
+            if dx == -1:  # left of room
+                sx = rx - sw - 1
+                sy = ry + rng.randint(0, max(0, rh - sh))
+                door_x, door_y = rx - 1, sy + sh // 2
+            elif dx == 1:  # right of room
+                sx = rx + rw + 1
+                sy = ry + rng.randint(0, max(0, rh - sh))
+                door_x, door_y = rx + rw, sy + sh // 2
+            elif dy == -1:  # above room
+                sx = rx + rng.randint(0, max(0, rw - sw))
+                sy = ry - sh - 1
+                door_x, door_y = sx + sw // 2, ry - 1
+            else:  # below room
+                sx = rx + rng.randint(0, max(0, rw - sw))
+                sy = ry + rh + 1
+                door_x, door_y = sx + sw // 2, ry + rh
+
+            # Bounds check
+            if sx < 1 or sy < 1 or sx + sw >= width - 1 or sy + sh >= height - 1:
+                continue
+            if door_x < 1 or door_y < 1 or door_x >= width - 1 or door_y >= height - 1:
+                continue
+
+            # Check the secret room area is all wall (no overlaps)
+            clear = True
+            for cy in range(sy - 1, sy + sh + 1):
+                for cx in range(sx - 1, sx + sw + 1):
+                    if 0 <= cy < height and 0 <= cx < width:
+                        if tiles[cy][cx]["type"] != DT_WALL:
+                            clear = False
+                            break
+                if not clear:
+                    break
+            if not clear:
+                continue
+
+            # Carve the secret room
+            for cy in range(sy, sy + sh):
+                for cx in range(sx, sx + sw):
+                    tiles[cy][cx]["type"] = DT_FLOOR
+                    tiles[cy][cx]["secret_room"] = True
+
+            # Place the secret door
+            tiles[door_y][door_x]["type"] = DT_SECRET_DOOR
+            tiles[door_y][door_x]["discovered"] = False
+            tiles[door_y][door_x]["secret_found"] = False
+
+            # Place magic item chest in center of secret room
+            cx_center = sx + sw // 2
+            cy_center = sy + sh // 2
+            magic_item = get_secret_item(floor_num, total_floors, rng)
+            gold_bonus = rng.randint(30, 80) * floor_num
+            tiles[cy_center][cx_center]["type"] = DT_TREASURE
+            tiles[cy_center][cx_center]["event"] = {
+                "type": "treasure", "gold": gold_bonus,
+                "items": [magic_item], "opened": False,
+                "secret_chest": True,
+            }
+            tiles[cy_center][cx_center]["secret_room"] = True
+            return  # placed successfully
+
+
 def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_id="goblin_warren"):
     """Generate a single dungeon floor grid.
     Returns 2D list of tile dicts and metadata."""
@@ -383,6 +469,13 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
                         "on_find": journal.get("on_find", []),
                     }
 
+        # ── Place secret rooms with magic item chests ──
+        # 40% chance per floor, higher on deeper floors
+        secret_chance = 0.35 + floor_num * 0.08
+        if rng.random() < secret_chance and len(rooms) >= 3:
+            _place_secret_room(tiles, rooms, width, height, floor_num,
+                               total_floors, rng, dungeon_id)
+
         return {
             "tiles": tiles,
             "rooms": rooms,
@@ -490,6 +583,9 @@ class DungeonState:
 
         tile = floor["tiles"][ny][nx]
         if tile["type"] not in PASSABLE_TILES:
+            return None
+        # Secret doors block movement until found
+        if tile["type"] == DT_SECRET_DOOR and not tile.get("secret_found"):
             return None
 
         self.party_x = nx
@@ -665,6 +761,22 @@ class DungeonState:
                             if random.randint(1, 100) <= min(90, base_chance):
                                 ev["detected"] = True
 
+        # Also check for secret doors nearby
+        self._check_secret_detection(px, py, floor, detect_bonus)
+
+    def _check_secret_detection(self, px, py, floor, detect_bonus):
+        """Roll to detect secret doors within 2 tiles."""
+        # Secret door detection: harder than traps
+        secret_chance = 15 + detect_bonus  # lower base than traps
+        for dy in range(-2, 3):
+            for dx in range(-2, 3):
+                tx, ty = px + dx, py + dy
+                if 0 <= tx < floor["width"] and 0 <= ty < floor["height"]:
+                    tile = floor["tiles"][ty][tx]
+                    if tile["type"] == DT_SECRET_DOOR and not tile.get("secret_found"):
+                        if random.randint(1, 100) <= min(75, secret_chance):
+                            tile["secret_found"] = True
+
     def disarm_trap(self, x, y):
         """Attempt to disarm a detected trap. Returns success bool."""
         floor = self.floors[self.current_floor]
@@ -703,6 +815,8 @@ class DungeonState:
                         "discovered": tile["discovered"],
                         "event": tile.get("event"),
                         "is_party": (wx == self.party_x and wy == self.party_y),
+                        "secret_found": tile.get("secret_found", False),
+                        "secret_room": tile.get("secret_room", False),
                     })
                 else:
                     row.append(None)
