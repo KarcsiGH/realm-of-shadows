@@ -210,33 +210,33 @@ RAIL_STATIONS = ["briarhollow", "woodhaven", "ironhearth"]
 
 ENCOUNTER_ZONES = {
     "briarhollow": {
-        "easy": ["tutorial", "easy_goblins"],
-        "medium": ["medium_bandits", "wolves"],
+        "easy": ["tutorial", "easy_goblins", "gw_scouts"],
+        "medium": ["wolves", "wm_wolves_dire", "medium_bandits"],
     },
     "thornwood": {
-        "easy": ["wolves"],
-        "medium": ["medium_goblins", "wolves"],
-        "hard": ["medium_bandits"],
+        "easy": ["wolves", "gw_bats"],
+        "medium": ["wm_wolves_dire", "medium_goblins", "gw_fungal"],
+        "hard": ["wm_highway", "medium_bandits"],
     },
     "iron_ridge": {
-        "medium": ["medium_bandits", "hard_mixed"],
-        "hard": ["hard_mixed", "boss_orc"],
+        "medium": ["am_kobolds", "medium_bandits", "wm_highway"],
+        "hard": ["am_kobold_fire", "wm_bandit_camp", "hard_mixed"],
     },
     "ashlands": {
-        "medium": ["hard_mixed"],
-        "hard": ["boss_orc"],
+        "medium": ["ra_bandits", "hard_mixed"],
+        "hard": ["ra_cultists", "wm_bandit_camp", "orc_patrol"],
     },
     "mirehollow": {
-        "medium": ["medium_goblins", "medium_bandits"],
-        "hard": ["hard_mixed"],
+        "medium": ["wm_swamp", "medium_goblins"],
+        "hard": ["wm_troll", "wm_swamp", "hard_mixed"],
     },
     "pale_coast": {
-        "easy": ["easy_goblins"],
-        "medium": ["medium_bandits"],
+        "easy": ["easy_goblins", "gw_scouts"],
+        "medium": ["medium_bandits", "wolves"],
     },
     "ocean": {
         "medium": ["medium_bandits"],
-        "hard": ["hard_mixed"],
+        "hard": ["wm_highway"],
     },
 }
 

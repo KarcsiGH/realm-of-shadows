@@ -784,3 +784,25 @@ def build_encounter(encounter_key):
             enemies.append(enemy)
             uid += 1
     return enemies, encounter["name"]
+
+
+# ═══════════════════════════════════════════════════════════════
+#  M9 EXPANDED BESTIARY — merge new enemies, encounters, tables
+# ═══════════════════════════════════════════════════════════════
+
+from data.bestiary_m9 import (
+    NEW_ENEMIES, NEW_ENCOUNTERS,
+    NEW_DUNGEON_ENCOUNTER_TABLES, NEW_ENCOUNTER_ZONES,
+    NEW_ENEMY_ABILITIES,
+)
+
+ENEMIES.update(NEW_ENEMIES)
+ENCOUNTERS.update(NEW_ENCOUNTERS)
+DUNGEON_ENCOUNTER_TABLES.update(NEW_DUNGEON_ENCOUNTER_TABLES)
+
+# Merge new enemy abilities into core.abilities
+try:
+    from core.abilities import ENEMY_ABILITIES
+    ENEMY_ABILITIES.update(NEW_ENEMY_ABILITIES)
+except ImportError:
+    pass
