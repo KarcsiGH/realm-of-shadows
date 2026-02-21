@@ -328,7 +328,8 @@ class Game:
                     else:
                         r = pygame.Rect(SCREEN_W//2 - 150, SCREEN_H - 65, 300, 45)
                         if r.collidepoint(mx, my):
-                            self.start_combat("tutorial")
+                            self._init_world_map()
+                            self.go(S_WORLD_MAP)
 
         elif self.state == S_INVENTORY:
             # Pass keyboard events (ESC)
