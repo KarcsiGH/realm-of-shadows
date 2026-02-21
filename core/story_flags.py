@@ -67,11 +67,21 @@ def start_quest(quest_id):
     key = f"quest.{quest_id}.state"
     if _flags.get(key, 0) == 0:
         _flags[key] = 1
+        try:
+            import core.sound as sfx
+            sfx.play("quest_accept")
+        except Exception:
+            pass
 
 
 def complete_quest(quest_id):
     """Mark a quest as complete."""
     _flags[f"quest.{quest_id}.state"] = -2  # -2 = complete
+    try:
+        import core.sound as sfx
+        sfx.play("quest_complete")
+    except Exception:
+        pass
 
 
 def is_quest_complete(quest_id):

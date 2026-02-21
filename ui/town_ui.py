@@ -8,6 +8,7 @@ Town locations:
   Exit          — leave town (back to world/encounters)
 """
 import random
+import core.sound as sfx
 import pygame
 from ui.renderer import *
 from core.classes import CLASSES
@@ -771,6 +772,7 @@ class TownUI:
             for j, (npc_id, npc_data) in enumerate(npcs):
                 nr = pygame.Rect(npc_x, 168 + j * 62, 210, 54)
                 if nr.collidepoint(mx, my):
+                    sfx.play("npc_talk")
                     dialogues = NPC_DIALOGUES.get(npc_id, [])
                     if dialogues:
                         from ui.dialogue_ui import DialogueUI
@@ -1034,6 +1036,7 @@ class TownUI:
         self.party[0].inventory.append(new_item)
 
         self._msg(f"Bought {shop_item['name']} for {price}g — added to {self.party[0].name}'s inventory", BUY_COL)
+        sfx.play("shop_buy")
 
     def _buy_back_item(self, sold_idx):
         """Buy back a previously sold item."""
@@ -1078,6 +1081,7 @@ class TownUI:
         buyback["_buyback"] = True
         self.sold_items.append(buyback)
         self._msg(f"Sold {name} for {sell_price}g", SELL_COL)
+        sfx.play("shop_sell")
 
     def _use_temple_service(self, service_key):
         """Use a temple service."""

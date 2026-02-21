@@ -31,6 +31,7 @@ from ui.dungeon_ui import DungeonUI
 from data.world_map import WorldState, LOCATIONS, LOC_TOWN, LOC_DUNGEON
 from data.dungeon import DungeonState, DUNGEONS
 from core.save_load import save_game, load_game
+import core.sound as sfx
 
 FPS = 60
 PARTY_SIZE = 6
@@ -60,6 +61,7 @@ class Game:
         pygame.display.set_caption("Realm of Shadows")
         self.clock = pygame.time.Clock()
         self.running = True
+        sfx.init()  # Initialize sound system
         self.state = S_TITLE
         self.party = []
         self.current_char = None
@@ -147,6 +149,23 @@ class Game:
         self.state = state
         self.fade = 120
         self.timer = 0
+        # Ambient sound management on state change
+        if state == S_TOWN:
+            sfx.stop_music()
+            sfx.play_ambient("town_ambient")
+        elif state == S_WORLD_MAP:
+            sfx.stop_music()
+            sfx.play_ambient("world_ambient")
+        elif state == S_DUNGEON:
+            sfx.stop_music()
+            sfx.play_ambient("dungeon_ambient")
+        elif state == S_COMBAT:
+            sfx.stop_ambient()
+            sfx.play_music("combat_music")
+            sfx.play("combat_start")
+        elif state in (S_PARTY, S_POST_COMBAT):
+            sfx.stop_music()
+            sfx.stop_ambient()
 
     # ══════════════════════════════════════════════════════════
     #  EVENT HANDLING
@@ -1083,6 +1102,7 @@ class Game:
             self.combat_ui.enemy_anim_timer += self.clock.get_time()
             if self.enemy_turn_delay > 600:  # 600ms delay between enemy actions
                 self.combat_state.execute_enemy_turn()
+                sfx.play("hit_physical")  # enemy attack sound
                 self.enemy_turn_delay = 0
                 self.combat_ui.enemy_anim_timer = 0
 
@@ -1132,14 +1152,17 @@ class Game:
 
         if event["type"] == "encounter":
             print(f"[DEBUG] World encounter triggered: {event['key']}")
+            sfx.play("encounter")
             self.start_combat(event["key"])
 
         elif event["type"] == "camp":
             result = self.world_state.camp()
             if result["type"] == "camp_ambush":
+                sfx.play("encounter")
                 self.world_map_ui._show_event("Ambush during rest!", RED)
                 self.start_combat(result["key"])
             else:
+                sfx.play("camp_rest")
                 healed = result.get("healed", {})
                 parts = [f"{name} +{hp}HP" for name, hp in healed.items() if hp > 0]
                 msg = "Rested safely. " + ", ".join(parts) if parts else "Rested safely. Already at full health."
@@ -1195,7 +1218,7 @@ class Game:
                     (80, 180, 220))
 
         elif event["type"] == "discovery":
-            pass  # handled by world_map_ui message display
+            sfx.play("discovery")
 
         elif event["type"] == "menu":
             # Go to party screen (inventory, etc.)
@@ -1248,7 +1271,7 @@ class Game:
             text = data.get("text", "")
             lore_id = data.get("lore_id")
             on_find = data.get("on_find", [])
-            # Execute on_find actions (quest updates, etc.)
+            sfx.play("journal_find")
             from core.dialogue import _execute_action
             for action in on_find:
                 _execute_action(action)
@@ -1262,6 +1285,7 @@ class Game:
 
         elif event["type"] == "stairs_down":
             if self.dungeon_state.go_downstairs():
+                sfx.play("stairs")
                 floor = self.dungeon_state.current_floor
                 self.dungeon_ui.show_event(f"Descended to Floor {floor}.", GOLD)
                 self.dungeon_ui.on_floor_change()
@@ -1273,6 +1297,7 @@ class Game:
 
         elif event["type"] == "stairs_up":
             if self.dungeon_state.go_upstairs():
+                sfx.play("stairs")
                 floor = self.dungeon_state.current_floor
                 self.dungeon_ui.show_event(f"Ascended to Floor {floor}.", (80, 180, 220))
 
@@ -1285,6 +1310,7 @@ class Game:
                 self.go(S_PARTY)
 
         elif event["type"] == "treasure":
+            sfx.play("treasure_open")
             data = event["data"]
             gold = data.get("gold", 0)
             items = data.get("items", [])
@@ -1313,6 +1339,7 @@ class Game:
             self.dungeon_ui.show_event(msg, GOLD)
 
         elif event["type"] == "trap":
+            sfx.play("trap_trigger")
             data = event["data"]
             dmg_base = data.get("damage", 10)
             trap_name = data.get("name", "Trap")
@@ -1406,6 +1433,8 @@ class Game:
         """Process a player combat action from the UI."""
         if action["type"] == "end_combat":
             if action["result"] == "victory":
+                sfx.stop_music()
+                sfx.play("victory")
                 # Sync HP, resources, and status effects from combat back to characters
                 for p in self.combat_state.players:
                     char = p.get("character_ref")
@@ -1427,6 +1456,8 @@ class Game:
                 self.start_post_combat()
             else:
                 # DEFEAT — TPK handling
+                sfx.stop_music()
+                sfx.play("defeat")
                 # All characters wake at 1 HP with resurrection sickness at last inn
                 for c in self.party:
                     c.resources["HP"] = 1
@@ -1446,12 +1477,25 @@ class Game:
 
         if action["type"] == "attack":
             self.combat_state.execute_player_action("attack", target=action["target"])
+            sfx.play("hit_physical")
         elif action["type"] == "defend":
             self.combat_state.execute_player_action("defend")
+            sfx.play("block")
         elif action["type"] == "ability":
             self.combat_state.execute_player_action(
                 "ability", target=action["target"], ability=action["ability"]
             )
+            # Pick sound based on ability type
+            ab = action.get("ability", {})
+            ab_type = ab.get("type", "") if isinstance(ab, dict) else ""
+            if ab_type in ("heal", "heal_aoe"):
+                sfx.play("heal")
+            elif ab_type in ("buff", "shield"):
+                sfx.play("buff")
+            elif ab_type in ("debuff", "dot"):
+                sfx.play("debuff")
+            else:
+                sfx.play("hit_magic")
         elif action["type"] == "move":
             self.combat_state.execute_player_action("move", target=action["direction"])
         elif action["type"] == "switch_weapon":

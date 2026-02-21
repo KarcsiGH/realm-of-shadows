@@ -591,7 +591,12 @@ class DungeonUI:
 
         if dx == 0 and dy == 0:
             return None
-        return self.dungeon.move(dx, dy)
+        result = self.dungeon.move(dx, dy)
+        if result is not None or (dx != 0 or dy != 0):
+            # Only play if we actually moved (check position changed)
+            import core.sound as _sfx
+            _sfx.play("footstep")
+        return result
 
     def _try_disarm(self):
         px, py = self.dungeon.party_x, self.dungeon.party_y
