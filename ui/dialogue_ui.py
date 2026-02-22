@@ -25,8 +25,9 @@ LOG_DIM = (120, 115, 130)
 # Layout
 PORTRAIT_SIZE = 60
 DIALOGUE_MARGIN = 40
-TEXT_AREA_Y = 320
-TEXT_AREA_H = 380
+TEXT_AREA_Y = 200          # moved up to give more room
+CHOICES_BOTTOM_MARGIN = 40 # space from bottom for choices
+MAX_TEXT_LINES = 8         # scroll if more
 
 
 class DialogueUI:
@@ -44,6 +45,9 @@ class DialogueUI:
         self.type_speed = 2  # chars per frame
         self.full_text_shown = False
 
+        # Text scroll
+        self.text_scroll = 0
+
     def draw(self, surface, mx, my, dt=16):
         surface.fill(DIALOGUE_BG)
 
@@ -57,51 +61,45 @@ class DialogueUI:
         portrait_color = self._get_portrait_color(speaker)
 
         # ── Log (previous dialogue, scrolled up) ──
-        log_y = 30
-        # Show last 4 log entries
-        visible_log = self.state.log[:-1][-4:] if len(self.state.log) > 1 else []
+        log_y = 20
+        visible_log = self.state.log[:-1][-5:] if len(self.state.log) > 1 else []
         for log_speaker, log_text in visible_log:
             if log_speaker == "You":
                 prefix = f"  > {log_text}"
                 col = DIM_GOLD
             elif log_speaker:
-                prefix = f"  {log_speaker}: {log_text[:80]}{'...' if len(log_text) > 80 else ''}"
+                prefix = f"  {log_speaker}: {log_text[:90]}{'...' if len(log_text) > 90 else ''}"
                 col = LOG_DIM
             else:
-                prefix = f"  {log_text[:80]}{'...' if len(log_text) > 80 else ''}"
+                prefix = f"  {log_text[:90]}{'...' if len(log_text) > 90 else ''}"
                 col = (100, 95, 110)
             draw_text(surface, prefix, DIALOGUE_MARGIN, log_y, col, 11)
-            log_y += 18
+            log_y += 16
 
         # ── Divider ──
-        div_y = max(log_y + 10, TEXT_AREA_Y - 40)
+        div_y = max(log_y + 8, TEXT_AREA_Y - 30)
         pygame.draw.line(surface, (40, 35, 60),
                          (DIALOGUE_MARGIN, div_y),
                          (SCREEN_W - DIALOGUE_MARGIN, div_y))
 
         # ── Speaker + Portrait indicator ──
-        content_y = div_y + 15
+        content_y = div_y + 12
         if speaker:
-            # Portrait color block
             pr = pygame.Rect(DIALOGUE_MARGIN, content_y, PORTRAIT_SIZE, PORTRAIT_SIZE)
             pygame.draw.rect(surface, portrait_color, pr, border_radius=5)
             pygame.draw.rect(surface, PANEL_BORDER, pr, 2, border_radius=5)
-            # Speaker initial
             initial = speaker[0].upper()
             iw = get_font(28).size(initial)[0]
             draw_text(surface, initial,
                       pr.x + (PORTRAIT_SIZE - iw) // 2,
                       pr.y + (PORTRAIT_SIZE - 28) // 2,
                       WHITE, 28, bold=True)
-
-            # Speaker name
             draw_text(surface, speaker,
                       DIALOGUE_MARGIN + PORTRAIT_SIZE + 15, content_y,
                       SPEAKER_COL, 20, bold=True)
             text_x = DIALOGUE_MARGIN + PORTRAIT_SIZE + 15
-            text_y = content_y + 28
+            text_y = content_y + 26
         else:
-            # Narrator (no speaker)
             text_x = DIALOGUE_MARGIN + 10
             text_y = content_y + 5
 
@@ -110,38 +108,56 @@ class DialogueUI:
         shown_text = text[:int(self.displayed_chars)]
         self.full_text_shown = self.displayed_chars >= len(text)
 
-        # Word wrap
         max_w = SCREEN_W - text_x - DIALOGUE_MARGIN
         lines = self._wrap_text(shown_text, max_w, 15)
-        for i, line in enumerate(lines):
+
+        # Determine how much space choices need
+        choices = self.state.get_choices() if self.full_text_shown else []
+        choice_count = len(choices)
+        choice_height = choice_count * 44 + 20 if choice_count > 0 else 50
+        available_text_height = SCREEN_H - text_y - choice_height - CHOICES_BOTTOM_MARGIN - 10
+
+        # Calculate visible text lines
+        line_h = 20
+        max_visible = max(3, available_text_height // line_h)
+
+        # Auto-scroll to show latest text
+        if len(lines) > max_visible:
+            self.text_scroll = len(lines) - max_visible
+
+        visible_lines = lines[self.text_scroll:self.text_scroll + max_visible]
+        for i, line in enumerate(visible_lines):
             col = TEXT_COL if speaker else NARRATOR_COL
-            draw_text(surface, line, text_x, text_y + i * 22, col, 15)
+            draw_text(surface, line, text_x, text_y + i * line_h, col, 15)
+
+        # Scroll indicator
+        if len(lines) > max_visible:
+            draw_text(surface, "▼ more ▼", text_x, text_y + max_visible * line_h,
+                      DARK_GREY, 10)
 
         # ── Choices or continue prompt ──
-        choices_y = max(text_y + len(lines) * 22 + 20, SCREEN_H - 220)
+        choices_y = SCREEN_H - choice_height - CHOICES_BOTTOM_MARGIN
 
         if self.full_text_shown:
             if self.state.has_choices():
                 self._draw_choices(surface, mx, my, choices_y)
             elif self.state.should_auto_advance():
-                # Show "click to continue"
-                draw_text(surface, "Click to continue...",
-                          SCREEN_W // 2 - 80, SCREEN_H - 50, DIM_GOLD, 14)
+                draw_text(surface, "Click or press SPACE to continue...",
+                          SCREEN_W // 2 - 130, SCREEN_H - 45, DIM_GOLD, 14)
             else:
-                # End of conversation
-                draw_text(surface, "Click to close.",
-                          SCREEN_W // 2 - 60, SCREEN_H - 50, DIM_GOLD, 14)
+                draw_text(surface, "Click or press SPACE to close.",
+                          SCREEN_W // 2 - 115, SCREEN_H - 45, DIM_GOLD, 14)
         else:
             draw_text(surface, "Click to show all...",
-                      SCREEN_W // 2 - 70, SCREEN_H - 50, DARK_GREY, 12)
+                      SCREEN_W // 2 - 70, SCREEN_H - 45, DARK_GREY, 12)
 
     def _draw_choices(self, surface, mx, my, top_y):
         self.hover_choice = -1
         choices = self.state.get_choices()
 
         for i, choice in enumerate(choices):
-            rect = pygame.Rect(DIALOGUE_MARGIN + 20, top_y + i * 48,
-                               SCREEN_W - DIALOGUE_MARGIN * 2 - 40, 42)
+            rect = pygame.Rect(DIALOGUE_MARGIN + 20, top_y + i * 44,
+                               SCREEN_W - DIALOGUE_MARGIN * 2 - 40, 38)
             hover = rect.collidepoint(mx, my)
             if hover:
                 self.hover_choice = i
@@ -151,8 +167,11 @@ class DialogueUI:
             pygame.draw.rect(surface, bg, rect, border_radius=4)
             pygame.draw.rect(surface, border, rect, 2, border_radius=4)
 
+            # Number prefix for keyboard selection
+            num = str(i + 1)
             col = GOLD if hover else CREAM
-            draw_text(surface, choice["text"], rect.x + 15, rect.y + 10, col, 14)
+            draw_text(surface, f"{num}.", rect.x + 8, rect.y + 9, DIM_GOLD, 13)
+            draw_text(surface, choice["text"], rect.x + 28, rect.y + 9, col, 14)
 
     def handle_click(self, mx, my):
         """Handle mouse click. Returns action string or None."""
@@ -174,6 +193,7 @@ class DialogueUI:
 
                 self.state.select_choice(self.hover_choice)
                 self.displayed_chars = 0
+                self.text_scroll = 0
 
                 # Check if the new node is the "fight" node
                 if self.state.finished:
@@ -204,6 +224,23 @@ class DialogueUI:
             elif event.key == pygame.K_ESCAPE:
                 self.finished = True
                 return "done"
+            # Number keys 1-9 for choice selection
+            elif self.full_text_shown and self.state.has_choices():
+                choices = self.state.get_choices()
+                num = event.key - pygame.K_1  # K_1 = 0, K_2 = 1, etc.
+                if 0 <= num < len(choices):
+                    choice = choices[num]
+                    self.state.select_choice(num)
+                    self.displayed_chars = 0
+                    self.text_scroll = 0
+                    if self.state.finished:
+                        node = self.state.current_node
+                        if node.get("on_enter"):
+                            for act in node["on_enter"]:
+                                if act.get("flag", "").endswith(".killed"):
+                                    self.result = "fight"
+                        return "done"
+                    return None
         return None
 
     def _get_portrait_color(self, speaker):

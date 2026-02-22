@@ -546,7 +546,19 @@ NPC_DIALOGUES = {
                         "on_enter": [
                             {"action": "set_flag", "flag": "choice.grak_spared", "value": True},
                             {"action": "set_flag", "flag": "boss.grak.defeated", "value": True},
+                            {"action": "set_flag", "flag": "goblin_peace", "value": True},
+                            {"action": "set_flag", "flag": "hearthstone.goblin_warren", "value": True},
+                            {"action": "set_quest", "quest": "main_goblin_warren", "state": 3},
                         ],
+                        "next": "peaceful_end",
+                    },
+                    "peaceful_end": {
+                        "speaker": "",
+                        "text": "Grak reaches into his pile of stolen furniture and "
+                                "carefully retrieves a glowing fragment — a piece of a "
+                                "Hearthstone. It pulses warm in your hands. The goblins "
+                                "watch you leave in silence. Their eyes hold something "
+                                "you didn't expect: hope.",
                         "end": True,
                     },
                     "demand": {

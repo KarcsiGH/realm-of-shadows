@@ -659,6 +659,13 @@ class DungeonState:
                 return {"type": "journal", "data": tile["event"]}
         elif tile.get("event") and tile["event"].get("type") == "boss_encounter":
             if not tile["event"].get("triggered"):
+                # Check if boss already resolved (e.g., Grak spared/defeated)
+                from core.story_flags import get_flag
+                boss_flag = f"boss.{self.dungeon_id.split('_')[0]}.defeated"
+                # Grak-specific check
+                if self.dungeon_id == "goblin_warren" and get_flag("boss.grak.defeated"):
+                    tile["event"]["triggered"] = True
+                    return None
                 tile["event"]["triggered"] = True
                 return {
                     "type": "random_encounter",
@@ -673,6 +680,14 @@ class DungeonState:
         rate = self.encounter_rate
         if self.step_counter >= random.randint(max(1, rate - 2), rate + 2):
             self.step_counter = 0
+
+            # Peace path: if goblins are at peace, skip goblin encounters
+            if self.dungeon_id == "goblin_warren":
+                from core.story_flags import get_flag
+                if get_flag("choice.grak_spared"):
+                    # Goblins are friendly — no random encounters
+                    return None
+
             # Boss is only triggered from the placed boss_encounter event tile,
             # not from random encounters. Random encounters are always normal.
             return {

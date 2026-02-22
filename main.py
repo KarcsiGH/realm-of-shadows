@@ -54,6 +54,7 @@ S_WORLD_MAP   = 12
 S_DUNGEON     = 13
 S_OPENING     = 14   # opening narrative sequence
 S_DIALOGUE    = 15   # standalone dialogue (e.g., boss pre-fight)
+S_CAMP        = 16   # full camp screen (dungeon/overworld)
 
 
 class Game:
@@ -115,6 +116,9 @@ class Game:
         self.dialogue_ui = None
         self.dialogue_return_state = None
         self.dialogue_callback = None  # function to call after dialogue ends
+        # Camp screen
+        self.camp_ui = None
+        self.camp_return_state = None
         # Quest log
         self.quest_log_ui = None
         # Track current/last town for shortcuts
@@ -499,6 +503,17 @@ class Game:
                     if self.dialogue_ui and self.dialogue_ui.finished:
                         self._end_dialogue()
 
+        elif self.state == S_CAMP:
+            if self.camp_ui:
+                if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                    result = self.camp_ui.handle_click(mx, my)
+                    if self.camp_ui.finished:
+                        self._end_camp()
+                elif e.type == pygame.KEYDOWN:
+                    result = self.camp_ui.handle_key(e.key)
+                    if self.camp_ui and self.camp_ui.finished:
+                        self._end_camp()
+
     # ══════════════════════════════════════════════════════════
     #  LOGIC
     # ══════════════════════════════════════════════════════════
@@ -591,6 +606,7 @@ class Game:
         elif self.state == S_DUNGEON:   self.draw_dungeon(mx, my)
         elif self.state == S_OPENING:   self.draw_opening()
         elif self.state == S_DIALOGUE:  self.draw_dialogue(mx, my)
+        elif self.state == S_CAMP:      self._draw_camp(mx, my)
 
     # ── Title Screen ──────────────────────────────────────────
 
@@ -1229,6 +1245,38 @@ class Game:
         if self.dialogue_ui:
             self.dialogue_ui.draw(self.screen, mx, my)
 
+    def start_camp(self, location="dungeon", dungeon_floor=1, return_state=None):
+        """Open the full camp screen."""
+        from ui.camp_ui import CampUI
+        self.camp_ui = CampUI(self.party, location=location, dungeon_floor=dungeon_floor)
+        self.camp_return_state = return_state or self.state
+        self.go(S_CAMP)
+
+    def _end_camp(self):
+        """Handle camp screen closing."""
+        if not self.camp_ui:
+            return
+        result = self.camp_ui.result
+        return_state = self.camp_return_state
+        self.camp_ui = None
+        self.camp_return_state = None
+
+        if result == "rest":
+            # Process the rest execution
+            self.go(return_state)
+            if return_state == S_DUNGEON:
+                self._process_dungeon_event({"type": "camp_rest_execute"})
+            elif return_state == S_WORLD_MAP:
+                self._process_world_event({"type": "camp"})
+        else:
+            # Cancel — just go back
+            self.go(return_state)
+
+    def _draw_camp(self, mx, my):
+        """Draw the camp screen."""
+        if self.camp_ui:
+            self.camp_ui.draw(self.screen, mx, my)
+
     def start_combat(self, encounter_key):
         """Initialize combat with an encounter."""
         self.combat_state = CombatState(self.party, encounter_key)
@@ -1425,6 +1473,21 @@ class Game:
                             self.start_combat(boss_enc)
                         else:
                             # Peaceful resolution (e.g., Grak spared)
+                            # Give hearthstone fragment to party leader
+                            from core.story_flags import get_flag
+                            if get_flag("choice.grak_spared"):
+                                hearthstone = {
+                                    "name": "Hearthstone Fragment (Warren)",
+                                    "type": "quest_item",
+                                    "description": "A warm, faintly glowing stone fragment. "
+                                                   "Part of the Hearthstone of Aldenmere.",
+                                    "identified": True,
+                                    "quest_item": True,
+                                    "rarity": "legendary",
+                                }
+                                self.party[0].add_item(hearthstone)
+                                self.dungeon_ui.show_event(
+                                    "Received: Hearthstone Fragment!", GOLD)
                             self.go(S_DUNGEON)
                     self.start_dialogue(boss_npc, return_state=S_DUNGEON,
                                         callback=after_boss_dialogue)
@@ -1575,7 +1638,13 @@ class Game:
             self.dungeon_ui.show_event(msg, color)
 
         elif event["type"] == "camp":
-            # Camping in dungeon — higher ambush risk
+            # Open camp screen instead of instant rest
+            floor = self.dungeon_state.current_floor if self.dungeon_state else 1
+            self.start_camp(location="dungeon", dungeon_floor=floor,
+                            return_state=S_DUNGEON)
+
+        elif event["type"] == "camp_rest_execute":
+            # Actual rest execution (called from _end_camp)
             import random
             ambush_chance = 25 + self.dungeon_state.current_floor * 5
             for c in self.party:

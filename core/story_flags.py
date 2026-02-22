@@ -37,6 +37,11 @@ def get(key, default=None):
     return _flags.get(key, default)
 
 
+def get_flag(key, default=None):
+    """Get a flag value (alias for get)."""
+    return _flags.get(key, default)
+
+
 def set_flag(key, value):
     """Set a flag value."""
     _flags[key] = value
