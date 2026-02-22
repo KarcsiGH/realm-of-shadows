@@ -911,9 +911,9 @@ DUNGEON_STORY_EVENTS = {
                "not decorative, but warnings. Something drove these creatures underground.",
             2: "Deeper now. The carvings change — they show a forest dissolving into nothing. "
                "Stick figures fleeing. A large figure carrying something bright.",
-            3: "The tunnels open into a crude throne room. Grak sits on a pile of stolen "
-               "furniture, clutching a faintly glowing stone to his chest. "
-               "He looks up as you enter. His eyes are not angry. They are afraid.",
+            3: "The tunnels open into a wider cavern. Crude fortifications line the walls — "
+               "overturned carts, sharpened stakes, the smell of cook-fires. "
+               "This is not just a hideout. It's a home. Someone important is deeper in.",
         },
         "journal_entries": [
             {
@@ -1001,6 +1001,54 @@ DUNGEON_STORY_EVENTS = {
                 "lore_id": "valdris_betrayal",
             },
         ],
+    },
+    "valdris_spire": {
+        "floor_messages": {
+            1: "The tower entrance groans open. Dust cascades from ancient stone. "
+               "Constructs stir in the darkness ahead.",
+            2: "Armor lines the halls like silent sentinels. Some begin to move as you approach.",
+            3: "Books and scrolls litter the floor. The air crackles with residual magic. "
+               "Robed figures shuffle between the shelves, muttering.",
+            4: "The stench of alchemical reagents fills the air. Something large "
+               "stirs in the shadows — the failed experiments of a desperate man.",
+            5: "Reality warps. The walls breathe. Tendrils of void seep through cracks "
+               "in the stone. The Fading is strong here.",
+            6: "The top of the tower. A great rift hangs in the air — "
+               "and within it, a figure of shadow and light turns to face you. "
+               "\"You've come at last. The Hearthstone calls to you as it once called to me.\"",
+        },
+        "journal_entries": [
+            {"floor": 1, "title": "Entry Log — Year 412",
+             "text": "The tower is sealed. Valdris ordered the lower halls warded with "
+                     "constructs after the last intrusion. The Wardens grow suspicious "
+                     "of his research, but he insists it's for the greater good.",
+             "lore_id": "spire_log_1"},
+            {"floor": 2, "title": "Research Notes — Animated Guardians",
+             "text": "The animated armor works splendidly. A simple binding circle "
+                     "imprints combat instinct into the metal. They never tire, "
+                     "never question. If only the other Wardens were so obedient.",
+             "lore_id": "spire_log_2"},
+            {"floor": 3, "title": "Research Notes — The Fading",
+             "text": "I've confirmed it. The Fading is not a disease — it's a boundary "
+                     "collapse. The veil between our world and the Void thins where the "
+                     "Hearthstones' influence wanes. If I can harness a Fading breach "
+                     "directly... the power would be beyond anything the Wardens imagined.",
+             "lore_id": "spire_log_3"},
+            {"floor": 4, "title": "Personal Journal — Doubts",
+             "text": "Maren visited today. She's growing. Bright child. Asked me why "
+                     "the tower 'feels sad.' I told her towers don't feel. But she's "
+                     "right. Something has changed here. The experiments pull at the "
+                     "edges of things. I've started seeing shapes in the corners.",
+             "lore_id": "spire_log_4"},
+            {"floor": 5, "title": "Final Entry",
+             "text": "The breach is open. The Fading pours through like water through "
+                     "a cracked dam. I can feel it reshaping me — not destroying, but "
+                     "rewriting. I understand now why the old Wardens hid the Hearthstones. "
+                     "Not to protect the world from the Fading. To protect the Fading "
+                     "from people like me. It's too late. Maren... forgive me.",
+             "lore_id": "spire_log_5"},
+        ],
+        "boss_dialogue": None,  # Boss speaks via floor_message on floor 6
     },
 }
 

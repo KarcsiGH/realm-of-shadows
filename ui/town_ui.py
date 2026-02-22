@@ -833,7 +833,8 @@ class TownUI:
         unid_items = []
         for ci, c in enumerate(self.party):
             for ii, item in enumerate(c.inventory):
-                if not item.get("identified"):
+                from core.identification import needs_identification
+                if needs_identification(item):
                     unid_items.append((ci, ii, item, c))
 
         if unid_items:
@@ -884,13 +885,18 @@ class TownUI:
         by = 110
         for i, tier_key in enumerate(INN_TIER_ORDER):
             tier = INN_TIERS[tier_key]
-            total_cost = tier["cost_per_char"] * party_size
+            room_cost = tier["cost_per_char"] * party_size
 
-            # Training cost if leveling available
+            # Training cost is INCLUDED in room cost, not separate
+            # Higher tier rooms include training as part of the service
             train_cost = 0
+            train_count = 0
             if tier["allows_level_up"] and lvl_ready:
                 for c in lvl_ready:
                     train_cost += training_cost(c.level + 1)
+                train_count = len(lvl_ready)
+
+            total_cost = room_cost + train_cost
 
             btn = pygame.Rect(SCREEN_W // 2 - 280, by + i * 95, 560, 85)
             hover = btn.collidepoint(mx, my)
@@ -907,13 +913,18 @@ class TownUI:
             name_col = GOLD if can_afford else DARK_GREY
             draw_text(surface, tier["name"], btn.x + 15, btn.y + 8, name_col, 18, bold=True)
 
-            cost_str = "Free" if total_cost == 0 else f"{total_cost}g ({tier['cost_per_char']}g × {party_size})"
+            if train_cost > 0:
+                cost_str = f"Room: {room_cost}g + Training: {train_cost}g = {total_cost}g total"
+            elif room_cost > 0:
+                cost_str = f"{room_cost}g ({tier['cost_per_char']}g × {party_size})"
+            else:
+                cost_str = "Free"
             draw_text(surface, cost_str, btn.x + 250, btn.y + 10, DIM_GOLD if can_afford else DARK_GREY, 13)
 
             draw_text(surface, tier["description"], btn.x + 15, btn.y + 35, GREY, 12)
 
             if tier["allows_level_up"] and lvl_ready:
-                draw_text(surface, f"Training available: +{train_cost}g for {len(lvl_ready)} character(s)",
+                draw_text(surface, f"{train_count} character(s) ready to level up!",
                           btn.x + 15, btn.y + 55, (180, 220, 120), 12)
             elif not tier["allows_level_up"] and lvl_ready:
                 draw_text(surface, "No training available at this tier", btn.x + 15, btn.y + 55, DARK_GREY, 11)
@@ -991,26 +1002,30 @@ class TownUI:
         skip = pygame.Rect(SCREEN_W // 2 + 200, 410, 180, 40)
         draw_button(surface, skip, "Skip", hover=skip.collidepoint(mx, my), size=14)
 
-    def _rest_at_inn(self, tier_key):
-        """Process inn rest for the party."""
+    def _rest_at_inn(self, tier_key, total_cost=None):
+        """Process inn rest for the party. total_cost includes room + training."""
         from core.progression import INN_TIERS, can_level_up
         from core.classes import get_all_resources
 
         tier = INN_TIERS[tier_key]
         party_size = len(self.party)
-        total_cost = tier["cost_per_char"] * party_size
-        total_gold = sum(c.gold for c in self.party)
 
+        if total_cost is None:
+            total_cost = tier["cost_per_char"] * party_size
+
+        total_gold = sum(c.gold for c in self.party)
         if total_gold < total_cost:
             return False
 
-        # Deduct gold evenly
+        # Deduct total gold (room + training) evenly across party
         if total_cost > 0:
-            per_char = total_cost // party_size
-            remainder = total_cost % party_size
-            for i, c in enumerate(self.party):
-                deduct = per_char + (1 if i < remainder else 0)
-                c.gold = max(0, c.gold - deduct)
+            remaining = total_cost
+            for c in self.party:
+                deduct = min(c.gold, remaining)
+                c.gold -= deduct
+                remaining -= deduct
+                if remaining <= 0:
+                    break
 
         # Restore resources
         for c in self.party:
@@ -1229,7 +1244,8 @@ class TownUI:
             unid_items = []
             for ci, c in enumerate(self.party):
                 for ii, item in enumerate(c.inventory):
-                    if not item.get("identified"):
+                    from core.identification import needs_identification
+                    if needs_identification(item):
                         unid_items.append((ci, ii, item, c))
 
             if unid_items:
@@ -1255,11 +1271,19 @@ class TownUI:
             for i, tier_key in enumerate(INN_TIER_ORDER):
                 btn = pygame.Rect(SCREEN_W // 2 - 280, by + i * 95, 560, 85)
                 if btn.collidepoint(mx, my):
+                    from core.progression import can_level_up, training_cost
                     tier = INN_TIERS[tier_key]
-                    total_cost = tier["cost_per_char"] * len(self.party)
+                    room_cost = tier["cost_per_char"] * len(self.party)
+                    # Include training cost upfront
+                    train_cost = 0
+                    if tier["allows_level_up"]:
+                        for c in self.party:
+                            if can_level_up(c):
+                                train_cost += training_cost(c.level + 1)
+                    total_cost = room_cost + train_cost
                     total_gold = sum(c.gold for c in self.party)
                     if total_gold >= total_cost:
-                        success = self._rest_at_inn(tier_key)
+                        success = self._rest_at_inn(tier_key, total_cost)
                         if success and self.levelup_queue:
                             self.view = self.VIEW_INN_LEVELUP
                         return "inn_save"  # signal to main.py to auto-save
@@ -1288,32 +1312,22 @@ class TownUI:
             # Confirm
             confirm = pygame.Rect(SCREEN_W // 2 + 200, 350, 180, 45)
             if confirm.collidepoint(mx, my) and self.levelup_free_stat:
-                cost = training_cost(c.level + 1)
-                total_gold = sum(cc.gold for cc in self.party)
-                if total_gold >= cost:
-                    remaining = cost
-                    for cc in self.party:
-                        deduct = min(cc.gold, remaining)
-                        cc.gold -= deduct
-                        remaining -= deduct
-                        if remaining <= 0: break
-                    summary = apply_level_up(c, self.levelup_free_stat)
-                    if summary:
-                        max_res = get_all_resources(c.class_name, c.stats, c.level)
-                        for rn, mv in max_res.items():
-                            if c.resources.get(rn, 0) > mv:
-                                c.resources[rn] = mv
-                        gains = ", ".join(f"+{v} {k}" for k, v in summary["stat_gains"].items())
-                        ab_str = ""
-                        if summary.get("new_abilities"):
-                            ab_str = " Learned: " + ", ".join(summary["new_abilities"])
-                        self.inn_result = f"{c.name} reached level {c.level}! {gains}, +{summary['hp_gain']} base HP{ab_str}"
-                    self.levelup_current += 1
-                    self.levelup_free_stat = None
-                    if self.levelup_current >= len(self.levelup_queue):
-                        self.view = self.VIEW_INN
-                else:
-                    self._msg(f"Need {cost}g for training!", RED)
+                # Training cost already paid upfront at inn rest
+                summary = apply_level_up(c, self.levelup_free_stat)
+                if summary:
+                    max_res = get_all_resources(c.class_name, c.stats, c.level)
+                    for rn, mv in max_res.items():
+                        if c.resources.get(rn, 0) > mv:
+                            c.resources[rn] = mv
+                    gains = ", ".join(f"+{v} {k}" for k, v in summary["stat_gains"].items())
+                    ab_str = ""
+                    if summary.get("new_abilities"):
+                        ab_str = " Learned: " + ", ".join(summary["new_abilities"])
+                    self.inn_result = f"{c.name} reached level {c.level}! {gains}, +{summary['hp_gain']} base HP{ab_str}"
+                self.levelup_current += 1
+                self.levelup_free_stat = None
+                if self.levelup_current >= len(self.levelup_queue):
+                    self.view = self.VIEW_INN
                 return None
 
             skip = pygame.Rect(SCREEN_W // 2 + 200, 410, 180, 40)

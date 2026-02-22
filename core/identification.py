@@ -20,8 +20,78 @@ import random
 
 
 # ═══════════════════════════════════════════════════════════════
-#  IDENTIFICATION COSTS
+#  MUNDANE ITEM AUTO-IDENTIFICATION
 # ═══════════════════════════════════════════════════════════════
+
+# Item types/categories that don't need magical identification
+MUNDANE_TYPES = {
+    "material", "consumable", "potion", "food", "misc", "junk",
+    "pelt", "hide", "bone", "ore", "gem", "trophy", "reagent",
+    "herb", "arrow", "bolt",
+}
+
+# Item name substrings that indicate mundane items
+MUNDANE_KEYWORDS = [
+    "pelt", "fang", "ear", "tooth", "hide", "scraps",
+    "bone", "skull", "crude", "rusty", "broken", "tattered",
+    "herbs", "potion", "pouch", "rations", "torch", "rope",
+    "arrows", "bolts", "bandage", "antidote", "coin",
+    "bundle", "trophy",
+]
+
+
+def needs_identification(item):
+    """Check if an item needs magical identification.
+    Mundane items (pelts, common weapons, materials) are auto-identified.
+    Only items with magical properties, enchantments, or explicit
+    identify_difficulty > 0 need identification."""
+    # Already identified
+    if item.get("identified"):
+        return False
+
+    # Explicitly marked as needing identification
+    if item.get("identify_difficulty", 0) > 0:
+        return True
+
+    # Has magical properties
+    if item.get("enchant_element") or item.get("enchant_bonus"):
+        return True
+    if item.get("enhance_bonus", 0) > 0:
+        return True
+    if item.get("cursed"):
+        return True
+    if item.get("magic_item"):
+        return True
+    if item.get("rarity") in ("rare", "epic", "legendary"):
+        return True
+
+    # Check item type — mundane types auto-identify
+    item_type = item.get("type", "").lower()
+    if item_type in MUNDANE_TYPES:
+        return False
+
+    # Check name for mundane keywords
+    item_name = item.get("name", "").lower()
+    for kw in MUNDANE_KEYWORDS:
+        if kw in item_name:
+            return False
+
+    # Default: common/uncommon non-magical items don't need identification
+    rarity = item.get("rarity", "common")
+    if rarity in ("common", "uncommon") and not item.get("enchant_element"):
+        return False
+
+    return True
+
+
+def auto_identify_mundane(item):
+    """Auto-identify items that don't need magical identification."""
+    if not needs_identification(item):
+        item["identified"] = True
+        item["magic_identified"] = True
+        item["material_identified"] = True
+        return True
+    return False
 
 ARCANE_LORE_COST = 5       # MP cost
 APPRAISAL_COST = 3         # SP cost

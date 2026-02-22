@@ -39,10 +39,10 @@ DUNGEONS = {
         "encounter_table": {
             1: ["medium_goblins", "wolves"],
             2: ["medium_goblins", "wolves"],
-            3: ["medium_goblins", "medium_bandits"],
+            3: ["medium_goblins"],
         },
         "boss_floor": 3,
-        "boss_encounter": "medium_bandits",
+        "boss_encounter": "boss_goblin_king",
         "theme": "cave",
         "encounter_rate": 9,
     },
@@ -57,7 +57,7 @@ DUNGEONS = {
             4: ["hard_mixed"],
         },
         "boss_floor": 4,
-        "boss_encounter": "hard_mixed",
+        "boss_encounter": "boss_spider_queen",
         "theme": "cave",
         "encounter_rate": 8,
     },
@@ -69,8 +69,8 @@ DUNGEONS = {
             1: ["medium_bandits"],
             2: ["medium_bandits", "hard_mixed"],
             3: ["hard_mixed"],
-            4: ["hard_mixed", "boss_orc"],
-            5: ["boss_orc"],
+            4: ["hard_mixed"],
+            5: ["hard_mixed"],
         },
         "boss_floor": 5,
         "boss_encounter": "boss_orc",
@@ -88,7 +88,7 @@ DUNGEONS = {
             4: ["hard_mixed"],
         },
         "boss_floor": 4,
-        "boss_encounter": "hard_mixed",
+        "boss_encounter": "boss_warden",
         "theme": "crypt",
         "encounter_rate": 9,
     },
@@ -98,9 +98,9 @@ DUNGEONS = {
         "width": 38, "height": 30,
         "encounter_table": {
             1: ["hard_mixed"],
-            2: ["hard_mixed", "boss_orc"],
-            3: ["boss_orc"],
-            4: ["boss_orc"],
+            2: ["hard_mixed"],
+            3: ["hard_mixed"],
+            4: ["hard_mixed"],
         },
         "boss_floor": 4,
         "boss_encounter": "boss_orc",
@@ -378,22 +378,26 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             _carve_h_corridor(tiles, cx1, cx2, cy2, width)
 
     # ── Place doors at room-corridor transitions ──
-    # A door belongs where a corridor tile is sandwiched between
-    # a wall on one axis and transitions to floor on the perpendicular axis
+    # A door belongs where a corridor tile transitions INTO a room (DT_FLOOR),
+    # not in the middle of a corridor. At least one side must be a room tile.
     for y in range(1, height - 1):
         for x in range(1, width - 1):
             if tiles[y][x]["type"] != DT_CORRIDOR:
                 continue
-            # Check for horizontal doorway: wall above+below, floor/corridor left+right
+            # Check for horizontal doorway: wall above+below, open left+right
+            # At least one side must be a room floor (not just corridor-corridor)
             h_wall = (tiles[y-1][x]["type"] == DT_WALL and tiles[y+1][x]["type"] == DT_WALL)
             h_open = (tiles[y][x-1]["type"] in (DT_FLOOR, DT_CORRIDOR) and
                       tiles[y][x+1]["type"] in (DT_FLOOR, DT_CORRIDOR))
-            # Check for vertical doorway: wall left+right, floor/corridor above+below
+            h_room = (tiles[y][x-1]["type"] == DT_FLOOR or tiles[y][x+1]["type"] == DT_FLOOR)
+
+            # Check for vertical doorway: wall left+right, open above+below
             v_wall = (tiles[y][x-1]["type"] == DT_WALL and tiles[y][x+1]["type"] == DT_WALL)
             v_open = (tiles[y-1][x]["type"] in (DT_FLOOR, DT_CORRIDOR) and
                       tiles[y+1][x]["type"] in (DT_FLOOR, DT_CORRIDOR))
+            v_room = (tiles[y-1][x]["type"] == DT_FLOOR or tiles[y+1][x]["type"] == DT_FLOOR)
 
-            if (h_wall and h_open) or (v_wall and v_open):
+            if (h_wall and h_open and h_room) or (v_wall and v_open and v_room):
                 if rng.random() < 0.5:
                     tiles[y][x]["type"] = DT_DOOR
 
@@ -669,21 +673,14 @@ class DungeonState:
         rate = self.encounter_rate
         if self.step_counter >= random.randint(max(1, rate - 2), rate + 2):
             self.step_counter = 0
-            # Check if this is the boss floor trigger (near stairs on last floor)
-            is_boss = False
-            if self.current_floor == self.total_floors:
-                floor = self.floors[self.current_floor]
-                sd = floor.get("stairs_down")
-                if sd:
-                    dist = abs(nx - sd[0]) + abs(ny - sd[1])
-                    if dist <= 3:
-                        is_boss = True
+            # Boss is only triggered from the placed boss_encounter event tile,
+            # not from random encounters. Random encounters are always normal.
             return {
                 "type": "random_encounter",
                 "dungeon_id": self.dungeon_id,
                 "floor": self.current_floor,
                 "total_floors": self.total_floors,
-                "is_boss": is_boss,
+                "is_boss": False,
             }
 
         return None

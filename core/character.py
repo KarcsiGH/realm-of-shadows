@@ -156,7 +156,11 @@ class Character:
         self.gold += amount
 
     def add_item(self, item):
-        """Add an item to inventory. Stackable items (consumables, materials) merge."""
+        """Add an item to inventory. Stackable items merge. Mundane items auto-identify."""
+        # Auto-identify non-magical items (pelts, common weapons, materials, etc.)
+        from core.identification import auto_identify_mundane
+        auto_identify_mundane(item)
+
         if _is_stackable(item):
             # Find existing stack of same name
             for inv_item in self.inventory:
