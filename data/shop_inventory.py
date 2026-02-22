@@ -111,25 +111,35 @@ TEMPLE = {
     "welcome": "Blessings upon you, travelers. How may the Temple serve?",
 
     "services": {
-        "rest_heal": {
-            "name": "Rest & Heal",
-            "description": "Restore all HP and resources for the entire party.",
-            "cost": 0,  # free — resting is free at temple
+        "cure_poison": {
+            "name": "Cure Poison",
+            "description": "Purge all poisons from one character.",
+            "cost": 30,
+            "action": "cure_poison",
+        },
+        "remove_curse": {
+            "name": "Remove Curse",
+            "description": "Lift a curse from one character.",
+            "cost": 100,
+            "action": "remove_curse",
+        },
+        "resurrect": {
+            "name": "Resurrect",
+            "description": "Revive a fallen party member. Cost scales with level.",
+            "cost": 200,  # base — actual cost = 200 + 100*level
+            "action": "resurrect",
         },
         "identify_item": {
             "name": "Identify Item",
             "description": "Fully identify one item (magical and material properties).",
             "cost": 15,
+            "action": "identify",
         },
-        "remove_curse": {
-            "name": "Remove Curse",
-            "description": "Remove a curse from one character or item.",
+        "blessing": {
+            "name": "Temple Blessing",
+            "description": "Receive a minor blessing for your next venture. (+5% accuracy for next dungeon)",
             "cost": 50,
-        },
-        "resurrect": {
-            "name": "Resurrect",
-            "description": "Bring a fallen party member back to life.",
-            "cost": 100,
+            "action": "blessing",
         },
     },
 }
@@ -172,3 +182,133 @@ def get_sell_price(item):
         return max(1, value // 3)
     else:
         return max(1, value // 5)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  TOWN-SPECIFIC SHOP INVENTORY
+# ═══════════════════════════════════════════════════════════════
+
+# Town shop profiles: which categories to stock, price modifiers, bonus items
+TOWN_SHOP_PROFILES = {
+    "briarhollow": {
+        "name": "Briarhollow General Store",
+        "welcome": "Welcome to Briarhollow! We've got the basics.",
+        "tier": "village",
+        "max_weapon_price": 60,   # only cheap weapons
+        "max_armor_price": 50,
+        "price_mult": 1.0,        # standard prices
+        "bonus_items": [
+            {"name": "Torch", "type": "consumable", "subtype": "light",
+             "rarity": "common", "description": "Lights dark areas. Lasts one floor.",
+             "buy_price": 5, "sell_price": 1, "identified": True},
+            {"name": "Rope", "type": "consumable", "subtype": "tool",
+             "rarity": "common", "description": "50ft of hempen rope.",
+             "buy_price": 8, "sell_price": 2, "identified": True},
+        ],
+    },
+    "woodhaven": {
+        "name": "Woodhaven Trading Post",
+        "welcome": "Forest goods and ranger supplies. Take a look.",
+        "tier": "town",
+        "max_weapon_price": 100,
+        "max_armor_price": 80,
+        "price_mult": 0.95,        # slightly cheaper
+        "bonus_items": [
+            {"name": "Ranger's Cloak", "type": "armor", "slot": "body",
+             "rarity": "uncommon", "defense": 3, "magic_resist": 2,
+             "description": "A forest cloak that helps avoid detection.",
+             "buy_price": 75, "sell_price": 30, "identified": True},
+            {"name": "Herbal Poultice", "type": "consumable", "subtype": "potion",
+             "rarity": "common", "heal": 35, "cures": ["Poison"],
+             "description": "Heals 35 HP and cures mild poison.",
+             "buy_price": 30, "sell_price": 12, "identified": True},
+            {"name": "Hunter's Bow", "type": "weapon", "slot": "weapon",
+             "subtype": "Longbow", "rarity": "uncommon", "damage": 11,
+             "phys_type": "piercing", "range": "ranged",
+             "description": "A well-crafted forest bow. +1 accuracy.",
+             "accuracy_bonus": 5,
+             "buy_price": 80, "sell_price": 32, "identified": True},
+        ],
+    },
+    "ironhearth": {
+        "name": "Ironhearth Forge & Armory",
+        "welcome": "Dwarven steel, finest in Aldenmere. Name your needs.",
+        "tier": "city",
+        "max_weapon_price": 999,   # everything available
+        "max_armor_price": 999,
+        "price_mult": 1.10,        # premium prices
+        "bonus_items": [
+            {"name": "Dwarven War Hammer", "type": "weapon", "slot": "weapon",
+             "subtype": "Mace", "rarity": "uncommon", "damage": 14,
+             "phys_type": "blunt", "range": "melee",
+             "special": {"armor_bypass": 0.20},
+             "description": "Heavy dwarven hammer. Bypasses 20% armor.",
+             "buy_price": 120, "sell_price": 50, "identified": True},
+            {"name": "Steel Breastplate", "type": "armor", "slot": "body",
+             "rarity": "uncommon", "defense": 10, "magic_resist": 2,
+             "description": "Solid dwarven steel armor. Premium protection.",
+             "buy_price": 150, "sell_price": 60, "identified": True},
+            {"name": "Runic Amulet", "type": "accessory", "slot": "accessory1",
+             "rarity": "uncommon", "magic_resist": 4,
+             "stat_bonus": {"INT": 2},
+             "description": "A dwarf-forged amulet inscribed with protective runes.",
+             "buy_price": 100, "sell_price": 40, "identified": True},
+            {"name": "Greater Healing Potion", "type": "consumable", "subtype": "potion",
+             "rarity": "uncommon", "heal": 100,
+             "description": "Restores 100 HP to one character.",
+             "buy_price": 60, "sell_price": 24, "identified": True},
+        ],
+    },
+}
+
+
+def get_town_shop(town_id):
+    """Return a shop inventory tailored to the given town.
+    Falls back to GENERAL_STORE if town not defined."""
+    profile = TOWN_SHOP_PROFILES.get(town_id)
+    if not profile:
+        return GENERAL_STORE
+
+    max_wpn = profile["max_weapon_price"]
+    max_arm = profile["max_armor_price"]
+    mult = profile.get("price_mult", 1.0)
+
+    shop = {
+        "name": profile["name"],
+        "welcome": profile["welcome"],
+        "weapons": [],
+        "armor": [],
+        "consumables": [],
+    }
+
+    # Filter weapons by price cap
+    for item in GENERAL_STORE.get("weapons", []):
+        if item.get("buy_price", 0) <= max_wpn:
+            it = dict(item)
+            it["buy_price"] = int(it["buy_price"] * mult)
+            shop["weapons"].append(it)
+
+    # Filter armor by price cap
+    for item in GENERAL_STORE.get("armor", []):
+        if item.get("buy_price", 0) <= max_arm:
+            it = dict(item)
+            it["buy_price"] = int(it["buy_price"] * mult)
+            shop["armor"].append(it)
+
+    # Always include all consumables
+    for item in GENERAL_STORE.get("consumables", []):
+        it = dict(item)
+        it["buy_price"] = int(it["buy_price"] * mult)
+        shop["consumables"].append(it)
+
+    # Add bonus items to appropriate category
+    for bonus in profile.get("bonus_items", []):
+        it = dict(bonus)
+        if it.get("type") == "weapon":
+            shop["weapons"].append(it)
+        elif it.get("type") in ("armor", "accessory"):
+            shop["armor"].append(it)
+        else:
+            shop["consumables"].append(it)
+
+    return shop

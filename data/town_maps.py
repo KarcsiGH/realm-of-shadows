@@ -121,6 +121,7 @@ BRIARHOLLOW_BUILDINGS = {
         "door": (10, 5),
         "color": (180, 160, 100),
         "label_pos": (7, 3),
+        "npc_name": "Innkeeper Bess",
     },
     "shop": {
         "name": "General Store",
@@ -128,6 +129,7 @@ BRIARHOLLOW_BUILDINGS = {
         "door": (13, 5),
         "color": (100, 180, 120),
         "label_pos": (12, 3),
+        "npc_name": "Merchant Kira",
     },
     "temple": {
         "name": "Shrine of Light",
@@ -135,6 +137,7 @@ BRIARHOLLOW_BUILDINGS = {
         "door": (8, 12),
         "color": (200, 200, 140),
         "label_pos": (5, 10),
+        "npc_name": "Priestess Alia",
     },
     "tavern": {
         "name": "The Rusty Flagon",
@@ -142,6 +145,7 @@ BRIARHOLLOW_BUILDINGS = {
         "door": (15, 12),
         "color": (200, 140, 80),
         "label_pos": (14, 10),
+        "npc_name": "Barkeep Thom",
     },
     "forge": {
         "name": "Dunn's Forge",
@@ -149,6 +153,7 @@ BRIARHOLLOW_BUILDINGS = {
         "door": (9, 17),
         "color": (220, 120, 50),
         "label_pos": (6, 15),
+        "npc_name": "Forgemaster Dunn",
     },
     "home": {
         "name": "Elder's House",

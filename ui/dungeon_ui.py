@@ -8,7 +8,7 @@ from ui.renderer import *
 from data.dungeon import (
     DungeonState, PASSABLE_TILES, DT_WALL, DT_FLOOR, DT_CORRIDOR,
     DT_DOOR, DT_STAIRS_DOWN, DT_STAIRS_UP, DT_TREASURE, DT_TRAP, DT_ENTRANCE,
-    DT_SECRET_DOOR,
+    DT_SECRET_DOOR, DT_INTERACTABLE,
 )
 
 # ── Layout ──
@@ -64,6 +64,9 @@ C_TRAP      = (220, 55, 55)
 C_JOURNAL   = (210, 190, 130)
 C_ENEMY     = (190, 40, 40)
 C_BOSS      = (230, 30, 90)
+C_INTERACT_HEAL = (80, 200, 255)
+C_INTERACT_MP   = (160, 100, 255)
+C_INTERACT_CURSE = (180, 50, 180)
 C_PARTY     = (255, 255, 80)
 C_PARTY_OUT = (200, 190, 50)
 
@@ -359,6 +362,50 @@ class DungeonUI:
                 surface.blit(gs, (sx, sy))
             # If not found, render as wall (handled by the wall check above)
 
+        elif tt == DT_INTERACTABLE:
+            ev = tile.get("event") or {}
+            used = ev.get("used", False)
+            subtype = ev.get("subtype", "")
+
+            if used:
+                # Dimmed, spent interactable
+                dc = self._dim((50, 45, 55), b)
+                pygame.draw.circle(surface, dc, (cx, cy), max(2, r // 2))
+            else:
+                # Active interactable with glow
+                if subtype == "healing_pool":
+                    c = self._dim(C_INTERACT_HEAL, b)
+                    # Water ripple circle
+                    pygame.draw.circle(surface, c, (cx, cy), max(2, r), 2)
+                    pygame.draw.circle(surface, self._dim((120, 230, 255), b),
+                                       (cx, cy), max(1, r - 2), 1)
+                    gl = int(self.pulse * 25) + 8
+                    gs = pygame.Surface((TS, TS), pygame.SRCALPHA)
+                    gs.fill((80, 200, 255, gl))
+                    surface.blit(gs, (sx, sy))
+                elif subtype == "mp_shrine":
+                    c = self._dim(C_INTERACT_MP, b)
+                    # Diamond shape
+                    pts = [(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)]
+                    pygame.draw.polygon(surface, c, pts, 2)
+                    gl = int(self.pulse * 25) + 8
+                    gs = pygame.Surface((TS, TS), pygame.SRCALPHA)
+                    gs.fill((160, 100, 255, gl))
+                    surface.blit(gs, (sx, sy))
+                elif subtype == "cursed_altar":
+                    c = self._dim(C_INTERACT_CURSE, b)
+                    # Inverted triangle (ominous)
+                    pts = [(cx - r, cy - r + 1), (cx + r, cy - r + 1), (cx, cy + r)]
+                    pygame.draw.polygon(surface, c, pts, 2)
+                    # Pulsing warning
+                    gl = int(self.pulse * 18) + 5
+                    gs = pygame.Surface((TS, TS), pygame.SRCALPHA)
+                    gs.fill((180, 50, 180, gl))
+                    surface.blit(gs, (sx, sy))
+                else:
+                    c = self._dim(CREAM, b)
+                    pygame.draw.circle(surface, c, (cx, cy), max(2, r - 1), 2)
+
         # ── Event overlays ──
         ev = tile.get("event")
         if ev and isinstance(ev, dict):
@@ -474,6 +521,18 @@ class DungeonUI:
                         c = (140, 80, 200)  # purple for found secret doors
                     else:
                         c = (45, 40, 35)  # looks like wall
+                elif tt == DT_INTERACTABLE:
+                    ev = tile.get("event") or {}
+                    if ev.get("used"):
+                        c = (60, 55, 65)
+                    elif ev.get("subtype") == "healing_pool":
+                        c = C_INTERACT_HEAL
+                    elif ev.get("subtype") == "mp_shrine":
+                        c = C_INTERACT_MP
+                    elif ev.get("subtype") == "cursed_altar":
+                        c = C_INTERACT_CURSE
+                    else:
+                        c = (180, 180, 180)
                 else:
                     c = (80, 72, 60)
                 pygame.draw.rect(surface, c, (mx0 + tx * ms, my0 + ty * ms, ms, ms))

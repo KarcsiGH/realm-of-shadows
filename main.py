@@ -1517,6 +1517,79 @@ class Game:
             self.dungeon_ui.show_event(f"📜 {title}", GOLD)
             self.dungeon_ui.show_event(text, (180, 160, 120))
 
+        elif event["type"] == "interactable":
+            data = event["data"]
+            subtype = data.get("subtype", "")
+            name = data.get("name", "Strange Object")
+            hint = data.get("hint", "")
+
+            if data.get("used"):
+                self.dungeon_ui.show_event(f"{name} — already used.", GREY)
+            elif subtype == "healing_pool":
+                data["used"] = True
+                heal_pct = data.get("heal_pct", 0.30)
+                from core.classes import get_all_resources
+                healed = []
+                for c in self.party:
+                    max_res = get_all_resources(c.class_name, c.stats, c.level)
+                    max_hp = max_res.get("HP", 1)
+                    old = c.resources.get("HP", 0)
+                    c.resources["HP"] = min(max_hp, old + int(max_hp * heal_pct))
+                    gained = c.resources["HP"] - old
+                    if gained > 0:
+                        healed.append(f"{c.name} +{gained}")
+                sfx.play("camp_rest")
+                self.dungeon_ui.show_event(f"🌊 {name}", (80, 200, 255))
+                if healed:
+                    self.dungeon_ui.show_event("  ".join(healed), GREEN)
+                else:
+                    self.dungeon_ui.show_event("Already at full health.", GREY)
+
+            elif subtype == "mp_shrine":
+                data["used"] = True
+                restore_pct = data.get("restore_pct", 0.25)
+                from core.classes import get_all_resources
+                restored = []
+                for c in self.party:
+                    max_res = get_all_resources(c.class_name, c.stats, c.level)
+                    for rk, mv in max_res.items():
+                        if rk == "HP":
+                            continue
+                        cur = c.resources.get(rk, 0)
+                        c.resources[rk] = min(mv, cur + int(mv * restore_pct))
+                        gained = c.resources[rk] - cur
+                        if gained > 0:
+                            restored.append(f"{c.name} +{gained} {rk}")
+                sfx.play("camp_rest")
+                self.dungeon_ui.show_event(f"✨ {name}", (120, 100, 220))
+                if restored:
+                    self.dungeon_ui.show_event("  ".join(restored[:4]), (140, 180, 255))
+                else:
+                    self.dungeon_ui.show_event("Resources already full.", GREY)
+
+            elif subtype == "cursed_altar":
+                data["used"] = True
+                import random as _rmod
+                buff_chance = data.get("buff_chance", 0.55)
+                if _rmod.random() < buff_chance:
+                    # Good outcome — temporary HP boost
+                    bonus = data.get("buff_hp", 20)
+                    for c in self.party:
+                        c.resources["HP"] = c.resources.get("HP", 0) + bonus
+                    sfx.play("camp_rest")
+                    self.dungeon_ui.show_event(f"🔮 {name} — dark power flows through you!", (180, 120, 255))
+                    self.dungeon_ui.show_event(f"Party gained +{bonus} temporary HP!", GREEN)
+                else:
+                    # Bad outcome — damage
+                    dmg = data.get("curse_dmg", 15)
+                    for c in self.party:
+                        c.resources["HP"] = max(1, c.resources.get("HP", 0) - dmg)
+                    sfx.play("trap")
+                    self.dungeon_ui.show_event(f"💀 {name} — a curse lashes out!", RED)
+                    self.dungeon_ui.show_event(f"Party took {dmg} shadow damage!", ORANGE)
+            else:
+                self.dungeon_ui.show_event(f"{name}: {hint}", CREAM)
+
         elif event["type"] == "stairs_down":
             if self.dungeon_state.go_downstairs():
                 sfx.play("stairs")

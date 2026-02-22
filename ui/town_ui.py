@@ -14,7 +14,7 @@ from ui.renderer import *
 from core.classes import CLASSES
 from core.identification import get_item_display_name
 from data.shop_inventory import (
-    GENERAL_STORE, TEMPLE, TAVERN, get_sell_price,
+    GENERAL_STORE, TEMPLE, TAVERN, get_sell_price, get_town_shop,
 )
 
 # ═══════════════════════════════════════════════════════════════
@@ -105,6 +105,7 @@ class TownUI:
         # NPC dialogue state
         self.active_dialogue = None  # DialogueUI when talking to an NPC
         self.town_id = town_id
+        self.shop = get_town_shop(town_id)  # Town-specific shop inventory
 
         # Forge state
         self.forge_scroll = 0
@@ -517,6 +518,15 @@ class TownUI:
                 bld_id, bld = result
                 btype = bld["type"]
                 sfx.play("door_open")
+
+                # Show building entry message with NPC name
+                npc_name = bld.get("npc_name", "")
+                bld_name = bld.get("name", "building")
+                if npc_name:
+                    self._show_walk_msg(f"Entered {bld_name}. {npc_name} greets you.", CREAM)
+                else:
+                    self._show_walk_msg(f"Entered {bld_name}.", CREAM)
+
                 if btype == BLD_INN:
                     self.view = self.VIEW_INN
                 elif btype == BLD_SHOP:
@@ -590,8 +600,8 @@ class TownUI:
     # ─────────────────────────────────────────────────────────
 
     def _draw_shop_menu(self, surface, mx, my):
-        draw_text(surface, "General Store", SCREEN_W // 2 - 90, 20, GOLD, 24, bold=True)
-        draw_text(surface, GENERAL_STORE["welcome"], SCREEN_W // 2 - 150, 55, GREY, 14)
+        draw_text(surface, self.shop.get("name", "General Store"), SCREEN_W // 2 - 90, 20, GOLD, 24, bold=True)
+        draw_text(surface, self.shop["welcome"], SCREEN_W // 2 - 150, 55, GREY, 14)
 
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 60, 85, DIM_GOLD, 16)
@@ -641,7 +651,7 @@ class TownUI:
                       GOLD if is_sel else CREAM, 14, bold=is_sel)
 
         # Item list — regular shop items + buyback items
-        items = list(GENERAL_STORE.get(self.shop_tab, []))
+        items = list(self.shop.get(self.shop_tab, []))
         # Append sold items to current tab (they appear in all tabs under "Buyback")
         buyback_start = len(items)
         items.extend(self.sold_items)
@@ -1176,7 +1186,7 @@ class TownUI:
                     return None
 
             # Item clicks — regular shop + buyback
-            items = list(GENERAL_STORE.get(self.shop_tab, []))
+            items = list(self.shop.get(self.shop_tab, []))
             buyback_start = len(items)
             items.extend(self.sold_items)
             panel = pygame.Rect(20, 95, SCREEN_W - 40, SCREEN_H - 200)
@@ -1559,7 +1569,7 @@ class TownUI:
 
     def handle_scroll(self, direction):
         if self.view == self.VIEW_SHOP_BUY:
-            items = GENERAL_STORE.get(self.shop_tab, [])
+            items = self.shop.get(self.shop_tab, [])
             max_s = max(0, len(items) - 8)
             if direction > 0:
                 self.shop_scroll = min(max_s, self.shop_scroll + 1)
