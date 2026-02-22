@@ -59,7 +59,7 @@ MAGIC_VARIANCE_MAX      = 1.10
 MINIMUM_DAMAGE          = 1
 
 # Magic stat multiplier: Stat Damage = Casting Stat × MAGIC_STAT_MULT
-MAGIC_STAT_MULT         = 1.5
+MAGIC_STAT_MULT         = 1.0
 
 # Healing formula: (PIE × HEAL_PIE_MULT) + Spell Power + Focus + random(0, PIE/2)
 HEAL_PIE_MULT           = 2.0

@@ -705,7 +705,9 @@ def resolve_ability(attacker, target, ability):
             target["alive"] = True
             target["hp"] = 0  # start from 0 for heal
 
-        heal_spell = {"power": cost * 1.5}  # Scale heal power off cost
+        # Use ability power multiplier: heal_power = cost * power
+        ab_power = ability.get("power", 1.0)
+        heal_spell = {"power": cost * ab_power}
         is_crit, crit_data = check_crit(attacker, "heal")
         amount = calc_healing(attacker, heal_spell)
         if is_crit:
@@ -745,7 +747,9 @@ def resolve_ability(attacker, target, ability):
                 return result
 
             is_crit, crit_data = check_crit(attacker, "spell")
-            spell = {"power": cost * 1.2, "element": "arcane"}
+            # Use ability power multiplier: spell_power = cost * power
+            ab_power = ability.get("power", 1.0)
+            spell = {"power": cost * ab_power, "element": "arcane"}
 
             # Try to determine element from ability name
             for elem, keywords in [
@@ -791,7 +795,9 @@ def resolve_ability(attacker, target, ability):
                 return result
 
             is_crit, crit_data = check_crit(attacker, "physical", weapon)
-            ability_bonus = cost * 0.8  # Abilities scale with their cost
+            # Use ability power multiplier: ability_bonus = cost * power * 0.5
+            ab_power = ability.get("power", 1.0)
+            ability_bonus = cost * ab_power * 0.5
 
             damage = calc_physical_damage(
                 attacker, target, weapon,
