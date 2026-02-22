@@ -21,9 +21,10 @@ GROWTH_AMOUNTS = {"high": (1, 2), "medium": (0, 1), "low": (0, 0)}
 
 
 class Character:
-    def __init__(self, name="", class_name=None):
+    def __init__(self, name="", class_name=None, race_name="Human"):
         self.name = name
         self.class_name = class_name
+        self.race_name = race_name
         self.level = 1
         self.xp = 0
         self.gold = 0
@@ -35,6 +36,7 @@ class Character:
         self.resources = {}
         self.abilities = []
         self.quick_rolled = False
+        self.human_bonus_stat = None  # which stat the Human player boosted
 
     def apply_stat_bonus(self, bonuses: dict):
         """Apply stat bonuses from a life path event."""
@@ -48,18 +50,24 @@ class Character:
             self.stats[stat] += random.randint(0, 1)
 
     def quick_roll(self, class_name):
-        """Skip life path: use class starting stats + small random bonus."""
+        """Skip life path: use class starting stats + small random bonus + racial mods."""
         self.class_name = class_name
         self.quick_rolled = True
         start = CLASSES[class_name]["starting_stats"]
         for stat in STAT_NAMES:
             self.stats[stat] = start[stat] + random.randint(0, 2)
+        # Apply racial stat modifiers
+        from core.races import apply_racial_stats
+        apply_racial_stats(self.stats, self.race_name)
         self._finalize()
 
     def finalize_with_class(self, class_name):
         """After life path is complete, assign class and calculate everything."""
         self.class_name = class_name
         self.apply_random_seasoning()
+        # Apply racial stat modifiers
+        from core.races import apply_racial_stats
+        apply_racial_stats(self.stats, self.race_name)
         self._finalize()
 
     def _finalize(self):
@@ -132,9 +140,11 @@ class Character:
         return self.xp, self.xp_to_next_level()
 
     def add_xp(self, amount):
-        """Add XP. Leveling now happens at the inn, not automatically.
+        """Add XP (with racial multiplier). Leveling happens at the inn.
         Returns True if character is now eligible to level up."""
-        self.xp += amount
+        from core.races import get_racial_xp_multiplier
+        adjusted = int(amount * get_racial_xp_multiplier(self.race_name))
+        self.xp += adjusted
         return self.xp >= self.xp_to_next_level() and self.level < 30
 
     def _level_up(self):

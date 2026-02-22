@@ -22,13 +22,14 @@ def serialize_character(char):
     return {
         "name": char.name,
         "class_name": char.class_name,
+        "race_name": getattr(char, "race_name", "Human"),
         "level": char.level,
         "xp": char.xp,
         "gold": char.gold,
         "stats": dict(char.stats),
         "resources": dict(char.resources),
         "abilities": [dict(a) for a in char.abilities],
-        "inventory": list(char.inventory),  # list of dicts, already serializable
+        "inventory": list(char.inventory),
         "equipment": {
             slot: dict(item) if item else None
             for slot, item in (char.equipment or {}).items()
@@ -36,12 +37,14 @@ def serialize_character(char):
         "life_path": list(char.life_path),
         "backstory_parts": list(char.backstory_parts),
         "quick_rolled": char.quick_rolled,
+        "human_bonus_stat": getattr(char, "human_bonus_stat", None),
     }
 
 
 def deserialize_character(data):
     """Reconstruct a Character from a saved dict."""
-    char = Character(data["name"], data["class_name"])
+    race = data.get("race_name", "Human")
+    char = Character(data["name"], data["class_name"], race)
     char.level = data.get("level", 1)
     char.xp = data.get("xp", 0)
     char.gold = data.get("gold", 0)
@@ -57,6 +60,7 @@ def deserialize_character(data):
     char.life_path = data.get("life_path", [])
     char.backstory_parts = data.get("backstory_parts", [])
     char.quick_rolled = data.get("quick_rolled", False)
+    char.human_bonus_stat = data.get("human_bonus_stat", None)
     return char
 
 
@@ -84,7 +88,7 @@ def save_game(party, slot_name="save1", metadata=None):
 
     # Add summary metadata
     save_data["metadata"]["party_summary"] = [
-        f"{c.name} Lv.{c.level} {c.class_name}" for c in party
+        f"{c.name} Lv.{c.level} {getattr(c, 'race_name', 'Human')} {c.class_name}" for c in party
     ]
     save_data["metadata"]["total_gold"] = sum(c.gold for c in party)
 

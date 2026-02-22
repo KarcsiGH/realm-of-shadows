@@ -751,8 +751,8 @@ class DungeonState:
 
     def _check_trap_detection(self, px, py):
         """Roll detection for traps on current and adjacent tiles.
-        Thief/Ranger get bonuses. Detection just reveals the trap;
-        the trap still fires unless disarmed."""
+        Thief/Ranger get bonuses. Dwarves get racial bonus.
+        Detection just reveals the trap; the trap still fires unless disarmed."""
         floor = self.floors[self.current_floor]
         # Detection bonus from party composition
         detect_bonus = 0
@@ -764,6 +764,10 @@ class DungeonState:
             # DEX/WIS contribute
             detect_bonus += c.stats.get("WIS", 0)
             detect_bonus += c.stats.get("DEX", 0) // 2
+            # Racial trap bonus (Dwarf)
+            from core.races import get_passive
+            trap_bonus = get_passive(getattr(c, "race_name", "Human"), "trap_detect_bonus", 0)
+            detect_bonus += trap_bonus
 
         base_chance = 30 + detect_bonus  # base 30% + bonuses
 
@@ -784,7 +788,7 @@ class DungeonState:
     def _check_secret_detection(self, px, py, floor, detect_bonus):
         """Roll to detect secret doors within 2 tiles.
         Harder than traps — only Thief/Ranger class bonuses count,
-        not raw party stats. Repeated rolls on each step nearby."""
+        not raw party stats. Elves get racial bonus. Repeated rolls on each step nearby."""
         # Only class bonuses matter for secrets (not raw stat stacking)
         secret_bonus = 0
         for c in self.party:
@@ -792,7 +796,11 @@ class DungeonState:
                 secret_bonus += 15 + c.level * 3
             elif c.class_name == "Ranger":
                 secret_bonus += 8 + c.level * 2
-            # Only best WIS in party contributes (not all)
+            # Racial secret door bonus (Elf)
+            from core.races import get_passive
+            sd_bonus = get_passive(getattr(c, "race_name", "Human"), "secret_door_bonus", 0)
+            secret_bonus += sd_bonus
+        # Only best WIS in party contributes (not all)
         best_wis = max((c.stats.get("WIS", 0) for c in self.party), default=0)
         secret_chance = 8 + secret_bonus + best_wis // 3  # much lower base
 

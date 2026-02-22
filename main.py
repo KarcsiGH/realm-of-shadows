@@ -40,6 +40,7 @@ PARTY_SIZE = 6
 S_TITLE       = 0
 S_MODE        = 1
 S_NAME        = 2
+S_RACE        = 16  # race selection (new)
 S_LIFEPATH    = 3
 S_RANDOM      = 4
 S_CLASSSELECT = 5
@@ -194,20 +195,51 @@ class Game:
             if e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_RETURN and self.name_text.strip():
                     self.current_char.name = self.name_text.strip()
-                    if self.quick:
-                        self.setup_class_choices()
-                        self.go(S_CLASSSELECT)
-                    else:
-                        self.slot = 1
-                        self.history = []
-                        self.setup_slot_choices()
-                        self.go(S_LIFEPATH)
+                    # Go to race selection
+                    self.race_scroll = 0
+                    self.race_hover = -1
+                    self.human_stat_pick = None
+                    self.go(S_RACE)
                 elif e.key == pygame.K_BACKSPACE:
                     self.name_text = self.name_text[:-1]
                 elif e.key == pygame.K_ESCAPE:
                     self.go(S_MODE)
                 elif len(self.name_text) < 20 and e.unicode.isprintable():
                     self.name_text += e.unicode
+
+        elif self.state == S_RACE:
+            if e.type == pygame.MOUSEBUTTONDOWN:
+                if e.button == 4:
+                    self.race_scroll = max(0, self.race_scroll - 1)
+                elif e.button == 5:
+                    from core.races import RACE_ORDER
+                    max_scroll = max(0, len(RACE_ORDER) - 5)
+                    self.race_scroll = min(max_scroll, self.race_scroll + 1)
+                elif e.button == 1:
+                    from core.races import RACE_ORDER, RACES
+                    if self.human_stat_pick:
+                        # Human stat pick mode — check stat buttons
+                        from core.classes import STAT_NAMES
+                        for i, stat in enumerate(STAT_NAMES):
+                            bx = 360 + (i % 3) * 130
+                            by = 440 + (i // 3) * 50
+                            r = pygame.Rect(bx, by, 110, 40)
+                            if r.collidepoint(mx, my):
+                                self.current_char.human_bonus_stat = stat
+                                self.current_char.stats[stat] = self.current_char.stats.get(stat, 5) + 1
+                                self._after_race_picked()
+                                break
+                    elif self.race_hover >= 0 and self.race_hover < len(RACE_ORDER):
+                        race_name = RACE_ORDER[self.race_hover]
+                        if race_name == "Human":
+                            self.human_stat_pick = True
+                            self.current_char.race_name = "Human"
+                        else:
+                            self.current_char.race_name = race_name
+                            self._after_race_picked()
+            elif e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+                self.human_stat_pick = None
+                self.go(S_NAME)
 
         elif self.state == S_LIFEPATH:
             if e.type == pygame.MOUSEBUTTONDOWN:
@@ -470,6 +502,21 @@ class Game:
         self.current_char.quick_rolled = self.quick
         self.name_text = ""
         self.history = []
+        self.race_scroll = 0
+        self.race_hover = -1
+        self.human_stat_pick = None
+
+    def _after_race_picked(self):
+        """Called after race is selected — proceed to lifepath or class select."""
+        self.human_stat_pick = None
+        if self.quick:
+            self.setup_class_choices()
+            self.go(S_CLASSSELECT)
+        else:
+            self.slot = 1
+            self.history = []
+            self.setup_slot_choices()
+            self.go(S_LIFEPATH)
 
     def setup_slot_choices(self):
         events = get_available_events(self.slot, self.history)
@@ -524,6 +571,7 @@ class Game:
         if self.state == S_TITLE:      self.draw_title()
         elif self.state == S_MODE:     self.draw_mode(mx, my)
         elif self.state == S_NAME:     self.draw_name()
+        elif self.state == S_RACE:     self.draw_race(mx, my)
         elif self.state == S_LIFEPATH: self.draw_lifepath(mx, my)
         elif self.state == S_RANDOM:   self.draw_random()
         elif self.state == S_CLASSSELECT: self.draw_class(mx, my)
@@ -616,6 +664,91 @@ class Game:
 
         draw_text(self.screen, "Press ENTER to continue",
                   SCREEN_W//2 - 120, 340, DARK_GREY, 14)
+
+    # ── Race Selection ─────────────────────────────────────────
+
+    def draw_race(self, mx, my):
+        from core.races import RACES, RACE_ORDER
+        from core.classes import STAT_NAMES, STAT_FULL_NAMES
+
+        draw_text(self.screen, f"Choose {self.current_char.name}'s Race",
+                  40, 25, GOLD, 22, bold=True)
+
+        mode = "Quick Roll" if self.quick else "Life Path"
+        draw_text(self.screen, f"Mode: {mode}",
+                  40, 55, GREY, 13)
+
+        # If human stat pick mode — show stat selection
+        if self.human_stat_pick:
+            draw_text(self.screen, "Human — Choose a stat to boost (+1):",
+                      SCREEN_W//2 - 200, 380, CREAM, 18)
+            draw_text(self.screen, "Humans are versatile. Pick one attribute to enhance.",
+                      SCREEN_W//2 - 240, 410, GREY, 14)
+            for i, stat in enumerate(STAT_NAMES):
+                bx = 360 + (i % 3) * 130
+                by = 440 + (i // 3) * 50
+                r = pygame.Rect(bx, by, 110, 40)
+                hover = r.collidepoint(mx, my)
+                draw_button(self.screen, r, f"+1 {STAT_FULL_NAMES[stat]}", hover=hover, size=13)
+
+        # Race list
+        start_y = 85
+        item_h = 90
+        visible = 5 if not self.human_stat_pick else 3
+        self.race_hover = -1
+
+        for i in range(visible):
+            idx = self.race_scroll + i
+            if idx >= len(RACE_ORDER):
+                break
+            race_name = RACE_ORDER[idx]
+            race = RACES[race_name]
+            rect = pygame.Rect(40, start_y + i * item_h, SCREEN_W - 80, item_h - 5)
+            is_hover = rect.collidepoint(mx, my) and not self.human_stat_pick
+            if is_hover:
+                self.race_hover = idx
+
+            bg = (45, 38, 75) if is_hover else PANEL_BG
+            sel = race_name == getattr(self.current_char, "race_name", None) and self.human_stat_pick
+            brd = race["color"] if (is_hover or sel) else PANEL_BORDER
+            draw_panel(self.screen, rect, border_color=brd, bg_color=bg)
+
+            # Race name
+            draw_text(self.screen, race_name, rect.x + 12, rect.y + 8,
+                      race["color"], 18, bold=True)
+
+            # Stat mods
+            mods = race.get("stat_mods", {})
+            if mods:
+                mod_parts = []
+                for s, v in mods.items():
+                    sign = "+" if v > 0 else ""
+                    mod_parts.append(f"{sign}{v} {s}")
+                mod_str = "  ".join(mod_parts)
+            else:
+                mod_str = "+1 to any stat (your choice)"
+            draw_text(self.screen, mod_str, rect.x + 200, rect.y + 10,
+                      HIGHLIGHT, 13)
+
+            # Description
+            draw_text(self.screen, race["description"], rect.x + 12, rect.y + 34,
+                      GREY if not is_hover else WHITE, 13,
+                      max_width=rect.width - 24)
+
+            # Lore preview on hover
+            if is_hover:
+                draw_text(self.screen, race["lore"][:120] + "...",
+                          rect.x + 12, rect.y + 56,
+                          DIM_GOLD, 11, max_width=rect.width - 24)
+
+        # Scroll hint
+        if len(RACE_ORDER) > visible:
+            draw_text(self.screen, "↑↓ Scroll for more races",
+                      SCREEN_W//2 - 100, start_y + visible * item_h + 5, DARK_GREY, 12)
+
+        # ESC hint
+        draw_text(self.screen, "ESC to go back",
+                  40, SCREEN_H - 30, DARK_GREY, 12)
 
     # ── Life Path ─────────────────────────────────────────────
 
@@ -796,8 +929,13 @@ class Game:
         cls = CLASSES[c.class_name]
 
         draw_text(self.screen, c.name, 40, 25, cls["color"], 26, bold=True)
-        draw_text(self.screen, f"{c.class_name}  —  Level {c.level}",
+        race_str = getattr(c, "race_name", "Human")
+        from core.races import RACES
+        race_col = RACES.get(race_str, {}).get("color", CREAM)
+        draw_text(self.screen, f"{race_str} {c.class_name}  —  Level {c.level}",
                   40, 60, CREAM, 16)
+        # Race name in its color
+        draw_text(self.screen, race_str, 40, 60, race_col, 16)
 
         # Stats
         draw_panel(self.screen, pygame.Rect(35, 95, 300, 175))
@@ -877,7 +1015,8 @@ class Game:
 
             # Name and class
             draw_text(self.screen, c.name, cx + 10, cy + 8, cls["color"], 16, bold=True)
-            draw_text(self.screen, c.class_name, cx + 10, cy + 28, CREAM, 13)
+            race_str = getattr(c, "race_name", "Human")
+            draw_text(self.screen, f"{race_str} {c.class_name}", cx + 10, cy + 28, CREAM, 13)
 
             # Stats in compact form
             sy = cy + 50
@@ -1572,9 +1711,11 @@ DEBUG_PARTY_NAMES = ["Aldric", "Lyra", "Sera", "Kael", "Wren", "Zhen"]
 
 def make_debug_party():
     """Quick-roll a full party for testing."""
+    debug_races = ["Human", "Elf", "Dwarf", "Halfling", "Gnome", "Half-Orc"]
     party = []
-    for name, cls in zip(DEBUG_PARTY_NAMES, DEBUG_PARTY_CLASSES):
-        c = Character(name)
+    for i, (name, cls) in enumerate(zip(DEBUG_PARTY_NAMES, DEBUG_PARTY_CLASSES)):
+        race = debug_races[i % len(debug_races)]
+        c = Character(name, race_name=race)
         c.quick_roll(cls)
         party.append(c)
     return party

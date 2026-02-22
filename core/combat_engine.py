@@ -64,6 +64,7 @@ def make_player_combatant(character, row=FRONT):
         "uid": id(character),
         "name": character.name,
         "class_name": character.class_name,
+        "race_name": getattr(character, "race_name", "Human"),
         "level": character.level,
         "stats": stats,
         "hp": character.resources["HP"],
@@ -323,6 +324,12 @@ def calc_physical_damage(attacker, defender, weapon, position_dmg_mod=1.0,
     if is_crit and crit_data:
         final *= crit_data.get("multiplier", 1.5)
 
+    # Racial damage bonus (Half-Orc physical, etc.)
+    if attacker.get("type") == "player":
+        from core.races import get_racial_damage_multiplier
+        phys_type = weapon.get("phys_type", "slashing")
+        final *= get_racial_damage_multiplier(attacker.get("race_name", "Human"), phys_type)
+
     # Weapon enchant bonus (elemental damage added after defense)
     enchant_elem = weapon.get("enchant_element")
     enchant_bonus = weapon.get("enchant_bonus", 0)
@@ -372,6 +379,16 @@ def calc_magic_damage(attacker, defender, spell, is_crit=False):
     # Crit
     if is_crit:
         final *= CRIT_SPELL_MULT
+
+    # Racial resistance on defender (Elf shadow resist, Gnome arcane resist, etc.)
+    if defender.get("type") == "player":
+        from core.races import get_racial_resist_multiplier
+        final *= get_racial_resist_multiplier(defender.get("race_name", "Human"), element)
+
+    # Racial damage bonus on attacker (Fading-Touched shadow bonus)
+    if attacker.get("type") == "player":
+        from core.races import get_racial_damage_multiplier
+        final *= get_racial_damage_multiplier(attacker.get("race_name", "Human"), element)
 
     return max(MINIMUM_DAMAGE, int(final))
 
@@ -443,6 +460,11 @@ def check_crit(attacker, attack_type="physical", weapon=None):
     else:
         crit_data = {"multiplier": 1.5}
 
+    # Racial crit bonus (Halfling)
+    if attacker.get("type") == "player":
+        from core.races import get_racial_crit_bonus
+        chance += get_racial_crit_bonus(attacker.get("race_name", "Human")) * 100
+
     is_crit = random.randint(1, 100) <= int(chance)
     return is_crit, crit_data if is_crit else None
 
@@ -472,6 +494,13 @@ def resolve_basic_attack(attacker, defender, enemies=None):
     # Accuracy check
     accuracy = calc_physical_accuracy(attacker, defender, weapon, pos_acc)
     hit = roll_hit(accuracy)
+
+    # Racial dodge bonus on defender (Halfling)
+    if hit and defender.get("type") == "player":
+        from core.races import get_racial_dodge_bonus
+        dodge = get_racial_dodge_bonus(defender.get("race_name", "Human"))
+        if dodge > 0 and random.random() < dodge:
+            hit = False  # dodged!
 
     result = {
         "action": "attack",
@@ -650,6 +679,11 @@ def resolve_ability(attacker, target, ability):
     resource_key = ability.get("resource", "")
     cost = ability.get("cost", 0)
     if resource_key and attacker["type"] == "player":
+        # Gnome racial: reduce MP costs by 1 (min 1)
+        from core.races import get_racial_mp_reduction
+        reduction = get_racial_mp_reduction(attacker.get("race_name", "Human"))
+        if reduction > 0 and resource_key in ("MP", "Mana"):
+            cost = max(1, cost - reduction)
         current = attacker["resources"].get(resource_key, 0)
         if current < cost:
             result["hit"] = False
