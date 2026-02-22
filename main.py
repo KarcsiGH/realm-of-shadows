@@ -399,7 +399,13 @@ class Game:
                     self.inventory_ui.handle_scroll(1)
 
         elif self.state == S_TOWN:
-            if e.type == pygame.MOUSEBUTTONDOWN:
+            if e.type == pygame.KEYDOWN:
+                # Forward keyboard to town UI (for walkable movement)
+                result = self.town_ui.handle_key(e.key)
+                if result == "exit":
+                    self._init_world_map()
+                    self.go(S_WORLD_MAP)
+            elif e.type == pygame.MOUSEBUTTONDOWN:
                 if e.button == 1:
                     result = self.town_ui.handle_click(mx, my)
                     if result == "exit":

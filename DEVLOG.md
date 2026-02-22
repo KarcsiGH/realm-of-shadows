@@ -1,7 +1,7 @@
 # Realm of Shadows — DEVLOG
 
 ## Current State
-**Session 1A complete — Race System (M11)**
+**Session 1B complete — Walkable Town Engine (M12 partial)**
 
 ## Sprint Plan
 - **Sprint 1:** M11 (Races) + M12 (Walkable Towns) + Briarhollow prototype
@@ -10,8 +10,25 @@
 - **Sprint 4:** M18 (Act 2) + M19 (Polish) + M20 (Steam Prep)
 
 ## Completed
+### Session 1B — Walkable Town Engine ✅
+- Tile-based walkable town maps replace menu-driven hub
+- data/town_maps.py: tile types (grass, wall, door, tree, water, path, exit, sign, fence)
+- Briarhollow: 24x20 map with 6 buildings (Inn, Shop, Temple, Tavern, Forge, Elder's House)
+- 3 NPCs placed on map (Maren, Captain Aldric, Elder Thom)
+- Job Board sign placed (UI framework coming in Sprint 2)
+- WASD/arrow movement, ENTER to interact, ESC to leave
+- Context-sensitive prompts at bottom of screen
+- All existing service UIs (shop, temple, inn, forge, tavern) work unchanged
+- _return_to_town() routes back to walk or menu based on town type
+- Fallback: towns without walkable maps still use old menu hub
+- Files: data/town_maps.py (new), ui/town_ui.py (modified), main.py (modified)
+
 ### M11 — Race System ✅
-- 7 races: Human, Elf, Dwarf, Halfling, Half-Orc, Gnome, Fading-Touched
+
+## Next Up: Session 1C
+- Build walkable maps for remaining 7 towns
+- World map location updates for new settlements
+- Unique buildings per settlement (Monastery, Fighter's Guild, Mage University, etc.)- 7 races: Human, Elf, Dwarf, Halfling, Half-Orc, Gnome, Fading-Touched
 - Race selection screen in character creation (between name and lifepath/class)
 - Human gets +1 to any stat (player picks)
 - Racial stat mods applied at character creation
@@ -34,14 +51,6 @@
 - Procedural dungeons with secret rooms
 - World map, 3 towns (menu-driven), story system
 - Sound engine
-
-## Next Up: Session 1B — Walkable Town Engine
-- Tile-based town renderer (reuse dungeon tile system)
-- Town map format: hand-crafted tile grids
-- Building interiors as separate "rooms"
-- NPC placement and interaction
-- Door/entrance tiles connecting buildings to town
-- Briarhollow as first walkable town
 
 ## Design Decisions
 - 8 settlements: 3 villages, 3 towns, 2 cities

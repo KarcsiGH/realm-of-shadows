@@ -61,6 +61,7 @@ RARITY_COLORS = {
 class TownUI:
     # Views
     VIEW_HUB = "hub"
+    VIEW_WALK = "walk"       # walkable town map
     VIEW_SHOP = "shop"
     VIEW_SHOP_BUY = "shop_buy"
     VIEW_SHOP_SELL = "shop_sell"
@@ -75,7 +76,6 @@ class TownUI:
 
     def __init__(self, party, town_id="briarhollow"):
         self.party = party
-        self.view = self.VIEW_HUB
         self.message = ""
         self.msg_timer = 0
         self.msg_color = CREAM
@@ -112,6 +112,20 @@ class TownUI:
         self.forge_selected_item = None
         self.forge_selected_enchant = None
 
+        # ── Walkable town state ──
+        from data.town_maps import get_town_data
+        self.town_data = get_town_data(town_id)
+        if self.town_data:
+            self.view = self.VIEW_WALK
+            self.walk_x, self.walk_y = self.town_data["spawn"]
+            self.walk_facing = "down"
+            self.walk_interact_msg = ""   # message shown at bottom
+            self.walk_interact_timer = 0
+            self.walk_tile_size = 32
+            self.walk_anim_t = 0
+        else:
+            self._return_to_town()
+
     # ─────────────────────────────────────────────────────────
     #  MAIN DRAW
     # ─────────────────────────────────────────────────────────
@@ -130,7 +144,11 @@ class TownUI:
 
         surface.fill(TOWN_BG)
 
-        if self.view == self.VIEW_HUB:
+        if self.view == self.VIEW_WALK:
+            self.walk_anim_t += dt
+            self.walk_interact_timer = max(0, self.walk_interact_timer - dt)
+            self._draw_walk(surface, mx, my)
+        elif self.view == self.VIEW_HUB:
             self._draw_hub(surface, mx, my)
         elif self.view == self.VIEW_SHOP:
             self._draw_shop_menu(surface, mx, my)
@@ -256,6 +274,316 @@ class TownUI:
                 for sname, scolor in statuses[:3]:  # max 3 shown
                     draw_text(surface, sname, sx, bar_y + 56, scolor, 9)
                     sx += 80
+
+    # ─────────────────────────────────────────────────────────
+    #  WALKABLE TOWN MAP
+    # ─────────────────────────────────────────────────────────
+
+    def _draw_walk(self, surface, mx, my):
+        from data.town_maps import (
+            TILE_COLORS, TILE_TOP_COLORS, TT_WALL, TT_TREE, TT_DOOR,
+            TT_FENCE, TT_PATH, TT_EXIT, TT_SIGN, TT_WATER,
+            get_tile, get_building_at, get_npc_at, get_sign_at,
+        )
+
+        td = self.town_data
+        ts = self.walk_tile_size
+        tw, th = td["width"], td["height"]
+
+        # Camera centered on player
+        map_area_h = SCREEN_H - 110  # leave room for UI bar at bottom
+        cam_x = self.walk_x - (SCREEN_W // ts) // 2
+        cam_y = self.walk_y - (map_area_h // ts) // 2
+        cam_x = max(0, min(tw - SCREEN_W // ts, cam_x))
+        cam_y = max(0, min(th - map_area_h // ts, cam_y))
+
+        # Draw tiles
+        for sy in range(map_area_h // ts + 2):
+            for sx in range(SCREEN_W // ts + 2):
+                tx = cam_x + sx
+                ty = cam_y + sy
+                tile = get_tile(td, tx, ty)
+                px = sx * ts - (cam_x * ts - int(cam_x) * ts)
+                py = sy * ts - (cam_y * ts - int(cam_y) * ts)
+
+                # Base tile
+                color = TILE_COLORS.get(tile, (40, 40, 40))
+                pygame.draw.rect(surface, color, (px, py, ts, ts))
+
+                # Top face for walls/trees/fences (3D effect)
+                top_color = TILE_TOP_COLORS.get(tile)
+                if top_color:
+                    pygame.draw.rect(surface, top_color, (px, py, ts, ts // 3))
+                    # Dark edge
+                    pygame.draw.line(surface, (color[0]//2, color[1]//2, color[2]//2),
+                                     (px, py + ts//3), (px + ts, py + ts//3))
+
+                # Door highlight
+                if tile == TT_DOOR:
+                    pygame.draw.rect(surface, (160, 120, 60), (px + ts//4, py + ts//6, ts//2, ts*2//3), border_radius=2)
+                    pygame.draw.rect(surface, (200, 160, 80), (px + ts//4, py + ts//6, ts//2, ts*2//3), 1, border_radius=2)
+
+                # Exit tiles — subtle glow
+                if tile == TT_EXIT:
+                    pulse = abs((self.walk_anim_t % 2000) - 1000) / 1000.0
+                    glow = int(40 + 30 * pulse)
+                    s = pygame.Surface((ts, ts), pygame.SRCALPHA)
+                    s.fill((80, 200, 80, glow))
+                    surface.blit(s, (px, py))
+
+                # Sign icon
+                if tile == TT_SIGN:
+                    pygame.draw.rect(surface, (140, 120, 70), (px + ts//3, py + ts//4, ts//3, ts//2))
+                    pygame.draw.line(surface, (100, 80, 40), (px + ts//2, py + ts//4 + ts//2), (px + ts//2, py + ts - 2), 2)
+
+                # Water shimmer
+                if tile == TT_WATER:
+                    shimmer = abs(((self.walk_anim_t + tx * 200) % 1500) - 750) / 750.0
+                    s = pygame.Surface((ts, ts), pygame.SRCALPHA)
+                    s.fill((60, 90, 140, int(30 + 25 * shimmer)))
+                    surface.blit(s, (px, py))
+
+                # Grid lines (subtle)
+                pygame.draw.rect(surface, (color[0]-10, color[1]-10, color[2]-10),
+                                 (px, py, ts, ts), 1)
+
+        # Draw NPCs
+        for npc in td.get("npcs", []):
+            nx, ny = npc["x"], npc["y"]
+            npx = (nx - cam_x) * ts
+            npy = (ny - cam_y) * ts
+            if 0 <= npx < SCREEN_W and 0 <= npy < map_area_h:
+                nc = npc.get("color", (180, 180, 180))
+                # Body
+                pygame.draw.rect(surface, nc,
+                                 (npx + ts//4, npy + ts//4, ts//2, ts//2), border_radius=3)
+                # Head
+                pygame.draw.circle(surface, (min(255, nc[0]+40), min(255, nc[1]+40), min(255, nc[2]+40)),
+                                   (npx + ts//2, npy + ts//5), ts//5)
+                # Name above
+                nw = get_font(9).size(npc["name"])[0]
+                draw_text(surface, npc["name"], npx + ts//2 - nw//2, npy - 12, nc, 9)
+
+        # Draw building labels
+        for bld_id, bld in td["buildings"].items():
+            lx, ly = bld.get("label_pos", bld["door"])
+            lpx = (lx - cam_x) * ts
+            lpy = (ly - cam_y) * ts - 8
+            if 0 <= lpx < SCREEN_W and 0 <= lpy < map_area_h:
+                draw_text(surface, bld["name"], lpx, lpy,
+                          bld.get("color", CREAM), 9)
+
+        # Draw player
+        ppx = (self.walk_x - cam_x) * ts
+        ppy = (self.walk_y - cam_y) * ts
+        # Yellow dot with outline
+        pygame.draw.circle(surface, (60, 50, 20), (ppx + ts//2, ppy + ts//2), ts//3 + 1)
+        pygame.draw.circle(surface, (255, 240, 80), (ppx + ts//2, ppy + ts//2), ts//3)
+        # Direction indicator
+        dx_map = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
+        fdx, fdy = dx_map.get(self.walk_facing, (0, 1))
+        pygame.draw.circle(surface, (255, 255, 200),
+                           (ppx + ts//2 + fdx * ts//4, ppy + ts//2 + fdy * ts//4), ts//8)
+
+        # ── UI bar at bottom ──
+        bar_y = map_area_h
+        pygame.draw.rect(surface, (12, 10, 25), (0, bar_y, SCREEN_W, SCREEN_H - bar_y))
+        pygame.draw.line(surface, PANEL_BORDER, (0, bar_y), (SCREEN_W, bar_y))
+
+        # Town name
+        draw_text(surface, td["name"], 20, bar_y + 8, GOLD, 16, bold=True)
+
+        # Gold
+        total_gold = sum(c.gold for c in self.party)
+        draw_text(surface, f"Gold: {total_gold}", 200, bar_y + 8, DIM_GOLD, 14)
+
+        # Interaction prompt
+        prompt = self._get_walk_prompt()
+        if prompt:
+            draw_text(surface, prompt, SCREEN_W // 2 - 200, bar_y + 30,
+                      HIGHLIGHT, 14)
+
+        # Interact message
+        if self.walk_interact_msg and self.walk_interact_timer > 0:
+            draw_text(surface, self.walk_interact_msg, SCREEN_W // 2 - 200,
+                      bar_y + 55, self.msg_color, 13)
+
+        # Controls hint
+        draw_text(surface, "WASD/Arrows: Move   ENTER: Interact   ESC: Leave Town",
+                  20, bar_y + 75, DARK_GREY, 11)
+
+        # Compact party HP bar
+        px_start = SCREEN_W - 350
+        for i, c in enumerate(self.party):
+            cls = CLASSES[c.class_name]
+            cx = px_start + i * 85
+            hp = c.resources.get("HP", 0)
+            max_hp = c.resources.get("HP", 1)  # approximate
+            draw_text(surface, c.name[:6], cx, bar_y + 8, cls["color"], 10, bold=True)
+            draw_text(surface, f"HP:{hp}", cx, bar_y + 20, DIM_GREEN, 9)
+
+    def _get_walk_prompt(self):
+        """Get context-sensitive prompt based on what's at the player's position or adjacent."""
+        from data.town_maps import get_building_at, get_npc_at, get_sign_at, is_exit, get_tile, TT_DOOR
+        td = self.town_data
+        x, y = self.walk_x, self.walk_y
+
+        # Check what's at player position
+        tile = get_tile(td, x, y)
+        if tile == TT_DOOR:
+            result = get_building_at(td, x, y)
+            if result:
+                _, bld = result
+                return f"[ENTER] Enter {bld['name']}"
+
+        if is_exit(td, x, y):
+            return "[ENTER] Leave Town"
+
+        # Check facing tile for NPCs and signs
+        dx_map = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
+        fdx, fdy = dx_map.get(self.walk_facing, (0, 1))
+        fx, fy = x + fdx, y + fdy
+
+        npc = get_npc_at(td, fx, fy)
+        if npc:
+            return f"[ENTER] Talk to {npc['name']}"
+
+        sign_text = get_sign_at(td, fx, fy)
+        if sign_text:
+            return "[ENTER] Read Sign"
+
+        # Check current tile too for NPCs
+        npc = get_npc_at(td, x, y)
+        if npc:
+            return f"[ENTER] Talk to {npc['name']}"
+
+        return ""
+
+    def handle_key(self, key):
+        """Handle keyboard input. Returns 'exit' to leave town, or None."""
+        if self.view != self.VIEW_WALK:
+            return None
+
+        # Dialogue takes priority
+        if self.active_dialogue and not self.active_dialogue.finished:
+            return None
+
+        from data.town_maps import is_walkable, get_building_at, get_npc_at, get_sign_at, is_exit, get_tile, TT_DOOR
+
+        td = self.town_data
+        dx, dy = 0, 0
+
+        # Movement
+        if key in (pygame.K_w, pygame.K_UP):
+            dy = -1; self.walk_facing = "up"
+        elif key in (pygame.K_s, pygame.K_DOWN):
+            dy = 1; self.walk_facing = "down"
+        elif key in (pygame.K_a, pygame.K_LEFT):
+            dx = -1; self.walk_facing = "left"
+        elif key in (pygame.K_d, pygame.K_RIGHT):
+            dx = 1; self.walk_facing = "right"
+        elif key == pygame.K_RETURN:
+            return self._walk_interact()
+        elif key == pygame.K_ESCAPE:
+            self.finished = True
+            return "exit"
+
+        if dx != 0 or dy != 0:
+            nx, ny = self.walk_x + dx, self.walk_y + dy
+            # Can walk onto NPC tiles (they're on walkable ground)
+            if is_walkable(td, nx, ny):
+                self.walk_x = nx
+                self.walk_y = ny
+                sfx.play("step")
+
+        return None
+
+    def _walk_interact(self):
+        """Handle ENTER press while walking. Returns 'exit' or None."""
+        from data.town_maps import (
+            get_building_at, get_npc_at, get_sign_at, is_exit,
+            get_tile, TT_DOOR, BLD_INN, BLD_SHOP, BLD_TEMPLE,
+            BLD_TAVERN, BLD_FORGE, BLD_HOUSE, BLD_JOBBOARD,
+        )
+
+        td = self.town_data
+        x, y = self.walk_x, self.walk_y
+
+        # Check current tile for door
+        tile = get_tile(td, x, y)
+        if tile == TT_DOOR:
+            result = get_building_at(td, x, y)
+            if result:
+                bld_id, bld = result
+                btype = bld["type"]
+                sfx.play("door_open")
+                if btype == BLD_INN:
+                    self.view = self.VIEW_INN
+                elif btype == BLD_SHOP:
+                    self.view = self.VIEW_SHOP
+                elif btype == BLD_TEMPLE:
+                    self.view = self.VIEW_TEMPLE
+                elif btype == BLD_TAVERN:
+                    self.view = self.VIEW_TAVERN
+                elif btype == BLD_FORGE:
+                    self.view = self.VIEW_FORGE
+                    self.forge_scroll = 0
+                elif btype == BLD_HOUSE:
+                    self._show_walk_msg(f"The door to {bld['name']} is locked.", GREY)
+                elif btype == BLD_JOBBOARD:
+                    self._show_walk_msg("Job Board — No jobs posted yet.", DIM_GOLD)
+                return None
+
+        # Check exit tile
+        if is_exit(td, x, y):
+            self.finished = True
+            return "exit"
+
+        # Check facing tile for NPC
+        dx_map = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
+        fdx, fdy = dx_map.get(self.walk_facing, (0, 1))
+        fx, fy = x + fdx, y + fdy
+
+        npc = get_npc_at(td, fx, fy)
+        if not npc:
+            npc = get_npc_at(td, x, y)  # also check current tile
+        if npc:
+            sfx.play("npc_talk")
+            did = npc.get("dialogue_id")
+            if did:
+                from data.story_data import NPC_DIALOGUES
+                from core.dialogue import select_dialogue
+                from ui.dialogue_ui import DialogueUI
+                dialogues = NPC_DIALOGUES.get(did, [])
+                if dialogues:
+                    ds = select_dialogue(did, dialogues)
+                    if ds:
+                        self.active_dialogue = DialogueUI(ds)
+                        return None
+            self._show_walk_msg(npc.get("description", f"{npc['name']} has nothing to say."),
+                                npc.get("color", CREAM))
+            return None
+
+        # Check facing tile for sign
+        sign_text = get_sign_at(td, fx, fy)
+        if sign_text:
+            self._show_walk_msg(sign_text, DIM_GOLD)
+            return None
+
+        return None
+
+    def _show_walk_msg(self, text, color=CREAM):
+        """Show a temporary message in the walk UI."""
+        self.walk_interact_msg = text
+        self.walk_interact_timer = 3000
+        self.msg_color = color
+
+    def _return_to_town(self):
+        """Return to the main town view (walkable or hub)."""
+        if self.town_data:
+            self.view = self.VIEW_WALK
+        else:
+            self.view = self.VIEW_HUB
 
     # ─────────────────────────────────────────────────────────
     #  GENERAL STORE — Menu
@@ -812,7 +1140,7 @@ class TownUI:
                         self.view = self.VIEW_SHOP_SELL
                         self.sell_scroll = 0
                     elif opt == "back":
-                        self.view = self.VIEW_HUB
+                        self._return_to_town()
                     return None
 
         # ── Shop buy ──
@@ -884,7 +1212,7 @@ class TownUI:
         elif self.view == self.VIEW_TEMPLE:
             back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
             if back.collidepoint(mx, my):
-                self.view = self.VIEW_HUB
+                self._return_to_town()
                 return None
 
             # Service buttons
@@ -919,7 +1247,7 @@ class TownUI:
 
             back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
             if back.collidepoint(mx, my):
-                self.view = self.VIEW_HUB
+                self._return_to_town()
                 self.inn_result = None
                 return None
 
@@ -1000,7 +1328,7 @@ class TownUI:
         elif self.view == self.VIEW_TAVERN:
             back = pygame.Rect(SCREEN_W - 140, 30, 120, 34)
             if back.collidepoint(mx, my):
-                self.view = self.VIEW_HUB
+                self._return_to_town()
                 return None
 
             another = pygame.Rect(SCREEN_W // 2 - 100, 310, 200, 45)
@@ -1441,7 +1769,7 @@ class TownUI:
         # Back button
         back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
         if back.collidepoint(mx, my):
-            self.view = self.VIEW_HUB
+            self._return_to_town()
             self.forge_selected_item = None
             return None
 
