@@ -92,6 +92,9 @@ class WorldMapUI:
         if self.show_camp_confirm:
             self._draw_camp_dialog(surface, mx, my)
 
+        # ── Fading world corruption overlay ──
+        self._draw_fading_overlay(surface)
+
         # ── Event message ──
         if self.event_message and self.event_timer > 0:
             msg_rect = pygame.Rect(SCREEN_W // 2 - 300, SCREEN_H // 2 - 40, 600, 80)
@@ -395,6 +398,87 @@ class WorldMapUI:
         ppx = mm_x + int(self.world.party_x * mm_scale)
         ppy = mm_y + int(self.world.party_y * mm_scale)
         pygame.draw.rect(surface, PARTY_COLOR, (ppx - 2, ppy - 2, 4, 4))
+
+    def _draw_fading_overlay(self, surface):
+        """
+        Draw a creeping Fading corruption overlay on the world map.
+        Intensity rises with hearthstones collected (0-5).
+        At 0: very faint edge vignette.
+        At 5: heavy purple-black tide consuming the map edges.
+        """
+        import math, random
+        from core.story_flags import hearthstone_count
+
+        count     = hearthstone_count()
+        # Base intensity: even with 0 stones there's a very light vignette
+        intensity = 0.12 + count * 0.17   # 0.12 → 0.97 over 0-5 stones
+
+        t = pygame.time.get_ticks() / 1000.0
+        W, H = surface.get_size()
+
+        # ── Edge vignette (always present, scaled by intensity) ──
+        vig = pygame.Surface((W, H), pygame.SRCALPHA)
+        depth = int(min(W, H) * intensity * 0.55)
+        for i in range(depth):
+            alpha = int(180 * intensity * ((depth - i) / depth) ** 1.8)
+            alpha = min(220, alpha)
+            col   = (20 + int(15 * intensity), 0, int(40 * intensity), alpha)
+            # draw 1px border rect inset by i
+            pygame.draw.rect(vig, col, (i, i, W - i*2, H - i*2), 1)
+        surface.blit(vig, (0, 0))
+
+        if count == 0:
+            return   # pure vignette is enough at story start
+
+        # ── Animated corruption tendrils along all four edges ──
+        # Seeded per-frame so they wiggle but stay stable between frames
+        rng    = random.Random(int(t * 2))   # changes twice per second
+        stroke = pygame.Surface((W, H), pygame.SRCALPHA)
+
+        def tendril(ox, oy, dx, dy, length, width, alpha):
+            """Draw a single jagged tendril from (ox,oy) in direction (dx,dy)."""
+            px, py = float(ox), float(oy)
+            perp_x, perp_y = -dy, dx
+            for _ in range(length):
+                jitter = rng.uniform(-6, 6) * intensity
+                nx = px + dx + perp_x * jitter
+                ny = py + dy + perp_y * jitter
+                a  = max(0, int(alpha * (1.0 - _ / length)))
+                pygame.draw.line(stroke, (80, 0, 120, a),
+                                 (int(px), int(py)), (int(nx), int(ny)), width)
+                px, py = nx, ny
+
+        # Number of tendrils scales with intensity
+        n_edge = int(6 * intensity)
+        step   = W // max(1, n_edge)
+        fade_len = int(min(W, H) * intensity * 0.5)
+
+        for i in range(n_edge):
+            # Top edge
+            ox = rng.randint(0, W)
+            tendril(ox, 0, 0, 1, fade_len, 2, 120)
+            # Bottom edge
+            ox = rng.randint(0, W)
+            tendril(ox, H, 0, -1, fade_len, 2, 120)
+            # Left edge
+            oy = rng.randint(0, H)
+            tendril(0, oy, 1, 0, fade_len, 2, 100)
+            # Right edge
+            oy = rng.randint(0, H)
+            tendril(W, oy, -1, 0, fade_len, 2, 100)
+
+        surface.blit(stroke, (0, 0))
+
+        # ── Pulsing dark bloom in corners at high intensity ──
+        if count >= 3:
+            bloom_alpha = int(80 * (count - 2) / 3 * (0.8 + 0.2 * math.sin(t * 0.9)))
+            bloom       = pygame.Surface((W, H), pygame.SRCALPHA)
+            bloom_r     = int(min(W, H) * 0.35 * ((count - 2) / 3))
+            for cx, cy in [(0, 0), (W, 0), (0, H), (W, H)]:
+                for ring in range(bloom_r, 0, -max(1, bloom_r // 12)):
+                    a = int(bloom_alpha * (bloom_r - ring) / bloom_r)
+                    pygame.draw.circle(bloom, (30, 0, 55, a), (cx, cy), ring)
+            surface.blit(bloom, (0, 0))
 
     def _draw_camp_dialog(self, surface, mx, my):
         """Draw camp confirmation dialog."""

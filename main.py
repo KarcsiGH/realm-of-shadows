@@ -178,6 +178,21 @@ class Game:
             sfx.stop_music()
             sfx.stop_ambient()
 
+    def go_fade(self, state):
+        """Fade-out current screen, switch state, then fade-in."""
+        # Fade out over ~200ms (20 frames at 60fps, step 13/frame)
+        mx, my = pygame.mouse.get_pos()
+        for alpha in range(0, 256, 13):
+            self.screen.fill(BG_COLOR)
+            self.draw_state(mx, my)
+            s = pygame.Surface((SCREEN_W, SCREEN_H))
+            s.fill(BLACK)
+            s.set_alpha(min(255, alpha))
+            self.screen.blit(s, (0, 0))
+            pygame.display.flip()
+            self.clock.tick(FPS)
+        self.go(state)
+
     # ══════════════════════════════════════════════════════════
     #  EVENT HANDLING
     # ══════════════════════════════════════════════════════════
@@ -343,7 +358,7 @@ class Game:
                         town_btn = pygame.Rect(SCREEN_W - 400, 40, 180, 40)
                         if town_btn.collidepoint(mx, my) and self.party:
                             self.town_ui = TownUI(self.party, town_id=self.current_town_id)
-                            self.go(S_TOWN)
+                            self.go_fade(S_TOWN)
                             return
                     # Save button
                     save_btn = pygame.Rect(20, 40, 120, 40)
@@ -370,10 +385,10 @@ class Game:
                     world_btn = pygame.Rect(290, 40, 160, 40)
                     if world_btn.collidepoint(mx, my) and self.party:
                         if self.dungeon_state:
-                            self.go(S_DUNGEON)
+                            self.go_fade(S_DUNGEON)
                         else:
                             self._init_world_map()
-                            self.go(S_WORLD_MAP)
+                            self.go_fade(S_WORLD_MAP)
                         return
                     if self.debug_mode:
                         # Check encounter buttons
@@ -390,7 +405,7 @@ class Game:
                         r = pygame.Rect(SCREEN_W//2 - 150, SCREEN_H - 65, 300, 45)
                         if r.collidepoint(mx, my):
                             self._init_world_map()
-                            self.go(S_WORLD_MAP)
+                            self.go_fade(S_WORLD_MAP)
 
         elif self.state == S_INVENTORY:
             # Pass keyboard events (ESC)
@@ -427,13 +442,13 @@ class Game:
                 result = self.town_ui.handle_key(e.key)
                 if result == "exit":
                     self._init_world_map()
-                    self.go(S_WORLD_MAP)
+                    self.go_fade(S_WORLD_MAP)
             elif e.type == pygame.MOUSEBUTTONDOWN:
                 if e.button == 1:
                     result = self.town_ui.handle_click(mx, my)
                     if result == "exit":
                         self._init_world_map()
-                        self.go(S_WORLD_MAP)
+                        self.go_fade(S_WORLD_MAP)
                     elif result == "inn_save":
                         # Auto-save when resting at inn
                         from core.save_load import save_game
@@ -458,6 +473,9 @@ class Game:
             if e.type == pygame.KEYDOWN:
                 event = self.dungeon_ui.handle_key(e.key)
                 self._process_dungeon_event(event)
+            elif e.type == pygame.KEYUP:
+                if hasattr(self.dungeon_ui, 'handle_keyup'):
+                    self.dungeon_ui.handle_keyup(e.key)
             elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
                 event = self.dungeon_ui.handle_click(mx, my)
                 self._process_dungeon_event(event)
@@ -487,9 +505,9 @@ class Game:
                     if result == "continue":
                         self.party_scroll = 0
                         if self.dungeon_state:
-                            self.go(S_DUNGEON)
+                            self.go_fade(S_DUNGEON)
                         elif self.world_state:
-                            self.go(S_WORLD_MAP)
+                            self.go_fade(S_WORLD_MAP)
                         else:
                             self.go(S_PARTY)
                 elif e.button == 4:
@@ -631,28 +649,89 @@ class Game:
     # ── Title Screen ──────────────────────────────────────────
 
     def draw_title(self):
-        # Gradient atmosphere
-        for i in range(40):
-            c = max(0, 30 - i)
-            s = pygame.Surface((SCREEN_W, 10)); s.fill((c, c//3, c*2))
-            s.set_alpha(80); self.screen.blit(s, (0, SCREEN_H//2 - 200 + i*10))
+        import math, random
 
-        pulse = abs((self.title_t % 3000) - 1500) / 1500.0
-        col = (int(200 + 55*pulse), int(180 + 35*pulse), 0)
+        t = self.title_t / 1000.0
 
-        draw_text(self.screen, "REALM", SCREEN_W//2 - 120, SCREEN_H//2 - 80,
-                  col, 48, bold=True)
-        draw_text(self.screen, "of", SCREEN_W//2 - 22, SCREEN_H//2 - 25,
-                  GREY, 24)
-        draw_text(self.screen, "SHADOWS", SCREEN_W//2 - 150, SCREEN_H//2 + 10,
-                  col, 48, bold=True)
+        # ── Animated starfield / mist background ──
+        rng = random.Random(42)
+        for _ in range(80):
+            sx = rng.randint(0, SCREEN_W)
+            sy = rng.randint(0, SCREEN_H)
+            sr = rng.randint(1, 2)
+            alpha = int(60 + 40 * math.sin(t * rng.uniform(0.4, 1.2) + rng.random() * 6))
+            s = pygame.Surface((sr*2, sr*2), pygame.SRCALPHA)
+            pygame.draw.circle(s, (200, 180, 255, alpha), (sr, sr), sr)
+            self.screen.blit(s, (sx - sr, sy - sr))
 
+        # ── Fading tendrils from edges (title atmosphere) ──
+        rng2 = random.Random(int(t * 1.5))
+        tendril_surf = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        for i in range(12):
+            ox = rng2.randint(0, SCREEN_W)
+            length = rng2.randint(80, 200)
+            px, py = float(ox), 0.0
+            for step in range(length):
+                jitter = rng2.uniform(-5, 5)
+                nx = px + jitter
+                ny = py + 1
+                a  = max(0, int(90 * (1 - step / length)))
+                pygame.draw.line(tendril_surf, (60, 0, 100, a),
+                                 (int(px), int(py)), (int(nx), int(ny)), 2)
+                px, py = nx, ny
+        # Bottom tendrils reaching up
+        for i in range(8):
+            ox = rng2.randint(0, SCREEN_W)
+            length = rng2.randint(60, 140)
+            px, py = float(ox), float(SCREEN_H)
+            for step in range(length):
+                jitter = rng2.uniform(-4, 4)
+                nx = px + jitter
+                ny = py - 1
+                a  = max(0, int(70 * (1 - step / length)))
+                pygame.draw.line(tendril_surf, (80, 0, 120, a),
+                                 (int(px), int(py)), (int(nx), int(ny)), 2)
+                px, py = nx, ny
+        self.screen.blit(tendril_surf, (0, 0))
+
+        # ── Gradient atmosphere band across center ──
+        band = pygame.Surface((SCREEN_W, 320), pygame.SRCALPHA)
+        for i in range(320):
+            d = abs(i - 160) / 160.0
+            a = int(60 * (1 - d ** 1.5))
+            pygame.draw.line(band, (20, 0, 40, a), (0, i), (SCREEN_W, i))
+        self.screen.blit(band, (0, SCREEN_H // 2 - 200))
+
+        # ── Logo ──
+        pulse = abs((self.title_t % 3000) - 1500) / 1500.0   # 0→1→0
+        r_col = (int(210 + 45 * pulse), int(180 + 30 * pulse), int(20 * pulse))
+        s_col = (int(160 + 60 * pulse), int(130 + 50 * pulse), int(180 + 40 * pulse))
+
+        # Soft glow behind "REALM"
+        glow_alpha = int(40 + 30 * pulse)
+        gw = pygame.Surface((360, 70), pygame.SRCALPHA)
+        gw.fill((80, 20, 140, glow_alpha))
+        self.screen.blit(gw, (SCREEN_W // 2 - 180, SCREEN_H // 2 - 105))
+
+        draw_text(self.screen, "REALM",   SCREEN_W // 2 - 120, SCREEN_H // 2 - 90,
+                  r_col, 52, bold=True)
+        draw_text(self.screen, "of",      SCREEN_W // 2 - 22,  SCREEN_H // 2 - 28,
+                  (180, 160, 220), 22)
+        draw_text(self.screen, "SHADOWS", SCREEN_W // 2 - 160, SCREEN_H // 2 + 4,
+                  s_col, 52, bold=True)
+
+        # ── Tagline ──
+        draw_text(self.screen, "The Fading comes for all things.",
+                  SCREEN_W // 2 - 175, SCREEN_H // 2 + 80, (140, 110, 180), 15)
+
+        # ── Blinking prompt ──
         if (self.title_t // 800) % 2 == 0:
-            draw_text(self.screen, "Press any key to begin", SCREEN_W//2 - 130,
-                      SCREEN_H//2 + 120, DIM_GOLD, 16)
+            draw_text(self.screen, "Press any key to begin",
+                      SCREEN_W // 2 - 130, SCREEN_H // 2 + 130, DIM_GOLD, 16)
 
-        draw_text(self.screen, "An Advanced Class System RPG", SCREEN_W//2 - 160,
-                  SCREEN_H - 60, DARK_GREY, 14)
+        # ── Version / credit ──
+        draw_text(self.screen, "An Advanced Class System RPG",
+                  SCREEN_W // 2 - 160, SCREEN_H - 42, DARK_GREY, 13)
 
     # ── Choose Mode ───────────────────────────────────────────
 
@@ -945,8 +1024,11 @@ class Game:
             brd = cls["color"] if is_hover else PANEL_BORDER
             draw_panel(self.screen, rect, border_color=brd, bg_color=bg)
 
-            # Class name and fit
-            draw_text(self.screen, cn, rect.x + 12, rect.y + 8,
+            # Class icon badge (left side of row)
+            draw_class_badge(self.screen, cn, rect.x + 8, rect.y + rect.h//2 - 18, 14)
+
+            # Class name and fit (shifted right to make room for badge)
+            draw_text(self.screen, cn, rect.x + 46, rect.y + 8,
                       cls["color"], 18, bold=True)
 
             if not self.quick:
@@ -955,13 +1037,13 @@ class Game:
                           fit_col, 13)
 
             # Description
-            draw_text(self.screen, cls["description"], rect.x + 12, rect.y + 32,
+            draw_text(self.screen, cls["description"], rect.x + 46, rect.y + 32,
                       GREY if not is_hover else WHITE, 13,
-                      max_width=rect.width - 24)
+                      max_width=rect.width - 58)
 
             # Starting abilities
             ab_text = "Starts with: " + ", ".join(a["name"] for a in cls["starting_abilities"])
-            draw_text(self.screen, ab_text, rect.x + 12, rect.y + 55,
+            draw_text(self.screen, ab_text, rect.x + 46, rect.y + 55,
                       DIM_GOLD, 11)
 
     # ── Character Summary ─────────────────────────────────────
@@ -970,7 +1052,9 @@ class Game:
         c = self.current_char
         cls = CLASSES[c.class_name]
 
-        draw_text(self.screen, c.name, 40, 25, cls["color"], 26, bold=True)
+        draw_text(self.screen, c.name, 80, 25, cls["color"], 26, bold=True)
+        # Class badge next to name
+        draw_class_badge(self.screen, c.class_name, 40, 20, 16)
         race_str = getattr(c, "race_name", "Human")
         from core.races import RACES
         race_col = RACES.get(race_str, {}).get("color", CREAM)
@@ -1055,10 +1139,11 @@ class Game:
             rect = pygame.Rect(cx, cy, card_w, card_h)
             draw_panel(self.screen, rect, border_color=cls["color"])
 
-            # Name and class
-            draw_text(self.screen, c.name, cx + 10, cy + 8, cls["color"], 16, bold=True)
+            # Class badge + Name and class
+            draw_class_badge(self.screen, c.class_name, cx + 6, cy + 6, 14)
+            draw_text(self.screen, c.name, cx + 44, cy + 8, cls["color"], 16, bold=True)
             race_str = getattr(c, "race_name", "Human")
-            draw_text(self.screen, f"{race_str} {c.class_name}", cx + 10, cy + 28, CREAM, 13)
+            draw_text(self.screen, f"{race_str} {c.class_name}", cx + 44, cy + 28, CREAM, 13)
 
             # Stats in compact form
             sy = cy + 50
@@ -1498,7 +1583,7 @@ class Game:
                 town_id = event.get("id", "briarhollow")
                 self.current_town_id = town_id
                 self.town_ui = TownUI(self.party, town_id=town_id)
-                self.go(S_TOWN)
+                self.go_fade(S_TOWN)
             elif loc["type"] == LOC_DUNGEON:
                 # Find matching dungeon ID
                 loc_id = event.get("id", "")
@@ -1521,7 +1606,7 @@ class Game:
                             self.dungeon_cache[dungeon_id] = self.dungeon_state
                         self.dungeon_ui = DungeonUI(self.dungeon_state)
                         self.pre_dungeon_state = S_WORLD_MAP
-                        self.go(S_DUNGEON)
+                        self.go_fade(S_DUNGEON)
                         # Track floor 1 for job board
                         from data.job_board import on_dungeon_floor_reached
                         on_dungeon_floor_reached(dungeon_id, 1)
@@ -1607,7 +1692,7 @@ class Game:
                                 self.party[0].add_item(hearthstone)
                                 self.dungeon_ui.show_event(
                                     "Received: Hearthstone Fragment!", GOLD)
-                            self.go(S_DUNGEON)
+                            self.go_fade(S_DUNGEON)
                     self.start_dialogue(boss_npc, return_state=S_DUNGEON,
                                         callback=after_boss_dialogue)
                     return
@@ -1734,7 +1819,7 @@ class Game:
             self.dungeon_state = None
             self.dungeon_ui = None
             if self.world_state:
-                self.go(S_WORLD_MAP)
+                self.go_fade(S_WORLD_MAP)
             else:
                 self.go(S_PARTY)
 
@@ -1925,7 +2010,7 @@ class Game:
                 self.town_ui = TownUI(self.party, town_id=self.current_town_id)
                 self.town_ui.inn_result = "Your party has fallen... You awaken at the inn, battered and bruised. (25% gold lost)"
                 self.town_ui.view = self.town_ui.VIEW_INN
-                self.go(S_TOWN)
+                self.go_fade(S_TOWN)
             return
 
         if action["type"] == "attack":

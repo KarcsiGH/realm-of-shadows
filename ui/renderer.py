@@ -204,3 +204,107 @@ class ChoiceList:
             bottom_y = self.y + self.max_visible * self.item_height
             draw_text(surface, "v scroll down v", self.x + self.width // 2 - 55,
                       bottom_y, DIM_GOLD, 12)
+
+
+# ── Class Icons ───────────────────────────────────────────────
+# Colored geometric symbols drawn with pygame primitives.
+# Each class has a distinct shape so they're readable at small sizes.
+
+def draw_class_icon(surface, class_name, cx, cy, size=18):
+    """
+    Draw a colored geometric class icon centred at (cx, cy).
+    size is the bounding box half-width (icon fits in size*2 x size*2).
+
+    Shapes:
+      Fighter  → crossed swords (two diagonal lines + crossguard)
+      Mage     → 6-point star
+      Cleric   → bold cross
+      Thief    → downward dagger
+      Ranger   → leaf / arrowhead
+      Monk     → circle with inner ring
+    """
+    from core.classes import CLASSES
+    color = CLASSES.get(class_name, {}).get("color", (160, 160, 160))
+    dim   = tuple(max(0, c - 60) for c in color)   # darker shadow tint
+    s = int(size * 0.85)   # inner draw radius
+
+    if class_name == "Fighter":
+        # Two crossed diagonal lines (swords) with tiny crossguards
+        pygame.draw.line(surface, color,  (cx - s, cy - s), (cx + s, cy + s), 3)
+        pygame.draw.line(surface, color,  (cx + s, cy - s), (cx - s, cy + s), 3)
+        # Crossguards
+        g = s // 2
+        pygame.draw.line(surface, dim, (cx - g, cy), (cx + g, cy), 2)
+        pygame.draw.line(surface, dim, (cx, cy - g), (cx, cy + g), 2)
+
+    elif class_name == "Mage":
+        # 6-point star (two overlapping triangles)
+        import math
+        pts_up   = [(cx + s*math.cos(math.radians(a - 90)),
+                     cy + s*math.sin(math.radians(a - 90)))
+                    for a in (0, 120, 240)]
+        pts_down = [(cx + s*math.cos(math.radians(a + 90)),
+                     cy + s*math.sin(math.radians(a + 90)))
+                    for a in (0, 120, 240)]
+        pygame.draw.polygon(surface, dim,   pts_up,   0)
+        pygame.draw.polygon(surface, color, pts_up,   2)
+        pygame.draw.polygon(surface, dim,   pts_down, 0)
+        pygame.draw.polygon(surface, color, pts_down, 2)
+
+    elif class_name == "Cleric":
+        # Bold cross
+        t = max(2, s // 3)   # arm thickness
+        pygame.draw.rect(surface, color, (cx - t, cy - s, t*2, s*2))
+        pygame.draw.rect(surface, color, (cx - s, cy - t, s*2, t*2))
+        # Bright centre dot
+        pygame.draw.circle(surface, (255, 255, 200), (cx, cy), t - 1)
+
+    elif class_name == "Thief":
+        # Downward-pointing dagger (triangle blade + small hilt)
+        tip = (cx, cy + s)
+        blade = [(cx - s//3, cy - s//2), tip, (cx + s//3, cy - s//2)]
+        pygame.draw.polygon(surface, dim, blade, 0)
+        pygame.draw.polygon(surface, color, blade, 2)
+        # Hilt crossbar
+        pygame.draw.line(surface, color, (cx - s//2, cy - s//2), (cx + s//2, cy - s//2), 2)
+        # Pommel
+        pygame.draw.circle(surface, color, (cx, cy - s), s//5)
+
+    elif class_name == "Ranger":
+        # Upward arrowhead / leaf
+        tip  = (cx,       cy - s)
+        left = (cx - s,   cy + s//2)
+        right= (cx + s,   cy + s//2)
+        notch= (cx,       cy + s//4)
+        pts  = [tip, right, notch, left]
+        pygame.draw.polygon(surface, dim,   pts, 0)
+        pygame.draw.polygon(surface, color, pts, 2)
+        # Centre vein
+        pygame.draw.line(surface, color, (cx, cy - s + 2), (cx, cy + s//4), 1)
+
+    elif class_name == "Monk":
+        # Outer circle + inner ring + centre dot  (energy / ki)
+        pygame.draw.circle(surface, dim,   (cx, cy), s,       0)
+        pygame.draw.circle(surface, color, (cx, cy), s,       2)
+        pygame.draw.circle(surface, color, (cx, cy), s*2//3,  1)
+        pygame.draw.circle(surface, color, (cx, cy), s//4,    0)
+
+    else:
+        # Generic: filled diamond
+        pts = [(cx, cy - s), (cx + s, cy), (cx, cy + s), (cx - s, cy)]
+        pygame.draw.polygon(surface, dim,   pts, 0)
+        pygame.draw.polygon(surface, color, pts, 2)
+
+
+def draw_class_badge(surface, class_name, x, y, size=18):
+    """
+    Draw a small circular badge with a class icon inside.
+    Top-left corner at (x, y).  Total footprint: (size*2+4) x (size*2+4).
+    """
+    from core.classes import CLASSES
+    color = CLASSES.get(class_name, {}).get("color", (100, 100, 100))
+    r     = size + 2
+    cx, cy = x + r, y + r
+    pygame.draw.circle(surface, (20, 16, 36),  (cx, cy), r)        # bg
+    pygame.draw.circle(surface, color,         (cx, cy), r, 2)     # border
+    draw_class_icon(surface, class_name, cx, cy, size)
