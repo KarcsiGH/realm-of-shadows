@@ -241,27 +241,29 @@ BRIARHOLLOW_EXIT = [(10, 19), (11, 19)]  # exit tiles
 #  WOODHAVEN — Forest Ranger Town (mid-tier)
 # ══════════════════════════════════════════════════════════
 
-# 28x22 tile map — forest town with a river
+# 28x22 tile map — forest town with a river running east-west through the middle
+# Layout: Inn/Shop in NW, Guild in NE, Temple/Tavern in west-center,
+#         Forge in SE, Ranger Hall in SW, bridge crosses river in center
 WOODHAVEN_MAP_RAW = [
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTT",  # 0
-    "T..........TT.............T",  # 1
-    "T..####..####..TT.........T",  # 2
-    "T..#..#..#..#..TT..####..TT",  # 3
-    "T..#..D..D..#......#..#..TT",  # 4  inn(5,4) shop(8,4)
-    "T..####..####......#..D...T",  # 5                   guild(22,5)
-    "T..........P.......####...T",  # 6
-    "T..PPPPPPPP..............TT",  # 7
-    "T..P.........####........TT",  # 8
+    "T.......................TTTT",  # 1
+    "T..####..####..........TTTT",  # 2
+    "T..#..#..#..#..........####",  # 3
+    "T..#..D..D..#..........#..#",  # 4  inn(5,4) shop(8,4)      guild(25,4)
+    "T..####..####..........D..#",  # 5                           guild(25,5)
+    "T....P.P.......PPPPPPPP####",  # 6  stubs up to inn/shop, east path
+    "T..PPPPPPPPPPPPPPPPPPPPPPPT",  # 7  main E-W street
+    "T..P.........####.........T",  # 8
     "T..P.........#..#.........T",  # 9
-    "T..P..####...D..#.........T",  # 10 temple(8,10)    tavern(13,10)
+    "T..P..####...D..#.........T",  # 10 temple(8,12)  tavern(13,10)
     "T..P..#..#...####.........T",  # 11
-    "T..P..#..D................T",  # 12
-    "T..P..####..S.............T",  # 13
-    "T..P..............####....T",  # 14
-    "WWWBWWWWWWWWWWWWWW#..#..WWT",  # 15 bridge(3,15) forge
-    "T..P..............D..#....T",  # 16              forge(18,16)
-    "T..P..............####....T",  # 17
-    "T..P......................T",  # 18
+    "T..P..#..D...P............T",  # 12
+    "T..P..####...P..S.........T",  # 13
+    "T..P.........P....####....T",  # 14                forge(18,16)
+    "WWWBWWWWWWWWWBWWWW#..#..WWW",  # 15 bridges at (3,15) and (13,15)
+    "T..P.........P....D..#....T",  # 16
+    "T..P.........P....####....T",  # 17
+    "T..P.........PPPPPPPPP....T",  # 18 east path to forge
     "T..P..####................T",  # 19
     "T..P..#..D................T",  # 20 ranger_hall(8,20)
     "TPPPPPPPPEEPPPPPPPPPPPPPPPT",  # 21 exits(9,21)(10,21)
@@ -313,9 +315,9 @@ WOODHAVEN_BUILDINGS = {
     "guild": {
         "name": "Ranger's Guild",
         "type": BLD_HOUSE,
-        "door": (22, 5),
+        "door": (23, 5),
         "color": (80, 120, 70),
-        "label_pos": (20, 3),
+        "label_pos": (22, 3),
         "npc_name": "Guildmaster Oren",
     },
     "ranger_hall": {
@@ -342,6 +344,13 @@ WOODHAVEN_NPCS = [
         "dialogue_id": "old_moss",
         "description": "An ancient herbalist gathering mushrooms by the river.",
         "color": (140, 170, 110),
+    },
+    {
+        "name": "Apprentice Scout",
+        "x": 20, "y": 8,
+        "dialogue_id": None,
+        "description": "A young scout practicing her footwork in the open yard.",
+        "color": (90, 150, 70),
     },
     # Service NPCs
     {
@@ -384,13 +393,21 @@ WOODHAVEN_NPCS = [
         "description": "A wiry woman who crafts bows and arrowheads.",
         "color": (200, 130, 60),
     },
+    {
+        "name": "Guildmaster Oren",
+        "x": 24, "y": 5,
+        "service": None,
+        "dialogue_id": None,
+        "description": "A grizzled ranger who runs the guild. He eyes you appraisingly.",
+        "color": (100, 140, 80),
+    },
 ]
 
 WOODHAVEN_SIGNS = {
-    (11, 13): "Job Board — Rangers needed for patrol work.",
+    (16, 13): "Job Board — Rangers needed for patrol work.",
 }
 
-WOODHAVEN_SPAWN = (9, 20)
+WOODHAVEN_SPAWN = (11, 20)   # shifted right of ranger_hall door (9,20) to avoid auto-entry
 WOODHAVEN_EXIT = [(9, 21), (10, 21)]
 
 
@@ -505,10 +522,32 @@ IRONHEARTH_NPCS = [
     },
     {
         "name": "Scholar Petra",
-        "x": 24, "y": 8,
+        "x": 22, "y": 8,
         "dialogue_id": "scholar_petra",
         "description": "A human scholar studying dwarven runes.",
         "color": (160, 160, 200),
+    },
+    # Ambient NPCs
+    {
+        "name": "Miner Durk",
+        "x": 18, "y": 21,
+        "dialogue_id": None,
+        "description": "A dusty dwarf heading home after a long shift underground.",
+        "color": (150, 120, 80),
+    },
+    {
+        "name": "City Guard",
+        "x": 14, "y": 6,
+        "dialogue_id": None,
+        "description": "An armored guard keeping watch over the main road.",
+        "color": (140, 150, 170),
+    },
+    {
+        "name": "Apprentice Tova",
+        "x": 20, "y": 19,
+        "dialogue_id": None,
+        "description": "A young dwarven apprentice running errands between the forge and armory.",
+        "color": (200, 160, 80),
     },
     # Service NPCs
     {

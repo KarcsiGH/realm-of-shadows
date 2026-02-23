@@ -286,7 +286,7 @@ class TownUI:
     def _draw_walk(self, surface, mx, my):
         from data.town_maps import (
             TILE_COLORS, TILE_TOP_COLORS, TT_WALL, TT_TREE, TT_DOOR,
-            TT_FENCE, TT_PATH, TT_EXIT, TT_SIGN, TT_WATER,
+            TT_FENCE, TT_PATH, TT_EXIT, TT_SIGN, TT_WATER, TT_BRIDGE,
             get_tile, get_building_at, get_npc_at, get_sign_at,
         )
 
@@ -347,6 +347,16 @@ class TownUI:
                     s.fill((60, 90, 140, int(30 + 25 * shimmer)))
                     surface.blit(s, (px, py))
 
+                # Bridge — draw wooden planks over base color
+                if tile == TT_BRIDGE:
+                    plank_color = (140, 110, 65)
+                    gap_color = (110, 85, 45)
+                    plank_h = max(2, ts // 4)
+                    for pi in range(3):
+                        ply = py + pi * (ts // 3) + ts // 8
+                        pygame.draw.rect(surface, plank_color, (px + 2, ply, ts - 4, plank_h))
+                    pygame.draw.rect(surface, gap_color, (px, py, ts, ts), 1)
+
                 # Grid lines (subtle)
                 pygame.draw.rect(surface, (color[0]-10, color[1]-10, color[2]-10),
                                  (px, py, ts, ts), 1)
@@ -394,37 +404,96 @@ class TownUI:
         pygame.draw.rect(surface, (12, 10, 25), (0, bar_y, SCREEN_W, SCREEN_H - bar_y))
         pygame.draw.line(surface, PANEL_BORDER, (0, bar_y), (SCREEN_W, bar_y))
 
-        # Town name
-        draw_text(surface, td["name"], 20, bar_y + 8, GOLD, 16, bold=True)
-
-        # Gold
+        # Town name + gold (left side)
+        draw_text(surface, td["name"], 14, bar_y + 6, GOLD, 16, bold=True)
         total_gold = sum(c.gold for c in self.party)
-        draw_text(surface, f"Gold: {total_gold}", 200, bar_y + 8, DIM_GOLD, 14)
+        draw_text(surface, f"✦ {total_gold}g", 14, bar_y + 26, DIM_GOLD, 12)
 
-        # Interaction prompt
+        # Interaction prompt (center)
         prompt = self._get_walk_prompt()
         if prompt:
-            draw_text(surface, prompt, SCREEN_W // 2 - 200, bar_y + 30,
-                      HIGHLIGHT, 14)
+            pw = get_font(14).size(prompt)[0]
+            draw_text(surface, prompt, SCREEN_W // 2 - pw // 2, bar_y + 8, HIGHLIGHT, 14)
 
-        # Interact message
+        # Interact message (center, below prompt)
         if self.walk_interact_msg and self.walk_interact_timer > 0:
-            draw_text(surface, self.walk_interact_msg, SCREEN_W // 2 - 200,
-                      bar_y + 55, self.msg_color, 13)
+            mw = get_font(12).size(self.walk_interact_msg)[0]
+            alpha_ratio = min(1.0, self.walk_interact_timer / 500.0)
+            msg_col = tuple(int(c * alpha_ratio) for c in self.msg_color)
+            draw_text(surface, self.walk_interact_msg,
+                      SCREEN_W // 2 - min(mw // 2, 280), bar_y + 30, msg_col, 12)
 
-        # Controls hint
-        draw_text(surface, "WASD/Arrows: Move   ENTER: Interact   ESC: Leave Town",
-                  20, bar_y + 75, DARK_GREY, 11)
+        # Controls hint (bottom left)
+        draw_text(surface, "WASD: Move   ENTER: Interact   ESC: Leave",
+                  14, bar_y + 90, DARK_GREY, 10)
 
-        # Compact party HP bar
-        px_start = SCREEN_W - 350
+        # ── Minimap (center-right) ──
+        mm_size = 90
+        mm_x = SCREEN_W // 2 + 80
+        mm_y = bar_y + 8
+        mm_tw, mm_th = td["width"], td["height"]
+        mm_tile_w = mm_size / mm_tw
+        mm_tile_h = mm_size / mm_th
+        # Background
+        pygame.draw.rect(surface, (8, 6, 18), (mm_x, mm_y, mm_size, mm_size))
+        pygame.draw.rect(surface, PANEL_BORDER, (mm_x, mm_y, mm_size, mm_size), 1)
+        # Draw simplified tiles
+        from data.town_maps import TT_GRASS, TT_WALL, TT_PATH, TT_WATER, TT_TREE, TT_EXIT
+        mm_colors = {
+            TT_GRASS: (35, 55, 28), TT_PATH: (80, 68, 48),
+            TT_WALL: (65, 52, 40), TT_WATER: (25, 45, 90),
+            TT_TREE: (20, 45, 18), TT_EXIT: (50, 110, 50),
+        }
+        for my_row in range(mm_th):
+            for mx_col in range(mm_tw):
+                tile = td["map"][my_row][mx_col] if mx_col < len(td["map"][my_row]) else TT_WALL
+                col = mm_colors.get(tile, (50, 40, 30))
+                rx = int(mm_x + mx_col * mm_tile_w)
+                ry = int(mm_y + my_row * mm_tile_h)
+                rw = max(1, int(mm_tile_w))
+                rh = max(1, int(mm_tile_h))
+                pygame.draw.rect(surface, col, (rx, ry, rw, rh))
+        # Player dot on minimap
+        pm_px = int(mm_x + self.walk_x * mm_tile_w)
+        pm_py = int(mm_y + self.walk_y * mm_tile_h)
+        pygame.draw.circle(surface, (255, 240, 60), (pm_px, pm_py), max(2, int(mm_tile_w)))
+        # NPCs as tiny dots
+        for npc in td.get("npcs", []):
+            nx_mm = int(mm_x + npc["x"] * mm_tile_w)
+            ny_mm = int(mm_y + npc["y"] * mm_tile_h)
+            nc = npc.get("color", (180, 180, 180))
+            pygame.draw.circle(surface, nc, (nx_mm, ny_mm), max(1, int(mm_tile_w * 0.6)))
+
+        # ── Compact party status (right side) ──
+        from core.progression import get_all_resources
+        px_start = SCREEN_W - 290
         for i, c in enumerate(self.party):
             cls = CLASSES[c.class_name]
-            cx = px_start + i * 85
+            cx = px_start + i * 72
+            # Name
+            draw_text(surface, c.name[:5], cx, bar_y + 6, cls["color"], 10, bold=True)
+            # HP
             hp = c.resources.get("HP", 0)
-            max_hp = c.resources.get("HP", 1)  # approximate
-            draw_text(surface, c.name[:6], cx, bar_y + 8, cls["color"], 10, bold=True)
-            draw_text(surface, f"HP:{hp}", cx, bar_y + 20, DIM_GREEN, 9)
+            max_resources = get_all_resources(c.class_name, c.stats, c.level)
+            max_hp = max_resources.get("HP", 1)
+            hp_ratio = hp / max_hp if max_hp > 0 else 0
+            hp_color = DIM_GREEN if hp_ratio > 0.5 else (220, 180, 40) if hp_ratio > 0.25 else (220, 70, 70)
+            # HP bar
+            bar_w = 60
+            bar_h = 6
+            pygame.draw.rect(surface, (30, 20, 20), (cx, bar_y + 20, bar_w, bar_h))
+            pygame.draw.rect(surface, hp_color, (cx, bar_y + 20, int(bar_w * hp_ratio), bar_h))
+            draw_text(surface, f"HP {hp}/{max_hp}", cx, bar_y + 29, hp_color, 9)
+            # MP (if class has it)
+            mp = c.resources.get("MP", -1)
+            if mp >= 0:
+                max_mp = max_resources.get("MP", 1)
+                mp_ratio = mp / max_mp if max_mp > 0 else 0
+                pygame.draw.rect(surface, (20, 20, 35), (cx, bar_y + 40, bar_w, 5))
+                pygame.draw.rect(surface, (80, 120, 220), (cx, bar_y + 40, int(bar_w * mp_ratio), 5))
+            # Dead indicator
+            if hp <= 0:
+                pygame.draw.line(surface, (200, 50, 50), (cx, bar_y + 6), (cx + 50, bar_y + 50), 2)
 
     def _get_walk_prompt(self):
         """Get context-sensitive prompt based on what's at the player's position or adjacent."""
