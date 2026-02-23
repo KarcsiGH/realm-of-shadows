@@ -1169,12 +1169,15 @@ class TownUI:
             panel = pygame.Rect(60, y, SCREEN_W - 120, 80)
             draw_panel(surface, panel, bg_color=(25, 20, 35))
 
-            # Job name and type tag
+            # Job name, type tag, and level requirement
             type_col = {"bounty": (200, 100, 100), "fetch": (100, 180, 100),
                         "explore": (100, 140, 220)}.get(job["type"], GREY)
             tag = job["type"].upper()
+            level_req = job.get("level_req", 1)
             draw_text(surface, f"[{tag}]", panel.x + 10, panel.y + 8, type_col, 11)
             draw_text(surface, job["name"], panel.x + 80, panel.y + 6, CREAM, 16, bold=True)
+            draw_text(surface, f"Lv.{level_req}+",
+                      panel.x + panel.width - 180, panel.y + 8, (160, 140, 100), 11)
 
             # Rewards
             draw_text(surface, f"Reward: {job['reward_gold']}g, {job['reward_xp']} XP",
@@ -1191,11 +1194,21 @@ class TownUI:
             btn_x = panel.x + panel.width - 130
             btn_w = 120
             if state == 0:
-                # Available — accept button
+                # Available — check level requirement
+                level_req = job.get("level_req", 1)
+                party_level = max((c.level for c in self.party), default=1)
+                too_low = party_level < level_req
+
                 btn = pygame.Rect(btn_x, panel.y + 25, btn_w, 30)
-                draw_button(surface, btn, "Accept",
-                            hover=btn.collidepoint(mx, my), size=12)
-                self._job_buttons.append((btn, "accept", job_id))
+                if too_low:
+                    # Grey out the panel and show level requirement instead of Accept
+                    pygame.draw.rect(surface, (15, 12, 22), panel, border_radius=4)
+                    draw_text(surface, f"Requires Lv.{level_req}",
+                              btn_x, panel.y + 32, (130, 100, 100), 12)
+                else:
+                    draw_button(surface, btn, "Accept",
+                                hover=btn.collidepoint(mx, my), size=12)
+                    self._job_buttons.append((btn, "accept", job_id))
             elif state == 1:
                 # Accepted — show progress
                 progress = get_job_progress(job_id)

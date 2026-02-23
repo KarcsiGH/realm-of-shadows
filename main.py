@@ -28,7 +28,8 @@ from ui.inventory_ui import InventoryUI
 from ui.town_ui import TownUI
 from ui.world_map_ui import WorldMapUI
 from ui.dungeon_ui import DungeonUI
-from data.world_map import WorldState, LOCATIONS, LOC_TOWN, LOC_DUNGEON
+from data.world_map import (WorldState, LOCATIONS, LOC_TOWN, LOC_DUNGEON,
+                            LOC_PORT, LOC_SECRET, LOC_POI, LOC_STABLE, LOC_RAIL)
 from data.dungeon import DungeonState, DUNGEONS
 from core.save_load import save_game, load_game
 import core.sound as sfx
@@ -1203,6 +1204,72 @@ class Game:
     #  STANDALONE DIALOGUE
     # ══════════════════════════════════════════════════════════
 
+    # ── Location Type Handlers ─────────────────────────────────
+
+    def _handle_port(self, loc_id, loc):
+        """Port location — show fast travel options to other ports."""
+        PORT_ROUTES = {
+            "briarhollow_dock": ["pale_coast_dock", "eastern_dock"],
+            "pale_coast_dock":  ["briarhollow_dock", "eastern_dock"],
+            "eastern_dock":     ["briarhollow_dock", "pale_coast_dock"],
+        }
+        routes = PORT_ROUTES.get(loc_id, [])
+
+        # Filter to only discovered destinations
+        discovered = self.world_state.discovered_locations
+        available = [
+            r for r in routes
+            if r in LOCATIONS and r in discovered
+        ]
+
+        if not available:
+            self.world_map_ui._show_event(
+                f"{loc['name']}: No known ports in range. Explore to find routes.",
+                (80, 180, 220))
+            return
+
+        # Build a simple destination list in the event message area.
+        # For now we show the first reachable port and teleport there.
+        # A full port UI (Phase 5) will replace this with a proper menu.
+        dest_id = available[0]
+        dest = LOCATIONS[dest_id]
+        self.world_state.party_x = dest["x"]
+        self.world_state.party_y = dest["y"]
+        self.world_map_ui._show_event(
+            f"Set sail from {loc['name']} → {dest['name']}!", (80, 180, 220))
+
+    def _handle_secret(self, loc_id, loc):
+        """Secret location — reward on first visit, flavour text always."""
+        visited_key = f"visited.{loc_id}"
+        from core.story_flags import get_flag, set_flag
+
+        if not get_flag(visited_key):
+            set_flag(visited_key, True)
+            # One-time reward: a small gold find
+            reward_gold = 25
+            if self.party:
+                self.party[0].add_gold(reward_gold)
+            self.world_map_ui._show_event(
+                f"Discovered: {loc['name']}! {loc.get('description','')} "
+                f"(+{reward_gold}g found here)",
+                (200, 160, 220))
+        else:
+            self.world_map_ui._show_event(
+                f"{loc['name']}: {loc.get('description', 'A mysterious place.')}",
+                (160, 120, 200))
+
+    def _handle_poi(self, loc_id, loc):
+        """Point of interest — flavour text, possible random encounter."""
+        visited_key = f"visited.{loc_id}"
+        from core.story_flags import get_flag, set_flag
+
+        first_visit = not get_flag(visited_key)
+        if first_visit:
+            set_flag(visited_key, True)
+
+        desc = loc.get("description", "An interesting location.")
+        self.world_map_ui._show_event(f"{loc['name']}: {desc}", (180, 200, 140))
+
     def start_dialogue(self, npc_id, return_state=None, callback=None):
         """Start a standalone dialogue (boss pre-fight, dungeon NPC, etc.)."""
         from data.story_data import NPC_DIALOGUES
@@ -1433,11 +1500,22 @@ class Game:
                     # Dungeon not yet defined — generic combat
                     enc_key = loc.get("encounter_key", "tutorial")
                     self.start_combat(enc_key)
-            elif loc["type"] == "port":
-                # Port — show message for now (full port UI later)
+            elif loc["type"] == LOC_PORT:
+                # Port — offer fast travel to other connected ports
+                self._handle_port(event.get("id", ""), loc)
+
+            elif loc["type"] == LOC_SECRET:
+                # Secret location — show flavour + small reward on first visit
+                self._handle_secret(event.get("id", ""), loc)
+
+            elif loc["type"] == LOC_POI:
+                # Point of interest — show description, possible encounter
+                self._handle_poi(event.get("id", ""), loc)
+
+            elif loc["type"] == LOC_STABLE:
+                # Stable — handled via town has_stable flag; standalone stables not yet placed
                 self.world_map_ui._show_event(
-                    f"You arrive at {loc['name']}. (Boat travel coming soon!)",
-                    (80, 180, 220))
+                    f"{loc['name']}: Horses available here.", (180, 140, 80))
 
         elif event["type"] == "discovery":
             sfx.play("discovery")

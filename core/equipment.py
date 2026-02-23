@@ -476,13 +476,30 @@ def calc_equipment_speed(character):
 
 
 def calc_equipment_stat_bonuses(character):
-    """Get total stat bonuses from all equipment. Returns dict."""
+    """Get total stat bonuses from all equipment. Returns dict with uppercase stat keys.
+
+    Reads two formats:
+      - stat_bonuses: {"STR": 2, "DEX": 1}   (standard armor/weapons)
+      - effect:       {"str_bonus": 2, "dex_bonus": 1}  (magic items)
+    """
+    # Map from effect-style lowercase keys to stat abbreviations
+    _EFFECT_TO_STAT = {
+        "str_bonus": "STR", "dex_bonus": "DEX", "con_bonus": "CON",
+        "int_bonus": "INT", "wis_bonus": "WIS", "pie_bonus": "PIE",
+    }
+
     bonuses = {}
     if not hasattr(character, "equipment") or not character.equipment:
         return bonuses
     for slot, item in character.equipment.items():
         if item is None:
             continue
+        # Standard format
         for stat, val in item.get("stat_bonuses", {}).items():
             bonuses[stat] = bonuses.get(stat, 0) + val
+        # Magic item effect format
+        for effect_key, stat in _EFFECT_TO_STAT.items():
+            val = item.get("effect", {}).get(effect_key, 0)
+            if val:
+                bonuses[stat] = bonuses.get(stat, 0) + val
     return bonuses

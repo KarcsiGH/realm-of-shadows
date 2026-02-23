@@ -227,6 +227,10 @@ class DialogueUI:
                 return "done"
             return None
         else:
+            # Check if peace was reached before finishing
+            from core.story_flags import get_flag
+            if get_flag("choice.grak_spared"):
+                self.result = "peace"
             self.finished = True
             return "done"
 

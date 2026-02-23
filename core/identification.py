@@ -360,11 +360,19 @@ def get_item_display_desc(item):
         if item.get("evasion_bonus"):
             stat_parts.append(f"+{item['evasion_bonus']}% Evasion")
 
-        # Stat bonuses
-        if item.get("stat_bonus"):
-            for stat, val in item["stat_bonus"].items():
-                sign = "+" if val > 0 else ""
-                stat_parts.append(f"{sign}{val} {stat}")
+        # Stat bonuses — read both formats
+        _EFFECT_TO_STAT = {
+            "str_bonus": "STR", "dex_bonus": "DEX", "con_bonus": "CON",
+            "int_bonus": "INT", "wis_bonus": "WIS", "pie_bonus": "PIE",
+        }
+        combined_stat_bonuses = dict(item.get("stat_bonus", {}))
+        for effect_key, stat in _EFFECT_TO_STAT.items():
+            val = item.get("effect", {}).get(effect_key, 0)
+            if val:
+                combined_stat_bonuses[stat] = combined_stat_bonuses.get(stat, 0) + val
+        for stat, val in combined_stat_bonuses.items():
+            sign = "+" if val > 0 else ""
+            stat_parts.append(f"{sign}{val} {stat}")
 
         # Elemental/special damage
         if item.get("element"):
