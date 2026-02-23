@@ -141,6 +141,23 @@ LOCATIONS = {
         "encounter_key": "boss_orc", "floors": 4, "difficulty": "hard",
         "required_key": "ashenmoor_seal",
     },
+    "crystalspire": {
+        "name": "Crystalspire", "type": LOC_TOWN,
+        "x": 78, "y": 48, "region": "ashlands",
+        "visible": False, "icon": "T",
+        "description": "A city of towering spires built over a ley line confluence. Home to the Mage Academy.",
+        "has_stable": True, "has_teleport": True,
+        "discovery_radius": 4,
+    },
+    "thornhaven": {
+        "name": "Thornhaven", "type": LOC_TOWN,
+        "x": 92, "y": 62, "region": "ashlands",
+        "visible": False, "icon": "C",
+        "description": "The capital of the realm. The Governor's castle dominates the skyline.",
+        "has_stable": True, "has_teleport": True,
+        "is_capital": True,
+        "discovery_radius": 6,
+    },
 
     # ── Mirehollow Region ──
     "sunken_crypt": {
@@ -151,6 +168,14 @@ LOCATIONS = {
         "encounter_key": "medium_bandits", "floors": 4, "difficulty": "medium",
         "required_key": "crypt_amulet", "discovery_radius": 2,
     },
+    "sanctum": {
+        "name": "Sanctum", "type": LOC_TOWN,
+        "x": 75, "y": 90, "region": "mirehollow",
+        "visible": False, "icon": "T",
+        "description": "A holy city built around an ancient cathedral. Pilgrims travel from across the realm to seek healing.",
+        "has_stable": True, "has_teleport": True,
+        "discovery_radius": 4,
+    },
 
     # ── Pale Coast ──
     "pale_coast_dock": {
@@ -158,6 +183,28 @@ LOCATIONS = {
         "x": 35, "y": 88, "region": "pale_coast",
         "visible": True, "icon": "P",
         "description": "A weathered harbor on the southwestern coast.",
+    },
+    "saltmere": {
+        "name": "Saltmere", "type": LOC_TOWN,
+        "x": 18, "y": 98, "region": "pale_coast",
+        "visible": False, "icon": "T",
+        "description": "A rough port town where no questions are asked. The Thieves' Guild has a strong presence here.",
+        "has_stable": False, "has_teleport": False,
+        "discovery_radius": 3,
+    },
+    "saltmere_dock": {
+        "name": "Saltmere Docks", "type": LOC_PORT,
+        "x": 18, "y": 102, "region": "pale_coast",
+        "visible": False, "icon": "P",
+        "description": "A busy dock with ships of questionable registry.",
+    },
+    "greenwood": {
+        "name": "Greenwood", "type": LOC_TOWN,
+        "x": 8, "y": 65, "region": "thornwood",
+        "visible": False, "icon": "T",
+        "description": "A remote wilderness outpost at the edge of the Thornwood. Few roads lead here.",
+        "has_stable": False, "has_teleport": False,
+        "discovery_radius": 2,
     },
     "smugglers_cove": {
         "name": "Smuggler's Cove", "type": LOC_SECRET,
@@ -195,13 +242,17 @@ LOCATIONS = {
 
 # Port routes (which ports connect)
 PORT_ROUTES = {
-    "briarhollow_dock": ["pale_coast_dock", "windswept_isle"],
-    "pale_coast_dock": ["briarhollow_dock", "windswept_isle"],
-    "eastern_dock": ["dragons_tooth"],
+    "briarhollow_dock": ["pale_coast_dock", "windswept_isle", "saltmere_dock"],
+    "pale_coast_dock":  ["briarhollow_dock", "windswept_isle", "saltmere_dock"],
+    "saltmere_dock":    ["pale_coast_dock", "briarhollow_dock", "windswept_isle"],
+    "eastern_dock":     ["dragons_tooth"],
 }
 
 # Magical rail connections
+# Act 1 stations are available from the start (once guild membership unlocked)
+# Act 2 stations unlock after reaching those towns
 RAIL_STATIONS = ["briarhollow", "woodhaven", "ironhearth"]
+RAIL_STATIONS_ACT2 = ["crystalspire", "thornhaven", "sanctum"]
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -431,12 +482,23 @@ def generate_world_map(seed=42):
 
     # ── Step 10: Roads between towns ──
     town_pairs = [
+        # Act 1 roads
         ("briarhollow", "woodhaven"),
         ("briarhollow", "ironhearth"),
         ("briarhollow", "briarhollow_dock"),
         ("briarhollow", "pale_coast_dock"),
         ("briarhollow", "goblin_warren"),
         ("woodhaven", "ironhearth"),
+        # New town roads
+        ("briarhollow", "crystalspire"),
+        ("briarhollow", "sanctum"),
+        ("crystalspire", "thornhaven"),
+        ("crystalspire", "ironhearth"),
+        ("thornhaven", "eastern_dock"),
+        ("thornhaven", "sanctum"),
+        ("sanctum", "sunken_crypt"),
+        ("pale_coast_dock", "saltmere"),
+        ("woodhaven", "greenwood"),
     ]
     for a, b in town_pairs:
         if a in LOCATIONS and b in LOCATIONS:
@@ -461,11 +523,11 @@ def _get_region(x, y):
     """Assign region based on coordinates."""
     regions = {
         "briarhollow": (60, 70, 20),
-        "thornwood":   (25, 50, 22),
+        "thornwood":   (18, 58, 22),   # shifted west to cover Greenwood
         "iron_ridge":  (55, 28, 20),
-        "ashlands":    (92, 40, 22),
-        "mirehollow":  (85, 80, 18),
-        "pale_coast":  (35, 88, 16),
+        "ashlands":    (88, 52, 28),   # expanded to cover Crystalspire + Thornhaven
+        "mirehollow":  (80, 84, 22),   # expanded south to cover Sanctum
+        "pale_coast":  (28, 95, 20),   # shifted to cover Saltmere coast
     }
     best = "briarhollow"
     best_d = 9999

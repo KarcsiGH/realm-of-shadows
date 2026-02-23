@@ -229,11 +229,21 @@ class WorldMapUI:
             col = LOC_POI_COL
 
         icon = loc.get("icon", "?")
-        # Draw a small banner
-        banner = pygame.Rect(px + TILE_W // 2 - 10, py + 2, 20, 18)
-        pygame.draw.rect(surface, (0, 0, 0), banner)
-        pygame.draw.rect(surface, col, banner, 2)
-        draw_text(surface, icon, banner.x + 4, banner.y + 1, col, 14, bold=True)
+        is_capital = loc.get("is_capital", False)
+
+        if is_capital:
+            # Capital gets a larger, double-bordered banner
+            banner = pygame.Rect(px + TILE_W // 2 - 14, py, 28, 22)
+            pygame.draw.rect(surface, (0, 0, 0), banner)
+            pygame.draw.rect(surface, (180, 140, 40), banner, 3)
+            pygame.draw.rect(surface, (255, 220, 80), banner.inflate(-4, -4), 1)
+            draw_text(surface, icon, banner.x + 7, banner.y + 2, (255, 220, 80), 16, bold=True)
+        else:
+            # Standard town banner
+            banner = pygame.Rect(px + TILE_W // 2 - 10, py + 2, 20, 18)
+            pygame.draw.rect(surface, (0, 0, 0), banner)
+            pygame.draw.rect(surface, col, banner, 2)
+            draw_text(surface, icon, banner.x + 4, banner.y + 1, col, 14, bold=True)
 
     def _draw_party(self, surface):
         """Draw the party token at center of viewport."""
@@ -323,7 +333,8 @@ class WorldMapUI:
         if loc_id and loc_id in LOCATIONS:
             loc = LOCATIONS[loc_id]
             if loc["type"] == LOC_TOWN:
-                draw_text(surface, "Press ENTER to enter town",
+                label = "★ CAPITAL — " if loc.get("is_capital") else ""
+                draw_text(surface, f"{label}Press ENTER to enter town",
                           SCREEN_W // 2 - 120, SCREEN_H - 90, LOC_TOWN_COL, 15)
             elif loc["type"] == LOC_DUNGEON:
                 can_enter, reason = self.world.can_enter_dungeon(loc_id)
