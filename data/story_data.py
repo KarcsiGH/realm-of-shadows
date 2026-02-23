@@ -78,6 +78,37 @@ QUESTS = {
                        "from the undead Warden who guards it.",
         "act": 2,
     },
+    "main_hearthstone_3": {
+        "name": "Fire and Salt",
+        "description": "The third Hearthstone lies somewhere in the Dragon's Tooth archipelago. "
+                       "Arrange passage from Saltmere and survive whatever waits there.",
+        "act": 2,
+    },
+    "main_thornhaven": {
+        "name": "Audience with the Governor",
+        "description": "Travel to Thornhaven and secure the support of the Imperial Governor. "
+                       "His archives may hold the locations of the remaining Hearthstones.",
+        "act": 2,
+    },
+    "main_maren_truth": {
+        "name": "The Scholar's Secret",
+        "description": "Court Mage Sira has revealed that Maren is the daughter of Valdris, "
+                       "the Traitor Warden. Confront Maren about what she truly intends "
+                       "to do with the Hearthstones.",
+        "act": 2,
+    },
+    "side_guild_initiation": {
+        "name": "Proving Ground",
+        "description": "Guildmaster Sable of the Saltmere Thieves' Guild wants proof "
+                       "of your capabilities before offering real work.",
+        "act": 2,
+    },
+    "side_academy_research": {
+        "name": "Data for the Archmage",
+        "description": "Archmage Solen wants ley line readings from three locations "
+                       "near active Fading zones. Dangerous work, but the Academy pays well.",
+        "act": 2,
+    },
 }
 
 
@@ -128,6 +159,69 @@ LORE_ENTRIES = {
                 "not to restore the wards as they were, but to complete her father's "
                 "original ritual — correctly this time. Whether her intentions are "
                 "noble remains to be seen.",
+    },
+    "governor_knowledge": {
+        "title": "The Governor's Files",
+        "text": "The Imperial Governor of Thornhaven has quietly maintained Warden records "
+                "for decades. The Empire's official policy is non-intervention, but the Governor "
+                "has been preparing contingencies. He knows where two of the Hearthstones are "
+                "believed to rest.",
+    },
+    "hearthstone_locations": {
+        "title": "Hearthstone Resonance",
+        "text": "Using the first recovered Hearthstone as a reference, the Mage Academy "
+                "detected two strong resonance signals: one from the Sunken Crypt to the south, "
+                "and one from the Dragon's Tooth archipelago to the east.",
+    },
+    "hearthstone_bloodlines": {
+        "title": "The Bloodline Oaths",
+        "text": "Each Hearthstone was placed by a Warden who swore an oath of their bloodline. "
+                "While a bloodline descendant lives and holds the oath, the stone stays anchored. "
+                "As bloodlines die out, the stones drift and the Fading accelerates. "
+                "The last active Warden bloodlines are nearly gone.",
+    },
+    "fading_intention": {
+        "title": "The Pattern in the Fading",
+        "text": "Analysis of Fading events reveals a deliberate pattern — they occur first "
+                "and most intensely near old Warden anchor points and undefended Hearthstone sites. "
+                "The Fading is not random entropy. Something intelligent is targeting the ward network "
+                "systematically.",
+    },
+    "fading_sea": {
+        "title": "The Sea Fades Too",
+        "text": "The Fading is not limited to land. Coastal priests report ships vanishing "
+                "with no storms, no wreckage, no survivors. The barrier between worlds "
+                "is dissolving wherever it is thinnest — including over open water.",
+    },
+    "imperial_hearthstone_records": {
+        "title": "Imperial Warden Archives",
+        "text": "The Governor's castle contains two centuries of Imperial observation of "
+                "Warden activities — including the locations of three Hearthstone anchor sites "
+                "and the bloodline names sworn to protect each one.",
+    },
+    "sunken_warden_truth": {
+        "title": "The Price of the Binding",
+        "text": "The Warden who guards the second Hearthstone is not a monster — he is "
+                "a guardian bound by his own oath. His name was Deren. He died defending "
+                "the stone and became its ward, unable to release it willingly. "
+                "The only way to claim the stone is to defeat him in combat — which is what "
+                "he wants, though it costs him everything.",
+    },
+    "valdris_true_plan": {
+        "title": "Valdris's Vision",
+        "text": "Valdris does not seek to destroy the world. He believes the barrier between "
+                "the Shadow Realm and the mortal world is an unnatural cage that has weakened "
+                "both sides for centuries. His goal is a full merger — one unified world of "
+                "light and shadow. Whether this would be salvation or annihilation is unknown. "
+                "He is utterly convinced it is the former.",
+    },
+    "dragon_karreth": {
+        "title": "Karreth the Guardian",
+        "text": "Before the Wardens existed, the dragon Karreth served as the first "
+                "ward-guardian of the eastern archipelago. When the nearest Hearthstone anchor "
+                "failed, the Fading entered the ancient creature and began corrupting it. "
+                "Karreth does not understand what is happening to it. It only knows "
+                "an imperative to protect the warm light at its center — the third Hearthstone.",
     },
 }
 
@@ -185,12 +279,88 @@ NPCS = {
         "portrait_color": (180, 80, 140),  # magenta
     },
 
+    # ─── Greenwood ───
+    "scout_feryn": {
+        "name": "Scout Feryn",
+        "title": "Forest Warden",
+        "location": "greenwood",
+        "portrait_color": (90, 150, 70),
+    },
+
+    # ─── Saltmere ───
+    "guildmaster_sable": {
+        "name": "Guildmaster Sable",
+        "title": "Thieves' Guild, Saltmere Chapter",
+        "location": "saltmere",
+        "portrait_color": (120, 90, 160),
+    },
+    "tide_priest_oran": {
+        "name": "Tide Priest Oran",
+        "title": "Keeper of the Saltmere Shrine",
+        "location": "saltmere",
+        "portrait_color": (80, 130, 200),
+    },
+
+    # ─── Sanctum ───
+    "high_priest_aldara": {
+        "name": "High Priest Aldara",
+        "title": "Grand Cathedral of Light",
+        "location": "sanctum",
+        "portrait_color": (230, 220, 160),
+    },
+
+    # ─── Crystalspire ───
+    "archmage_solen": {
+        "name": "Archmage Solen",
+        "title": "Head of the Mage Academy",
+        "location": "crystalspire",
+        "portrait_color": (160, 180, 255),
+    },
+    "teleport_master": {
+        "name": "Teleport Master Vaen",
+        "title": "Keeper of the Circle",
+        "location": "crystalspire",
+        "portrait_color": (190, 160, 240),
+    },
+
+    # ─── Thornhaven ───
+    "governor_aldric": {
+        "name": "Governor Aldric",
+        "title": "The Emperor's Voice in Aldenmere",
+        "location": "thornhaven",
+        "portrait_color": (200, 180, 100),
+    },
+    "guild_commander_varek": {
+        "name": "Commander Varek",
+        "title": "Adventurers' Guild, Imperial Chapter",
+        "location": "thornhaven",
+        "portrait_color": (140, 150, 180),
+    },
+    "court_mage_sira": {
+        "name": "Court Mage Sira",
+        "title": "Imperial Court Mage",
+        "location": "thornhaven",
+        "portrait_color": (150, 140, 220),
+    },
+
     # ─── Dungeon NPCs ───
     "grak": {
         "name": "Grak the Goblin King",
         "title": "King of the Warren",
         "location": "goblin_warren",
         "portrait_color": (100, 140, 60),  # goblin green
+    },
+    "sunken_warden": {
+        "name": "The Sunken Warden",
+        "title": "Undead Guardian of the Second Stone",
+        "location": "sunken_crypt",
+        "portrait_color": (80, 160, 180),
+    },
+    "valdris": {
+        "name": "Valdris",
+        "title": "The Traitor Warden",
+        "location": "valdris_spire",
+        "portrait_color": (160, 60, 80),
     },
 }
 
@@ -856,6 +1026,953 @@ NPC_DIALOGUES = {
             },
         },
     ],
+
+    # ─────────────────────────────────────────────────────────
+    #  SCOUT FERYN — Greenwood, forest warden
+    # ─────────────────────────────────────────────────────────
+    "scout_feryn": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "scout_feryn_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Scout Feryn",
+                        "text": "You made it out here in one piece. That already puts you ahead of most. "
+                                "These woods aren't safe — haven't been for months. "
+                                "Something is killing the animals. Not hunters. Something else.",
+                        "on_enter": [{"action": "meet_npc", "npc": "scout_feryn"}],
+                        "choices": [
+                            {"text": "What kind of something?", "next": "threat"},
+                            {"text": "We're looking for work.", "next": "work"},
+                            {"text": "Just passing through.", "next": "bye"},
+                        ],
+                    },
+                    "threat": {
+                        "speaker": "Scout Feryn",
+                        "text": "Shadow-touched beasts. Animals that should be dead — still moving, "
+                                "eyes black as coal. We've lost two wardens to them already. "
+                                "Whatever's doing this is coming from the east. From the Fading zones.",
+                        "next": "work",
+                    },
+                    "work": {
+                        "speaker": "Scout Feryn",
+                        "text": "The outpost pays for information. If you scout the eastern border "
+                                "and come back alive, we'll make it worth your while. "
+                                "Talk to the warden on duty if you want official work.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Scout Feryn",
+                        "text": "Watch the eastern tree line. And don't travel after dark.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  GUILDMASTER SABLE — Saltmere, Thieves' Guild
+    # ─────────────────────────────────────────────────────────
+    "guildmaster_sable": [
+        # After party has proven themselves (Act 2)
+        {
+            "conditions": [
+                {"flag": "npc.guildmaster_sable.met", "op": "==", "value": True},
+                {"flag": "lore.fading_basics", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "sable_act2",
+                "nodes": {
+                    "start": {
+                        "speaker": "Guildmaster Sable",
+                        "text": "You've been busy. Word travels, even out here. "
+                                "The Governor's agents are asking questions about you. "
+                                "That means you're either doing something important, "
+                                "or something stupid. I'm betting on the former.",
+                        "choices": [
+                            {"text": "We need passage to the eastern islands.", "next": "passage"},
+                            {"text": "What do the Governor's agents want?", "next": "governor"},
+                            {"text": "Just browsing.", "next": "bye"},
+                        ],
+                    },
+                    "passage": {
+                        "speaker": "Guildmaster Sable",
+                        "text": "Dragon's Tooth? That's a death run. I'll arrange it — "
+                                "but you'll owe the Guild a favor. Real currency around here.",
+                        "on_enter": [{"action": "set_flag", "flag": "quest.dragons_tooth.passage_offered", "value": True}],
+                        "end": True,
+                    },
+                    "governor": {
+                        "speaker": "Guildmaster Sable",
+                        "text": "They want to know about the Hearthstones. The Governor knows "
+                                "more than he admits. He's been sitting on old Warden records "
+                                "for years. If you need them, the castle archive isn't as "
+                                "secure as it looks.",
+                        "on_enter": [{"action": "discover_lore", "lore": "governor_knowledge"}],
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Guildmaster Sable",
+                        "text": "Door's always open. For the right price.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # First meeting
+        {
+            "conditions": [
+                {"flag": "npc.guildmaster_sable.met", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "sable_intro",
+                "nodes": {
+                    "start": {
+                        "speaker": "Guildmaster Sable",
+                        "text": "New faces. In Saltmere, that's either opportunity or trouble. "
+                                "I prefer to decide which before you leave.",
+                        "on_enter": [{"action": "meet_npc", "npc": "guildmaster_sable"}],
+                        "choices": [
+                            {"text": "We're adventurers. Looking for work.", "next": "work"},
+                            {"text": "We heard about your Guild.", "next": "guild"},
+                            {"text": "Just browsing.", "next": "bye"},
+                        ],
+                    },
+                    "work": {
+                        "speaker": "Guildmaster Sable",
+                        "text": "Adventurers. Right. We have uses for people who can handle "
+                                "themselves. Come back when you've proved you're worth the trouble. "
+                                "Ask around town. Show me what you can do.",
+                        "end": True,
+                    },
+                    "guild": {
+                        "speaker": "Guildmaster Sable",
+                        "text": "Then you know we don't advertise. What you see here is a "
+                                "trading post. What happens in the back room is private commerce. "
+                                "Any questions?",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Guildmaster Sable",
+                        "text": "Mm. Come back if you change your mind.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Default
+        {
+            "conditions": [],
+            "tree": {
+                "id": "sable_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Guildmaster Sable",
+                        "text": "The Guild remembers its debts. Both kinds.",
+                        "choices": [
+                            {"text": "Do you have work for us?", "next": "work"},
+                            {"text": "We need information.", "next": "info"},
+                            {"text": "Goodbye.", "next": "bye"},
+                        ],
+                    },
+                    "work": {
+                        "speaker": "Guildmaster Sable",
+                        "text": "Check the job board. Anything sensitive comes through me directly — "
+                                "and those jobs don't get posted publicly.",
+                        "end": True,
+                    },
+                    "info": {
+                        "speaker": "Guildmaster Sable",
+                        "text": "Information costs. What do you want to know, and what are you "
+                                "willing to pay?",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Guildmaster Sable",
+                        "text": "Watch the harbor. Interesting things wash ashore.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  TIDE PRIEST ORAN — Saltmere shrine
+    # ─────────────────────────────────────────────────────────
+    "tide_priest_oran": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "oran_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "The tides have been wrong for months. Coming in at the wrong hour. "
+                                "Going out too far. The sea feels... thin. Like it's forgetting "
+                                "what it is. I pray every dawn. I don't know if anyone is listening.",
+                        "on_enter": [{"action": "meet_npc", "npc": "tide_priest_oran"}],
+                        "choices": [
+                            {"text": "What god do you pray to?", "next": "faith"},
+                            {"text": "Have you heard of the Fading?", "next": "fading"},
+                            {"text": "Can you heal us?", "next": "healing"},
+                        ],
+                    },
+                    "faith": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "The Tides. Not a god by name — a force. The eternal rhythm. "
+                                "Life, death, the pull of the moon. When the tides are wrong, "
+                                "the whole world is wrong. I feel it in my bones.",
+                        "end": True,
+                    },
+                    "fading": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "I've watched three fishing boats sail out and not return. "
+                                "No storm. No wreck found. Just... gone. The Fading doesn't "
+                                "only take land. It takes sea too. Be careful out there.",
+                        "on_enter": [{"action": "set_flag", "flag": "lore.fading_sea", "value": True}],
+                        "end": True,
+                    },
+                    "healing": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "The shrine heals those who need it. Go — I'll ask the Tides "
+                                "to be kind to you.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  HIGH PRIEST ALDARA — Sanctum, grand cathedral
+    # ─────────────────────────────────────────────────────────
+    "high_priest_aldara": [
+        # After party learns about the Fading
+        {
+            "conditions": [
+                {"flag": "lore.fading_basics", "op": "==", "value": True},
+                {"flag": "npc.high_priest_aldara.met", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "aldara_fading",
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "You've learned the truth of the Fading. Good. Denial is a luxury "
+                                "we can no longer afford. The Cathedral has records you should see — "
+                                "accounts from the last time the wards nearly failed, three centuries ago. "
+                                "The Wardens stopped it then. We must hope they can again.",
+                        "choices": [
+                            {"text": "What do the records say?", "next": "records"},
+                            {"text": "Can the Cathedral help us?", "next": "help"},
+                            {"text": "Thank you.", "next": "bye"},
+                        ],
+                    },
+                    "records": {
+                        "speaker": "High Priest Aldara",
+                        "text": "That the Hearthstones were not merely artifacts — they were promises. "
+                                "Each one placed by a Warden who swore their bloodline would protect it. "
+                                "When the last Warden of a bloodline dies, the stone begins to drift. "
+                                "That is what has been happening. Bloodlines dying. Promises breaking.",
+                        "on_enter": [{"action": "discover_lore", "lore": "hearthstone_bloodlines"}],
+                        "end": True,
+                    },
+                    "help": {
+                        "speaker": "High Priest Aldara",
+                        "text": "We can consecrate your weapons against shadow-touched creatures. "
+                                "We can heal your wounds and restore your spirit. What we cannot do "
+                                "is fight this battle for you. That burden falls on those with Warden blood.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Light guide your steps into the dark.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # First meeting
+        {
+            "conditions": [
+                {"flag": "npc.high_priest_aldara.met", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "aldara_intro",
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Travelers in Sanctum are always welcome, whatever their faith. "
+                                "I am Aldara. I have served this Cathedral for forty years. "
+                                "Something tells me you are not here for pilgrimage.",
+                        "on_enter": [{"action": "meet_npc", "npc": "high_priest_aldara"}],
+                        "choices": [
+                            {"text": "We're looking for information about the Fading.", "next": "fading"},
+                            {"text": "We need healing.", "next": "healing"},
+                            {"text": "We're just passing through.", "next": "passing"},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Then you already know more than most. Come back when you've "
+                                "learned what you're truly up against. The Cathedral's archives "
+                                "will be open to you.",
+                        "on_enter": [{"action": "set_flag", "flag": "lore.sanctum_archives", "value": True}],
+                        "end": True,
+                    },
+                    "healing": {
+                        "speaker": "High Priest Aldara",
+                        "text": "The shrine is always open. You need only ask.",
+                        "end": True,
+                    },
+                    "passing": {
+                        "speaker": "High Priest Aldara",
+                        "text": "No one passes through Sanctum by accident. Rest, restore yourselves. "
+                                "Whatever you're carrying, you needn't carry it alone.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Default
+        {
+            "conditions": [],
+            "tree": {
+                "id": "aldara_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "The light of the Cathedral is always here when you need it.",
+                        "choices": [
+                            {"text": "What have you heard from other pilgrims?", "next": "rumors"},
+                            {"text": "Farewell.", "next": "bye"},
+                        ],
+                    },
+                    "rumors": {
+                        "speaker": "High Priest Aldara",
+                        "text": "That entire villages are vanishing in the east. That the Governor "
+                                "in Thornhaven knows more than he says. That a woman named Maren "
+                                "has been asking about the old Warden bloodlines.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Go with light.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  ARCHMAGE SOLEN — Crystalspire
+    # ─────────────────────────────────────────────────────────
+    "archmage_solen": [
+        # After hearthstone 1 found
+        {
+            "conditions": [
+                {"flag": "quest.main_hearthstone_1.state", "op": "==", "value": -2},
+                {"flag": "npc.archmage_solen.met", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "solen_hearthstone",
+                "nodes": {
+                    "start": {
+                        "speaker": "Archmage Solen",
+                        "text": "You found the first stone. Remarkable. I have spent forty years "
+                                "studying these artifacts and never held one. The resonance signature "
+                                "is extraordinary — pure ward-magic, undiluted. The Academy's instruments "
+                                "can help you locate the others.",
+                        "choices": [
+                            {"text": "Can you track the other stones?", "next": "track"},
+                            {"text": "What do you know about Valdris?", "next": "valdris"},
+                            {"text": "Thank you.", "next": "bye"},
+                        ],
+                    },
+                    "track": {
+                        "speaker": "Archmage Solen",
+                        "text": "With the first stone as a reference, yes. The others emit a "
+                                "harmonic echo. I'm detecting two strong signals — one from the "
+                                "Sunken Crypt to the south, another from somewhere in the eastern "
+                                "sea. The Dragon's Tooth archipelago, I believe.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "lore.hearthstone_locations", "value": True},
+                            {"action": "discover_lore", "lore": "hearthstone_locations"},
+                        ],
+                        "end": True,
+                    },
+                    "valdris": {
+                        "speaker": "Archmage Solen",
+                        "text": "Valdris was the greatest mage this Academy ever produced. "
+                                "That is not pride — it is a warning. He believed the Shadow "
+                                "Realm was not a threat but a resource. His experiments are what "
+                                "weakened the wards. I was his student. I watched him cross the line. "
+                                "I should have stopped him.",
+                        "on_enter": [{"action": "discover_lore", "lore": "valdris_betrayal"}],
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Archmage Solen",
+                        "text": "The Academy's resources are at your disposal.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # First meeting
+        {
+            "conditions": [
+                {"flag": "npc.archmage_solen.met", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "solen_intro",
+                "nodes": {
+                    "start": {
+                        "speaker": "Archmage Solen",
+                        "text": "Visitors to the Academy. Unusual. I am Solen — Archmage, "
+                                "and currently the only person in this city taking the Fading "
+                                "seriously enough to actually study it. What brings you here?",
+                        "on_enter": [{"action": "meet_npc", "npc": "archmage_solen"}],
+                        "choices": [
+                            {"text": "We're looking into the Fading.", "next": "fading"},
+                            {"text": "We need access to the teleport network.", "next": "teleport"},
+                            {"text": "Just exploring.", "next": "exploring"},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "Archmage Solen",
+                        "text": "Then we have something in common. The Academy's official position "
+                                "is that the Fading is a 'temporary magical weather event.' "
+                                "My position is that that is catastrophically wrong. "
+                                "Come back when you have proof I can put in front of the Council.",
+                        "end": True,
+                    },
+                    "teleport": {
+                        "speaker": "Archmage Solen",
+                        "text": "Guild membership required. Alternatively, significant contribution "
+                                "to Academy research. The circle is not free — the ley lines that "
+                                "power it are weakening with the Fading. Every jump costs real energy.",
+                        "end": True,
+                    },
+                    "exploring": {
+                        "speaker": "Archmage Solen",
+                        "text": "Crystalspire is worth exploring. Try not to touch anything "
+                                "that's glowing without asking first.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Default
+        {
+            "conditions": [],
+            "tree": {
+                "id": "solen_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Archmage Solen",
+                        "text": "The ley line readings are worse today than yesterday. "
+                                "They have been for months. What can I do for you?",
+                        "choices": [
+                            {"text": "What's the latest from the Academy?", "next": "research"},
+                            {"text": "Goodbye.", "next": "bye"},
+                        ],
+                    },
+                    "research": {
+                        "speaker": "Archmage Solen",
+                        "text": "We've confirmed that the Fading accelerates near Hearthstone "
+                                "anchor points that are undefended. Whatever is driving it is "
+                                "intelligent. It targets weakness. Find those stones.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Archmage Solen",
+                        "text": "Measure twice. The shadow doesn't give second chances.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  TELEPORT MASTER VAEN — Crystalspire circle
+    # ─────────────────────────────────────────────────────────
+    "teleport_master": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "vaen_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Teleport Master Vaen",
+                        "text": "The circle is operational. I maintain it personally — "
+                                "not the Academy, not the Guild. Me. If it fails, people die "
+                                "mid-transit. So I take the work seriously.",
+                        "on_enter": [{"action": "meet_npc", "npc": "teleport_master"}],
+                        "choices": [
+                            {"text": "How does the teleport network work?", "next": "explain"},
+                            {"text": "Where can we travel from here?", "next": "destinations"},
+                            {"text": "We'd like to travel.", "next": "travel"},
+                        ],
+                    },
+                    "explain": {
+                        "speaker": "Teleport Master Vaen",
+                        "text": "The circles draw from the ley lines beneath the ground. "
+                                "You step in, fix a destination in mind that you've previously "
+                                "attuned to, and the network does the rest. The ley lines have been "
+                                "weakening — the Fading is eating them. Some circles have gone dark permanently.",
+                        "end": True,
+                    },
+                    "destinations": {
+                        "speaker": "Teleport Master Vaen",
+                        "text": "From Crystalspire you can reach Briarhollow, Woodhaven, Ironhearth, "
+                                "and Sanctum — provided you've attuned to their circles. "
+                                "Thornhaven's circle is still active but restricted. "
+                                "Governor's orders.",
+                        "end": True,
+                    },
+                    "travel": {
+                        "speaker": "Teleport Master Vaen",
+                        "text": "Fifty gold per person, per jump. Attunement to the destination "
+                                "circle required — you must have stood in that circle before. "
+                                "Ready when you are.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  GOVERNOR ALDRIC — Thornhaven capital, Iron tier
+    # ─────────────────────────────────────────────────────────
+    "governor_aldric": [
+        # After party has all 5 hearthstones (endgame)
+        {
+            "conditions": [
+                {"flag": "quest.main_hearthstone_5.state", "op": "==", "value": -2},
+            ],
+            "tree": {
+                "id": "governor_endgame",
+                "nodes": {
+                    "start": {
+                        "speaker": "Governor Aldric",
+                        "text": "You've done it. I doubted you — I will admit that freely. "
+                                "The Empire has watched the Wardens fail before. I had no reason "
+                                "to believe this generation would be different. I was wrong. "
+                                "What do you need from me?",
+                        "choices": [
+                            {"text": "We need the castle's archives.", "next": "archives"},
+                            {"text": "We need imperial soldiers.", "next": "soldiers"},
+                            {"text": "Just your blessing.", "next": "blessing"},
+                        ],
+                    },
+                    "archives": {
+                        "speaker": "Governor Aldric",
+                        "text": "Done. Every Warden record we have — and there are more than "
+                                "you might expect. The Empire has been quietly preparing for "
+                                "this possibility for a long time.",
+                        "on_enter": [{"action": "set_flag", "flag": "lore.imperial_archives_unlocked", "value": True}],
+                        "end": True,
+                    },
+                    "soldiers": {
+                        "speaker": "Governor Aldric",
+                        "text": "Against shadow-touched creatures? My soldiers would be slaughtered. "
+                                "Bronze-tier warriors against whatever is driving the Fading — "
+                                "I won't throw their lives away. But I'll secure the roads and "
+                                "keep the population safe. You handle the source.",
+                        "end": True,
+                    },
+                    "blessing": {
+                        "speaker": "Governor Aldric",
+                        "text": "You have it. And more than that — you have my respect. "
+                                "Which, in this empire, is not nothing.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # First meeting — cautious, politically careful
+        {
+            "conditions": [
+                {"flag": "npc.governor_aldric.met", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "governor_intro",
+                "nodes": {
+                    "start": {
+                        "speaker": "Governor Aldric",
+                        "text": "Adventurers in my court. An unusual occurrence. I am told "
+                                "you have been asking questions about the Fading across the realm. "
+                                "I find that... interesting. Tell me — what have you learned?",
+                        "on_enter": [{"action": "meet_npc", "npc": "governor_aldric"}],
+                        "choices": [
+                            {"text": "The Hearthstones are the key to stopping it.", "next": "hearthstones"},
+                            {"text": "We know you have Warden records.", "next": "records"},
+                            {"text": "We're still investigating.", "next": "cautious"},
+                        ],
+                    },
+                    "hearthstones": {
+                        "speaker": "Governor Aldric",
+                        "text": "Yes. The Empire has known about the Hearthstones for some time. "
+                                "The Emperor's stance has been non-intervention — the Wardens "
+                                "made their choices. I have been less certain that policy is wise. "
+                                "What do you need?",
+                        "next": "what_need",
+                    },
+                    "records": {
+                        "speaker": "Governor Aldric",
+                        "text": "Someone has been talking. Yes, we have records. Old ones. "
+                                "The Empire keeps everything. I am not certain you have earned "
+                                "access yet. Show me you can be trusted with what you already know.",
+                        "end": True,
+                    },
+                    "cautious": {
+                        "speaker": "Governor Aldric",
+                        "text": "Honest, at least. Come back when you have more. "
+                                "The Empire does not act on maybes.",
+                        "end": True,
+                    },
+                    "what_need": {
+                        "speaker": "Governor Aldric",
+                        "text": "The castle archives contain records of every Warden bloodline "
+                                "that swore fealty to the Empire. They are yours — on one condition. "
+                                "Recover the Hearthstones. All of them. Whatever it takes.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "lore.governor_alliance", "value": True},
+                            {"action": "discover_lore", "lore": "imperial_hearthstone_records"},
+                        ],
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Default
+        {
+            "conditions": [],
+            "tree": {
+                "id": "governor_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Governor Aldric",
+                        "text": "The situation in the eastern provinces worsens daily. "
+                                "I hope your work is producing results.",
+                        "choices": [
+                            {"text": "We're making progress.", "next": "progress"},
+                            {"text": "We need access to the archives.", "next": "archives"},
+                            {"text": "Goodbye.", "next": "bye"},
+                        ],
+                    },
+                    "progress": {
+                        "speaker": "Governor Aldric",
+                        "text": "Good. The Empire watches, and waits. Do not take too long.",
+                        "end": True,
+                    },
+                    "archives": {
+                        "speaker": "Governor Aldric",
+                        "text": "Earn it. Bring me a Hearthstone — even one — and the archives "
+                                "open. That is the deal.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Governor Aldric",
+                        "text": "Walk carefully, Warden.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  GUILD COMMANDER VAREK — Thornhaven adventurers' guild
+    # ─────────────────────────────────────────────────────────
+    "guild_commander_varek": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "varek_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Commander Varek",
+                        "text": "Adventurers registered with the Imperial Guild get access to "
+                                "better contracts, better pay, and the Empire's legal protection. "
+                                "In exchange, you follow our codes and don't embarrass the crown. "
+                                "Interested?",
+                        "on_enter": [{"action": "meet_npc", "npc": "guild_commander_varek"}],
+                        "choices": [
+                            {"text": "Tell us about the best available contracts.", "next": "contracts"},
+                            {"text": "What's the situation in the eastern provinces?", "next": "east"},
+                            {"text": "Not right now.", "next": "bye"},
+                        ],
+                    },
+                    "contracts": {
+                        "speaker": "Commander Varek",
+                        "text": "The high-value work right now is in the east — Fading recovery "
+                                "operations, escort jobs through corrupted zones, creature culling. "
+                                "Pays triple what frontier work does. Also three times the chance "
+                                "you don't come back.",
+                        "end": True,
+                    },
+                    "east": {
+                        "speaker": "Commander Varek",
+                        "text": "Three villages gone in the last month. No bodies, no debris. "
+                                "Just empty land. I've sent twelve scouting parties. Four returned. "
+                                "The Fading isn't just growing — it's accelerating.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Commander Varek",
+                        "text": "The door's open when you're ready.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  COURT MAGE SIRA — Thornhaven, Maren's Act II reveal
+    # ─────────────────────────────────────────────────────────
+    "court_mage_sira": [
+        # The Maren reveal — she is Valdris's daughter
+        {
+            "conditions": [
+                {"flag": "quest.main_hearthstone_1.state", "op": "==", "value": -2},
+                {"flag": "npc.court_mage_sira.met", "op": "==", "value": True},
+                {"flag": "lore.maren_origin", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "sira_maren_reveal",
+                "nodes": {
+                    "start": {
+                        "speaker": "Court Mage Sira",
+                        "text": "I've been waiting for the right moment to tell you something. "
+                                "The scholar you've been working with — Maren. "
+                                "I know her real name.",
+                        "choices": [
+                            {"text": "Tell us.", "next": "reveal"},
+                            {"text": "What do you mean, her real name?", "next": "reveal"},
+                        ],
+                    },
+                    "reveal": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Maren Valdris. Daughter of the Traitor Warden. "
+                                "She has been searching for the Hearthstones since she was a child — "
+                                "but not, I fear, to restore the wards as they were. "
+                                "Her father's ritual was incomplete. She means to finish it.",
+                        "on_enter": [{"action": "discover_lore", "lore": "maren_origin"}],
+                        "next": "question",
+                    },
+                    "question": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Whether that means saving the world or consuming it — "
+                                "I genuinely don't know. Valdris believed he was saving it too. "
+                                "I thought you should have this information before you hand her "
+                                "the second stone.",
+                        "on_enter": [{"action": "set_flag", "flag": "lore.maren_revealed", "value": True}],
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # First meeting
+        {
+            "conditions": [
+                {"flag": "npc.court_mage_sira.met", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "sira_intro",
+                "nodes": {
+                    "start": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Court Mage — the title sounds grander than the reality. "
+                                "I advise the Governor on magical matters. Mostly I sit in this "
+                                "tower and watch the ley line readings get worse. "
+                                "You're the Warden-blooded party, aren't you?",
+                        "on_enter": [{"action": "meet_npc", "npc": "court_mage_sira"}],
+                        "choices": [
+                            {"text": "How do you know about us?", "next": "knows"},
+                            {"text": "What have you learned about the Fading?", "next": "fading"},
+                            {"text": "Just visiting.", "next": "bye"},
+                        ],
+                    },
+                    "knows": {
+                        "speaker": "Court Mage Sira",
+                        "text": "The ley lines carry information as well as power. When someone "
+                                "with Warden blood touches a Hearthstone, it resonates across the "
+                                "entire network. I felt you find the first stone. So did Archmage Solen. "
+                                "So, I suspect, did Maren.",
+                        "end": True,
+                    },
+                    "fading": {
+                        "speaker": "Court Mage Sira",
+                        "text": "That something is driving it. It is not simply entropy — "
+                                "there is intention behind the pattern of which areas Fade first. "
+                                "Always the areas with old Warden presence. Always the anchor points. "
+                                "Whatever is out there wants the wards down.",
+                        "on_enter": [{"action": "discover_lore", "lore": "fading_intention"}],
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Come back. I have a feeling we'll have more to discuss.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Default
+        {
+            "conditions": [],
+            "tree": {
+                "id": "sira_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Court Mage Sira",
+                        "text": "The readings are worse today. I say that every day now, "
+                                "and every day it's true.",
+                        "choices": [
+                            {"text": "What are you tracking?", "next": "tracking"},
+                            {"text": "Goodbye.", "next": "bye"},
+                        ],
+                    },
+                    "tracking": {
+                        "speaker": "Court Mage Sira",
+                        "text": "The integrity of the barrier between worlds. Currently at "
+                                "roughly forty percent of its original strength, down from seventy "
+                                "when I started measuring three years ago. At this rate, full "
+                                "collapse in eighteen months. Maybe less.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Find those stones.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  THE SUNKEN WARDEN — Boss of Sunken Crypt (Act 2)
+    # ─────────────────────────────────────────────────────────
+    "sunken_warden": [
+        {
+            "conditions": [
+                {"flag": "boss.sunken_warden.defeated", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "sunken_warden_boss",
+                "nodes": {
+                    "start": {
+                        "speaker": "The Sunken Warden",
+                        "text": "Warden blood. I can smell it from here. "
+                                "How many centuries has it been? I have been waiting — "
+                                "not by choice. The stone bound me here. "
+                                "I cannot release it willingly. You understand what that means.",
+                        "choices": [
+                            {"text": "We need the stone. We're trying to restore the wards.", "next": "reason"},
+                            {"text": "Step aside.", "next": "fight"},
+                            {"text": "Who were you?", "next": "identity"},
+                        ],
+                    },
+                    "identity": {
+                        "speaker": "The Sunken Warden",
+                        "text": "My name was Deren. I was Third Warden of the Western Coast, "
+                                "two hundred and thirty years ago. I died defending this stone "
+                                "from those who wanted to destroy it. Death was not the end. "
+                                "I became the ward.",
+                        "next": "reason",
+                    },
+                    "reason": {
+                        "speaker": "The Sunken Warden",
+                        "text": "I believe you. That is the tragedy. Every Warden who has come "
+                                "for this stone has meant well. Valdris meant well. And yet. "
+                                "The oath I swore cannot be reasoned with. I must guard until "
+                                "I am defeated. That is the price of the binding. "
+                                "Fight me. Take the stone. Complete what we started.",
+                        "on_enter": [{"action": "set_flag", "flag": "lore.sunken_warden_truth", "value": True}],
+                        "end": True,
+                    },
+                    "fight": {
+                        "speaker": "The Sunken Warden",
+                        "text": "Good. No more words. The stone calls for a worthy hand. "
+                                "Prove yours.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  VALDRIS — Final boss of Valdris Spire (Act 2/3)
+    # ─────────────────────────────────────────────────────────
+    "valdris": [
+        {
+            "conditions": [
+                {"flag": "boss.valdris.defeated", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "valdris_final",
+                "nodes": {
+                    "start": {
+                        "speaker": "Valdris",
+                        "text": "My daughter's little helpers. She sent you ahead, didn't she? "
+                                "To weaken me before she arrives. I taught her that. "
+                                "I am almost proud.",
+                        "choices": [
+                            {"text": "Maren didn't send us. We're stopping you both if we have to.", "next": "defiant"},
+                            {"text": "What are you trying to do?", "next": "plan"},
+                            {"text": "You're the one who caused all of this.", "next": "accuse"},
+                        ],
+                    },
+                    "defiant": {
+                        "speaker": "Valdris",
+                        "text": "Brave. Foolish. You have no idea what you're standing between. "
+                                "The Shadow Realm is not the enemy — it is the solution. "
+                                "The Fading is not decay. It is transformation. "
+                                "What I am doing will save this world. "
+                                "You are too small to see it.",
+                        "next": "response",
+                    },
+                    "plan": {
+                        "speaker": "Valdris",
+                        "text": "I am completing what the original Wardens were too frightened "
+                                "to attempt. A true merger. Not a barrier between worlds — "
+                                "a bridge. Shadow and light. Unified. Eternal. "
+                                "No more Fading. No more dissolution. "
+                                "One world, stronger than either alone.",
+                        "on_enter": [{"action": "discover_lore", "lore": "valdris_true_plan"}],
+                        "next": "response",
+                    },
+                    "accuse": {
+                        "speaker": "Valdris",
+                        "text": "Caused it. Yes. The wards were a cage. What I 'caused' "
+                                "was the first honest look at what lies beyond them. "
+                                "The Fading is the natural result of a world that has been "
+                                "starved of Shadow for a thousand years. I gave it what it needed.",
+                        "next": "response",
+                    },
+                    "response": {
+                        "speaker": "Valdris",
+                        "text": "You cannot stop the process now. Not without the Hearthstones. "
+                                "And if you have them — then you understand exactly what I mean "
+                                "to do with them. Let us see if you have the will to use them "
+                                "differently.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
 }
 
 
@@ -868,11 +1985,11 @@ TOWN_NPCS = {
     "briarhollow": ["maren", "captain_rowan", "bess"],
     "woodhaven":   ["elder_theron", "sylla"],
     "ironhearth":  ["forgemaster_dunn", "merchant_kira"],
-    "greenwood":   [],   # story NPCs added in S6
-    "saltmere":    [],
-    "sanctum":     [],
-    "crystalspire":[],
-    "thornhaven":  [],
+    "greenwood":   ["scout_feryn"],
+    "saltmere":    ["guildmaster_sable", "tide_priest_oran"],
+    "sanctum":     ["high_priest_aldara"],
+    "crystalspire": ["archmage_solen", "teleport_master"],
+    "thornhaven":  ["governor_aldric", "guild_commander_varek", "court_mage_sira"],
 }
 
 
@@ -891,6 +2008,10 @@ TAVERN_RUMORS = {
         "The temple priests seem worried. They won't say about what.",
         "Farmers say their crops are wilting even with good rain. Never seen that before.",
         "Strange lights in the old mine at night. Nobody's had the nerve to check.",
+        "Heard a whole patrol went into the eastern woods and didn't come back. Captain's keeping it quiet.",
+        "The spiders in the Thornwood are getting bigger. And they're moving in groups now.",
+        "My grandfather talked about the Wardens like they were gods. Said they kept something terrible locked away.",
+        "The fishing boats say the sea has been wrong lately. Tides off. Water too dark.",
     ],
     2: [
         "A whole village disappeared north of Woodhaven. Just... gone. Empty land.",
@@ -901,6 +2022,13 @@ TAVERN_RUMORS = {
         "The sun seems dimmer. That's not just me, right?",
         "Traders from Ironhearth say the mines are failing. Ore comes up wrong — brittle, grey.",
         "They say a dragon nests in the Dragon's Tooth. Corrupted by the shadow.",
+        "The Governor in Thornhaven has locked down the castle archives. Why would he do that unless he knows something?",
+        "Crystalspire's Archmage has been running calculations for months. I heard the numbers are bad.",
+        "A woman came through asking about the old bloodlines. Warden bloodlines. Very intense eyes.",
+        "The Sunken Crypt has been sealed by the Cathedral for two centuries. Nobody says why.",
+        "I met a scholar who said the Fading isn't random — it always takes Warden places first.",
+        "Saltmere's had three ships vanish. No storms. Just gone. The priests are praying double shifts.",
+        "The teleport circles in Crystalspire are flickering. The ley lines are failing.",
     ],
     3: [
         "Eastport has gone dark. No ships, no messages. Nothing.",
@@ -911,6 +2039,11 @@ TAVERN_RUMORS = {
         "The last Hearthstone — they say it's on the Windswept Isle. If it's not already gone.",
         "There's talk of a ritual that could end this. But the cost...",
         "Whatever happens next, I'm glad someone's fighting. That's worth something.",
+        "I heard those adventurers found one of the old stones. Maybe there's hope yet.",
+        "The Governor sent soldiers east. None came back. He's not sending more.",
+        "Valdris's tower has been visible from the hills. Something in it is moving.",
+        "The Cathedral in Sanctum is seeing a thousand pilgrims a day. People want somewhere to pray.",
+        "If those Warden-blooded people fail... I don't think anyone's coming after them.",
     ],
 }
 
@@ -1065,7 +2198,98 @@ DUNGEON_STORY_EVENTS = {
                      "from people like me. It's too late. Maren... forgive me.",
              "lore_id": "spire_log_5"},
         ],
-        "boss_dialogue": None,  # Boss speaks via floor_message on floor 6
+        "boss_dialogue": "valdris",  # Triggers before final combat on floor 6
+    },
+    "sunken_crypt": {
+        "floor_messages": {
+            1: "Cold water seeps through the stone. The crypt was built to last — "
+               "great carved archways still stand perfectly, despite centuries of flooding. "
+               "Strange blue lichen casts a pale light. The air smells of salt and old magic.",
+            2: "The deeper chambers are warmer, not colder. "
+               "A low hum resonates through the walls — not mechanical, but magical. "
+               "Ward-lines are carved into every surface. Something here is still active.",
+            3: "Ancestor statues line the corridor. Each bears a broken ward-mark on its chest. "
+               "Someone — or something — has been here before and deliberately damaged them. "
+               "Yet the stone at the center still holds.",
+            4: "The burial chamber of Deren, Third Warden of the Western Coast. "
+               "A figure stands at the altar, back turned. It is still. It has been waiting. "
+               "The air between you and it vibrates with ward-energy. "
+               "He turns, and his eyes are cold blue fire.",
+        },
+        "journal_entries": [
+            {
+                "floor": 1,
+                "title": "Crypt Inscription",
+                "text": "Cut into the archway in old Aldenmere script: "
+                        "'Here rests the line of Deren, who swore to the last stone. "
+                        "He who passes with Warden blood — remember that some oaths "
+                        "outlast death. He waits for the worthy. He cannot do otherwise.'",
+                "lore_id": None,
+            },
+            {
+                "floor": 2,
+                "title": "Researcher's Fragment",
+                "text": "A torn page, relatively recent: "
+                        "'The Sunken Warden is not a haunt — it is a construct of oath-magic. "
+                        "He retains full intelligence. He can speak, reason, even grieve. "
+                        "He simply cannot choose to release the stone. "
+                        "The binding doesn't allow for surrender. "
+                        "It only allows for defeat.' — A.S. [Archmage Solen?]",
+                "lore_id": "sunken_warden_truth",
+            },
+            {
+                "floor": 3,
+                "title": "Letter, Never Sent",
+                "text": "Water-stained but legible: "
+                        "'Deren — if you read this, we have failed to free you. "
+                        "I tried everything. The binding is older than our order and stronger "
+                        "than anything I know how to break. I'm sorry. "
+                        "I hope the ones who come after us are worthy of what you protect. "
+                        "— Warden-Commander Lira, Year 344'",
+                "lore_id": None,
+            },
+        ],
+        "boss_dialogue": "sunken_warden",
+    },
+    "dragons_tooth": {
+        "floor_messages": {
+            1: "The volcanic island reeks of sulfur and salt. "
+               "The ground is black glass — cooled lava from some ancient eruption. "
+               "Corrupted creatures patrol the shoreline. "
+               "High above, something vast shifts in the caldera.",
+            2: "The cave network beneath the island is extensive. "
+               "Strange carvings mark the walls — older than any human civilization. "
+               "Something lived here long before the dragon.",
+            3: "The dragon's hoard chamber. Gold and bones in equal measure. "
+               "At the center, something glows with a light that doesn't belong here — "
+               "warm and golden against the volcanic dark. "
+               "The third Hearthstone. And curled around it, something enormous stirs.",
+        },
+        "journal_entries": [
+            {
+                "floor": 1,
+                "title": "Sailor's Log",
+                "text": "Final entry of the merchant vessel Tiderunner: "
+                        "'The island is inhabited. Not by men — something older. "
+                        "Karreth keeps circling the caldera, won't approach. "
+                        "We've lost two of the crew. The thing on the peak watches us. "
+                        "Making for open water at dawn. "
+                        "God help whoever comes here for the thing that glows.'",
+                "lore_id": None,
+            },
+            {
+                "floor": 2,
+                "title": "Ancient Tablet",
+                "text": "Translated from pre-Imperial script by Archmage Solen: "
+                        "'The dragon Karreth was not always corrupted. "
+                        "It was once a ward-guardian — the first, before the Wardens existed. "
+                        "The Fading entered it when the nearest anchor failed. "
+                        "It does not know what it has become. "
+                        "It only knows it must protect the warm thing at its center.'",
+                "lore_id": "dragon_karreth",
+            },
+        ],
+        "boss_dialogue": None,
     },
 }
 
