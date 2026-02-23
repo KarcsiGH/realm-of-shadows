@@ -44,6 +44,26 @@ TOWN_DISPLAY = {
         "name": "Ironhearth",
         "desc": "A mining town built on iron and stubbornness.",
     },
+    "greenwood": {
+        "name": "Greenwood",
+        "desc": "A remote wilderness outpost. Few roads lead here.",
+    },
+    "saltmere": {
+        "name": "Saltmere",
+        "desc": "A rough port town where no questions are asked.",
+    },
+    "sanctum": {
+        "name": "Sanctum",
+        "desc": "A holy city built around the Grand Cathedral of Light.",
+    },
+    "crystalspire": {
+        "name": "Crystalspire",
+        "desc": "City of towers and ley lines. Home of the Mage Academy.",
+    },
+    "thornhaven": {
+        "name": "Thornhaven — Capital of Aldenmere",
+        "desc": "The seat of the Governor's power. The largest city in the realm.",
+    },
 }
 
 RARITY_COLORS = {

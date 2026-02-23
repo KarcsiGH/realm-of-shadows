@@ -866,8 +866,13 @@ NPC_DIALOGUES = {
 
 TOWN_NPCS = {
     "briarhollow": ["maren", "captain_rowan", "bess"],
-    "woodhaven": ["elder_theron", "sylla"],
-    "ironhearth": ["forgemaster_dunn", "merchant_kira"],
+    "woodhaven":   ["elder_theron", "sylla"],
+    "ironhearth":  ["forgemaster_dunn", "merchant_kira"],
+    "greenwood":   [],   # story NPCs added in S6
+    "saltmere":    [],
+    "sanctum":     [],
+    "crystalspire":[],
+    "thornhaven":  [],
 }
 
 
