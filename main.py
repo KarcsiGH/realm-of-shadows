@@ -26,6 +26,7 @@ from ui.combat_ui import CombatUI
 from ui.post_combat_ui import PostCombatUI
 from ui.inventory_ui import InventoryUI
 from ui.town_ui import TownUI
+from ui.chest_ui import ChestUI
 from ui.world_map_ui import WorldMapUI
 from ui.dungeon_ui import DungeonUI
 from data.world_map import (WorldState, LOCATIONS, LOC_TOWN, LOC_DUNGEON,
@@ -56,6 +57,7 @@ S_DUNGEON     = 13
 S_OPENING     = 14   # opening narrative sequence
 S_DIALOGUE    = 15   # standalone dialogue (e.g., boss pre-fight)
 S_CAMP        = 16   # full camp screen (dungeon/overworld)
+S_CHEST       = 17   # chest loot assignment screen
 
 
 class Game:
@@ -91,6 +93,9 @@ class Game:
         self.enemy_turn_delay = 0
         # Post-combat
         self.post_combat_ui = None
+        # Chest loot screen
+        self.chest_ui = None
+        self.chest_return_state = S_DUNGEON
         # Inventory
         self.inventory_ui = None
         self.inventory_return_state = S_PARTY
@@ -394,7 +399,7 @@ class Game:
                 if result == "back":
                     self.go(self.inventory_return_state)
             elif e.type == pygame.MOUSEBUTTONDOWN:
-                if e.button in (1, 3):  # left or right click
+                if e.button in (1, 2, 3):  # left, middle, or right click
                     result = self.inventory_ui.handle_click(mx, my, button=e.button)
                     if result == "back":
                         self.go(self.inventory_return_state)
@@ -402,6 +407,19 @@ class Game:
                     self.inventory_ui.handle_scroll(-1)
                 elif e.button == 5:
                     self.inventory_ui.handle_scroll(1)
+
+        elif self.state == S_CHEST:
+            if self.chest_ui:
+                if e.type == pygame.KEYDOWN:
+                    result = self.chest_ui.handle_event(e)
+                    if self.chest_ui.finished:
+                        self.chest_ui = None
+                        self.go(self.chest_return_state)
+                elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                    result = self.chest_ui.handle_click(mx, my)
+                    if self.chest_ui.finished:
+                        self.chest_ui = None
+                        self.go(self.chest_return_state)
 
         elif self.state == S_TOWN:
             if e.type == pygame.KEYDOWN:
@@ -608,6 +626,7 @@ class Game:
         elif self.state == S_OPENING:   self.draw_opening()
         elif self.state == S_DIALOGUE:  self.draw_dialogue(mx, my)
         elif self.state == S_CAMP:      self._draw_camp(mx, my)
+        elif self.state == S_CHEST:     self._draw_chest(mx, my)
 
     # ── Title Screen ──────────────────────────────────────────
 
@@ -1312,6 +1331,24 @@ class Game:
         if self.dialogue_ui:
             self.dialogue_ui.draw(self.screen, mx, my)
 
+    def start_chest(self, gold, items, is_secret=False, return_state=None):
+        """Open the chest loot assignment screen."""
+        self.chest_ui = ChestUI(self.party, gold, items, is_secret=is_secret)
+        self.chest_return_state = return_state if return_state is not None else S_DUNGEON
+        self.go(S_CHEST)
+
+    def _draw_chest(self, mx, my):
+        """Draw the chest loot screen over the dungeon background."""
+        # Draw the dungeon behind it so the overlay looks right
+        if self.dungeon_ui and self.dungeon_state:
+            dt = self.clock.get_time() / 1000.0
+            self.dungeon_ui.draw(self.screen, mx, my, dt)
+        else:
+            self.screen.fill((12, 10, 24))
+        if self.chest_ui:
+            dt = self.clock.get_time() / 1000.0
+            self.chest_ui.draw(self.screen, mx, my, dt)
+
     def start_camp(self, location="dungeon", dungeon_floor=1, return_state=None):
         """Open the full camp screen."""
         from ui.camp_ui import CampUI
@@ -1707,34 +1744,29 @@ class Game:
             is_secret = data.get("secret_chest", False)
             gold = data.get("gold", 0)
             items = data.get("items", [])
-            # Distribute gold evenly across party
+
+            # Distribute gold evenly across party immediately
             if gold > 0:
                 share = gold // len(self.party)
                 remainder = gold % len(self.party)
                 for i, c in enumerate(self.party):
                     c.gold += share + (1 if i < remainder else 0)
-            # Items go to party leader's inventory — auto-ID if known
+
+            # Auto-identify items as needed
             from core.party_knowledge import auto_identify_if_known, mark_item_identified
+            processed = []
             for item in items:
                 item_copy = dict(item)
-                # Secret chest items come pre-identified
                 if is_secret:
                     item_copy["identified"] = True
                 auto_identify_if_known(item_copy)
                 if item_copy.get("identified"):
                     mark_item_identified(item_copy.get("name", ""))
-                self.party[0].inventory.append(item_copy)
-            parts = []
-            if gold > 0:
-                parts.append(f"{gold} gold")
-            for item in items:
-                parts.append(item["name"])
-            prefix = "★ Secret chest! " if is_secret else ""
-            msg = prefix + ("Found: " + ", ".join(parts) if parts else "The chest is empty.")
-            if items:
-                msg += f" (Check {self.party[0].name}'s inventory)"
-            color = (200, 140, 255) if is_secret else GOLD
-            self.dungeon_ui.show_event(msg, color)
+                processed.append(item_copy)
+
+            # Open chest loot UI so player can assign items to party members
+            self.start_chest(gold, processed, is_secret=is_secret,
+                             return_state=S_DUNGEON)
 
         elif event["type"] == "trap":
             sfx.play("trap_trigger")

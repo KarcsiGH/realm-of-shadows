@@ -17,7 +17,11 @@ from core.equipment import (
     calc_equipment_speed, calc_equipment_stat_bonuses,
 )
 from core.classes import CLASSES, STAT_NAMES, STAT_FULL_NAMES, get_all_resources
-from core.identification import get_item_display_name, get_item_display_desc
+from core.identification import (
+    get_item_display_name, get_item_display_desc,
+    needs_identification, get_identify_options, attempt_identify,
+)
+from core.combat_engine import make_player_combatant
 
 # ═══════════════════════════════════════════════════════════════
 #  COLORS
@@ -104,8 +108,11 @@ class InventoryUI:
         self.selected_slot = -1
         self.selected_inv_item = -1
         self.inv_scroll = 0
-        self.mode = "normal"          # normal, give_to
+        self.mode = "normal"          # normal, give_to, identify
         self.give_item = None
+        self.identify_item = None     # item pending identification
+        self.identify_item_idx = -1   # index in current char's inventory
+        self.identify_char_options = []  # [(char_idx, combatant, options), ...]
         self.message = ""
         self.message_timer = 0
         self.message_color = CREAM
@@ -131,7 +138,7 @@ class InventoryUI:
         # ── Character tabs ──
         self._draw_char_tabs(surface, mx, my)
 
-        # ── Give-to banner ──
+        # ── Give-to / Identify banner ──
         content_y = 100
         if self.mode == "give_to" and self.give_item:
             banner = pygame.Rect(20, 92, SCREEN_W - 40, 28)
@@ -141,6 +148,15 @@ class InventoryUI:
             draw_text(surface,
                       f"Click a character tab to give: {name}   (ESC to cancel)",
                       banner.x + 12, banner.y + 6, ORANGE, 13)
+            content_y = 126
+        elif self.mode == "identify" and self.identify_item:
+            banner = pygame.Rect(20, 92, SCREEN_W - 40, 28)
+            pygame.draw.rect(surface, (20, 30, 55), banner, border_radius=3)
+            pygame.draw.rect(surface, HIGHLIGHT, banner, 2, border_radius=3)
+            name = get_item_display_name(self.identify_item)
+            draw_text(surface,
+                      f"Identify: {name}   — choose a method below   (ESC to cancel)",
+                      banner.x + 12, banner.y + 6, HIGHLIGHT, 13)
             content_y = 126
 
         # ── Left: Equipment slots ──
@@ -152,10 +168,62 @@ class InventoryUI:
         # ── Right: Inventory ──
         self._draw_inventory(surface, mx, my, char, content_y)
 
+        # ── Identify panel (overlays bottom when active) ──
+        if self.mode == "identify" and self.identify_item:
+            self._draw_identify_panel(surface, mx, my)
+
         # ── Message bar ──
         if self.message and self.message_timer > 0:
             draw_text(surface, self.message, SCREEN_W // 2 - 200,
                       SCREEN_H - 30, self.message_color, 15)
+
+    def _draw_identify_panel(self, surface, mx, my):
+        """Bottom overlay panel: shows which characters can identify and at what cost."""
+        ph = 160
+        panel = pygame.Rect(20, SCREEN_H - ph - 10, SCREEN_W - 40, ph)
+        pygame.draw.rect(surface, (14, 18, 38), panel, border_radius=6)
+        pygame.draw.rect(surface, HIGHLIGHT, panel, 2, border_radius=6)
+
+        draw_text(surface, "Who identifies it?", panel.x + 16, panel.y + 10,
+                  HIGHLIGHT, 15, bold=True)
+
+        self._identify_buttons = []
+        x = panel.x + 16
+        for ci, combatant, options in self.identify_char_options:
+            char = self.party[ci]
+            col_w = 220
+            # Character name
+            draw_text(surface, f"{char.name} ({char.class_name})",
+                      x, panel.y + 36, CREAM, 13, bold=True)
+
+            if not options:
+                draw_text(surface, "No identify skills", x, panel.y + 56,
+                          DARK_GREY, 11)
+            else:
+                for oi, opt in enumerate(options):
+                    by = panel.y + 56 + oi * 38
+                    can = opt["can_afford"]
+                    btn = pygame.Rect(x, by, col_w - 16, 32)
+                    hover = btn.collidepoint(mx, my) and can
+                    bg = (40, 60, 100) if hover else (25, 22, 44)
+                    border = HIGHLIGHT if hover else (70, 60, 110)
+                    if not can:
+                        bg = (20, 18, 32)
+                        border = DARK_GREY
+                    pygame.draw.rect(surface, bg, btn, border_radius=3)
+                    pygame.draw.rect(surface, border, btn, 2, border_radius=3)
+                    lbl_col = CREAM if can else DARK_GREY
+                    draw_text(surface, opt["name"], btn.x + 8, btn.y + 4,
+                              lbl_col, 12, bold=True)
+                    draw_text(surface, opt["description"], btn.x + 8, btn.y + 18,
+                              GREY if can else DARK_GREY, 10)
+                    if can:
+                        self._identify_buttons.append((btn, ci, combatant, opt))
+            x += col_w
+
+        draw_text(surface, "ESC to cancel",
+                  panel.x + panel.width - 120, panel.y + panel.height - 20,
+                  DARK_GREY, 11)
 
     def _draw_char_tabs(self, surface, mx, my):
         tab_y = 50
@@ -387,6 +455,11 @@ class InventoryUI:
                 draw_text(surface, "  ".join(parts),
                           rect.x + 10, rect.y + 38, GREY, 11)
 
+            # Unidentified badge
+            if needs_identification(item):
+                draw_text(surface, "?? Unidentified",
+                          rect.x + 10, rect.y + 38, (180, 120, 220), 11)
+
             # Hover hints
             if is_hover:
                 hx = rect.x + rect.width - 10
@@ -397,6 +470,10 @@ class InventoryUI:
                 lbl2 = "R-Click: Give"
                 draw_text(surface, lbl2, hx - get_font(11).size(lbl2)[0],
                           rect.y + 48, DIM_GOLD, 11)
+                if needs_identification(item):
+                    lbl3 = "M-Click: Identify"
+                    draw_text(surface, lbl3, hx - get_font(11).size(lbl3)[0],
+                              rect.y + 26, (180, 120, 220), 11)
 
             iy += 68
 
@@ -409,7 +486,7 @@ class InventoryUI:
     # ─────────────────────────────────────────────────────────
 
     def handle_click(self, mx, my, button=1):
-        """Handle mouse click. button: 1=left, 3=right.
+        """Handle mouse click. button: 1=left, 2=middle, 3=right.
         Returns 'back' to exit inventory."""
         char = self.party[self.selected_char]
 
@@ -418,6 +495,33 @@ class InventoryUI:
         if back_btn.collidepoint(mx, my):
             self.finished = True
             return "back"
+
+        # ── Identify mode — check identify panel buttons ──
+        if self.mode == "identify" and self.identify_item:
+            for btn, ci, combatant, opt in getattr(self, "_identify_buttons", []):
+                if btn.collidepoint(mx, my) and opt["can_afford"]:
+                    results, all_ok = attempt_identify(combatant, self.identify_item, opt["action"])
+                    # Sync resources back to character object
+                    char_obj = self.party[ci]
+                    char_obj.resources = dict(combatant["resources"])
+                    # Compose result message
+                    msgs = [f"{name}: {'✓' if ok else '✗'} {msg}"
+                            for name, ok, msg in results]
+                    if self.identify_item.get("identified"):
+                        from core.party_knowledge import mark_item_identified
+                        mark_item_identified(self.identify_item.get("name", ""))
+                        self._show_message("Identified! " + " | ".join(msgs), (100, 220, 100))
+                    else:
+                        self._show_message(" | ".join(msgs), (220, 180, 80))
+                    self.mode = "normal"
+                    self.identify_item = None
+                    self.identify_item_idx = -1
+                    return None
+            # Click outside panel → cancel
+            self.mode = "normal"
+            self.identify_item = None
+            self.identify_item_idx = -1
+            return None
 
         # ── Give-to mode ──
         if self.mode == "give_to" and self.give_item:
@@ -487,6 +591,13 @@ class InventoryUI:
                         name = get_item_display_name(item)
                         self._show_message(f"Click a character to give: {name}", DIM_GOLD)
                         return None
+                    elif button == 2:
+                        # Middle-click → identify panel
+                        if needs_identification(item):
+                            self._enter_identify_mode(item, idx)
+                        else:
+                            self._show_message("Item is already identified.", DARK_GREY)
+                        return None
                     else:
                         # Left-click → equip if possible
                         slot = resolve_item_slot(item)
@@ -508,9 +619,37 @@ class InventoryUI:
                 self.mode = "normal"
                 self.give_item = None
                 return None
+            if self.mode == "identify":
+                self.mode = "normal"
+                self.identify_item = None
+                self.identify_item_idx = -1
+                return None
             self.finished = True
             return "back"
         return None
+
+    def _enter_identify_mode(self, item, item_idx):
+        """Switch to identify mode for a given inventory item."""
+        self.identify_item = item
+        self.identify_item_idx = item_idx
+        self.mode = "identify"
+        self._identify_buttons = []
+
+        # Build combatant options for every party member who has identify skills
+        self.identify_char_options = []
+        for ci, char in enumerate(self.party):
+            combatant = make_player_combatant(char)
+            options = get_identify_options(combatant)
+            if options:  # only show characters who have at least one skill
+                self.identify_char_options.append((ci, combatant, options))
+
+        if not self.identify_char_options:
+            name = get_item_display_name(item)
+            self._show_message(
+                f"No one in the party can identify {name}. Visit a temple.",
+                (180, 100, 100))
+            self.mode = "normal"
+            self.identify_item = None
 
     def handle_scroll(self, direction):
         char = self.party[self.selected_char]
