@@ -425,6 +425,67 @@ def _place_secret_room(tiles, rooms, width, height, floor_num, total_floors, rng
             return  # placed successfully
 
 
+def _place_wall_door(tiles, scan_range, wall_coord, corr_coord, axis, height, width, rng):
+    """Place at most one door per contiguous corridor segment along a room wall.
+    
+    axis="h": scanning x values, wall_coord/corr_coord are y values
+    axis="v": scanning y values, wall_coord/corr_coord are x values
+    """
+    in_segment = False
+    segment_candidates = []
+
+    for pos in scan_range:
+        if axis == "h":
+            wy, wx = wall_coord, pos
+            cy, cx = corr_coord, pos
+        else:  # "v"
+            wy, wx = pos, wall_coord
+            cy, cx = pos, corr_coord
+
+        # Bounds check
+        if not (0 <= wy < height and 0 <= wx < width):
+            if in_segment and segment_candidates:
+                _pick_door(tiles, segment_candidates, rng)
+                segment_candidates = []
+            in_segment = False
+            continue
+        if not (0 <= cy < height and 0 <= cx < width):
+            if in_segment and segment_candidates:
+                _pick_door(tiles, segment_candidates, rng)
+                segment_candidates = []
+            in_segment = False
+            continue
+
+        wall_tile = tiles[wy][wx]["type"]
+        corr_tile = tiles[cy][cx]["type"]
+
+        if wall_tile == DT_WALL and corr_tile == DT_CORRIDOR:
+            in_segment = True
+            segment_candidates.append((wx, wy))
+        else:
+            if in_segment and segment_candidates:
+                _pick_door(tiles, segment_candidates, rng)
+                segment_candidates = []
+            in_segment = False
+
+    # End of scan — flush last segment
+    if in_segment and segment_candidates:
+        _pick_door(tiles, segment_candidates, rng)
+
+
+def _pick_door(tiles, candidates, rng):
+    """From a list of wall positions in a contiguous corridor segment,
+    pick one to become a door (prefer the middle)."""
+    if not candidates:
+        return
+    if rng.random() < 0.3:
+        return  # 30% chance no door at all for this entry
+    # Pick the middle candidate
+    mid = len(candidates) // 2
+    x, y = candidates[mid]
+    tiles[y][x]["type"] = DT_DOOR
+
+
 def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_id="goblin_warren"):
     """Generate a single dungeon floor grid.
     Returns 2D list of tile dicts and metadata."""
@@ -479,29 +540,23 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             _carve_v_corridor(tiles, cy1, cy2, cx1, height)
             _carve_h_corridor(tiles, cx1, cx2, cy2, width)
 
-    # ── Place doors at room-corridor transitions ──
-    # A door belongs where a corridor tile transitions INTO a room (DT_FLOOR),
-    # not in the middle of a corridor. At least one side must be a room tile.
-    for y in range(1, height - 1):
-        for x in range(1, width - 1):
-            if tiles[y][x]["type"] != DT_CORRIDOR:
-                continue
-            # Check for horizontal doorway: wall above+below, open left+right
-            # At least one side must be a room floor (not just corridor-corridor)
-            h_wall = (tiles[y-1][x]["type"] == DT_WALL and tiles[y+1][x]["type"] == DT_WALL)
-            h_open = (tiles[y][x-1]["type"] in (DT_FLOOR, DT_CORRIDOR) and
-                      tiles[y][x+1]["type"] in (DT_FLOOR, DT_CORRIDOR))
-            h_room = (tiles[y][x-1]["type"] == DT_FLOOR or tiles[y][x+1]["type"] == DT_FLOOR)
-
-            # Check for vertical doorway: wall left+right, open above+below
-            v_wall = (tiles[y][x-1]["type"] == DT_WALL and tiles[y][x+1]["type"] == DT_WALL)
-            v_open = (tiles[y-1][x]["type"] in (DT_FLOOR, DT_CORRIDOR) and
-                      tiles[y+1][x]["type"] in (DT_FLOOR, DT_CORRIDOR))
-            v_room = (tiles[y-1][x]["type"] == DT_FLOOR or tiles[y+1][x]["type"] == DT_FLOOR)
-
-            if (h_wall and h_open and h_room) or (v_wall and v_open and v_room):
-                if rng.random() < 0.5:
-                    tiles[y][x]["type"] = DT_DOOR
+    # ── Place doors at room entrances only ──
+    # A door should ONLY appear where a corridor enters a room.
+    # For each room wall, find corridor connections and place at most one door
+    # per contiguous corridor segment.
+    for (rx, ry, rw, rh) in rooms:
+        # Top wall (y = ry-1): check for corridor at y = ry-2
+        _place_wall_door(tiles, range(rx, rx + rw), ry - 1, ry - 2,
+                         axis="h", height=height, width=width, rng=rng)
+        # Bottom wall (y = ry+rh): check for corridor at y = ry+rh+1
+        _place_wall_door(tiles, range(rx, rx + rw), ry + rh, ry + rh + 1,
+                         axis="h", height=height, width=width, rng=rng)
+        # Left wall (x = rx-1): check for corridor at x = rx-2
+        _place_wall_door(tiles, range(ry, ry + rh), rx - 1, rx - 2,
+                         axis="v", height=height, width=width, rng=rng)
+        # Right wall (x = rx+rw): check for corridor at x = rx+rw+1
+        _place_wall_door(tiles, range(ry, ry + rh), rx + rw, rx + rw + 1,
+                         axis="v", height=height, width=width, rng=rng)
 
     # ── Place entrance (floor 1) or stairs up ──
     if rooms:
@@ -697,6 +752,159 @@ class DungeonState:
                 rng,
                 self.dungeon_id,
             )
+            # Spawn visible enemies on the floor
+            self._spawn_floor_enemies(floor_num, rng)
+
+    def _spawn_floor_enemies(self, floor_num, rng):
+        """Place visible enemy entities on floor tiles."""
+        floor = self.floors[floor_num]
+        tiles = floor["tiles"]
+        fw, fh = floor["width"], floor["height"]
+
+        # Collect walkable floor tiles NOT near entrance/stairs
+        entrance = floor.get("entrance", (0, 0))
+        stairs_down = floor.get("stairs_down")
+        avoid = set()
+        for ax, ay in [entrance] + ([stairs_down] if stairs_down else []):
+            for ddx in range(-3, 4):
+                for ddy in range(-3, 4):
+                    avoid.add((ax + ddx, ay + ddy))
+
+        walkable = []
+        for y in range(fh):
+            for x in range(fw):
+                if tiles[y][x]["type"] in (DT_FLOOR, DT_CORRIDOR) and (x, y) not in avoid:
+                    walkable.append((x, y))
+
+        if not walkable:
+            floor["enemies"] = []
+            return
+
+        # Number of enemies scales with floor and encounter rate
+        base_count = 3 + floor_num * 2
+        count = min(base_count, len(walkable) // 8)
+
+        # Get encounter keys for this floor
+        from data.enemies import DUNGEON_ENCOUNTER_TABLES
+        table = DUNGEON_ENCOUNTER_TABLES.get(self.dungeon_id, {})
+        enc_keys = table.get(floor_num, table.get(1, ["tutorial"]))
+        if isinstance(enc_keys, str):
+            enc_keys = [enc_keys]
+
+        enemies = []
+        used_positions = set()
+        for _ in range(count):
+            attempts = 0
+            while attempts < 20:
+                pos = rng.choice(walkable)
+                if pos not in used_positions:
+                    used_positions.add(pos)
+                    break
+                attempts += 1
+            else:
+                continue
+
+            enc_key = rng.choice(enc_keys)
+            enemy = {
+                "x": pos[0],
+                "y": pos[1],
+                "enc_key": enc_key,
+                "state": "patrol",     # patrol, chase, dead
+                "patrol_dir": rng.choice([(0, 1), (0, -1), (1, 0), (-1, 0)]),
+                "move_cooldown": 0,    # skip turns between moves
+                "alert_range": 5,      # detect player within this range
+                "chase_speed": 1,      # moves per player move when chasing
+            }
+            enemies.append(enemy)
+
+        floor["enemies"] = enemies
+
+    def _move_enemies(self):
+        """Move all enemies on current floor. Returns enemy if one touches party."""
+        floor = self.floors[self.current_floor]
+        enemies = floor.get("enemies", [])
+        tiles = floor["tiles"]
+        fw, fh = floor["width"], floor["height"]
+        px, py = self.party_x, self.party_y
+
+        # Build occupied set for enemy-enemy collision avoidance
+        occupied = {(e["x"], e["y"]) for e in enemies if e["state"] != "dead"}
+
+        for enemy in enemies:
+            if enemy["state"] == "dead":
+                continue
+
+            # Cooldown
+            if enemy["move_cooldown"] > 0:
+                enemy["move_cooldown"] -= 1
+                continue
+
+            ex, ey = enemy["x"], enemy["y"]
+            dist = abs(ex - px) + abs(ey - py)  # Manhattan distance
+
+            if dist <= 1:
+                # Adjacent or same tile — trigger combat
+                return enemy
+
+            if dist <= enemy["alert_range"]:
+                # Chase — move toward player
+                enemy["state"] = "chase"
+                dx = 0 if px == ex else (1 if px > ex else -1)
+                dy = 0 if py == ey else (1 if py > ey else -1)
+                # Prefer axis with larger gap
+                if abs(px - ex) >= abs(py - ey):
+                    moves = [(dx, 0), (0, dy), (dx, dy)]
+                else:
+                    moves = [(0, dy), (dx, 0), (dx, dy)]
+            else:
+                # Patrol — wander
+                enemy["state"] = "patrol"
+                pdx, pdy = enemy["patrol_dir"]
+                moves = [(pdx, pdy)]
+                # Random direction change
+                if random.random() < 0.2:
+                    enemy["patrol_dir"] = random.choice(
+                        [(0, 1), (0, -1), (1, 0), (-1, 0)])
+
+            # Try each move
+            moved = False
+            for mdx, mdy in moves:
+                if mdx == 0 and mdy == 0:
+                    continue
+                nx, ny = ex + mdx, ey + mdy
+                if (0 <= nx < fw and 0 <= ny < fh and
+                        tiles[ny][nx]["type"] in PASSABLE_TILES and
+                        (nx, ny) not in occupied):
+                    occupied.discard((ex, ey))
+                    enemy["x"] = nx
+                    enemy["y"] = ny
+                    occupied.add((nx, ny))
+                    moved = True
+                    break
+
+            if not moved and enemy["state"] == "patrol":
+                # Reverse direction if blocked
+                pdx, pdy = enemy["patrol_dir"]
+                enemy["patrol_dir"] = (-pdx, -pdy)
+
+            # Set cooldown (patrol is slower, chase is faster)
+            enemy["move_cooldown"] = 1 if enemy["state"] == "chase" else 2
+
+        return None  # no contact
+
+    def get_floor_enemies(self):
+        """Get list of living enemies on current floor."""
+        floor = self.floors[self.current_floor]
+        return [e for e in floor.get("enemies", []) if e["state"] != "dead"]
+
+    def kill_enemy_at(self, x, y):
+        """Mark enemy at position as dead (called after combat victory)."""
+        floor = self.floors[self.current_floor]
+        for e in floor.get("enemies", []):
+            if e["x"] == x and e["y"] == y and e["state"] != "dead":
+                e["state"] = "dead"
+                return True
+        return False
 
     def move(self, dx, dy):
         """Move party in dungeon. Returns event dict or None."""
@@ -783,27 +991,24 @@ class DungeonState:
                     "is_boss": True,
                 }
 
-        # Random encounter check
-        self.step_counter += 1
-        rate = self.encounter_rate
-        if self.step_counter >= random.randint(max(1, rate - 2), rate + 2):
-            self.step_counter = 0
-
-            # Peace path: if goblins are at peace, skip goblin encounters
+        # ── Visible enemy movement + collision ──
+        contact = self._move_enemies()
+        if contact:
+            # Peace path check
             if self.dungeon_id == "goblin_warren":
                 from core.story_flags import get_flag
                 if get_flag("choice.grak_spared"):
-                    # Goblins are friendly — no random encounters
-                    return None
+                    return None  # goblins are friendly
 
-            # Boss is only triggered from the placed boss_encounter event tile,
-            # not from random encounters. Random encounters are always normal.
+            # Store contacted enemy position for post-combat cleanup
+            self._last_contact_enemy = (contact["x"], contact["y"])
             return {
                 "type": "random_encounter",
                 "dungeon_id": self.dungeon_id,
                 "floor": self.current_floor,
                 "total_floors": self.total_floors,
                 "is_boss": False,
+                "_enc_key": contact["enc_key"],
             }
 
         return None
@@ -836,9 +1041,8 @@ class DungeonState:
         from data.enemies import DUNGEON_ENCOUNTER_TABLES
         table = DUNGEON_ENCOUNTER_TABLES.get(self.dungeon_id)
         if table:
-            # Check for boss floor
-            if self.current_floor >= self.total_floors and "boss" in table:
-                return table["boss"]
+            # NEVER return boss from random encounters — boss only spawns
+            # from the placed boss_encounter event tile on the map
             keys = table.get(self.current_floor, table.get(1, ["tutorial"]))
             if isinstance(keys, str):
                 return keys

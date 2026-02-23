@@ -59,6 +59,11 @@ def make_player_combatant(character, row=FRONT):
                 if item and item.get("enchant_resist_bonus"):
                     equip_mres += item["enchant_resist_bonus"]
 
+    # Get actual max resources (not current values)
+    from core.classes import get_all_resources
+    actual_max = get_all_resources(character.class_name, stats, character.level)
+    max_hp = actual_max.get("HP", character.resources["HP"])
+
     return {
         "type": "player",
         "uid": id(character),
@@ -68,9 +73,9 @@ def make_player_combatant(character, row=FRONT):
         "level": character.level,
         "stats": stats,
         "hp": character.resources["HP"],
-        "max_hp": character.resources["HP"],
+        "max_hp": max_hp,
         "resources": dict(character.resources),  # current values
-        "max_resources": dict(character.resources),  # max values
+        "max_resources": actual_max,             # TRUE max values
         "abilities": [dict(a) for a in character.abilities],
         "weapon": weapon,
         "row": row,
@@ -693,12 +698,67 @@ def resolve_ability(attacker, target, ability):
             return result
         attacker["resources"][resource_key] -= cost
 
-    # Determine ability type based on name/resource
+    # Determine ability type from the ability data, not just the name
     ab_name = ability["name"].lower()
-    is_heal = "heal" in ab_name
-    is_offensive = not is_heal
+    ab_type = ability.get("type", "spell")
+    is_heal = ab_type == "heal" or "heal" in ab_name
+    is_buff = ab_type == "buff"
+    is_debuff = ab_type == "debuff"
+    is_cure = ab_type == "cure"
+    is_offensive = not (is_heal or is_buff or is_cure)
 
-    if is_heal:
+    if is_buff:
+        # Buff ability — apply status to self or ally
+        buff_name = ability.get("buff", ability["name"])
+        duration = ability.get("duration", 3)
+        # Apply to caster (self-buff) if no valid target or if target is self
+        buff_target = target if target and target["type"] == "player" else attacker
+        apply_status_effect(buff_target, buff_name, duration, 1.0)
+        result["messages"].append(
+            f"{attacker['name']} uses {ability['name']}! "
+            f"{buff_target['name']} gains {ability.get('desc', buff_name)}."
+        )
+
+    elif is_cure:
+        # Cure ability — remove negative status
+        cure_target = target if target else attacker
+        # Remove first negative status
+        removed = False
+        for se in cure_target.get("status_effects", [])[:]:
+            if se.get("negative", True):
+                cure_target["status_effects"].remove(se)
+                result["messages"].append(
+                    f"{attacker['name']} uses {ability['name']} on {cure_target['name']} — "
+                    f"{se['name']} removed!"
+                )
+                removed = True
+                break
+        if not removed:
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']} on {cure_target['name']} — "
+                f"no negative effects to cure."
+            )
+
+    elif is_debuff:
+        # Debuff ability — apply slow/weaken to enemy
+        # Accuracy check first
+        acc = calc_magic_accuracy(attacker, target)
+        hit = roll_hit(acc)
+        if not hit:
+            result["hit"] = False
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']} on {target['name']} — RESISTED!"
+            )
+            return result
+        debuff_name = ability.get("debuff", ability["name"])
+        duration = ability.get("slow_duration", ability.get("duration", 2))
+        apply_status_effect(target, debuff_name, duration, 1.0)
+        result["messages"].append(
+            f"{attacker['name']} uses {ability['name']} on {target['name']}! "
+            f"{target['name']} is {debuff_name.lower()}ed."
+        )
+
+    elif is_heal:
         # Healing ability — can also revive downed allies
         was_downed = not target["alive"]
         if was_downed:

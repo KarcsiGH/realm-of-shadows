@@ -47,7 +47,7 @@ def _e(name, hp, df, mr, stats, spd, atk, atype, ptype,
 
 TOWER_ENEMIES = {
     # ── Floor 1-2: Constructs & vermin ──
-    "Stone Guardian": _e("Stone Guardian", 55, 14, 4,
+    "Stone Guardian": _e("Stone Guardian", 137, 35, 8,
         _S(16, 4, 14, 2, 4, 0), 6, 18, "melee", "blunt",
         xp=28, gold=(4, 12),
         res={"piercing": 0.3, "slashing": 0.5, "blunt": 1.5, "lightning": 2.0,
@@ -56,7 +56,7 @@ TOWER_ENEMIES = {
         desc={0: "A stone statue that grinds to life.", 1: "Stone Guardian",
               2: "Stone Guardian — very high armor. Weak to blunt/lightning."}),
 
-    "Arcane Sentry": _e("Arcane Sentry", 35, 6, 10,
+    "Arcane Sentry": _e("Arcane Sentry", 87, 15, 20,
         _S(4, 10, 8, 14, 10, 2), 14, 12, "ranged", "arcane",
         acc=4, row="mid", xp=25, gold=(5, 14),
         res={"arcane": 0.0, "shadow": 1.5},
@@ -66,12 +66,12 @@ TOWER_ENEMIES = {
         desc={0: "A floating crystal orbiting a metal frame.", 1: "Arcane Sentry",
               2: "Arcane Sentry — ranged arcane damage. Immune to arcane."}),
 
-    "Tower Rat": _e("Tower Rat", 12, 0, 0,
+    "Tower Rat": _e("Tower Rat", 30, 3, 1,
         _S(3, 14, 3, 1, 3, 0), 20, 5, "melee", "piercing",
         acc=3, xp=5, gold=(0, 2),
         desc={0: "An oversized rat.", 1: "Tower Rat", 2: "Tower Rat — fast, weak."}),
 
-    "Animated Armor": _e("Animated Armor", 65, 16, 2,
+    "Animated Armor": _e("Animated Armor", 162, 40, 4,
         _S(18, 6, 14, 1, 2, 0), 6, 22, "melee", "slashing",
         xp=38, gold=(8, 18),
         res={"piercing": 0.5, "slashing": 0.5, "blunt": 1.5, "lightning": 1.8},
@@ -85,7 +85,7 @@ TOWER_ENEMIES = {
               2: "Animated Armor — heavy armor. Weak to blunt/lightning."}),
 
     # ── Floor 3-4: Corrupted scholars & experiments ──
-    "Corrupted Scholar": _e("Corrupted Scholar", 40, 3, 12,
+    "Corrupted Scholar": _e("Corrupted Scholar", 100, 7, 24,
         _S(4, 8, 6, 16, 14, 4), 12, 8, "ranged", "arcane",
         acc=5, row="back", ai="supportive", xp=35, gold=(8, 20),
         res={"arcane": 0.5, "shadow": 0.5, "divine": 1.5},
@@ -101,7 +101,7 @@ TOWER_ENEMIES = {
         desc={0: "A robed figure muttering incomprehensibly.", 1: "Corrupted Scholar",
               2: "Corrupted Scholar — casts shadow bolts and heals. Priority target."}),
 
-    "Flesh Golem": _e("Flesh Golem", 90, 8, 4,
+    "Flesh Golem": _e("Flesh Golem", 225, 20, 8,
         _S(22, 4, 20, 2, 4, 0), 5, 26, "melee", "blunt",
         xp=48, gold=(5, 15),
         res={"lightning": 2.0, "fire": 1.5, "nature": 0.5, "shadow": 0.5},
@@ -111,7 +111,7 @@ TOWER_ENEMIES = {
         desc={0: "A hulking mass of stitched flesh.", 1: "Flesh Golem",
               2: "Flesh Golem — very tough. Weak to lightning/fire."}),
 
-    "Arcane Wisp": _e("Arcane Wisp", 18, 0, 14,
+    "Arcane Wisp": _e("Arcane Wisp", 45, 3, 28,
         _S(1, 16, 4, 12, 10, 2), 22, 10, "ranged", "arcane",
         acc=6, row="back", xp=18, gold=(3, 8),
         res={"piercing": 0.0, "slashing": 0.0, "blunt": 0.0, "arcane": 0.0, "shadow": 1.5, "divine": 1.5},
@@ -119,7 +119,7 @@ TOWER_ENEMIES = {
         desc={0: "A flickering mote of arcane light.", 1: "Arcane Wisp",
               2: "Arcane Wisp — immune to physical and arcane. Use shadow or divine."}),
 
-    "Living Tome": _e("Living Tome", 28, 4, 12,
+    "Living Tome": _e("Living Tome", 70, 10, 24,
         _S(2, 10, 6, 16, 12, 4), 14, 6, "ranged", "arcane",
         acc=4, row="back", xp=22, gold=(6, 14),
         res={"fire": 3.0, "arcane": 0.0},
@@ -130,7 +130,7 @@ TOWER_ENEMIES = {
               2: "Living Tome — casts arcane. Extremely weak to fire."}),
 
     # ── Floor 5-6: Fading creatures ──
-    "Fading Wraith": _e("Fading Wraith", 45, 0, 18,
+    "Fading Wraith": _e("Fading Wraith", 112, 3, 36,
         _S(2, 14, 6, 16, 16, 4), 18, 14, "ranged", "shadow",
         acc=6, row="back", xp=42, gold=(5, 18),
         res={"piercing": 0.0, "slashing": 0.0, "blunt": 0.0, "shadow": 0.0,
@@ -143,7 +143,7 @@ TOWER_ENEMIES = {
         desc={0: "A shape of emptiness in the air.", 1: "Fading Wraith",
               2: "Fading Wraith — immune to phys/shadow. Use divine."}),
 
-    "Void Tendril": _e("Void Tendril", 30, 4, 8,
+    "Void Tendril": _e("Void Tendril", 75, 10, 16,
         _S(14, 8, 10, 2, 2, 0), 10, 16, "melee", "shadow",
         xp=28, gold=(0, 5),
         res={"shadow": 0.0, "divine": 2.0, "fire": 1.5},
@@ -153,7 +153,7 @@ TOWER_ENEMIES = {
         desc={0: "A writhing tendril of darkness.", 1: "Void Tendril",
               2: "Void Tendril — slows targets. Weak to divine/fire."}),
 
-    "Reality Fracture": _e("Reality Fracture", 50, 0, 20,
+    "Reality Fracture": _e("Reality Fracture", 125, 3, 40,
         _S(1, 1, 12, 18, 18, 6), 8, 0, "ranged", "arcane",
         ai="supportive", row="back", xp=50, gold=(10, 25),
         res={"piercing": 0.0, "slashing": 0.0, "blunt": 0.0,
@@ -167,7 +167,7 @@ TOWER_ENEMIES = {
               2: "Reality Fracture — heals allies, AoE arcane. Immune to phys. Kill fast."}),
 
     # ── Boss: The Lingering Will ──
-    "Lingering Will": _e("Lingering Will", 320, 8, 18,
+    "Lingering Will": _e("Lingering Will", 800, 20, 36,
         _S(14, 12, 16, 22, 18, 8), 14, 20, "ranged", "shadow",
         acc=8, ai="boss", xp=200, gold=(80, 150),
         res={"piercing": 0.7, "slashing": 0.7, "blunt": 0.7,
@@ -305,7 +305,7 @@ TOWER_BOSS_LOOT = {
         {"drop_chance": 0.50, "item": {
             "name": "Spire Warden's Mantle", "type": "armor", "slot": "body",
             "subtype": "robes", "rarity": "epic", "armor_tier": "clothing",
-            "defense": 4, "magic_resist": 10,
+            "defense": 10, "magic_resist": 20,
             "effect": {"int_bonus": 2, "wis_bonus": 2},
             "enchant_resist": "shadow", "enchant_resist_bonus": 5,
             "identified": True, "estimated_value": 450,
@@ -314,7 +314,7 @@ TOWER_BOSS_LOOT = {
             "name": "Ring of the Spire", "type": "accessory", "slot": "accessory1",
             "subtype": "ring", "rarity": "epic",
             "effect": {"int_bonus": 3, "pie_bonus": 2},
-            "magic_resist": 4,
+            "magic_resist": 8,
             "identified": True, "estimated_value": 350,
             "description": "A ring that resonates with the tower itself. +3 INT, +2 PIE."}},
     ],

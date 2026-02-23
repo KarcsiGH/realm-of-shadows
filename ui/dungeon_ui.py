@@ -212,6 +212,24 @@ class DungeonUI:
                 b = (max(0.35, 1.0 - (dist / TORCH_R) * 0.60) * flicker) if lit else FOG_B
                 self._draw_obj(surface, sx, sy, b, tile)
 
+        # ── Visible enemies ──
+        for enemy in self.dungeon.get_floor_enemies():
+            ex, ey = enemy["x"], enemy["y"]
+            tile = tiles[ey][ex] if (0 <= ey < fh and 0 <= ex < fw) else None
+            if not tile or not tile["discovered"]:
+                continue
+            dist = math.sqrt((ex - px) ** 2 + (ey - py) ** 2)
+            if dist > TORCH_R + 1:
+                continue  # only show in/near torchlight
+            esx = ox + ex * TS
+            esy = oy + ey * TS
+            if esx + TS < VP_X or esx > VP_X + VP_W:
+                continue
+            if esy + TS < VP_Y or esy > VP_Y + VP_H:
+                continue
+            b = max(0.35, 1.0 - (dist / TORCH_R) * 0.60) * flicker
+            self._draw_enemy_sprite(surface, esx, esy, b, enemy)
+
         # ── Party ──
         psx = ox + px * TS
         psy = oy + py * TS
@@ -445,6 +463,42 @@ class DungeonUI:
 
     # ── Party marker ──
 
+    def _draw_enemy_sprite(self, surface, sx, sy, b, enemy):
+        """Draw a visible enemy on the dungeon map. Simple shapes for now."""
+        cx, cy = sx + TS // 2, sy + TS // 2
+        r = TS // 3
+
+        # Color based on state
+        if enemy["state"] == "chase":
+            base_col = (220, 60, 60)   # red when chasing
+            glow_col = (220, 40, 40)
+        else:
+            base_col = (200, 130, 50)  # amber when patrolling
+            glow_col = (180, 100, 30)
+
+        col = self._dim(base_col, b)
+        gcol = self._dim(glow_col, b)
+
+        # Subtle alert glow when chasing
+        if enemy["state"] == "chase":
+            gs = pygame.Surface((TS + 6, TS + 6), pygame.SRCALPHA)
+            ga = int(self.pulse * 25) + 15
+            pygame.draw.circle(gs, (*glow_col[:3], ga), (TS // 2 + 3, TS // 2 + 3), r + 5)
+            surface.blit(gs, (sx - 3, sy - 3))
+
+        # Body — diamond shape
+        points = [(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)]
+        pygame.draw.polygon(surface, col, points)
+        pygame.draw.polygon(surface, gcol, points, 2)
+
+        # Eyes — two small dots
+        eye_y = cy - r // 4
+        eye_sep = r // 2
+        eye_col = (255, 80, 80) if enemy["state"] == "chase" else (255, 200, 80)
+        eye_col = self._dim(eye_col, b)
+        pygame.draw.circle(surface, eye_col, (cx - eye_sep, eye_y), max(1, r // 5))
+        pygame.draw.circle(surface, eye_col, (cx + eye_sep, eye_y), max(1, r // 5))
+
     def _draw_party(self, surface, sx, sy):
         cx, cy = sx + TS // 2, sy + TS // 2
         r = TS // 3 + 1
@@ -542,6 +596,19 @@ class DungeonUI:
         ppy = my0 + self.dungeon.party_y * ms + ms // 2
         pr = max(2, ms)
         pygame.draw.circle(surface, C_PARTY, (ppx, ppy), pr)
+
+        # Enemy dots (only visible enemies in discovered tiles within torch range)
+        px, py = self.dungeon.party_x, self.dungeon.party_y
+        for enemy in self.dungeon.get_floor_enemies():
+            ex, ey = enemy["x"], enemy["y"]
+            dist = math.sqrt((ex - px) ** 2 + (ey - py) ** 2)
+            if dist > TORCH_R + 1:
+                continue
+            if 0 <= ey < fh and 0 <= ex < fw and tiles[ey][ex]["discovered"]:
+                ecol = (220, 60, 60) if enemy["state"] == "chase" else (200, 130, 50)
+                epx = mx0 + ex * ms + ms // 2
+                epy = my0 + ey * ms + ms // 2
+                pygame.draw.circle(surface, ecol, (epx, epy), max(1, ms - 1))
 
         # Border
         pygame.draw.rect(surface, PANEL_BORDER, (mx0 - 2, my0 - 2, mw + 4, mh + 4), 1)

@@ -316,10 +316,108 @@ def get_item_display_desc(item):
     parts = []
 
     if item.get("identified"):
-        # Full description
-        return item.get("description", "")
+        # Base description
+        base_desc = item.get("description", "")
+        if base_desc:
+            parts.append(base_desc)
 
-    # Always show the surface description
+        # ── Build stat summary for identified items ──
+        stat_parts = []
+
+        # Weapon stats
+        if item.get("damage"):
+            stat_parts.append(f"Dmg: {item['damage']}")
+        if item.get("phys_type"):
+            stat_parts.append(f"Type: {item['phys_type'].title()}")
+        if item.get("range") and item["range"] != "melee":
+            stat_parts.append(f"Range: {item['range'].title()}")
+        if item.get("accuracy_bonus"):
+            stat_parts.append(f"+{item['accuracy_bonus']} Hit")
+        if item.get("speed_bonus"):
+            stat_parts.append(f"+{item['speed_bonus']} Speed")
+        if item.get("spell_bonus"):
+            stat_parts.append(f"+{item['spell_bonus']} Spell Power")
+        if item.get("crit_bonus"):
+            stat_parts.append(f"+{int(item['crit_bonus']*100)}% Crit")
+        if item.get("stat_scaling"):
+            sc = item["stat_scaling"]
+            scale_strs = [f"{k}×{v}" for k, v in sc.items() if v > 0]
+            if scale_strs:
+                stat_parts.append(f"Scales: {', '.join(scale_strs)}")
+        elif item.get("damage_stat"):
+            sc = item["damage_stat"]
+            scale_strs = [f"{k}×{v}" for k, v in sc.items() if v > 0]
+            if scale_strs:
+                stat_parts.append(f"Scales: {', '.join(scale_strs)}")
+
+        # Armor/defense stats
+        if item.get("defense") and item.get("type") != "weapon":
+            stat_parts.append(f"+{item['defense']} DEF")
+        if item.get("magic_resist"):
+            stat_parts.append(f"+{item['magic_resist']} MRES")
+        if item.get("enchant_resist_bonus"):
+            stat_parts.append(f"+{item['enchant_resist_bonus']} MRES")
+        if item.get("evasion_bonus"):
+            stat_parts.append(f"+{item['evasion_bonus']}% Evasion")
+
+        # Stat bonuses
+        if item.get("stat_bonus"):
+            for stat, val in item["stat_bonus"].items():
+                sign = "+" if val > 0 else ""
+                stat_parts.append(f"{sign}{val} {stat}")
+
+        # Elemental/special damage
+        if item.get("element"):
+            stat_parts.append(f"Element: {item['element'].title()}")
+        if item.get("element_damage"):
+            stat_parts.append(f"+{item['element_damage']} {item.get('element','').title()} Dmg")
+        if item.get("bonus_vs"):
+            for enemy_type, mult in item["bonus_vs"].items():
+                stat_parts.append(f"×{mult} vs {enemy_type.title()}")
+
+        # Resistances
+        if item.get("resistances"):
+            for elem, level in item["resistances"].items():
+                if level == "resistant":
+                    stat_parts.append(f"Resist {elem.title()}")
+                elif level == "immune":
+                    stat_parts.append(f"Immune {elem.title()}")
+                elif level == "vulnerable":
+                    stat_parts.append(f"Weak {elem.title()}")
+
+        # Status effects
+        if item.get("status_on_hit"):
+            se = item["status_on_hit"]
+            stat_parts.append(f"On hit: {se.get('name', '???')} ({int(se.get('chance', 0)*100)}%)")
+        if item.get("poison_chance"):
+            stat_parts.append(f"Poison: {int(item['poison_chance']*100)}%")
+
+        # Healing/consumable
+        if item.get("heal_amount"):
+            stat_parts.append(f"Heals {item['heal_amount']} HP")
+        if item.get("mp_restore"):
+            stat_parts.append(f"Restores {item['mp_restore']} MP")
+
+        # Enhance bonus
+        if item.get("enhance_bonus"):
+            stat_parts.append(f"+{item['enhance_bonus']} Enhanced")
+
+        # Special properties
+        if item.get("two_handed"):
+            stat_parts.append("Two-handed")
+        if item.get("quest_item"):
+            stat_parts.append("Quest Item")
+
+        # Value
+        if item.get("estimated_value"):
+            stat_parts.append(f"Value: ~{item['estimated_value']}g")
+
+        if stat_parts:
+            parts.append("[" + " | ".join(stat_parts) + "]")
+
+        return " ".join(parts) if parts else "No description."
+
+    # ── Unidentified items ──
     parts.append(item.get("unidentified_desc",
                           item.get("surface_desc", "You're not sure what this is.")))
 

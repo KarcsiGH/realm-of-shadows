@@ -343,9 +343,9 @@ INN_TIER_ORDER = ["stable", "common", "private", "suite"]
 #  RESOURCE TRICKLE (per step recovery)
 # ═══════════════════════════════════════════════════════════════
 
-TRICKLE_HP_PCT = 0.02   # 2% max HP per step
-TRICKLE_MP_PCT = 0.03   # 3% max MP per step
-TRICKLE_SP_PCT = 0.04   # 4% max SP per step
+TRICKLE_HP_PCT = 0.005  # 0.5% max HP per step
+TRICKLE_MP_PCT = 0.01   # 1% max MP per step
+TRICKLE_SP_PCT = 0.015  # 1.5% max SP per step
 
 def apply_step_regen(character, max_resources):
     """Apply per-step resource trickle. Call after each movement step."""

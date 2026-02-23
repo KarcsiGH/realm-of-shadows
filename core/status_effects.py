@@ -198,6 +198,23 @@ def get_status_display(character):
             display.append((s["name"], (180, 50, 180)))  # purple
         elif s["id"] == "resurrection_sickness":
             display.append(("Res. Sickness", (150, 150, 100)))  # tan
+        elif s.get("name") == "Stun" or s.get("name") == "Stunned":
+            display.append(("Stunned", (255, 220, 50)))  # yellow
+        elif s.get("name") == "Frozen" or s.get("name") == "Freeze":
+            display.append(("Frozen", (100, 200, 255)))  # ice blue
+        elif s.get("name") == "Burning" or s.get("name") == "On Fire":
+            display.append(("Burning", (255, 120, 30)))  # orange
+        elif s.get("name") == "Petrified":
+            display.append(("Stoned", (160, 160, 160)))  # grey
+        elif s.get("name") == "Sleep":
+            display.append(("Asleep", (150, 130, 200)))  # lavender
+        else:
+            display.append((s.get("name", "???"), (200, 200, 200)))
+
+    # Show "Ok" if no negative statuses
+    if not display:
+        display.append(("Ok", (100, 200, 100)))  # green
+
     return display
 
 def is_silenced(character):

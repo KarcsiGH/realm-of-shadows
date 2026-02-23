@@ -1418,6 +1418,9 @@ class Game:
                         self.dungeon_ui = DungeonUI(self.dungeon_state)
                         self.pre_dungeon_state = S_WORLD_MAP
                         self.go(S_DUNGEON)
+                        # Track floor 1 for job board
+                        from data.job_board import on_dungeon_floor_reached
+                        on_dungeon_floor_reached(dungeon_id, 1)
                         # Show floor 1 story message
                         from data.story_data import get_dungeon_floor_message
                         msg = get_dungeon_floor_message(dungeon_id, 1)
@@ -1456,7 +1459,8 @@ class Game:
             return
 
         if event["type"] == "random_encounter":
-            enc_key = self.dungeon_state.get_encounter_key()
+            # Use specific encounter key from visible enemy, or fall back to random
+            enc_key = event.get("_enc_key") or self.dungeon_state.get_encounter_key()
             self.pre_dungeon_state = S_DUNGEON
 
             # Check for boss dialogue
@@ -1596,6 +1600,9 @@ class Game:
                 floor = self.dungeon_state.current_floor
                 self.dungeon_ui.show_event(f"Descended to Floor {floor}.", GOLD)
                 self.dungeon_ui.on_floor_change()
+                # Track exploration for job board
+                from data.job_board import on_dungeon_floor_reached
+                on_dungeon_floor_reached(self.dungeon_state.dungeon_id, floor)
                 # Show story floor message if available
                 from data.story_data import get_dungeon_floor_message
                 msg = get_dungeon_floor_message(self.dungeon_state.dungeon_id, floor)
@@ -1776,6 +1783,18 @@ class Game:
                 # ── Grant dungeon keys on boss victory ──
                 if self.dungeon_state:
                     self._grant_boss_rewards(self.dungeon_state.dungeon_id)
+
+                    # Mark visible enemy as dead on the map
+                    contact_pos = getattr(self.dungeon_state, '_last_contact_enemy', None)
+                    if contact_pos:
+                        self.dungeon_state.kill_enemy_at(*contact_pos)
+                        self.dungeon_state._last_contact_enemy = None
+
+                # ── Track kills for job board bounties ──
+                from data.job_board import on_enemy_killed
+                for e in self.combat_state.enemies:
+                    if not e.get("alive", True):
+                        on_enemy_killed(e["name"])
 
                 self.start_post_combat()
             else:

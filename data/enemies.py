@@ -17,10 +17,10 @@ from core.combat_config import (
 ENEMIES = {
     "Goblin Warrior": {
         "name": "Goblin Warrior",
-        "hp": 51, "defense": 2, "magic_resist": 1,
+        "hp": 76, "defense": 5, "magic_resist": 2,
         "stats": {"STR": 6, "DEX": 10, "CON": 5, "INT": 4, "WIS": 4, "PIE": 2},
         "speed_base": 14,
-        "attack_damage": 16, "attack_type": "melee", "phys_type": "slashing",
+        "attack_damage": 25, "attack_type": "melee", "phys_type": "slashing",
         "accuracy_bonus": 0,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
@@ -69,10 +69,10 @@ ENEMIES = {
 
     "Goblin Archer": {
         "name": "Goblin Archer",
-        "hp": 38, "defense": 1, "magic_resist": 1,
+        "hp": 57, "defense": 3, "magic_resist": 2,
         "stats": {"STR": 4, "DEX": 12, "CON": 4, "INT": 5, "WIS": 5, "PIE": 2},
         "speed_base": 16,
-        "attack_damage": 18, "attack_type": "ranged", "phys_type": "piercing",
+        "attack_damage": 28, "attack_type": "ranged", "phys_type": "piercing",
         "accuracy_bonus": 5,
         "preferred_row": MID,
         "ai_type": "aggressive",
@@ -121,10 +121,10 @@ ENEMIES = {
 
     "Bandit": {
         "name": "Bandit",
-        "hp": 76, "defense": 4, "magic_resist": 2,
+        "hp": 114, "defense": 10, "magic_resist": 4,
         "stats": {"STR": 12, "DEX": 10, "CON": 10, "INT": 7, "WIS": 6, "PIE": 4},
         "speed_base": 16,
-        "attack_damage": 18, "attack_type": "melee", "phys_type": "slashing",
+        "attack_damage": 28, "attack_type": "melee", "phys_type": "slashing",
         "accuracy_bonus": 2,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
@@ -173,10 +173,10 @@ ENEMIES = {
 
     "Wolf": {
         "name": "Wolf",
-        "hp": 57, "defense": 2, "magic_resist": 1,
+        "hp": 85, "defense": 5, "magic_resist": 2,
         "stats": {"STR": 10, "DEX": 14, "CON": 8, "INT": 3, "WIS": 10, "PIE": 2},
         "speed_base": 22,
-        "attack_damage": 20, "attack_type": "melee", "phys_type": "piercing",
+        "attack_damage": 32, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 5,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
@@ -224,10 +224,10 @@ ENEMIES = {
 
     "Skeleton Warrior": {
         "name": "Skeleton Warrior",
-        "hp": 70, "defense": 6, "magic_resist": 3,
+        "hp": 105, "defense": 15, "magic_resist": 6,
         "stats": {"STR": 10, "DEX": 8, "CON": 0, "INT": 2, "WIS": 4, "PIE": 0},
         "speed_base": 12,
-        "attack_damage": 18, "attack_type": "melee", "phys_type": "slashing",
+        "attack_damage": 28, "attack_type": "melee", "phys_type": "slashing",
         "accuracy_bonus": 0,
         "preferred_row": FRONT,
         "ai_type": "defensive",
@@ -249,10 +249,10 @@ ENEMIES = {
 
     "Orc Fighter": {
         "name": "Orc Fighter",
-        "hp": 112, "defense": 7, "magic_resist": 3,
+        "hp": 168, "defense": 17, "magic_resist": 6,
         "stats": {"STR": 16, "DEX": 8, "CON": 14, "INT": 5, "WIS": 6, "PIE": 3},
         "speed_base": 13,
-        "attack_damage": 32, "attack_type": "melee", "phys_type": "slashing",
+        "attack_damage": 51, "attack_type": "melee", "phys_type": "slashing",
         "accuracy_bonus": 0,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
@@ -301,10 +301,10 @@ ENEMIES = {
 
     "Orc Chieftain": {
         "name": "Orc Chieftain",
-        "hp": 180, "defense": 10, "magic_resist": 5,
+        "hp": 270, "defense": 25, "magic_resist": 10,
         "stats": {"STR": 20, "DEX": 10, "CON": 18, "INT": 8, "WIS": 8, "PIE": 4},
         "speed_base": 14,
-        "attack_damage": 40, "attack_type": "melee", "phys_type": "slashing",
+        "attack_damage": 64, "attack_type": "melee", "phys_type": "slashing",
         "accuracy_bonus": 5,
         "preferred_row": FRONT,
         "ai_type": "boss",
@@ -372,10 +372,10 @@ ENEMIES = {
 
     "Goblin Shaman": {
         "name": "Goblin Shaman",
-        "hp": 44, "defense": 1, "magic_resist": 6,
+        "hp": 66, "defense": 3, "magic_resist": 12,
         "stats": {"STR": 3, "DEX": 8, "CON": 4, "INT": 10, "WIS": 10, "PIE": 6},
         "speed_base": 14,
-        "attack_damage": 10, "attack_type": "melee", "phys_type": "blunt",
+        "attack_damage": 16, "attack_type": "melee", "phys_type": "blunt",
         "accuracy_bonus": 0,
         "preferred_row": BACK,
         "ai_type": "supportive",
@@ -436,10 +436,10 @@ ENEMIES = {
 
     "Goblin King": {
         "name": "Grak the Goblin King",
-        "hp": 380, "defense": 14, "magic_resist": 8,
+        "hp": 400, "defense": 12, "magic_resist": 8,
         "stats": {"STR": 18, "DEX": 10, "CON": 16, "INT": 6, "WIS": 8, "PIE": 4},
         "speed_base": 12,
-        "attack_damage": 30, "attack_type": "melee", "phys_type": "blunt",
+        "attack_damage": 38, "attack_type": "melee", "phys_type": "blunt",
         "accuracy_bonus": 8,
         "preferred_row": FRONT,
         "ai_type": "boss",
@@ -453,11 +453,21 @@ ENEMIES = {
         "status_immunities": ["stun"],
         "abilities": ["Goblin King Smash", "Enrage"],
         "loot_table": [
-            {"drop_chance": 0.80, "item": {
+            {"drop_chance": 1.0, "item": {
                 "name": "Goblin King's Crown", "type": "armor", "subtype": "helmet",
-                "rarity": "rare", "tier": 2, "defense": 5, "identified": True,
+                "rarity": "rare", "tier": 2, "defense": 12, "identified": False,
+                "appraised_name": "Goblin King's Crown",
                 "estimated_value": 200,
-                "description": "A crude crown of bent metal and stolen gems. Surprisingly well-made.",
+                "description": "A crude crown of bent metal and stolen gems. "
+                               "+12 DEF. Surprisingly well-made for goblin craftsmanship.",
+            }},
+            {"drop_chance": 0.60, "item": {
+                "name": "Goblin King's Coin", "type": "accessory", "subtype": "trinket",
+                "rarity": "uncommon", "tier": 2, "identified": False,
+                "appraised_name": "Goblin King's Lucky Coin",
+                "estimated_value": 120,
+                "stat_bonus": {"LCK": 2},
+                "description": "A battered gold coin Grak carried for luck. +2 LCK.",
             }},
         ],
         "description_tiers": {
@@ -469,10 +479,10 @@ ENEMIES = {
 
     "Giant Spider Queen": {
         "name": "Spider Queen",
-        "hp": 320, "defense": 8, "magic_resist": 10,
+        "hp": 480, "defense": 20, "magic_resist": 20,
         "stats": {"STR": 14, "DEX": 18, "CON": 14, "INT": 4, "WIS": 12, "PIE": 2},
         "speed_base": 18,
-        "attack_damage": 26, "attack_type": "melee", "phys_type": "piercing",
+        "attack_damage": 41, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 12,
         "preferred_row": FRONT,
         "ai_type": "boss",
@@ -488,7 +498,7 @@ ENEMIES = {
         "loot_table": [
             {"drop_chance": 0.80, "item": {
                 "name": "Spider Silk Mantle", "type": "armor", "subtype": "cloak",
-                "rarity": "rare", "tier": 2, "defense": 3, "magic_resist": 4, "identified": True,
+                "rarity": "rare", "tier": 2, "defense": 7, "magic_resist": 8, "identified": True,
                 "estimated_value": 180,
                 "description": "A shimmering cloak woven from spider silk. Light and magically resistant.",
             }},
@@ -502,10 +512,10 @@ ENEMIES = {
 
     "Undead Foreman": {
         "name": "The Foreman",
-        "hp": 300, "defense": 15, "magic_resist": 12,
+        "hp": 450, "defense": 37, "magic_resist": 24,
         "stats": {"STR": 20, "DEX": 8, "CON": 22, "INT": 10, "WIS": 14, "PIE": 2},
         "speed_base": 8,
-        "attack_damage": 38, "attack_type": "melee", "phys_type": "blunt",
+        "attack_damage": 60, "attack_type": "melee", "phys_type": "blunt",
         "accuracy_bonus": 6,
         "preferred_row": FRONT,
         "ai_type": "boss",
@@ -535,10 +545,10 @@ ENEMIES = {
 
     "Giant Spider": {
         "name": "Giant Spider",
-        "hp": 56, "defense": 4, "magic_resist": 3,
+        "hp": 84, "defense": 10, "magic_resist": 6,
         "stats": {"STR": 10, "DEX": 16, "CON": 8, "INT": 2, "WIS": 8, "PIE": 1},
         "speed_base": 20,
-        "attack_damage": 16, "attack_type": "melee", "phys_type": "piercing",
+        "attack_damage": 25, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 8,
         "preferred_row": FRONT,
         "ai_type": "aggressive",

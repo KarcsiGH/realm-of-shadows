@@ -174,7 +174,7 @@ BRIARHOLLOW_NPCS = [
     },
     {
         "name": "Captain Aldric",
-        "x": 16, "y": 12,  # near tavern
+        "x": 16, "y": 14,  # near tavern, on grass
         "dialogue_id": "captain_aldric",
         "description": "The town's guard captain, nursing an ale.",
         "color": (140, 160, 200),
@@ -186,6 +186,47 @@ BRIARHOLLOW_NPCS = [
         "description": "The village elder, weathered but sharp.",
         "color": (180, 170, 140),
     },
+    # ── Building NPCs (shopkeepers standing near their doors) ──
+    {
+        "name": "Innkeeper Bess",
+        "x": 11, "y": 5,  # walkable tile next to inn door (10,5)
+        "service": "inn",
+        "dialogue_id": "bess",
+        "description": "A warm, bustling woman who runs the Wanderer's Rest.",
+        "color": (200, 170, 120),
+    },
+    {
+        "name": "Merchant Kira",
+        "x": 14, "y": 5,  # walkable tile next to shop door (13,5)
+        "service": "shop",
+        "dialogue_id": "merchant_kira",
+        "description": "A shrewd traveling merchant with goods from afar.",
+        "color": (120, 180, 140),
+    },
+    {
+        "name": "Priestess Alia",
+        "x": 9, "y": 12,  # walkable tile next to temple door (8,12)
+        "service": "temple",
+        "dialogue_id": None,
+        "description": "A serene priestess of the Shrine of Light.",
+        "color": (220, 220, 160),
+    },
+    {
+        "name": "Barkeep Thom",
+        "x": 14, "y": 12,  # walkable tile next to tavern door (15,12)
+        "service": "tavern",
+        "dialogue_id": None,
+        "description": "A grizzled barkeep who hears all the rumors.",
+        "color": (180, 130, 80),
+    },
+    {
+        "name": "Forgemaster Dunn",
+        "x": 10, "y": 17,  # walkable tile next to forge door (9,17)
+        "service": "forge",
+        "dialogue_id": "forgemaster_dunn",
+        "description": "A stocky dwarf who runs the town forge.",
+        "color": (220, 140, 60),
+    },
 ]
 
 BRIARHOLLOW_SIGNS = {
@@ -194,6 +235,330 @@ BRIARHOLLOW_SIGNS = {
 
 BRIARHOLLOW_SPAWN = (11, 18)  # on the path near bottom
 BRIARHOLLOW_EXIT = [(10, 19), (11, 19)]  # exit tiles
+
+
+# ══════════════════════════════════════════════════════════
+#  WOODHAVEN — Forest Ranger Town (mid-tier)
+# ══════════════════════════════════════════════════════════
+
+# 28x22 tile map — forest town with a river
+WOODHAVEN_MAP_RAW = [
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTT",  # 0
+    "T..........TT.............T",  # 1
+    "T..####..####..TT.........T",  # 2
+    "T..#..#..#..#..TT..####..TT",  # 3
+    "T..#..D..D..#......#..#..TT",  # 4  inn(5,4) shop(8,4)
+    "T..####..####......#..D...T",  # 5                   guild(22,5)
+    "T..........P.......####...T",  # 6
+    "T..PPPPPPPP..............TT",  # 7
+    "T..P.........####........TT",  # 8
+    "T..P.........#..#.........T",  # 9
+    "T..P..####...D..#.........T",  # 10 temple(8,10)    tavern(13,10)
+    "T..P..#..#...####.........T",  # 11
+    "T..P..#..D................T",  # 12
+    "T..P..####..S.............T",  # 13
+    "T..P..............####....T",  # 14
+    "WWWBWWWWWWWWWWWWWW#..#..WWT",  # 15 bridge(3,15) forge
+    "T..P..............D..#....T",  # 16              forge(18,16)
+    "T..P..............####....T",  # 17
+    "T..P......................T",  # 18
+    "T..P..####................T",  # 19
+    "T..P..#..D................T",  # 20 ranger_hall(8,20)
+    "TPPPPPPPPEEPPPPPPPPPPPPPPPT",  # 21 exits(9,21)(10,21)
+]
+
+WOODHAVEN_MAP = _pad_map(WOODHAVEN_MAP_RAW, 28)
+
+WOODHAVEN_BUILDINGS = {
+    "inn": {
+        "name": "The Canopy Rest",
+        "type": BLD_INN,
+        "door": (6, 4),
+        "color": (120, 100, 70),
+        "label_pos": (3, 2),
+        "npc_name": "Innkeeper Jessa",
+    },
+    "shop": {
+        "name": "Woodhaven Trading Post",
+        "type": BLD_SHOP,
+        "door": (9, 4),
+        "color": (100, 130, 80),
+        "label_pos": (7, 2),
+        "npc_name": "Trader Finn",
+    },
+    "temple": {
+        "name": "Grove Shrine",
+        "type": BLD_TEMPLE,
+        "door": (9, 12),
+        "color": (80, 150, 80),
+        "label_pos": (5, 10),
+        "npc_name": "Druid Rowan",
+    },
+    "tavern": {
+        "name": "The Hunter's Horn",
+        "type": BLD_TAVERN,
+        "door": (13, 10),
+        "color": (130, 100, 60),
+        "label_pos": (12, 8),
+        "npc_name": "Barkeep Holt",
+    },
+    "forge": {
+        "name": "Ranger's Forge",
+        "type": BLD_FORGE,
+        "door": (18, 16),
+        "color": (160, 100, 50),
+        "label_pos": (17, 14),
+        "npc_name": "Smith Wren",
+    },
+    "guild": {
+        "name": "Ranger's Guild",
+        "type": BLD_HOUSE,
+        "door": (22, 5),
+        "color": (80, 120, 70),
+        "label_pos": (20, 3),
+        "npc_name": "Guildmaster Oren",
+    },
+    "ranger_hall": {
+        "name": "Scout Hall",
+        "type": BLD_HOUSE,
+        "door": (9, 20),
+        "color": (90, 110, 70),
+        "label_pos": (5, 19),
+    },
+}
+
+WOODHAVEN_NPCS = [
+    # Story NPCs
+    {
+        "name": "Ranger Lyric",
+        "x": 14, "y": 7,
+        "dialogue_id": "ranger_lyric",
+        "description": "A sharp-eyed ranger keeping watch over the forest paths.",
+        "color": (100, 160, 80),
+    },
+    {
+        "name": "Old Moss",
+        "x": 6, "y": 14,
+        "dialogue_id": "old_moss",
+        "description": "An ancient herbalist gathering mushrooms by the river.",
+        "color": (140, 170, 110),
+    },
+    # Service NPCs
+    {
+        "name": "Innkeeper Jessa",
+        "x": 7, "y": 4,
+        "service": "inn",
+        "dialogue_id": None,
+        "description": "A quiet woman who keeps the inn spotless.",
+        "color": (180, 160, 120),
+    },
+    {
+        "name": "Trader Finn",
+        "x": 10, "y": 4,
+        "service": "shop",
+        "dialogue_id": None,
+        "description": "A well-traveled merchant with ranger supplies.",
+        "color": (120, 180, 100),
+    },
+    {
+        "name": "Druid Rowan",
+        "x": 10, "y": 12,
+        "service": "temple",
+        "dialogue_id": None,
+        "description": "A druid who tends the forest shrine.",
+        "color": (80, 200, 100),
+    },
+    {
+        "name": "Barkeep Holt",
+        "x": 14, "y": 10,
+        "service": "tavern",
+        "dialogue_id": None,
+        "description": "A burly hunter who runs the tavern between seasons.",
+        "color": (180, 140, 80),
+    },
+    {
+        "name": "Smith Wren",
+        "x": 19, "y": 16,
+        "service": "forge",
+        "dialogue_id": None,
+        "description": "A wiry woman who crafts bows and arrowheads.",
+        "color": (200, 130, 60),
+    },
+]
+
+WOODHAVEN_SIGNS = {
+    (11, 13): "Job Board — Rangers needed for patrol work.",
+}
+
+WOODHAVEN_SPAWN = (9, 20)
+WOODHAVEN_EXIT = [(9, 21), (10, 21)]
+
+
+# ══════════════════════════════════════════════════════════
+#  IRONHEARTH — Dwarven Mining City (high-tier)
+# ══════════════════════════════════════════════════════════
+
+# 30x24 tile map — stone city with forges and mineshaft entrance
+IRONHEARTH_MAP_RAW = [
+    "##############################",  # 0
+    "#............................#",  # 1
+    "#..####..####..####..####...#",  # 2
+    "#..#..#..#..#..#..#..#..#...#",  # 3
+    "#..#..D..D..#..#..D..D..#...#",  # 4  inn(5,4) shop(8,4) temple(17,4) tavern(20,4)
+    "#..####..####..####..####...#",  # 5
+    "#............................#",  # 6
+    "#..PPPPPPPPPPPPPPPPPPPPPPPP.#",  # 7
+    "#..P........................#",  # 8
+    "#..P..########..########...#",  # 9
+    "#..P..#......#..#......#...#",  # 10
+    "#..P..#......D..D......#...#",  # 11 forge_main(11,11) armory(14,11)
+    "#..P..#......#..#......#...#",  # 12
+    "#..P..########..########...#",  # 13
+    "#..P........................#",  # 14
+    "#..P.S......................#",  # 15
+    "#..P........................#",  # 16
+    "#..P..####......####........#",  # 17
+    "#..P..#..#......#..#........#",  # 18
+    "#..P..#..D......D..#........#",  # 19 guild(8,19) mines_office(15,19)
+    "#..P..####......####........#",  # 20
+    "#..P........................#",  # 21
+    "#..P........................#",  # 22
+    "#PPPPPPPPPEEPPPPPPPPPPPPPPPP#",  # 23 exits(10,23)(11,23)
+]
+
+IRONHEARTH_MAP = _pad_map(IRONHEARTH_MAP_RAW, 30)
+
+IRONHEARTH_BUILDINGS = {
+    "inn": {
+        "name": "The Iron Anvil Inn",
+        "type": BLD_INN,
+        "door": (6, 4),
+        "color": (100, 90, 80),
+        "label_pos": (3, 2),
+        "npc_name": "Innkeeper Bron",
+    },
+    "shop": {
+        "name": "Ironhearth Forge & Armory",
+        "type": BLD_SHOP,
+        "door": (9, 4),
+        "color": (130, 110, 80),
+        "label_pos": (7, 2),
+        "npc_name": "Merchant Gilda",
+    },
+    "temple": {
+        "name": "Shrine of the Deep",
+        "type": BLD_TEMPLE,
+        "door": (18, 4),
+        "color": (120, 120, 160),
+        "label_pos": (15, 2),
+        "npc_name": "Priest Korvan",
+    },
+    "tavern": {
+        "name": "The Molten Cup",
+        "type": BLD_TAVERN,
+        "door": (21, 4),
+        "color": (160, 100, 50),
+        "label_pos": (19, 2),
+        "npc_name": "Barkeep Magda",
+    },
+    "forge_main": {
+        "name": "The Grand Forge",
+        "type": BLD_FORGE,
+        "door": (13, 11),
+        "color": (200, 120, 40),
+        "label_pos": (7, 9),
+        "npc_name": "Master Smith Thardin",
+    },
+    "armory": {
+        "name": "City Armory",
+        "type": BLD_SHOP,
+        "door": (16, 11),
+        "color": (140, 140, 150),
+        "label_pos": (15, 9),
+        "npc_name": "Quartermaster Helga",
+    },
+    "guild": {
+        "name": "Miners' Guild",
+        "type": BLD_HOUSE,
+        "door": (9, 19),
+        "color": (110, 100, 80),
+        "label_pos": (5, 17),
+        "npc_name": "Guildmaster Dorric",
+    },
+    "mines_office": {
+        "name": "Mines Office",
+        "type": BLD_HOUSE,
+        "door": (16, 19),
+        "color": (100, 100, 110),
+        "label_pos": (14, 17),
+    },
+}
+
+IRONHEARTH_NPCS = [
+    # Story NPCs
+    {
+        "name": "Foreman Brak",
+        "x": 20, "y": 14,
+        "dialogue_id": "foreman_brak",
+        "description": "A scarred dwarf who oversees the mine operations.",
+        "color": (180, 140, 90),
+    },
+    {
+        "name": "Scholar Petra",
+        "x": 24, "y": 8,
+        "dialogue_id": "scholar_petra",
+        "description": "A human scholar studying dwarven runes.",
+        "color": (160, 160, 200),
+    },
+    # Service NPCs
+    {
+        "name": "Innkeeper Bron",
+        "x": 7, "y": 4,
+        "service": "inn",
+        "dialogue_id": None,
+        "description": "A stout dwarf who pours strong ale.",
+        "color": (160, 130, 90),
+    },
+    {
+        "name": "Merchant Gilda",
+        "x": 10, "y": 4,
+        "service": "shop",
+        "dialogue_id": None,
+        "description": "A sharp-tongued merchant with the finest goods.",
+        "color": (180, 160, 100),
+    },
+    {
+        "name": "Priest Korvan",
+        "x": 19, "y": 4,
+        "service": "temple",
+        "dialogue_id": None,
+        "description": "A solemn priest of the deep stone.",
+        "color": (140, 140, 200),
+    },
+    {
+        "name": "Barkeep Magda",
+        "x": 22, "y": 4,
+        "service": "tavern",
+        "dialogue_id": None,
+        "description": "A boisterous dwarven woman who loves a good story.",
+        "color": (200, 140, 80),
+    },
+    {
+        "name": "Master Smith Thardin",
+        "x": 12, "y": 11,
+        "service": "forge",
+        "dialogue_id": None,
+        "description": "The finest weaponsmith in the region. His work is legendary.",
+        "color": (220, 140, 40),
+    },
+]
+
+IRONHEARTH_SIGNS = {
+    (6, 15): "Job Board — Miners and fighters needed.",
+}
+
+IRONHEARTH_SPAWN = (10, 22)
+IRONHEARTH_EXIT = [(10, 23), (11, 23)]
 
 
 # ══════════════════════════════════════════════════════════
@@ -211,6 +576,30 @@ TOWN_MAPS = {
         "signs": BRIARHOLLOW_SIGNS,
         "spawn": BRIARHOLLOW_SPAWN,
         "exits": BRIARHOLLOW_EXIT,
+        "ambient": "town_ambient",
+    },
+    "woodhaven": {
+        "name": "Woodhaven",
+        "map": WOODHAVEN_MAP,
+        "width": 28,
+        "height": 22,
+        "buildings": WOODHAVEN_BUILDINGS,
+        "npcs": WOODHAVEN_NPCS,
+        "signs": WOODHAVEN_SIGNS,
+        "spawn": WOODHAVEN_SPAWN,
+        "exits": WOODHAVEN_EXIT,
+        "ambient": "town_ambient",
+    },
+    "ironhearth": {
+        "name": "Ironhearth",
+        "map": IRONHEARTH_MAP,
+        "width": 30,
+        "height": 24,
+        "buildings": IRONHEARTH_BUILDINGS,
+        "npcs": IRONHEARTH_NPCS,
+        "signs": IRONHEARTH_SIGNS,
+        "spawn": IRONHEARTH_SPAWN,
+        "exits": IRONHEARTH_EXIT,
         "ambient": "town_ambient",
     },
 }

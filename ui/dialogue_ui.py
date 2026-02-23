@@ -202,12 +202,28 @@ class DialogueUI:
                         for act in node["on_enter"]:
                             if act.get("flag", "").endswith(".killed"):
                                 self.result = "fight"
+                            elif act.get("flag", "").endswith("_spared") or \
+                                 act.get("flag", "") == "goblin_peace":
+                                self.result = "peace"
                     return "done"
                 return None
         elif self.state.should_auto_advance():
             self.state.advance()
             self.displayed_chars = 0
             if self.state.finished:
+                # Check final node for result
+                node = self.state.current_node
+                if node.get("on_enter"):
+                    for act in node["on_enter"]:
+                        if act.get("flag", "").endswith(".killed"):
+                            self.result = "fight"
+                        elif act.get("flag", "").endswith("_spared") or \
+                             act.get("flag", "") == "goblin_peace":
+                            self.result = "peace"
+                # Also check if peace was already set in earlier nodes
+                from core.story_flags import get_flag
+                if get_flag("choice.grak_spared"):
+                    self.result = "peace"
                 return "done"
             return None
         else:
@@ -239,6 +255,12 @@ class DialogueUI:
                             for act in node["on_enter"]:
                                 if act.get("flag", "").endswith(".killed"):
                                     self.result = "fight"
+                                elif act.get("flag", "").endswith("_spared") or \
+                                     act.get("flag", "") == "goblin_peace":
+                                    self.result = "peace"
+                        from core.story_flags import get_flag
+                        if get_flag("choice.grak_spared"):
+                            self.result = "peace"
                         return "done"
                     return None
         return None

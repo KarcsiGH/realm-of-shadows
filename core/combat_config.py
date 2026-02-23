@@ -62,7 +62,7 @@ MINIMUM_DAMAGE          = 1
 MAGIC_STAT_MULT         = 1.0
 
 # Healing formula: (PIE × HEAL_PIE_MULT) + Spell Power + Focus + random(0, PIE/2)
-HEAL_PIE_MULT           = 2.0
+HEAL_PIE_MULT           = 1.2
 
 
 # ═══════════════════════════════════════════════════════════════

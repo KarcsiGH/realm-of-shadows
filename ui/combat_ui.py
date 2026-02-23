@@ -847,13 +847,14 @@ class CombatUI:
                 abilities = actor.get("abilities", [])
                 if self.hover_action < len(abilities):
                     ab = abilities[self.hover_action]
-                    # Check if it's a heal (target allies) or offensive (target enemies)
-                    if "heal" in ab["name"].lower():
+                    ab_type = ab.get("type", "spell")
+                    # Route to proper target mode based on ability type
+                    if ab_type in ("heal", "buff", "cure") or "heal" in ab["name"].lower():
                         self.selected_ability = ab
-                        self.action_mode = "target_heal"
+                        self.action_mode = "target_heal"  # targets allies
                     else:
                         self.selected_ability = ab
-                        self.action_mode = "target_ability"
+                        self.action_mode = "target_ability"  # targets enemies
                     return None
 
         elif self.action_mode == "choose_move":

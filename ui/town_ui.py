@@ -71,6 +71,7 @@ class TownUI:
     VIEW_INN_LEVELUP = "inn_levelup"
     VIEW_FORGE = "forge"
     VIEW_FORGE_CRAFT = "forge_craft"
+    VIEW_JOBBOARD = "jobboard"
     VIEW_FORGE_UPGRADE = "forge_upgrade"
     VIEW_FORGE_ENCHANT = "forge_enchant"
 
@@ -168,6 +169,8 @@ class TownUI:
         elif self.view in (self.VIEW_FORGE, self.VIEW_FORGE_CRAFT,
                            self.VIEW_FORGE_UPGRADE, self.VIEW_FORGE_ENCHANT):
             self._draw_forge(surface, mx, my)
+        elif self.view == self.VIEW_JOBBOARD:
+            self._draw_jobboard(surface, mx, my)
 
         # Message bar
         if self.message and self.msg_timer > 0:
@@ -447,7 +450,9 @@ class TownUI:
 
         npc = get_npc_at(td, fx, fy)
         if npc:
-            return f"[ENTER] Talk to {npc['name']}"
+            service = npc.get("service", "")
+            service_hint = f" ({service.title()})" if service else ""
+            return f"[ENTER] Talk to {npc['name']}{service_hint}"
 
         sign_text = get_sign_at(td, fx, fy)
         if sign_text:
@@ -456,7 +461,9 @@ class TownUI:
         # Check current tile too for NPCs
         npc = get_npc_at(td, x, y)
         if npc:
-            return f"[ENTER] Talk to {npc['name']}"
+            service = npc.get("service", "")
+            service_hint = f" ({service.title()})" if service else ""
+            return f"[ENTER] Talk to {npc['name']}{service_hint}"
 
         return ""
 
@@ -541,7 +548,8 @@ class TownUI:
                 elif btype == BLD_HOUSE:
                     self._show_walk_msg(f"The door to {bld['name']} is locked.", GREY)
                 elif btype == BLD_JOBBOARD:
-                    self._show_walk_msg("Job Board — No jobs posted yet.", DIM_GOLD)
+                    self._show_walk_msg("Checking the job board...", DIM_GOLD)
+                    self.view = self.VIEW_JOBBOARD
                 return None
 
         # Check exit tile
@@ -559,6 +567,39 @@ class TownUI:
             npc = get_npc_at(td, x, y)  # also check current tile
         if npc:
             sfx.play("npc_talk")
+
+            # Service NPC — opens building menu directly
+            service = npc.get("service")
+            if service:
+                npc_name = npc["name"]
+                if service == "inn":
+                    self._show_walk_msg(f"{npc_name}: \"Welcome to the inn! Rest a while.\"",
+                                        npc.get("color", CREAM))
+                    self.view = self.VIEW_INN
+                    return None
+                elif service == "shop":
+                    self._show_walk_msg(f"{npc_name}: \"Browse my wares, friend.\"",
+                                        npc.get("color", CREAM))
+                    self.view = self.VIEW_SHOP
+                    return None
+                elif service == "temple":
+                    self._show_walk_msg(f"{npc_name}: \"The Light guides and heals.\"",
+                                        npc.get("color", CREAM))
+                    self.view = self.VIEW_TEMPLE
+                    return None
+                elif service == "tavern":
+                    self._show_walk_msg(f"{npc_name}: \"Pull up a chair! What'll it be?\"",
+                                        npc.get("color", CREAM))
+                    self.view = self.VIEW_TAVERN
+                    return None
+                elif service == "forge":
+                    self._show_walk_msg(f"{npc_name}: \"Fine steel, fair prices.\"",
+                                        npc.get("color", CREAM))
+                    self.view = self.VIEW_FORGE
+                    self.forge_scroll = 0
+                    return None
+
+            # Regular dialogue NPC
             did = npc.get("dialogue_id")
             if did:
                 from data.story_data import NPC_DIALOGUES
@@ -577,7 +618,11 @@ class TownUI:
         # Check facing tile for sign
         sign_text = get_sign_at(td, fx, fy)
         if sign_text:
-            self._show_walk_msg(sign_text, DIM_GOLD)
+            if "Job Board" in sign_text:
+                self._show_walk_msg("Checking the job board...", DIM_GOLD)
+                self.view = self.VIEW_JOBBOARD
+            else:
+                self._show_walk_msg(sign_text, DIM_GOLD)
             return None
 
         return None
@@ -1099,6 +1144,94 @@ class TownUI:
         self._draw_party_bar(surface, mx, my)
 
     # ─────────────────────────────────────────────────────────
+    #  JOB BOARD
+    # ─────────────────────────────────────────────────────────
+
+    def _draw_jobboard(self, surface, mx, my):
+        from data.job_board import get_town_jobs, check_job_ready, get_job_progress, JOBS
+
+        draw_text(surface, "Job Board", SCREEN_W // 2 - 60, 30, GOLD, 24, bold=True)
+        draw_text(surface, "Available work in the area.",
+                  SCREEN_W // 2 - 100, 65, GREY, 14)
+
+        back = pygame.Rect(SCREEN_W - 140, 30, 120, 34)
+        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+
+        jobs = get_town_jobs(self.town_id)
+        if not jobs:
+            draw_text(surface, "No jobs posted.", SCREEN_W // 2 - 60, 150, GREY, 16)
+            self._draw_party_bar(surface, mx, my)
+            return
+
+        y = 100
+        self._job_buttons = []
+        for job_id, job, state in jobs:
+            panel = pygame.Rect(60, y, SCREEN_W - 120, 80)
+            draw_panel(surface, panel, bg_color=(25, 20, 35))
+
+            # Job name and type tag
+            type_col = {"bounty": (200, 100, 100), "fetch": (100, 180, 100),
+                        "explore": (100, 140, 220)}.get(job["type"], GREY)
+            tag = job["type"].upper()
+            draw_text(surface, f"[{tag}]", panel.x + 10, panel.y + 8, type_col, 11)
+            draw_text(surface, job["name"], panel.x + 80, panel.y + 6, CREAM, 16, bold=True)
+
+            # Rewards
+            draw_text(surface, f"Reward: {job['reward_gold']}g, {job['reward_xp']} XP",
+                      panel.x + 10, panel.y + 30, DIM_GOLD, 12)
+
+            # Description
+            desc = job["description"]
+            if len(desc) > 80:
+                desc = desc[:77] + "..."
+            draw_text(surface, desc, panel.x + 10, panel.y + 50, GREY, 11,
+                      max_width=panel.width - 160)
+
+            # Progress / action button
+            btn_x = panel.x + panel.width - 130
+            btn_w = 120
+            if state == 0:
+                # Available — accept button
+                btn = pygame.Rect(btn_x, panel.y + 25, btn_w, 30)
+                draw_button(surface, btn, "Accept",
+                            hover=btn.collidepoint(mx, my), size=12)
+                self._job_buttons.append((btn, "accept", job_id))
+            elif state == 1:
+                # Accepted — show progress
+                progress = get_job_progress(job_id)
+                required = job.get("required", 0)
+                ready = check_job_ready(job_id, self.party)
+
+                if job["type"] == "bounty":
+                    prog_text = f"{min(progress, required)}/{required} killed"
+                elif job["type"] == "fetch":
+                    # Count items in party
+                    count = 0
+                    for c in self.party:
+                        for item in c.inventory:
+                            if item.get("name") == job["item_name"]:
+                                count += item.get("stack", 1)
+                    prog_text = f"{min(count, required)}/{required} collected"
+                else:
+                    prog_text = "Complete!" if ready else "In progress..."
+
+                prog_col = (100, 220, 100) if ready else (220, 180, 80)
+                draw_text(surface, prog_text, btn_x, panel.y + 15, prog_col, 12)
+
+                if ready:
+                    btn = pygame.Rect(btn_x, panel.y + 38, btn_w, 28)
+                    draw_button(surface, btn, "Turn In",
+                                hover=btn.collidepoint(mx, my), size=12)
+                    self._job_buttons.append((btn, "turnin", job_id))
+            elif state == -2:
+                draw_text(surface, "COMPLETED", btn_x + 10, panel.y + 30,
+                          (80, 180, 80), 13, bold=True)
+
+            y += 88
+
+        self._draw_party_bar(surface, mx, my)
+
+    # ─────────────────────────────────────────────────────────
     #  CLICK HANDLING
     # ─────────────────────────────────────────────────────────
 
@@ -1374,6 +1507,28 @@ class TownUI:
         elif self.view in (self.VIEW_FORGE, self.VIEW_FORGE_CRAFT,
                            self.VIEW_FORGE_UPGRADE, self.VIEW_FORGE_ENCHANT):
             return self._handle_forge_click(mx, my)
+
+        # ── Job Board ──
+        elif self.view == self.VIEW_JOBBOARD:
+            back = pygame.Rect(SCREEN_W - 140, 30, 120, 34)
+            if back.collidepoint(mx, my):
+                self._return_to_town()
+                return None
+
+            from data.job_board import accept_job, complete_job
+            for btn, action, job_id in getattr(self, '_job_buttons', []):
+                if btn.collidepoint(mx, my):
+                    if action == "accept":
+                        accept_job(job_id)
+                        sfx.play("quest_accept")
+                        self._msg("Job accepted!", (100, 220, 100))
+                    elif action == "turnin":
+                        reward = complete_job(job_id, self.party)
+                        if reward:
+                            sfx.play("quest_complete")
+                            self._msg(f"Job complete! +{reward['gold']}g, +{reward['xp']} XP",
+                                      GOLD)
+                    return None
 
         return None
 
