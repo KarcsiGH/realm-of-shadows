@@ -1,821 +1,737 @@
 """
-Realm of Shadows — Dungeon UI (Top-Down View v2)
-Large tiles, torch-lit radius, clear wall framing, object icons,
-minimap overlay, smooth camera follow, themed palettes.
+Realm of Shadows — Dungeon UI v3  (3D Raycaster)
+
+First-person perspective dungeon renderer using a DDA raycaster.
+Textured walls per dungeon theme, torch falloff, floor/ceiling shading,
+sprite billboarding for enemies/objects, minimap overlay, full HUD.
+
+Public interface (unchanged from v2):
+    __init__(dungeon_state)
+    draw(surface, mx, my, dt)
+    handle_key(key) → result_dict or None
+    handle_click(mx, my) → result_dict or None
+    show_event(msg, color)
+    on_floor_change()
 """
+
 import pygame, math, random
-from ui.renderer import *
+from ui.renderer import SCREEN_W, SCREEN_H, CREAM, GOLD
 from data.dungeon import (
-    DungeonState, PASSABLE_TILES, DT_WALL, DT_FLOOR, DT_CORRIDOR,
-    DT_DOOR, DT_STAIRS_DOWN, DT_STAIRS_UP, DT_TREASURE, DT_TRAP, DT_ENTRANCE,
-    DT_SECRET_DOOR, DT_INTERACTABLE,
+    DungeonState, PASSABLE_TILES,
+    DT_WALL, DT_FLOOR, DT_CORRIDOR,
+    DT_DOOR, DT_STAIRS_DOWN, DT_STAIRS_UP, DT_TREASURE, DT_TRAP,
+    DT_ENTRANCE, DT_SECRET_DOOR, DT_INTERACTABLE,
 )
 
-# ── Layout ──
-VP_X, VP_Y = 10, 50
-VP_W, VP_H = 840, 630
-TS = 32                  # tile size in pixels
-TORCH_R = 8             # lit radius around party
-FOG_B = 0.22            # brightness of discovered-but-dark tiles
+try:
+    from ui.renderer import draw_panel, draw_text_shadow
+except ImportError:
+    draw_panel = None
+    draw_text_shadow = None
 
-# ── Theme palettes ──
+# ═══════════════════════════════════════════════════════════════
+#  LAYOUT CONSTANTS
+# ═══════════════════════════════════════════════════════════════
+
+VP_X, VP_Y   = 0,   50
+VP_W, VP_H   = 940, 820
+HUD_H        = 90
+
+MM_X    = VP_X + VP_W + 8
+MM_Y    = VP_Y + 4
+MM_W    = SCREEN_W - MM_X - 4
+MM_H    = 200
+MM_TS   = 5
+
+NUM_RAYS    = VP_W
+FOV         = math.radians(66)
+HALF_FOV    = FOV / 2
+PROJ_DIST   = (VP_W / 2) / math.tan(HALF_FOV)
+
+MOVE_SPEED  = 3.5
+ROT_SPEED   = 2.2
+TORCH_DIST  = 8.0
+
+# ═══════════════════════════════════════════════════════════════
+#  DUNGEON THEMES
+# ═══════════════════════════════════════════════════════════════
+
 THEMES = {
-    "cave": {
-        "wall_fill": (38, 32, 26),  "wall_top": (55, 48, 38),
-        "floor": (90, 78, 62),      "corr": (82, 72, 58),
-        "grid": (68, 58, 46),       "bg": (12, 10, 8),
-        "torch": (220, 160, 60),
-    },
-    "mine": {
-        "wall_fill": (48, 38, 28),  "wall_top": (65, 55, 42),
-        "floor": (100, 88, 68),     "corr": (92, 80, 62),
-        "grid": (75, 64, 50),       "bg": (10, 8, 6),
-        "torch": (240, 180, 70),
-    },
-    "crypt": {
-        "wall_fill": (30, 32, 45),  "wall_top": (48, 52, 68),
-        "floor": (62, 66, 82),      "corr": (56, 60, 74),
-        "grid": (44, 48, 60),       "bg": (8, 8, 14),
-        "torch": (120, 140, 200),
-    },
-    "ruins": {
-        "wall_fill": (42, 36, 28),  "wall_top": (62, 52, 40),
-        "floor": (98, 85, 68),      "corr": (90, 78, 62),
-        "grid": (72, 62, 50),       "bg": (10, 8, 6),
-        "torch": (230, 170, 60),
-    },
-    "tower": {
-        "wall_fill": (35, 30, 50),  "wall_top": (55, 48, 75),
-        "floor": (70, 65, 90),      "corr": (62, 58, 82),
-        "grid": (50, 46, 68),       "bg": (8, 6, 16),
-        "torch": (140, 120, 220),
-    },
+    "cave":  ((110,90,70),  (45,35,26),  (55,45,34),  (18,14,10), (220,145,55), (12,8,6)  ),
+    "mine":  ((120,100,75), (55,42,30),  (65,52,38),  (20,15,10), (240,175,65), (14,10,6) ),
+    "crypt": ((80,88,120),  (32,36,55),  (38,42,65),  (12,12,22), (100,130,210),(8,8,16)  ),
+    "ruins": ((115,95,72),  (50,40,30),  (62,50,38),  (18,13,9),  (225,160,55), (12,9,6)  ),
+    "tower": ((90,82,130),  (38,34,62),  (48,44,78),  (14,12,24), (145,115,230),(8,6,18)  ),
 }
 
-# ── Colors ──
-C_DOOR      = (160, 115, 55)
-C_DOOR_BRD  = (100, 70, 30)
-C_SDN       = (200, 180, 60)
-C_SUP       = (80, 190, 230)
-C_TREAS     = (255, 220, 50)
-C_TREAS_O   = (110, 90, 50)
-C_ENTRANCE  = (100, 210, 110)
-C_TRAP      = (220, 55, 55)
-C_JOURNAL   = (210, 190, 130)
-C_ENEMY     = (190, 40, 40)
-C_BOSS      = (230, 30, 90)
-C_INTERACT_HEAL = (80, 200, 255)
-C_INTERACT_MP   = (160, 100, 255)
-C_INTERACT_CURSE = (180, 50, 180)
-C_PARTY     = (255, 255, 80)
-C_PARTY_OUT = (200, 190, 50)
+# ═══════════════════════════════════════════════════════════════
+#  WALL TEXTURE GENERATOR
+# ═══════════════════════════════════════════════════════════════
 
+TEX_W, TEX_H = 64, 64
+
+def _gen_texture(wall_light, wall_dark, is_door=False):
+    surf = pygame.Surface((TEX_W, TEX_H))
+    rng  = random.Random(hash((wall_light, is_door)))
+
+    if is_door:
+        surf.fill(tuple(int(v * 0.85) for v in wall_light))
+        for py in range(0, TEX_H, 12):
+            pygame.draw.line(surf, tuple(int(v*0.55) for v in wall_light), (0,py),(TEX_W,py))
+        for px in range(0, TEX_W, 8):
+            c = tuple(int(v*(0.7+rng.random()*0.25)) for v in wall_light)
+            pygame.draw.line(surf, c, (px,0),(px,TEX_H))
+        return surf
+
+    brick_h = 8
+    brick_w = 16
+    mortar  = tuple(int(v*0.55) for v in wall_dark)
+    surf.fill(mortar)
+    for row in range(TEX_H // brick_h + 1):
+        oy = row * brick_h
+        offset = (brick_w//2) if (row%2) else 0
+        for col in range(-1, TEX_W // brick_w + 2):
+            ox = col * brick_w + offset
+            tone = 0.75 + rng.random()*0.35
+            base = tuple(min(255,int(v*tone)) for v in wall_light)
+            r = pygame.Rect(ox+1, oy+1, brick_w-2, brick_h-2)
+            r.clamp_ip(pygame.Rect(0,0,TEX_W,TEX_H))
+            pygame.draw.rect(surf, base, r)
+    for _ in range(80):
+        nx = rng.randint(0,TEX_W-1)
+        ny = rng.randint(0,TEX_H-1)
+        ex = surf.get_at((nx,ny))
+        dim = tuple(max(0,v-rng.randint(0,30)) for v in ex[:3])
+        surf.set_at((nx,ny), dim)
+    return surf
+
+
+# ═══════════════════════════════════════════════════════════════
+#  SPRITE DATA
+# ═══════════════════════════════════════════════════════════════
+
+SPRITE_COLORS = {
+    DT_TREASURE:     (255, 220, 50),
+    DT_STAIRS_DOWN:  (100, 220, 255),
+    DT_STAIRS_UP:    (80,  200, 255),
+    DT_ENTRANCE:     (100, 230, 120),
+    DT_TRAP:         (230, 50,  50),
+    DT_INTERACTABLE: (80,  200, 255),
+    "enemy":         (200, 40,  40),
+    "boss":          (255, 20,  100),
+    "journal":       (220, 200, 130),
+}
+
+
+# ═══════════════════════════════════════════════════════════════
+#  DUNGEON UI CLASS
+# ═══════════════════════════════════════════════════════════════
 
 class DungeonUI:
-    def __init__(self, ds):
-        self.dungeon = ds
-        self.th = THEMES.get(ds.theme, THEMES["cave"])
-        self.facing = 0  # kept for API compat
 
-        # Smooth camera (pixel coords)
-        self.cam_x = float(ds.party_x * TS)
-        self.cam_y = float(ds.party_y * TS)
+    def __init__(self, ds: DungeonState):
+        self.dungeon   = ds
+        self.theme_id  = getattr(ds, "theme", "cave")
+        th = THEMES.get(self.theme_id, THEMES["cave"])
+        self.wall_light, self.wall_dark, self.floor_c, self.ceil_c, \
+            self.torch_tint, self.fog_c = th
+
+        # Player state
+        self.px    = float(ds.party_x) + 0.5
+        self.py    = float(ds.party_y) + 0.5
+        self.angle = 0.0
+        self._recalc_camera()
+
+        self._keys: set = set()
+
+        # Pre-generate textures
+        self._tex_wall  = _gen_texture(self.wall_light, self.wall_dark)
+        self._tex_door  = _gen_texture(self.wall_light, self.wall_dark, is_door=True)
+
+        # Pre-bake column arrays from textures for speed
+        self._wall_cols = self._bake_tex_cols(self._tex_wall)
+        self._door_cols = self._bake_tex_cols(self._tex_door)
+
+        # Z-buffer
+        self._zbuf = [0.0] * VP_W
+
+        # Render surface
+        self._view = pygame.Surface((VP_W, VP_H))
 
         # Events
-        self.event_message = ""
-        self.event_timer = 0
-        self.event_color = CREAM
-        self.event_queue = []
+        self.event_message    = ""
+        self.event_timer      = 0
+        self.event_color      = CREAM
+        self.event_queue: list = []
 
-        # Dialogs
-        self.show_camp_confirm = False
+        self.show_camp_confirm   = False
         self.show_stairs_confirm = False
-        self.stairs_direction = None
+        self.stairs_direction    = None
 
-        # Animation
-        self.t = 0.0
-        self.pulse = 0.0
-
-        # Fading
         self.fading_intensity = 0.0
         self._update_fading()
+
+        self.t     = 0.0
+        self.pulse = 0.0
+
+        self._sync_grid_pos()
+
+    # ─────────────────────────────────────────────────────────
+
+    def _bake_tex_cols(self, surf):
+        """Pre-bake each column of a texture into a list of colour lists."""
+        cols = []
+        for x in range(TEX_W):
+            col = [surf.get_at((x, y))[:3] for y in range(TEX_H)]
+            cols.append(col)
+        return cols
+
+    def _recalc_camera(self):
+        self.dx =  math.cos(self.angle)
+        self.dy =  math.sin(self.angle)
+        self.cx = -self.dy * 0.825
+        self.cy =  self.dx * 0.825
 
     def _update_fading(self):
         f = self.dungeon.current_floor
         t = self.dungeon.total_floors
-        self.fading_intensity = min(0.5, (f - 1) / max(1, t) * 0.4)
+        self.fading_intensity = min(0.6, (f-1) / max(1,t) * 0.45)
+
+    def _sync_grid_pos(self):
+        self.dungeon.party_x = int(self.px)
+        self.dungeon.party_y = int(self.py)
 
     def on_floor_change(self):
         self._update_fading()
-        self.cam_x = float(self.dungeon.party_x * TS)
-        self.cam_y = float(self.dungeon.party_y * TS)
+        self.px = float(self.dungeon.party_x) + 0.5
+        self.py = float(self.dungeon.party_y) + 0.5
+        self._recalc_camera()
 
-    @staticmethod
-    def _dim(c, f):
-        return tuple(max(0, min(255, int(v * f))) for v in c)
+    def _is_solid(self, gx, gy):
+        fl = self.dungeon.get_current_floor_data()
+        if gx < 0 or gy < 0 or gx >= fl["width"] or gy >= fl["height"]:
+            return True
+        tile = fl["tiles"][gy][gx]
+        tt   = tile["type"]
+        if tt == DT_SECRET_DOOR and not tile.get("secret_found"):
+            return True
+        return tt == DT_WALL
 
-    # ══════════════════════════════════════════════════════════
+    # ─────────────────────────────────────────────────────────
+
+    def _cast_ray(self, ray_dx, ray_dy):
+        """DDA ray → (dist, wall_x_frac, is_ns, is_door)."""
+        if ray_dx == 0: ray_dx = 1e-10
+        if ray_dy == 0: ray_dy = 1e-10
+
+        delta_x = abs(1.0 / ray_dx)
+        delta_y = abs(1.0 / ray_dy)
+        step_x  = 1 if ray_dx > 0 else -1
+        step_y  = 1 if ray_dy > 0 else -1
+
+        map_x   = int(self.px)
+        map_y   = int(self.py)
+        frac_x  = self.px - map_x
+        frac_y  = self.py - map_y
+
+        sdx = (1.0 - frac_x) * delta_x if ray_dx > 0 else frac_x * delta_x
+        sdy = (1.0 - frac_y) * delta_y if ray_dy > 0 else frac_y * delta_y
+
+        fl   = self.dungeon.get_current_floor_data()
+        fw   = fl["width"]
+        fh   = fl["height"]
+        tiles = fl["tiles"]
+
+        for _ in range(64):
+            if sdx < sdy:
+                sdx  += delta_x
+                map_x += step_x
+                ns    = False
+            else:
+                sdy  += delta_y
+                map_y += step_y
+                ns    = True
+
+            if map_x < 0 or map_y < 0 or map_x >= fw or map_y >= fh:
+                return 20.0, 0.0, ns, False
+            tile = tiles[map_y][map_x]
+            tt   = tile["type"]
+            is_s = tt == DT_SECRET_DOOR and not tile.get("secret_found")
+            is_w = tt == DT_WALL or is_s
+            is_d = tt == DT_DOOR
+            if is_w or is_d:
+                if not ns:
+                    dist = (map_x - self.px + (1 - step_x)/2) / ray_dx
+                else:
+                    dist = (map_y - self.py + (1 - step_y)/2) / ray_dy
+                if not ns:
+                    wx = self.py + dist * ray_dy
+                else:
+                    wx = self.px + dist * ray_dx
+                wx -= math.floor(wx)
+                return max(0.01, dist), wx, ns, is_d
+        return 20.0, 0.0, False, False
+
+    # ─────────────────────────────────────────────────────────
     #  MAIN DRAW
-    # ══════════════════════════════════════════════════════════
+    # ─────────────────────────────────────────────────────────
 
     def draw(self, surface, mx, my, dt):
-        ds = dt / 1000.0
+        ds          = dt / 1000.0
+        self.t     += ds
+        self.pulse  = math.sin(self.t * 3.2) * 0.5 + 0.5
         self.event_timer = max(0, self.event_timer - dt)
-        self.t += ds
-        self.pulse = math.sin(self.t * 3.0) * 0.5 + 0.5
-        self.event_queue = [(m, c, t - dt) for m, c, t in self.event_queue if t - dt > 0]
+        self.event_queue = [(m,c,t-dt) for m,c,t in self.event_queue if t-dt > 0]
 
-        # Smooth cam
-        tx = float(self.dungeon.party_x * TS)
-        ty = float(self.dungeon.party_y * TS)
-        lr = min(1.0, 10.0 * ds)
-        self.cam_x += (tx - self.cam_x) * lr
-        self.cam_y += (ty - self.cam_y) * lr
+        self._process_held_keys(ds)
+        self._render_3d()
 
-        surface.fill(self.th["bg"])
-        self._draw_map(surface)
+        surface.blit(self._view, (VP_X, VP_Y))
         self._draw_minimap(surface)
         self._draw_hud(surface, mx, my)
+
         if self.show_camp_confirm:
-            self._draw_camp_dlg(surface, mx, my)
+            self._draw_confirm_dialog(surface, mx, my,
+                "Make Camp?", "Rest and recover HP/MP.",
+                "Camp", "Cancel", "camp")
         if self.show_stairs_confirm:
-            self._draw_stairs_dlg(surface, mx, my)
+            if self.stairs_direction == "down":
+                t, m = "Descend?", "Go deeper into the dungeon."
+            elif self.stairs_direction == "up":
+                t, m = "Ascend?", "Return to the previous floor."
+            else:
+                t, m = "Leave Dungeon?", "Return to the surface."
+            self._draw_confirm_dialog(surface, mx, my, t, m, "Yes", "No", "stairs")
+
         if (self.event_message and self.event_timer > 0) or self.event_queue:
             self._draw_events(surface)
 
-    # ══════════════════════════════════════════════════════════
-    #  MAP
-    # ══════════════════════════════════════════════════════════
+    # ─────────────────────────────────────────────────────────
+    #  3D RENDER
+    # ─────────────────────────────────────────────────────────
 
-    def _draw_map(self, surface):
-        clip = pygame.Rect(VP_X, VP_Y, VP_W, VP_H)
-        surface.set_clip(clip)
+    def _render_3d(self):
+        view  = self._view
+        VH    = VP_H
+        VW    = VP_W
+        HH    = VH // 2
+        zbuf  = self._zbuf
+        flick = 0.95 + 0.05 * self.pulse
+        FOG   = TORCH_DIST
 
-        fl = self.dungeon.get_current_floor_data()
-        fw, fh = fl["width"], fl["height"]
-        px, py = self.dungeon.party_x, self.dungeon.party_y
-
-        # Camera offset — party centred in viewport
-        ox = VP_X + VP_W // 2 - int(self.cam_x) - TS // 2
-        oy = VP_Y + VP_H // 2 - int(self.cam_y) - TS // 2
-
-        # Visible range
-        x0 = max(0, (-ox) // TS - 1)
-        y0 = max(0, (-oy) // TS - 1)
-        x1 = min(fw, x0 + VP_W // TS + 3)
-        y1 = min(fh, y0 + VP_H // TS + 3)
-
-        flicker = 0.92 + 0.08 * math.sin(self.t * 6.7)
-        tiles = fl["tiles"]
-
-        # ── Pass 1: floor + walls ──
-        for ty in range(y0, y1):
-            row = tiles[ty]
-            for tx in range(x0, x1):
-                tile = row[tx]
-                if not tile["discovered"]:
-                    continue
-                sx = ox + tx * TS
-                sy = oy + ty * TS
-                if sx + TS < VP_X or sx > VP_X + VP_W or sy + TS < VP_Y or sy > VP_Y + VP_H:
-                    continue
-
-                dist = math.sqrt((tx - px) ** 2 + (ty - py) ** 2)
-                lit = dist <= TORCH_R
-                if lit:
-                    b = max(0.35, 1.0 - (dist / TORCH_R) * 0.60) * flicker
-                else:
-                    b = FOG_B
-
-                tt = tile["type"]
-                # Undetected secret doors look like walls
-                if tt == DT_SECRET_DOOR and not tile.get("secret_found"):
-                    self._draw_wall(surface, sx, sy, b, tx, ty, tiles, fw, fh)
-                elif tt == DT_WALL:
-                    self._draw_wall(surface, sx, sy, b, tx, ty, tiles, fw, fh)
-                else:
-                    self._draw_floor_tile(surface, sx, sy, b, tt, tile)
-
-        # ── Pass 2: objects on top ──
-        for ty in range(y0, y1):
-            row = tiles[ty]
-            for tx in range(x0, x1):
-                tile = row[tx]
-                if not tile["discovered"]:
-                    continue
-                sx = ox + tx * TS
-                sy = oy + ty * TS
-                if sx + TS < VP_X or sx > VP_X + VP_W or sy + TS < VP_Y or sy > VP_Y + VP_H:
-                    continue
-                dist = math.sqrt((tx - px) ** 2 + (ty - py) ** 2)
-                lit = dist <= TORCH_R
-                b = (max(0.35, 1.0 - (dist / TORCH_R) * 0.60) * flicker) if lit else FOG_B
-                self._draw_obj(surface, sx, sy, b, tile)
-
-        # ── Visible enemies ──
-        for enemy in self.dungeon.get_floor_enemies():
-            ex, ey = enemy["x"], enemy["y"]
-            tile = tiles[ey][ex] if (0 <= ey < fh and 0 <= ex < fw) else None
-            if not tile or not tile["discovered"]:
+        # ── Ceiling / floor scanlines ──
+        for sy in range(VH):
+            if sy == HH:
                 continue
-            dist = math.sqrt((ex - px) ** 2 + (ey - py) ** 2)
-            if dist > TORCH_R + 1:
-                continue  # only show in/near torchlight
-            esx = ox + ex * TS
-            esy = oy + ey * TS
-            if esx + TS < VP_X or esx > VP_X + VP_W:
-                continue
-            if esy + TS < VP_Y or esy > VP_Y + VP_H:
-                continue
-            b = max(0.35, 1.0 - (dist / TORCH_R) * 0.60) * flicker
-            self._draw_enemy_sprite(surface, esx, esy, b, enemy)
-
-        # ── Party ──
-        psx = ox + px * TS
-        psy = oy + py * TS
-        self._draw_party(surface, psx, psy)
-
-        # ── Fading ──
-        if self.fading_intensity > 0.05:
-            self._draw_fading(surface)
-
-        surface.set_clip(None)
-        pygame.draw.rect(surface, PANEL_BORDER, clip, 2)
-
-    # ── Wall drawing ──
-
-    def _draw_wall(self, surface, sx, sy, b, tx, ty, tiles, fw, fh):
-        th = self.th
-        # Filled dark wall
-        pygame.draw.rect(surface, self._dim(th["wall_fill"], b), (sx, sy, TS, TS))
-
-        # Top surface highlight — gives 3D depth illusion
-        top_h = max(2, TS // 5)
-        pygame.draw.rect(surface, self._dim(th["wall_top"], b * 0.9),
-                         (sx + 1, sy + 1, TS - 2, top_h))
-
-        # Only draw border edges that face a non-wall tile (creates clear room outlines)
-        edge = self._dim(th["wall_top"], b * 0.55)
-        for dx, dy, x1, y1, x2, y2 in [
-            (0, -1, sx, sy, sx + TS, sy),               # top
-            (0,  1, sx, sy + TS - 1, sx + TS, sy + TS - 1),  # bottom
-            (-1, 0, sx, sy, sx, sy + TS),                # left
-            ( 1, 0, sx + TS - 1, sy, sx + TS - 1, sy + TS),  # right
-        ]:
-            nx, ny = tx + dx, ty + dy
-            if 0 <= nx < fw and 0 <= ny < fh:
-                if tiles[ny][nx]["type"] != DT_WALL:
-                    pygame.draw.line(surface, edge, (x1, y1), (x2, y2), 2)
-
-    # ── Floor tile ──
-
-    def _draw_floor_tile(self, surface, sx, sy, b, tt, tile):
-        th = self.th
-        base = th["floor"] if tt == DT_FLOOR else th["corr"]
-        col = self._dim(base, b)
-        pygame.draw.rect(surface, col, (sx, sy, TS, TS))
-        # Subtle grid
-        if b > 0.28:
-            gc = self._dim(th["grid"], b * 0.5)
-            pygame.draw.rect(surface, gc, (sx, sy, TS, TS), 1)
-
-    # ── Objects overlay (doors, stairs, treasure etc.) ──
-
-    def _draw_obj(self, surface, sx, sy, b, tile):
-        tt = tile["type"]
-        cx, cy = sx + TS // 2, sy + TS // 2
-        r = TS // 3  # icon radius
-
-        if tt == DT_DOOR:
-            dc = self._dim(C_DOOR, b)
-            m = TS // 5
-            pygame.draw.rect(surface, dc, (sx + m, sy + m, TS - m * 2, TS - m * 2), border_radius=2)
-            pygame.draw.rect(surface, self._dim(C_DOOR_BRD, b),
-                             (sx + m, sy + m, TS - m * 2, TS - m * 2), 2, border_radius=2)
-            # Doorknob
-            pygame.draw.circle(surface, self._dim((220, 200, 100), b),
-                               (sx + TS - m - 4, cy), max(2, TS // 10))
-
-        elif tt == DT_STAIRS_DOWN:
-            c = self._dim(C_SDN, b)
-            # Bold down arrow
-            pygame.draw.polygon(surface, c,
-                                [(cx, cy + r + 2), (cx - r - 1, cy - r // 2), (cx + r + 1, cy - r // 2)])
-            pygame.draw.line(surface, c, (cx, cy - r - 2), (cx, cy + 2), 2)
-
-        elif tt == DT_STAIRS_UP:
-            c = self._dim(C_SUP, b)
-            pygame.draw.polygon(surface, c,
-                                [(cx, cy - r - 2), (cx - r - 1, cy + r // 2), (cx + r + 1, cy + r // 2)])
-            pygame.draw.line(surface, c, (cx, cy + r + 2), (cx, cy - 2), 2)
-
-        elif tt == DT_ENTRANCE:
-            c = self._dim(C_ENTRANCE, b)
-            m = TS // 5
-            pygame.draw.rect(surface, c, (sx + m, sy + m, TS - m * 2, TS - m * 2), 3, border_radius=3)
-            if b > 0.4:
-                gs = pygame.Surface((TS, TS), pygame.SRCALPHA)
-                gs.fill((*C_ENTRANCE[:3], 12))
-                surface.blit(gs, (sx, sy))
-
-        elif tt == DT_TREASURE:
-            ev = tile.get("event") or {}
-            opened = ev.get("opened", False)
-            base = C_TREAS_O if opened else C_TREAS
-            c = self._dim(base, b)
-            # Chest
-            bw, bh = TS // 2 + 2, TS // 3
-            bx, by = cx - bw // 2, cy - bh // 2 + 2
-            pygame.draw.rect(surface, c, (bx, by, bw, bh), border_radius=2)
-            pygame.draw.rect(surface, self._dim((80, 60, 20) if opened else (180, 150, 30), b),
-                             (bx, by, bw, bh), 1, border_radius=2)
-            if not opened:
-                # Lock
-                pygame.draw.circle(surface, self._dim((240, 220, 100), b), (cx, cy + 1), max(2, TS // 9))
-                # Pulse glow
-                gl = int(self.pulse * 28) + 5
-                gs = pygame.Surface((TS, TS), pygame.SRCALPHA)
-                gs.fill((255, 220, 50, gl))
-                surface.blit(gs, (sx, sy))
-
-        elif tt == DT_TRAP:
-            ev = tile.get("event") or {}
-            det = ev.get("detected", False)
-            dis = ev.get("disarmed", False)
-            if det and not dis:
-                c = self._dim(C_TRAP, b)
-                pygame.draw.line(surface, c, (cx - r, cy - r), (cx + r, cy + r), 3)
-                pygame.draw.line(surface, c, (cx + r, cy - r), (cx - r, cy + r), 3)
-                # Danger pulse
-                gl = int(self.pulse * 22) + 5
-                gs = pygame.Surface((TS, TS), pygame.SRCALPHA)
-                gs.fill((220, 55, 55, gl))
-                surface.blit(gs, (sx, sy))
-            elif dis:
-                dc = self._dim((70, 70, 70), b)
-                pygame.draw.line(surface, dc, (cx - r, cy), (cx + r, cy), 1)
-
-        elif tt == DT_SECRET_DOOR:
-            found = tile.get("secret_found", False)
-            if found:
-                # Render as a special door with a "?" mark
-                dc = self._dim((100, 60, 140), b)  # purple-ish
-                m = TS // 5
-                pygame.draw.rect(surface, dc, (sx + m, sy + m, TS - m*2, TS - m*2), border_radius=2)
-                pygame.draw.rect(surface, self._dim((160, 100, 200), b),
-                                 (sx + m, sy + m, TS - m*2, TS - m*2), 2, border_radius=2)
-                # Question mark hint
-                if b > 0.3 and TS >= 12:
-                    fc = self._dim((200, 160, 240), b)
-                    try:
-                        font = pygame.font.Font(None, max(10, TS // 2))
-                        txt = font.render("?", True, fc)
-                        surface.blit(txt, (cx - txt.get_width() // 2, cy - txt.get_height() // 2))
-                    except Exception:
-                        pass
-                # Subtle glow
-                gl = int(self.pulse * 20) + 4
-                gs = pygame.Surface((TS, TS), pygame.SRCALPHA)
-                gs.fill((140, 80, 200, gl))
-                surface.blit(gs, (sx, sy))
-            # If not found, render as wall (handled by the wall check above)
-
-        elif tt == DT_INTERACTABLE:
-            ev = tile.get("event") or {}
-            used = ev.get("used", False)
-            subtype = ev.get("subtype", "")
-
-            if used:
-                # Dimmed, spent interactable
-                dc = self._dim((50, 45, 55), b)
-                pygame.draw.circle(surface, dc, (cx, cy), max(2, r // 2))
+            row_dist = PROJ_DIST / max(1, abs(sy - HH))
+            fog_t    = min(1.0, row_dist * 0.35 / FOG)
+            if sy < HH:
+                c = tuple(int(self.ceil_c[i]*(1-fog_t) + self.fog_c[i]*fog_t) for i in range(3))
             else:
-                # Active interactable with glow
-                if subtype == "healing_pool":
-                    c = self._dim(C_INTERACT_HEAL, b)
-                    # Water ripple circle
-                    pygame.draw.circle(surface, c, (cx, cy), max(2, r), 2)
-                    pygame.draw.circle(surface, self._dim((120, 230, 255), b),
-                                       (cx, cy), max(1, r - 2), 1)
-                    gl = int(self.pulse * 25) + 8
-                    gs = pygame.Surface((TS, TS), pygame.SRCALPHA)
-                    gs.fill((80, 200, 255, gl))
-                    surface.blit(gs, (sx, sy))
-                elif subtype == "mp_shrine":
-                    c = self._dim(C_INTERACT_MP, b)
-                    # Diamond shape
-                    pts = [(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)]
-                    pygame.draw.polygon(surface, c, pts, 2)
-                    gl = int(self.pulse * 25) + 8
-                    gs = pygame.Surface((TS, TS), pygame.SRCALPHA)
-                    gs.fill((160, 100, 255, gl))
-                    surface.blit(gs, (sx, sy))
-                elif subtype == "cursed_altar":
-                    c = self._dim(C_INTERACT_CURSE, b)
-                    # Inverted triangle (ominous)
-                    pts = [(cx - r, cy - r + 1), (cx + r, cy - r + 1), (cx, cy + r)]
-                    pygame.draw.polygon(surface, c, pts, 2)
-                    # Pulsing warning
-                    gl = int(self.pulse * 18) + 5
-                    gs = pygame.Surface((TS, TS), pygame.SRCALPHA)
-                    gs.fill((180, 50, 180, gl))
-                    surface.blit(gs, (sx, sy))
-                else:
-                    c = self._dim(CREAM, b)
-                    pygame.draw.circle(surface, c, (cx, cy), max(2, r - 1), 2)
+                c = tuple(int(self.floor_c[i]*(1-fog_t*0.85) + self.fog_c[i]*fog_t*0.85) for i in range(3))
+            pygame.draw.line(view, c, (0, sy), (VW-1, sy))
 
-        # ── Event overlays ──
-        ev = tile.get("event")
-        if ev and isinstance(ev, dict):
-            etype = ev.get("type", "")
-            triggered = ev.get("triggered", False)
+        # ── Wall columns ──
+        wall_cols = self._wall_cols
+        door_cols = self._door_cols
 
-            if etype == "journal" and not triggered and b > 0.28:
-                c = self._dim(C_JOURNAL, b)
-                # Scroll icon
-                sw, sh = TS // 3, TS // 2 - 1
-                rx, ry = cx - sw // 2, cy - sh // 2
-                pygame.draw.rect(surface, c, (rx, ry, sw, sh), border_radius=1)
-                pygame.draw.line(surface, c, (rx + 2, ry + sh // 3), (rx + sw - 2, ry + sh // 3), 1)
-                pygame.draw.line(surface, c, (rx + 2, ry + 2 * sh // 3), (rx + sw - 2, ry + 2 * sh // 3), 1)
-                # Glow
-                gl = int(self.pulse * 18) + 4
-                gs = pygame.Surface((TS, TS), pygame.SRCALPHA)
-                gs.fill((210, 190, 130, gl))
-                surface.blit(gs, (sx, sy))
+        for col in range(VW):
+            cam_x    = (2.0 * col / VW) - 1.0
+            ray_dx   = self.dx + self.cx * cam_x
+            ray_dy   = self.dy + self.cy * cam_x
+            dist, wx, ns, is_door = self._cast_ray(ray_dx, ray_dy)
+            zbuf[col] = dist
 
-            elif etype in ("fixed_encounter", "boss_encounter") and not triggered and b > 0.28:
-                boss = etype == "boss_encounter"
-                ec = self._dim(C_BOSS if boss else C_ENEMY, b)
-                er = r if boss else r - 1
-                pygame.draw.circle(surface, ec, (cx, cy), er)
-                # Eyes
-                ep = 0.6 + 0.4 * self.pulse
-                eye = self._dim((255, 80, 80), b * ep)
-                gap = max(2, er // 2)
-                pygame.draw.circle(surface, eye, (cx - gap, cy - 1), max(1, er // 4))
-                pygame.draw.circle(surface, eye, (cx + gap, cy - 1), max(1, er // 4))
-                if boss:
-                    # Crown-like spikes
-                    sc = self._dim((255, 200, 50), b)
-                    for dx in [-er + 1, 0, er - 1]:
-                        pygame.draw.line(surface, sc, (cx + dx, cy - er), (cx + dx, cy - er - 3), 1)
+            wall_h = min(VH, int(PROJ_DIST / max(0.01, dist)))
+            top    = HH - wall_h // 2
+            # bot  = HH + wall_h // 2
 
-    # ── Party marker ──
+            tex_x = int(wx * TEX_W) % TEX_W
+            cols_src = door_cols[tex_x] if is_door else wall_cols[tex_x]
 
-    def _draw_enemy_sprite(self, surface, sx, sy, b, enemy):
-        """Draw a visible enemy on the dungeon map. Simple shapes for now."""
-        cx, cy = sx + TS // 2, sy + TS // 2
-        r = TS // 3
+            # Lighting
+            fog_t = min(1.0, dist / FOG)
+            ns_f  = 0.70 if ns else 1.0
+            bright = ns_f * (1.0 - fog_t * 0.82) * flick
+            bright = max(0.0, min(1.0, bright))
+            fog_c  = self.fog_c
+            fb     = 1.0 - bright
 
-        # Color based on state
-        if enemy["state"] == "chase":
-            base_col = (220, 60, 60)   # red when chasing
-            glow_col = (220, 40, 40)
-        else:
-            base_col = (200, 130, 50)  # amber when patrolling
-            glow_col = (180, 100, 30)
+            for screen_y in range(max(0, top), min(VH, top + wall_h)):
+                tex_y = int((screen_y - top) / wall_h * TEX_H) % TEX_H
+                r, g, b = cols_src[tex_y]
+                rc = int(r * bright + fog_c[0] * fb)
+                gc = int(g * bright + fog_c[1] * fb)
+                bc = int(b * bright + fog_c[2] * fb)
+                view.set_at((col, screen_y), (rc, gc, bc))
 
-        col = self._dim(base_col, b)
-        gcol = self._dim(glow_col, b)
+        # ── Sprites ──
+        self._render_sprites(view, zbuf)
 
-        # Subtle alert glow when chasing
-        if enemy["state"] == "chase":
-            gs = pygame.Surface((TS + 6, TS + 6), pygame.SRCALPHA)
-            ga = int(self.pulse * 25) + 15
-            pygame.draw.circle(gs, (*glow_col[:3], ga), (TS // 2 + 3, TS // 2 + 3), r + 5)
-            surface.blit(gs, (sx - 3, sy - 3))
+        # ── Fading overlay ──
+        if self.fading_intensity > 0.05:
+            self._fading_overlay(view)
 
-        # Body — diamond shape
-        points = [(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)]
-        pygame.draw.polygon(surface, col, points)
-        pygame.draw.polygon(surface, gcol, points, 2)
+        # ── Crosshair ──
+        cx, cy = VW // 2, VH // 2
+        pygame.draw.line(view, (255,255,255), (cx-10, cy), (cx+10, cy), 1)
+        pygame.draw.line(view, (255,255,255), (cx, cy-10), (cx, cy+10), 1)
 
-        # Eyes — two small dots
-        eye_y = cy - r // 4
-        eye_sep = r // 2
-        eye_col = (255, 80, 80) if enemy["state"] == "chase" else (255, 200, 80)
-        eye_col = self._dim(eye_col, b)
-        pygame.draw.circle(surface, eye_col, (cx - eye_sep, eye_y), max(1, r // 5))
-        pygame.draw.circle(surface, eye_col, (cx + eye_sep, eye_y), max(1, r // 5))
+    def _render_sprites(self, view, zbuf):
+        fl     = self.dungeon.get_current_floor_data()
+        tiles  = fl["tiles"]
+        fh, fw = fl["height"], fl["width"]
 
-    def _draw_party(self, surface, sx, sy):
-        cx, cy = sx + TS // 2, sy + TS // 2
-        r = TS // 3 + 1
-        # Glow
-        gs = pygame.Surface((TS + 8, TS + 8), pygame.SRCALPHA)
-        gl = int(self.pulse * 18) + 12
-        pygame.draw.circle(gs, (*C_PARTY[:3], gl), (TS // 2 + 4, TS // 2 + 4), r + 6)
-        surface.blit(gs, (sx - 4, sy - 4))
-        # Solid marker
-        pygame.draw.circle(surface, C_PARTY, (cx, cy), r)
-        pygame.draw.circle(surface, C_PARTY_OUT, (cx, cy), r, 2)
-        # Inner shine
-        pygame.draw.circle(surface, (255, 255, 220), (cx - 1, cy - 2), max(2, r // 3))
+        sprites = []
+        for ty in range(fh):
+            for tx in range(fw):
+                tile = tiles[ty][tx]
+                if not tile.get("discovered"):
+                    continue
+                tt = tile["type"]
+                icon_key = None
+                if tt in SPRITE_COLORS:
+                    icon_key = tt
+                enc = tile.get("encounter")
+                if enc and not enc.get("cleared"):
+                    icon_key = "boss" if enc.get("is_boss") else "enemy"
+                if tile.get("has_journal") and not tile.get("journal_read"):
+                    icon_key = "journal"
+                if icon_key is None:
+                    continue
+                sx = tx + 0.5 - self.px
+                sy = ty + 0.5 - self.py
+                d  = math.sqrt(sx*sx + sy*sy)
+                if d < 0.3 or d > TORCH_DIST + 1:
+                    continue
+                sprites.append((d, sx, sy, icon_key))
 
-    # ── Fading overlay ──
+        sprites.sort(key=lambda s: -s[0])
 
-    def _draw_fading(self, surface):
-        ov = pygame.Surface((VP_W, VP_H), pygame.SRCALPHA)
-        t = self.t
-        a = int(self.fading_intensity * 35 * (0.7 + 0.3 * math.sin(t * 1.5)))
-        ov.fill((80, 20, 120, a))
-        for i in range(2):
-            by = int((math.sin(t * 0.7 + i * 2.5) * 0.5 + 0.5) * VP_H)
-            bh = int(15 + self.fading_intensity * 30)
-            ba = int(self.fading_intensity * 25 * (0.5 + 0.5 * math.sin(t * 2.1 + i)))
-            pygame.draw.rect(ov, (120, 40, 180, ba), (0, by, VP_W, bh))
-        surface.blit(ov, (VP_X, VP_Y))
+        font = pygame.font.SysFont("segoeuisymbol,symbola,unifont,dejavusans", 32)
+        for dist, sx, sy, icon_key in sprites:
+            inv = 1.0 / (self.cx * self.dy - self.dx * self.cy)
+            tx_ = inv * (self.dy * sx - self.dx * sy)
+            ty_ = inv * (-self.cy * sx + self.cx * sy)
+            if ty_ <= 0.1:
+                continue
+            screen_x = int((VP_W/2) * (1 + tx_ / ty_))
+            sp_h = max(1, abs(int(PROJ_DIST / ty_)))
+            sp_w = sp_h
+            start_y = max(0, VP_H//2 - sp_h//2)
+            end_y   = min(VP_H, VP_H//2 + sp_h//2)
+            start_x = max(0, screen_x - sp_w//2)
+            end_x   = min(VP_W, screen_x + sp_w//2)
+            if start_x >= end_x:
+                continue
 
-    # ══════════════════════════════════════════════════════════
+            color = SPRITE_COLORS.get(icon_key, (200, 200, 200))
+            fog_t  = min(1.0, dist / TORCH_DIST)
+            alpha  = int(255 * (1.0 - fog_t * 0.88))
+            color_a = (*color, alpha)
+
+            # Draw as a glowing circle with label
+            cx = (start_x + end_x) // 2
+            cy = (start_y + end_y) // 2
+            r  = max(4, sp_h // 4)
+            # Check z-buffer at center
+            if 0 <= cx < VP_W and ty_ < zbuf[cx]:
+                glow_surf = pygame.Surface((r*4, r*4), pygame.SRCALPHA)
+                pygame.draw.circle(glow_surf, (*color, alpha//3), (r*2, r*2), r*2)
+                pygame.draw.circle(glow_surf, (*color, alpha),    (r*2, r*2), max(2,r//2))
+                view.blit(glow_surf, (cx - r*2, cy - r*2))
+
+    def _fading_overlay(self, view):
+        intensity = self.fading_intensity
+        vign = pygame.Surface((VP_W, VP_H), pygame.SRCALPHA)
+        pa   = int(intensity * 60 + intensity * 35 * self.pulse)
+        rng  = random.Random(int(self.t * 8))
+        for _ in range(int(intensity * 10)):
+            x  = rng.randint(0, VP_W-1)
+            ah = rng.randint(4, max(5, int(35*intensity)))
+            pygame.draw.rect(vign, (0,0,0,rng.randint(5,pa)), (x,0,2,VP_H))
+        for cx_, cy_ in [(0,0),(VP_W-100,0),(0,VP_H-100),(VP_W-100,VP_H-100)]:
+            pygame.draw.rect(vign, (20,0,30,int(intensity*100)), (cx_,cy_,100,100))
+        view.blit(vign, (0,0))
+
+    # ─────────────────────────────────────────────────────────
     #  MINIMAP
-    # ══════════════════════════════════════════════════════════
+    # ─────────────────────────────────────────────────────────
 
     def _draw_minimap(self, surface):
-        fl = self.dungeon.get_current_floor_data()
-        fw, fh = fl["width"], fl["height"]
-        # Fit minimap in corner
-        mm_max = 160
-        ms = max(2, min(mm_max // fw, mm_max // fh))
-        mw, mh = fw * ms, fh * ms
-        mx0 = SCREEN_W - mw - 12
-        my0 = VP_Y + VP_H - mh - 12
-
-        # Background
-        bg = pygame.Surface((mw + 4, mh + 4), pygame.SRCALPHA)
-        bg.fill((0, 0, 0, 160))
-        surface.blit(bg, (mx0 - 2, my0 - 2))
-
+        fl    = self.dungeon.get_current_floor_data()
         tiles = fl["tiles"]
-        for ty in range(fh):
-            row = tiles[ty]
-            for tx in range(fw):
-                tile = row[tx]
-                if not tile["discovered"]:
+        fw, fh = fl["width"], fl["height"]
+        ts = MM_TS
+        cols = min(fw, MM_W // ts)
+        rows = min(fh, MM_H // ts)
+        px_i, py_i = int(self.px), int(self.py)
+        x0 = max(0, min(px_i - cols//2, fw - cols))
+        y0 = max(0, min(py_i - rows//2, fh - rows))
+
+        bg = pygame.Surface((cols*ts, rows*ts), pygame.SRCALPHA)
+        bg.fill((0,0,0,155))
+
+        for ty in range(y0, y0+rows):
+            for tx in range(x0, x0+cols):
+                tile = tiles[ty][tx]
+                if not tile.get("discovered"):
                     continue
                 tt = tile["type"]
-                if tt == DT_WALL:
-                    c = (45, 40, 35)
-                elif tt in (DT_FLOOR, DT_CORRIDOR):
-                    c = (100, 90, 75)
+                if tt == DT_WALL or (tt == DT_SECRET_DOOR and not tile.get("secret_found")):
+                    c = (55,50,45,220)
                 elif tt == DT_DOOR:
-                    c = (130, 95, 45)
-                elif tt == DT_STAIRS_DOWN:
-                    c = C_SDN
-                elif tt in (DT_STAIRS_UP, DT_ENTRANCE):
-                    c = C_SUP
+                    c = (180,130,60,255)
+                elif tt in (DT_STAIRS_DOWN, DT_STAIRS_UP):
+                    c = (80,200,255,255)
                 elif tt == DT_TREASURE:
-                    ev = tile.get("event") or {}
-                    c = C_TREAS_O if ev.get("opened") else C_TREAS
-                elif tt == DT_TRAP:
-                    ev = tile.get("event") or {}
-                    c = C_TRAP if ev.get("detected") and not ev.get("disarmed") else (100, 90, 75)
-                elif tt == DT_SECRET_DOOR:
-                    if tile.get("secret_found"):
-                        c = (140, 80, 200)  # purple for found secret doors
-                    else:
-                        c = (45, 40, 35)  # looks like wall
-                elif tt == DT_INTERACTABLE:
-                    ev = tile.get("event") or {}
-                    if ev.get("used"):
-                        c = (60, 55, 65)
-                    elif ev.get("subtype") == "healing_pool":
-                        c = C_INTERACT_HEAL
-                    elif ev.get("subtype") == "mp_shrine":
-                        c = C_INTERACT_MP
-                    elif ev.get("subtype") == "cursed_altar":
-                        c = C_INTERACT_CURSE
-                    else:
-                        c = (180, 180, 180)
+                    c = (255,215,40,255)
+                elif tt == DT_TRAP and tile.get("event",{}).get("detected"):
+                    c = (220,50,50,255)
                 else:
-                    c = (80, 72, 60)
-                pygame.draw.rect(surface, c, (mx0 + tx * ms, my0 + ty * ms, ms, ms))
+                    c = (88,78,62,200)
+                sx = (tx-x0)*ts
+                sy = (ty-y0)*ts
+                pygame.draw.rect(bg, c, (sx,sy,ts-1,ts-1))
 
-        # Party dot
-        ppx = mx0 + self.dungeon.party_x * ms + ms // 2
-        ppy = my0 + self.dungeon.party_y * ms + ms // 2
-        pr = max(2, ms)
-        pygame.draw.circle(surface, C_PARTY, (ppx, ppy), pr)
+        # Party dot + facing arrow
+        ppx = (px_i-x0)*ts + ts//2
+        ppy = (py_i-y0)*ts + ts//2
+        ax  = ppx + int(math.cos(self.angle)*ts*1.2)
+        ay  = ppy + int(math.sin(self.angle)*ts*1.2)
+        pygame.draw.line(bg, (255,255,80,255), (ppx,ppy), (ax,ay), 2)
+        pygame.draw.circle(bg, (255,255,80,255), (ppx,ppy), ts//2)
+        pygame.draw.rect(bg, (100,90,72,200), (0,0,cols*ts,rows*ts), 1)
 
-        # Enemy dots (only visible enemies in discovered tiles within torch range)
-        px, py = self.dungeon.party_x, self.dungeon.party_y
-        for enemy in self.dungeon.get_floor_enemies():
-            ex, ey = enemy["x"], enemy["y"]
-            dist = math.sqrt((ex - px) ** 2 + (ey - py) ** 2)
-            if dist > TORCH_R + 1:
-                continue
-            if 0 <= ey < fh and 0 <= ex < fw and tiles[ey][ex]["discovered"]:
-                ecol = (220, 60, 60) if enemy["state"] == "chase" else (200, 130, 50)
-                epx = mx0 + ex * ms + ms // 2
-                epy = my0 + ey * ms + ms // 2
-                pygame.draw.circle(surface, ecol, (epx, epy), max(1, ms - 1))
+        surface.blit(bg, (MM_X, MM_Y))
+        font = pygame.font.SysFont("courier,monospace", 11)
+        lbl  = font.render(f"Floor {self.dungeon.current_floor}", True, (170,160,130))
+        surface.blit(lbl, (MM_X+2, MM_Y+rows*ts+2))
 
-        # Border
-        pygame.draw.rect(surface, PANEL_BORDER, (mx0 - 2, my0 - 2, mw + 4, mh + 4), 1)
-
-    # ══════════════════════════════════════════════════════════
+    # ─────────────────────────────────────────────────────────
     #  HUD
-    # ══════════════════════════════════════════════════════════
+    # ─────────────────────────────────────────────────────────
 
     def _draw_hud(self, surface, mx, my):
-        # Top bar
-        pygame.draw.rect(surface, (12, 10, 24), (0, 0, SCREEN_W, 44))
-        pygame.draw.line(surface, PANEL_BORDER, (0, 44), (SCREEN_W, 44))
-        draw_text(surface, self.dungeon.name, 15, 6, GOLD, 18, bold=True)
-        draw_text(surface, f"Floor {self.dungeon.current_floor}/{self.dungeon.total_floors}",
-                  15, 26, CREAM, 13)
+        by = SCREEN_H - HUD_H
+        pygame.draw.rect(surface, (14,11,8), (0, by, SCREEN_W, HUD_H))
+        pygame.draw.line(surface, GOLD, (0, by), (SCREEN_W, by), 2)
 
-        # Party HP — right of dungeon name
-        hpx = 320
-        for i, c in enumerate(self.dungeon.party):
-            from core.classes import get_all_resources
-            mr = get_all_resources(c.class_name, c.stats, c.level)
-            hp, mhp = c.resources.get("HP", 0), mr.get("HP", 1)
-            pct = hp / mhp if mhp > 0 else 0
-            hc = GREEN if pct > 0.5 else ORANGE if pct > 0.25 else RED
-            draw_text(surface, f"{c.name[:6]}:{hp}/{mhp}", hpx, 8 + (i % 2) * 16, hc, 11)
-            if i % 2 == 1:
-                hpx += 130
-            if i == 0:
-                hpx = hpx  # first goes to second row same x
-            if i % 2 == 1:
-                pass  # already advanced
+        fb = pygame.font.SysFont("courier,consolas,monospace", 13, bold=True)
+        fs = pygame.font.SysFont("courier,consolas,monospace", 11)
 
-        # Tile hint
-        tile = self.dungeon.get_tile(self.dungeon.party_x, self.dungeon.party_y)
-        if tile:
-            t = tile["type"]
-            if t == DT_STAIRS_DOWN:
-                draw_text(surface, "▼ ENTER to descend", VP_X + 10, VP_Y + VP_H + 6,
-                          C_SDN, 14, bold=True)
-            elif t in (DT_STAIRS_UP, DT_ENTRANCE):
-                lbl = "exit" if self.dungeon.current_floor == 1 else "ascend"
-                draw_text(surface, f"▲ ENTER to {lbl}", VP_X + 10, VP_Y + VP_H + 6,
-                          C_SUP, 14, bold=True)
+        party = self.dungeon.party
+        if party:
+            col_w = min(195, VP_W // max(1, len(party)))
+            for i, ch in enumerate(party):
+                cx_h = 8 + i*col_w
+                cy_h = by + 5
+                surface.blit(fb.render(ch.name[:12], True, GOLD), (cx_h, cy_h))
+                cy_h += 16
+                # Get resources
+                try:
+                    from core.classes import get_all_resources
+                    max_res = get_all_resources(ch.class_name, ch.stats, ch.level)
+                except Exception:
+                    max_res = {}
+                cur_hp  = ch.resources.get("HP", 0)
+                max_hp  = max(1, max_res.get("HP", cur_hp) or cur_hp)
+                hw = max(0, int((cur_hp/max_hp)*(col_w-12)))
+                pygame.draw.rect(surface, (55,12,12), (cx_h, cy_h, col_w-12, 7))
+                pygame.draw.rect(surface, (185,38,38), (cx_h, cy_h, hw, 7))
+                surface.blit(fs.render(f"{cur_hp}/{max_hp}", True, (190,150,145)), (cx_h, cy_h+8))
+                # Second resource (MP/Ki/etc.)
+                res_keys = [k for k in ch.resources if k != "HP"]
+                if res_keys:
+                    cy_h += 20
+                    rk     = res_keys[0]
+                    cur_r  = ch.resources.get(rk, 0)
+                    max_r  = max(1, max_res.get(rk, cur_r) or cur_r)
+                    mw     = max(0, int((cur_r/max_r)*(col_w-12)))
+                    pygame.draw.rect(surface, (12,12,55), (cx_h, cy_h, col_w-12, 7))
+                    pygame.draw.rect(surface, (45,75,205), (cx_h, cy_h, mw, 7))
+                    surface.blit(fs.render(f"{rk} {cur_r}/{max_r}", True, (130,140,215)), (cx_h, cy_h+8))
 
         # Buttons
-        by = SCREEN_H - 46
-        btns = [
-            (pygame.Rect(VP_X, by, 100, 36), "Camp (C)", 13),
-            (pygame.Rect(VP_X + 112, by, 100, 36), "Menu", 13),
-            (pygame.Rect(VP_X + 224, by, 120, 36), "Disarm (T)", 13),
+        bx = 8
+        bdata = [
+            ("C Camp",   pygame.Rect(bx,           by+HUD_H-34, 108, 26)),
+            ("M Menu",   pygame.Rect(bx+118,        by+HUD_H-34, 108, 26)),
+            ("T Disarm", pygame.Rect(bx+236,        by+HUD_H-34, 118, 26)),
         ]
-        for rect, label, sz in btns:
-            draw_button(surface, rect, label, hover=rect.collidepoint(mx, my), size=sz)
+        for lbl, r in bdata:
+            hov = r.collidepoint(mx,my)
+            pygame.draw.rect(surface, (40,30,18) if not hov else (62,46,24), r, border_radius=3)
+            pygame.draw.rect(surface, GOLD if hov else (75,60,38), r, 1, border_radius=3)
+            surface.blit(fb.render(lbl, True, GOLD if hov else CREAM), (r.x+6, r.y+5))
 
-        draw_text(surface, "Arrows/WASD = Move   ENTER = Use   C = Camp   T = Disarm",
-                  VP_X, SCREEN_H - 6, DARK_GREY, 10)
+        info = fb.render(
+            f"{self.dungeon.dungeon_id.replace('_',' ').title()}  ·  Floor {self.dungeon.current_floor}/{self.dungeon.total_floors}",
+            True, (150,138,110))
+        surface.blit(info, (SCREEN_W - info.get_width() - 10, by + HUD_H - 28))
 
-    # ══════════════════════════════════════════════════════════
-    #  EVENT MESSAGES
-    # ══════════════════════════════════════════════════════════
+        ctrl = fs.render("WASD Move  QE/←→ Turn  ENTER Interact  C Camp  T Disarm", True, (72,64,50))
+        surface.blit(ctrl, (VP_X+4, by+3))
+
+    # ─────────────────────────────────────────────────────────
+    #  DIALOGS
+    # ─────────────────────────────────────────────────────────
+
+    def _draw_confirm_dialog(self, surface, mx, my, title, msg, yes_lbl, no_lbl, tag):
+        dw, dh = 400, 160
+        dx = SCREEN_W//2 - dw//2
+        dy = SCREEN_H//2 - dh//2
+        pygame.draw.rect(surface, (20,16,10), (dx,dy,dw,dh), border_radius=6)
+        pygame.draw.rect(surface, GOLD, (dx,dy,dw,dh), 2, border_radius=6)
+        ft = pygame.font.SysFont("courier,monospace", 18, bold=True)
+        fb = pygame.font.SysFont("courier,monospace", 13)
+        t  = ft.render(title, True, GOLD)
+        surface.blit(t, (dx+dw//2-t.get_width()//2, dy+12))
+        m  = fb.render(msg, True, CREAM)
+        surface.blit(m, (dx+dw//2-m.get_width()//2, dy+44))
+        yb = pygame.Rect(dx+40, dy+dh-48, 120, 34)
+        nb = pygame.Rect(dx+dw-160, dy+dh-48, 120, 34)
+        for btn, lbl in [(yb,yes_lbl),(nb,no_lbl)]:
+            hov = btn.collidepoint(mx,my)
+            pygame.draw.rect(surface, (70,48,18) if hov else (38,28,14), btn, border_radius=3)
+            pygame.draw.rect(surface, GOLD if hov else (70,55,32), btn, 1, border_radius=3)
+            bt = fb.render(lbl, True, GOLD)
+            surface.blit(bt, (btn.x+btn.w//2-bt.get_width()//2, btn.y+btn.h//2-bt.get_height()//2))
 
     def _draw_events(self, surface):
-        lines = []
-        if self.event_message and self.event_timer > 0:
-            lines.append((self.event_message, self.event_color))
-        for m, c, _ in self.event_queue:
-            if (m, c) not in lines:
-                lines.append((m, c))
-        if not lines:
-            return
-        h = max(36, len(lines) * 20 + 12)
-        r = pygame.Rect(VP_X + VP_W // 2 - 280, VP_Y + 8, 560, h)
-        ov = pygame.Surface((r.w, r.h), pygame.SRCALPHA)
-        ov.fill((10, 8, 20, 210))
-        surface.blit(ov, r.topleft)
-        pygame.draw.rect(surface, GOLD, r, 1, border_radius=4)
-        for i, (msg, col) in enumerate(lines[:5]):
-            draw_text(surface, msg, r.x + 14, r.y + 6 + i * 18, col, 13, max_width=r.w - 28)
+        font   = pygame.font.SysFont("courier,monospace", 15, bold=True)
+        base_y = VP_Y + VP_H - 70
+        for i, (msg, col, timer) in enumerate(reversed(list(self.event_queue[-4:]))):
+            ts = font.render(msg, True, col)
+            ts.set_alpha(min(255, int(timer/300*255)))
+            surface.blit(ts, (VP_X + VP_W//2 - ts.get_width()//2, base_y - i*22))
 
-    # ══════════════════════════════════════════════════════════
-    #  DIALOGS
-    # ══════════════════════════════════════════════════════════
-
-    def _draw_camp_dlg(self, surface, mx, my):
-        ov = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        ov.fill((0, 0, 0, 140))
-        surface.blit(ov, (0, 0))
-        d = pygame.Rect(SCREEN_W // 2 - 220, SCREEN_H // 2 - 100, 440, 200)
-        pygame.draw.rect(surface, (20, 16, 36), d, border_radius=5)
-        pygame.draw.rect(surface, GOLD, d, 2, border_radius=5)
-        draw_text(surface, "Camp in the Dungeon?", d.x + 100, d.y + 15, GOLD, 22, bold=True)
-        draw_text(surface, "Restores ~25% HP, ~15% MP/SP.", d.x + 20, d.y + 55, CREAM, 14)
-        draw_text(surface, "Higher ambush risk underground!", d.x + 20, d.y + 80, ORANGE, 14)
-        yb = pygame.Rect(d.x + 60, d.y + 140, 140, 40)
-        draw_button(surface, yb, "Rest", hover=yb.collidepoint(mx, my), size=16)
-        nb = pygame.Rect(d.x + 240, d.y + 140, 140, 40)
-        draw_button(surface, nb, "Cancel", hover=nb.collidepoint(mx, my), size=16)
-
-    def _draw_stairs_dlg(self, surface, mx, my):
-        ov = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        ov.fill((0, 0, 0, 120))
-        surface.blit(ov, (0, 0))
-        d = pygame.Rect(SCREEN_W // 2 - 200, SCREEN_H // 2 - 80, 400, 160)
-        pygame.draw.rect(surface, (20, 16, 36), d, border_radius=5)
-        pygame.draw.rect(surface, GOLD, d, 2, border_radius=5)
-        if self.stairs_direction == "down":
-            txt, col = f"Descend to Floor {self.dungeon.current_floor + 1}?", C_SDN
-        elif self.stairs_direction == "exit":
-            txt, col = "Exit the dungeon?", C_ENTRANCE
-        else:
-            txt, col = f"Ascend to Floor {self.dungeon.current_floor - 1}?", C_SUP
-        draw_text(surface, txt, d.x + 80, d.y + 20, col, 20, bold=True)
-        yb = pygame.Rect(d.x + 40, d.y + 100, 140, 40)
-        draw_button(surface, yb, "Yes", hover=yb.collidepoint(mx, my), size=16)
-        nb = pygame.Rect(d.x + 220, d.y + 100, 140, 40)
-        draw_button(surface, nb, "No", hover=nb.collidepoint(mx, my), size=16)
-
-    # ══════════════════════════════════════════════════════════
+    # ─────────────────────────────────────────────────────────
     #  INPUT
-    # ══════════════════════════════════════════════════════════
+    # ─────────────────────────────────────────────────────────
+
+    def _process_held_keys(self, dt):
+        if self.show_camp_confirm or self.show_stairs_confirm:
+            return
+        keys = self._keys
+        if pygame.K_LEFT in keys or pygame.K_q in keys:
+            self.angle -= ROT_SPEED * dt
+            self._recalc_camera()
+        if pygame.K_RIGHT in keys or pygame.K_e in keys:
+            self.angle += ROT_SPEED * dt
+            self._recalc_camera()
+        md = MOVE_SPEED * dt
+        nx, ny = self.px, self.py
+        moved = False
+        if pygame.K_UP in keys or pygame.K_w in keys:
+            nx += self.dx*md; ny += self.dy*md; moved = True
+        if pygame.K_DOWN in keys or pygame.K_s in keys:
+            nx -= self.dx*md; ny -= self.dy*md; moved = True
+        if pygame.K_a in keys:
+            nx += self.dy*md*0.7; ny -= self.dx*md*0.7; moved = True
+        if pygame.K_d in keys:
+            nx -= self.dy*md*0.7; ny += self.dx*md*0.7; moved = True
+        if moved:
+            if not self._is_solid(int(nx), int(self.py)):
+                self.px = nx
+            if not self._is_solid(int(self.px), int(ny)):
+                self.py = ny
+            self._sync_grid_pos()
 
     def handle_key(self, key):
+        movement_keys = (
+            pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT,
+            pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d,
+            pygame.K_q, pygame.K_e,
+        )
+        if key in movement_keys:
+            self._keys.add(key)
+            return None
+
         if self.show_camp_confirm or self.show_stairs_confirm:
             return None
 
-        dx, dy = 0, 0
-        if key in (pygame.K_UP, pygame.K_w):       dy = -1
-        elif key in (pygame.K_DOWN, pygame.K_s):    dy = 1
-        elif key in (pygame.K_LEFT, pygame.K_a):    dx = -1
-        elif key in (pygame.K_RIGHT, pygame.K_d):   dx = 1
-        elif key == pygame.K_RETURN:
+        if key == pygame.K_RETURN:
             tile = self.dungeon.get_tile(self.dungeon.party_x, self.dungeon.party_y)
             if tile:
-                if tile["type"] == DT_STAIRS_DOWN:
-                    self.show_stairs_confirm = True
-                    self.stairs_direction = "down"
-                elif tile["type"] in (DT_STAIRS_UP, DT_ENTRANCE):
+                tt = tile["type"]
+                if tt == DT_STAIRS_DOWN:
+                    self.show_stairs_confirm = True; self.stairs_direction = "down"
+                elif tt in (DT_STAIRS_UP, DT_ENTRANCE):
                     self.show_stairs_confirm = True
                     self.stairs_direction = "exit" if self.dungeon.current_floor == 1 else "up"
             return None
-        elif key == pygame.K_c:
-            self.show_camp_confirm = True
-            return None
-        elif key == pygame.K_t:
+        if key == pygame.K_c:
+            self.show_camp_confirm = True; return None
+        if key == pygame.K_t:
             return self._try_disarm()
+        return None
 
-        if dx == 0 and dy == 0:
+    def handle_keyup(self, key):
+        self._keys.discard(key)
+
+    def handle_click(self, mx, my):
+        dw, dh = 400, 160
+        dx = SCREEN_W//2 - dw//2
+        dy = SCREEN_H//2 - dh//2
+        yb = pygame.Rect(dx+40, dy+dh-48, 120, 34)
+        nb = pygame.Rect(dx+dw-160, dy+dh-48, 120, 34)
+
+        if self.show_stairs_confirm:
+            if yb.collidepoint(mx,my):
+                self.show_stairs_confirm = False
+                if self.stairs_direction == "down":   return {"type":"stairs_down"}
+                elif self.stairs_direction == "up":   return {"type":"stairs_up"}
+                else:                                 return {"type":"exit_dungeon"}
+            elif nb.collidepoint(mx,my):
+                self.show_stairs_confirm = False
             return None
-        result = self.dungeon.move(dx, dy)
-        if result is not None or (dx != 0 or dy != 0):
-            # Only play if we actually moved (check position changed)
-            import core.sound as _sfx
-            _sfx.play("footstep")
-        return result
+
+        if self.show_camp_confirm:
+            if yb.collidepoint(mx,my):
+                self.show_camp_confirm = False; return {"type":"camp"}
+            elif nb.collidepoint(mx,my):
+                self.show_camp_confirm = False
+            return None
+
+        by = SCREEN_H - HUD_H
+        if pygame.Rect(8, by+HUD_H-34, 108, 26).collidepoint(mx,my):
+            self.show_camp_confirm = True; return None
+        if pygame.Rect(126, by+HUD_H-34, 108, 26).collidepoint(mx,my):
+            return {"type":"menu"}
+        if pygame.Rect(244, by+HUD_H-34, 118, 26).collidepoint(mx,my):
+            return self._try_disarm()
+        return None
 
     def _try_disarm(self):
         px, py = self.dungeon.party_x, self.dungeon.party_y
-        for dx, dy in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
-            tile = self.dungeon.get_tile(px + dx, py + dy)
+        for ddx, ddy in [(0,-1),(0,1),(-1,0),(1,0)]:
+            tile = self.dungeon.get_tile(px+ddx, py+ddy)
             if tile and tile["type"] == DT_TRAP:
                 ev = tile.get("event") or {}
                 if ev.get("detected") and not ev.get("disarmed"):
-                    if self.dungeon.disarm_trap(px + dx, py + dy):
-                        self.show_event("Trap disarmed!", (100, 255, 100))
+                    if self.dungeon.disarm_trap(px+ddx, py+ddy):
+                        self.show_event("Trap disarmed!", (100,255,100))
                     else:
-                        return {"type": "trap", "data": ev}
+                        return {"type":"trap","data":ev}
                     return None
         self.show_event("No detected trap nearby.", CREAM)
         return None
 
-    def handle_click(self, mx, my):
-        if self.show_stairs_confirm:
-            d = pygame.Rect(SCREEN_W // 2 - 200, SCREEN_H // 2 - 80, 400, 160)
-            yb = pygame.Rect(d.x + 40, d.y + 100, 140, 40)
-            nb = pygame.Rect(d.x + 220, d.y + 100, 140, 40)
-            if yb.collidepoint(mx, my):
-                self.show_stairs_confirm = False
-                if self.stairs_direction == "down":   return {"type": "stairs_down"}
-                elif self.stairs_direction == "up":   return {"type": "stairs_up"}
-                else:                                 return {"type": "exit_dungeon"}
-            elif nb.collidepoint(mx, my):
-                self.show_stairs_confirm = False
-            return None
-
-        if self.show_camp_confirm:
-            d = pygame.Rect(SCREEN_W // 2 - 220, SCREEN_H // 2 - 100, 440, 200)
-            yb = pygame.Rect(d.x + 60, d.y + 140, 140, 40)
-            nb = pygame.Rect(d.x + 240, d.y + 140, 140, 40)
-            if yb.collidepoint(mx, my):
-                self.show_camp_confirm = False
-                return {"type": "camp"}
-            elif nb.collidepoint(mx, my):
-                self.show_camp_confirm = False
-            return None
-
-        by = SCREEN_H - 46
-        if pygame.Rect(VP_X, by, 100, 36).collidepoint(mx, my):
-            self.show_camp_confirm = True
-            return None
-        if pygame.Rect(VP_X + 112, by, 100, 36).collidepoint(mx, my):
-            return {"type": "menu"}
-        if pygame.Rect(VP_X + 224, by, 120, 36).collidepoint(mx, my):
-            return self._try_disarm()
-        return None
-
     def show_event(self, msg, color=CREAM):
         self.event_message = msg
-        self.event_color = color
-        self.event_timer = 3500
+        self.event_color   = color
+        self.event_timer   = 3500
         self.event_queue.append((msg, color, 3500))
+
+    @property
+    def facing(self):
+        a = self.angle % (2 * math.pi)
+        if a < 0: a += 2 * math.pi
+        return int((a + math.pi/4) / (math.pi/2)) % 4
+
+    @facing.setter
+    def facing(self, v):
+        self.angle = v * math.pi / 2
+        self._recalc_camera()
+
