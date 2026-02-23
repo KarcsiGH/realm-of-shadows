@@ -465,7 +465,7 @@ class TownUI:
             pygame.draw.circle(surface, nc, (nx_mm, ny_mm), max(1, int(mm_tile_w * 0.6)))
 
         # ── Compact party status (right side) ──
-        from core.progression import get_all_resources
+        from core.classes import get_all_resources
         px_start = SCREEN_W - 290
         for i, c in enumerate(self.party):
             cls = CLASSES[c.class_name]
