@@ -89,11 +89,16 @@ class TownUI:
     VIEW_TAVERN = "tavern"
     VIEW_INN = "inn"
     VIEW_INN_LEVELUP = "inn_levelup"
+    VIEW_INN_LEVELUP_RESULT = "inn_levelup_result"   # fanfare screen
+    VIEW_BRANCH_CHOICE = "branch_choice"              # ability fork selection
+    VIEW_CLASSTREE = "classtree"                      # class progression viewer
     VIEW_FORGE = "forge"
     VIEW_FORGE_CRAFT = "forge_craft"
     VIEW_JOBBOARD = "jobboard"
     VIEW_FORGE_UPGRADE = "forge_upgrade"
     VIEW_FORGE_ENCHANT = "forge_enchant"
+    VIEW_GUILD = "guild"
+    VIEW_GUILD_TRANSITION = "guild_transition"
 
     def __init__(self, party, town_id="briarhollow"):
         self.party = party
@@ -118,6 +123,12 @@ class TownUI:
         self.levelup_queue = []  # characters ready to level up
         self.levelup_current = 0  # index in queue
         self.levelup_free_stat = None  # selected stat for free point
+        self.levelup_summary = None  # result dict from apply_level_up (for fanfare)
+        self.branch_pending_char = None  # character awaiting branch choice
+        self.branch_pending_opts = None  # [opt_A, opt_B] for branch screen
+        self.branch_hover_idx = -1       # hovered option index
+        # Class tree viewer
+        self.classtree_char_idx = 0  # which party member to show
 
         # Tavern state
         from data.story_data import get_rumor
@@ -186,11 +197,19 @@ class TownUI:
             self._draw_inn(surface, mx, my)
         elif self.view == self.VIEW_INN_LEVELUP:
             self._draw_inn_levelup(surface, mx, my)
+        elif self.view == self.VIEW_INN_LEVELUP_RESULT:
+            self._draw_levelup_result(surface, mx, my)
+        elif self.view == self.VIEW_BRANCH_CHOICE:
+            self._draw_branch_choice(surface, mx, my)
+        elif self.view == self.VIEW_CLASSTREE:
+            self._draw_classtree(surface, mx, my)
         elif self.view in (self.VIEW_FORGE, self.VIEW_FORGE_CRAFT,
                            self.VIEW_FORGE_UPGRADE, self.VIEW_FORGE_ENCHANT):
             self._draw_forge(surface, mx, my)
         elif self.view == self.VIEW_JOBBOARD:
             self._draw_jobboard(surface, mx, my)
+        elif self.view in (self.VIEW_GUILD, self.VIEW_GUILD_TRANSITION):
+            self._draw_guild(surface, mx, my)
 
         # Message bar
         if self.message and self.msg_timer > 0:
@@ -600,7 +619,7 @@ class TownUI:
         from data.town_maps import (
             get_building_at, get_npc_at, get_sign_at, is_exit,
             get_tile, TT_DOOR, BLD_INN, BLD_SHOP, BLD_TEMPLE,
-            BLD_TAVERN, BLD_FORGE, BLD_HOUSE, BLD_JOBBOARD,
+            BLD_TAVERN, BLD_FORGE, BLD_HOUSE, BLD_JOBBOARD, BLD_GUILD,
         )
 
         td = self.town_data
@@ -634,6 +653,8 @@ class TownUI:
                 elif btype == BLD_FORGE:
                     self.view = self.VIEW_FORGE
                     self.forge_scroll = 0
+                elif btype == BLD_GUILD:
+                    self._enter_guild(bld)
                 elif btype == BLD_HOUSE:
                     self._show_walk_msg(f"The door to {bld['name']} is locked.", GREY)
                 elif btype == BLD_JOBBOARD:
@@ -1087,64 +1108,423 @@ class TownUI:
         self._draw_party_bar(surface, mx, my)
 
     def _draw_inn_levelup(self, surface, mx, my):
-        """Level up screen for a character at the inn."""
-        from core.progression import can_level_up, apply_level_up, training_cost
+        """
+        Level-up screen: left panel = stat picker, right panel = full ability tree.
+        Shows locked/unlocked/new abilities for the character's class.
+        """
+        from core.progression import training_cost
         from core.classes import STAT_NAMES
+        from core.abilities import CLASS_ABILITIES, get_new_abilities_at_level
 
         if not self.levelup_queue:
             self.view = self.VIEW_INN
             return
 
-        c = self.levelup_queue[self.levelup_current]
+        c    = self.levelup_queue[self.levelup_current]
         cost = training_cost(c.level + 1)
-        cls = CLASSES.get(c.class_name, {})
+        cls  = CLASSES.get(c.class_name, {})
+        col  = cls.get("color", CREAM)
+        next_lvl = c.level + 1
 
-        draw_text(surface, f"Training: {c.name}", SCREEN_W // 2 - 120, 20, GOLD, 24, bold=True)
-        class_col = cls.get("color", CREAM)
-        draw_text(surface, f"Level {c.level} → {c.level + 1}  |  {c.class_name}  |  Cost: {cost}g",
-                  SCREEN_W // 2 - 180, 55, CREAM, 16)
-        # Show class with color
-        draw_text(surface, c.class_name,
-                  SCREEN_W // 2 - 180 + get_font(16).size(f"Level {c.level} → {c.level + 1}  |  ")[0],
-                  55, class_col, 16, bold=True)
+        # Header
+        draw_class_badge(surface, c.class_name, 20, 14, 16)
+        draw_text(surface, f"{c.name}  —  Level {c.level} → {next_lvl}", 58, 18, col, 22, bold=True)
+        draw_text(surface, f"Training cost: {cost}g", 58, 48, DIM_GOLD, 14)
+        party_gold = sum(cc.gold for cc in self.party)
+        gold_col = GREEN if party_gold >= cost else RED
+        draw_text(surface, f"Party gold: {party_gold}g", 260, 48, gold_col, 14)
 
-        # Class stat recommendation hint
+        # Left panel: stat picker
+        left_panel = pygame.Rect(20, 80, 310, 420)
+        draw_panel(surface, left_panel)
+        draw_text(surface, "Assign 1 free stat point:", left_panel.x + 14, left_panel.y + 10, GOLD, 15, bold=True)
+
         growth = cls.get("stat_growth", {})
-        primary_stats = [s for s, tier in growth.items() if tier == "high"]
-        if primary_stats:
-            draw_text(surface, f"Key stats for {c.class_name}: {', '.join(primary_stats)}",
-                      SCREEN_W // 2 - 180, 78, class_col, 13)
-
-        # Current stats
-        draw_text(surface, "Current Stats:", 60, 100, GOLD, 16, bold=True)
         for i, stat in enumerate(STAT_NAMES):
+            btn     = pygame.Rect(left_panel.x + 10, left_panel.y + 38 + i * 60, left_panel.width - 20, 52)
+            selected= self.levelup_free_stat == stat
+            hover   = btn.collidepoint(mx, my)
+            tier    = growth.get(stat, "low")
+            tier_col= {"high":(180,220,120),"medium":(180,180,100),"low":(120,120,100)}.get(tier, GREY)
+            bg      = (55, 45, 25) if selected else (38, 32, 20) if hover else (22, 18, 12)
+            border  = GOLD if selected else tier_col if hover else (50, 45, 35)
+            pygame.draw.rect(surface, bg,     btn, border_radius=4)
+            pygame.draw.rect(surface, border, btn, 2 if selected else 1, border_radius=4)
             val = c.stats[stat]
-            sy = 130 + i * 30
-            draw_text(surface, f"{stat}: {val}", 80, sy, CREAM, 15)
+            draw_text(surface, f"{stat}", btn.x + 10, btn.y + 4, tier_col, 18, bold=True)
+            draw_text(surface, f"{val} → {val+1}", btn.x + 56, btn.y + 6, CREAM, 16)
+            draw_text(surface, tier.upper(), btn.x + 10, btn.y + 30, tier_col, 10)
+            if selected:
+                pygame.draw.polygon(surface, GOLD,
+                    [(btn.right-22, btn.y+18),(btn.right-10, btn.y+8),(btn.right-10, btn.y+28)])
 
-        # Free stat point selection
-        draw_text(surface, "Assign 1 free stat point:", SCREEN_W // 2 - 50, 100, GOLD, 16, bold=True)
-        for i, stat in enumerate(STAT_NAMES):
-            btn = pygame.Rect(SCREEN_W // 2 - 30, 130 + i * 38, 200, 32)
-            selected = self.levelup_free_stat == stat
-            hover = btn.collidepoint(mx, my)
-            bg = (60, 50, 30) if selected else (40, 35, 25) if hover else (25, 20, 15)
-            border = GOLD if selected else PANEL_BORDER
-            pygame.draw.rect(surface, bg, btn, border_radius=3)
-            pygame.draw.rect(surface, border, btn, 1, border_radius=3)
-            label = f"+1 {stat} ({c.stats[stat]} → {c.stats[stat]+1})"
-            draw_text(surface, label, btn.x + 10, btn.y + 6, CREAM if hover or selected else GREY, 14)
+        # Right panel: ability tree
+        right_panel = pygame.Rect(340, 80, SCREEN_W - 360, 490)
+        draw_panel(surface, right_panel, border_color=col)
+        draw_text(surface, f"{c.class_name} Abilities", right_panel.x + 14, right_panel.y + 10, col, 15, bold=True)
 
-        # Confirm button
-        can_train = self.levelup_free_stat is not None and sum(cc.gold for cc in self.party) >= cost
-        confirm = pygame.Rect(SCREEN_W // 2 + 200, 350, 180, 45)
+        all_abs  = CLASS_ABILITIES.get(c.class_name, [])
+        known    = {a["name"] for a in c.abilities}
+        new_at   = {a["name"] for a in get_new_abilities_at_level(c.class_name, next_lvl)}
+
+        row_h  = 68
+        ab_x   = right_panel.x + 12
+        ab_y   = right_panel.y + 38
+        vis    = (right_panel.height - 48) // row_h
+
+        for i, ab in enumerate(all_abs[:vis]):
+            ry       = ab_y + i * row_h
+            is_known = ab["name"] in known
+            is_new   = ab["name"] in new_at
+            is_next  = not is_known and not is_new and ab["level"] == next_lvl + 1
+            locked   = ab["level"] > next_lvl and not is_known
+
+            if is_new:
+                bg_col, bd_col = (30,60,20), GREEN
+            elif is_known:
+                bg_col, bd_col = (20,30,50), (60,100,160)
+            elif is_next:
+                bg_col, bd_col = (35,28,15), (100,90,50)
+            else:
+                bg_col, bd_col = (18,14,10), (40,35,30)
+
+            row_rect = pygame.Rect(ab_x, ry, right_panel.width - 24, row_h - 4)
+            pygame.draw.rect(surface, bg_col, row_rect, border_radius=4)
+            pygame.draw.rect(surface, bd_col, row_rect, 1, border_radius=4)
+
+            lv_col = GREEN if is_new else (100,150,220) if is_known else (100,90,60) if is_next else (60,50,40)
+            pygame.draw.rect(surface, (20,20,20), pygame.Rect(ab_x+4, ry+4, 36, 20), border_radius=3)
+            draw_text(surface, f"Lv{ab['level']}", ab_x+5, ry+5, lv_col, 11, bold=True)
+
+            if is_new:      tag, tag_col = "NEW!", GREEN
+            elif is_known:  tag, tag_col = "Known", (100,150,220)
+            elif locked:    tag, tag_col = f"Lv{ab['level']} req", (80,70,50)
+            else:           tag, tag_col = "Next!", (180,160,80)
+            draw_text(surface, tag, ab_x+46, ry+5, tag_col, 11)
+
+            name_col = GOLD if is_new else (160,200,255) if is_known else (120,110,80) if not locked else (80,70,60)
+            draw_text(surface, ab["name"], ab_x+46, ry+20, name_col, 14, bold=True)
+            res_txt = f"{ab['cost']} {ab['resource']}" if ab.get("resource") else ""
+            if res_txt:
+                draw_text(surface, res_txt, ab_x + right_panel.width - 130, ry+22, (120,110,90), 11)
+            desc_col = (160,160,140) if is_known or is_new else (80,75,60)
+            draw_text(surface, ab.get("desc",""), ab_x+46, ry+40, desc_col, 11,
+                      max_width=right_panel.width - 80)
+
+        if len(all_abs) > vis:
+            draw_text(surface, f"+ {len(all_abs)-vis} more at higher levels",
+                      right_panel.x+14, right_panel.bottom-22, (80,80,60), 11)
+
+        # Bottom buttons
+        can_train = self.levelup_free_stat is not None and party_gold >= cost
+        confirm = pygame.Rect(20, 516, 200, 46)
         draw_button(surface, confirm, "Train!", hover=confirm.collidepoint(mx, my) and can_train, size=16)
-        if not can_train and self.levelup_free_stat:
-            draw_text(surface, "Not enough gold!", confirm.x, confirm.y + 50, RED, 12)
+        if self.levelup_free_stat and not can_train:
+            draw_text(surface, "Not enough gold!", confirm.x, confirm.y+50, RED, 12)
+        elif not self.levelup_free_stat:
+            draw_text(surface, "Pick a stat first", confirm.x+4, confirm.y+50, (100,90,60), 12)
 
-        # Skip button
-        skip = pygame.Rect(SCREEN_W // 2 + 200, 410, 180, 40)
+        skip = pygame.Rect(240, 516, 130, 46)
         draw_button(surface, skip, "Skip", hover=skip.collidepoint(mx, my), size=14)
+
+        tree_btn = pygame.Rect(390, 516, 200, 46)
+        draw_button(surface, tree_btn, "Full Tree", hover=tree_btn.collidepoint(mx, my), size=13)
+
+    def _draw_branch_choice(self, surface, mx, my):
+        """
+        Branch ability choice screen.
+        Player selects ONE of two abilities, permanently locking the other path.
+        Full-width dramatic presentation with flavour text.
+        """
+        c    = self.branch_pending_char
+        opts = self.branch_pending_opts
+        if not c or not opts:
+            self.view = self.VIEW_INN_LEVELUP_RESULT
+            return
+
+        cls     = CLASSES.get(c.class_name, {})
+        col     = cls.get("color", CREAM)
+
+        # Background atmosphere
+        bg = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        bg.fill((10, 8, 20, 200))
+        surface.blit(bg, (0, 0))
+
+        # Header
+        draw_class_badge(surface, c.class_name, 24, 20, 18)
+        draw_text(surface, f"{c.name}  —  Level {c.level} Path Choice",
+                  70, 24, col, 22, bold=True)
+        draw_text(surface, "Your experience has opened a new path. Choose wisely — the other road closes forever.",
+                  70, 56, (160, 140, 180), 14, max_width=SCREEN_W - 100)
+
+        # "Choose your path" divider
+        mid_x = SCREEN_W // 2
+        pygame.draw.line(surface, (60, 50, 80), (mid_x, 90), (mid_x, SCREEN_H - 100), 1)
+        draw_text(surface, "— OR —", mid_x - 28, SCREEN_H // 2 - 12, (120, 100, 160), 14)
+
+        CARD_W = SCREEN_W // 2 - 40
+        CARD_TOP = 90
+        CARD_H   = SCREEN_H - 200
+
+        for idx, opt in enumerate(opts):
+            cx = 20 + idx * (SCREEN_W // 2)
+            card = pygame.Rect(cx, CARD_TOP, CARD_W, CARD_H)
+            hover = card.collidepoint(mx, my)
+            if hover:
+                self.branch_hover_idx = idx
+
+            bg_col = (35, 55, 25) if (hover and idx == 0) else \
+                     (25, 40, 65) if (hover and idx == 1) else \
+                     (22, 18, 35)
+            bd_col = col if hover else (60, 50, 90)
+            pygame.draw.rect(surface, bg_col, card, border_radius=8)
+            pygame.draw.rect(surface, bd_col, card, 2 if hover else 1, border_radius=8)
+
+            # Branch label (big path identifier)
+            label   = opt.get("branch_label", opt["name"])
+            lbl_col = (200, 240, 140) if idx == 0 else (140, 180, 255)
+            draw_text(surface, label.upper(), cx + 20, CARD_TOP + 18,
+                      lbl_col, 20, bold=True)
+
+            # Branch descriptor tagline
+            tag = opt.get("branch_desc", "")
+            draw_text(surface, tag, cx + 20, CARD_TOP + 48,
+                      (160, 155, 170), 13, max_width=CARD_W - 40)
+
+            # Divider line under tagline
+            pygame.draw.line(surface, (50, 45, 70),
+                             (cx + 20, CARD_TOP + 68), (cx + CARD_W - 20, CARD_TOP + 68))
+
+            # Ability name
+            draw_text(surface, opt["name"], cx + 20, CARD_TOP + 82,
+                      col if hover else CREAM, 18, bold=True)
+
+            # Cost / resource
+            if opt.get("resource"):
+                cost_str = f"{opt['cost']} {opt['resource']}"
+                draw_text(surface, cost_str, cx + CARD_W - 120, CARD_TOP + 84,
+                          DIM_GOLD, 13)
+
+            # Description — wrapped generously
+            draw_text(surface, opt.get("desc", ""), cx + 20, CARD_TOP + 114,
+                      (190, 185, 160) if hover else (130, 125, 110), 13,
+                      max_width=CARD_W - 40)
+
+            # Type badge
+            type_colors = {"attack": (200, 80, 80), "spell": (80, 120, 220),
+                           "heal": (80, 200, 120), "buff": (200, 180, 60),
+                           "debuff": (180, 80, 180), "aoe": (220, 120, 60)}
+            type_col = type_colors.get(opt.get("type", ""), GREY)
+            type_str = opt.get("type", "ability").upper()
+            tr = pygame.Rect(cx + 20, CARD_TOP + CARD_H - 100, 80, 22)
+            pygame.draw.rect(surface, (25, 20, 35), tr, border_radius=3)
+            pygame.draw.rect(surface, type_col, tr, 1, border_radius=3)
+            draw_text(surface, type_str, tr.x + 6, tr.y + 4, type_col, 11)
+
+            # Element badge if applicable
+            if opt.get("element"):
+                elem_colors = {"fire": (220, 100, 40), "ice": (100, 180, 240),
+                               "lightning": (240, 220, 60), "divine": (240, 220, 120),
+                               "nature": (80, 180, 80), "arcane": (160, 100, 220)}
+                ec = elem_colors.get(opt["element"], GREY)
+                er = pygame.Rect(cx + 110, CARD_TOP + CARD_H - 100, 80, 22)
+                pygame.draw.rect(surface, (25, 20, 35), er, border_radius=3)
+                pygame.draw.rect(surface, ec, er, 1, border_radius=3)
+                draw_text(surface, opt["element"].upper(), er.x + 6, er.y + 4, ec, 11)
+
+            # Select button
+            btn = pygame.Rect(cx + 20, CARD_TOP + CARD_H - 62, CARD_W - 40, 48)
+            btn_hover = btn.collidepoint(mx, my)
+            btn_col   = (lbl_col[0]//2, lbl_col[1]//2, lbl_col[2]//2)
+            btn_bord  = lbl_col
+            pygame.draw.rect(surface, btn_col, btn, border_radius=6)
+            pygame.draw.rect(surface, btn_bord, btn, 2, border_radius=6)
+            draw_text(surface, f"Choose {label}", btn.x + 20, btn.y + 14,
+                      lbl_col, 15, bold=True)
+
+    def _draw_levelup_result(self, surface, mx, my):
+        """Fanfare screen after confirming level-up."""
+        s = self.levelup_summary
+        if not s:
+            self.view = self.VIEW_INN
+            return
+
+        cls   = CLASSES.get(s.get("class_name",""), {})
+        col   = cls.get("color", CREAM)
+
+        # Glow
+        glow = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        for r in range(260, 0, -4):
+            a  = int(55 * (260-r)/260)
+            rc, gc, bc = col
+            pygame.draw.circle(glow, (rc//3, gc//3, bc//3, a), (SCREEN_W//2, SCREEN_H//2-60), r)
+        surface.blit(glow, (0, 0))
+
+        draw_class_badge(surface, s.get("class_name",""), SCREEN_W//2-220, 60, 22)
+        draw_text(surface, "LEVEL UP!", SCREEN_W//2-100, 55, GOLD, 36, bold=True)
+        draw_text(surface, f"{s.get('char_name','')}  is now Level {s.get('level','')}  {s.get('class_name','')}",
+                  SCREEN_W//2-220, 105, col, 20)
+
+        # Stat gains
+        panel = pygame.Rect(SCREEN_W//2-320, 145, 300, 220)
+        draw_panel(surface, panel, border_color=col)
+        draw_text(surface, "Gains:", panel.x+14, panel.y+10, GOLD, 15, bold=True)
+        gy = panel.y+40
+        for stat, val in s.get("stat_gains",{}).items():
+            draw_text(surface, f"+{val} {stat}", panel.x+20, gy, GREEN, 18); gy += 28
+        if s.get("hp_gain"):
+            draw_text(surface, f"+{s['hp_gain']} Max HP", panel.x+20, gy, (160,220,160), 16)
+
+        # New ability panel
+        ab_panel = pygame.Rect(SCREEN_W//2+20, 145, 340, 220)
+        if s.get("new_abilities"):
+            from core.abilities import CLASS_ABILITIES
+            all_abs  = CLASS_ABILITIES.get(s.get("class_name",""), [])
+            new_name = s["new_abilities"][0]
+            ab_data  = next((a for a in all_abs if a["name"] == new_name), None)
+            draw_panel(surface, ab_panel, border_color=GREEN)
+            draw_text(surface, "New Ability!", ab_panel.x+14, ab_panel.y+10, GREEN, 14, bold=True)
+            if ab_data:
+                draw_text(surface, ab_data["name"], ab_panel.x+14, ab_panel.y+38, GOLD, 20, bold=True)
+                draw_text(surface, f"{ab_data['cost']} {ab_data.get('resource','')}",
+                          ab_panel.x+14, ab_panel.y+68, DIM_GOLD, 13)
+                draw_wrapped_text(surface, ab_data.get("desc",""),
+                                  ab_panel.x+14, ab_panel.y+92,
+                                  ab_panel.width-28, (210,210,190), get_font(13))
+            if len(s["new_abilities"]) > 1:
+                draw_text(surface, f"+ {len(s['new_abilities'])-1} more learned!",
+                          ab_panel.x+14, ab_panel.bottom-22, GREEN, 11)
+        else:
+            draw_panel(surface, ab_panel, border_color=(60,50,40))
+            draw_text(surface, "No new abilities this level.", ab_panel.x+14, ab_panel.y+80, (100,90,70), 14)
+            from core.abilities import CLASS_ABILITIES
+            all_abs = CLASS_ABILITIES.get(s.get("class_name",""), [])
+            nxt = next((a for a in all_abs if a["level"] > s.get("level",1)), None)
+            if nxt:
+                draw_text(surface, "Coming next:", ab_panel.x+14, ab_panel.y+120, DIM_GOLD, 13)
+                draw_text(surface, f"{nxt['name']}  (Level {nxt['level']})",
+                          ab_panel.x+14, ab_panel.y+142, (160,150,100), 15)
+                draw_text(surface, nxt.get("desc",""), ab_panel.x+14, ab_panel.y+168,
+                          (100,95,80), 12, max_width=ab_panel.width-28)
+
+        # Branch choice result (if applicable)
+        if s.get("branch_chosen"):
+            branch_panel = pygame.Rect(SCREEN_W//2 - 320, 380, 660, 100)
+            draw_panel(surface, branch_panel, border_color=(160, 120, 220))
+            draw_text(surface, "PATH CHOSEN:", branch_panel.x + 14, branch_panel.y + 10,
+                      (160, 120, 220), 13, bold=True)
+            draw_text(surface, s["branch_label"].upper(), branch_panel.x + 14,
+                      branch_panel.y + 34, (200, 170, 255), 20, bold=True)
+            draw_text(surface, s["branch_chosen"], branch_panel.x + 200, branch_panel.y + 38,
+                      GOLD, 16)
+            draw_text(surface, "The other path is now closed to you.",
+                      branch_panel.x + 14, branch_panel.y + 70, (100, 90, 120), 12)
+
+        # Continue button
+        cont = pygame.Rect(SCREEN_W//2-100, SCREEN_H-90, 200, 50)
+        draw_button(surface, cont, "Continue", hover=cont.collidepoint(mx, my), size=16)
+        self._lvlresult_cont = cont
+
+    def _draw_classtree(self, surface, mx, my):
+        """Full class progression viewer: timeline of abilities with locked/known state."""
+        from core.abilities import CLASS_ABILITIES
+        from core.progression import CLASS_TRANSITIONS, get_available_transitions
+        from collections import defaultdict
+
+        if not self.party:
+            self.view = self.VIEW_INN
+            return
+
+        self.classtree_char_idx = max(0, min(self.classtree_char_idx, len(self.party)-1))
+        c   = self.party[self.classtree_char_idx]
+        cls = CLASSES.get(c.class_name, {})
+        col = cls.get("color", CREAM)
+        known = {a["name"] for a in c.abilities}
+
+        # Header + tabs
+        draw_text(surface, "Class Progression", 20, 12, GOLD, 22, bold=True)
+        self._classtree_tab_rects = []
+        self._classtree_back = pygame.Rect(SCREEN_W-130, 12, 110, 34)
+        draw_button(surface, self._classtree_back, "Back",
+                    hover=self._classtree_back.collidepoint(mx, my), size=13)
+
+        tab_x = 20
+        for i, ch in enumerate(self.party):
+            tc = CLASSES.get(ch.class_name, {}).get("color", CREAM)
+            tw = max(110, get_font(13).size(ch.name)[0]+36)
+            tr = pygame.Rect(tab_x, 48, tw, 30)
+            self._classtree_tab_rects.append(tr)
+            sel = (i == self.classtree_char_idx)
+            pygame.draw.rect(surface, (40,35,25) if sel else (20,18,14), tr, border_radius=4)
+            pygame.draw.rect(surface, tc if sel else (50,45,35), tr, 2, border_radius=4)
+            draw_class_badge(surface, ch.class_name, tr.x+4, tr.y+3, 11)
+            draw_text(surface, ch.name, tr.x+30, tr.y+7, tc if sel else GREY, 13)
+            tab_x += tw + 6
+
+        # Class info
+        draw_class_badge(surface, c.class_name, 20, 90, 18)
+        draw_text(surface, f"{c.class_name}  Level {c.level}", 62, 93, col, 18, bold=True)
+        draw_text(surface, cls.get("description",""), 62, 118, GREY, 12)
+
+        # Timeline
+        all_abs = CLASS_ABILITIES.get(c.class_name, [])
+        by_level = defaultdict(list)
+        for ab in all_abs:
+            by_level[ab["level"]].append(ab)
+        levels = sorted(by_level.keys())
+
+        if not levels:
+            draw_text(surface, "No ability data.", 60, 200, GREY, 14)
+        else:
+            TL_X = 60; TL_Y = 150; TL_W = SCREEN_W-100; TL_H = SCREEN_H-TL_Y-80
+            COL_W = max(160, TL_W // max(1, len(levels)))
+            pygame.draw.line(surface, (60,55,40), (TL_X, TL_Y+22), (TL_X+TL_W, TL_Y+22), 2)
+
+            for ci, lv in enumerate(levels):
+                cx = TL_X + ci*COL_W + COL_W//2
+                reached = c.level >= lv
+                dot_col = col if reached else (55,50,38)
+                pygame.draw.circle(surface, dot_col, (cx, TL_Y+22), 7 if reached else 4)
+                if reached:
+                    pygame.draw.circle(surface, GOLD, (cx, TL_Y+22), 3)
+                draw_text(surface, f"Lv{lv}", cx-18, TL_Y+4, col if reached else (70,62,48), 11, bold=reached)
+
+                ay = TL_Y + 40
+                for ab in by_level[lv]:
+                    is_known = ab["name"] in known
+                    is_next  = lv == c.level + 1
+                    if is_known:   ab_bg, ab_bd, nc = (18,32,55), (55,100,190), (140,190,255)
+                    elif is_next:  ab_bg, ab_bd, nc = (38,30,12), (170,140,55), (210,180,90)
+                    else:          ab_bg, ab_bd, nc = (16,13,10), (38,33,26),   (70,63,50)
+
+                    ar = pygame.Rect(cx-COL_W//2+4, ay, COL_W-8, 74)
+                    if ay + ar.height > TL_Y + TL_H: break
+                    pygame.draw.rect(surface, ab_bg, ar, border_radius=4)
+                    pygame.draw.rect(surface, ab_bd, ar, 1, border_radius=4)
+                    tick = "✓" if is_known else ">" if is_next else "·"
+                    draw_text(surface, tick, ar.x+4, ar.y+4, ab_bd, 12)
+                    draw_text(surface, ab["name"], ar.x+16, ar.y+4, nc, 12, bold=True)
+                    draw_text(surface, f"{ab['cost']} {ab.get('resource','')}", ar.x+16, ar.y+20, (90,82,62), 10)
+                    draw_wrapped_text(surface, ab.get("desc",""), ar.x+6, ar.y+36,
+                                      ar.width-12, (100,93,75) if not is_known else (120,125,150), get_font(10))
+                    ay += ar.height + 4
+
+        # Transitions bar
+        ty = SCREEN_H - 68
+        draw_text(surface, "Transitions:", 20, ty, DIM_GOLD, 12)
+        tx = 130
+        for tn, req in CLASS_TRANSITIONS.items():
+            if c.class_name not in req["base_classes"]: continue
+            can = tn in get_available_transitions(c)
+            tc2 = PURPLE if can else (60,50,50)
+            bg2 = (35,16,50) if can else (20,16,16)
+            tr2 = pygame.Rect(tx, ty-3, get_font(12).size(tn)[0]+20, 24)
+            pygame.draw.rect(surface, bg2, tr2, border_radius=3)
+            pygame.draw.rect(surface, tc2, tr2, 1, border_radius=3)
+            draw_text(surface, tn, tr2.x+8, tr2.y+4, tc2, 11)
+            draw_text(surface, f"Lv{req['min_level']}", tr2.x+4, tr2.y-13, (72,66,50), 10)
+            tx += tr2.width + 6
+
 
     def _rest_at_inn(self, tier_key, total_cost=None):
         """Process inn rest for the party. total_cost includes room + training."""
@@ -1547,41 +1927,128 @@ class TownUI:
 
             c = self.levelup_queue[self.levelup_current]
 
-            # Stat selection buttons
+            # Stat selection buttons (left panel, 60px rows starting at y=118)
+            left_panel_x = 30
             for i, stat in enumerate(STAT_NAMES):
-                btn = pygame.Rect(SCREEN_W // 2 - 30, 130 + i * 38, 200, 32)
+                btn = pygame.Rect(left_panel_x, 118 + i * 60, 290, 52)
                 if btn.collidepoint(mx, my):
                     self.levelup_free_stat = stat
                     return None
 
-            # Confirm
-            confirm = pygame.Rect(SCREEN_W // 2 + 200, 350, 180, 45)
-            if confirm.collidepoint(mx, my) and self.levelup_free_stat:
-                # Training cost already paid upfront at inn rest
+            # Train button
+            cost = training_cost(c.level + 1)
+            party_gold = sum(cc.gold for cc in self.party)
+            can_train = self.levelup_free_stat is not None and party_gold >= cost
+            confirm = pygame.Rect(20, 516, 200, 46)
+            if confirm.collidepoint(mx, my) and can_train:
                 summary = apply_level_up(c, self.levelup_free_stat)
                 if summary:
                     max_res = get_all_resources(c.class_name, c.stats, c.level)
                     for rn, mv in max_res.items():
                         if c.resources.get(rn, 0) > mv:
                             c.resources[rn] = mv
+                    # Store for fanfare screen
+                    summary["char_name"]   = c.name
+                    summary["class_name"]  = c.class_name
+                    summary["stats_after"] = dict(c.stats)
+                    self.levelup_summary   = summary
                     gains = ", ".join(f"+{v} {k}" for k, v in summary["stat_gains"].items())
-                    ab_str = ""
-                    if summary.get("new_abilities"):
-                        ab_str = " Learned: " + ", ".join(summary["new_abilities"])
-                    self.inn_result = f"{c.name} reached level {c.level}! {gains}, +{summary['hp_gain']} base HP{ab_str}"
+                    ab_str = (" Learned: " + ", ".join(summary["new_abilities"])
+                              if summary.get("new_abilities") else "")
+                    self.inn_result = (f"{c.name} reached level {c.level}! "
+                                      f"{gains}, +{summary['hp_gain']} base HP{ab_str}")
+
+                    # If there's a branch choice pending, show that screen first
+                    if summary.get("branch_choice"):
+                        self.branch_pending_char = c
+                        self.branch_pending_opts  = summary["branch_choice"]
+                        self.branch_hover_idx     = -1
+                        self.levelup_current += 1
+                        self.levelup_free_stat = None
+                        self.view = self.VIEW_BRANCH_CHOICE
+                        return None
+
                 self.levelup_current += 1
                 self.levelup_free_stat = None
-                if self.levelup_current >= len(self.levelup_queue):
-                    self.view = self.VIEW_INN
+                # Go to fanfare before next character
+                self.view = self.VIEW_INN_LEVELUP_RESULT
                 return None
 
-            skip = pygame.Rect(SCREEN_W // 2 + 200, 410, 180, 40)
+            # Skip button
+            skip = pygame.Rect(240, 516, 130, 46)
             if skip.collidepoint(mx, my):
                 self.levelup_current += 1
                 self.levelup_free_stat = None
                 if self.levelup_current >= len(self.levelup_queue):
                     self.view = self.VIEW_INN
                 return None
+
+            # Full tree button
+            tree_btn = pygame.Rect(390, 516, 200, 46)
+            if tree_btn.collidepoint(mx, my):
+                # Find this char's index in party for the tree viewer
+                idx = next((i for i, ch in enumerate(self.party)
+                            if ch is c), 0)
+                self.classtree_char_idx = idx
+                self.view = self.VIEW_CLASSTREE
+                return None
+
+        elif self.view == self.VIEW_INN_LEVELUP_RESULT:
+            # Continue button → next character or back to inn
+            cont = pygame.Rect(SCREEN_W // 2 - 100, SCREEN_H - 90, 200, 50)
+            if cont.collidepoint(mx, my):
+                self.levelup_summary = None
+                if self.levelup_current >= len(self.levelup_queue):
+                    self.view = self.VIEW_INN
+                else:
+                    self.view = self.VIEW_INN_LEVELUP
+                return None
+
+        elif self.view == self.VIEW_BRANCH_CHOICE:
+            from core.abilities import choose_branch
+            c    = self.branch_pending_char
+            opts = self.branch_pending_opts
+            if not c or not opts:
+                self.view = self.VIEW_INN_LEVELUP_RESULT
+                return None
+
+            CARD_W   = SCREEN_W // 2 - 40
+            CARD_TOP = 90
+            CARD_H   = SCREEN_H - 200
+
+            for idx, opt in enumerate(opts):
+                cx  = 20 + idx * (SCREEN_W // 2)
+                btn = pygame.Rect(cx + 20, CARD_TOP + CARD_H - 62, CARD_W - 40, 48)
+                if btn.collidepoint(mx, my):
+                    choose_branch(c, opt)
+                    label = opt.get("branch_label", opt["name"])
+                    if self.levelup_summary:
+                        self.levelup_summary["branch_chosen"] = opt["name"]
+                        self.levelup_summary["branch_label"]  = label
+                    self.branch_pending_char = None
+                    self.branch_pending_opts = None
+                    self.view = self.VIEW_INN_LEVELUP_RESULT
+                    return None
+
+        elif self.view == self.VIEW_CLASSTREE:
+            # Back button
+            back_btn = pygame.Rect(SCREEN_W - 130, 12, 110, 34)
+            if back_btn.collidepoint(mx, my):
+                # Return to wherever we came from
+                if self.levelup_queue and self.levelup_current < len(self.levelup_queue):
+                    self.view = self.VIEW_INN_LEVELUP
+                else:
+                    self.view = self.VIEW_INN
+                return None
+            # Character tabs
+            tab_x = 20
+            for i, ch in enumerate(self.party):
+                tw = max(110, get_font(13).size(ch.name)[0] + 36)
+                tr = pygame.Rect(tab_x, 48, tw, 30)
+                if tr.collidepoint(mx, my):
+                    self.classtree_char_idx = i
+                    return None
+                tab_x += tw + 6
 
         # ── Tavern ──
         elif self.view == self.VIEW_TAVERN:

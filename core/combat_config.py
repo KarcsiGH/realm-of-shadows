@@ -273,7 +273,11 @@ STATUS_INCAPACITATE = {"Stunned", "Frozen", "Petrified", "Sleep"}
 STATUS_DURATION_TICK = (
     set(STATUS_TICK_DAMAGE.keys())
     | STATUS_INCAPACITATE
-    | {"Blinded", "Fear", "Silenced", "Slowed", "Hasted"}
+    | {"Blinded", "Fear", "Silenced", "Slowed", "Hasted",
+       "Taunted", "war_cry", "WarCry", "defense_up", "evasion",
+       "smoke_screen", "iron_skin", "magic_shield", "bulwark",
+       "last_stand", "hawk_eye", "ki_deflect", "empty_mind",
+       "courage_aura", "tracking"}
 )
 
 

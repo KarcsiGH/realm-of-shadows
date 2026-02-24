@@ -335,6 +335,23 @@ def calc_physical_damage(attacker, defender, weapon, position_dmg_mod=1.0,
         phys_type = weapon.get("phys_type", "slashing")
         final *= get_racial_damage_multiplier(attacker.get("race_name", "Human"), phys_type)
 
+    # Active buff multipliers (war_cry, hawk_eye, last_stand)
+    if attacker.get("type") == "player":
+        for st in attacker.get("status_effects", []):
+            n = st["name"]
+            if n in ("war_cry", "WarCry"):        final *= 1.25
+            if n == "hawk_eye":                   final *= 1.20
+            if n == "last_stand":
+                if attacker["hp"] / max(1, attacker.get("max_hp", 1)) <= 0.25:
+                    final *= 1.50
+
+    # Active defense buff on defender (defense_up, iron_skin)
+    if defender.get("type") == "player":
+        for st in defender.get("status_effects", []):
+            n = st["name"]
+            if n == "defense_up":  final -= 5
+            if n == "iron_skin":   final -= 8
+
     # Weapon enchant bonus (elemental damage added after defense)
     enchant_elem = weapon.get("enchant_element")
     enchant_bonus = weapon.get("enchant_bonus", 0)
@@ -507,6 +524,14 @@ def resolve_basic_attack(attacker, defender, enemies=None):
         if dodge > 0 and random.random() < dodge:
             hit = False  # dodged!
 
+    # Evasion/smoke_screen status dodge
+    if hit and defender.get("type") == "player":
+        for st in defender.get("status_effects", []):
+            if st["name"] in ("evasion", "smoke_screen"):
+                if random.random() < 0.45:
+                    hit = False
+                    break
+
     result = {
         "action": "attack",
         "attacker": attacker,
@@ -666,8 +691,21 @@ def resolve_move_position(combatant, direction):
     }
 
 
-def resolve_ability(attacker, target, ability):
-    """Resolve a spell/ability use. Returns result dict."""
+def resolve_ability(attacker, target, ability, all_players=None, all_enemies=None):
+    """
+    Resolve a spell/ability use. Returns result dict.
+
+    Fully handles:
+      - attack, spell, heal, aoe, aoe_heal, buff, debuff, cure, revive, taunt types
+      - stun_chance, slow_chance, apply_poison, dot/dot_duration
+      - bonus_crit, execute_threshold, hits (multi-hit), self_damage_pct
+      - targets: "all_allies", aoe hitting all enemies
+      - armor_shred (permanent defense reduction)
+      - mark_duration / mark_crit_bonus (Death Mark / Warden's Mark)
+      - revive type (Resurrection)
+      - Active buff effects: war_cry, defense_up, evasion/smoke_screen, iron_skin,
+        magic_shield, bulwark, last_stand, hawk_eye, ki_deflect, empty_mind, courage_aura
+    """
     result = {
         "action": "ability",
         "attacker": attacker,
@@ -678,13 +716,13 @@ def resolve_ability(attacker, target, ability):
         "hit": True,
         "is_crit": False,
         "messages": [],
+        "extra_hits": [],   # list of (damage, target_name) for multi-hit log
     }
 
-    # Check resource cost
+    # ── Resource cost ──────────────────────────────────────────
     resource_key = ability.get("resource", "")
     cost = ability.get("cost", 0)
     if resource_key and attacker["type"] == "player":
-        # Gnome racial: reduce MP costs by 1 (min 1)
         from core.races import get_racial_mp_reduction
         reduction = get_racial_mp_reduction(attacker.get("race_name", "Human"))
         if reduction > 0 and resource_key in ("MP", "Mana"):
@@ -693,196 +731,421 @@ def resolve_ability(attacker, target, ability):
         if current < cost:
             result["hit"] = False
             result["messages"].append(
-                f"{attacker['name']} doesn't have enough {resource_key}! (need {cost}, have {current})"
+                f"{attacker['name']} doesn't have enough {resource_key}! "
+                f"(need {cost}, have {current})"
             )
             return result
         attacker["resources"][resource_key] -= cost
 
-    # Determine ability type from the ability data, not just the name
-    ab_name = ability["name"].lower()
-    ab_type = ability.get("type", "spell")
-    is_heal = ab_type == "heal" or "heal" in ab_name
-    is_buff = ab_type == "buff"
-    is_debuff = ab_type == "debuff"
-    is_cure = ab_type == "cure"
-    is_offensive = not (is_heal or is_buff or is_cure)
+    ab_name  = ability["name"].lower()
+    ab_type  = ability.get("type", "spell")
+    is_heal  = ab_type in ("heal", "aoe_heal") or "heal" in ab_name
+    is_buff  = ab_type == "buff"
+    is_debuff= ab_type == "debuff"
+    is_cure  = ab_type == "cure"
+    is_revive= ab_type == "revive"
+    is_taunt = ab_type == "taunt"
+    is_aoe   = ab_type in ("aoe", "aoe_heal")
+    is_offensive = not (is_heal or is_buff or is_cure or is_revive or is_taunt)
 
-    if is_buff:
-        # Buff ability — apply status to self or ally
-        buff_name = ability.get("buff", ability["name"])
-        duration = ability.get("duration", 3)
-        # Apply to caster (self-buff) if no valid target or if target is self
-        buff_target = target if target and target["type"] == "player" else attacker
-        apply_status_effect(buff_target, buff_name, duration, 1.0)
-        result["messages"].append(
-            f"{attacker['name']} uses {ability['name']}! "
-            f"{buff_target['name']} gains {ability.get('desc', buff_name)}."
+    # ── Helpers ────────────────────────────────────────────────
+    def _apply_bonus_crit(base_chance):
+        return base_chance + ability.get("bonus_crit", 0)
+
+    def _check_crit_with_bonus(attack_type, weapon=None):
+        is_crit, crit_data = check_crit(attacker, attack_type, weapon)
+        bonus = ability.get("bonus_crit", 0)
+        if bonus > 0 and not is_crit:
+            is_crit = random.randint(1, 100) <= bonus
+            if is_crit:
+                crit_data = {"multiplier": 1.5}
+        return is_crit, crit_data
+
+    def _inflict_special_effects(tgt, msg_prefix=""):
+        """Apply stun_chance, slow_chance, apply_poison, dot, armor_shred after a hit."""
+        msgs = []
+        if ability.get("stun_chance") and random.random() < ability["stun_chance"]:
+            if apply_status_effect(tgt, "Stunned", 1, 1.0):
+                msgs.append(f"{msg_prefix}{tgt['name']} is STUNNED!")
+        if ability.get("slow_chance") and random.random() < ability["slow_chance"]:
+            if apply_status_effect(tgt, "Slowed", ability.get("slow_duration", 2), 1.0):
+                msgs.append(f"{msg_prefix}{tgt['name']} is Slowed!")
+        if ability.get("apply_poison"):
+            poison_key = ability["apply_poison"]
+            # Map progression poison keys → combat status
+            POISON_MAP = {
+                "poison_weak":   ("Poisoned",      2),
+                "poison_strong": ("Poisoned",      3),
+                "poison_deadly": ("Poisoned",      4),
+            }
+            sname, sdur = POISON_MAP.get(poison_key, ("Poisoned", 2))
+            if apply_status_effect(tgt, sname, sdur, 1.0):
+                msgs.append(f"{msg_prefix}{tgt['name']} is Poisoned!")
+        if ability.get("dot"):
+            dot_map = {"burning": "Burning"}
+            sname = dot_map.get(ability["dot"], ability["dot"].capitalize())
+            sdur  = ability.get("dot_duration", 2)
+            if apply_status_effect(tgt, sname, sdur, 1.0):
+                msgs.append(f"{msg_prefix}{tgt['name']} is {sname}!")
+        if ability.get("armor_shred"):
+            shred = ability["armor_shred"]
+            tgt["defense"] = max(0, tgt.get("defense", 0) - shred)
+            msgs.append(f"{msg_prefix}{tgt['name']}'s defense reduced by {shred}!")
+        if ability.get("mark_duration"):
+            tgt.setdefault("marks", []).append({
+                "type": "death_mark",
+                "crit_bonus": ability.get("mark_crit_bonus", 30),
+                "duration": ability["mark_duration"],
+            })
+            msgs.append(f"{msg_prefix}{tgt['name']} is marked!")
+        return msgs
+
+    def _active_buff_mods(combatant):
+        """Return (dmg_mult, def_reduction, evasion_chance, absorb_next)."""
+        dmg_mult = 1.0
+        def_reduce = 0
+        evade_chance = 0.0
+        absorb_next = False
+        for st in combatant.get("status_effects", []):
+            n = st["name"]
+            if n == "war_cry":       dmg_mult *= 1.25
+            if n == "WarCry":        dmg_mult *= 1.25
+            if n == "hawk_eye":      dmg_mult *= 1.20
+            if n == "last_stand" and combatant["hp"] / max(1, combatant["max_hp"]) <= 0.25:
+                dmg_mult *= 1.50
+            if n == "defense_up":    def_reduce += 5
+            if n == "iron_skin":     def_reduce += 8
+            if n == "magic_shield":  def_reduce += 6
+            if n == "bulwark":       absorb_next = True
+            if n in ("evasion", "smoke_screen"):
+                evade_chance = max(evade_chance, 0.45)
+            if n == "ki_deflect":    absorb_next = True
+        return dmg_mult, def_reduce, evade_chance, absorb_next
+
+    def _apply_physical_hit(tgt, power_mult=1.0):
+        """Apply one physical ability hit. Returns (damage, is_crit, msgs)."""
+        weapon = attacker.get("weapon") or get_weapon("Unarmed")
+        pos_dmg, pos_acc = get_position_mods(
+            weapon.get("range", "melee"), attacker["row"], tgt["row"]
         )
+        acc = calc_physical_accuracy(attacker, tgt, weapon, pos_acc)
+        acc += ability.get("bonus_accuracy", 0)
+        if not roll_hit(acc):
+            return 0, False, [f"{attacker['name']} uses {ability['name']} — MISS!"]
 
-    elif is_cure:
-        # Cure ability — remove negative status
-        cure_target = target if target else attacker
-        # Remove first negative status
+        # Evasion check
+        _, _, evade, absorb = _active_buff_mods(tgt)
+        if evade > 0 and random.random() < evade:
+            return 0, False, [f"{tgt['name']} evades {ability['name']}!"]
+        if absorb:
+            _remove_status(tgt, ("bulwark", "ki_deflect"))
+            return 0, False, [f"{tgt['name']} absorbs {ability['name']}!"]
+
+        is_crit, crit_data = _check_crit_with_bonus("physical", weapon)
+        ab_power = ability.get("power", 1.0) * power_mult
+        ability_bonus = cost * ab_power * 0.5
+
+        # Attacker buff
+        atk_mult, _, _, _ = _active_buff_mods(attacker)
+        # Defender buff (defense bonus)
+        _, def_bonus, _, _ = _active_buff_mods(tgt)
+
+        dmg = calc_physical_damage(
+            attacker, tgt, weapon,
+            position_dmg_mod=pos_dmg,
+            ability_bonus=ability_bonus,
+            is_crit=is_crit, crit_data=crit_data,
+        )
+        dmg = max(MINIMUM_DAMAGE, int(dmg * atk_mult - def_bonus))
+
+        # Mark bonus damage
+        for mark in tgt.get("marks", []):
+            if mark["type"] == "death_mark" and is_crit:
+                dmg = int(dmg * 1.3)
+
+        tgt["hp"] = max(0, tgt["hp"] - dmg)
+        if tgt["hp"] <= 0:
+            tgt["alive"] = False
+        crit_str = " CRITICAL!" if is_crit else ""
+        return dmg, is_crit, [f"{attacker['name']} uses {ability['name']} on {tgt['name']} for {dmg} damage!{crit_str}"]
+
+    def _apply_magic_hit(tgt, power_mult=1.0):
+        """Apply one magic ability hit. Returns (damage, is_crit, msgs)."""
+        acc = calc_magic_accuracy(attacker, tgt)
+        if not roll_hit(acc):
+            return 0, False, [f"{attacker['name']} casts {ability['name']} at {tgt['name']} — RESISTED!"]
+
+        _, _, evade, absorb = _active_buff_mods(tgt)
+        if absorb:
+            _remove_status(tgt, ("magic_shield",))
+            return 0, False, [f"{tgt['name']}'s magic shield absorbs {ability['name']}!"]
+
+        is_crit, _ = _check_crit_with_bonus("spell")
+        ab_power = ability.get("power", 1.0) * power_mult
+
+        # Determine element
+        element = ability.get("element", "arcane")
+        if not ability.get("element"):
+            for elem, keywords in [
+                ("fire",      ["fire", "flame", "burn", "inferno", "meteor"]),
+                ("ice",       ["ice", "frost", "freeze", "blizzard"]),
+                ("lightning", ["lightning", "shock", "thunder", "storm", "chain"]),
+                ("divine",    ["smite", "holy", "divine", "judgment", "wrath"]),
+                ("shadow",    ["shadow", "dark", "void", "dread", "death"]),
+                ("nature",    ["nature", "thorn", "entangle"]),
+            ]:
+                if any(kw in ab_name for kw in keywords):
+                    element = elem
+                    break
+
+        spell = {"power": cost * ab_power, "element": element}
+
+        atk_mult, _, _, _ = _active_buff_mods(attacker)
+        _, def_bonus, _, _ = _active_buff_mods(tgt)
+
+        dmg = calc_magic_damage(attacker, tgt, spell, is_crit)
+        dmg = max(MINIMUM_DAMAGE, int(dmg * atk_mult))
+
+        tgt["hp"] = max(0, tgt["hp"] - dmg)
+        if tgt["hp"] <= 0:
+            tgt["alive"] = False
+        crit_str = " CRITICAL!" if is_crit else ""
+        return dmg, is_crit, [f"{attacker['name']} casts {ability['name']} on {tgt['name']} for {dmg} damage!{crit_str}"]
+
+    def _remove_status(combatant, names):
+        combatant["status_effects"] = [
+            s for s in combatant.get("status_effects", [])
+            if s["name"] not in names
+        ]
+
+    def _log_death(tgt):
+        if not tgt["alive"]:
+            if tgt["type"] == "player":
+                result["messages"].append(f"{tgt['name']} falls unconscious!")
+            else:
+                result["messages"].append(f"{tgt['name']} has fallen!")
+
+    # ── REVIVE ─────────────────────────────────────────────────
+    if is_revive:
+        revive_tgt = target if (target and not target["alive"]) else None
+        if not revive_tgt and all_players:
+            revive_tgt = next((p for p in all_players if not p["alive"]), None)
+        if revive_tgt:
+            revive_tgt["alive"] = True
+            revive_hp = int(revive_tgt["max_hp"] * ability.get("revive_hp_pct", 0.5))
+            revive_tgt["hp"] = revive_hp
+            result["healing"] = revive_hp
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']} — "
+                f"{revive_tgt['name']} is revived with {revive_hp} HP!"
+            )
+        else:
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']} — no fallen allies to revive."
+            )
+        return result
+
+    # ── TAUNT ──────────────────────────────────────────────────
+    if is_taunt:
+        dur = ability.get("taunt_duration", 2)
+        if target:
+            apply_status_effect(target, "Taunted", dur, 1.0)
+            target["taunt_target_uid"] = attacker.get("uid")
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']} — "
+                f"{target['name']} must target {attacker['name']} for {dur} turn(s)!"
+            )
+        return result
+
+    # ── CURE ───────────────────────────────────────────────────
+    if is_cure:
+        cure_tgt = target if target else attacker
+        cures_type = ability.get("cures", "")
         removed = False
-        for se in cure_target.get("status_effects", [])[:]:
-            if se.get("negative", True):
-                cure_target["status_effects"].remove(se)
+        CURE_MAP = {"poison": {"Poisoned", "Burning"}, "any": None}
+        cure_set = CURE_MAP.get(cures_type)
+        for se in cure_tgt.get("status_effects", [])[:]:
+            if cure_set is None or se["name"] in cure_set or se.get("negative", True):
+                cure_tgt["status_effects"].remove(se)
                 result["messages"].append(
-                    f"{attacker['name']} uses {ability['name']} on {cure_target['name']} — "
+                    f"{attacker['name']} uses {ability['name']} on {cure_tgt['name']} — "
                     f"{se['name']} removed!"
                 )
                 removed = True
                 break
         if not removed:
             result["messages"].append(
-                f"{attacker['name']} uses {ability['name']} on {cure_target['name']} — "
-                f"no negative effects to cure."
+                f"{attacker['name']} uses {ability['name']} on {cure_tgt['name']} — "
+                f"no matching effects to cure."
             )
+        # If ability also heals (e.g. Nature's Balm)
+        if ability.get("power") and cure_tgt["alive"]:
+            heal_sp = {"power": cost * ability.get("power", 0.5)}
+            amount = min(cure_tgt["max_hp"] - cure_tgt["hp"],
+                         calc_healing(attacker, heal_sp))
+            if amount > 0:
+                cure_tgt["hp"] += amount
+                result["healing"] += amount
+                result["messages"].append(f"  Also heals {cure_tgt['name']} for {amount} HP.")
+        return result
 
-    elif is_debuff:
-        # Debuff ability — apply slow/weaken to enemy
-        # Accuracy check first
+    # ── BUFF ───────────────────────────────────────────────────
+    if is_buff:
+        buff_name = ability.get("buff", ability["name"])
+        duration  = ability.get("duration", 3)
+        tgt_spec  = ability.get("targets", "self")
+        self_only = ability.get("self_only", False)
+
+        if self_only or tgt_spec == "self":
+            buff_targets = [attacker]
+        elif tgt_spec == "all_allies":
+            buff_targets = [p for p in (all_players or [attacker]) if p["alive"]]
+            if attacker not in buff_targets:
+                buff_targets.append(attacker)
+        elif target and target.get("type") == "player":
+            buff_targets = [target]
+        else:
+            buff_targets = [attacker]
+
+        applied_to = []
+        for bt in buff_targets:
+            apply_status_effect(bt, buff_name, duration, 1.0)
+            applied_to.append(bt["name"])
+
+        if len(applied_to) == 1:
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']}! "
+                f"{applied_to[0]} gains {buff_name} for {duration} turn(s)."
+            )
+        else:
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']}! "
+                f"Party gains {buff_name} for {duration} turn(s)."
+            )
+        return result
+
+    # ── DEBUFF ─────────────────────────────────────────────────
+    if is_debuff:
         acc = calc_magic_accuracy(attacker, target)
-        hit = roll_hit(acc)
-        if not hit:
+        if not roll_hit(acc):
             result["hit"] = False
             result["messages"].append(
                 f"{attacker['name']} uses {ability['name']} on {target['name']} — RESISTED!"
             )
             return result
+
         debuff_name = ability.get("debuff", ability["name"])
-        duration = ability.get("slow_duration", ability.get("duration", 2))
+        duration    = ability.get("slow_duration", ability.get("duration", 2))
         apply_status_effect(target, debuff_name, duration, 1.0)
         result["messages"].append(
             f"{attacker['name']} uses {ability['name']} on {target['name']}! "
-            f"{target['name']} is {debuff_name.lower()}ed."
+            f"{target['name']} is {debuff_name}."
         )
+        # Secondary effects
+        result["messages"] += _inflict_special_effects(target)
+        return result
 
-    elif is_heal:
-        # Healing ability — can also revive downed allies
-        was_downed = not target["alive"]
-        if was_downed:
-            target["alive"] = True
-            target["hp"] = 0  # start from 0 for heal
-
-        # Use ability power multiplier: heal_power = cost * power
-        ab_power = ability.get("power", 1.0)
-        heal_spell = {"power": cost * ab_power}
-        is_crit, crit_data = check_crit(attacker, "heal")
-        amount = calc_healing(attacker, heal_spell)
-        if is_crit:
-            amount = int(amount * CRIT_HEAL_MULT)
-            result["is_crit"] = True
-
-        old_hp = target["hp"]
-        target["hp"] = min(target["max_hp"], target["hp"] + amount)
-        actual = target["hp"] - old_hp
-        result["healing"] = actual
-
-        crit_str = " CRITICAL HEAL!" if is_crit else ""
-        if was_downed:
-            result["messages"].append(
-                f"{attacker['name']} uses {ability['name']} — {target['name']} revived with {actual} HP!{crit_str}"
-            )
+    # ── HEAL / AOE_HEAL ────────────────────────────────────────
+    if is_heal:
+        if ab_type == "aoe_heal":
+            heal_targets = [p for p in (all_players or [target or attacker]) if p["alive"]]
         else:
-            result["messages"].append(
-                f"{attacker['name']} uses {ability['name']} on {target['name']} — heals {actual} HP!{crit_str}"
-            )
+            heal_targets = [target if target else attacker]
 
-    elif is_offensive:
-        # Offensive ability — check if magic or physical
-        is_magic = resource_key in ("INT-MP", "WIS-MP", "PIE-MP")
+        heal_spell = {"power": cost * ability.get("power", 1.0)}
+        is_crit, _ = check_crit(attacker, "heal")
+        total_healed = 0
+        for ht in heal_targets:
+            was_downed = not ht["alive"]
+            if was_downed:
+                ht["alive"] = True; ht["hp"] = 0
+            amount = calc_healing(attacker, heal_spell)
+            if is_crit:
+                amount = int(amount * CRIT_HEAL_MULT)
+            old_hp = ht["hp"]
+            ht["hp"] = min(ht["max_hp"], ht["hp"] + amount)
+            actual = ht["hp"] - old_hp
+            total_healed += actual
+            crit_str = " CRITICAL HEAL!" if is_crit else ""
+            if was_downed:
+                result["messages"].append(f"{attacker['name']} uses {ability['name']} — {ht['name']} revived for {actual} HP!{crit_str}")
+            else:
+                result["messages"].append(f"{attacker['name']} uses {ability['name']} on {ht['name']} — heals {actual} HP.{crit_str}")
+        result["healing"] = total_healed
+        result["is_crit"] = is_crit
+        return result
 
-        if is_magic:
-            # Magic accuracy
-            acc = calc_magic_accuracy(attacker, target)
-            hit = roll_hit(acc)
-            result["accuracy"] = acc
+    # ── OFFENSIVE ──────────────────────────────────────────────
+    if is_offensive:
+        resource_key_r = ability.get("resource", "")
+        is_magic = resource_key_r in ("INT-MP", "WIS-MP", "PIE-MP")
+        n_hits   = ability.get("hits", 1)
+        hit_power = 1.0 / n_hits if n_hits > 1 else 1.0  # split power across hits
 
-            if not hit:
-                result["hit"] = False
-                result["messages"].append(
-                    f"{attacker['name']} casts {ability['name']} at {target['name']} — RESISTED!"
-                )
-                return result
-
-            is_crit, crit_data = check_crit(attacker, "spell")
-            # Use ability power multiplier: spell_power = cost * power
-            ab_power = ability.get("power", 1.0)
-            spell = {"power": cost * ab_power, "element": "arcane"}
-
-            # Try to determine element from ability name
-            for elem, keywords in [
-                ("fire", ["fire", "flame", "burn", "inferno"]),
-                ("ice", ["ice", "frost", "freeze", "blizzard"]),
-                ("lightning", ["lightning", "shock", "thunder", "storm"]),
-                ("divine", ["smite", "holy", "divine", "judgment"]),
-                ("shadow", ["shadow", "dark", "void", "dread"]),
-                ("nature", ["nature", "thorn", "entangle", "earthquake"]),
-            ]:
-                if any(kw in ab_name for kw in keywords):
-                    spell["element"] = elem
-                    break
-
-            damage = calc_magic_damage(attacker, target, spell, is_crit)
-            result["damage"] = damage
-            result["is_crit"] = is_crit
-
-            target["hp"] = max(0, target["hp"] - damage)
-            if target["hp"] <= 0:
-                target["alive"] = False
-
-            crit_str = " CRITICAL!" if is_crit else ""
-            result["messages"].append(
-                f"{attacker['name']} casts {ability['name']} on {target['name']} for {damage} damage!{crit_str}"
-            )
+        # AOE: gather all targets
+        if is_aoe:
+            raw_targets = [e for e in (all_enemies or [target])
+                           if e and e["alive"]] if not is_magic or True else []
+            # "target: row" — just hit all enemies (simplified to all alive)
+            aoe_targets = [e for e in (all_enemies or ([target] if target else []))
+                           if e and e["alive"]]
+            if not aoe_targets and target:
+                aoe_targets = [target]
         else:
-            # Physical ability (STR-SP, DEX-SP, Ki)
-            weapon = attacker.get("weapon", get_weapon("Unarmed"))
-            pos_dmg, pos_acc = get_position_mods(
-                weapon.get("range", "melee"), attacker["row"], target["row"]
-            )
+            aoe_targets = [target] if target else []
 
-            acc = calc_physical_accuracy(attacker, target, weapon, pos_acc)
-            hit = roll_hit(acc)
-            result["accuracy"] = acc
+        if not aoe_targets:
+            result["hit"] = False
+            result["messages"].append(f"{attacker['name']} has no valid target!")
+            return result
 
-            if not hit:
-                result["hit"] = False
-                result["messages"].append(
-                    f"{attacker['name']} uses {ability['name']} at {target['name']} — MISS!"
-                )
-                return result
+        total_damage = 0
+        any_crit = False
 
-            is_crit, crit_data = check_crit(attacker, "physical", weapon)
-            # Use ability power multiplier: ability_bonus = cost * power * 0.5
-            ab_power = ability.get("power", 1.0)
-            ability_bonus = cost * ab_power * 0.5
+        for aoe_tgt in aoe_targets:
+            for hit_n in range(n_hits):
+                if is_magic:
+                    dmg, is_crit, msgs = _apply_magic_hit(aoe_tgt, hit_power)
+                else:
+                    dmg, is_crit, msgs = _apply_physical_hit(aoe_tgt, hit_power)
+                total_damage += dmg
+                if is_crit:
+                    any_crit = True
+                result["messages"] += msgs
+                if dmg > 0:
+                    result["messages"] += _inflict_special_effects(aoe_tgt)
+                if not aoe_tgt["alive"]:
+                    _log_death(aoe_tgt)
+                    break  # no more hits on dead target
 
-            damage = calc_physical_damage(
-                attacker, target, weapon,
-                position_dmg_mod=pos_dmg,
-                ability_bonus=ability_bonus,
-                is_crit=is_crit, crit_data=crit_data,
-            )
-            result["damage"] = damage
-            result["is_crit"] = is_crit
+            # Execute threshold (single-target only, not AOE)
+            if not is_aoe and ability.get("execute_threshold"):
+                threshold = ability["execute_threshold"]
+                hp_pct = aoe_tgt["hp"] / max(1, aoe_tgt["max_hp"])
+                if hp_pct <= threshold and aoe_tgt["alive"]:
+                    aoe_tgt["hp"] = 0
+                    aoe_tgt["alive"] = False
+                    result["messages"].append(
+                        f"EXECUTE! {aoe_tgt['name']} is slain by {ability['name']}!"
+                    )
+                    _log_death(aoe_tgt)
 
-            target["hp"] = max(0, target["hp"] - damage)
-            if target["hp"] <= 0:
-                target["alive"] = False
+        result["damage"]  = total_damage
+        result["is_crit"] = any_crit
+        result["hit"]     = total_damage > 0 or any_crit
 
-            crit_str = " CRITICAL!" if is_crit else ""
+        # Self-damage recoil (Reckless Charge)
+        if ability.get("self_damage_pct") and total_damage > 0:
+            recoil = max(1, int(attacker["max_hp"] * ability["self_damage_pct"]))
+            attacker["hp"] = max(0, attacker["hp"] - recoil)
+            if attacker["hp"] <= 0:
+                attacker["alive"] = False
             result["messages"].append(
-                f"{attacker['name']} uses {ability['name']} on {target['name']} for {damage} damage!{crit_str}"
+                f"{attacker['name']} takes {recoil} recoil damage!"
             )
-
-    if target.get("type") != "player" and not target["alive"]:
-        result["messages"].append(f"{target['name']} has fallen!")
-    elif target.get("type") == "player" and not target["alive"]:
-        result["messages"].append(f"{target['name']} falls unconscious!")
 
     return result
+
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -1071,6 +1334,14 @@ def enemy_choose_action(enemy, players, enemies):
     living_players = [p for p in players if p["alive"]]
     if not living_players:
         return None, None, None
+
+    # ── Taunted override: must target the taunting player ──
+    if has_status(enemy, "Taunted"):
+        taunt_uid = enemy.get("taunt_target_uid")
+        if taunt_uid:
+            taunt_tgt = next((p for p in living_players if p.get("uid") == taunt_uid), None)
+            if taunt_tgt:
+                return "attack", taunt_tgt, None
 
     ai_type = enemy.get("ai_type", "random")
     attack_type = enemy.get("attack_type", "melee")
@@ -1413,7 +1684,9 @@ class CombatState:
         elif action_type == "defend":
             result = resolve_defend(actor)
         elif action_type == "ability":
-            result = resolve_ability(actor, target, ability)
+            result = resolve_ability(actor, target, ability,
+                                     all_players=self.players,
+                                     all_enemies=self.enemies)
         elif action_type == "move":
             result = resolve_move_position(actor, target)  # target is direction string
         else:

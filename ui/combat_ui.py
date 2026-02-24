@@ -776,6 +776,7 @@ class CombatUI:
     # ─────────────────────────────────────────────────────────
 
     STATUS_COLORS = {
+        # Debuffs / DoTs
         "Poisoned":    (80, 200, 80),
         "Burning":     (255, 120, 40),
         "Frostbitten": (100, 180, 255),
@@ -787,9 +788,24 @@ class CombatUI:
         "Fear":        (180, 80, 180),
         "Silenced":    (160, 80, 160),
         "Slowed":      (100, 100, 200),
-        "Hasted":      (80, 255, 80),
         "Sleep":       (140, 140, 200),
-        "WarCry":      (255, 80, 40),
+        "Taunted":     (200, 80, 60),
+        # Buffs (player)
+        "Hasted":        (80, 255, 80),
+        "WarCry":        (255, 100, 40),
+        "war_cry":       (255, 100, 40),
+        "defense_up":    (60, 180, 255),
+        "iron_skin":     (140, 160, 100),
+        "evasion":       (160, 220, 120),
+        "smoke_screen":  (140, 140, 180),
+        "magic_shield":  (100, 140, 255),
+        "bulwark":       (200, 180, 80),
+        "ki_deflect":    (180, 120, 220),
+        "hawk_eye":      (220, 200, 80),
+        "last_stand":    (255, 60, 60),
+        "courage_aura":  (240, 220, 100),
+        "empty_mind":    (180, 200, 255),
+        "tracking":      (100, 200, 120),
     }
 
     def _status_color(self, name):

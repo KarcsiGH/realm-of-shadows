@@ -273,15 +273,24 @@ def apply_level_up(character, free_stat=None):
     summary["hp_gain"] = hp_gain
 
     # Learn new abilities for this level
-    from core.abilities import CLASS_ABILITIES
+    from core.abilities import CLASS_ABILITIES, get_branch_at_level
     class_abilities = CLASS_ABILITIES.get(cls, [])
     known_names = {a["name"] for a in character.abilities}
     new_abilities = []
+
+    # Get branch options at this level (if any) — these require player choice, not auto-learn
+    branch_opts = get_branch_at_level(cls, new_level)
+    branch_names = {opt["name"] for opt in branch_opts} if branch_opts else set()
+
     for ab in class_abilities:
         if ab["name"] not in known_names and ab.get("level", 1) <= new_level:
+            # Skip branch abilities — player must choose
+            if ab["name"] in branch_names:
+                continue
             character.abilities.append(ab.copy())
             new_abilities.append(ab["name"])
     summary["new_abilities"] = new_abilities
+    summary["branch_choice"] = branch_opts  # None or [opt_A, opt_B]
 
     # Recalculate all resources to new maxes (but don't heal — inn rest does that)
     # The caller should recalculate resources after this
