@@ -1409,8 +1409,13 @@ class Game:
     def _end_dialogue(self):
         """Handle dialogue completion."""
         result = None
+        dialogue_id = None
         if self.dialogue_ui:
             result = self.dialogue_ui.result  # e.g., "fight" for boss combat
+            try:
+                dialogue_id = self.dialogue_ui.state.tree.get("id")
+            except Exception:
+                pass
         callback = self.dialogue_callback
         return_state = self.dialogue_return_state
 
@@ -1418,10 +1423,34 @@ class Game:
         self.dialogue_callback = None
         self.dialogue_return_state = None
 
+        # Post-betrayal: remove 2 Hearthstone Fragments from party inventory
+        if dialogue_id == "maren_betrayal":
+            self._maren_takes_hearthstones()
+
         if callback:
             callback(result)
         elif return_state is not None:
             self.go(return_state)
+
+    def _maren_takes_hearthstones(self):
+        """Remove 2 Hearthstone Fragment items from party inventory after Maren's betrayal."""
+        if not self.party:
+            return
+        taken = 0
+        for member in self.party.members:
+            if taken >= 2:
+                break
+            remove_these = []
+            for item in member.inventory:
+                if taken >= 2:
+                    break
+                name = item.get("name", "")
+                if "Hearthstone Fragment" in name or "hearthstone" in name.lower():
+                    remove_these.append(item)
+                    taken += 1
+            for item in remove_these:
+                if item in member.inventory:
+                    member.inventory.remove(item)
 
     def draw_dialogue(self, mx, my):
         """Draw standalone dialogue."""

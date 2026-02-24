@@ -97,6 +97,14 @@ QUESTS = {
                        "to do with the Hearthstones.",
         "act": 2,
     },
+    "main_act2_pursuit": {
+        "name": "What Maren Took",
+        "description": "Maren has vanished, taking two of the Hearthstone fragments. "
+                       "She believes her father's ritual will save the world — "
+                       "but Ashenmoor stands as evidence of what his methods cost. "
+                       "Find her before she reaches Valdris' Spire.",
+        "act": 2,
+    },
     "side_guild_initiation": {
         "name": "Proving Ground",
         "description": "Guildmaster Sable of the Saltmere Thieves' Guild wants proof "
@@ -159,6 +167,16 @@ LORE_ENTRIES = {
                 "not to restore the wards as they were, but to complete her father's "
                 "original ritual — correctly this time. Whether her intentions are "
                 "noble remains to be seen.",
+    },
+    "maren_gone": {
+        "title": "The Scholar's Departure",
+        "text": "Maren Valdris revealed herself before she left. She took two of the "
+                "recovered Hearthstone fragments — enough, she said, to reach Valdris' Spire. "
+                "Her stated goal: complete her father's original ritual, which she claims "
+                "would make the ward-network self-sustaining, requiring no further sacrifice. "
+                "Ashenmoor was, she insisted, a miscalculation — not the intended outcome. "
+                "She left one fragment behind. It is unclear whether this was mercy, "
+                "practicality, or something else entirely.",
     },
     "governor_knowledge": {
         "title": "The Governor's Files",
@@ -417,6 +435,187 @@ NPC_DIALOGUES = {
     #  MAREN — Main quest giver
     # ─────────────────────────────────────────────────────────
     "maren": [
+        # ── ACT 2 MIDPOINT: MAREN'S BETRAYAL ──────────────────────────────────
+        # Fires the first time the player talks to Maren after all three
+        # major Act 1/2 dungeons are cleared (mine, ashenmoor, sunken crypt).
+        {
+            "conditions": [
+                {"flag": "boss_defeated.abandoned_mine",   "op": "==", "value": True},
+                {"flag": "boss_defeated.ruins_ashenmoor",  "op": "==", "value": True},
+                {"flag": "boss_defeated.sunken_crypt",     "op": "==", "value": True},
+                {"flag": "maren.betrayal_done",            "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "maren_betrayal",
+                "nodes": {
+                    "start": {
+                        "speaker": "Maren",
+                        "text": "I need to speak with you privately.\n"
+                                "Not here. Inside.",
+                        "choices": [
+                            {"text": "All right.", "next": "approach"},
+                            {"text": "You're making me nervous.", "next": "approach"},
+                        ],
+                    },
+                    "approach": {
+                        "speaker": "Maren",
+                        "text": "You know, don't you. About Thornhaven. About what Sira told you.\n"
+                                "Don't bother denying it — I could see it in your faces when you "
+                                "came back. The way you looked at me differently. Calculating "
+                                "what I might do.",
+                        "choices": [
+                            {"text": "She said you're Valdris's daughter.",        "next": "confirm"},
+                            {"text": "She said you might not be what you claimed.", "next": "confirm"},
+                            {"text": "Then you know why we're concerned.",          "next": "confirm"},
+                        ],
+                    },
+                    "confirm": {
+                        "speaker": "Maren",
+                        "text": "Yes. I am. I've never lied to you about what I want — "
+                                "I want the wards restored. I want the Fading stopped. "
+                                "What I didn't tell you is how.\n"
+                                "My father's ritual wasn't meant to destroy anything. "
+                                "The current ward-network requires Warden blood to maintain. "
+                                "Someone has to keep giving, keep sacrificing, indefinitely. "
+                                "My father found a way to make it self-sustaining.",
+                        "choices": [
+                            {"text": "Ashenmoor. Two hundred people.",      "next": "ashenmoor"},
+                            {"text": "And the ritual failed catastrophically.", "next": "ashenmoor"},
+                            {"text": "Why didn't you just tell us this?",   "next": "why_silent"},
+                        ],
+                    },
+                    "ashenmoor": {
+                        "speaker": "Maren",
+                        "text": "I know.\n"
+                                "He miscalculated the resonance cascade. He knew it immediately — "
+                                "he wrote it in his notes, the ones the Council burned. "
+                                "He understood what he'd done. And he spent the rest of his life "
+                                "correcting the equation.\n"
+                                "I've had thirty years to finish what he couldn't.",
+                        "next": "why_silent",
+                    },
+                    "why_silent": {
+                        "speaker": "Maren",
+                        "text": "Because you would have done exactly what you're doing now. "
+                                "You would have looked at Ashenmoor and decided the risk was too "
+                                "great. You would have tried to stop me.\n"
+                                "And I couldn't let you stop me. Not when I'm this close.",
+                        "choices": [
+                            {"text": "We could have helped you do this safely.", "next": "could_help"},
+                            {"text": "What are you planning to do right now?",   "next": "the_plan"},
+                            {"text": "We're going to stop you.",                  "next": "stop_her"},
+                        ],
+                    },
+                    "could_help": {
+                        "speaker": "Maren",
+                        "text": "Maybe. But I've watched how people respond to risk when "
+                                "it's theoretical versus when they're standing in front of it. "
+                                "I've seen scholars abandon thirty years of work because "
+                                "someone more powerful told them to.\n"
+                                "I couldn't take that chance. I'm sorry.",
+                        "next": "the_plan",
+                    },
+                    "stop_her": {
+                        "speaker": "Maren",
+                        "text": "I know. That's why I'm not asking permission.\n"
+                                "I'm telling you because you deserve to understand why.",
+                        "next": "the_plan",
+                    },
+                    "the_plan": {
+                        "speaker": "Maren",
+                        "text": "I'm taking two of the three fragments. I need them to reach "
+                                "the Spire — Valdris' Spire, which my father built specifically "
+                                "to complete this ritual.\n"
+                                "I'm leaving you one. It will still slow the Fading. "
+                                "You can find the remaining stones — there are two more — "
+                                "and catch up to me, if you choose.\n"
+                                "Or you can try to stop me here.",
+                        "choices": [
+                            {"text": "What happens if the ritual fails again?",          "next": "failure"},
+                            {"text": "You're gambling with every life in this region.",   "next": "stakes"},
+                            {"text": "We'll find the other stones. And we'll find you.",  "next": "farewell_resolved"},
+                            {"text": "Then we stop you here.",                            "next": "resist"},
+                        ],
+                    },
+                    "failure": {
+                        "speaker": "Maren",
+                        "text": "Then the wards collapse anyway, and whatever the Fading was "
+                                "holding back comes through. Which is what happens if we do "
+                                "nothing.\n"
+                                "The difference is: if I succeed, we end this permanently. "
+                                "If I fail, we're no worse off than we already are.\n"
+                                "My father's miscalculation was in the containment ring. "
+                                "I've solved the containment problem.",
+                        "next": "farewell_resolved",
+                    },
+                    "stakes": {
+                        "speaker": "Maren",
+                        "text": "Yes.\n"
+                                "So is doing nothing.\n"
+                                "I've thought about this every day for thirty years. "
+                                "I'm not making this decision lightly.",
+                        "next": "farewell_resolved",
+                    },
+                    "resist": {
+                        "speaker": "Maren",
+                        "text": "I was hoping you wouldn't say that.\n"
+                                "I've prepared for this possibility too.",
+                        "next": "escape",
+                    },
+                    "escape": {
+                        "speaker": "Maren",
+                        "text": "A ward-pulse. Disorienting, not lethal — I owe you that much.\n"
+                                "When you can see straight again, I'll already be gone. "
+                                "The fragment is on the table. I left it there for you.\n"
+                                "Come to the Spire. See what I build. "
+                                "Or try to stop me. Either way, we'll meet again.",
+                        "on_enter": [
+                            {"action": "set_flag",       "flag": "maren.betrayal_done",    "value": True},
+                            {"action": "set_flag",       "flag": "maren.left",             "value": True},
+                            {"action": "set_flag",       "flag": "maren.betray_resisted",  "value": True},
+                            {"action": "complete_quest", "quest": "main_maren_truth"},
+                            {"action": "start_quest",    "quest": "main_act2_pursuit"},
+                            {"action": "discover_lore",  "lore": "maren_gone"},
+                        ],
+                        "end": True,
+                    },
+                    "farewell_resolved": {
+                        "speaker": "Maren",
+                        "text": "Thank you. For listening.\n"
+                                "I know that doesn't make it better. "
+                                "But I didn't want to leave without you understanding.\n"
+                                "The fragment is there.",
+                        "on_enter": [
+                            {"action": "set_flag",       "flag": "maren.betrayal_done",    "value": True},
+                            {"action": "set_flag",       "flag": "maren.left",             "value": True},
+                            {"action": "set_flag",       "flag": "maren.betray_heard",     "value": True},
+                            {"action": "complete_quest", "quest": "main_maren_truth"},
+                            {"action": "start_quest",    "quest": "main_act2_pursuit"},
+                            {"action": "discover_lore",  "lore": "maren_gone"},
+                        ],
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # After Maren has left — show a brief "gone" note if player walks to her spot
+        {
+            "conditions": [
+                {"flag": "maren.left", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "maren_gone_note",
+                "nodes": {
+                    "start": {
+                        "speaker": "Innkeeper Bess",
+                        "text": "She left before dawn. Paid her tab and everything — "
+                                "which surprised me, honestly. Left a note for your party.\n"
+                                "It just says: \"I meant what I said. Find me at the Spire.\"",
+                        "end": True,
+                    },
+                },
+            },
+        },
         # After goblin warren cleared
         {
             "conditions": [

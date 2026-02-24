@@ -402,6 +402,12 @@ class TownUI:
 
         # Draw NPCs
         for npc in td.get("npcs", []):
+            # Skip NPCs whose hide_if flag is set
+            hide_flag = npc.get("hide_if")
+            if hide_flag:
+                from core.story_flags import get_flag
+                if get_flag(hide_flag):
+                    continue
             nx, ny = npc["x"], npc["y"]
             npx = (nx - cam_x) * ts
             npy = (ny - cam_y) * ts

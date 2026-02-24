@@ -171,6 +171,7 @@ BRIARHOLLOW_NPCS = [
         "dialogue_id": "maren",
         "description": "A determined woman with knowing eyes.",
         "color": (180, 140, 220),
+        "hide_if": "maren.left",
     },
     {
         "name": "Captain Aldric",
@@ -1557,9 +1558,13 @@ def get_building_at(town_data, x, y):
 
 
 def get_npc_at(town_data, x, y):
-    """Get NPC dict at position (x,y). Returns None if no NPC."""
+    """Get NPC dict at position (x,y). Returns None if no NPC or if NPC is hidden."""
+    from core.story_flags import get_flag
     for npc in town_data.get("npcs", []):
         if npc["x"] == x and npc["y"] == y:
+            hide_flag = npc.get("hide_if")
+            if hide_flag and get_flag(hide_flag):
+                return None
             return npc
     return None
 
