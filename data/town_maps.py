@@ -819,7 +819,7 @@ SALTMERE_NPCS = [
     {
         "name": "Dockhand Riv",
         "x": 25, "y": 17,      # open area near the harbor wall
-        "dialogue_id": None,
+        "dialogue_id": "dockhand_riv",
         "description": "A weathered sailor with rope-burned hands, watching the harbor.",
         "color": (140, 160, 180),
     },

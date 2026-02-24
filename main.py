@@ -59,6 +59,7 @@ S_DIALOGUE    = 15   # standalone dialogue (e.g., boss pre-fight)
 S_CAMP        = 16   # full camp screen (dungeon/overworld)
 S_CHEST       = 17   # chest loot assignment screen
 S_ATTACK_CINEMATIC = 18  # Act 1 climax: shadow attack on Briarhollow
+S_ENDING           = 19  # Epilogue / credits after Valdris defeated
 
 
 class Game:
@@ -169,6 +170,7 @@ class Game:
         elif state == S_WORLD_MAP:
             sfx.stop_music()
             sfx.play_ambient("world_ambient")
+            self._sync_flag_keys()
         elif state == S_DUNGEON:
             sfx.stop_music()
             sfx.play_ambient("dungeon_ambient")
@@ -550,6 +552,8 @@ class Game:
 
         elif self.state == S_ATTACK_CINEMATIC:
             self._handle_attack_cinematic_input(e)
+        elif self.state == S_ENDING:
+            self._handle_ending_input(e)
 
         elif self.state == S_CAMP:
             if self.camp_ui:
@@ -657,6 +661,7 @@ class Game:
         elif self.state == S_CAMP:      self._draw_camp(mx, my)
         elif self.state == S_CHEST:     self._draw_chest(mx, my)
         elif self.state == S_ATTACK_CINEMATIC: self._draw_attack_cinematic(mx, my)
+        elif self.state == S_ENDING:           self._draw_ending(mx, my)
 
     # ── Title Screen ──────────────────────────────────────────
 
@@ -1551,7 +1556,13 @@ class Game:
             "abandoned_mine":  "ashenmoor_seal",    # unlocks Ruins of Ashenmoor
             "sunken_crypt":    "spire_key",         # unlocks Valdris' Spire
             "ruins_ashenmoor": "crypt_amulet",      # unlocks Sunken Crypt
-            "valdris_spire":   "dragon_scale",      # unlocks Dragon's Tooth (future)
+            "dragons_tooth":   "dragon_scale",      # story trophy; Karreth's scale
+        }
+        # Hearthstone numbers per dungeon
+        HEARTHSTONE_MAP = {
+            "abandoned_mine": 1,
+            "sunken_crypt":   2,
+            "dragons_tooth":  3,
         }
         # Map dungeon IDs to boss NPC IDs (for dialogue conditions)
         BOSS_NPC_IDS = {
@@ -1560,6 +1571,7 @@ class Game:
             "spiders_nest":    "spider_queen",
             "sunken_crypt":    "sunken_warden",
             "ruins_ashenmoor": "ashvar",
+            "dragons_tooth":   "karreth",
             "valdris_spire":   "valdris",
         }
         key = BOSS_KEY_GRANTS.get(dungeon_id)
@@ -1574,15 +1586,155 @@ class Game:
                         self.world_state.discovered_locations.add(loc_id)
 
         # Set story flags
-        from core.story_flags import set_flag, defeat_boss
+        from core.story_flags import set_flag, defeat_boss, collect_hearthstone
         set_flag(f"boss_defeated.{dungeon_id}", True)
+
+        # Collect hearthstone for relevant dungeons
+        hs_num = HEARTHSTONE_MAP.get(dungeon_id)
+        if hs_num:
+            collect_hearthstone(hs_num)
+            set_flag(f"hearthstone.{dungeon_id}", True)
 
         # Set boss NPC defeated flag (used by dialogue conditions)
         boss_npc = BOSS_NPC_IDS.get(dungeon_id)
         if boss_npc:
             defeat_boss(boss_npc)
 
-    def _trigger_briarhollow_attack(self):
+        # Check for ending condition: Valdris defeated
+        if dungeon_id == "valdris_spire":
+            self._trigger_ending()
+
+    def _sync_flag_keys(self):
+        """Sync story-flag-based world keys (e.g. ship_passage from NPC dialogue)."""
+        if not self.world_state:
+            return
+        from core.story_flags import get_flag
+        from data.world_map import LOCATIONS
+        FLAG_KEYS = {
+            "ship_passage.granted": "ship_passage",
+        }
+        for flag, key in FLAG_KEYS.items():
+            if get_flag(flag) and not self.world_state.has_key(key):
+                self.world_state.add_key(key)
+                for loc_id, loc in LOCATIONS.items():
+                    if loc.get("required_key") == key:
+                        loc["visible"] = True
+                        self.world_state.discovered_locations.add(loc_id)
+
+    def _trigger_ending(self):
+        """Fire after Valdris is defeated. Transition to the epilogue sequence."""
+        from core.story_flags import hearthstone_count, get_flag
+        self._ending_timer  = 0.0
+        self._ending_phase  = "fade_in"   # fade_in → text → credits → done
+        self._ending_hs     = hearthstone_count()
+        self._ending_freed  = get_flag("lore.karreth_freed")
+        self._ending_heard  = get_flag("maren.betray_heard")
+        self._ending_key_index = 0
+        self._ending_input_ready = False
+        self.go(S_ENDING)
+
+    def _handle_ending_input(self, event):
+        import pygame
+        if not self._ending_input_ready:
+            return
+        if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+            self._ending_key_index += 1
+            self._ending_input_ready = False
+            self._ending_timer = 0.0
+
+    def _draw_ending(self, mx, my):
+        import pygame
+        dt = self.clock.get_time() / 1000.0
+        self._ending_timer = getattr(self, "_ending_timer", 0.0) + dt
+
+        surf  = self.screen
+        W, H  = surf.get_size()
+        surf.fill((4, 3, 10))
+
+        def fnt(sz):
+            try:
+                return pygame.font.SysFont("georgia", sz)
+            except Exception:
+                return pygame.font.Font(None, sz + 4)
+
+        def txt(text, y, size=18, color=(220, 210, 190), alpha=255):
+            f = fnt(size)
+            s = f.render(text, True, color)
+            s.set_alpha(min(255, alpha))
+            surf.blit(s, (W // 2 - s.get_width() // 2, y))
+
+        hs   = getattr(self, "_ending_hs",    0)
+        freed = getattr(self, "_ending_freed", False)
+        heard = getattr(self, "_ending_heard", False)
+        ki   = getattr(self, "_ending_key_index", 0)
+        t    = self._ending_timer
+
+        # Pages indexed by ki
+        PAGES = [
+            # Page 0 — the ward network restored
+            [("THE FADING RECEDES", H // 2 - 80, 36, (255, 220, 120)),
+             ("The Hearthstone network pulses once — twice —", H // 2 - 10, 17, (210, 195, 165)),
+             ("and then holds.", H // 2 + 14, 17, (210, 195, 165)),
+             ("Across the region, the grey at the edges of things", H // 2 + 50, 15, (170, 160, 140)),
+             ("begins, slowly, to pull back.", H // 2 + 72, 15, (170, 160, 140))],
+            # Page 1 — Maren outcome (varies)
+            [("MAREN VALDRIS", H // 2 - 80, 28,
+              (200, 170, 220) if heard else (180, 120, 100)),
+             ("She was at the Spire when it fell.", H // 2 - 20, 17, (210, 195, 165)),
+             ("Whether the ritual she had planned would have worked",
+              H // 2 + 14, 15, (170, 160, 140)),
+             ("remains an open question.", H // 2 + 36, 15, (170, 160, 140)),
+             ("She left no notes behind — only one stone.", H // 2 + 70, 15, (170, 160, 140))
+             ] if not heard else
+            [("MAREN VALDRIS", H // 2 - 80, 28, (200, 170, 220)),
+             ("She listened when you explained what had happened.", H // 2 - 20, 17, (210, 195, 165)),
+             ("She helped carry the last stone to the anchor point.", H // 2 + 14, 15, (170, 160, 140)),
+             ("She left before dawn, as she always had.", H // 2 + 50, 15, (170, 160, 140)),
+             ("She left no forwarding address.", H // 2 + 72, 15, (170, 160, 140))],
+            # Page 2 — Karreth (varies)
+            [("KARRETH", H // 2 - 80, 28, (200, 140, 80)),
+             ("The first guardian. The one who held longest.", H // 2 - 20, 17, (210, 195, 165)),
+             ("Its vigil is over.", H // 2 + 14, 17, (210, 195, 165)),
+             ("The network remembers what it was.", H // 2 + 50, 15, (170, 160, 140))
+             ] if freed else
+            [("KARRETH", H // 2 - 80, 28, (160, 100, 60)),
+             ("The first guardian.", H // 2 - 20, 17, (210, 195, 165)),
+             ("The Corrupted drove it to a final charge.", H // 2 + 14, 17, (210, 195, 165)),
+             ("It did not know what it protected until the end.", H // 2 + 50, 15, (170, 160, 140))],
+            # Page 3 — hearthstones
+            [(f"{'ALL FIVE' if hs >= 5 else str(hs).upper() + ' OF FIVE'} HEARTHSTONES RESTORED",
+              H // 2 - 80, 24,
+              (255, 230, 100) if hs >= 5 else (200, 200, 150)),
+             ("The wards are not what they were —", H // 2 - 10, 17, (210, 195, 165)),
+             ("they are something new.", H // 2 + 14, 17, (210, 195, 165)),
+             ("They do not require blood. They do not require vigil.", H // 2 + 50, 15, (170, 160, 140)),
+             ("They simply hold.", H // 2 + 72, 15, (170, 160, 140))],
+            # Page 4 — THE END
+            [("REALM OF SHADOWS", H // 2 - 60, 40, (255, 240, 200)),
+             ("", H // 2, 1, (0, 0, 0)),
+             ("Thank you for playing.", H // 2 + 40, 20, (180, 165, 140))],
+        ]
+
+        if ki >= len(PAGES):
+            # After all pages — return to title
+            if t > 2.0:
+                self.go(S_TITLE)
+            return
+
+        page = PAGES[ki]
+        fade = min(1.0, t / 1.2)
+
+        for (text, y, size, color) in page:
+            if text:
+                txt(text, y, size, color, int(255 * fade))
+
+        # Prompt
+        if t > 1.5:
+            self._ending_input_ready = True
+            pulse = int(140 + 80 * abs((t * 1.5) % 2 - 1))
+            is_last = ki == len(PAGES) - 1
+            prompt = "Press any key to continue" if not is_last else "Press any key"
+            txt(prompt, H - 50, 13, (pulse, pulse, pulse))
         """Trigger the Act 1 climax: shadow creatures attack Briarhollow.
         Called once when the party returns after collecting Hearthstone 1."""
         self._attack_phase = "cinematic"
@@ -1948,6 +2100,17 @@ class Game:
                 msg = get_dungeon_floor_message(self.dungeon_state.dungeon_id, floor)
                 if msg:
                     self.dungeon_ui.show_event(msg, (180, 160, 120))
+                # Maren reunion — fires on Valdris Spire floor 5, once
+                dungeon_id = self.dungeon_state.dungeon_id
+                if dungeon_id == "valdris_spire" and floor == 5:
+                    from core.story_flags import get_flag
+                    if get_flag("maren.left") and not get_flag("maren.spire_reunion_done"):
+                        from data.story_data import NPC_DIALOGUES
+                        from core.dialogue import select_dialogue
+                        dlg_list = NPC_DIALOGUES.get("maren_spire", [])
+                        ds = select_dialogue("maren_spire", dlg_list)
+                        if ds:
+                            self.start_dialogue(ds, return_state=S_DUNGEON)
 
         elif event["type"] == "stairs_up":
             if self.dungeon_state.go_upstairs():

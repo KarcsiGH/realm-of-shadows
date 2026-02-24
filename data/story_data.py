@@ -421,6 +421,18 @@ NPCS = {
         "location": "valdris_spire",
         "portrait_color": (160, 60, 80),
     },
+    "karreth": {
+        "name": "Karreth",
+        "title": "The Corrupted Ward-Guardian",
+        "location": "dragons_tooth",
+        "portrait_color": (200, 80, 20),
+    },
+    "dockhand_riv": {
+        "name": "Dockhand Riv",
+        "title": "Harbor Hand, Saltmere",
+        "location": "saltmere",
+        "portrait_color": (100, 140, 180),
+    },
 }
 
 
@@ -849,6 +861,90 @@ NPC_DIALOGUES = {
                                 "like embers in the dark. We have to reach them before the Fading does.",
                         "on_enter": [
                             {"action": "set_flag", "flag": "maren.post_attack_spoken", "value": True},
+                        ],
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # After Dragon's Tooth cleared
+        {
+            "conditions": [
+                {"flag": "boss_defeated.dragons_tooth", "op": "==", "value": True},
+                {"flag": "maren.post_dragon_spoken",    "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "maren_post_dragon",
+                "nodes": {
+                    "start": {
+                        "speaker": "Maren",
+                        "text": "Three stones.\n"
+                                "I felt it when you brought it back. The network is... "
+                                "I don't have the right word for it. Louder. More present.\n"
+                                "How was the island?",
+                        "choices": [
+                            {"text": "Karreth was the first ward-guardian. Before the Wardens.",
+                             "next": "karreth_knew",
+                             "condition": {"flag": "lore.dragon_karreth", "op": "==", "value": True}},
+                            {"text": "We fought a dragon.",         "next": "just_fought"},
+                            {"text": "There was something there. Ancient.", "next": "ancient"},
+                        ],
+                    },
+                    "karreth_knew": {
+                        "speaker": "Maren",
+                        "text": "I know. The records mention a \"first warden\" — something "
+                                "that predated the whole system. But I never thought it would "
+                                "still be there.\n"
+                                "Was it... did it know what it was?",
+                        "choices": [
+                            {"text": "At the end. It asked us to free it.", "next": "karreth_freed"},
+                            {"text": "No. It only knew to protect the stone.", "next": "karreth_lost"},
+                        ],
+                    },
+                    "karreth_freed": {
+                        "speaker": "Maren",
+                        "text": "Then it understood, at the end, what you were doing for it.\n"
+                                "I hope that counts for something.\n"
+                                "I've been thinking about the other bound guardians. "
+                                "Korrath. The Sunken Warden. Karreth. All of them waiting, "
+                                "centuries, because the ritual bound them and no one came back "
+                                "to complete the cycle.\n"
+                                "My father did that. Indirectly. He broke the cycle when "
+                                "Ashenmoor fell.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "maren.post_dragon_spoken", "value": True},
+                        ],
+                        "end": True,
+                    },
+                    "karreth_lost": {
+                        "speaker": "Maren",
+                        "text": "Four hundred years of vigil and it never got a chance to "
+                                "understand why. That's the worst part of what the Fading does — "
+                                "it doesn't destroy things cleanly. It corrupts them. "
+                                "Turns guardians into obstacles.\n"
+                                "This is what I'm trying to stop. Permanently.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "maren.post_dragon_spoken", "value": True},
+                        ],
+                        "end": True,
+                    },
+                    "just_fought": {
+                        "speaker": "Maren",
+                        "text": "You fought a dragon.\n"
+                                "I sometimes forget what I've been asking of you.\n"
+                                "The Hearthstone is safe?",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "maren.post_dragon_spoken", "value": True},
+                        ],
+                        "end": True,
+                    },
+                    "ancient": {
+                        "speaker": "Maren",
+                        "text": "Ancient and corrupted. That's the Dragon's Tooth in a sentence.\n"
+                                "But you came back with the fragment. That's what matters.\n"
+                                "Three stones. Two more to find.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "maren.post_dragon_spoken", "value": True},
                         ],
                         "end": True,
                     },
@@ -2459,6 +2555,204 @@ NPC_DIALOGUES = {
     ],
 
     # ─────────────────────────────────────────────────────────
+    #  DOCKHAND RIV — Ship passage to Dragon's Tooth (Saltmere)
+    # ─────────────────────────────────────────────────────────
+    "dockhand_riv": [
+        # Offers passage once Hearthstone 2 is collected
+        {
+            "conditions": [
+                {"flag": "boss_defeated.sunken_crypt", "op": "==", "value": True},
+                {"flag": "ship_passage.granted",       "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "riv_passage_offer",
+                "nodes": {
+                    "start": {
+                        "speaker": "Dockhand Riv",
+                        "text": "You're the ones people are talking about. The Warden-bloods.\n"
+                                "I heard you came back from the Sunken Crypt. Alive, even.\n"
+                                "I can get you to Dragon's Tooth if you want. I know the route — "
+                                "the one that avoids the creature that circles the island.\n"
+                                "Won't be cheap. Won't be safe either. But I'll get you there.",
+                        "choices": [
+                            {"text": "We need to get there. Book us passage.", "next": "booked"},
+                            {"text": "What do you know about the island?",      "next": "island_info"},
+                            {"text": "Not yet. We'll come back.",               "next": "later"},
+                        ],
+                    },
+                    "island_info": {
+                        "speaker": "Dockhand Riv",
+                        "text": "Volcanic. Unstable. The Tiderunner went there eight years ago "
+                                "and only two of the crew made it back. They said there was "
+                                "something glowing at the center of the caldera — warm light, "
+                                "not fire. And something enormous that protected it.\n"
+                                "That's all I know. You still want to go?",
+                        "choices": [
+                            {"text": "Yes. Book us passage.", "next": "booked"},
+                            {"text": "Not yet.",              "next": "later"},
+                        ],
+                    },
+                    "booked": {
+                        "speaker": "Dockhand Riv",
+                        "text": "Right. I'll have the skiff ready. "
+                                "She's small but she's fast. "
+                                "Come find me at the dock when you're ready to leave.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "ship_passage.granted", "value": True},
+                        ],
+                        "end": True,
+                    },
+                    "later": {
+                        "speaker": "Dockhand Riv",
+                        "text": "I'll be here. Don't take too long — "
+                                "I've had other offers.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # After passage granted — remind player
+        {
+            "conditions": [
+                {"flag": "ship_passage.granted", "op": "==", "value": True},
+                {"flag": "boss_defeated.dragons_tooth", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "riv_passage_reminder",
+                "nodes": {
+                    "start": {
+                        "speaker": "Dockhand Riv",
+                        "text": "Skiff's ready when you are. Dragon's Tooth, whenever you want to go.\n"
+                                "She'll be waiting at the eastern dock.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # After Dragon's Tooth cleared
+        {
+            "conditions": [
+                {"flag": "boss_defeated.dragons_tooth", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "riv_post_island",
+                "nodes": {
+                    "start": {
+                        "speaker": "Dockhand Riv",
+                        "text": "You came back. And you took something off that island.\n"
+                                "I could feel it from the harbor. The air changed.\n"
+                                "Whatever you're doing with these stones — I hope it works.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Default (too early)
+        {
+            "conditions": [],
+            "tree": {
+                "id": "riv_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Dockhand Riv",
+                        "text": "I run charters to the outer islands. "
+                                "Nothing out there worth seeing right now, though.\n"
+                                "Come back if that changes.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  KARRETH — Boss of Dragon's Tooth (Act 2)
+    # ─────────────────────────────────────────────────────────
+    "karreth": [
+        {
+            "conditions": [
+                {"flag": "boss.karreth.defeated", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "karreth_confrontation",
+                "nodes": {
+                    "start": {
+                        "speaker": "Karreth",
+                        "text": "WARM THING. MINE. MINE SINCE BEFORE YOUR KIND WALKED.\n"
+                                "The great head swings toward you. Twin fires burn in its eyes — "
+                                "one orange-gold, natural and ancient. One a sickly grey-green, "
+                                "wrong in a way you feel in your teeth.",
+                        "choices": [
+                            {"text": "We need what you're protecting. Stand aside.",   "next": "fight_direct"},
+                            {"text": "We know what you are. What you were.",           "next": "lore_path",
+                             "condition": {"flag": "lore.dragon_karreth", "op": "==", "value": True}},
+                            {"text": "We're not here to fight you.",                   "next": "plea"},
+                        ],
+                    },
+                    "plea": {
+                        "speaker": "Karreth",
+                        "text": "NOT. FIGHT.\n"
+                                "The grey-green eye fixes on you. Something ancient and confused "
+                                "moves behind it.\n"
+                                "WARM THING CALLS DANGER. DANGER MUST DIE. THAT IS THE OATH.\n"
+                                "The binding is too deep. It doesn't have a choice.",
+                        "next": "fight_direct",
+                    },
+                    "fight_direct": {
+                        "speaker": "Karreth",
+                        "text": "OATH HOLDS.\n"
+                                "The great wings unfurl. The chamber fills with heat.",
+                        "end": True,
+                    },
+                    "lore_path": {
+                        "speaker": "Karreth",
+                        "text": "The grey-green eye narrows. Then something shifts — "
+                                "a long, slow blink. When the eye opens again, the sickly light "
+                                "is dimmer. The voice, when it comes, is quieter.\n"
+                                "YOU. KNOW. WHAT I WAS.\n"
+                                "BEFORE THE SICK THING CAME INTO ME.",
+                        "next": "lore_conversation",
+                    },
+                    "lore_conversation": {
+                        "speaker": "Karreth",
+                        "text": "WAS. GUARDIAN. FIRST GUARDIAN. BEFORE YOUR WARDENS.\n"
+                                "I REMEMBER... WARMTH. RIGHTNESS. THE STONES SANG.\n"
+                                "NOW. ONLY PROTECT. CANNOT STOP. CANNOT REST.\n"
+                                "It shudders. The grey-green eye pulses.\n"
+                                "I AM. TIRED.",
+                        "choices": [
+                            {"text": "We can end this. Let us fight you. Be free.", "next": "karreth_release"},
+                            {"text": "Is there another way?",                       "next": "no_other_way"},
+                        ],
+                    },
+                    "no_other_way": {
+                        "speaker": "Karreth",
+                        "text": "NO OTHER WAY. BINDING TOO DEEP. TOO LONG.\n"
+                                "DEFEAT. IS. RELEASE.\n"
+                                "The second eye — the natural one — closes. "
+                                "When it opens, something like peace is in it.\n"
+                                "FIGHT. FREE ME.",
+                        "next": "karreth_release",
+                    },
+                    "karreth_release": {
+                        "speaker": "Karreth",
+                        "text": "TAKE. THE STONE.\n"
+                                "WHEN I AM GONE. GIVE IT. BACK. TO THE NETWORK.\n"
+                                "TELL THEM. KARRETH. HELD. AS LONG. AS IT COULD.\n"
+                                "The natural fire in both eyes burns brighter, briefly, "
+                                "consuming the grey-green entirely.\n"
+                                "Then it charges.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "lore.karreth_freed", "value": True},
+                        ],
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
     #  THE SUNKEN WARDEN — Boss of Sunken Crypt (Act 2)
     # ─────────────────────────────────────────────────────────
     "sunken_warden": [
@@ -2523,48 +2817,251 @@ NPC_DIALOGUES = {
                 "nodes": {
                     "start": {
                         "speaker": "Valdris",
-                        "text": "My daughter's little helpers. She sent you ahead, didn't she? "
-                                "To weaken me before she arrives. I taught her that. "
-                                "I am almost proud.",
+                        "text": "You made it all the way up.\n"
+                                "And you brought my daughter's stones with you.\n"
+                                "I wondered which of us she'd send to the top first.",
                         "choices": [
-                            {"text": "Maren didn't send us. We're stopping you both if we have to.", "next": "defiant"},
-                            {"text": "What are you trying to do?", "next": "plan"},
-                            {"text": "You're the one who caused all of this.", "next": "accuse"},
+                            {"text": "Maren is with us. Against you.",
+                             "next": "maren_with_party",
+                             "condition": {"flag": "maren.fighting_with_party", "op": "==", "value": True}},
+                            {"text": "You're the one who caused Ashenmoor.",
+                             "next": "accuse"},
+                            {"text": "What are you trying to do with the Hearthstones?",
+                             "next": "plan"},
+                            {"text": "We're not giving you anything.",
+                             "next": "fight"},
                         ],
                     },
-                    "defiant": {
+                    "maren_with_party": {
                         "speaker": "Valdris",
-                        "text": "Brave. Foolish. You have no idea what you're standing between. "
-                                "The Shadow Realm is not the enemy — it is the solution. "
-                                "The Fading is not decay. It is transformation. "
-                                "What I am doing will save this world. "
-                                "You are too small to see it.",
-                        "next": "response",
-                    },
-                    "plan": {
-                        "speaker": "Valdris",
-                        "text": "I am completing what the original Wardens were too frightened "
-                                "to attempt. A true merger. Not a barrier between worlds — "
-                                "a bridge. Shadow and light. Unified. Eternal. "
-                                "No more Fading. No more dissolution. "
-                                "One world, stronger than either alone.",
-                        "on_enter": [{"action": "discover_lore", "lore": "valdris_true_plan"}],
-                        "next": "response",
+                        "text": "Ah.\n"
+                                "She finally chose a side.\n"
+                                "The silence stretches. Something moves in his face — "
+                                "something that was a father, once.\n"
+                                "Then it closes again.\n"
+                                "That doesn't change what I have to do.",
+                        "next": "plan",
                     },
                     "accuse": {
                         "speaker": "Valdris",
-                        "text": "Caused it. Yes. The wards were a cage. What I 'caused' "
-                                "was the first honest look at what lies beyond them. "
-                                "The Fading is the natural result of a world that has been "
-                                "starved of Shadow for a thousand years. I gave it what it needed.",
-                        "next": "response",
+                        "text": "Ashenmoor.\n"
+                                "They always bring up Ashenmoor.\n"
+                                "Two hundred people. Yes. I know the count. "
+                                "I've carried it longer than you've been alive.\n"
+                                "But a world-merger requires a resonance cascade. "
+                                "The living are part of the bridge. "
+                                "Ashenmoor was the proof of concept. Not the goal.",
+                        "on_enter": [{"action": "discover_lore", "lore": "valdris_true_plan"}],
+                        "next": "final_choice",
                     },
-                    "response": {
+                    "plan": {
                         "speaker": "Valdris",
-                        "text": "You cannot stop the process now. Not without the Hearthstones. "
-                                "And if you have them — then you understand exactly what I mean "
-                                "to do with them. Let us see if you have the will to use them "
-                                "differently.",
+                        "text": "A bridge. Between this world and the Shadow Realm.\n"
+                                "Not a barrier — the Wardens built a barrier. It only delays. "
+                                "The Fading will consume this world in eighteen months "
+                                "whether you stop me or not.\n"
+                                "What I offer is permanence. Merger. "
+                                "One world, which cannot Fade, because Shadow is already within it.",
+                        "on_enter": [{"action": "discover_lore", "lore": "valdris_true_plan"}],
+                        "next": "final_choice",
+                    },
+                    "final_choice": {
+                        "speaker": "Valdris",
+                        "text": "You have the Hearthstones. I need them.\n"
+                                "Give them to me — and I will build something that lasts.\n"
+                                "Or use them yourselves — restoring a ward-network that will fail "
+                                "again in a century and requires someone's blood to maintain forever.\n"
+                                "Choose quickly. I have run out of patience.",
+                        "choices": [
+                            {"text": "The wards don't need blood anymore. Maren solved it.",
+                             "next": "maren_solution",
+                             "condition": {"flag": "maren.fighting_with_party", "op": "==", "value": True}},
+                            {"text": "We choose the wards.",  "next": "fight"},
+                            {"text": "We're not giving you anything.", "next": "fight"},
+                        ],
+                    },
+                    "maren_solution": {
+                        "speaker": "Valdris",
+                        "text": "She solved the maintenance equation.\n"
+                                "The long silence.\n"
+                                "Show me.",
+                        "next": "maren_shows",
+                    },
+                    "maren_shows": {
+                        "speaker": "Maren",
+                        "text": "It's in the resonance differential. You treated the stones "
+                                "as static anchors. They're not — they're oscillators. "
+                                "Phase them correctly and the ward-network generates its own "
+                                "maintenance field. No blood. No vigil. Perpetual.\n"
+                                "It's your own math, Father. You just didn't finish it.",
+                        "next": "valdris_responds",
+                    },
+                    "valdris_responds": {
+                        "speaker": "Valdris",
+                        "text": "...\n"
+                                "The figure is still for a very long time.\n"
+                                "The grey-light flickers.\n"
+                                "If that is true. If you've solved it.\n"
+                                "Then everything I have done was unnecessary.\n"
+                                "He looks at his hands.\n"
+                                "It won't stop me. But I wanted you to know — "
+                                "that I understood, at the end, what I cost.",
+                        "on_enter": [{"action": "set_flag", "flag": "valdris.understood", "value": True}],
+                        "end": True,
+                    },
+                    "fight": {
+                        "speaker": "Valdris",
+                        "text": "Then we have nothing more to discuss.\n"
+                                "I have waited four hundred years for these stones.\n"
+                                "You will not take them from me.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  MAREN SPIRE REUNION — Fires on Valdris Spire floor 5
+    #  Two variants based on how the betrayal went.
+    # ─────────────────────────────────────────────────────────
+    "maren_spire": [
+        # Variant A — player listened (betray_heard)
+        {
+            "conditions": [
+                {"flag": "maren.betray_heard",        "op": "==",        "value": True},
+                {"flag": "maren.spire_reunion_done",  "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "maren_spire_heard",
+                "nodes": {
+                    "start": {
+                        "speaker": "Maren",
+                        "text": "You came.\n"
+                                "I didn't know if you would — or if you'd come to stop me "
+                                "rather than finish this.\n"
+                                "Either way. I'm glad you're here.",
+                        "choices": [
+                            {"text": "We're here to stop Valdris. What he's doing is wrong.",
+                             "next": "align"},
+                            {"text": "We're not sure yet. What do you need?",
+                             "next": "uncertain"},
+                            {"text": "What did you find when you got here?",
+                             "next": "what_found"},
+                        ],
+                    },
+                    "what_found": {
+                        "speaker": "Maren",
+                        "text": "Him. My father — what's left of him.\n"
+                                "He's not Valdris anymore. He's a Lingering Will — "
+                                "a consciousness that refused to dissolve when the Fading consumed him. "
+                                "The ritual bound him to the Spire instead of completing.\n"
+                                "That's why the Hearthstones are needed. "
+                                "They're the only thing that can break the binding — "
+                                "and either restore the wards or finish what he started.",
+                        "next": "align",
+                    },
+                    "uncertain": {
+                        "speaker": "Maren",
+                        "text": "That's fair. You've had good reason not to trust me.\n"
+                                "I need — I need you to fight him. I can't do it myself. "
+                                "He's still my father, whatever he's become, and I can't "
+                                "make my hands do it.\n"
+                                "After — after, I'll restore the wards the way the formula says. "
+                                "No ritual. No sacrifice. Just the stones and the anchor points.\n"
+                                "You have my word.",
+                        "next": "final_deal",
+                    },
+                    "align": {
+                        "speaker": "Maren",
+                        "text": "Then we want the same thing. Finally.\n"
+                                "The wards can be restored with just the stones — no ritual. "
+                                "I've confirmed it. The ritual was my father's shortcut. "
+                                "The stones themselves are enough, if placed correctly.\n"
+                                "Fight him. I'll handle the placement. Deal?",
+                        "next": "final_deal",
+                    },
+                    "final_deal": {
+                        "speaker": "Maren",
+                        "text": "He's on the top floor. He's been waiting — "
+                                "he wants the Hearthstones too, but for the opposite reason.\n"
+                                "Don't let him speak too long. He's very persuasive. "
+                                "He was my father. I would know.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "maren.spire_reunion_done", "value": True},
+                            {"action": "set_flag", "flag": "maren.fighting_with_party",  "value": True},
+                        ],
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Variant B — player resisted (betray_resisted)
+        {
+            "conditions": [
+                {"flag": "maren.betray_resisted",     "op": "==",        "value": True},
+                {"flag": "maren.spire_reunion_done",  "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "maren_spire_resisted",
+                "nodes": {
+                    "start": {
+                        "speaker": "Maren",
+                        "text": "You got up.\n"
+                                "Good.\n"
+                                "For what it's worth — the ward-pulse wasn't meant to hurt you. "
+                                "It was meant to give me a head start.",
+                        "choices": [
+                            {"text": "We're here now. What do you want?",
+                             "next": "what_want"},
+                            {"text": "We should have stopped you when we had the chance.",
+                             "next": "regret"},
+                        ],
+                    },
+                    "regret": {
+                        "speaker": "Maren",
+                        "text": "Maybe. But then you wouldn't be here now.\n"
+                                "And I need you here now.\n"
+                                "I got inside the Spire. I found him. "
+                                "I spent two days trying to do what I came to do "
+                                "and I couldn't. He's too strong for one person.\n"
+                                "I was wrong to think I could do this alone.",
+                        "next": "offer",
+                    },
+                    "what_want": {
+                        "speaker": "Maren",
+                        "text": "I want what I've always wanted. The Fading stopped. "
+                                "The wards restored.\n"
+                                "But my father is a Lingering Will now — more dangerous than "
+                                "he ever was alive. I can't fight him alone.\n"
+                                "I'm asking. After everything. Please.",
+                        "next": "offer",
+                    },
+                    "offer": {
+                        "speaker": "Maren",
+                        "text": "Help me fight him. Then I'll restore the wards — "
+                                "properly, just the stones and the anchor points, "
+                                "no ritual, no sacrifice.\n"
+                                "And after that — if you want to drag me to the Imperial "
+                                "courts or whatever — I'll go quietly.\n"
+                                "But let me finish this first.",
+                        "choices": [
+                            {"text": "We'll fight him. Then we talk about after.",
+                             "next": "accepted"},
+                            {"text": "Fine. But we're watching you.",
+                             "next": "accepted"},
+                        ],
+                    },
+                    "accepted": {
+                        "speaker": "Maren",
+                        "text": "That's all I'm asking for.\n"
+                                "He's at the top. He knows we're coming — "
+                                "he's known since I arrived. He's been waiting.\n"
+                                "Stay close.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "maren.spire_reunion_done",   "value": True},
+                            {"action": "set_flag", "flag": "maren.fighting_with_party",  "value": True},
+                        ],
                         "end": True,
                     },
                 },
@@ -2584,7 +3081,7 @@ TOWN_NPCS = {
     "woodhaven":   ["elder_theron", "sylla"],
     "ironhearth":  ["forgemaster_dunn", "merchant_kira"],
     "greenwood":   ["scout_feryn"],
-    "saltmere":    ["guildmaster_sable", "tide_priest_oran"],
+    "saltmere":    ["guildmaster_sable", "tide_priest_oran", "dockhand_riv"],
     "sanctum":     ["high_priest_aldara"],
     "crystalspire": ["archmage_solen", "teleport_master"],
     "thornhaven":  ["governor_aldric", "guild_commander_varek", "court_mage_sira"],
@@ -2903,7 +3400,7 @@ DUNGEON_STORY_EVENTS = {
                 "lore_id": "dragon_karreth",
             },
         ],
-        "boss_dialogue": None,
+        "boss_dialogue": "karreth",
     },
 }
 
