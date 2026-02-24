@@ -322,6 +322,37 @@ NEW_ENEMIES = {
              "estimated_value":18,"description":"Enchanted stone from a gargoyle."}}],
         desc={0:"A stone figure that moves.",1:"Gargoyle",
               2:"Gargoyle — very high armor. Weak to blunt/lightning."}),
+
+    # ── Briarhollow Attack (Act 1 Climax) ──
+    "Shadow Stalker": _e("Shadow Stalker",110,6,28,S(8,18,8,10,10,2),22,30,"melee","shadow",
+        acc=10,row="front",ai="aggressive",xp=55,gold=(12,22),
+        res={"piercing":0.0,"slashing":0.0,"blunt":0.0,
+             "fire":1.5,"ice":1.0,"lightning":1.0,
+             "divine":2.5,"shadow":0.0,"nature":1.0,"arcane":1.5},
+        imm=["Poisoned","Fear","Sleep"],
+        ab=[{"name":"Shadow Strike","type":"damage","target":"single_enemy","power":18,
+             "element":"shadow","description":"A blade of pure shadow energy."}],
+        loot=[{"drop_chance":0.40,"item":{"name":"Shadow Essence","type":"material",
+               "rarity":"uncommon","identified":True,"estimated_value":35,
+               "description":"A dense droplet of shadow energy. Warm to the touch."}}],
+        desc={0:"A humanoid shape woven from shadow, nearly invisible until it moves.",
+              1:"Shadow Stalker",
+              2:"Shadow Stalker — immune to physical damage. Use divine, fire, or arcane."}),
+
+    "Shadow Brute": _e("Shadow Brute",220,12,20,S(18,8,20,6,6,2),8,48,"melee","shadow",
+        acc=5,row="front",ai="defensive",xp=75,gold=(15,30),
+        res={"piercing":0.0,"slashing":0.0,"blunt":0.5,
+             "fire":1.5,"ice":1.0,"lightning":1.0,
+             "divine":2.5,"shadow":0.0,"nature":1.0,"arcane":1.5},
+        imm=["Poisoned","Fear","Charm"],
+        ab=[{"name":"Shadow Slam","type":"damage","target":"single_enemy","power":30,
+             "element":"shadow","description":"Crushes with shadow-hardened fists."}],
+        loot=[{"drop_chance":0.50,"item":{"name":"Dense Shadow Core","type":"material",
+               "rarity":"rare","identified":True,"estimated_value":70,
+               "description":"A fist-sized mass of compacted shadow energy. Cold on one side, burning on the other."}}],
+        desc={0:"A massive shadow-creature, hunched and slow but devastatingly powerful.",
+              1:"Shadow Brute",
+              2:"Shadow Brute — immune to piercing/slashing. Heavy hitter. Use divine or fire."}),
 }
 
 # ══════════════════════════════════════════════════════════
@@ -329,6 +360,11 @@ NEW_ENEMIES = {
 # ══════════════════════════════════════════════════════════
 
 NEW_ENCOUNTERS = {
+    # ── Story Events ──
+    "briarhollow_attack": {"name":"Shadow Attack on Briarhollow","difficulty":"hard",
+        "groups":[{"enemy":"Shadow Brute","count":1,"row":"front"},
+                  {"enemy":"Shadow Stalker","count":2,"row":"front"}]},
+
     # ── Goblin Warren ──
     "gw_scouts":      {"name":"Goblin Scouts","difficulty":"easy",
         "groups":[{"enemy":"Goblin Scout","count":4,"row":"front"}]},

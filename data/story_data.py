@@ -595,6 +595,67 @@ NPC_DIALOGUES = {
                 },
             },
         },
+        # After Briarhollow shadow attack
+        {
+            "conditions": [
+                {"flag": "briarhollow_attack.done", "op": "==", "value": True},
+                {"flag": "maren.post_attack_spoken", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "maren_post_attack",
+                "nodes": {
+                    "start": {
+                        "speaker": "Maren",
+                        "text": "They came here. To Briarhollow. I didn't think it would happen this fast.\n"
+                                "The Fading doesn't just unmake things at the edges anymore — "
+                                "it's pushing creatures through. Sending them somewhere specific.\n"
+                                "They were here for us. For the fragment you're carrying.",
+                        "choices": [
+                            {"text": "How do we stop them coming back?", "next": "stop"},
+                            {"text": "Are the people here in danger?", "next": "danger"},
+                            {"text": "We need to move faster.", "next": "faster"},
+                        ],
+                    },
+                    "stop": {
+                        "speaker": "Maren",
+                        "text": "The only way to stop them is to restore the wards. Which means "
+                                "finding the rest of the Hearthstones. Every fragment we collect "
+                                "strengthens the network a little — enough to make this town "
+                                "less of a beacon.\n"
+                                "Right now, carrying that fragment is like holding a torch in a dark room "
+                                "full of things that hate light.",
+                        "next": "urge",
+                    },
+                    "danger": {
+                        "speaker": "Maren",
+                        "text": "Yes. Not immediately — shadow creatures aren't interested in "
+                                "ordinary people. They're drawn to Warden energy, to the fragments.\n"
+                                "But the longer we stay here with what we're carrying, "
+                                "the more attacks there will be. "
+                                "We protect this town by leaving it.",
+                        "next": "urge",
+                    },
+                    "faster": {
+                        "speaker": "Maren",
+                        "text": "Yes. I agree. I've been too cautious — treating this like an "
+                                "academic investigation instead of what it actually is.\n"
+                                "We need to move.",
+                        "next": "urge",
+                    },
+                    "urge": {
+                        "speaker": "Maren",
+                        "text": "The Ashenmoor ruins should have answers about what Valdris was actually "
+                                "building. If we understand the plan, we can stop it.\n"
+                                "And there are more Hearthstones to find. I can feel them, dimly — "
+                                "like embers in the dark. We have to reach them before the Fading does.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "maren.post_attack_spoken", "value": True},
+                        ],
+                        "end": True,
+                    },
+                },
+            },
+        },
         # First meeting — intro quest
         {
             "conditions": [

@@ -58,6 +58,7 @@ S_OPENING     = 14   # opening narrative sequence
 S_DIALOGUE    = 15   # standalone dialogue (e.g., boss pre-fight)
 S_CAMP        = 16   # full camp screen (dungeon/overworld)
 S_CHEST       = 17   # chest loot assignment screen
+S_ATTACK_CINEMATIC = 18  # Act 1 climax: shadow attack on Briarhollow
 
 
 class Game:
@@ -122,6 +123,7 @@ class Game:
         self.dialogue_ui = None
         self.dialogue_return_state = None
         self.dialogue_callback = None  # function to call after dialogue ends
+        self._post_combat_town = None  # if set, post-combat routes to this town
         # Camp screen
         self.camp_ui = None
         self.camp_return_state = None
@@ -504,7 +506,13 @@ class Game:
                     result = self.post_combat_ui.handle_click(mx, my)
                     if result == "continue":
                         self.party_scroll = 0
-                        if self.dungeon_state:
+                        # Special routing: story combat that drops into a town
+                        if getattr(self, "_post_combat_town", None):
+                            town_id = self._post_combat_town
+                            self._post_combat_town = None
+                            self.town_ui = TownUI(self.party, town_id=town_id)
+                            self.go_fade(S_TOWN)
+                        elif self.dungeon_state:
                             self.go_fade(S_DUNGEON)
                         elif self.world_state:
                             self.go_fade(S_WORLD_MAP)
@@ -539,6 +547,9 @@ class Game:
                     result = self.dialogue_ui.handle_event(e)
                     if self.dialogue_ui and self.dialogue_ui.finished:
                         self._end_dialogue()
+
+        elif self.state == S_ATTACK_CINEMATIC:
+            self._handle_attack_cinematic_input(e)
 
         elif self.state == S_CAMP:
             if self.camp_ui:
@@ -645,6 +656,7 @@ class Game:
         elif self.state == S_DIALOGUE:  self.draw_dialogue(mx, my)
         elif self.state == S_CAMP:      self._draw_camp(mx, my)
         elif self.state == S_CHEST:     self._draw_chest(mx, my)
+        elif self.state == S_ATTACK_CINEMATIC: self._draw_attack_cinematic(mx, my)
 
     # ── Title Screen ──────────────────────────────────────────
 
@@ -1541,6 +1553,80 @@ class Game:
         if boss_npc:
             defeat_boss(boss_npc)
 
+    def _trigger_briarhollow_attack(self):
+        """Trigger the Act 1 climax: shadow creatures attack Briarhollow.
+        Called once when the party returns after collecting Hearthstone 1."""
+        self._attack_phase = "cinematic"
+        self._attack_timer = 0.0
+        self.go(S_ATTACK_CINEMATIC)
+
+    def _draw_attack_cinematic(self, mx, my):
+        """Full-screen dramatic cinematic before the Briarhollow battle."""
+        import pygame
+        dt = self.clock.get_time() / 1000.0
+        self._attack_timer = getattr(self, "_attack_timer", 0.0) + dt
+
+        surf = self.screen
+        W, H = surf.get_size()
+        surf.fill((0, 0, 0))
+
+        t = self._attack_timer
+        # Fade in over first 0.8s
+        alpha = min(255, int(t / 0.8 * 255))
+
+        lines = [
+            ("THE FADING FOLLOWS", 2.0, 42, (220, 80, 80)),
+            ("Something has tracked the Hearthstone fragment", 3.5, 20, (200, 170, 130)),
+            ("back to Briarhollow.", 3.5, 20, (200, 170, 130)),
+            ("", 0, 0, (0,0,0)),
+            ("Shadow creatures emerge from the tree line.", 5.0, 20, (180, 150, 110)),
+            ("", 0, 0, (0,0,0)),
+            ("DEFEND THE TOWN", 6.5, 34, (240, 100, 60)),
+        ]
+
+        font_cache = {}
+        def get_font(size):
+            if size not in font_cache:
+                font_cache[size] = pygame.font.SysFont("Georgia", size)
+            return font_cache[size]
+
+        y = H // 2 - 120
+        for text, appear_at, size, color in lines:
+            if not text or size == 0:
+                y += 20
+                continue
+            if t >= appear_at:
+                line_alpha = min(255, int((t - appear_at) / 0.6 * 255))
+                font = get_font(size)
+                rendered = font.render(text, True, color)
+                rendered.set_alpha(line_alpha)
+                x = W // 2 - rendered.get_width() // 2
+                surf.blit(rendered, (x, y))
+            y += size + 14
+
+        # Show "Press any key" after all lines appear
+        if t >= 8.5:
+            prompt_font = pygame.font.SysFont("Georgia", 16)
+            pulse = abs((t * 2) % 2 - 1)  # 0→1→0 pulse
+            prompt_alpha = int(80 + 175 * pulse)
+            prompt = prompt_font.render("[ Press any key to continue ]", True, (160, 140, 120))
+            prompt.set_alpha(prompt_alpha)
+            surf.blit(prompt, (W // 2 - prompt.get_width() // 2, H - 60))
+
+    def _handle_attack_cinematic_input(self, event):
+        """Handle input during attack cinematic — any key/click advances."""
+        import pygame
+        t = getattr(self, "_attack_timer", 0.0)
+        if t < 1.5:
+            return  # prevent accidental skip
+        if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+            # Transition to the actual combat
+            from core.story_flags import set_flag
+            set_flag("briarhollow_attack.done", True)
+            self._post_combat_town = "briarhollow"  # after fight, enter town
+            self.pre_dungeon_state = None
+            self.start_combat("briarhollow_attack")
+
     def draw_inventory(self, mx, my):
         """Draw the inventory/equipment screen."""
         dt = self.clock.get_time()
@@ -1597,6 +1683,17 @@ class Game:
                 town_id = event.get("id", "briarhollow")
                 self.current_town_id = town_id
                 self.town_ui = TownUI(self.party, town_id=town_id)
+
+                # ── Act 1 Climax: Shadow attack on Briarhollow ──
+                # Fires once, after Hearthstone 1 is collected, on next visit to Briarhollow
+                if town_id == "briarhollow":
+                    from core.story_flags import get_flag
+                    hs1 = get_flag("hearthstone.abandoned_mine")
+                    already_done = get_flag("briarhollow_attack.done")
+                    if hs1 and not already_done:
+                        self._trigger_briarhollow_attack()
+                        return  # attack handler takes over
+
                 self.go_fade(S_TOWN)
             elif loc["type"] == LOC_DUNGEON:
                 # Find matching dungeon ID
