@@ -125,6 +125,20 @@ DUNGEONS = {
         "theme": "tower",
         "encounter_rate": 7,
     },
+    "dragons_tooth": {
+        "name": "Dragon's Tooth",
+        "floors": 3,
+        "width": 38, "height": 30,
+        "encounter_table": {
+            1: ["dt_hatchlings", "dt_beetles"],
+            2: ["dt_drakes", "dt_troll", "dt_beetles"],
+            3: ["dt_mixed", "dt_drake_swarm"],
+        },
+        "boss_floor": 3,
+        "boss_encounter": "boss_karreth",
+        "theme": "cave",           # volcanic cave reuses cave theme renderer
+        "encounter_rate": 7,
+    },
 }
 
 # ═══════════════════════════════════════════════════════════════

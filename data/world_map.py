@@ -234,9 +234,9 @@ LOCATIONS = {
         "name": "Dragon's Tooth", "type": LOC_DUNGEON,
         "x": 112, "y": 55, "region": "ocean",
         "visible": False, "icon": "D",
-        "description": "A volcanic island shaped like a fang.",
-        "encounter_key": "boss_orc", "floors": 6, "difficulty": "legendary",
-        "required_key": "dragon_scale", "discovery_radius": 3,
+        "description": "A volcanic island shaped like a fang. Something vast circles its caldera.",
+        "encounter_key": "boss_karreth", "floors": 3, "difficulty": "legendary",
+        "required_key": "ship_passage", "discovery_radius": 3,
     },
 }
 
