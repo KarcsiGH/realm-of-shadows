@@ -222,6 +222,75 @@ ENEMIES = {
         },
     },
 
+    "Stone Sentinel": {
+        "name": "Stone Sentinel",
+        "hp": 180, "defense": 28, "magic_resist": 12,
+        "stats": {"STR": 16, "DEX": 4, "CON": 20, "INT": 4, "WIS": 8, "PIE": 2},
+        "speed_base": 5,
+        "attack_damage": 38, "attack_type": "melee", "phys_type": "blunt",
+        "accuracy_bonus": 4,
+        "preferred_row": FRONT,
+        "ai_type": "defensive",
+        "xp_reward": 80, "gold_reward": (10, 25),
+        "resistances": {
+            "piercing": RESISTANT, "slashing": RESISTANT, "blunt": NEUTRAL,
+            "fire": NEUTRAL, "ice": NEUTRAL, "lightning": RESISTANT,
+            "divine": NEUTRAL, "shadow": RESISTANT, "nature": NEUTRAL,
+            "arcane": VULNERABLE,
+        },
+        "status_immunities": ["poison", "stun", "fear", "charm", "sleep"],
+        "abilities": [],
+        "loot_table": [
+            {"drop_chance": 0.30, "item": {
+                "name": "Ward-Carved Stone", "type": "material",
+                "rarity": "uncommon", "identified": True,
+                "estimated_value": 45,
+                "description": "A piece of stone etched with fading warden runes. Used in crafting.",
+            }},
+        ],
+        "description_tiers": {
+            0: "A hulking construct of stone and ancient rune-work, animated by dwarven warden magic.",
+            1: "Stone Sentinel",
+            2: "Stone Sentinel — Dwarven construct. Slow but heavily armored. "
+               "Resistant to blades and lightning. Arcane magic bypasses its defenses.",
+        },
+    },
+
+    "Ash Revenant": {
+        "name": "Ash Revenant",
+        "hp": 145, "defense": 18, "magic_resist": 20,
+        "stats": {"STR": 14, "DEX": 12, "CON": 16, "INT": 10, "WIS": 8, "PIE": 2},
+        "speed_base": 14,
+        "attack_damage": 32, "attack_type": "melee", "phys_type": "slashing",
+        "accuracy_bonus": 6,
+        "preferred_row": MID,
+        "ai_type": "aggressive",
+        "xp_reward": 70, "gold_reward": (15, 30),
+        "resistances": {
+            "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
+            "fire": IMMUNE, "ice": NEUTRAL, "lightning": NEUTRAL,
+            "divine": VULNERABLE, "shadow": RESISTANT, "nature": NEUTRAL,
+            "arcane": NEUTRAL,
+        },
+        "status_immunities": ["poison", "burn", "fear"],
+        "abilities": ["Cinder Touch"],
+        "loot_table": [
+            {"drop_chance": 0.35, "item": {
+                "name": "Ashenmoor Cinder", "type": "material",
+                "rarity": "uncommon", "identified": True,
+                "estimated_value": 38,
+                "description": "Ash compacted into a dense, still-warm lump. Reeks of old magic.",
+            }},
+        ],
+        "description_tiers": {
+            0: "A humanoid shape woven from compressed ash and fading shadow energy, "
+               "hollow where its eyes should be.",
+            1: "Ash Revenant",
+            2: "Ash Revenant — Undead. Immune to fire. Weak to divine. "
+               "Moderate speed, hits at range. Cinder Touch inflicts Burning.",
+        },
+    },
+
     "Skeleton Warrior": {
         "name": "Skeleton Warrior",
         "hp": 105, "defense": 15, "magic_resist": 6,
@@ -543,6 +612,98 @@ ENEMIES = {
         },
     },
 
+    # ─── Abandoned Mine Boss ───────────────────────────────────────
+    "Korrath the Stone Warden": {
+        "name": "Korrath the Stone Warden",
+        "hp": 520, "defense": 44, "magic_resist": 30,
+        "stats": {"STR": 22, "DEX": 8, "CON": 26, "INT": 14, "WIS": 18, "PIE": 10},
+        "speed_base": 6,
+        "attack_damage": 68, "attack_type": "melee", "phys_type": "blunt",
+        "accuracy_bonus": 8,
+        "preferred_row": FRONT,
+        "ai_type": "boss",
+        "xp_reward": 380, "gold_reward": (120, 220),
+        "resistances": {
+            "piercing": RESISTANT, "slashing": RESISTANT, "blunt": NEUTRAL,
+            "fire": NEUTRAL, "ice": NEUTRAL, "lightning": RESISTANT,
+            "divine": NEUTRAL, "shadow": RESISTANT, "nature": NEUTRAL,
+            "arcane": NEUTRAL,
+        },
+        "status_immunities": ["poison", "stun", "fear", "charm"],
+        "abilities": ["Stone Slam", "Ward Pulse", "Enrage"],
+        "loot_table": [
+            {"drop_chance": 1.0, "item": {
+                "name": "Hearthstone Fragment (Mine)", "type": "key_item",
+                "subtype": "hearthstone_fragment", "identified": True,
+                "rarity": "legendary", "tier": 3,
+                "estimated_value": 0,
+                "description": "A warm fragment of the First Hearthstone, glowing with amber light. "
+                               "The dwarven Warden Korrath guarded this for centuries.",
+            }},
+            {"drop_chance": 0.85, "item": {
+                "name": "Warden's Stone Hammer", "type": "weapon", "subtype": "hammer",
+                "rarity": "rare", "tier": 3, "damage": 26, "identified": True,
+                "estimated_value": 340,
+                "description": "A dwarven war-hammer inscribed with ward-runes. "
+                               "+26 base damage, +8 magic resist to wielder.",
+                "stat_bonus": {"magic_resist": 8},
+            }},
+        ],
+        "description_tiers": {
+            0: "A massive stone-clad figure, translucent at the edges. "
+               "The ghost of a dwarven Warden, still at his post.",
+            1: "Korrath the Stone Warden",
+            2: "Korrath the Stone Warden — Boss. Warden ghost. Resistant to most damage types. "
+               "Weak to nothing in particular — endure and outlast.",
+        },
+    },
+
+    # ─── Ruins of Ashenmoor Boss ───────────────────────────────────
+    "Commander Ashvar": {
+        "name": "Commander Ashvar",
+        "hp": 490, "defense": 38, "magic_resist": 42,
+        "stats": {"STR": 18, "DEX": 14, "CON": 20, "INT": 22, "WIS": 16, "PIE": 4},
+        "speed_base": 10,
+        "attack_damage": 55, "attack_type": "melee", "phys_type": "slashing",
+        "accuracy_bonus": 10,
+        "preferred_row": FRONT,
+        "ai_type": "boss",
+        "xp_reward": 360, "gold_reward": (140, 250),
+        "resistances": {
+            "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
+            "fire": IMMUNE, "ice": NEUTRAL, "lightning": NEUTRAL,
+            "divine": VULNERABLE, "shadow": RESISTANT, "nature": NEUTRAL,
+            "arcane": NEUTRAL,
+        },
+        "status_immunities": ["poison", "fear", "charm"],
+        "abilities": ["Ashen Wave", "Shadow Bind", "Commander's Wrath"],
+        "loot_table": [
+            {"drop_chance": 0.90, "item": {
+                "name": "Ashenmoor Commander's Seal", "type": "accessory",
+                "subtype": "amulet", "rarity": "rare", "tier": 3,
+                "identified": True, "estimated_value": 280,
+                "description": "A cracked warden seal, still radiating residual authority. "
+                               "+12 magic resist, +6 defense.",
+                "stat_bonus": {"magic_resist": 12, "defense": 6},
+            }},
+            {"drop_chance": 0.60, "item": {
+                "name": "Scorched Warden Blade", "type": "weapon", "subtype": "sword",
+                "rarity": "uncommon", "tier": 3, "damage": 20, "identified": True,
+                "estimated_value": 210,
+                "description": "A warden's sword, blackened by whatever destroyed Ashenmoor. "
+                               "+20 base damage, deals bonus fire damage.",
+                "stat_bonus": {"fire_damage_bonus": 6},
+            }},
+        ],
+        "description_tiers": {
+            0: "A figure of scorched bone and hardened ash, encased in the charred remnants "
+               "of warden plate. The ruins shaped something from what was left behind.",
+            1: "Commander Ashvar",
+            2: "Commander Ashvar — Boss. Ash-bound undead Warden. Immune to fire. "
+               "Weak to divine. High magic resist — physical attacks hit harder.",
+        },
+    },
+
     "Giant Spider": {
         "name": "Giant Spider",
         "hp": 84, "defense": 10, "magic_resist": 6,
@@ -651,6 +812,22 @@ ENCOUNTERS = {
             {"enemy": "Giant Spider", "count": 3, "row": FRONT},
         ],
     },
+    "boss_mine_warden": {
+        "name": "The Deep Vault",
+        "difficulty": "boss",
+        "groups": [
+            {"enemy": "Korrath the Stone Warden", "count": 1, "row": FRONT},
+            {"enemy": "Stone Sentinel", "count": 2, "row": FRONT},
+        ],
+    },
+    "boss_ashenmoor": {
+        "name": "The Commander's Court",
+        "difficulty": "boss",
+        "groups": [
+            {"enemy": "Commander Ashvar", "count": 1, "row": FRONT},
+            {"enemy": "Ash Revenant", "count": 2, "row": MID},
+        ],
+    },
     "boss_foreman": {
         "name": "The Foreman's Chamber",
         "difficulty": "boss",
@@ -707,7 +884,7 @@ DUNGEON_ENCOUNTER_TABLES = {
         1: ["medium_goblins", "medium_bandits"],
         2: ["hard_mixed", "orc_patrol"],
         3: ["orc_patrol", "hard_mixed"],
-        "boss": "boss_foreman",
+        "boss": "boss_mine_warden",
     },
     "sunken_crypt": {
         1: ["hard_goblins", "hard_mixed"],
@@ -719,7 +896,7 @@ DUNGEON_ENCOUNTER_TABLES = {
         1: ["hard_mixed", "orc_patrol"],
         2: ["boss_orc", "orc_patrol"],
         3: ["boss_orc", "orc_patrol"],
-        "boss": "boss_foreman",
+        "boss": "boss_ashenmoor",
     },
 }
 

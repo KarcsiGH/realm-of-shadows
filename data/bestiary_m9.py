@@ -557,7 +557,7 @@ NEW_DUNGEON_ENCOUNTER_TABLES = {
         3: ["am_golem","am_kobold_fire","am_wraith","am_crystal","am_trap_squad"],
         4: ["am_wraith","am_deep","am_golem","am_crystal","am_golem_duo"],
         5: ["am_deep","am_wraith","am_golem_duo","am_crystal"],
-        "boss": "boss_foreman",
+        "boss": "boss_mine_warden",
     },
     "sunken_crypt": {
         1: ["sc_zombies","sc_skel_patrol","sc_mixed_easy","sc_plague"],
@@ -571,7 +571,7 @@ NEW_DUNGEON_ENCOUNTER_TABLES = {
         2: ["ra_cultists","ra_bandits","ra_sentinel","ra_patrol","ra_gargoyles"],
         3: ["ra_treant","ra_cultists","ra_mixed","ra_abomination","ra_gargoyles"],
         4: ["ra_mixed","ra_treant","ra_full_force","ra_abomination","ra_gargoyles"],
-        "boss": "boss_shadow_v",
+        "boss": "boss_ashenmoor",
     },
 }
 

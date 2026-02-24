@@ -223,6 +223,35 @@ LORE_ENTRIES = {
                 "Karreth does not understand what is happening to it. It only knows "
                 "an imperative to protect the warm light at its center — the third Hearthstone.",
     },
+    "ashenmoor_fall": {
+        "title": "The Fall of Ashenmoor",
+        "text": "Ashenmoor was a Warden garrison city — two hundred and twelve people, "
+                "most of them support staff, scholars, and their families. "
+                "The city was destroyed when Warden-Researcher Valdris opened a shadow rift "
+                "inside the city's ward-anchor chamber. "
+                "Commander Ashvar's execution order was signed but never carried out. "
+                "Valdris was never found. "
+                "The Council classified the incident and sealed all records.",
+    },
+    "korrath_truth": {
+        "title": "The Stone Warden's Vigil",
+        "text": "Korrath was the last surviving member of the Iron Ridge Warden chapter. "
+                "Rather than abandon his post when the other Wardens fell, he used an old "
+                "dwarven binding ritual to merge himself with the vault, becoming both its "
+                "guardian and its lock. "
+                "He has been aware, waiting, for over four hundred years. "
+                "The binding cannot be dissolved — only satisfied.",
+    },
+    "ashvar_truth": {
+        "title": "Commander Ashvar's Account",
+        "text": "Ashvar commanded eighty-three Wardens at the time of Ashenmoor's destruction. "
+                "He recognized the danger in Valdris's research long before anyone else, "
+                "but acted too slowly. "
+                "The Shadow energy released in the rift bound him to the ruins, "
+                "preventing him from acting but preserving his awareness. "
+                "He has spent centuries reconstructing exactly what Valdris planned — "
+                "and is certain the spire is the final piece.",
+    },
 }
 
 
@@ -344,6 +373,18 @@ NPCS = {
     },
 
     # ─── Dungeon NPCs ───
+    "korrath": {
+        "name": "Korrath the Stone Warden",
+        "title": "Guardian of the First Hearthstone",
+        "location": "abandoned_mine",
+        "portrait_color": (140, 120, 80),  # warm stone brown
+    },
+    "ashvar": {
+        "name": "Commander Ashvar",
+        "title": "The Bound Commander",
+        "location": "ruins_ashenmoor",
+        "portrait_color": (80, 70, 65),  # ash grey
+    },
     "grak": {
         "name": "Grak the Goblin King",
         "title": "King of the Warren",
@@ -416,6 +457,138 @@ NPC_DIALOGUES = {
                         "on_enter": [
                             {"action": "complete_quest", "quest": "main_goblin_warren"},
                             {"action": "start_quest", "quest": "main_hearthstone_1"},
+                        ],
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # After Abandoned Mine cleared — Korrath defeated, Hearthstone 1 recovered
+        {
+            "conditions": [
+                {"flag": "boss.korrath.defeated", "op": "==", "value": True},
+                {"flag": "quest.main_hearthstone_1.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "maren_post_mine",
+                "nodes": {
+                    "start": {
+                        "speaker": "Maren",
+                        "text": "You made it back from the mine. I felt something shift — "
+                                "in the air, in the wards. You found it, didn't you?\n"
+                                "A Hearthstone fragment.",
+                        "choices": [
+                            {"text": "Yes. The dwarven Warden — Korrath — he was still there.",
+                             "next": "korrath_truth",
+                             "conditions": [{"flag": "lore.korrath_truth", "op": "==", "value": True}]},
+                            {"text": "We fought our way through. The fragment is ours.",
+                             "next": "fought"},
+                        ],
+                    },
+                    "korrath_truth": {
+                        "speaker": "Maren",
+                        "text": "Still there. Four hundred years.\n"
+                                "That's — that's devotion beyond anything I've read about. "
+                                "The binding he used... it's old dwarven oath-magic. "
+                                "He couldn't release the stone without being defeated. "
+                                "He was waiting for us, in a way.\n"
+                                "I hope he's at rest now.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "main_hearthstone_1"},
+                            {"action": "set_flag", "flag": "hearthstone.abandoned_mine", "value": True},
+                        ],
+                        "next": "next_steps",
+                    },
+                    "fought": {
+                        "speaker": "Maren",
+                        "text": "A dwarven Warden bound to a fragment for centuries. "
+                                "You fought an oath made flesh. Whatever he was before, "
+                                "I hope the binding released him.\n"
+                                "The fragment is what matters now.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "main_hearthstone_1"},
+                            {"action": "set_flag", "flag": "hearthstone.abandoned_mine", "value": True},
+                        ],
+                        "next": "next_steps",
+                    },
+                    "next_steps": {
+                        "speaker": "Maren",
+                        "text": "One fragment recovered. Three or four still to go — "
+                                "I'm still not sure of the exact number. "
+                                "The Ruins of Ashenmoor may have answers. "
+                                "Something's been active there. Not alive, exactly — but aware.\n"
+                                "Be careful. Ashenmoor was destroyed by Warden experiments. "
+                                "Whatever's left in those ruins saw what happened.",
+                        "on_enter": [{"action": "start_quest", "quest": "main_ashenmoor"}],
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # After Ruins of Ashenmoor cleared — Ashvar defeated, Valdris betrayal confirmed
+        {
+            "conditions": [
+                {"flag": "boss.ashvar.defeated", "op": "==", "value": True},
+                {"flag": "quest.main_ashenmoor.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "maren_post_ashenmoor",
+                "nodes": {
+                    "start": {
+                        "speaker": "Maren",
+                        "text": "You've been to Ashenmoor. I can see it in how you're standing.\n"
+                                "What did you find?",
+                        "choices": [
+                            {"text": "A bound Warden commander. He knew Valdris.",
+                             "next": "ashvar",
+                             "conditions": [{"flag": "lore.ashvar_truth", "op": "==", "value": True}]},
+                            {"text": "Evidence of what Valdris actually did.",
+                             "next": "evidence",
+                             "conditions": [{"flag": "lore.valdris_betrayal", "op": "==", "value": True}]},
+                            {"text": "The ruins are clear. Something was guarding them.",
+                             "next": "general"},
+                        ],
+                    },
+                    "ashvar": {
+                        "speaker": "Maren",
+                        "text": "A bound commander... That would be Ashvar. My father wrote about him "
+                                "in his earliest journals — dismissed him as an obstacle. 'Too rigid, "
+                                "too rule-bound.' That's how Valdris described anyone who got in his way.\n"
+                                "What did Ashvar tell you?",
+                        "next": "ashvar_detail",
+                    },
+                    "ashvar_detail": {
+                        "speaker": "Maren",
+                        "text": "He watched it happen. He tried to stop it. And he was bound to those "
+                                "ruins by the same magic that destroyed them.\n"
+                                "Valdris did that to a man who served alongside him.",
+                        "on_enter": [{"action": "discover_lore", "lore": "ashvar_truth"}],
+                        "next": "maren_reaction",
+                    },
+                    "evidence": {
+                        "speaker": "Maren",
+                        "text": "The Commander's Log. I've seen references to it — "
+                                "it was sealed when the Council covered up Ashenmoor.\n"
+                                "My father weakened a ward-anchor deliberately. "
+                                "And two hundred people died because of it.",
+                        "next": "maren_reaction",
+                    },
+                    "general": {
+                        "speaker": "Maren",
+                        "text": "Something that saw what Valdris did, and was left behind when "
+                                "the city was destroyed. The ruins have a way of keeping things.\n"
+                                "What matters is that you got through.",
+                        "next": "maren_reaction",
+                    },
+                    "maren_reaction": {
+                        "speaker": "Maren",
+                        "text": "When I was a child, I thought my father was the most principled man "
+                                "I'd ever known. Everything he did was for the greater good. "
+                                "He said that a lot.\n"
+                                "I'm beginning to understand what he meant by it.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "main_ashenmoor"},
+                            {"action": "set_flag", "flag": "maren.ashenmoor_revelation", "value": True},
                         ],
                         "end": True,
                     },
@@ -656,6 +829,171 @@ NPC_DIALOGUES = {
                     "bye": {
                         "speaker": "Bess",
                         "text": "Rest well. The world'll still need saving tomorrow.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  KORRATH — Pre-boss dialogue in Abandoned Mine (Act 1)
+    # ─────────────────────────────────────────────────────────
+    "korrath": [
+        {
+            "conditions": [
+                {"flag": "boss.korrath.defeated", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "korrath_confrontation",
+                "nodes": {
+                    "start": {
+                        "speaker": "Korrath the Stone Warden",
+                        "text": "Hold. State your purpose in the vault of the Wardens.\n"
+                                "I am Korrath, last of the Iron Ridge Wardens. "
+                                "I have stood this watch for four hundred and twelve years. "
+                                "I will stand it four hundred more, if need be.",
+                        "choices": [
+                            {"text": "We seek the Hearthstone. The wards are failing.", "next": "reason"},
+                            {"text": "Who were the Iron Ridge Wardens?", "next": "history"},
+                            {"text": "[Attack]", "next": "fight_direct"},
+                        ],
+                    },
+                    "history": {
+                        "speaker": "Korrath the Stone Warden",
+                        "text": "We were twelve. Dwarves, mostly, with a few humans who had the talent "
+                                "and the patience for stone-work. We sealed this vault when the other "
+                                "Wardens began to fall. Dug it deep enough that nothing walking the surface "
+                                "could reach it. We were right about that, at least.\n"
+                                "None of us expected to run out of living Wardens.",
+                        "choices": [
+                            {"text": "We seek the Hearthstone. The wards are failing.", "next": "reason"},
+                            {"text": "[Attack]", "next": "fight_direct"},
+                        ],
+                    },
+                    "reason": {
+                        "speaker": "Korrath the Stone Warden",
+                        "text": "Failing. Yes. I can feel it from down here — the stone gets "
+                                "colder every decade. The warmth in the fragment dims.\n"
+                                "You carry Warden blood. I can read it in the way you stand. "
+                                "But the oath I swore was not 'protect until someone worthy comes.' "
+                                "It was 'protect until the stone breaks free of you or you break free of it.'\n"
+                                "There is only one way to satisfy that oath.",
+                        "choices": [
+                            {"text": "Then we fight.", "next": "fight_accept"},
+                            {"text": "Is there no other way?", "next": "no_other_way"},
+                        ],
+                    },
+                    "no_other_way": {
+                        "speaker": "Korrath the Stone Warden",
+                        "text": "I have had four centuries to find one. There is not.\n"
+                                "The binding is dwarven work — it does not bend. "
+                                "But hear me: I do not wish to destroy you. "
+                                "I wish to be defeated. When you win, the fragment is yours by right. "
+                                "That is what I have been waiting for. "
+                                "A party strong enough to take it from me.",
+                        "on_enter": [{"action": "set_flag", "flag": "lore.korrath_truth", "value": True}],
+                        "end": True,
+                    },
+                    "fight_accept": {
+                        "speaker": "Korrath the Stone Warden",
+                        "text": "Good. No sentiment. That is the dwarven way.\n"
+                                "Come, then. Let the stone judge you.",
+                        "end": True,
+                    },
+                    "fight_direct": {
+                        "speaker": "Korrath the Stone Warden",
+                        "text": "Straight to it. I respect that.\n"
+                                "You will not find me easy, surface-dweller.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  COMMANDER ASHVAR — Pre-boss dialogue in Ashenmoor (Act 2)
+    # ─────────────────────────────────────────────────────────
+    "ashvar": [
+        {
+            "conditions": [
+                {"flag": "boss.ashvar.defeated", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "ashvar_confrontation",
+                "nodes": {
+                    "start": {
+                        "speaker": "Commander Ashvar",
+                        "text": "Wardens. Or something like Wardens. You have the look.\n"
+                                "I commanded eighty-three of them, once. I watched Valdris "
+                                "hollow them out one by one. Convinced them the Shadow was a tool. "
+                                "By the time I understood what he was doing, "
+                                "there was nothing left to command.",
+                        "choices": [
+                            {"text": "What happened to Ashenmoor?", "next": "what_happened"},
+                            {"text": "You know Valdris?", "next": "know_valdris"},
+                            {"text": "We've seen his work. He's still out there.", "next": "still_alive"},
+                            {"text": "[Attack]", "next": "fight_direct"},
+                        ],
+                    },
+                    "what_happened": {
+                        "speaker": "Commander Ashvar",
+                        "text": "He opened a rift. Not an accident — deliberate. Called it a 'controlled "
+                                "experiment.' Said the ward-anchor here was already compromised and we would "
+                                "lose nothing by testing the limits.\n"
+                                "Two hundred people lived in this city. "
+                                "The rift did not distinguish between the experiment and them.",
+                        "on_enter": [{"action": "discover_lore", "lore": "ashenmoor_fall"}],
+                        "choices": [
+                            {"text": "You know Valdris?", "next": "know_valdris"},
+                            {"text": "We've seen his work. He's still out there.", "next": "still_alive"},
+                        ],
+                    },
+                    "know_valdris": {
+                        "speaker": "Commander Ashvar",
+                        "text": "Know him. I trained him. He was the most gifted Warden I ever "
+                                "evaluated — and the most certain that the rules applied to everyone else.\n"
+                                "I ordered his quarters sealed when the experiments started. "
+                                "He had already moved them underground by then. "
+                                "He was always three steps ahead of where I was looking.",
+                        "next": "still_alive",
+                    },
+                    "still_alive": {
+                        "speaker": "Commander Ashvar",
+                        "text": "Still alive.\n"
+                                "Of course he is. That's the nature of his work — the Shadow preserves "
+                                "what it cannot consume. He would have used that. Turned himself into "
+                                "something permanent.\n"
+                                "I was bound here by the same force that destroyed this city. "
+                                "I have been... reconsidering what I know about Valdris for a long time. "
+                                "He must be stopped. But I cannot leave this place.\n"
+                                "You can. Once you get past me.",
+                        "on_enter": [{"action": "set_flag", "flag": "lore.ashvar_truth", "value": True},
+                                     {"action": "discover_lore", "lore": "valdris_betrayal"}],
+                        "choices": [
+                            {"text": "We'll stop him. But we have to get through you first.", "next": "fight_accept"},
+                            {"text": "Why can't you just let us pass?", "next": "cant_pass"},
+                        ],
+                    },
+                    "cant_pass": {
+                        "speaker": "Commander Ashvar",
+                        "text": "Because the Shadow that holds me here is part of Valdris's work. "
+                                "It tests everyone who comes. It doesn't care about my intentions — "
+                                "only about whether you are strong enough to continue.\n"
+                                "I don't like it either. I never liked his methods.",
+                        "end": True,
+                    },
+                    "fight_accept": {
+                        "speaker": "Commander Ashvar",
+                        "text": "Good. Don't hold back on my account. "
+                                "I've been waiting for someone to end this posting.",
+                        "end": True,
+                    },
+                    "fight_direct": {
+                        "speaker": "Commander Ashvar",
+                        "text": "No questions. Reasonable choice, given the circumstances.\n"
+                                "Let's see what you're made of.",
                         "end": True,
                     },
                 },
@@ -2130,8 +2468,9 @@ DUNGEON_STORY_EVENTS = {
                 "lore_id": None,
             },
         ],
+        "boss_dialogue": "korrath",
     },
-    "ashenmoor": {
+    "ruins_ashenmoor": {
         "floor_messages": {
             1: "The ruins still smolder with a heat that has no source. "
                "This place was destroyed by magic, not fire.",
@@ -2139,6 +2478,9 @@ DUNGEON_STORY_EVENTS = {
                "One figure stands apart from the others. His hands glow with shadow.",
             3: "You find a sealed chamber. The door bears the mark of the Wardens, "
                "broken deliberately. Someone wanted what was inside.",
+            4: "The inner court. The air here is thick with ash. "
+               "Something formed from it — shaped itself over centuries "
+               "from what the destruction left behind. It waits at the center.",
         },
         "journal_entries": [
             {
@@ -2149,8 +2491,20 @@ DUNGEON_STORY_EVENTS = {
                         "today. He called us blind. Said the Shadow isn't our enemy — it's our "
                         "evolution. I've ordered his quarters sealed. Gods help us all.'",
                 "lore_id": "valdris_betrayal",
+                "on_find": [{"action": "discover_lore", "lore": "valdris_betrayal"},
+                             {"action": "set_flag", "flag": "lore.valdris_betrayal", "value": True}],
+            },
+            {
+                "floor": 3,
+                "title": "Charred Order of Execution",
+                "text": "'By authority of the Warden Council, the research and quarters of "
+                        "Warden-Researcher Valdris are hereby sealed pending investigation "
+                        "into the Ashenmoor ward-anchor collapse. The death toll is two hundred "
+                        "and twelve. Valdris has not been located. — Signed, Commander Ashvar'",
+                "lore_id": "ashenmoor_fall",
             },
         ],
+        "boss_dialogue": "ashvar",
     },
     "valdris_spire": {
         "floor_messages": {

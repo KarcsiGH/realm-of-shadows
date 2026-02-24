@@ -1512,6 +1512,15 @@ class Game:
             "ruins_ashenmoor": "crypt_amulet",      # unlocks Sunken Crypt
             "valdris_spire":   "dragon_scale",      # unlocks Dragon's Tooth (future)
         }
+        # Map dungeon IDs to boss NPC IDs (for dialogue conditions)
+        BOSS_NPC_IDS = {
+            "goblin_warren":   "grak",
+            "abandoned_mine":  "korrath",
+            "spiders_nest":    "spider_queen",
+            "sunken_crypt":    "sunken_warden",
+            "ruins_ashenmoor": "ashvar",
+            "valdris_spire":   "valdris",
+        }
         key = BOSS_KEY_GRANTS.get(dungeon_id)
         if key and self.world_state:
             if not self.world_state.has_key(key):
@@ -1524,8 +1533,13 @@ class Game:
                         self.world_state.discovered_locations.add(loc_id)
 
         # Set story flags
-        from core.story_flags import set_flag
+        from core.story_flags import set_flag, defeat_boss
         set_flag(f"boss_defeated.{dungeon_id}", True)
+
+        # Set boss NPC defeated flag (used by dialogue conditions)
+        boss_npc = BOSS_NPC_IDS.get(dungeon_id)
+        if boss_npc:
+            defeat_boss(boss_npc)
 
     def draw_inventory(self, mx, my):
         """Draw the inventory/equipment screen."""
