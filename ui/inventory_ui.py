@@ -297,6 +297,19 @@ class InventoryUI:
                 if is_cursed_known:
                     draw_text(surface, "★ CURSED", rect.x + 100, rect.y + 44, (180, 80, 220), 10)
 
+                # Durability indicator
+                try:
+                    from core.durability import has_durability, get_durability_state, get_durability_color, get_durability_label, init_durability
+                    if has_durability(item):
+                        init_durability(item)
+                        state = get_durability_state(item)
+                        if state != "full":
+                            dur_col = get_durability_color(item)
+                            dur_lbl = get_durability_label(item)
+                            draw_text(surface, f"⚠ {state.upper()} {dur_lbl}", rect.x + rect.width - 130, rect.y + 4, dur_col, 10)
+                except Exception:
+                    pass
+
                 parts = []
                 if item.get("defense", 0):
                     parts.append(f"DEF +{item['defense']}")
@@ -393,6 +406,24 @@ class InventoryUI:
             parts = [f"{st} +{v}" for st, v in eq_stats.items()]
             draw_text(surface, f"Stat bonuses: {', '.join(parts)}",
                       panel.x + 12, sy, STAT_UP, 13)
+            sy += 18
+
+        # Item set bonuses
+        try:
+            from data.magic_items import get_set_bonus
+            active_sets = get_set_bonus(char)
+            if active_sets:
+                SET_COL = (255, 200, 80)   # warm gold for set bonuses
+                for sid, (set_data, count, tier) in active_sets.items():
+                    bonus = set_data["bonuses"][tier]
+                    draw_text(surface, f"★ {bonus['label']}",
+                              panel.x + 12, sy, SET_COL, 12, bold=True)
+                    sy += 14
+                    draw_text(surface, bonus["description"],
+                              panel.x + 20, sy, (200, 170, 60), 10)
+                    sy += 14
+        except Exception:
+            pass
 
     def _draw_inventory(self, surface, mx, my, char, top_y):
         panel = pygame.Rect(460, top_y, SCREEN_W - 480, 660)

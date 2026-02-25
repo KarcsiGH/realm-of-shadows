@@ -97,6 +97,7 @@ class TownUI:
     VIEW_JOBBOARD = "jobboard"
     VIEW_FORGE_UPGRADE = "forge_upgrade"
     VIEW_FORGE_ENCHANT = "forge_enchant"
+    VIEW_FORGE_REPAIR  = "forge_repair"
     VIEW_GUILD = "guild"
     VIEW_GUILD_TRANSITION = "guild_transition"
 
@@ -204,7 +205,8 @@ class TownUI:
         elif self.view == self.VIEW_CLASSTREE:
             self._draw_classtree(surface, mx, my)
         elif self.view in (self.VIEW_FORGE, self.VIEW_FORGE_CRAFT,
-                           self.VIEW_FORGE_UPGRADE, self.VIEW_FORGE_ENCHANT):
+                           self.VIEW_FORGE_UPGRADE, self.VIEW_FORGE_ENCHANT,
+                           self.VIEW_FORGE_REPAIR):
             self._draw_forge(surface, mx, my)
         elif self.view == self.VIEW_JOBBOARD:
             self._draw_jobboard(surface, mx, my)
@@ -2080,7 +2082,8 @@ class TownUI:
 
         # ── Forge ──
         elif self.view in (self.VIEW_FORGE, self.VIEW_FORGE_CRAFT,
-                           self.VIEW_FORGE_UPGRADE, self.VIEW_FORGE_ENCHANT):
+                           self.VIEW_FORGE_UPGRADE, self.VIEW_FORGE_ENCHANT,
+                           self.VIEW_FORGE_REPAIR):
             return self._handle_forge_click(mx, my)
 
         # ── Job Board ──
@@ -2187,6 +2190,58 @@ class TownUI:
         self.sold_items.append(buyback)
         self._msg(f"Sold {name} for {sell_price}g", SELL_COL)
         sfx.play("shop_sell")
+
+    def _draw_forge_repair(self, surface, mx, my, y, total_gold, accent):
+        """Draw the forge repair tab — list damaged equipment and repair buttons."""
+        from core.durability import (
+            has_durability, get_durability_state, get_durability_color,
+            get_durability_label, get_repair_cost, repair_item, init_durability
+        )
+
+        GREY = (120, 110, 100)
+        RED  = (220, 60, 60)
+        draw_text(surface, "Repair damaged equipment:", 20, y, accent, 14, bold=True)
+        draw_text(surface, "(Repairs all durability for a fixed gold cost)", 20, y + 18, GREY, 11)
+        y += 40
+
+        found_any = False
+        btn_w, btn_h = 120, 30
+        row_h = 52
+
+        for ci, char in enumerate(self.party):
+            for slot, item in list((char.equipment or {}).items()):
+                if not item or not has_durability(item):
+                    continue
+                init_durability(item)
+                state = get_durability_state(item)
+                if state == "full":
+                    continue
+                found_any = True
+                cost = get_repair_cost(item)
+                can_afford = total_gold >= cost
+                dur_col = get_durability_color(item)
+                dur_lbl = get_durability_label(item)
+
+                row = pygame.Rect(20, y, SCREEN_W - 180, row_h)
+                pygame.draw.rect(surface, (22, 18, 35), row, border_radius=3)
+                pygame.draw.rect(surface, accent, row, 1, border_radius=3)
+
+                draw_text(surface, item.get("name", "?"), row.x + 10, row.y + 6, CREAM, 14, bold=True)
+                draw_text(surface, f"{char.name} — {slot}", row.x + 10, row.y + 26, GREY, 11)
+                draw_text(surface, f"Durability: {dur_lbl}", row.x + 320, row.y + 6, dur_col, 13)
+                draw_text(surface, state.upper(), row.x + 320, row.y + 26, dur_col, 11)
+
+                btn_col = accent if can_afford else RED
+                btn = pygame.Rect(SCREEN_W - 150, y + 8, btn_w, btn_h)
+                pygame.draw.rect(surface, (40, 30, 15) if can_afford else (35, 15, 15), btn, border_radius=3)
+                pygame.draw.rect(surface, btn_col, btn, 1, border_radius=3)
+                lbl = f"Repair {cost}g" if can_afford else f"Need {cost}g"
+                draw_text(surface, lbl, btn.x + 8, btn.y + 7, btn_col, 12)
+
+                y += row_h + 6
+
+        if not found_any:
+            draw_text(surface, "All equipment is in good condition.", 20, y, (100, 200, 100), 14)
 
     def _use_temple_service(self, service_key):
         """Use a temple service."""
@@ -2358,7 +2413,8 @@ class TownUI:
         # Tab bar
         tabs = [("Craft", self.VIEW_FORGE_CRAFT),
                 ("Upgrade", self.VIEW_FORGE_UPGRADE),
-                ("Enchant", self.VIEW_FORGE_ENCHANT)]
+                ("Enchant", self.VIEW_FORGE_ENCHANT),
+                ("Repair",  self.VIEW_FORGE_REPAIR)]
         for i, (label, view) in enumerate(tabs):
             tr = pygame.Rect(20 + i * 140, 50, 130, 32)
             active = self.view == view or (self.view == self.VIEW_FORGE and i == 0)
@@ -2395,6 +2451,8 @@ class TownUI:
             self._draw_forge_upgrade(surface, mx, my, y, total_gold, FORGE_ORANGE)
         elif active_view == self.VIEW_FORGE_ENCHANT:
             self._draw_forge_enchant(surface, mx, my, y, total_gold, FORGE_ORANGE)
+        elif active_view == self.VIEW_FORGE_REPAIR:
+            self._draw_forge_repair(surface, mx, my, y, total_gold, FORGE_ORANGE)
 
     def _draw_forge_craft(self, surface, mx, my, y, recipes, total_gold, accent):
         from core.crafting import can_afford_recipe, count_material
@@ -2546,7 +2604,7 @@ class TownUI:
 
         # Tab clicks
         tabs = [(self.VIEW_FORGE_CRAFT, 20), (self.VIEW_FORGE_UPGRADE, 160),
-                (self.VIEW_FORGE_ENCHANT, 300)]
+                (self.VIEW_FORGE_ENCHANT, 300), (self.VIEW_FORGE_REPAIR, 440)]
         for view, tx in tabs:
             tr = pygame.Rect(tx, 50, 130, 32)
             if tr.collidepoint(mx, my):
@@ -2557,6 +2615,36 @@ class TownUI:
 
         active_view = self.view if self.view != self.VIEW_FORGE else self.VIEW_FORGE_CRAFT
         y = 110
+
+        if active_view == self.VIEW_FORGE_REPAIR:
+            from core.durability import (
+                has_durability, get_durability_state, get_repair_cost,
+                repair_item, init_durability
+            )
+            y_r = 110 + 40
+            row_h = 52
+            btn_w, btn_h = 120, 30
+            for ci, char in enumerate(self.party):
+                for slot, item in list((char.equipment or {}).items()):
+                    if not item or not has_durability(item):
+                        continue
+                    init_durability(item)
+                    if get_durability_state(item) == "full":
+                        continue
+                    cost = get_repair_cost(item)
+                    total_gold = sum(c.gold for c in self.party)
+                    btn = pygame.Rect(SCREEN_W - 150, y_r + 8, btn_w, btn_h)
+                    if btn.collidepoint(mx, my):
+                        if total_gold < cost:
+                            self._msg(f"Not enough gold! Need {cost}g.", RED)
+                            return None
+                        self._deduct_gold(cost)
+                        repair_item(item)
+                        sfx.play("shop_buy")
+                        self._msg(f"Repaired {item.get('name','item')} for {cost}g.", (100, 220, 100))
+                        return None
+                    y_r += row_h + 6
+            return None
 
         if active_view == self.VIEW_FORGE_CRAFT:
             visible = RECIPES[self.forge_scroll:self.forge_scroll + 7]

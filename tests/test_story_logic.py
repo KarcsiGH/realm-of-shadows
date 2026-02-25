@@ -388,6 +388,109 @@ except Exception as e:
     traceback.print_exc()
 
 # ─────────────────────────────────────────────────────────────
+# ═════════════════════════════════════════════════════════════
+#  11. UNIQUE ITEMS & ITEM SETS
+# ═════════════════════════════════════════════════════════════
+section("11. Unique Items & Item Sets")
+try:
+    from data.magic_items import UNIQUE_ITEMS, ITEM_SETS, get_unique_item, party_has_unique, get_set_bonus, calc_set_stat_bonuses
+
+    check("UNIQUE_ITEMS defined", len(UNIQUE_ITEMS) >= 5)
+    check("ITEM_SETS defined", len(ITEM_SETS) >= 2)
+    check("warden_set exists", "warden_set" in ITEM_SETS)
+    check("ashenmoor_set exists", "ashenmoor_set" in ITEM_SETS)
+
+    # get_unique_item returns copy
+    blade = get_unique_item("korrath_blade")
+    check("get_unique_item returns item", blade is not None)
+    check("unique item has correct name", blade["name"] == "Korrath's Last Oath")
+    check("unique item has set_id", blade.get("set_id") == "warden_set")
+    check("unique item has lore", len(blade.get("lore", "")) > 20)
+
+    # party_has_unique prevents duplicates
+    class FakeMember2:
+        def __init__(self):
+            self.inventory = []
+            self.equipment = {}
+
+    party_test = [FakeMember2()]
+    party_test[0].inventory.append(blade)
+    check("party_has_unique detects item in inventory",
+          party_has_unique(party_test, "Korrath's Last Oath"))
+    check("get_unique_item returns None when party has it",
+          get_unique_item("korrath_blade", party_test) is None)
+
+    # Set bonuses — equip 2 warden pieces
+    m = FakeMember2()
+    m.equipment = {
+        "weapon": get_unique_item("korrath_blade"),
+        "accessory1": get_unique_item("korrath_ring"),
+    }
+    active = get_set_bonus(m)
+    check("2pc warden set activates", "warden_set" in active)
+    bonuses = calc_set_stat_bonuses(m)
+    check("2pc warden set grants STR bonus", bonuses.get("STR", 0) >= 2)
+    check("2pc warden set grants CON bonus", bonuses.get("CON", 0) >= 2)
+
+except Exception as e:
+    check("unique items / sets check", False, str(e))
+    traceback.print_exc()
+
+# ═════════════════════════════════════════════════════════════
+#  12. DURABILITY SYSTEM
+# ═════════════════════════════════════════════════════════════
+section("12. Durability System")
+try:
+    from core.durability import (
+        has_durability, init_durability, get_durability_state,
+        get_durability_label, degrade_weapon, degrade_armor,
+        get_repair_cost, repair_item, get_effective_damage
+    )
+
+    weapon = {"name": "Sword", "type": "weapon", "damage": 20}
+    armor  = {"name": "Plate", "type": "armor",  "defense": 15}
+
+    check("weapon has_durability", has_durability(weapon))
+    check("armor has_durability", has_durability(armor))
+    check("consumable no durability", not has_durability({"type": "consumable"}))
+
+    init_durability(weapon)
+    check("init sets durability=100", weapon["durability"] == 100)
+    check("state full at 100", get_durability_state(weapon) == "full")
+    check("label shows 100/100", get_durability_label(weapon) == "100/100")
+
+    # Degrade to damaged
+    weapon["durability"] = 50
+    check("state damaged at 50", get_durability_state(weapon) == "damaged")
+
+    # Degrade to worn
+    weapon["durability"] = 20
+    check("state worn at 20", get_durability_state(weapon) == "worn")
+    check("effective damage reduced when worn", get_effective_damage(weapon) < 20)
+
+    # Degrade to broken
+    weapon["durability"] = 0
+    check("state broken at 0", get_durability_state(weapon) == "broken")
+    check("label shows BROKEN", get_durability_label(weapon) == "BROKEN")
+    check("effective damage heavily reduced when broken", get_effective_damage(weapon) < 10)
+
+    # Repair
+    cost = get_repair_cost(weapon)
+    check("repair cost > 0 when broken", cost > 0)
+    repair_item(weapon)
+    check("repair restores full durability", weapon["durability"] == 100)
+    check("repair cost is 0 after repair", get_repair_cost(weapon) == 0)
+
+    # degrade_weapon reduces durability
+    weapon["durability"] = 100
+    degrade_weapon(weapon)
+    check("degrade_weapon reduces durability", weapon["durability"] < 100)
+
+except Exception as e:
+    check("durability system check", False, str(e))
+    traceback.print_exc()
+
+# ─────────────────────────────────────────────────────────────
 total = PASS + FAIL
 print(f"\n{'═'*55}")
 print(f"  Results: {PASS}/{total} passed", "✓" if FAIL == 0 else f"— {FAIL} FAILED")

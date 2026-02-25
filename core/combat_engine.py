@@ -569,6 +569,39 @@ def resolve_basic_attack(attacker, defender, enemies=None):
     if defender["hp"] <= 0:
         defender["alive"] = False
 
+    # Durability degradation — attacker's weapon and defender's armor
+    try:
+        from core.durability import degrade_weapon, degrade_armor, init_durability
+        # Weapon wears on successful hits
+        if weapon and weapon.get("name") != "Unarmed":
+            init_durability(weapon)
+            broke = degrade_weapon(weapon, is_crit=is_crit)
+            # Also update character_ref's equipment if available
+            char_ref = attacker.get("character_ref")
+            if char_ref and char_ref.equipment.get("weapon") is weapon:
+                pass  # same object, already updated
+            if broke:
+                result["messages"].append(
+                    f"  {attacker['name']}'s {weapon['name']} is now broken!"
+                )
+        # Defender's equipped armor degrades
+        def_ref = defender.get("character_ref")
+        if def_ref:
+            import random as _r
+            armor_slots = [s for s in ("body", "head", "hands", "feet") 
+                           if def_ref.equipment.get(s)]
+            if armor_slots:
+                hit_slot = _r.choice(armor_slots)
+                hit_armor = def_ref.equipment[hit_slot]
+                init_durability(hit_armor)
+                broke = degrade_armor(hit_armor, is_crit=is_crit)
+                if broke:
+                    result["messages"].append(
+                        f"  {defender['name']}'s {hit_armor['name']} breaks!"
+                    )
+    except Exception:
+        pass  # durability is non-critical
+
     # Build message
     crit_str = " CRITICAL HIT!" if is_crit else ""
     msg = f"{attacker['name']} attacks {defender['name']} with {weapon['name']} for {damage} damage!{crit_str}"

@@ -168,19 +168,9 @@ BOSS_BONUS_LOOT = {
             "identified": False, "estimated_value": 120}},
     ],
     "Warden Revenant": [
-        {"drop_chance": 0.80, "item": {
-            "name": "Revenant's Greatsword", "appraised_name": "Revenant's Greatsword", "type": "weapon", "slot": "weapon",
-            "subtype": "Greatsword", "rarity": "rare", "damage": 18,
-            "phys_type": "slashing", "range": "melee",
-            "enchant_element": "shadow", "enchant_bonus": 4, "enchant_name": "Shadow",
-            "description": "The corrupted Warden's blade. Shadow-infused.",
-            "identified": False, "estimated_value": 220}},
-        {"drop_chance": 0.40, "item": {
-            "name": "Warden's Signet Ring", "appraised_name": "Warden's Signet Ring", "type": "accessory", "slot": "accessory1",
-            "subtype": "ring", "rarity": "rare",
-            "effect": {"str_bonus": 2, "con_bonus": 2},
-            "description": "The signet of a fallen Warden. +2 STR, +2 CON.",
-            "identified": False, "estimated_value": 180}},
+        # Unique item — Korrath's blade (1.0 drop, but won't drop if party already has it)
+        {"drop_chance": 1.0, "unique_key": "korrath_blade"},
+        {"drop_chance": 0.60, "unique_key": "korrath_ring"},
     ],
     "Shadow Valdris": [
         {"drop_chance": 0.80, "item": {
@@ -200,13 +190,28 @@ BOSS_BONUS_LOOT = {
             "description": "A crystallized fragment of the Fading. Whispers with dark knowledge. +3 INT, +2 WIS, +1 PIE.",
             "identified": False, "estimated_value": 400}},
     ],
+    "Ashvar": [
+        {"drop_chance": 1.0, "unique_key": "ashvar_robes"},
+        {"drop_chance": 0.70, "unique_key": "ashvar_focus"},
+    ],
     # NOTE: Lingering Will boss loot is defined in tower_data.py
 }
 
 
-def get_secret_item(floor_num, total_floors, rng):
-    """Pick a random magic item appropriate to dungeon depth."""
+def get_secret_item(floor_num, total_floors, rng, party=None):
+    """Pick a random magic item appropriate to dungeon depth.
+    Deep rooms (floor 3+) have a 12% chance to contain a unique item."""
     depth_ratio = floor_num / max(total_floors, 1)
+
+    # Deep secret rooms: chance for unique items seeded into the world
+    if depth_ratio >= 0.6 and rng.random() < 0.12:
+        secret_uniques = ["shadowwalker_boots", "hearthwarden_helm"]
+        rng.shuffle(secret_uniques)
+        for key in secret_uniques:
+            item = get_unique_item(key, party)
+            if item:
+                return item
+
     if depth_ratio >= 0.8 and rng.random() < 0.3:
         pool = SECRET_ITEMS_T3
     elif depth_ratio >= 0.4 or floor_num >= 2:
@@ -216,13 +221,18 @@ def get_secret_item(floor_num, total_floors, rng):
     return dict(rng.choice(pool))
 
 
-def get_boss_bonus_drops(boss_name, rng):
+def get_boss_bonus_drops(boss_name, rng, party=None):
     """Get bonus loot from a boss. Returns list of items that dropped."""
     bonus_table = BOSS_BONUS_LOOT.get(boss_name, [])
     drops = []
     for entry in bonus_table:
         if rng.random() < entry["drop_chance"]:
-            drops.append(dict(entry["item"]))
+            if "unique_key" in entry:
+                item = get_unique_item(entry["unique_key"], party)
+                if item:
+                    drops.append(item)
+            elif "item" in entry:
+                drops.append(dict(entry["item"]))
     return drops
 
 
@@ -351,3 +361,242 @@ def get_cursed_item(floor_num, total_floors, rng):
         bonuses[stat] = bonuses.get(stat, 0) + penalty
     item["stat_bonus"] = bonuses
     return item
+
+
+# ═══════════════════════════════════════════════════════════════
+#  UNIQUE ITEMS
+#  One-of-a-kind drops. "unique": True means only one can exist
+#  in the world at once — if already in party inventory or
+#  equipped, it won't drop again. Guaranteed boss drops are
+#  flagged "unique_boss_drop": True.
+# ═══════════════════════════════════════════════════════════════
+
+UNIQUE_ITEMS = {
+
+    # ── Korrath (Warden Revenant boss) ──────────────────────
+    "korrath_blade": {
+        "name": "Korrath's Last Oath",
+        "type": "weapon", "subtype": "Greatsword", "slot": "weapon",
+        "rarity": "legendary", "unique": True,
+        "damage": 22, "phys_type": "slashing", "range": "melee",
+        "enchant_element": "shadow", "enchant_bonus": 6, "enchant_name": "Shadow",
+        "stat_bonuses": {"STR": 2},
+        "set_id": "warden_set",
+        "identified": False, "estimated_value": 350,
+        "description": (
+            "Korrath's own blade, still warm with the last oaths he swore "
+            "before the Fading took him. The shadow enchantment is not evil — "
+            "it is grief, solidified. +2 STR, shadow damage."
+        ),
+        "lore": (
+            "Korrath was the last loyal Warden Commander. When Valdris ordered "
+            "him to seal the miners inside the abandoned shafts to hide evidence "
+            "of the Hearthstone extraction, Korrath refused — and Valdris had him "
+            "killed. The Fading resurrected him as a revenant bound to guard the "
+            "very mine he died protecting. He cannot rest."
+        ),
+    },
+
+    "korrath_ring": {
+        "name": "Warden's Oath Ring",
+        "type": "accessory", "subtype": "ring", "slot": "accessory1",
+        "rarity": "rare", "unique": True,
+        "stat_bonuses": {"STR": 2, "CON": 2},
+        "magic_resist": 4,
+        "set_id": "warden_set",
+        "identified": False, "estimated_value": 220,
+        "description": (
+            "The signet ring of the Warden order, passed down through commanders. "
+            "Korrath wore it to his death. +2 STR, +2 CON, +4 magic resist."
+        ),
+        "lore": (
+            "The ring bears the Warden crest — a torch over crossed blades — "
+            "though the crest is worn nearly smooth. Dozens of Wardens have "
+            "worn this ring. Most died in service. None were murdered by their own."
+        ),
+    },
+
+    # ── Ashvar (Ruins of Ashenmoor boss) ─────────────────────
+    "ashvar_robes": {
+        "name": "Ashvar's Travelling Robes",
+        "type": "armor", "subtype": "chest", "slot": "body",
+        "rarity": "legendary", "unique": True,
+        "defense": 6, "magic_resist": 14,
+        "stat_bonuses": {"INT": 3, "WIS": 2},
+        "set_id": "ashenmoor_set",
+        "identified": False, "estimated_value": 380,
+        "description": (
+            "Ashvar wore these robes for thirty years of wandering before "
+            "Valdris's agents caught him. Stitched with minor wards that have "
+            "grown strong with age. +3 INT, +2 WIS, high magic resist."
+        ),
+        "lore": (
+            "Ashvar survived the fall of the first Warden order and spent "
+            "decades trying to warn city after city about Valdris. Nobody "
+            "listened. The robes are patched in seventeen places — each patch "
+            "marks a close call."
+        ),
+    },
+
+    "ashvar_focus": {
+        "name": "The Shattered Focus",
+        "type": "accessory", "subtype": "amulet", "slot": "accessory2",
+        "rarity": "legendary", "unique": True,
+        "stat_bonuses": {"INT": 4, "WIS": 1},
+        "magic_resist": 6,
+        "enchant_element": "divine", "enchant_bonus": 5, "enchant_name": "Holy",
+        "set_id": "ashenmoor_set",
+        "identified": False, "estimated_value": 420,
+        "description": (
+            "Ashvar's spellcasting focus, cracked down the middle when Valdris "
+            "overwhelmed him. Somehow the crack makes it resonate at two "
+            "frequencies simultaneously. +4 INT, +1 WIS, holy damage bonus."
+        ),
+        "lore": (
+            "The crack runs through a small rune of warding. Ashvar once said "
+            "that broken things sometimes become more than they were — the "
+            "crack lets light in from both sides at once."
+        ),
+    },
+
+    # ── Secret room find — no specific boss ──────────────────
+    "shadowwalker_boots": {
+        "name": "Shadowwalker's Boots",
+        "type": "armor", "subtype": "boots", "slot": "feet",
+        "rarity": "legendary", "unique": True,
+        "defense": 4, "speed_mod": 5,
+        "stat_bonuses": {"DEX": 3},
+        "enchant_resist": "shadow", "enchant_resist_bonus": 10,
+        "identified": False, "estimated_value": 300,
+        "description": (
+            "Boots worn by a Fading-Touched scout who could run between shadows. "
+            "The soles are made from shadow-silk — they make no sound at all. "
+            "+3 DEX, +5 speed, shadow resist."
+        ),
+        "lore": (
+            "Found on a skeleton in a sealed room. The scout apparently crawled "
+            "in through a crack too small to escape through. The door had "
+            "been locked from the outside."
+        ),
+    },
+
+    "hearthwarden_helm": {
+        "name": "Hearthwarden Helm",
+        "type": "armor", "subtype": "helmet", "slot": "head",
+        "rarity": "legendary", "unique": True,
+        "defense": 10, "magic_resist": 8,
+        "stat_bonuses": {"CON": 3, "WIS": 1},
+        "set_id": "warden_set",
+        "identified": False, "estimated_value": 340,
+        "description": (
+            "The ceremonial helm of the Warden order's High Commander. Last worn "
+            "the night Valdris gave his first order. +3 CON, +1 WIS, solid "
+            "defense and magic resist."
+        ),
+        "lore": (
+            "The High Commander who wore this helm vanished the same night "
+            "Korrath was killed. No body was ever found. The helm was "
+            "discovered in a sealed vault beneath the ruins, still clean."
+        ),
+    },
+}
+
+
+# ── Item Sets ─────────────────────────────────────────────────
+# Bonuses applied when wearing N pieces of the same set.
+# Keys are set_id values used in item dicts above.
+
+ITEM_SETS = {
+    "warden_set": {
+        "name": "Warden's Oath",
+        "pieces": ["Korrath's Last Oath", "Warden's Oath Ring", "Hearthwarden Helm"],
+        "bonuses": {
+            2: {
+                "label": "2pc: Warden's Resolve",
+                "stat_bonuses": {"STR": 2, "CON": 2},
+                "description": "+2 STR, +2 CON. The Warden's training returns to muscle memory.",
+            },
+            3: {
+                "label": "3pc: Oath Unbroken",
+                "stat_bonuses": {"STR": 3, "CON": 3},
+                "magic_resist": 8,
+                "damage_bonus": 5,
+                "description": "+3 STR, +3 CON, +8 MRES, +5 physical damage. Korrath's oath strengthens the bearer.",
+            },
+        },
+    },
+
+    "ashenmoor_set": {
+        "name": "Ashvar's Legacy",
+        "pieces": ["Ashvar's Travelling Robes", "The Shattered Focus"],
+        "bonuses": {
+            2: {
+                "label": "2pc: Wanderer's Wisdom",
+                "stat_bonuses": {"INT": 3, "WIS": 2},
+                "magic_resist": 10,
+                "description": "+3 INT, +2 WIS, +10 MRES. Decades of wandering encoded in the set.",
+            },
+        },
+    },
+}
+
+
+def get_set_bonus(character):
+    """Calculate active item set bonuses for a character.
+    Returns dict: { set_id: (set_data, pieces_equipped, active_bonus_tier) }
+    """
+    if not hasattr(character, "equipment") or not character.equipment:
+        return {}
+
+    # Count set pieces equipped
+    set_counts = {}
+    for slot, item in character.equipment.items():
+        if item and item.get("set_id"):
+            sid = item["set_id"]
+            set_counts[sid] = set_counts.get(sid, 0) + 1
+
+    result = {}
+    for sid, count in set_counts.items():
+        if sid not in ITEM_SETS:
+            continue
+        set_data = ITEM_SETS[sid]
+        # Find highest bonus tier active
+        active_tier = max(
+            (tier for tier in set_data["bonuses"] if tier <= count),
+            default=0
+        )
+        if active_tier > 0:
+            result[sid] = (set_data, count, active_tier)
+
+    return result
+
+
+def calc_set_stat_bonuses(character):
+    """Return combined stat bonuses from all active item sets."""
+    bonuses = {}
+    for sid, (set_data, count, tier) in get_set_bonus(character).items():
+        for stat, val in set_data["bonuses"][tier].get("stat_bonuses", {}).items():
+            bonuses[stat] = bonuses.get(stat, 0) + val
+    return bonuses
+
+
+def party_has_unique(party, item_name):
+    """Check if party already has a named unique item (equipped or in inventory)."""
+    for char in party:
+        for inv_item in char.inventory:
+            if inv_item.get("name") == item_name and inv_item.get("unique"):
+                return True
+        for slot, eq in (char.equipment or {}).items():
+            if eq and eq.get("name") == item_name and eq.get("unique"):
+                return True
+    return False
+
+
+def get_unique_item(key, party=None):
+    """Return a copy of a unique item, or None if party already has it."""
+    item = UNIQUE_ITEMS.get(key)
+    if item is None:
+        return None
+    if party and party_has_unique(party, item["name"]):
+        return None
+    return dict(item)

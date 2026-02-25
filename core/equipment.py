@@ -486,6 +486,7 @@ def calc_equipment_stat_bonuses(character):
     Reads two formats:
       - stat_bonuses: {"STR": 2, "DEX": 1}   (standard armor/weapons)
       - effect:       {"str_bonus": 2, "dex_bonus": 1}  (magic items)
+    Also includes active item set bonuses.
     """
     # Map from effect-style lowercase keys to stat abbreviations
     _EFFECT_TO_STAT = {
@@ -507,4 +508,13 @@ def calc_equipment_stat_bonuses(character):
             val = item.get("effect", {}).get(effect_key, 0)
             if val:
                 bonuses[stat] = bonuses.get(stat, 0) + val
+
+    # Item set bonuses
+    try:
+        from data.magic_items import calc_set_stat_bonuses
+        for stat, val in calc_set_stat_bonuses(character).items():
+            bonuses[stat] = bonuses.get(stat, 0) + val
+    except ImportError:
+        pass
+
     return bonuses
