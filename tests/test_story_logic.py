@@ -490,6 +490,62 @@ except Exception as e:
     check("durability system check", False, str(e))
     traceback.print_exc()
 
+# ═════════════════════════════════════════════════════════════
+#  13. ADVANCED EQUIPMENT CATALOG
+# ═════════════════════════════════════════════════════════════
+section("13. Advanced Equipment Catalog")
+try:
+    from data.advanced_equipment import (
+        ALL_CLASS_WEAPONS, ALL_CLASS_ARMOR, ALL_CLASS_ACCESSORIES,
+        WEAPONS_T1, WEAPONS_T2, WEAPONS_T3, WEAPONS_T4,
+        get_shop_weapons, get_shop_armor, get_class_equipment,
+    )
+    from data.shop_inventory import get_town_shop
+
+    classes = ["Fighter", "Mage", "Cleric", "Thief", "Ranger", "Monk"]
+    check("All 6 classes have weapons", all(cls in ALL_CLASS_WEAPONS for cls in classes))
+    check("All 6 classes have armor",   all(cls in ALL_CLASS_ARMOR   for cls in classes))
+    check("T1 weapons exist", len(WEAPONS_T1) >= 10)
+    check("T2 weapons exist", len(WEAPONS_T2) >= 10)
+    check("T3 weapons exist", len(WEAPONS_T3) >= 10)
+    check("T4 weapons exist", len(WEAPONS_T4) >= 5)
+
+    # Each class has items at each rarity
+    for cls in classes:
+        for rarity in ("common", "uncommon", "rare", "epic"):
+            w, a, acc = get_class_equipment(cls, rarity)
+            check(f"{cls} has {rarity} items", len(w) + len(a) + len(acc) > 0)
+
+    # Shop filtering works by tier
+    village_wpn = get_shop_weapons("village", ["Fighter", "Mage"])
+    town_wpn    = get_shop_weapons("town",    ["Thief"])
+    city_wpn    = get_shop_weapons("city",    ["Ranger"])
+    cap_wpn     = get_shop_weapons("capital", ["Monk"])
+
+    check("Village has T1 weapons",  any(i["rarity"] == "common"   for i in village_wpn))
+    check("Town has T2 weapons",     any(i["rarity"] == "uncommon" for i in town_wpn))
+    check("City has T3 weapons",     any(i["rarity"] == "rare"     for i in city_wpn))
+    check("Capital has T4 weapons",  any(i["rarity"] == "epic"     for i in cap_wpn))
+
+    # Town shop integration
+    shop = get_town_shop("briarhollow", ["Fighter"])
+    check("Briarhollow shop has weapons",    len(shop["weapons"]) > 0)
+    check("Briarhollow shop has armor",      len(shop["armor"]) > 0)
+    check("Briarhollow weapons are T1",
+          all(i["buy_price"] <= 80 for i in shop["weapons"] if i["rarity"] == "common"))
+
+    shop_city = get_town_shop("ironhearth", ["Mage", "Cleric"])
+    check("City shop has higher-tier items", any(i["rarity"] in ("uncommon","rare") for i in shop_city["weapons"]))
+
+    # Items have required fields
+    for item in WEAPONS_T2[:3]:
+        check(f"{item['name']} has damage",  "damage" in item)
+        check(f"{item['name']} has buy_price", "buy_price" in item)
+
+except Exception as e:
+    check("Advanced equipment check", False, str(e))
+    traceback.print_exc()
+
 # ─────────────────────────────────────────────────────────────
 total = PASS + FAIL
 print(f"\n{'═'*55}")

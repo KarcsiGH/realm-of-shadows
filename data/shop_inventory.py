@@ -389,9 +389,12 @@ TOWN_SHOP_PROFILES = {
 }
 
 
-def get_town_shop(town_id):
+def get_town_shop(town_id, party_classes=None):
     """Return a shop inventory tailored to the given town.
-    Falls back to GENERAL_STORE if town not defined."""
+    Falls back to GENERAL_STORE if town not defined.
+    party_classes: list of class names to filter class-specific items.
+    """
+    from data.advanced_equipment import get_shop_weapons, get_shop_armor, get_shop_accessories
     profile = TOWN_SHOP_PROFILES.get(town_id)
     if not profile:
         return GENERAL_STORE
@@ -408,19 +411,51 @@ def get_town_shop(town_id):
         "consumables": [],
     }
 
-    # Filter weapons by price cap
+    tier = profile.get("tier", "village")
+
+    # Class-specific weapons from advanced catalog
+    seen_names = set()
+    for item in get_shop_weapons(tier, party_classes):
+        if item["buy_price"] <= max_wpn and item["name"] not in seen_names:
+            it = dict(item)
+            it["buy_price"] = int(it["buy_price"] * mult)
+            it["sell_price"] = it["buy_price"] // 4
+            shop["weapons"].append(it)
+            seen_names.add(item["name"])
+
+    # Generic weapons from GENERAL_STORE as variety fallback
     for item in GENERAL_STORE.get("weapons", []):
-        if item.get("buy_price", 0) <= max_wpn:
+        if item.get("buy_price", 0) <= max_wpn and item["name"] not in seen_names:
             it = dict(item)
             it["buy_price"] = int(it["buy_price"] * mult)
             shop["weapons"].append(it)
+            seen_names.add(item["name"])
 
-    # Filter armor by price cap
+    # Class-specific armor + accessories
+    seen_names = set()
+    for item in get_shop_armor(tier, party_classes):
+        if item["buy_price"] <= max_arm and item["name"] not in seen_names:
+            it = dict(item)
+            it["buy_price"] = int(it["buy_price"] * mult)
+            it["sell_price"] = it["buy_price"] // 4
+            shop["armor"].append(it)
+            seen_names.add(item["name"])
+
+    for item in get_shop_accessories(tier, party_classes):
+        if item["buy_price"] <= max_arm and item["name"] not in seen_names:
+            it = dict(item)
+            it["buy_price"] = int(it["buy_price"] * mult)
+            it["sell_price"] = it["buy_price"] // 4
+            shop["armor"].append(it)
+            seen_names.add(item["name"])
+
+    # GENERAL_STORE armor fallback
     for item in GENERAL_STORE.get("armor", []):
-        if item.get("buy_price", 0) <= max_arm:
+        if item.get("buy_price", 0) <= max_arm and item["name"] not in seen_names:
             it = dict(item)
             it["buy_price"] = int(it["buy_price"] * mult)
             shop["armor"].append(it)
+            seen_names.add(item["name"])
 
     # Always include all consumables
     for item in GENERAL_STORE.get("consumables", []):

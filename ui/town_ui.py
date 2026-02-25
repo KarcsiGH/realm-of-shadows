@@ -138,7 +138,8 @@ class TownUI:
         # NPC dialogue state
         self.active_dialogue = None  # DialogueUI when talking to an NPC
         self.town_id = town_id
-        self.shop = get_town_shop(town_id)  # Town-specific shop inventory
+        party_classes = [c.class_name for c in party if hasattr(c, "class_name")]
+        self.shop = get_town_shop(town_id, party_classes)  # Town-specific shop inventory
 
         # Forge state
         self.forge_scroll = 0
