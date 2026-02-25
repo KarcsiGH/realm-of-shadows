@@ -415,6 +415,11 @@ def unequip_item(character, slot):
     if item is None:
         return False, None, "Nothing equipped in that slot"
 
+    # Cursed items cannot be unequipped without Remove Curse
+    if item.get("cursed") and not item.get("curse_lifted"):
+        name = item.get("name", "item")
+        return False, item, f"{name} is cursed and cannot be removed!"
+
     character.equipment[slot] = None
     character.inventory.append(item)
     return True, item, f"Unequipped {item.get('name', 'item')}"

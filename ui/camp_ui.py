@@ -639,6 +639,36 @@ class CampUI:
         item = char.inventory[item_idx]
         name = item.get("name", "item")
 
+        # Scroll of Remove Curse
+        if item.get("effect") == "remove_curse" or item.get("name") == "Scroll of Remove Curse":
+            from core.equipment import unequip_item as _ueq
+            cursed_slots = [
+                slot for slot, eq in (char.equipment or {}).items()
+                if eq and eq.get("cursed") and not eq.get("curse_lifted")
+            ]
+            from core.status_effects import get_status_effects
+            curse_effects = [s for s in get_status_effects(char) if s.get("type") == "curse"]
+            if not cursed_slots and not curse_effects:
+                self._msg(f"{char.name} is not cursed.", ORANGE)
+                return
+            for slot in cursed_slots:
+                eq = char.equipment[slot]
+                eq["curse_lifted"] = True
+                char.equipment[slot] = None
+                char.inventory.append(eq)
+            for se in curse_effects:
+                if se in char.status_effects:
+                    char.status_effects.remove(se)
+            self._msg(f"{char.name}'s curses have been lifted!", HEAL_COL)
+            # Consume scroll
+            stack = item.get("stack", 1)
+            if stack > 1:
+                item["stack"] = stack - 1
+            else:
+                char.inventory.pop(item_idx)
+                self.selected_item = -1
+            return
+
         # Healing items
         heal = item.get("heal", 0)
         if heal > 0:

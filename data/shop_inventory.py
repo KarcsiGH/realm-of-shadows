@@ -351,6 +351,10 @@ TOWN_SHOP_PROFILES = {
              "rarity": "common",
              "description": "Identifies one unknown item instantly.",
              "buy_price": 30, "sell_price": 12, "identified": True},
+            {"name": "Scroll of Remove Curse", "type": "consumable", "subtype": "scroll",
+             "effect": "remove_curse", "rarity": "uncommon",
+             "description": "Lifts all curses from one character, freeing any cursed equipment.",
+             "buy_price": 90, "sell_price": 36, "identified": True},
         ],
     },
     "thornhaven": {

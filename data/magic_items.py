@@ -42,6 +42,11 @@ SECRET_ITEMS_T1 = [
      "effect": {"wis_bonus": 2, "int_bonus": 1},
      "description": "A silver owl pendant. +2 WIS, +1 INT.",
      "identified": False, "estimated_value": 55},
+    {"name": "Scroll of Remove Curse", "appraised_name": "Scroll of Remove Curse",
+     "type": "consumable", "subtype": "scroll", "effect": "remove_curse",
+     "rarity": "uncommon",
+     "description": "Lifts all curses from one character, freeing any cursed equipment.",
+     "identified": True, "estimated_value": 75},
 ]
 
 SECRET_ITEMS_T2 = [
@@ -219,3 +224,130 @@ def get_boss_bonus_drops(boss_name, rng):
         if rng.random() < entry["drop_chance"]:
             drops.append(dict(entry["item"]))
     return drops
+
+
+# ═══════════════════════════════════════════════════════════════
+#  CURSED ITEMS
+#  These appear unidentified and are tempting — good stats that
+#  hide a curse. Only revealed on identification or when equipped.
+#  Require Remove Curse at the temple (100g) to unequip.
+# ═══════════════════════════════════════════════════════════════
+
+CURSED_ITEMS = [
+    # ── Tier 1 — Early game traps ──
+    {
+        "name": "Ring of Misfortune",
+        "type": "accessory", "subtype": "ring",
+        "slot": "accessory",
+        "rarity": "uncommon", "tier": 1,
+        "cursed": True, "identified": False,
+        "estimated_value": 80,
+        "stat_bonus": {"DEX": 3},
+        "stat_penalty": {"LCK": -5, "accuracy_bonus": -8},
+        "description": "A silver ring that seems to shimmer with promise. "
+                       "It pulls misfortune toward the wearer like a lodestone. "
+                       "★ CURSED — cannot be removed without Remove Curse.",
+        "lore": "Common thieves' trap — enchanted to look valuable, sold to the unwary.",
+    },
+    {
+        "name": "Helm of Weakness",
+        "type": "armor", "subtype": "helmet", "armor_slot": "head",
+        "slot": "head",
+        "rarity": "uncommon", "tier": 1,
+        "cursed": True, "identified": False,
+        "defense": 8,
+        "estimated_value": 120,
+        "stat_penalty": {"STR": -4, "attack_damage": -6},
+        "description": "A well-crafted helm that slowly drains the wearer's strength. "
+                       "★ CURSED — cannot be removed without Remove Curse.",
+    },
+
+    # ── Tier 2 — Mid-game ──
+    {
+        "name": "Shadowbind Gauntlets",
+        "type": "armor", "subtype": "gloves", "armor_slot": "hands",
+        "slot": "hands",
+        "rarity": "rare", "tier": 2,
+        "cursed": True, "identified": False,
+        "defense": 12,
+        "estimated_value": 220,
+        "enchant_element": "shadow", "enchant_bonus": 6,
+        "stat_penalty": {"speed_mod": -4},
+        "description": "Gauntlets that crackle with shadow energy. Powerful, but they "
+                       "slow the wearer's reactions as shadow seeps into the blood. "
+                       "★ CURSED — cannot be removed without Remove Curse.",
+        "lore": "Used by Valdris's early followers — gifts that became chains.",
+    },
+    {
+        "name": "Greatsword of Bloodlust",
+        "type": "weapon", "subtype": "sword",
+        "slot": "main_hand",
+        "rarity": "rare", "tier": 2,
+        "cursed": True, "identified": False,
+        "damage": 34,
+        "estimated_value": 300,
+        "enchant_element": "fire", "enchant_bonus": 5,
+        "stat_penalty": {"magic_resist": -10},
+        "description": "A powerful blade that whispers of violence. Its edge is "
+                       "unnaturally sharp, but it burns away the mind's defenses. "
+                       "★ CURSED — cannot be removed without Remove Curse.",
+    },
+
+    # ── Tier 3 — Late game, high risk/reward ──
+    {
+        "name": "Crown of Dominion",
+        "type": "armor", "subtype": "helmet", "armor_slot": "head",
+        "slot": "head",
+        "rarity": "legendary", "tier": 3,
+        "cursed": True, "identified": False,
+        "defense": 20,
+        "estimated_value": 600,
+        "stat_bonus": {"INT": 5, "WIS": 4, "magic_resist": 15},
+        "stat_penalty": {"CON": -6},
+        "description": "A crown of dark iron that amplifies magical power at the "
+                       "cost of physical resilience. Those who wear it rarely "
+                       "willingly remove it. ★ CURSED — cannot be removed without "
+                       "Remove Curse.",
+        "lore": "Said to have been worn by the last Warden Commander before the Fall. "
+                "Whether it cursed him or he cursed it is debated.",
+    },
+    {
+        "name": "Voidbound Shield",
+        "type": "armor", "subtype": "shield", "armor_slot": "off_hand",
+        "slot": "off_hand",
+        "rarity": "legendary", "tier": 3,
+        "cursed": True, "identified": False,
+        "defense": 30,
+        "estimated_value": 500,
+        "enchant_resist": "shadow", "enchant_resist_bonus": 20,
+        "stat_penalty": {"speed_mod": -6, "DEX": -3},
+        "description": "An immense shield of void-steel that absorbs shadow damage "
+                       "completely — but its weight seeps into the spirit, not just "
+                       "the body. ★ CURSED — cannot be removed without Remove Curse.",
+    },
+]
+
+# Tier-bucketed for loot system
+CURSED_ITEMS_T1 = [i for i in CURSED_ITEMS if i["tier"] == 1]
+CURSED_ITEMS_T2 = [i for i in CURSED_ITEMS if i["tier"] == 2]
+CURSED_ITEMS_T3 = [i for i in CURSED_ITEMS if i["tier"] == 3]
+
+
+def get_cursed_item(floor_num, total_floors, rng):
+    """Return a cursed item appropriate to dungeon depth, or None.
+    Called with ~8% chance from the loot generator on chest/secret finds."""
+    depth_ratio = floor_num / max(total_floors, 1)
+    if depth_ratio >= 0.8 and CURSED_ITEMS_T3:
+        pool = CURSED_ITEMS_T3
+    elif depth_ratio >= 0.4 and CURSED_ITEMS_T2:
+        pool = CURSED_ITEMS_T2
+    else:
+        pool = CURSED_ITEMS_T1
+    item = dict(rng.choice(pool))
+    # Copy stat_penalty into the item's stat_bonus so combat engine picks it up
+    # Penalties are negative values in stat_bonus
+    bonuses = dict(item.get("stat_bonus", {}))
+    for stat, penalty in item.get("stat_penalty", {}).items():
+        bonuses[stat] = bonuses.get(stat, 0) + penalty
+    item["stat_bonus"] = bonuses
+    return item

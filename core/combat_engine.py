@@ -964,15 +964,44 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         removed = False
         CURE_MAP = {"poison": {"Poisoned", "Burning"}, "any": None}
         cure_set = CURE_MAP.get(cures_type)
-        for se in cure_tgt.get("status_effects", [])[:]:
-            if cure_set is None or se["name"] in cure_set or se.get("negative", True):
-                cure_tgt["status_effects"].remove(se)
+
+        # Special case: Remove Curse lifts cursed equipment AND status curses
+        if cures_type == "curse":
+            cursed_slots = [
+                slot for slot, item in (cure_tgt.get("equipment") or {}).items()
+                if item and item.get("cursed") and not item.get("curse_lifted")
+            ]
+            for slot in cursed_slots:
+                item = cure_tgt["equipment"][slot]
+                item["curse_lifted"] = True
+                cure_tgt["equipment"][slot] = None
+                inv = cure_tgt.get("inventory")
+                if inv is not None:
+                    inv.append(item)
                 result["messages"].append(
                     f"{attacker['name']} uses {ability['name']} on {cure_tgt['name']} — "
-                    f"{se['name']} removed!"
+                    f"{item['name']} curse lifted!"
                 )
                 removed = True
-                break
+            # Also clear curse status effects
+            for se in list(cure_tgt.get("status_effects", [])):
+                if se.get("type") == "curse" or se.get("name") == "Cursed":
+                    cure_tgt["status_effects"].remove(se)
+                    result["messages"].append(
+                        f"{attacker['name']} uses {ability['name']} on {cure_tgt['name']} — "
+                        f"{se['name']} removed!"
+                    )
+                    removed = True
+        else:
+            for se in list(cure_tgt.get("status_effects", [])):
+                if cure_set is None or se["name"] in cure_set or se.get("negative", True):
+                    cure_tgt["status_effects"].remove(se)
+                    result["messages"].append(
+                        f"{attacker['name']} uses {ability['name']} on {cure_tgt['name']} — "
+                        f"{se['name']} removed!"
+                    )
+                    removed = True
+                    break
         if not removed:
             result["messages"].append(
                 f"{attacker['name']} uses {ability['name']} on {cure_tgt['name']} — "

@@ -2211,15 +2211,32 @@ class TownUI:
 
         elif service_key == "remove_curse":
             from core.status_effects import get_status_effects, remove_all_curses
+            # Check for cursed status effects OR cursed equipped items
             for c in self.party:
                 effects = get_status_effects(c)
-                if any(s.get("type") == "curse" for s in effects):
+                has_curse_effect = any(s.get("type") == "curse" for s in effects)
+                cursed_slots = [
+                    slot for slot, item in (c.equipment or {}).items()
+                    if item and item.get("cursed") and not item.get("curse_lifted")
+                ]
+                if has_curse_effect or cursed_slots:
                     if total_gold < cost:
                         self._msg(f"Not enough gold! Need {cost}g.", RED)
                         return
                     self._deduct_gold(cost)
-                    remove_all_curses(c)
-                    self._msg(f"{c.name}'s curses have been lifted! ({cost}g)", HEAL_COL)
+                    if has_curse_effect:
+                        remove_all_curses(c)
+                    # Lift all cursed equipment — mark as removable and unequip
+                    for slot in cursed_slots:
+                        item = c.equipment[slot]
+                        item["curse_lifted"] = True
+                        c.equipment[slot] = None
+                        c.inventory.append(item)
+                    msg = f"{c.name}'s curses have been lifted! ({cost}g)"
+                    if cursed_slots:
+                        names = ", ".join(c.equipment.get(s, {}).get("name", s) or s for s in cursed_slots)
+                        msg = f"{c.name} freed from cursed gear! ({cost}g)"
+                    self._msg(msg, HEAL_COL)
                     return
             self._msg("No one in your party is cursed.", GREY)
 

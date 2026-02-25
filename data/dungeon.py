@@ -358,7 +358,7 @@ def _make_interactable(itype, floor_num, rng):
 def _place_secret_room(tiles, rooms, width, height, floor_num, total_floors, rng, dungeon_id):
     """Try to carve a secret room adjacent to an existing room.
     The entrance is a DT_SECRET_DOOR tile that renders as wall until discovered."""
-    from data.magic_items import get_secret_item
+    from data.magic_items import get_secret_item, get_cursed_item
 
     # Pick a room to attach the secret room to (not first or last)
     candidates = rooms[1:-1] if len(rooms) > 2 else rooms[1:]
@@ -427,7 +427,11 @@ def _place_secret_room(tiles, rooms, width, height, floor_num, total_floors, rng
             # Place magic item chest in center of secret room
             cx_center = sx + sw // 2
             cy_center = sy + sh // 2
-            magic_item = get_secret_item(floor_num, total_floors, rng)
+            # 8% chance the secret chest contains a cursed item instead
+            if rng.random() < 0.08:
+                magic_item = get_cursed_item(floor_num, total_floors, rng)
+            else:
+                magic_item = get_secret_item(floor_num, total_floors, rng)
             gold_bonus = rng.randint(30, 80) * floor_num
             tiles[cy_center][cx_center]["type"] = DT_TREASURE
             tiles[cy_center][cx_center]["event"] = {

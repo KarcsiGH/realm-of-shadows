@@ -1735,6 +1735,8 @@ class Game:
             is_last = ki == len(PAGES) - 1
             prompt = "Press any key to continue" if not is_last else "Press any key"
             txt(prompt, H - 50, 13, (pulse, pulse, pulse))
+
+    def _trigger_briarhollow_attack(self):
         """Trigger the Act 1 climax: shadow creatures attack Briarhollow.
         Called once when the party returns after collecting Hearthstone 1."""
         self._attack_phase = "cinematic"

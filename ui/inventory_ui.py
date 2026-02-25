@@ -288,8 +288,14 @@ class InventoryUI:
             if item:
                 rarity = item.get("rarity", "common")
                 name_col = RARITY_COLORS.get(rarity, CREAM)
+                # Cursed items glow sickly purple when identified
+                is_cursed_known = item.get("cursed") and item.get("identified") and not item.get("curse_lifted")
+                if is_cursed_known:
+                    name_col = (180, 80, 220)  # curse purple
                 draw_text(surface, get_item_display_name(item),
                           rect.x + 100, rect.y + 4, name_col, 14, bold=True)
+                if is_cursed_known:
+                    draw_text(surface, "★ CURSED", rect.x + 100, rect.y + 44, (180, 80, 220), 10)
 
                 parts = []
                 if item.get("defense", 0):
