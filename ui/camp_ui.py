@@ -669,6 +669,36 @@ class CampUI:
                 self.selected_item = -1
             return
 
+        # Scroll of Identify
+        if item.get("subtype") == "scroll" and (
+            item.get("name") == "Scroll of Identify" or item.get("effect") == "identify"
+        ):
+            from core.identification import attempt_identify
+            from core.party_knowledge import mark_item_identified
+            # Find first unidentified item across party
+            for member in [char] + [m for m in self.party if m is not char]:
+                for i, inv_item in enumerate(member.inventory):
+                    if not inv_item.get("identified"):
+                        inv_item["identified"] = True
+                        inv_item["magic_identified"] = True
+                        inv_item["material_identified"] = True
+                        mark_item_identified(inv_item.get("name", ""))
+                        self._msg(
+                            f"Scroll identifies: {inv_item.get('name', 'item')} "
+                            f"(in {member.name}'s pack)",
+                            HEAL_COL
+                        )
+                        # Consume scroll
+                        stack = item.get("stack", 1)
+                        if stack > 1:
+                            item["stack"] = stack - 1
+                        else:
+                            char.inventory.pop(item_idx)
+                            self.selected_item = -1
+                        return
+            self._msg("No unidentified items to identify.", ORANGE)
+            return
+
         # Healing items
         heal = item.get("heal", 0)
         if heal > 0:

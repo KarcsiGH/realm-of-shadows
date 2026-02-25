@@ -660,7 +660,43 @@ class CombatUI:
                 self._combat_items.append(("weapon", item))
                 idx += 1
 
-            # Future: consumables (potions, scrolls) would go here
+        # Consumables — potions and scrolls usable in combat
+        for item in char_ref.inventory:
+            is_consumable = (
+                item.get("type") in ("consumable", "potion", "food") or
+                item.get("subtype") in ("potion", "scroll", "food")
+            )
+            if not is_consumable:
+                continue
+            name = item.get("name", "item")
+            stack = item.get("stack", 1)
+            stack_str = f" x{stack}" if stack > 1 else ""
+            # Short description for combat readability
+            if item.get("heal", 0):
+                detail = f"+{item['heal']} HP"
+            elif item.get("restore_mp", 0):
+                detail = f"+{item['restore_mp']} MP"
+            elif "Remove Curse" in name:
+                detail = "lifts curse"
+            elif "Identify" in name:
+                detail = "identifies item"
+            else:
+                detail = item.get("subtype", "consumable")
+            label = f"Use: {name}{stack_str}  ({detail})"
+            rect = pygame.Rect(bx + (idx % 2) * (btn_w + 10),
+                               by + (idx // 2) * (btn_h + 6),
+                               btn_w, btn_h)
+            hover = rect.collidepoint(mx, my)
+            if hover:
+                self.hover_action = idx
+            bg = ACTION_HOVER if hover else (20, 40, 30)   # green tint for consumables
+            border = (80, 200, 80) if hover else (40, 80, 40)
+            pygame.draw.rect(surface, bg, rect, border_radius=3)
+            pygame.draw.rect(surface, border, rect, 2, border_radius=3)
+            draw_text(surface, label, rect.x + 10, rect.y + 10,
+                      (140, 240, 140) if hover else (180, 220, 180), 13)
+            self._combat_items.append(("consumable", item))
+            idx += 1
 
         if idx == 0:
             draw_text(surface, "No weapons or usable items in inventory.",
@@ -891,6 +927,10 @@ class CombatUI:
                         # Switch weapon — costs action
                         self.action_mode = "main"
                         return {"type": "switch_weapon", "item": item}
+                    elif action_type == "consumable":
+                        # Use consumable — costs action, needs target selection for heals
+                        self.action_mode = "main"
+                        return {"type": "use_consumable", "item": item}
             return None
 
         elif self.action_mode in ("target_attack", "target_ability"):

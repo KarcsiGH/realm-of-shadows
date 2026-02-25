@@ -469,7 +469,12 @@ class InventoryUI:
             # Hover hints
             if is_hover:
                 hx = rect.x + rect.width - 10
-                if equippable:
+                is_consumable = item.get("type") in ("consumable", "potion", "food") or item.get("subtype") in ("potion", "scroll", "food")
+                if is_consumable:
+                    lbl = "L-Click: Use"
+                    draw_text(surface, lbl, hx - get_font(11).size(lbl)[0],
+                              rect.y + 4, HEAL_COL, 11)
+                elif equippable:
                     lbl = "L-Click: Equip"
                     draw_text(surface, lbl, hx - get_font(11).size(lbl)[0],
                               rect.y + 4, EQUIP_COL, 11)
@@ -605,14 +610,19 @@ class InventoryUI:
                             self._show_message("Item is already identified.", DARK_GREY)
                         return None
                     else:
-                        # Left-click → equip if possible
-                        slot = resolve_item_slot(item)
-                        if slot:
-                            item["slot"] = slot  # ensure slot field exists
-                            ok, old, msg = equip_item(char, item, slot)
-                            self._show_message(msg, EQUIP_COL if ok else STAT_DOWN)
+                        # Left-click → use if consumable, otherwise equip
+                        is_consumable = item.get("type") in ("consumable", "potion", "food") or item.get("subtype") in ("potion", "scroll", "food")
+                        if is_consumable:
+                            msg, col = self._use_consumable(char, idx)
+                            self._show_message(msg, col)
                         else:
-                            self._show_message("This item cannot be equipped", DARK_GREY)
+                            slot = resolve_item_slot(item)
+                            if slot:
+                                item["slot"] = slot
+                                ok, old_item, msg = equip_item(char, item, slot)
+                                self._show_message(msg, EQUIP_COL if ok else STAT_DOWN)
+                            else:
+                                self._show_message("This item cannot be equipped", DARK_GREY)
                     return None
                 iy += 68
 
@@ -656,6 +666,91 @@ class InventoryUI:
                 (180, 100, 100))
             self.mode = "normal"
             self.identify_item = None
+
+    def _use_consumable(self, char, item_idx):
+        """Use a consumable item from inventory. Returns (message, color)."""
+        from core.classes import get_all_resources
+        from ui.renderer import HEAL_COL, ORANGE, GREY
+        MP_COL = (100, 180, 255)
+        item = char.inventory[item_idx]
+        name = item.get("name", "item")
+
+        # Scroll of Remove Curse
+        if item.get("effect") == "remove_curse" or name == "Scroll of Remove Curse":
+            cursed_slots = [
+                s for s, eq in (char.equipment or {}).items()
+                if eq and eq.get("cursed") and not eq.get("curse_lifted")
+            ]
+            from core.status_effects import get_status_effects
+            curse_fx = [s for s in get_status_effects(char) if s.get("type") == "curse"]
+            if not cursed_slots and not curse_fx:
+                return (f"{char.name} is not cursed.", ORANGE)
+            for slot in cursed_slots:
+                eq = char.equipment[slot]
+                eq["curse_lifted"] = True
+                char.equipment[slot] = None
+                char.inventory.append(eq)
+            for se in curse_fx:
+                if hasattr(char, "status_effects") and se in char.status_effects:
+                    char.status_effects.remove(se)
+            self._consume(char, item_idx)
+            return (f"{char.name}'s curses lifted!", HEAL_COL)
+
+        # Scroll of Identify
+        if item.get("subtype") == "scroll" and (
+            name == "Scroll of Identify" or item.get("effect") == "identify"
+        ):
+            from core.party_knowledge import mark_item_identified
+            for member in self.party:
+                for i, inv_item in enumerate(member.inventory):
+                    if not inv_item.get("identified"):
+                        inv_item["identified"] = True
+                        inv_item["magic_identified"] = True
+                        inv_item["material_identified"] = True
+                        mark_item_identified(inv_item.get("name", ""))
+                        self._consume(char, item_idx)
+                        return (
+                            f"Identified: {inv_item.get('name', 'item')} ({member.name})",
+                            HEAL_COL
+                        )
+            return ("No unidentified items to identify.", ORANGE)
+
+        # Healing potion
+        heal = item.get("heal", 0)
+        if heal > 0:
+            max_res = get_all_resources(char.class_name, char.stats, char.level)
+            max_hp = max_res.get("HP", 1)
+            old_hp = char.resources.get("HP", 0)
+            char.resources["HP"] = min(max_hp, old_hp + heal)
+            actual = char.resources["HP"] - old_hp
+            self._consume(char, item_idx)
+            return (f"{char.name} used {name}: +{actual} HP", HEAL_COL)
+
+        # MP restore
+        restore_mp = item.get("restore_mp", 0)
+        if restore_mp > 0:
+            max_res = get_all_resources(char.class_name, char.stats, char.level)
+            for rk in char.resources:
+                if "MP" in rk:
+                    max_val = max_res.get(rk, 0)
+                    old_val = char.resources[rk]
+                    char.resources[rk] = min(max_val, old_val + restore_mp)
+                    actual = char.resources[rk] - old_val
+                    self._consume(char, item_idx)
+                    return (f"{char.name} used {name}: +{actual} {rk}", MP_COL)
+
+        return (f"Can't use {name} here.", ORANGE)
+
+    def _consume(self, char, item_idx):
+        """Reduce stack by 1 or remove item from inventory."""
+        if item_idx >= len(char.inventory):
+            return
+        item = char.inventory[item_idx]
+        stack = item.get("stack", 1)
+        if stack > 1:
+            item["stack"] = stack - 1
+        else:
+            char.inventory.pop(item_idx)
 
     def handle_scroll(self, direction):
         char = self.party[self.selected_char]
