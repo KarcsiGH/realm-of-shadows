@@ -398,7 +398,7 @@ WOODHAVEN_NPCS = [
         "name": "Guildmaster Oren",
         "x": 24, "y": 5,
         "service": None,
-        "dialogue_id": None,
+        "dialogue_id": "guildmaster_oren",
         "description": "A grizzled ranger who runs the guild. He eyes you appraisingly.",
         "color": (100, 140, 80),
     },
@@ -532,7 +532,7 @@ IRONHEARTH_NPCS = [
     {
         "name": "Miner Durk",
         "x": 18, "y": 21,
-        "dialogue_id": None,
+        "dialogue_id": "miner_durk",
         "description": "A dusty dwarf heading home after a long shift underground.",
         "color": (150, 120, 80),
     },
@@ -546,7 +546,7 @@ IRONHEARTH_NPCS = [
     {
         "name": "Apprentice Tova",
         "x": 20, "y": 19,
-        "dialogue_id": None,
+        "dialogue_id": "apprentice_tova",
         "description": "A young dwarven apprentice running errands between the forge and armory.",
         "color": (200, 160, 80),
     },
@@ -670,14 +670,14 @@ GREENWOOD_NPCS = [
     {
         "name": "Scout Feryn",
         "x": 7, "y": 7,        # on path (P)
-        "dialogue_id": None,
+        "dialogue_id": "scout_feryn",
         "description": "A lean ranger watching the treeline with sharp eyes.",
         "color": (90, 150, 70),
     },
     {
         "name": "Trapper Holt",
         "x": 10, "y": 12,      # on path
-        "dialogue_id": None,
+        "dialogue_id": "trapper_holt",
         "description": "A sun-weathered trapper sorting pelts on a wooden rack.",
         "color": (160, 130, 90),
     },
@@ -826,7 +826,7 @@ SALTMERE_NPCS = [
     {
         "name": "Shady Figure",
         "x": 13, "y": 8,
-        "dialogue_id": None,
+        "dialogue_id": "shady_figure",
         "description": "A cloaked figure who meets your gaze and looks away too quickly.",
         "color": (80, 70, 100),
     },
@@ -866,7 +866,7 @@ SALTMERE_NPCS = [
         "name": "Tide Priest Oran",
         "x": 8, "y": 18,
         "service": "temple",
-        "dialogue_id": None,
+        "dialogue_id": "tide_priest_oran",
         "description": "A weathered priest who prays for those the sea takes.",
         "color": (100, 140, 200),
     },
@@ -987,21 +987,21 @@ SANCTUM_NPCS = [
     {
         "name": "Pilgrim Elder",
         "x": 14, "y": 8,
-        "dialogue_id": None,
+        "dialogue_id": "pilgrim_elder",
         "description": "An old pilgrim who has walked to Sanctum three times in his life.",
         "color": (200, 190, 160),
     },
     {
         "name": "Holy Knight",
         "x": 14, "y": 13,
-        "dialogue_id": None,
+        "dialogue_id": "holy_knight",
         "description": "A knight in white and gold armor standing guard at the crossing.",
         "color": (220, 220, 200),
     },
     {
         "name": "Novice Priest",
         "x": 22, "y": 20,
-        "dialogue_id": None,
+        "dialogue_id": "novice_priest",
         "description": "A young priest walking the cloister path in quiet prayer.",
         "color": (180, 180, 220),
     },
@@ -1009,7 +1009,7 @@ SANCTUM_NPCS = [
         "name": "High Priest Aldara",
         "x": 13, "y": 5,
         "service": "temple",
-        "dialogue_id": None,
+        "dialogue_id": "high_priest_aldara",
         "description": "The High Priest of Sanctum. Her healing abilities are legendary.",
         "color": (240, 230, 180),
     },
@@ -1146,21 +1146,21 @@ CRYSTALSPIRE_NPCS = [
     {
         "name": "Apprentice Mage",
         "x": 20, "y": 1,       # open area row 1 away from buildings
-        "dialogue_id": None,
+        "dialogue_id": "apprentice_mage",
         "description": "A student in blue robes practicing gestures under her breath.",
         "color": (160, 180, 240),
     },
     {
         "name": "Crystal Scholar",
         "x": 14, "y": 9,       # on main street path
-        "dialogue_id": None,
+        "dialogue_id": "crystal_scholar",
         "description": "A scholar studying the crystal formations in the street cobbles.",
         "color": (180, 200, 230),
     },
     {
         "name": "Teleport Master",
         "x": 14, "y": 15,      # adjacent to teleport circle (O tile), standing on P
-        "dialogue_id": None,
+        "dialogue_id": "teleport_master",
         "description": "A robed mage standing at the teleport circle. He nods in greeting.",
         "color": (200, 180, 255),
     },
@@ -1168,7 +1168,7 @@ CRYSTALSPIRE_NPCS = [
         "name": "Archmage Solen",
         "x": 12, "y": 5,
         "service": None,
-        "dialogue_id": None,
+        "dialogue_id": "archmage_solen",
         "description": "The Archmage of Crystalspire. Ancient, precise, and watching everything.",
         "color": (180, 200, 255),
     },
@@ -1350,37 +1350,59 @@ THORNHAVEN_NPCS = [
     {
         "name": "City Guard",
         "x": 16, "y": 7,
-        "dialogue_id": None,
+        "dialogue_id": "city_guard_thornhaven",
         "description": "An armored guard in imperial livery. There are more of them than you'd like.",
         "color": (160, 170, 190),
     },
     {
         "name": "City Guard",
         "x": 25, "y": 7,
-        "dialogue_id": None,
+        "dialogue_id": "city_guard_thornhaven",
         "description": "Another imperial guard. They nod at each other on the hour.",
         "color": (160, 170, 190),
     },
     {
         "name": "Imperial Crier",
         "x": 16, "y": 13,
-        "dialogue_id": None,
+        "dialogue_id": "imperial_crier",
         "description": "A herald reading proclamations from a scroll. Nobody is listening.",
         "color": (200, 180, 130),
     },
     {
         "name": "Merchant Noble",
         "x": 22, "y": 4,
-        "dialogue_id": None,
+        "dialogue_id": "merchant_noble",
         "description": "A wealthy merchant in silk and furs, looking impatient.",
         "color": (200, 160, 100),
     },
     {
         "name": "Refugee",
         "x": 6, "y": 26,
-        "dialogue_id": None,
+        "dialogue_id": "refugee",
         "description": "A gaunt figure sitting against the wall. Fading scars on their hands.",
         "color": (140, 130, 120),
+    },
+    # Key story NPCs
+    {
+        "name": "Governor Aldric",
+        "x": 32, "y": 4,  # near castle gate
+        "dialogue_id": "governor_aldric",
+        "description": "The Imperial Governor of Thornhaven. Looks like he hasn't slept in a week.",
+        "color": (180, 160, 120),
+    },
+    {
+        "name": "Guild Commander Varek",
+        "x": 13, "y": 4,  # near guild hall door (14,4)
+        "dialogue_id": "guild_commander_varek",
+        "description": "A hard-faced woman running the Imperial Guild. She knows more than she says.",
+        "color": (140, 150, 180),
+    },
+    {
+        "name": "Court Mage Sira",
+        "x": 13, "y": 24,  # near mages_hall door (12,24)
+        "dialogue_id": "court_mage_sira",
+        "description": "The court mage of the Empire. Her eyes track more than they let on.",
+        "color": (160, 140, 220),
     },
     # Service NPCs
     {

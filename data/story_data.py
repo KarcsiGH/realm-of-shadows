@@ -117,6 +117,24 @@ QUESTS = {
                        "near active Fading zones. Dangerous work, but the Academy pays well.",
         "act": 2,
     },
+    "main_act3_spire": {
+        "name": "The Long Road",
+        "description": "Maren has the fragments and a head start. "
+                       "Valdris' Spire stands at the edge of the known world, "
+                       "and whatever she finds there — whatever he has become — "
+                       "it cannot be allowed to end without you. "
+                       "Reach the Spire.",
+        "act": 3,
+    },
+    "main_act3_finale": {
+        "name": "The Last Warden",
+        "description": "You are inside Valdris' Spire. "
+                       "At the top waits what is left of the man who broke the wards "
+                       "and unmade Ashenmoor. "
+                       "Maren is here too — which side she lands on may depend on you. "
+                       "Reach the summit. End this.",
+        "act": 3,
+    },
 }
 
 
@@ -432,6 +450,12 @@ NPCS = {
         "title": "Harbor Hand, Saltmere",
         "location": "saltmere",
         "portrait_color": (100, 140, 180),
+    },
+    "spider_queen": {
+        "name": "The Spider Queen",
+        "title": "Between Worlds",
+        "location": "spiders_nest",
+        "portrait_color": (90, 40, 140),
     },
 }
 
@@ -3202,9 +3226,10 @@ DUNGEON_STORY_EVENTS = {
                         "prolonged exposure to ward-decay energy. The Fading doesn't just "
                         "destroy — it transforms. These creatures are adapting to exist "
                         "between realities. — E.V.",
-                "lore_id": None,
+                "lore_id": "spider_queen_observed",
             },
         ],
+        "boss_dialogue": "spider_queen",
     },
     "abandoned_mine": {
         "floor_messages": {
@@ -3442,3 +3467,1258 @@ def get_dungeon_boss_dialogue(dungeon_id):
     """Get the NPC dialogue key for a dungeon's boss, if any."""
     events = DUNGEON_STORY_EVENTS.get(dungeon_id, {})
     return events.get("boss_dialogue")
+
+
+# ══════════════════════════════════════════════════════════
+#  ADDITIONAL NPC DIALOGUES  (wired in town_maps.py)
+# ══════════════════════════════════════════════════════════
+
+_NEW_DIALOGUES = {
+
+    # ── Briarhollow ────────────────────────────────────────
+
+    "captain_aldric": [
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {
+                "id": "aldric_post_mine",
+                "nodes": {
+                    "start": {
+                        "speaker": "Captain Aldric",
+                        "text": "You cleared the mine. I won't pretend I thought you'd pull it off. The townsfolk are sleeping better. I suppose I owe you a drink.",
+                        "choices": [
+                            {"text": "What happens to the mine now?", "next": "mine_fate"},
+                            {"text": "Just doing our job.", "next": "modest"},
+                        ],
+                    },
+                    "mine_fate": {
+                        "speaker": "Captain Aldric",
+                        "text": "The Guild wants to reopen it. I say leave it sealed. Whatever Valdris was doing down there — I don't want it under our feet again. But nobody asks guards.",
+                        "choices": [{"text": "Thanks, Captain.", "next": None}],
+                    },
+                    "modest": {
+                        "speaker": "Captain Aldric",
+                        "text": "Don't be modest. Half my garrison wouldn't have gone in. Take the compliment.",
+                        "choices": [{"text": "We'll be moving on soon.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "aldric_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Captain Aldric",
+                        "text": "I'm the town guard captain. Twelve men, one broken crossbow, and a gate that sticks. If trouble comes, I'm counting on adventurers more than I should be.",
+                        "choices": [
+                            {"text": "What kind of trouble?", "next": "trouble"},
+                            {"text": "The mine — what do you know about it?", "next": "mine"},
+                            {"text": "We can handle ourselves.", "next": "confident"},
+                        ],
+                    },
+                    "trouble": {
+                        "speaker": "Captain Aldric",
+                        "text": "Goblin raids getting bolder. And something's wrong in the old Hearthstone mine — workers won't go near it after dark. I've sent two patrols. Neither came back with good news.",
+                        "choices": [{"text": "We'll look into it.", "next": None}],
+                    },
+                    "mine": {
+                        "speaker": "Captain Aldric",
+                        "text": "It was a good vein once. Then Valdris's people showed up, bought out the contracts, started working night shifts. No one knows what they pulled out. Then — silence. Workers left. Something's still in there.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                    "confident": {
+                        "speaker": "Captain Aldric",
+                        "text": "Good. Because I can't spare anyone.",
+                        "choices": [{"text": "Fair enough.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "elder_thom": [
+        {
+            "conditions": [{"flag": "lore.fading_basics", "op": "==", "value": True}],
+            "tree": {
+                "id": "elder_thom_knows",
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Thom",
+                        "text": "So. You know about the Fading now. I've watched it creep closer for twenty years. We call it shadow sickness here, pretend it's natural. It isn't.",
+                        "choices": [
+                            {"text": "How long has Briarhollow known?", "next": "how_long"},
+                            {"text": "What can we do?", "next": "what_do"},
+                        ],
+                    },
+                    "how_long": {
+                        "speaker": "Elder Thom",
+                        "text": "The forest started dying when I was a young man. Forty years ago, give or take. About when Valdris first started his 'research.' The timing was never a coincidence.",
+                        "choices": [{"text": "We'll stop him.", "next": None}],
+                    },
+                    "what_do": {
+                        "speaker": "Elder Thom",
+                        "text": "Find the Hearthstones. The scholar — Maren — she's right about them. They're not power sources. They're seals. Break the pattern of extraction and you break his hold.",
+                        "choices": [{"text": "We understand.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "elder_thom_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Thom",
+                        "text": "I've been elder here for thirty years. In that time I've seen three harvests fail, a river run dry, and the forest creep back from the edge of town. Something is wrong with this land.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.elder_thom.met", "value": True}],
+                        "choices": [
+                            {"text": "What do you think is causing it?", "next": "cause"},
+                            {"text": "Who should we speak to?", "next": "refer"},
+                        ],
+                    },
+                    "cause": {
+                        "speaker": "Elder Thom",
+                        "text": "I'm an old man, not a scholar. But the decline matched when the miners came — the ones who took contracts from some lord up north. I never learned his name. Maren might know.",
+                        "choices": [{"text": "We'll ask her.", "next": None}],
+                    },
+                    "refer": {
+                        "speaker": "Elder Thom",
+                        "text": "Maren, the scholar staying at the inn. She's been researching the land sickness longer than anyone. She has theories I don't fully understand, but her eyes are honest.",
+                        "choices": [{"text": "Thank you, Elder.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    # ── Woodhaven ──────────────────────────────────────────
+
+    "ranger_lyric": [
+        {
+            "conditions": [{"flag": "quest.main_spiders_nest.state", "op": ">", "value": 0}],
+            "tree": {
+                "id": "lyric_spider_quest",
+                "nodes": {
+                    "start": {
+                        "speaker": "Ranger Lyric",
+                        "text": "The Spider Queen's nest is growing. Two of my scouts didn't come back from the eastern ridge. Whatever she is now, she wasn't natural to begin with — something sped up her growth.",
+                        "choices": [
+                            {"text": "We're on it.", "next": "good"},
+                            {"text": "What changed?", "next": "changed"},
+                        ],
+                    },
+                    "good": {
+                        "speaker": "Ranger Lyric",
+                        "text": "Don't go in without fire. The webs are thick enough to stop a spear.",
+                        "choices": [{"text": "Noted.", "next": None}],
+                    },
+                    "changed": {
+                        "speaker": "Ranger Lyric",
+                        "text": "Six months ago she was just a big spider. Now she's the size of a cart horse and her brood covers the whole eastern slope. Something's feeding her growth. The same thing that's killing the trees, maybe.",
+                        "choices": [{"text": "We'll find out.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "lyric_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Ranger Lyric",
+                        "text": "These woods used to be safe enough for children to wander. Now I don't let my scouts go east without a full squad. Something is wrong in the deep forest — worse every season.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.lyric.met", "value": True}],
+                        "choices": [
+                            {"text": "What's out there?", "next": "threats"},
+                            {"text": "Any work for adventurers?", "next": "work"},
+                        ],
+                    },
+                    "threats": {
+                        "speaker": "Ranger Lyric",
+                        "text": "Giant spiders, mostly. Bigger than they should be. A few wolf packs that act wrong — too coordinated, like they're being driven. And the trees themselves are sick. Brown at the roots.",
+                        "choices": [{"text": "We'll investigate.", "next": None}],
+                    },
+                    "work": {
+                        "speaker": "Ranger Lyric",
+                        "text": "Check the job board. Guildmaster Oren posts contracts. But between us — the real problem is the spider nest to the east. It's getting out of hand.",
+                        "choices": [{"text": "We'll look into it.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "old_moss": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "old_moss_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Old Moss",
+                        "text": "Mm. Travelers. Sit. These mushrooms won't pick themselves, but they'll wait a moment. You have the look of people carrying more trouble than they admit.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.old_moss.met", "value": True}],
+                        "choices": [
+                            {"text": "What do you know about the forest dying?", "next": "forest"},
+                            {"text": "What are those mushrooms for?", "next": "mushrooms"},
+                            {"text": "Just passing through.", "next": "passing"},
+                        ],
+                    },
+                    "forest": {
+                        "speaker": "Old Moss",
+                        "text": "I've watched this forest since before your parents were born. The sickness comes from below, not above. The roots feel it before the leaves do. Something underground is draining them. Has been for years.",
+                        "choices": [
+                            {"text": "The mines?", "next": "mines"},
+                            {"text": "Thank you, elder.", "next": None},
+                        ],
+                    },
+                    "mines": {
+                        "speaker": "Old Moss",
+                        "text": "Probably. The old Hearthstone veins. They were sealed for a reason — the miners who dug them three hundred years ago sealed them themselves, which tells you something. Now someone's opened them again.",
+                        "choices": [{"text": "Who?", "next": "who"},
+                                    {"text": "Thank you.", "next": None}],
+                    },
+                    "who": {
+                        "speaker": "Old Moss",
+                        "text": "A name from the capital. Valdris. He sent agents years ago, smooth-talking with Imperial letters. The Guild approved it. Nobody listened to an old herbalist. They never do.",
+                        "choices": [{"text": "We're listening.", "next": "listening"}],
+                    },
+                    "listening": {
+                        "speaker": "Old Moss",
+                        "text": "Then find the stones before he does. Or find them after, and take them away from him. Either works.",
+                        "choices": [{"text": "We will.", "next": None}],
+                    },
+                    "mushrooms": {
+                        "speaker": "Old Moss",
+                        "text": "This one cures fever. This one cures poison if you eat it before the venom sets. This one will kill you in an interesting way if you eat it after dark. I keep them separate.",
+                        "choices": [{"text": "Useful.", "next": None}],
+                    },
+                    "passing": {
+                        "speaker": "Old Moss",
+                        "text": "Nobody just passes through anymore. The roads aren't safe enough. Stay careful.",
+                        "choices": [{"text": "We will.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "guildmaster_oren": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "oren_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Guildmaster Oren",
+                        "text": "You want to register with the Guild? Smart. Registered parties get access to contract work, priority lodging, and a legal standing the Empire recognizes. Unregistered adventurers are just bandits with better intentions.",
+                        "choices": [
+                            {"text": "How do we register?", "next": "register"},
+                            {"text": "What contracts are available?", "next": "contracts"},
+                            {"text": "We'll think about it.", "next": "think"},
+                        ],
+                    },
+                    "register": {
+                        "speaker": "Guildmaster Oren",
+                        "text": "Five gold. I write your names in the ledger, you get a charter, and you're recognized from here to the capital. Best investment you'll make.",
+                        "choices": [{"text": "Sounds reasonable.", "next": None},
+                                    {"text": "Maybe later.", "next": None}],
+                    },
+                    "contracts": {
+                        "speaker": "Guildmaster Oren",
+                        "text": "Check the job board outside. I post what comes in. Right now it's mostly patrol work and pest control. The spider situation to the east is getting serious — I'm offering a premium for proof of the nest being cleared.",
+                        "choices": [{"text": "Noted.", "next": None}],
+                    },
+                    "think": {
+                        "speaker": "Guildmaster Oren",
+                        "text": "Don't think too long. Guild charter protects you if a job goes wrong and a lord wants someone to blame. Without it, that someone is you.",
+                        "choices": [{"text": "Fair point.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    # ── Ironhearth ─────────────────────────────────────────
+
+    "foreman_brak": [
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {
+                "id": "brak_post_mine",
+                "nodes": {
+                    "start": {
+                        "speaker": "Foreman Brak",
+                        "text": "Word came from Briarhollow. You dealt with whatever was in that shaft. I owe you more than thanks — half my workers came from that mine before they shut it. They deserve to know it's over.",
+                        "choices": [
+                            {"text": "What was Valdris extracting?", "next": "extraction"},
+                            {"text": "The Warden is gone.", "next": "warden"},
+                        ],
+                    },
+                    "extraction": {
+                        "speaker": "Foreman Brak",
+                        "text": "Something older than iron. The veins weren't ore — they were crystallized energy. Hearthstone, the old records call it. We dug it out for fifty years not knowing what it was, just following Imperial orders.",
+                        "choices": [{"text": "And what happens when it's all gone?", "next": "gone"}],
+                    },
+                    "gone": {
+                        "speaker": "Foreman Brak",
+                        "text": "Ask the forest. Ask the rivers. Ask the villages that went dark two generations back. The land bleeds when the stones are taken. But someone's still taking them.",
+                        "choices": [{"text": "We know.", "next": None}],
+                    },
+                    "warden": {
+                        "speaker": "Foreman Brak",
+                        "text": "Korrath. I knew him before he turned. Good soldier. Didn't deserve what happened to him. Rest easy, old ghost.",
+                        "choices": [{"text": "We'll find who ordered it.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "brak_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Foreman Brak",
+                        "text": "I run three shifts underground and I can't fill half my roster. Workers quit, won't say why. Those that stay come up looking wrong — pale, shaky. The deep shafts are doing something to them.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.brak.met", "value": True}],
+                        "choices": [
+                            {"text": "What's in the deep shafts?", "next": "deep"},
+                            {"text": "Is this related to Valdris?", "next": "valdris"},
+                        ],
+                    },
+                    "deep": {
+                        "speaker": "Foreman Brak",
+                        "text": "Officially? Iron ore and old granite. Unofficially — something glows down there that isn't lantern light. The old foreman sealed off level five and wouldn't talk about it before he disappeared.",
+                        "choices": [{"text": "Disappeared?", "next": "disappeared"},
+                                    {"text": "We'll investigate.", "next": None}],
+                    },
+                    "disappeared": {
+                        "speaker": "Foreman Brak",
+                        "text": "Walked into level five on a Tuesday. Nobody saw him leave. I reported it. Got a letter back from the capital saying he'd been reassigned. Right.",
+                        "choices": [{"text": "We'll look into it.", "next": None}],
+                    },
+                    "valdris": {
+                        "speaker": "Foreman Brak",
+                        "text": "The contracts came through his office. I never met the man. But the extraction quotas, the sealed levels, the silence about what we pulled up — all signed by his agents. It smells wrong.",
+                        "choices": [{"text": "It is wrong.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "scholar_petra": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "petra_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Scholar Petra",
+                        "text": "Oh! Travelers. I'm studying the runic inscriptions on the mine supports. They're not just structural — they're warnings. The dwarves who built these shafts knew something was down there and wanted no one to forget it.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.petra.met", "value": True}],
+                        "choices": [
+                            {"text": "What do the warnings say?", "next": "warnings"},
+                            {"text": "Do you know about the Hearthstones?", "next": "hearthstones"},
+                        ],
+                    },
+                    "warnings": {
+                        "speaker": "Scholar Petra",
+                        "text": "Roughly: 'Do not consume the deep flame. It is not fuel. It is blood.' That's my best translation. Poetic for a mine support. I've found the same phrase in three different shafts.",
+                        "choices": [
+                            {"text": "Blood?", "next": "blood"},
+                            {"text": "Thank you.", "next": None},
+                        ],
+                    },
+                    "blood": {
+                        "speaker": "Scholar Petra",
+                        "text": "The land's blood, I think. The Hearthstones aren't a resource — they're part of a living system. Extract them and something essential is lost. I've been trying to publish this for two years. My faculty keeps losing my letters.",
+                        "choices": [{"text": "Someone doesn't want it published.", "next": "suppressed"}],
+                    },
+                    "suppressed": {
+                        "speaker": "Scholar Petra",
+                        "text": "That thought occurred to me. I'm being careful. You should be too, if you're asking these questions.",
+                        "choices": [{"text": "We will be.", "next": None}],
+                    },
+                    "hearthstones": {
+                        "speaker": "Scholar Petra",
+                        "text": "You know about those? Good — someone should. They're crystallized ley energy, nodes in a network that runs under the whole region. Extracting one causes instability. Extracting all of them... I don't know. But nothing good.",
+                        "choices": [{"text": "We're working to stop it.", "next": "stop"}],
+                    },
+                    "stop": {
+                        "speaker": "Scholar Petra",
+                        "text": "Then you need the scholar Maren's research. And you need to get to the stones before whoever's been clearing the sites. Move fast.",
+                        "choices": [{"text": "We intend to.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "miner_durk": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "durk_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Miner Durk",
+                        "text": "Don't ask me about the lower levels. I work the upper shafts, I go home, I sleep, I do it again. That's all. I've got a family.",
+                        "choices": [
+                            {"text": "What happened on the lower levels?", "next": "lower"},
+                            {"text": "Fair enough.", "next": None},
+                        ],
+                    },
+                    "lower": {
+                        "speaker": "Miner Durk",
+                        "text": "Two men I knew. Went down to level five because they heard something. Came up... not right. Quiet. Eyes wrong. They transferred out a week later. Company transfer. That's all I know.",
+                        "choices": [{"text": "We'll leave it at that.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "apprentice_tova": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "tova_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Apprentice Tova",
+                        "text": "Oh! Sorry, I'm in a hurry. Master Thardin will have my ears if this delivery's late. He's not mean, just very... precise.",
+                        "choices": [
+                            {"text": "What are you delivering?", "next": "delivery"},
+                            {"text": "Go ahead, we won't keep you.", "next": None},
+                        ],
+                    },
+                    "delivery": {
+                        "speaker": "Apprentice Tova",
+                        "text": "Temper salts from the Armory. You add them to the quench bath to harden steel. The Grand Forge uses twice what any normal forge does — Master Thardin says it's because he works to higher tolerances. I believe him.",
+                        "choices": [{"text": "Learn from the best.", "next": "learn"}],
+                    },
+                    "learn": {
+                        "speaker": "Apprentice Tova",
+                        "text": "That's the plan! Right after I survive the apprenticeship.",
+                        "choices": [{"text": "Good luck.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    # ── Greenwood ──────────────────────────────────────────
+
+    "scout_feryn": [
+        {
+            "conditions": [{"flag": "quest.main_spiders_nest.state", "op": ">", "value": 0}],
+            "tree": {
+                "id": "feryn_spider",
+                "nodes": {
+                    "start": {
+                        "speaker": "Scout Feryn",
+                        "text": "You found the nest? Good. I tried to map it two weeks ago. Got halfway in before the webbing sealed the path behind me. Nearly didn't get out.",
+                        "choices": [
+                            {"text": "What's in there?", "next": "inside"},
+                            {"text": "We'll handle it.", "next": "handle"},
+                        ],
+                    },
+                    "inside": {
+                        "speaker": "Scout Feryn",
+                        "text": "Queen's brood, hundreds of them. And the Queen herself — she's not a normal spider. Something changed her. She moves like she's thinking.",
+                        "choices": [{"text": "We'll go prepared.", "next": None}],
+                    },
+                    "handle": {
+                        "speaker": "Scout Feryn",
+                        "text": "Bring fire. Lots of it. And watch the ceiling.",
+                        "choices": [{"text": "Thanks for the warning.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "feryn_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Scout Feryn",
+                        "text": "You made it out here. Good. These woods get worse every season — even the birds have been acting strange. I scout this territory and I've been doing it fifteen years. Something has changed.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.feryn.met", "value": True}],
+                        "choices": [
+                            {"text": "What's changed specifically?", "next": "changed"},
+                            {"text": "Any threats we should know about?", "next": "threats"},
+                        ],
+                    },
+                    "changed": {
+                        "speaker": "Scout Feryn",
+                        "text": "The spider population tripled in two seasons. Wolves are ranging further than I've ever seen. And there's a low sound in the deep forest, just at the edge of hearing. The trees around the old stone sites have all gone black at the root.",
+                        "choices": [{"text": "Old stone sites?", "next": "stones"}],
+                    },
+                    "stones": {
+                        "speaker": "Scout Feryn",
+                        "text": "Places the old settlers marked. Rings of flat stones, mostly grown over now. I leave them alone. Started going wrong around the time workers showed up from the capital. Coincidence, maybe.",
+                        "choices": [{"text": "Probably not a coincidence.", "next": None}],
+                    },
+                    "threats": {
+                        "speaker": "Scout Feryn",
+                        "text": "Giant spiders to the east — I mean giant, house-sized. Don't go alone. To the north, wolves that don't run when you shout at them. And something worse I can't pin down, south of the river.",
+                        "choices": [{"text": "We'll stay sharp.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "trapper_holt": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "holt_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Trapper Holt",
+                        "text": "Haven't pulled a decent pelt in three weeks. Animals are either gone or wrong. Found a fox last Tuesday — twice normal size, moving like a drunk. Left it alone.",
+                        "choices": [
+                            {"text": "Something's affecting the animals?", "next": "animals"},
+                            {"text": "Any idea what's causing it?", "next": "cause"},
+                        ],
+                    },
+                    "animals": {
+                        "speaker": "Trapper Holt",
+                        "text": "Not just size. They're more aggressive. A deer charged me last week. A deer. I've been trapping since I was ten. That doesn't happen.",
+                        "choices": [{"text": "We're looking into it.", "next": None}],
+                    },
+                    "cause": {
+                        "speaker": "Trapper Holt",
+                        "text": "Something underground, I reckon. The animals near the old mine sites go wrong first. I mark them on my trap maps — always the same spots. Close to where the Hearthstone veins run, the old-timers say.",
+                        "choices": [{"text": "Thank you, that's useful.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    # ── Saltmere ───────────────────────────────────────────
+
+    "shady_figure": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "shady_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Shady Figure",
+                        "text": "Eyes forward, don't stare. People who stare in Saltmere end up with fewer fingers. You need something? Information costs. Everything in this town costs.",
+                        "choices": [
+                            {"text": "What's going on in this port?", "next": "port"},
+                            {"text": "What do you know about Valdris?", "next": "valdris"},
+                            {"text": "Nothing. Carry on.", "next": None},
+                        ],
+                    },
+                    "port": {
+                        "speaker": "Shady Figure",
+                        "text": "Same as any port. Ships come in, cargo goes out, nobody asks what's in the crates. Lately there are more private ships — no markings, fast hulls. They unload at the south dock at midnight. I stay away from midnight cargoes.",
+                        "choices": [{"text": "What's in the crates?", "next": "crates"}],
+                    },
+                    "crates": {
+                        "speaker": "Shady Figure",
+                        "text": "I didn't say I had that information. I said I stay away. Smart is different from curious.",
+                        "choices": [{"text": "Fair enough.", "next": None}],
+                    },
+                    "valdris": {
+                        "speaker": "Shady Figure",
+                        "text": "That name. Lower your voice. He has agents in every port — some of them aren't even trying to be subtle anymore. If you're working against him, you need to already be ahead of him. Are you?",
+                        "choices": [
+                            {"text": "We're getting there.", "next": "getting_there"},
+                            {"text": "We're trying.", "next": "trying"},
+                        ],
+                    },
+                    "getting_there": {
+                        "speaker": "Shady Figure",
+                        "text": "Then I'll tell you one thing free: the stones he's moving go south, not east. Whatever he's building, it's not in the capital. Check the sea routes.",
+                        "choices": [{"text": "Useful. Thank you.", "next": None}],
+                    },
+                    "trying": {
+                        "speaker": "Shady Figure",
+                        "text": "Try faster.",
+                        "choices": [{"text": "Right.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "tide_priest_oran": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "oran_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "The tides have been wrong for months. Coming in at the wrong hour. Going out too fast. The sea knows something is out of balance — she always does, long before the land catches on.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.oran.met", "value": True}],
+                        "choices": [
+                            {"text": "What does the sea know?", "next": "sea_knows"},
+                            {"text": "Is it related to the Fading?", "next": "fading"},
+                        ],
+                    },
+                    "sea_knows": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "That the ley lines are shifting. The Hearthstone network — you've heard of it? — runs under the sea floor too. Pull a stone on land and the whole web trembles. Including the tides.",
+                        "choices": [
+                            {"text": "You know about the Hearthstones?", "next": "knows_stones"},
+                            {"text": "What can be done?", "next": "what_done"},
+                        ],
+                    },
+                    "knows_stones": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Every tide priest knows. We've been tracking the disruptions for generations. But knowledge and power are different things. We watch. We record. We pray. It helps less than I'd like.",
+                        "choices": [{"text": "We're doing more than watching.", "next": "active"}],
+                    },
+                    "active": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Then the sea favors you. There's a stone under the bay — it was sealed there centuries ago by the first tide priests. If Valdris finds it, the tides won't be the only thing that goes wrong.",
+                        "choices": [{"text": "We'll protect it.", "next": None}],
+                    },
+                    "fading": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "It's the same phenomenon. Different name — we call it the Emptying. The land dries, the sea shifts, the sky goes thin. All from the same wound.",
+                        "choices": [{"text": "What wound?", "next": "wound"}],
+                    },
+                    "wound": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "The extraction of what should never be extracted. The stones aren't ore. They're the world's own vitality, crystallized. Take enough of them and nothing grows back.",
+                        "choices": [{"text": "We'll stop it.", "next": None}],
+                    },
+                    "what_done": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Return what was taken, if any remain. Or at minimum, stop more from being taken. Either buys time.",
+                        "choices": [{"text": "We're working on it.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    # ── Sanctum ────────────────────────────────────────────
+
+    "pilgrim_elder": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "pilgrim_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Pilgrim Elder",
+                        "text": "I walked four hundred miles to reach this city. To stand in the Cathedral and know the Light is still here. Some days that's all that keeps me moving.",
+                        "choices": [
+                            {"text": "Is the Light in danger?", "next": "danger"},
+                            {"text": "What draws pilgrims here?", "next": "draws"},
+                        ],
+                    },
+                    "danger": {
+                        "speaker": "Pilgrim Elder",
+                        "text": "The priests say no. But I've walked through three villages that were empty. Not attacked — just empty. Doors open, fires cold, food on tables. People don't abandon meals. Something took them all at once.",
+                        "choices": [{"text": "When?", "next": "when"}],
+                    },
+                    "when": {
+                        "speaker": "Pilgrim Elder",
+                        "text": "Three months ago. Six months ago. Longer, further east. It's spreading west, slowly. I came here to warn the High Priest. I don't think she believed me.",
+                        "choices": [{"text": "We'll look into it.", "next": None}],
+                    },
+                    "draws": {
+                        "speaker": "Pilgrim Elder",
+                        "text": "The Radiant Archive — manuscripts going back two thousand years. The reliquary. And the Cathedral itself, which the High Priest says was built on a site of power. I believe her.",
+                        "choices": [{"text": "Thank you.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "holy_knight": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "knight_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Holy Knight",
+                        "text": "The Order does not discuss its missions with outsiders. If you have business in Sanctum, conduct it and move on. The city is not a waystation.",
+                        "choices": [
+                            {"text": "We're hunting the Fading.", "next": "fading"},
+                            {"text": "Just passing through.", "next": None},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "Holy Knight",
+                        "text": "Then you have the Cathedral's support, if not its resources. Speak to the High Priest. She has been expecting someone like you — or hoping for it, at least. Second building on the left.",
+                        "choices": [{"text": "Thank you.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "novice_priest": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "novice_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Novice Priest",
+                        "text": "Oh! Visitors. I'm supposed to be sweeping the courtyard. If Sister Aldara sees me standing still she'll assign me another floor. She assigns things by observation.",
+                        "choices": [
+                            {"text": "What's it like here?", "next": "life"},
+                            {"text": "We won't keep you.", "next": None},
+                        ],
+                    },
+                    "life": {
+                        "speaker": "Novice Priest",
+                        "text": "Harder than I expected. More prayers, less sleep. But when the healing works — when someone walks out better than they came in — it's worth it. The High Priest says doubt is part of faith. I'm very faithful then.",
+                        "choices": [{"text": "Honest answer.", "next": "honest"}],
+                    },
+                    "honest": {
+                        "speaker": "Novice Priest",
+                        "text": "She also says there's something coming that will test all of us. She says it quietly, late at night, to herself. I don't think she knows I can hear.",
+                        "choices": [{"text": "She's right.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "high_priest_aldara": [
+        {
+            "conditions": [{"flag": "lore.fading_basics", "op": "==", "value": True}],
+            "tree": {
+                "id": "aldara_knows",
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "You've learned the truth of the Fading. Good. Denial is a luxury we can no longer afford. Sanctum sits on a ley convergence — if the Hearthstone network collapses, this city goes with it.",
+                        "choices": [
+                            {"text": "Can the Cathedral help?", "next": "help"},
+                            {"text": "How much time do we have?", "next": "time"},
+                        ],
+                    },
+                    "help": {
+                        "speaker": "High Priest Aldara",
+                        "text": "We can sustain the convergence point here if you can stabilize the others. The Reliquary holds an amplification relic — it would strengthen a Hearthstone if you find one. You may take it.",
+                        "on_exit": [{"action": "set_flag", "flag": "lore.aldara_relic", "value": True}],
+                        "choices": [{"text": "Thank you, High Priest.", "next": None}],
+                    },
+                    "time": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Weeks if he accelerates extraction. Months if he hasn't found the deep nodes yet. I don't know which. Move as though it's weeks.",
+                        "choices": [{"text": "We will.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "aldara_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Travelers. The Cathedral is open to those who seek the Light. If you seek something else — answers, guidance, healing — I may be able to help. Sanctum has been a place of knowledge longer than it has been a city.",
+                        "choices": [
+                            {"text": "What do you know about the Fading?", "next": "fading"},
+                            {"text": "We need healing.", "next": "heal"},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Everything. It's been the central concern of the Order for fifty years — we simply haven't had the courage to say so publicly. Come back when you've learned more. I will tell you what I can when I know you're committed.",
+                        "choices": [{"text": "We're committed.", "next": "committed"}],
+                    },
+                    "committed": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Then pursue the Hearthstones. Find the scholar Maren's research if you haven't already. The truth is all in there. Return when you have it.",
+                        "choices": [{"text": "We will.", "next": None}],
+                    },
+                    "heal": {
+                        "speaker": "High Priest Aldara",
+                        "text": "The temple services are available to all who enter in good faith.",
+                        "choices": [{"text": "Thank you.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    # ── Crystalspire ───────────────────────────────────────
+
+    "apprentice_mage": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "app_mage_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Apprentice Mage",
+                        "text": "Third-year apprentice. I've been here long enough to know which professors to avoid and which theories are actually taught versus which ones get you failed. Both categories are interesting.",
+                        "choices": [
+                            {"text": "Which theories get you failed?", "next": "failed"},
+                            {"text": "What's the Academy studying?", "next": "studying"},
+                        ],
+                    },
+                    "failed": {
+                        "speaker": "Apprentice Mage",
+                        "text": "Ley line disruption. Hearthstone mechanics. Anything that implies the extraction program is causing damage. The administration gets very quiet when you raise those topics in seminar.",
+                        "choices": [{"text": "Who's behind the silence?", "next": "silence"}],
+                    },
+                    "silence": {
+                        "speaker": "Apprentice Mage",
+                        "text": "The funding comes from the capital. And the capital's funding comes from someone who really doesn't want this research published. That's my theory. Written nowhere.",
+                        "choices": [{"text": "Keep it that way.", "next": None}],
+                    },
+                    "studying": {
+                        "speaker": "Apprentice Mage",
+                        "text": "Officially? Crystallomancy, conjuration theory, the mechanics of the Arcane. Unofficially, Archmage Solen has been running a private project on ley resonance. He doesn't discuss it with students. At all.",
+                        "choices": [{"text": "We should speak with Solen.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "crystal_scholar": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "scholar_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Crystal Scholar",
+                        "text": "The crystals in this city aren't decorative. The whole district is built on a natural amplification node — the founders knew. Every building is aligned to the same axis. It's the largest unbroken arcane resonator in the known world.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.crystal_scholar.met", "value": True}],
+                        "choices": [
+                            {"text": "What does that mean for the Fading?", "next": "fading"},
+                            {"text": "Can it be used as a weapon?", "next": "weapon"},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "Crystal Scholar",
+                        "text": "It means this city is both the most vulnerable and most defensible point in the region. If the ley network fails, the resonator collapses — Crystalspire goes dark in minutes. If it holds, it can sustain the network long past any single node failure.",
+                        "choices": [{"text": "Which will it do?", "next": "which"}],
+                    },
+                    "which": {
+                        "speaker": "Crystal Scholar",
+                        "text": "Depends on what's taken from the network and what's left. The Archmage is trying to model it. I don't think he likes the projections.",
+                        "choices": [{"text": "We need to speak with him.", "next": None}],
+                    },
+                    "weapon": {
+                        "speaker": "Crystal Scholar",
+                        "text": "Please don't.",
+                        "choices": [{"text": "Fair enough.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "archmage_solen": [
+        {
+            "conditions": [{"flag": "main_hearthstone_1.found", "op": "==", "value": True}],
+            "tree": {
+                "id": "solen_knows",
+                "nodes": {
+                    "start": {
+                        "speaker": "Archmage Solen",
+                        "text": "You found the first stone. Remarkable. I have spent forty years studying these — and feared they were all gone. Let me see it.",
+                        "choices": [
+                            {"text": "What can you tell us about it?", "next": "analyze"},
+                            {"text": "How many are there?", "next": "count"},
+                        ],
+                    },
+                    "analyze": {
+                        "speaker": "Archmage Solen",
+                        "text": "This one is from the Briarhollow vein. Still resonant — which means the network there hasn't fully collapsed. Each stone is unique to its node. Together they form a web. Without even one, the web... frays.",
+                        "choices": [{"text": "How do we use them?", "next": "use"}],
+                    },
+                    "use": {
+                        "speaker": "Archmage Solen",
+                        "text": "Don't use them. Return them, or seal them from Valdris. The teleport circle here can help you move fast enough to get ahead of his agents. Talk to the Teleport Master.",
+                        "choices": [{"text": "We will.", "next": None}],
+                    },
+                    "count": {
+                        "speaker": "Archmage Solen",
+                        "text": "Seven primary nodes in this region. He has at least two already. You have one. That leaves four. Whoever gets the remaining four first wins whatever this ends up being.",
+                        "choices": [{"text": "We'll move fast.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "solen_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Archmage Solen",
+                        "text": "I don't typically receive unannounced visitors. My time is limited. If you've come about the ley disruptions, speak quickly — I'm already late for something.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.solen.met", "value": True}],
+                        "choices": [
+                            {"text": "The Hearthstones — what do you know?", "next": "stones"},
+                            {"text": "What are the ley disruptions?", "next": "ley"},
+                        ],
+                    },
+                    "stones": {
+                        "speaker": "Archmage Solen",
+                        "text": "More than anyone else alive, probably. They're ley crystallizations — natural nodes in the network that runs under this whole continent. Extracting them is like removing vertebrae from a spine. Do enough of it and the creature stops moving.",
+                        "choices": [
+                            {"text": "Someone is doing that now.", "next": "doing"},
+                            {"text": "Can they be restored?", "next": "restore"},
+                        ],
+                    },
+                    "doing": {
+                        "speaker": "Archmage Solen",
+                        "text": "I know. I've known for years. I sent three reports to the Imperial Council. Got back three letters thanking me for my service and telling me to stay in my lane. Whoever Valdris is, he has friends in high places.",
+                        "choices": [{"text": "We don't answer to the Council.", "next": "free"}],
+                    },
+                    "free": {
+                        "speaker": "Archmage Solen",
+                        "text": "Then perhaps you can succeed where letters have failed. Find the stones. Don't let him have them. Come back here when you do — the teleport circle can help you move faster than his agents.",
+                        "choices": [{"text": "We'll return.", "next": None}],
+                    },
+                    "restore": {
+                        "speaker": "Archmage Solen",
+                        "text": "Theoretically. If you returned a stone to its original node, the resonance would rebuild. But the nodes themselves must still be intact — if Valdris has destroyed the physical site, restoration may not be possible.",
+                        "choices": [{"text": "We'll work quickly.", "next": None}],
+                    },
+                    "ley": {
+                        "speaker": "Archmage Solen",
+                        "text": "The magical equivalent of a failing heart. The ley lines carry energy that sustains life, weather, growth. They've been weakening for decades. I think I know why, but proving it is another matter.",
+                        "choices": [{"text": "The Hearthstones.", "next": "stones"}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "teleport_master": [
+        {
+            "conditions": [{"flag": "npc.solen.met", "op": "==", "value": True}],
+            "tree": {
+                "id": "teleport_ready",
+                "nodes": {
+                    "start": {
+                        "speaker": "Teleport Master",
+                        "text": "The circle is operational. I maintain it personally — not the Academy, not the Guild. Me. The Archmage told me you might be coming. Where do you need to go?",
+                        "choices": [
+                            {"text": "Can you send us to Thornhaven?", "next": "thornhaven"},
+                            {"text": "To Sanctum.", "next": "sanctum"},
+                            {"text": "Not yet — we'll be back.", "next": None},
+                        ],
+                    },
+                    "thornhaven": {
+                        "speaker": "Teleport Master",
+                        "text": "I can send you to the circle in the Mage's Hall there. It'll cost you twenty gold for the activation — pure material cost, no markup. Ready?",
+                        "choices": [
+                            {"text": "Ready.", "next": None},
+                            {"text": "Not yet.", "next": None},
+                        ],
+                    },
+                    "sanctum": {
+                        "speaker": "Teleport Master",
+                        "text": "Sanctum circle is maintained by the High Priest. Twenty gold. Ready?",
+                        "choices": [
+                            {"text": "Ready.", "next": None},
+                            {"text": "Not yet.", "next": None},
+                        ],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "teleport_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Teleport Master",
+                        "text": "The circle works. I don't run tours. If you have business with the Archmage and he's sent you here, fine. Otherwise I'm not in the habit of flinging strangers across the countryside.",
+                        "choices": [
+                            {"text": "The Archmage sent us.", "next": "archmage"},
+                            {"text": "Understood.", "next": None},
+                        ],
+                    },
+                    "archmage": {
+                        "speaker": "Teleport Master",
+                        "text": "Then get the clearance from him first. Come back with it. I'll be here.",
+                        "choices": [{"text": "Fine.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    # ── Thornhaven ─────────────────────────────────────────
+
+    "city_guard_thornhaven": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "guard_thornhaven",
+                "nodes": {
+                    "start": {
+                        "speaker": "City Guard",
+                        "text": "Keep your weapons sheathed in the capital. The city watch doesn't ask twice. You're registered with the Imperial Guild? Good. That makes this easier.",
+                        "choices": [
+                            {"text": "What's the situation in the city?", "next": "situation"},
+                            {"text": "We understand.", "next": None},
+                        ],
+                    },
+                    "situation": {
+                        "speaker": "City Guard",
+                        "text": "Tense. There are refugees from the eastern villages — hundreds came in last month. Nobody knows where the villages went. The Governor is managing public order but it's fragile. Don't start anything.",
+                        "choices": [{"text": "We won't.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "imperial_crier": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "crier_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Imperial Crier",
+                        "text": "HEAR YE! The Governor of Thornhaven invites all registered adventurers to the Imperial Guild Hall for contract work. REWARDS OFFERED for information on the eastern village disappearances. HEAR YE!",
+                        "choices": [
+                            {"text": "What happened to the villages?", "next": "villages"},
+                            {"text": "Thank you.", "next": None},
+                        ],
+                    },
+                    "villages": {
+                        "speaker": "Imperial Crier",
+                        "text": "Officially? Unknown. Unofficially? I've heard the word 'Fading' from three separate officers and a priest this week. Whatever it is, it's spreading west. Fast.",
+                        "choices": [{"text": "We're handling it.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "merchant_noble": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "noble_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Merchant Noble",
+                        "text": "The market disruptions are insufferable. My eastern supply routes are gone — three trade houses vanished with the villages. I've lost forty thousand gold in contracts this season alone.",
+                        "choices": [
+                            {"text": "People lost their lives.", "next": "lives"},
+                            {"text": "Do you know what caused it?", "next": "cause"},
+                        ],
+                    },
+                    "lives": {
+                        "speaker": "Merchant Noble",
+                        "text": "Yes, yes. Tragic. But the practical reality is the supply chain is broken and nobody in this city has a plan. At least I'm honest about why I'm upset.",
+                        "choices": [{"text": "We're working on a plan.", "next": None}],
+                    },
+                    "cause": {
+                        "speaker": "Merchant Noble",
+                        "text": "I heard the name Valdris from a colleague who did trade with his operation for years. Then that colleague stopped responding to letters. Then his entire trading house closed. I don't investigate further than that.",
+                        "choices": [{"text": "We will.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "refugee": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "refugee_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Refugee",
+                        "text": "I'm from Ashford. It was a good village — hundred and forty people, mill, a chapel, everything proper. Then the ground went cold. The crops didn't come up. We woke up one morning and half the livestock were dead. We left.",
+                        "choices": [
+                            {"text": "What happened to those who stayed?", "next": "stayed"},
+                            {"text": "Did you see anything strange?", "next": "strange"},
+                        ],
+                    },
+                    "stayed": {
+                        "speaker": "Refugee",
+                        "text": "We don't talk about it.",
+                        "choices": [{"text": "I'm sorry.", "next": None}],
+                    },
+                    "strange": {
+                        "speaker": "Refugee",
+                        "text": "The shadows moved wrong at night. And there was a sound — low, like something breathing underground. Very slow. Very big. Three days before we left it got louder every night. We stopped sleeping.",
+                        "choices": [{"text": "We'll make sure it doesn't spread.", "next": "promise"}],
+                    },
+                    "promise": {
+                        "speaker": "Refugee",
+                        "text": "They all say that. No offense.",
+                        "choices": [{"text": "None taken.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "governor_aldric": [
+        {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "aldric_post_valdris",
+                "nodes": {
+                    "start": {
+                        "speaker": "Governor Aldric",
+                        "text": "You've done it. I doubted you — I will admit that freely. The Empire has watched the east collapse for years and done nothing. You did something. Whatever comes next, the histories will note it.",
+                        "choices": [
+                            {"text": "Is it truly over?", "next": "over"},
+                            {"text": "Valdris had help.", "next": "help"},
+                        ],
+                    },
+                    "over": {
+                        "speaker": "Governor Aldric",
+                        "text": "The shadow he built — yes. What he uncovered about the Hearthstones, what he set in motion... that will take years to fully understand. But the immediate threat is gone. The land can start to heal.",
+                        "choices": [{"text": "That's enough for now.", "next": None}],
+                    },
+                    "help": {
+                        "speaker": "Governor Aldric",
+                        "text": "I know. The Council inquiry is already underway. Some of those names will surprise people. Others won't. Let me handle that part — you've earned the rest.",
+                        "choices": [{"text": "Don't let them bury it.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "aldric_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Governor Aldric",
+                        "text": "I govern the capital and three hundred miles of territory, half of which is now silent. The eastern villages — gone. Thousands of people. No bodies, no struggle. The Empire calls it 'regional instability.' I call it a catastrophe.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.governor.met", "value": True}],
+                        "choices": [
+                            {"text": "We know what's causing it.", "next": "know"},
+                            {"text": "What resources do you have?", "next": "resources"},
+                        ],
+                    },
+                    "know": {
+                        "speaker": "Governor Aldric",
+                        "text": "Then you know more than my intelligence reports. Tell me. I've been waiting two years for someone to come in here and say those words.",
+                        "choices": [
+                            {"text": "The Hearthstone extraction. Valdris.", "next": "valdris"},
+                        ],
+                    },
+                    "valdris": {
+                        "speaker": "Governor Aldric",
+                        "text": "That name. It keeps appearing. He has Imperial letters — real ones. Someone in the Council signed off on his operations. I cannot move against him officially without evidence he hasn't buried. Can you get me that evidence?",
+                        "choices": [{"text": "That's what we're doing.", "next": None}],
+                    },
+                    "resources": {
+                        "speaker": "Governor Aldric",
+                        "text": "Limited. The Imperial military won't act without an order from the Council. I have city guards, a treasury that's being bled by refugee costs, and an extremely good Guild Commander. The Guild is your best ally here.",
+                        "choices": [{"text": "We'll work with them.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "guild_commander_varek": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "varek_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Adventurers registered with the Imperial Guild get access to better contracts, better information, and my personal backing if things go sideways politically. If you're doing what I think you're doing, you'll want all three.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.varek.met", "value": True}],
+                        "choices": [
+                            {"text": "What do you think we're doing?", "next": "think"},
+                            {"text": "What contracts are available?", "next": "contracts"},
+                        ],
+                    },
+                    "think": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Chasing Valdris. You have the look. Determined, tired, slightly haunted. I've seen it before — anyone who digs deep enough into the eastern question gets that look. Most of them stop digging.",
+                        "choices": [
+                            {"text": "We're not stopping.", "next": "not_stopping"},
+                        ],
+                    },
+                    "not_stopping": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Good. I have an operative who's been tracking his supply routes for six months. I'll arrange a meeting. Don't mention this to the Council — half of them are his.",
+                        "on_exit": [{"action": "set_flag", "flag": "lore.varek_contact", "value": True}],
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                    "contracts": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Refugee escort work, mostly. Dangerous — the roads east are not safe. Also: information bounties on Valdris's operations. I pay well for verified intelligence. Better than you'd expect from a man with limited official authority.",
+                        "choices": [{"text": "We'll check back.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "court_mage_sira": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "sira_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Court Mage Sira",
+                        "text": "I've been waiting for the right moment to tell you something. The scholar you've been working with — Maren — her research is correct. More than she even knows. There's a second network beneath the primary one.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.sira.met", "value": True}],
+                        "choices": [
+                            {"text": "A second network?", "next": "second"},
+                            {"text": "How do you know?", "next": "how"},
+                        ],
+                    },
+                    "second": {
+                        "speaker": "Court Mage Sira",
+                        "text": "The Hearthstone network everyone knows about is the visible layer. Beneath it is an older one — the original ley system, pre-human. Valdris doesn't know about it. Yet. If he discovers it, the primary network becomes irrelevant.",
+                        "choices": [{"text": "What can we do about it?", "next": "do"}],
+                    },
+                    "do": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Stabilize the primary network before he finds the secondary one. Every Hearthstone you protect buys us time to locate the deep nodes. The Archmage in Crystalspire has a theory about where they are.",
+                        "choices": [{"text": "We've spoken to him.", "next": "solen"}],
+                    },
+                    "solen": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Good. Between his models and my position here, we might actually map the full network before Valdris does. Come back to me when you have all the primary stones accounted for.",
+                        "choices": [{"text": "We will.", "next": None}],
+                    },
+                    "how": {
+                        "speaker": "Court Mage Sira",
+                        "text": "I'm the court mage of the Empire's capital. I have access to archives that haven't been opened in four hundred years. The information was always there. Nobody thought to look.",
+                        "choices": [{"text": "What does it mean for us?", "next": "second"}],
+                    },
+                },
+            },
+        },
+    ],
+}
+
+# Merge into main NPC_DIALOGUES
+NPC_DIALOGUES.update(_NEW_DIALOGUES)

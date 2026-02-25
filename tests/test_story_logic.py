@@ -546,6 +546,66 @@ except Exception as e:
     check("Advanced equipment check", False, str(e))
     traceback.print_exc()
 
+# ═════════════════════════════════════════════════════════════
+#  14. NPC DIALOGUE COVERAGE
+# ═════════════════════════════════════════════════════════════
+section("14. NPC Dialogue Coverage")
+try:
+    from data.town_maps import TOWN_MAPS
+    from data.story_data import NPC_DIALOGUES
+
+    all_towns = list(TOWN_MAPS.keys())
+    check("All 8 towns present", len(all_towns) == 8)
+
+    for town_id in all_towns:
+        td = TOWN_MAPS[town_id]
+        npcs = td["npcs"]
+        check(f"{town_id} has NPCs", len(npcs) >= 4)
+        positioned = [n for n in npcs if "x" in n and "y" in n]
+        check(f"{town_id} NPCs have positions", len(positioned) == len(npcs))
+
+    # Dialogue completeness — every named dialogue_id resolves
+    broken = []
+    for town_id, td in TOWN_MAPS.items():
+        for npc in td["npcs"]:
+            did = npc.get("dialogue_id")
+            if did and did not in NPC_DIALOGUES:
+                broken.append(f"{town_id}/{npc['name']}:{did}")
+    check("No broken dialogue_id references", len(broken) == 0, str(broken))
+
+    # New dialogues present
+    new_ids = [
+        "captain_aldric", "elder_thom", "ranger_lyric", "old_moss",
+        "guildmaster_oren", "foreman_brak", "scholar_petra",
+        "scout_feryn", "trapper_holt", "shady_figure",
+        "pilgrim_elder", "holy_knight", "novice_priest", "high_priest_aldara",
+        "apprentice_mage", "crystal_scholar", "archmage_solen", "teleport_master",
+        "city_guard_thornhaven", "imperial_crier", "merchant_noble", "refugee",
+        "governor_aldric", "guild_commander_varek", "court_mage_sira",
+    ]
+    for did in new_ids:
+        check(f"Dialogue exists: {did}", did in NPC_DIALOGUES)
+
+    # Each new dialogue has at least one tree with nodes
+    for did in new_ids:
+        entries = NPC_DIALOGUES.get(did, [])
+        has_tree = any("tree" in e and "nodes" in e["tree"] for e in entries)
+        check(f"{did} has valid tree", has_tree)
+
+    # Thornhaven has 3 new story NPCs
+    th_npcs = [n["name"] for n in TOWN_MAPS["thornhaven"]["npcs"]]
+    check("Thornhaven has Governor Aldric", "Governor Aldric" in th_npcs)
+    check("Thornhaven has Guild Commander Varek", "Guild Commander Varek" in th_npcs)
+    check("Thornhaven has Court Mage Sira", "Court Mage Sira" in th_npcs)
+
+    # Total NPC count
+    total_npcs = sum(len(td["npcs"]) for td in TOWN_MAPS.values())
+    check("71+ total NPCs across towns", total_npcs >= 71)
+
+except Exception as e:
+    check("NPC dialogue check", False, str(e))
+    import traceback; traceback.print_exc()
+
 # ─────────────────────────────────────────────────────────────
 total = PASS + FAIL
 print(f"\n{'═'*55}")
