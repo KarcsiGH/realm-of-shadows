@@ -361,6 +361,48 @@ QUESTS = {
         ],
     },
 
+    "main_pale_coast": {
+        "name": "The Fourth Stone",
+        "description": "A Warden who chose exile sealed herself at the Pale Coast "
+                       "rather than risk corruption. She still guards the fourth "
+                       "Hearthstone. Whether you fight her or reason with her "
+                       "may depend on how many stones you already carry.",
+        "act": 3,
+        "giver_npc": "Guild Commander Varek",
+        "turn_in_npc": None,
+        "auto_complete": True,
+        "reward_gold": 500,
+        "reward_xp": 800,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Recover the fourth Hearthstone from the Pale Coast Catacombs",
+                "flag": "item.hearthstone.4", "op": "==", "val": True,
+            },
+        ],
+    },
+
+    "main_windswept_isle": {
+        "name": "The Fifth Stone",
+        "description": "The final Hearthstone is bound to the ruins of an old "
+                       "ward-station on a windswept island. An elemental guardian "
+                       "was bound there by the original order to protect it. "
+                       "It has no reasoning — only purpose.",
+        "act": 3,
+        "giver_npc": "Guild Commander Varek",
+        "turn_in_npc": None,
+        "auto_complete": True,
+        "reward_gold": 500,
+        "reward_xp": 800,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Recover the fifth Hearthstone from the Windswept Isle Ruins",
+                "flag": "item.hearthstone.5", "op": "==", "val": True,
+            },
+        ],
+    },
+
     "main_act3_finale": {
         "name": "The Last Warden",
         "description": "Inside Valdris' Spire. At the top waits what remains of the man "
@@ -385,6 +427,7 @@ QUESTS = {
         ],
     },
 }
+
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -1467,6 +1510,81 @@ NPC_DIALOGUES = {
 
     # ─────────────────────────────────────────────────────────
     #  KORRATH — Pre-boss dialogue in Abandoned Mine (Act 1)
+    # ─────────────────────────────────────────────────────────
+    # ─────────────────────────────────────────────────────────
+    #  SPIDER QUEEN — Spiders' Nest boss
+    # ─────────────────────────────────────────────────────────
+    "spider_queen": [
+        {
+            "conditions": [
+                {"flag": "boss.spider_queen.defeated", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "spider_queen_confrontation",
+                "nodes": {
+                    "start": {
+                        "speaker": "The Spider Queen",
+                        "text": "You smell of iron and urgency.\nYou are not the first to come here seeking the brightness at my center.\nThey all wanted it. None understood what it is.\nDo you?",
+                        "choices": [
+                            {"text": "It's a Hearthstone. Part of the ward network.", "next": "knows"},
+                            {"text": "A fragment of the Fading ward. We need it.", "next": "need"},
+                            {"text": "[Attack] We don't have time for conversation.", "next": "fight"},
+                        ],
+                    },
+                    "knows": {
+                        "speaker": "The Spider Queen",
+                        "text": "So you do know.\nI have fed on the Fading for decades. The stone is why my children were born wrong — too many legs, too many thoughts, too much space between the moments.\nI did not choose this. The stone did.\nYou want it. I want it gone. We may have common ground.",
+                        "choices": [
+                            {"text": "Let us take it and we'll leave you in peace.", "next": "peace"},
+                            {"text": "Why haven't you destroyed it?", "next": "why_not"},
+                        ],
+                    },
+                    "need": {
+                        "speaker": "The Spider Queen",
+                        "text": "Everything here needs it.\nIt radiates something that the Fading cannot digest — a counter-frequency. My nest is the only place within a day's travel that the grey has not reached.\nYou taking it would doom my children. You know this?",
+                        "choices": [
+                            {"text": "The ward network will protect more than just your nest.", "next": "greater_good"},
+                            {"text": "Then we fight.", "next": "fight"},
+                        ],
+                    },
+                    "why_not": {
+                        "speaker": "The Spider Queen",
+                        "text": "I tried. Three times.\nEach attempt undid something in me.\nThe stone and I are not separate things anymore. Taking it without consent — it would leave a wound that does not close.\nIf you take it, take it knowing that.",
+                        "choices": [
+                            {"text": "We're sorry. But the network needs it.", "next": "greater_good"},
+                            {"text": "Then yield it freely. It matters.", "next": "peace"},
+                        ],
+                    },
+                    "greater_good": {
+                        "speaker": "The Spider Queen",
+                        "text": "The greater good.\nI have heard that phrase before from smaller creatures justifying larger cruelties.\nBut I have watched the grey take the forest for fifteen years.\nPerhaps your network holds better than my nest.\nTake it. And remember what it cost.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "choice.spider_queen_spared", "value": True},
+                            {"action": "set_flag", "flag": "boss.spider_queen.defeated", "value": True},
+                        ],
+                        "choices": [{"text": "We will remember.", "next": None}],
+                    },
+                    "peace": {
+                        "speaker": "The Spider Queen",
+                        "text": "Then there is no fight today.\nTake the stone. Go.\nIf your ward network holds — if the grey recedes — send word to this place.\nMy children have never known a world without the Fading.\nI would like them to.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "choice.spider_queen_spared", "value": True},
+                            {"action": "set_flag", "flag": "boss.spider_queen.defeated", "value": True},
+                        ],
+                        "choices": [{"text": "We'll send word.", "next": None}],
+                    },
+                    "fight": {
+                        "speaker": "The Spider Queen",
+                        "text": "Then I defend what is mine.\nAs I always have.",
+                        "choices": [{"text": "[Begin combat]", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  KORRATH — Abandoned Mine boss
     # ─────────────────────────────────────────────────────────
     "korrath": [
         {
@@ -3676,6 +3794,196 @@ DUNGEON_STORY_EVENTS = {
         ],
         "boss_dialogue": "karreth",
     },
+
+    # ── ACT 3 DUNGEONS ─────────────────────────────────────────────
+
+    "pale_coast": {
+        "floor_messages": {
+            1: "The catacombs beneath the Pale Coast are half-flooded. "
+               "Salt water drips from ceilings carved by hands long dead. "
+               "Bodies from a dozen ages line the walls — all the same expression. "
+               "All looking inward.",
+            2: "Deeper now, and drier. The flooding stops at what appears to be "
+               "an old ward-line — still active, still holding the sea back. "
+               "Someone maintained this. Someone who knew what they were doing.",
+            3: "The sound of the sea vanishes here. The silence is total. "
+               "On the wall, carved in precise Warden script: "
+               "'I chose this. I am not a victim. I am the last lock. "
+               "Turn back if you are not the ones who carry the light.'",
+            4: "The Sentinel's chamber. She stands exactly as she has for decades — "
+               "armored, unmoving, facing the Hearthstone at the room's center. "
+               "As you enter, she turns. She has been waiting. She has always been waiting.",
+        },
+        "journal_entries": [
+            {
+                "floor": 1,
+                "title": "Hermit's Note",
+                "text": "Found pinned to a driftwood marker at the cave entrance: "
+                        "'The Pale Sentinel turns away all who come alone or wounded. "
+                        "She will only yield to those who have already done the work. "
+                        "Three stones and a clear conscience, the old texts say. "
+                        "I have neither. I am turning back.'",
+                "lore_id": None,
+            },
+            {
+                "floor": 2,
+                "title": "Warden Archive Fragment",
+                "text": "A preserved scroll in a warded alcove: "
+                        "'Warden Sirenne of the Pale Coast ward-station elected voluntary isolation "
+                        "rather than risk corruption as the Fading advanced. "
+                        "She sealed herself into the catacombs with the Hearthstone. "
+                        "Her last communication stated: I will hold it until the order sends "
+                        "someone worthy to continue the work. "
+                        "No such person has come.'",
+                "lore_id": "pale_sentinel_sirenne",
+            },
+            {
+                "floor": 3,
+                "title": "Sirenne's Journal — Final Entry",
+                "text": "The ink is old but clear: "
+                        "'I have been here a very long time. The Fading has not reached me "
+                        "— the stone keeps it at bay. Or perhaps I keep it at bay. "
+                        "We have reached a kind of accord, the stone and I. "
+                        "I no longer know which of us is guardian and which is the guarded. "
+                        "I do not think it matters. What matters is that the next one carries it better than I have.'",
+                "lore_id": None,
+            },
+        ],
+        "boss_dialogue": "pale_sentinel",
+    },
+
+    "windswept_isle": {
+        "floor_messages": {
+            1: "The ruins are old — older than the Empire, possibly older than Aldenmere itself. "
+               "The wind here is constant, as if the island is breathing. "
+               "Carved into the archway above the entrance: one word, in a language "
+               "your party cannot read. The translation in Maren's notes reads: 'Remembrance.'",
+            2: "The storm grows inside the ruins, not outside. The sky above is calm. "
+               "Arcane instruments — long dead — line the walls of what was once a study. "
+               "Scattered among them, notes in a hand identical to nothing in your knowledge. "
+               "The ward-station's original operator. A keeper with no name.",
+            3: "The innermost chamber. The fifth Hearthstone rests on a stone pedestal, "
+               "undisturbed for centuries. Around it, an elemental storm that has spun "
+               "for just as long, bound by orders it never questioned. "
+               "It has no malice. It has no mercy. It has a purpose.",
+        },
+        "journal_entries": [
+            {
+                "floor": 1,
+                "title": "Explorer's Field Notes",
+                "text": "Margins annotated in three different hands: "
+                        "'The ward-station was built before the Warden order was formalized. "
+                        "Whoever placed the keeper here did so with no intention of ever retrieving it. "
+                        "The Hearthstone and the guardian were meant to outlast everything else. "
+                        "They appear to be succeeding.'",
+                "lore_id": None,
+            },
+            {
+                "floor": 2,
+                "title": "Keeper's Log (Last Entry)",
+                "text": "The paper is barely paper anymore, more mineral than organic: "
+                        "'The order has not come. I do not believe the order will come. "
+                        "I do not believe the order still exists. "
+                        "My purpose does not require the order to exist. "
+                        "I am the lock. The stone is the key. "
+                        "The key does not leave with anyone. "
+                        "This entry requires no response.'",
+                "lore_id": "windswept_keeper",
+            },
+        ],
+        "boss_dialogue": "isle_keeper",
+    },
+
+    "shadow_throne": {
+        "floor_messages": {
+            1: "The Shadow Throne. The name is metaphor made architecture — "
+               "shadow given weight, given walls, given purpose. "
+               "The Fading doesn't just exist here. It was invited. "
+               "Valdris built this place as a vessel.",
+            2: "Research chambers. The work here is meticulous, obsessive. "
+               "Notes on ward-failure rates, on Fading progression, on Warden bloodlines. "
+               "He was not trying to destroy the world. "
+               "He was trying to understand why it was already dying.",
+            3: "The first Warden echoes begin appearing here — "
+               "former members of the order who followed Valdris, then were consumed. "
+               "They wear the order's colors. They do not recognize you.",
+            4: "Halfway up. The shadow here is dense enough to see — "
+               "not darkness, but something with texture, with will. "
+               "It watches. It has been watching since you entered.",
+            5: "A gallery of portraits, all defaced — the original Warden order. "
+               "One face has been untouched. Maren's mother. "
+               "The resemblance to Maren is unmistakable.",
+            6: "The upper chambers. More personal now. A bedroom. Books read to pieces. "
+               "A child's drawing, framed. The inscription: 'For Father, from M.' "
+               "Maren was here. Often. For years.",
+            7: "The anteroom to the throne chamber. Maren stands at the far end. "
+               "She turns when she hears you. Her expression is not surprise. "
+               "She has been waiting for this conversation for a very long time.",
+            8: "The throne chamber. Valdris waits — or what remains of him. "
+               "The shadow that wears his face turns slowly. "
+               "Somewhere inside it, the man who broke the world is still present. "
+               "Maren stands beside you. The choice is here.",
+        },
+        "journal_entries": [
+            {
+                "floor": 1,
+                "title": "Valdris — Personal Notes, Year 1",
+                "text": "The Fading is not entropy. Entropy is passive. This has direction. "
+                        "Something is extracting the ward-energy deliberately. "
+                        "My colleagues believe I have become obsessive. "
+                        "They are correct. Obsession is the appropriate response.",
+                "lore_id": "valdris_notes_1",
+            },
+            {
+                "floor": 2,
+                "title": "Valdris — Personal Notes, Year 7",
+                "text": "I have found the mechanism. The ward-network requires continuous Warden sacrifice "
+                        "to maintain — slow, invisible, but real. The order knew this and said nothing. "
+                        "Every Warden who ever served has been slowly diminished. "
+                        "Maren's mother died of it. She thought she was ill. "
+                        "I am going to find another way.",
+                "lore_id": "valdris_notes_2",
+            },
+            {
+                "floor": 3,
+                "title": "Valdris — Personal Notes, Year 12",
+                "text": "Ashenmoor was an accident. "
+                        "I did not believe the anchor would fail that way. "
+                        "I did not believe two hundred people lived in the collapse radius. "
+                        "I have spent eleven years telling myself that the alternative — "
+                        "the slow bleeding of every Warden for centuries — was worse. "
+                        "I am no longer certain I believe that.",
+                "lore_id": "valdris_notes_3",
+            },
+            {
+                "floor": 5,
+                "title": "Maren — Unsent Letter",
+                "text": "Written in Maren's hand, addressed to no one: "
+                        "'Father. I have the Hearthstones. I have the ritual. "
+                        "I know what it requires. "
+                        "I keep thinking about what you told me before Ashenmoor: "
+                        "that there is no solution that doesn't cost something real. "
+                        "I finally believe you. "
+                        "I'm sorry it took this long. "
+                        "I'm sorry about what I'm going to do. "
+                        "I think you would understand. "
+                        "I think that's the worst part.'",
+                "lore_id": "maren_unsent",
+            },
+            {
+                "floor": 7,
+                "title": "The Order's Last Record",
+                "text": "An official document, Imperial seal intact: "
+                        "'Warden Valdris is hereby declared Oathbreaker and enemy of the realm. "
+                        "His research is to be destroyed. His name is stricken. "
+                        "His daughter is to have no contact with the order. "
+                        "By order of the Grand Council of Wardens — "
+                        "The last document entered before the order's dissolution, one year later.'",
+                "lore_id": "valdris_oathbreaker",
+            },
+        ],
+        "boss_dialogue": "valdris_pre_fight",
+    },
 }
 
 
@@ -5028,6 +5336,67 @@ _NEW_DIALOGUES = {
     ],
 
     "guild_commander_varek": [
+        # After getting 3 stones — send to Pale Coast and Windswept Isle
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.3", "op": "==", "value": True},
+                {"flag": "item.hearthstone.4", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "varek_act3_stones",
+                "nodes": {
+                    "start": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Three stones. I've had people watching — you've done what nobody else managed in a decade. There are two left. My operative found them: the Pale Coast Catacombs to the southwest, and the Windswept Isle ruins — accessible from the coast by ship. Get both. Then go north.",
+                        "on_enter": [
+                            {"action": "start_quest", "quest": "main_pale_coast"},
+                            {"action": "start_quest", "quest": "main_windswept_isle"},
+                        ],
+                        "choices": [
+                            {"text": "What do you know about the Pale Coast guardian?", "next": "pale"},
+                            {"text": "What's on the Windswept Isle?", "next": "isle"},
+                            {"text": "Understood. We'll move.", "next": None},
+                        ],
+                    },
+                    "pale": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "A Warden. One of the original order — she sealed herself in decades ago to protect the stone. She may still be alive, or she may have become something else. My operative couldn't get close enough to tell. Approach with caution. If she's coherent, she may yield willingly.",
+                        "choices": [{"text": "And the isle?", "next": "isle"}, {"text": "We'll handle it.", "next": None}],
+                    },
+                    "isle": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "An elemental guardian. Pre-order — bound before Wardens existed. It doesn't negotiate and it doesn't retreat. It's also immune to the Fading entirely, which is the only reason the stone there survived. You'll need to fight it straight.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                },
+            },
+        },
+        # After getting all 5 stones — point to the Spire and Shadow Throne
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.5", "op": "==", "value": True},
+                {"flag": "boss_defeated.shadow_valdris", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "varek_send_north",
+                "nodes": {
+                    "start": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "All five. I won't pretend I expected that. Valdris' Spire is north of Thornhaven — past the last garrison, past the last road. Below the Spire is the Shadow Throne — that's where he actually lives. The Spire is the lock. The Throne is the man. Go.",
+                        "choices": [
+                            {"text": "What do we do when we find him?", "next": "choice"},
+                            {"text": "We're ready.", "next": None},
+                        ],
+                    },
+                    "choice": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "That's between you and him and whatever Maren is planning. I've heard she's already inside. Whatever she wants — I'd think carefully before agreeing to it. She's her father's daughter in more ways than she admits.",
+                        "choices": [{"text": "Noted.", "next": None}],
+                    },
+                },
+            },
+        },
+        # Default
         {
             "conditions": [],
             "tree": {
@@ -5102,6 +5471,288 @@ _NEW_DIALOGUES = {
                         "speaker": "Court Mage Sira",
                         "text": "I'm the court mage of the Empire's capital. I have access to archives that haven't been opened in four hundred years. The information was always there. Nobody thought to look.",
                         "choices": [{"text": "What does it mean for us?", "next": "second"}],
+                    },
+                },
+            },
+        },
+    ],
+
+    # ── ACT 3 BOSS & STORY DIALOGUES ────────────────────────
+
+    # Pale Sentinel — fires before boss fight on floor 4
+    "pale_sentinel": [
+        # If party has 3+ Hearthstones — she yields, no fight needed
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.3", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "sentinel_yields",
+                "nodes": {
+                    "start": {
+                        "speaker": "The Pale Sentinel",
+                        "text": "You carry three stones already. Then you are the ones I was told to wait for.\nI have kept this one safe for forty-three years. I am tired.\nTake it. Do not waste what I gave up to protect it.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "boss_defeated.pale_coast", "value": True},
+                            {"action": "set_flag", "flag": "sentinel.yielded", "value": True},
+                        ],
+                        "choices": [
+                            {"text": "You'll be free now.", "next": "free"},
+                            {"text": "Thank you, Warden.", "next": "warden"},
+                        ],
+                    },
+                    "free": {
+                        "speaker": "The Pale Sentinel",
+                        "text": "Free. I no longer know what that means.\nI have been the lock for so long I forgot I was ever anything else.\nPerhaps that is the answer to a question I stopped asking.\nGo. The world needs you more than this cave needs me.",
+                        "choices": [{"text": "Farewell.", "next": None}],
+                    },
+                    "warden": {
+                        "speaker": "The Pale Sentinel",
+                        "text": "The order is gone. I know that. I kept the name because the name still meant something — to me, if to no one else.\nYou carry the order's purpose now. Whether you want it or not.\nDo better than we did.",
+                        "choices": [{"text": "We'll try.", "next": None}],
+                    },
+                },
+            },
+        },
+        # Default — must fight
+        {
+            "conditions": [],
+            "tree": {
+                "id": "sentinel_fight",
+                "nodes": {
+                    "start": {
+                        "speaker": "The Pale Sentinel",
+                        "text": "You are not the ones I was told to wait for.\nThe order said: three stones and a clear conscience.\nYou do not carry three stones. Therefore I cannot know what you carry in the other.\nLeave. Or prove you are worth the cost of what I guard.",
+                        "choices": [
+                            {"text": "We need that stone.", "next": "need"},
+                            {"text": "We'll leave.", "next": "leave"},
+                        ],
+                    },
+                    "need": {
+                        "speaker": "The Pale Sentinel",
+                        "text": "Everyone who has come here needed it. That is not sufficient.\nI am not blocking your path out of malice. I am a lock.\nIf you want to know why, find the other stones first. Then come back. I will still be here.\nI have always been here.",
+                        "choices": [
+                            {"text": "[FIGHT] We don't have time.", "next": None},
+                            {"text": "We understand. We'll return.", "next": None},
+                        ],
+                    },
+                    "leave": {
+                        "speaker": "The Pale Sentinel",
+                        "text": "That is the first wise thing anyone has said to me in twenty years.\nLeave. Come back when you are ready.",
+                        "choices": [{"text": "We'll return.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    # Isle Keeper — mindless elemental guardian, no negotiation possible
+    # Fires before boss fight on windswept_isle floor 3
+    "isle_keeper": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "isle_keeper_encounter",
+                "nodes": {
+                    "start": {
+                        "speaker": "The Last Keeper",
+                        "text": "...\n\n[The Keeper does not speak. It does not see you as a person. It sees something approaching the stone it has protected for centuries.]\n[Its purpose and its awareness have collapsed into a single point. There is nothing left to reason with.]\n[It begins to move.]",
+                        "on_enter": [{"action": "set_flag", "flag": "isle_keeper.encountered", "value": True}],
+                        "choices": [
+                            {"text": "[FIGHT] Stand your ground.", "next": None},
+                        ],
+                    },
+                },
+            },
+        },
+    ],
+
+    # Shadow Valdris — post-phase-2 dialogue (Valdris the Broken)
+    # The man beneath the shadow speaks. This sets the ending path.
+    "shadow_valdris": [
+        # If party chose the redemption path before the fight
+        {
+            "conditions": [
+                {"flag": "ending.path", "op": "==", "value": "redemption"},
+            ],
+            "tree": {
+                "id": "valdris_redemption",
+                "nodes": {
+                    "start": {
+                        "speaker": "Valdris the Broken",
+                        "text": "The avatar is gone.\nI can... think again. It has been a long time since I could think.\nYou came with the stones. All five. My daughter calculated it — the full set, the original anchor structure...\nIt might actually work. My first theory. Before everything else.\nI never thought anyone would be standing here with all of them.",
+                        "choices": [
+                            {"text": "It can work. But you have to choose it.", "next": "choose"},
+                            {"text": "You caused Ashenmoor.", "next": "ashenmoor"},
+                        ],
+                    },
+                    "ashenmoor": {
+                        "speaker": "Valdris the Broken",
+                        "text": "Yes.\nTwo hundred and fourteen people. I know the number. I have known it every day for twelve years.\nI cannot fix that. I can only — possibly — make certain that what they died to prevent, never happens.\nThat does not make it right. It makes it the only direction left.",
+                        "choices": [{"text": "Then choose it. Now.", "next": "choose"}],
+                    },
+                    "choose": {
+                        "speaker": "Valdris the Broken",
+                        "text": "I choose it.\nI, Valdris — Warden, Oathbreaker, Father — choose to give the network what it was always meant to receive willingly.\nNot sacrifice. Not blood taken without consent.\nA gift. Freely given.\nTell Maren... tell her the first theory was right.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "choice.ending", "value": "redemption"},
+                            {"action": "set_flag", "flag": "valdris.redeemed", "value": True},
+                            {"action": "complete_quest", "quest": "main_act3_finale"},
+                        ],
+                        "choices": [{"text": "We will.", "next": None}],
+                    },
+                },
+            },
+        },
+        # Default — heroic or sacrifice path
+        {
+            "conditions": [],
+            "tree": {
+                "id": "valdris_end",
+                "nodes": {
+                    "start": {
+                        "speaker": "Valdris the Broken",
+                        "text": "The shadow is gone. I can see your faces.\nI haven't seen anything clearly in... years.\nAm I dying? I think I might be dying.\nI want to ask you something, before I do.",
+                        "choices": [
+                            {"text": "Ask.", "next": "ask"},
+                            {"text": "You don't have much time.", "next": "time"},
+                        ],
+                    },
+                    "ask": {
+                        "speaker": "Valdris the Broken",
+                        "text": "Is it enough? The work. The stones. What you've done.\nIs the world going to hold?",
+                        "choices": [
+                            {"text": "Yes. The wards are restored.", "next": "restored"},
+                            {"text": "It'll hold long enough.", "next": "long_enough"},
+                        ],
+                    },
+                    "time": {
+                        "speaker": "Valdris the Broken",
+                        "text": "Then I'll be quick.\nI spent thirty years trying to save the world without paying the cost the world required.\nDid I waste all of it?",
+                        "choices": [
+                            {"text": "No. The stones are back. The wards hold.", "next": "restored"},
+                            {"text": "You saved Maren. She finished it.", "next": "maren_finish"},
+                        ],
+                    },
+                    "maren_finish": {
+                        "speaker": "Valdris the Broken",
+                        "text": "I taught her everything she used against me.\nThat seems... appropriate.\nShe's better than I was. Tell her I said so.",
+                        "on_enter": [{"action": "set_flag", "flag": "valdris.last_words", "value": "maren"}],
+                        "choices": [{"text": "We'll tell her.", "next": "end"}],
+                    },
+                    "restored": {
+                        "speaker": "Valdris the Broken",
+                        "text": "Good.\nThe network will hold without blood now. No more Wardens dying slowly in sealed rooms.\nSomebody finally got it right.\nI'm glad it wasn't me. I would have — found a way to ruin it.",
+                        "choices": [{"text": "Rest now.", "next": "end"}],
+                    },
+                    "long_enough": {
+                        "speaker": "Valdris the Broken",
+                        "text": "Long enough is all any of us ever managed.\nAll right.\nThat'll do.",
+                        "choices": [{"text": "Rest now.", "next": "end"}],
+                    },
+                    "end": {
+                        "speaker": "Valdris the Broken",
+                        "text": "...\n\n[Valdris exhales once. He does not speak again.\nIn the throne chamber, the shadow lifts. The Fading has no anchor here anymore.\nThe stones in your possession hum briefly, then go quiet.\nThe network holds.]",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "choice.ending", "value": "heroic"},
+                            {"action": "complete_quest", "quest": "main_act3_finale"},
+                        ],
+                        "choices": [{"text": "Leave the Throne.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    # Valdris pre-fight — fires on Shadow Throne floor 7 (Maren is present)
+    "valdris_pre_fight": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "valdris_final_scene",
+                "nodes": {
+                    "start": {
+                        "speaker": "Maren",
+                        "text": "You came.\nI hoped you would. I also hoped you wouldn't. Both things are true.\nHe's through those doors. What remains of him.\nI need to explain something before you go in, and I need you to actually hear it.",
+                        "choices": [
+                            {"text": "We're listening.", "next": "maren_explains"},
+                            {"text": "We already know about the ritual.", "next": "know_already"},
+                        ],
+                    },
+                    "maren_explains": {
+                        "speaker": "Maren",
+                        "text": "The ward network requires living sacrifice to maintain. Small amounts, continuously, from every Warden who serves. My father discovered it. He couldn't live with it.\nHis solution caused Ashenmoor. I know. I have spent my entire life knowing.\nMy solution is different. It requires willing sacrifice — once, completely. It makes the network self-sustaining afterward. Forever.\nIt requires Warden blood. It requires all of you.",
+                        "choices": [
+                            {"text": "You're asking us to die.", "next": "die"},
+                            {"text": "There has to be another way.", "next": "another_way"},
+                            {"text": "What about Valdris?", "next": "valdris_question"},
+                        ],
+                    },
+                    "know_already": {
+                        "speaker": "Maren",
+                        "text": "Then you know what I'm going to ask. And you know I'm not asking it lightly.\nI've been carrying this since I was nineteen years old. I know what it costs. I know it isn't fair.\nBut I don't know another way that works.",
+                        "choices": [
+                            {"text": "What about Valdris?", "next": "valdris_question"},
+                            {"text": "And if we refuse?", "next": "refuse"},
+                        ],
+                    },
+                    "die": {
+                        "speaker": "Maren",
+                        "text": "Yes.\nI'm not going to dress it differently. You would die, and the world would live, and in a hundred years no one would know your names except possibly the Archmage, who would write a paper about it.\nI understand if the answer is no.",
+                        "choices": [
+                            {"text": "[REFUSE] No. There's another way.", "next": "refuse"},
+                            {"text": "[AGREE] Tell us what we have to do.", "next": "agree"},
+                            {"text": "What about Valdris?", "next": "valdris_question"},
+                        ],
+                    },
+                    "another_way": {
+                        "speaker": "Maren",
+                        "text": "I looked. For fifteen years I looked.\nIf there's a path I missed, I haven't found it. But you have the Hearthstones. All five.\nMy father's original theory — the one before Ashenmoor — said a complete set might allow redemption of the anchor structure rather than sacrifice. He never tested it. He ran out of time.\nI don't know if it works.",
+                        "on_enter": [{"action": "set_flag", "flag": "maren.offered_redemption", "value": True}],
+                        "choices": [
+                            {"text": "[REDEMPTION PATH] We try his way.", "next": "redemption"},
+                            {"text": "[REFUSE] We destroy Valdris and stop this.", "next": "refuse"},
+                            {"text": "[AGREE] If it doesn't work, we do your ritual.", "next": "agree"},
+                        ],
+                    },
+                    "redemption": {
+                        "speaker": "Maren",
+                        "text": "Then we need him. Not destroyed — freed. The shadow that wears his face has to go, but the man underneath has to choose to let it go.\nThat is harder than killing him. Possibly impossible.\nBut if you have all five stones and he's willing — it might close everything. Permanently. No sacrifice. No broken ritual.\nI'll be with you.",
+                        "on_enter": [{"action": "set_flag", "flag": "ending.path", "value": "redemption"}],
+                        "choices": [{"text": "Then let's go.", "next": None}],
+                    },
+                    "refuse": {
+                        "speaker": "Maren",
+                        "text": "I expected that answer.\nDestroy him. Seal what you can with the stones. The network will hold for a generation — maybe two.\nAfter that — someone else's problem. The same problem it's always been.\nI won't stop you. I'm not sure I even disagree.",
+                        "on_enter": [{"action": "set_flag", "flag": "ending.path", "value": "heroic"}],
+                        "choices": [{"text": "Stand back.", "next": None}],
+                    },
+                    "agree": {
+                        "speaker": "Maren",
+                        "text": "You're certain?\nI need you to be certain. I've been certain for fifteen years and I still have nightmares about asking someone this.\nIf you're certain — then after Valdris, we perform the ritual together. All of us. I'll explain every step.\nThank you. I mean that. Even if I hate that I have to.",
+                        "on_enter": [{"action": "set_flag", "flag": "ending.path", "value": "sacrifice"}],
+                        "choices": [{"text": "Let's end this.", "next": None}],
+                    },
+                    "refuse": {
+                        "speaker": "Maren",
+                        "text": "I expected that answer.\nDestroy him. Seal what you can with the stones. The network will hold for a generation — maybe two.\nAfter that — someone else's problem.\nI won't stop you.",
+                        "on_enter": [{"action": "set_flag", "flag": "ending.path", "value": "heroic"}],
+                        "choices": [{"text": "Stand back.", "next": None}],
+                    },
+                    "valdris_question": {
+                        "speaker": "Maren",
+                        "text": "He's in there. What's left of him.\nThe shadow consumed most of what he was. But there's still a man inside it — exhausted, guilty, probably relieved someone finally got here.\nKilling the shadow frees him. What the freed man chooses to do is the question I've been afraid to answer for twenty years.",
+                        "choices": [
+                            {"text": "What does he want?", "next": "valdris_want"},
+                            {"text": "And the ritual?", "next": "maren_explains"},
+                        ],
+                    },
+                    "valdris_want": {
+                        "speaker": "Maren",
+                        "text": "To be forgiven. For Ashenmoor. For me. For all of it.\nI don't know if I can give him that. I've been working on it.\nBut what he wants, ultimately, is the same thing we want — for the Fading to stop. He just broke the world trying to get there.\nSo did I, almost.",
+                        "choices": [
+                            {"text": "Let's go face him.", "next": None},
+                        ],
                     },
                 },
             },

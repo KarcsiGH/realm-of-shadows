@@ -774,3 +774,518 @@ NEW_ENEMY_ABILITIES = {
         "description": "The Fading weakens all enemies' resistance.",
     },
 }
+
+
+# ══════════════════════════════════════════════════════════
+#  ACT 3 ENEMIES — Pale Coast, Windswept Isle, Shadow Throne
+# ══════════════════════════════════════════════════════════
+
+ACT3_ENEMIES = {
+
+    # ─── Pale Coast ────────────────────────────────────────
+
+    "Drowned Revenant": {
+        "name": "Drowned Revenant",
+        "hp": 145, "defense": 12, "magic_resist": 18,
+        "stats": {"STR": 14, "DEX": 8, "CON": 14, "INT": 6, "WIS": 6, "PIE": 2},
+        "speed_base": 9,
+        "attack_damage": 30, "attack_type": "melee", "phys_type": "blunt",
+        "accuracy_bonus": 3, "preferred_row": "front",
+        "ai_type": "aggressive",
+        "xp_reward": 50, "gold_reward": (8, 18),
+        "resistances": {"piercing": 0.5, "slashing": 0.5, "blunt": 1.0,
+                        "fire": 1.5, "ice": 0.5, "lightning": 1.5,
+                        "divine": 2.0, "shadow": 0.5, "nature": 1.0, "arcane": 1.0},
+        "status_immunities": ["Poisoned", "Fear"],
+        "abilities": [{"name": "Waterlogged Strike", "type": "damage",
+                       "target": "single_enemy", "power": 20, "element": "ice",
+                       "description": "A sodden blow that chills the target."}],
+        "loot_table": [
+            {"drop_chance": 0.25, "item": {
+                "name": "Waterlogged Armor Fragment", "type": "material",
+                "rarity": "common", "identified": True, "estimated_value": 20,
+                "description": "Rusted plate, still dripping. Useless as armor, but the metal holds alchemical value."
+            }}
+        ],
+        "description_tiers": {
+            0: "A body washed up from the deep, still walking.",
+            1: "Drowned Revenant",
+            2: "Drowned Revenant — cold-resistant, weak to fire and divine."
+        }
+    },
+
+    "Saltwater Shade": {
+        "name": "Saltwater Shade",
+        "hp": 90, "defense": 4, "magic_resist": 30,
+        "stats": {"STR": 6, "DEX": 16, "CON": 8, "INT": 12, "WIS": 10, "PIE": 4},
+        "speed_base": 18,
+        "attack_damage": 22, "attack_type": "ranged", "phys_type": "shadow",
+        "accuracy_bonus": 8, "preferred_row": "back",
+        "ai_type": "coward",
+        "xp_reward": 45, "gold_reward": (5, 15),
+        "resistances": {"piercing": 0.0, "slashing": 0.0, "blunt": 0.5,
+                        "fire": 1.5, "ice": 0.5, "lightning": 1.0,
+                        "divine": 2.5, "shadow": 0.0, "nature": 1.0, "arcane": 1.5},
+        "status_immunities": ["Poisoned", "Sleep", "Fear"],
+        "abilities": [{"name": "Salt Corrode", "type": "debuff",
+                       "target": "single_enemy", "effect": {"defense_reduction": 6, "duration": 3},
+                       "description": "Saltwater mist corrodes armor and weakens defenses."}],
+        "loot_table": [],
+        "description_tiers": {
+            0: "A wisp of briny fog shaped like a drowned sailor.",
+            1: "Saltwater Shade",
+            2: "Saltwater Shade — immune to physical. Use fire, divine, or arcane."
+        }
+    },
+
+    "Coral Golem": {
+        "name": "Coral Golem",
+        "hp": 280, "defense": 22, "magic_resist": 8,
+        "stats": {"STR": 20, "DEX": 4, "CON": 22, "INT": 2, "WIS": 4, "PIE": 0},
+        "speed_base": 5,
+        "attack_damage": 55, "attack_type": "melee", "phys_type": "blunt",
+        "accuracy_bonus": 2, "preferred_row": "front",
+        "ai_type": "defensive",
+        "xp_reward": 90, "gold_reward": (20, 40),
+        "resistances": {"piercing": 0.25, "slashing": 0.25, "blunt": 0.5,
+                        "fire": 0.5, "ice": 1.0, "lightning": 1.5,
+                        "divine": 1.0, "shadow": 1.0, "nature": 0.5, "arcane": 1.5},
+        "status_immunities": ["Poisoned", "Fear", "Stun", "Sleep", "Charm"],
+        "abilities": [{"name": "Coral Barrage", "type": "damage",
+                       "target": "aoe_enemy", "power": 18,
+                       "description": "Fires shards of razor coral at all enemies."}],
+        "loot_table": [
+            {"drop_chance": 0.40, "item": {
+                "name": "Enchanted Coral Shard", "type": "material",
+                "rarity": "uncommon", "identified": True, "estimated_value": 45,
+                "description": "A shard of magically-hardened coral. Excellent for defensive enchantments."
+            }}
+        ],
+        "description_tiers": {
+            0: "A hulking form built from living coral, calcified by shadow.",
+            1: "Coral Golem",
+            2: "Coral Golem — massive HP, resistant to physical. Weak to lightning and arcane."
+        }
+    },
+
+    "Tide Wraith": {
+        "name": "Tide Wraith",
+        "hp": 110, "defense": 6, "magic_resist": 25,
+        "stats": {"STR": 8, "DEX": 14, "CON": 10, "INT": 16, "WIS": 12, "PIE": 6},
+        "speed_base": 15,
+        "attack_damage": 28, "attack_type": "melee", "phys_type": "shadow",
+        "accuracy_bonus": 7, "preferred_row": "mid",
+        "ai_type": "aggressive",
+        "xp_reward": 55, "gold_reward": (10, 25),
+        "resistances": {"piercing": 0.0, "slashing": 0.0, "blunt": 0.5,
+                        "fire": 1.5, "ice": 0.5, "lightning": 1.0,
+                        "divine": 2.5, "shadow": 0.0, "nature": 1.0, "arcane": 1.5},
+        "status_immunities": ["Poisoned", "Fear"],
+        "abilities": [{"name": "Undertow Curse", "type": "debuff",
+                       "target": "single_enemy",
+                       "effect": {"speed_penalty": 0.4, "mp_drain": 8, "duration": 3},
+                       "description": "Pulls the target under with crushing tidal force, slowing them and draining magic."}],
+        "loot_table": [],
+        "description_tiers": {
+            0: "A roiling mass of saltwater and shadow that crests like a wave.",
+            1: "Tide Wraith",
+            2: "Tide Wraith — immune to physical, drains MP. Use fire and divine."
+        }
+    },
+
+    # Boss: The Pale Sentinel
+    "The Pale Sentinel": {
+        "name": "The Pale Sentinel",
+        "hp": 750, "defense": 28, "magic_resist": 35,
+        "stats": {"STR": 18, "DEX": 14, "CON": 20, "INT": 16, "WIS": 22, "PIE": 18},
+        "speed_base": 12,
+        "attack_damage": 45, "attack_type": "melee", "phys_type": "divine",
+        "accuracy_bonus": 8, "preferred_row": "mid",
+        "ai_type": "boss",
+        "xp_reward": 380, "gold_reward": (100, 220),
+        "resistances": {"piercing": 0.5, "slashing": 0.5, "blunt": 0.5,
+                        "fire": 1.0, "ice": 0.5, "lightning": 1.0,
+                        "divine": 0.0, "shadow": 2.0, "nature": 0.5, "arcane": 1.0},
+        "status_immunities": ["Poisoned", "Fear", "Stun", "Sleep", "Charm"],
+        "abilities": ["Tide of Judgment", "Ward of Isolation", "Sentinel's Resolve"],
+        "loot_table": [
+            {"drop_chance": 1.0, "item": {
+                "name": "Hearthstone (Pale Coast)", "type": "key_item",
+                "rarity": "legendary", "identified": True, "estimated_value": 0,
+                "description": "The fourth Hearthstone, cold as coastal winter. It hums with ward energy.",
+                "on_pickup": {"action": "collect_hearthstone", "n": 4}
+            }}
+        ],
+        "description_tiers": {
+            0: "An armored figure, ancient and still. Eyes like frozen seafoam.",
+            1: "The Pale Sentinel",
+            2: "The Pale Sentinel — Boss. Immune to divine, crushed by shadow... but she's waiting to be freed."
+        }
+    },
+
+    # ─── Windswept Isle ─────────────────────────────────────
+
+    "Wind Wraith": {
+        "name": "Wind Wraith",
+        "hp": 95, "defense": 3, "magic_resist": 28,
+        "stats": {"STR": 6, "DEX": 22, "CON": 8, "INT": 12, "WIS": 8, "PIE": 2},
+        "speed_base": 24,
+        "attack_damage": 18, "attack_type": "ranged", "phys_type": "lightning",
+        "accuracy_bonus": 12, "preferred_row": "back",
+        "ai_type": "coward",
+        "xp_reward": 45, "gold_reward": (5, 12),
+        "resistances": {"piercing": 0.0, "slashing": 0.0, "blunt": 0.5,
+                        "fire": 1.0, "ice": 1.5, "lightning": 0.0,
+                        "divine": 2.0, "shadow": 1.5, "nature": 0.5, "arcane": 1.0},
+        "status_immunities": ["Poisoned", "Fear", "Sleep"],
+        "abilities": [{"name": "Gust Burst", "type": "damage",
+                       "target": "aoe_enemy", "power": 10, "element": "lightning",
+                       "description": "Unleashes a burst of electrified wind."}],
+        "loot_table": [],
+        "description_tiers": {
+            0: "A howling shape woven from wind and static charge.",
+            1: "Wind Wraith",
+            2: "Wind Wraith — immune to physical and lightning. Use ice or divine."
+        }
+    },
+
+    "Tempest Sprite": {
+        "name": "Tempest Sprite",
+        "hp": 65, "defense": 2, "magic_resist": 22,
+        "stats": {"STR": 4, "DEX": 20, "CON": 6, "INT": 14, "WIS": 8, "PIE": 4},
+        "speed_base": 26,
+        "attack_damage": 14, "attack_type": "ranged", "phys_type": "lightning",
+        "accuracy_bonus": 14, "preferred_row": "back",
+        "ai_type": "coward",
+        "xp_reward": 38, "gold_reward": (4, 10),
+        "resistances": {"piercing": 0.0, "slashing": 0.0, "blunt": 0.5,
+                        "fire": 1.0, "ice": 1.5, "lightning": 0.0,
+                        "divine": 2.0, "shadow": 1.5, "nature": 0.5, "arcane": 1.0},
+        "status_immunities": ["Poisoned", "Sleep"],
+        "abilities": [{"name": "Static Bolt", "type": "damage",
+                       "target": "single_enemy", "power": 12, "element": "lightning",
+                       "description": "A crackling bolt of static energy."}],
+        "loot_table": [
+            {"drop_chance": 0.30, "item": {
+                "name": "Sprite Dust", "type": "material",
+                "rarity": "uncommon", "identified": True, "estimated_value": 30,
+                "description": "Fine sparkling dust from a tempest sprite. Used in lightning enchantments."
+            }}
+        ],
+        "description_tiers": {
+            0: "A tiny crackling figure, too fast to track.",
+            1: "Tempest Sprite",
+            2: "Tempest Sprite — immune to physical/lightning, very fast. Use ice or divine."
+        }
+    },
+
+    "Storm Golem": {
+        "name": "Storm Golem",
+        "hp": 240, "defense": 16, "magic_resist": 14,
+        "stats": {"STR": 18, "DEX": 8, "CON": 18, "INT": 6, "WIS": 4, "PIE": 0},
+        "speed_base": 8,
+        "attack_damage": 50, "attack_type": "melee", "phys_type": "lightning",
+        "accuracy_bonus": 4, "preferred_row": "front",
+        "ai_type": "aggressive",
+        "xp_reward": 80, "gold_reward": (18, 35),
+        "resistances": {"piercing": 0.5, "slashing": 0.5, "blunt": 0.75,
+                        "fire": 0.5, "ice": 1.5, "lightning": 0.0,
+                        "divine": 1.0, "shadow": 1.0, "nature": 0.5, "arcane": 1.5},
+        "status_immunities": ["Poisoned", "Stun", "Fear", "Sleep", "Charm"],
+        "abilities": [{"name": "Lightning Crash", "type": "damage",
+                       "target": "aoe_enemy", "power": 22, "element": "lightning",
+                       "description": "Slams the ground releasing a shockwave of lightning."}],
+        "loot_table": [
+            {"drop_chance": 0.35, "item": {
+                "name": "Storm Core Shard", "type": "material",
+                "rarity": "rare", "identified": True, "estimated_value": 65,
+                "description": "A fragment of solidified lightning. Still crackles in the hand."
+            }}
+        ],
+        "description_tiers": {
+            0: "Stone and storm, animated by elemental fury.",
+            1: "Storm Golem",
+            2: "Storm Golem — immune to lightning. High physical defense. Use ice or arcane."
+        }
+    },
+
+    "Isle Shade": {
+        "name": "Isle Shade",
+        "hp": 105, "defense": 5, "magic_resist": 26,
+        "stats": {"STR": 10, "DEX": 16, "CON": 10, "INT": 10, "WIS": 8, "PIE": 2},
+        "speed_base": 16,
+        "attack_damage": 26, "attack_type": "melee", "phys_type": "shadow",
+        "accuracy_bonus": 8, "preferred_row": "mid",
+        "ai_type": "aggressive",
+        "xp_reward": 48, "gold_reward": (8, 18),
+        "resistances": {"piercing": 0.0, "slashing": 0.0, "blunt": 0.5,
+                        "fire": 1.5, "ice": 1.0, "lightning": 1.5,
+                        "divine": 2.5, "shadow": 0.0, "nature": 1.0, "arcane": 1.5},
+        "status_immunities": ["Poisoned", "Fear"],
+        "abilities": [{"name": "Isle Miasma", "type": "debuff",
+                       "target": "single_enemy",
+                       "effect": {"accuracy_reduction": 20, "duration": 2},
+                       "description": "Exhales a disorienting sea mist."}],
+        "loot_table": [],
+        "description_tiers": {
+            0: "A shadow clinging to the island ruins, fed by the Fading.",
+            1: "Isle Shade",
+            2: "Isle Shade — immune to physical. Reduces accuracy. Use divine or fire."
+        }
+    },
+
+    # Boss: The Last Keeper
+    "The Last Keeper": {
+        "name": "The Last Keeper",
+        "hp": 680, "defense": 18, "magic_resist": 28,
+        "stats": {"STR": 14, "DEX": 18, "CON": 16, "INT": 18, "WIS": 14, "PIE": 8},
+        "speed_base": 16,
+        "attack_damage": 40, "attack_type": "ranged", "phys_type": "lightning",
+        "accuracy_bonus": 10, "preferred_row": "back",
+        "ai_type": "boss",
+        "xp_reward": 360, "gold_reward": (90, 200),
+        "resistances": {"piercing": 0.5, "slashing": 0.5, "blunt": 0.5,
+                        "fire": 1.0, "ice": 1.5, "lightning": 0.0,
+                        "divine": 1.0, "shadow": 2.0, "nature": 0.5, "arcane": 1.0},
+        "status_immunities": ["Poisoned", "Fear", "Stun", "Sleep"],
+        "abilities": ["Tempest Barrage", "Cyclone Ward", "Chain Lightning"],
+        "loot_table": [
+            {"drop_chance": 1.0, "item": {
+                "name": "Hearthstone (Windswept Isle)", "type": "key_item",
+                "rarity": "legendary", "identified": True, "estimated_value": 0,
+                "description": "The fifth and final Hearthstone, crackling with stored storm energy.",
+                "on_pickup": {"action": "collect_hearthstone", "n": 5}
+            }}
+        ],
+        "description_tiers": {
+            0: "A being of living storm, ancient and indifferent.",
+            1: "The Last Keeper",
+            2: "The Last Keeper — Boss. Immune to lightning. Pure elemental guardian — no reasoning with this one."
+        }
+    },
+
+    # ─── Shadow Throne ─────────────────────────────────────
+
+    "Throne Shade": {
+        "name": "Throne Shade",
+        "hp": 140, "defense": 8, "magic_resist": 32,
+        "stats": {"STR": 12, "DEX": 18, "CON": 12, "INT": 14, "WIS": 10, "PIE": 2},
+        "speed_base": 18,
+        "attack_damage": 35, "attack_type": "melee", "phys_type": "shadow",
+        "accuracy_bonus": 10, "preferred_row": "mid",
+        "ai_type": "aggressive",
+        "xp_reward": 65, "gold_reward": (15, 30),
+        "resistances": {"piercing": 0.0, "slashing": 0.0, "blunt": 0.5,
+                        "fire": 1.5, "ice": 1.0, "lightning": 1.0,
+                        "divine": 3.0, "shadow": 0.0, "nature": 1.0, "arcane": 2.0},
+        "status_immunities": ["Poisoned", "Fear", "Sleep"],
+        "abilities": [{"name": "Shadow Rend", "type": "damage",
+                       "target": "single_enemy", "power": 22, "element": "shadow",
+                       "description": "Tears at the target's soul with shadow claws."}],
+        "loot_table": [
+            {"drop_chance": 0.35, "item": {
+                "name": "Shadow Essence", "type": "material",
+                "rarity": "uncommon", "identified": True, "estimated_value": 40,
+                "description": "Dense shadow energy. Warm and unsettling to hold."
+            }}
+        ],
+        "description_tiers": {
+            0: "A sentinel of the Shadow Throne. Loyal only to Valdris.",
+            1: "Throne Shade",
+            2: "Throne Shade — immune to physical. Extremely weak to divine (3×)."
+        }
+    },
+
+    "Corrupted Warden Echo": {
+        "name": "Corrupted Warden Echo",
+        "hp": 195, "defense": 18, "magic_resist": 22,
+        "stats": {"STR": 16, "DEX": 12, "CON": 16, "INT": 14, "WIS": 12, "PIE": 8},
+        "speed_base": 12,
+        "attack_damage": 44, "attack_type": "melee", "phys_type": "shadow",
+        "accuracy_bonus": 8, "preferred_row": "front",
+        "ai_type": "aggressive",
+        "xp_reward": 80, "gold_reward": (20, 40),
+        "resistances": {"piercing": 0.5, "slashing": 0.5, "blunt": 0.75,
+                        "fire": 1.0, "ice": 1.0, "lightning": 1.0,
+                        "divine": 2.5, "shadow": 0.0, "nature": 1.0, "arcane": 1.5},
+        "status_immunities": ["Poisoned", "Fear", "Charm"],
+        "abilities": [{"name": "Echo Strike", "type": "damage",
+                       "target": "single_enemy", "power": 26, "element": "shadow",
+                       "description": "A shadow-infused blow that echoes with fallen warden power."}],
+        "loot_table": [
+            {"drop_chance": 0.20, "item": {
+                "name": "Warden's Remnant Badge", "type": "material",
+                "rarity": "rare", "identified": True, "estimated_value": 80,
+                "description": "The badge of a Warden long since fallen to shadow. The inscription is still legible."
+            }}
+        ],
+        "description_tiers": {
+            0: "A ghost of a Warden, face twisted, still wearing the order's colors.",
+            1: "Corrupted Warden Echo",
+            2: "Corrupted Warden Echo — elite. Decent defenses. Divine is the key."
+        }
+    },
+
+    # Shadow Throne — Void Tendril (swarm horror, fast, fragile)
+    "Void Tendril": {
+        "name": "Void Tendril",
+        "hp": 55, "defense": 2, "magic_resist": 6,
+        "stats": {"STR": 6, "DEX": 20, "CON": 4, "INT": 2, "WIS": 4, "PIE": 1},
+        "speed_base": 28,
+        "attack_damage": 18, "attack_type": "melee", "phys_type": "shadow",
+        "accuracy_bonus": 10, "preferred_row": "front",
+        "ai_type": "aggressive",
+        "xp_reward": 45, "gold_reward": (0, 5),
+        "resistances": {"piercing": 1.5, "slashing": 1.5, "blunt": 0.75,
+                        "fire": 2.0, "ice": 0.75, "lightning": 1.0,
+                        "divine": 2.0, "shadow": 0.0, "nature": 1.0, "arcane": 1.0},
+        "status_immunities": ["Poisoned", "Sleep"],
+        "abilities": [],
+        "loot_table": [],
+        "description_tiers": {
+            0: "A thrashing tendril of pure void-matter, reaching hungrily from the walls.",
+            1: "Void Tendril",
+            2: "Void Tendril — swarm horror. Very fast, very fragile. Fire and divine shred them. Watch for the Abomination behind them."
+        }
+    },
+
+    # Boss: Valdris (Phase 1) — shadow avatar form
+    "Valdris, Shadow Avatar": {
+        "name": "Valdris, Shadow Avatar",
+        "hp": 900, "defense": 25, "magic_resist": 38,
+        "stats": {"STR": 18, "DEX": 16, "CON": 20, "INT": 26, "WIS": 22, "PIE": 10},
+        "speed_base": 14,
+        "attack_damage": 55, "attack_type": "ranged", "phys_type": "shadow",
+        "accuracy_bonus": 12, "preferred_row": "back",
+        "ai_type": "boss",
+        "xp_reward": 500, "gold_reward": (200, 400),
+        "resistances": {"piercing": 0.75, "slashing": 0.75, "blunt": 0.75,
+                        "fire": 1.0, "ice": 1.0, "lightning": 1.0,
+                        "divine": 2.0, "shadow": 0.0, "nature": 1.0, "arcane": 0.5},
+        "status_immunities": ["Poisoned", "Fear", "Stun", "Sleep", "Charm"],
+        "abilities": ["Shadow Nova", "Dark Ritual", "Fading Pulse", "Ward Shatter"],
+        "loot_table": [],  # phase 2 triggers on defeat, no loot yet
+        "description_tiers": {
+            0: "Valdris — but not the man. A shell of pure shadow wearing his face.",
+            1: "Valdris, Shadow Avatar",
+            2: "Valdris — Phase 1. Immune to shadow, vulnerable to divine and arcane. Defeat the avatar to reach the man."
+        }
+    },
+
+    # Boss: Valdris (Phase 2) — diminished, broken form
+    "Valdris the Broken": {
+        "name": "Valdris the Broken",
+        "hp": 420, "defense": 12, "magic_resist": 20,
+        "stats": {"STR": 10, "DEX": 10, "CON": 12, "INT": 22, "WIS": 18, "PIE": 14},
+        "speed_base": 10,
+        "attack_damage": 35, "attack_type": "ranged", "phys_type": "arcane",
+        "accuracy_bonus": 6, "preferred_row": "back",
+        "ai_type": "boss",
+        "xp_reward": 600, "gold_reward": (250, 500),
+        "resistances": {"piercing": 1.0, "slashing": 1.0, "blunt": 1.0,
+                        "fire": 1.0, "ice": 1.0, "lightning": 1.0,
+                        "divine": 1.0, "shadow": 1.5, "nature": 1.0, "arcane": 0.5},
+        "status_immunities": ["Fear", "Charm"],
+        "abilities": ["Desperate Nova", "Last Ward", "Plea of the Fallen"],
+        "loot_table": [
+            {"drop_chance": 1.0, "item": {
+                "name": "Valdris's Warden Seal", "type": "key_item",
+                "rarity": "legendary", "identified": True, "estimated_value": 0,
+                "description": "The seal of the order Valdris once served. He never stopped wearing it. "
+                               "Choosing to end him or spare him — both paths open from here."
+            }}
+        ],
+        "description_tiers": {
+            0: "The shadow is stripped away. What remains is an old, exhausted man.",
+            1: "Valdris the Broken",
+            2: "Valdris — Phase 2. Weakened but dangerous. Shadow now hurts him. This is the real decision."
+        }
+    },
+}
+
+NEW_ENEMIES.update(ACT3_ENEMIES)
+
+
+# ──────────────────────────────────────────────────────────
+#  ACT 3 ENCOUNTERS
+# ──────────────────────────────────────────────────────────
+
+ACT3_ENCOUNTERS = {
+
+    # ─── Pale Coast ───────────────────────────────────────
+
+    "pc_drowned":    {"name": "Risen Dead", "difficulty": "medium",
+        "groups": [{"enemy": "Drowned Revenant", "count": 2, "row": "front"}]},
+    "pc_shades":     {"name": "Saltwater Shades", "difficulty": "medium",
+        "groups": [{"enemy": "Saltwater Shade", "count": 3, "row": "back"}]},
+    "pc_tide":       {"name": "Tide Wraiths", "difficulty": "medium",
+        "groups": [{"enemy": "Tide Wraith", "count": 2, "row": "mid"},
+                   {"enemy": "Saltwater Shade", "count": 1, "row": "back"}]},
+    "pc_golem":      {"name": "Coral Guardian", "difficulty": "hard",
+        "groups": [{"enemy": "Coral Golem", "count": 1, "row": "front"},
+                   {"enemy": "Saltwater Shade", "count": 2, "row": "back"}]},
+    "pc_drowned_mob":{"name": "Drowned Legion", "difficulty": "hard",
+        "groups": [{"enemy": "Drowned Revenant", "count": 3, "row": "front"},
+                   {"enemy": "Tide Wraith", "count": 1, "row": "mid"}]},
+    "pc_twin_golems":{"name": "Twin Coral Guardians", "difficulty": "hard",
+        "groups": [{"enemy": "Coral Golem", "count": 2, "row": "front"}]},
+    "boss_pale_warden": {"name": "The Pale Sentinel", "difficulty": "boss",
+        "groups": [{"enemy": "The Pale Sentinel", "count": 1, "row": "mid"},
+                   {"enemy": "Drowned Revenant", "count": 2, "row": "front"},
+                   {"enemy": "Tide Wraith", "count": 2, "row": "back"}]},
+
+    # ─── Windswept Isle ────────────────────────────────────
+
+    "wi_wraiths":     {"name": "Wind Wraiths", "difficulty": "medium",
+        "groups": [{"enemy": "Wind Wraith", "count": 3, "row": "back"}]},
+    "wi_sprites":     {"name": "Tempest Sprites", "difficulty": "medium",
+        "groups": [{"enemy": "Tempest Sprite", "count": 4, "row": "back"}]},
+    "wi_mixed":       {"name": "Storm Pack", "difficulty": "medium",
+        "groups": [{"enemy": "Wind Wraith", "count": 2, "row": "back"},
+                   {"enemy": "Isle Shade", "count": 1, "row": "mid"}]},
+    "wi_golem":       {"name": "Storm Golem", "difficulty": "hard",
+        "groups": [{"enemy": "Storm Golem", "count": 1, "row": "front"},
+                   {"enemy": "Tempest Sprite", "count": 2, "row": "back"}]},
+    "wi_storm_mob":   {"name": "Storm Surge", "difficulty": "hard",
+        "groups": [{"enemy": "Wind Wraith", "count": 2, "row": "back"},
+                   {"enemy": "Storm Golem", "count": 1, "row": "front"},
+                   {"enemy": "Isle Shade", "count": 1, "row": "mid"}]},
+    "boss_isle_keeper": {"name": "The Last Keeper", "difficulty": "boss",
+        "groups": [{"enemy": "The Last Keeper", "count": 1, "row": "back"},
+                   {"enemy": "Storm Golem", "count": 1, "row": "front"},
+                   {"enemy": "Wind Wraith", "count": 3, "row": "back"}]},
+
+    # ─── Shadow Throne ─────────────────────────────────────
+
+    "st_shades":      {"name": "Throne Sentinels", "difficulty": "hard",
+        "groups": [{"enemy": "Throne Shade", "count": 3, "row": "mid"}]},
+    "st_mixed":       {"name": "Throne Guard", "difficulty": "hard",
+        "groups": [{"enemy": "Shadow Brute", "count": 1, "row": "front"},
+                   {"enemy": "Throne Shade", "count": 2, "row": "mid"}]},
+    "st_echoes":      {"name": "Fallen Wardens", "difficulty": "hard",
+        "groups": [{"enemy": "Corrupted Warden Echo", "count": 2, "row": "front"},
+                   {"enemy": "Throne Shade", "count": 1, "row": "mid"}]},
+    "st_abominations":{"name": "Fading Made Flesh", "difficulty": "hard",
+        "groups": [{"enemy": "Fading Abomination", "count": 2, "row": "front"},
+                   {"enemy": "Throne Shade", "count": 2, "row": "back"}]},
+    "st_elite":       {"name": "Elite Guard", "difficulty": "hard",
+        "groups": [{"enemy": "Corrupted Warden Echo", "count": 1, "row": "front"},
+                   {"enemy": "Shadow Stalker", "count": 2, "row": "mid"},
+                   {"enemy": "Throne Shade", "count": 2, "row": "back"}]},
+    "st_void":        {"name": "Void Breach", "difficulty": "hard",
+        "groups": [{"enemy": "Void Tendril", "count": 4, "row": "front"},
+                   {"enemy": "Fading Abomination", "count": 1, "row": "front"}]},
+    "st_warden_elite":{"name": "Warden Echoes", "difficulty": "hard",
+        "groups": [{"enemy": "Corrupted Warden Echo", "count": 3, "row": "front"}]},
+    "st_shadow_squad":{"name": "Shadow Squad", "difficulty": "hard",
+        "groups": [{"enemy": "Shadow Brute", "count": 2, "row": "front"},
+                   {"enemy": "Shadow Stalker", "count": 2, "row": "mid"}]},
+    "boss_valdris_phase1": {"name": "Valdris — Shadow Avatar", "difficulty": "boss",
+        "groups": [{"enemy": "Valdris, Shadow Avatar", "count": 1, "row": "back"},
+                   {"enemy": "Throne Shade", "count": 2, "row": "mid"},
+                   {"enemy": "Shadow Brute", "count": 1, "row": "front"}]},
+    "boss_valdris_phase2": {"name": "Valdris the Broken", "difficulty": "boss",
+        "groups": [{"enemy": "Valdris the Broken", "count": 1, "row": "back"}]},
+}
+
+NEW_ENCOUNTERS.update(ACT3_ENCOUNTERS)
