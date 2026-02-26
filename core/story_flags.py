@@ -98,6 +98,44 @@ def is_quest_active(quest_id):
     return state > 0  # started but not complete/failed
 
 
+def check_quest_objectives(quest_id):
+    """
+    Evaluate each objective in a quest.
+    Returns list of (objective_dict, is_complete: bool).
+    Requires data.story_data.QUESTS — lazy import to avoid circular deps.
+    """
+    from data.story_data import QUESTS
+    q = QUESTS.get(quest_id, {})
+    results = []
+    for obj in q.get("objectives", []):
+        flag = obj.get("flag")
+        op = obj.get("op", "==")
+        val = obj.get("val", True)
+        actual = _flags.get(flag)
+        if op == "==":
+            done = actual == val
+        elif op == "!=":
+            done = actual != val
+        elif op == ">=":
+            done = actual is not None and actual >= val
+        elif op == ">":
+            done = actual is not None and actual > val
+        elif op == "<=":
+            done = actual is not None and actual <= val
+        elif op == "==":
+            done = actual == val
+        else:
+            done = bool(actual)
+        results.append((obj, done))
+    return results
+
+
+def all_objectives_complete(quest_id):
+    """True if every objective for a quest is satisfied."""
+    results = check_quest_objectives(quest_id)
+    return bool(results) and all(done for _, done in results)
+
+
 def discover_lore(lore_id):
     """Mark a lore entry as discovered."""
     _flags[f"lore.{lore_id}"] = True
@@ -201,3 +239,49 @@ def load_save_data(data):
 
 # Initialize with defaults
 reset()
+
+
+# ═══════════════════════════════════════════════════════════════
+#  QUEST AUTO-COMPLETE
+# ═══════════════════════════════════════════════════════════════
+
+def auto_advance_quests(party=None):
+    """
+    For any active quest whose all objectives are now satisfied,
+    auto-complete it and distribute rewards.
+    Only auto-completes quests with no turn_in_npc (narrative only),
+    or quests whose giver == turn_in (same NPC — player already spoke to them).
+    Returns list of completed quest IDs.
+    """
+    from data.story_data import QUESTS
+    completed_now = []
+    for qid, q in QUESTS.items():
+        state = _flags.get(f"quest.{qid}.state", 0)
+        if state <= 0 or state == -2:
+            continue  # not active or already done
+        if not all_objectives_complete(qid):
+            continue
+        # Auto-complete: no turn_in, or flagged for auto
+        turnin = q.get("turn_in_npc")
+        if turnin is None or q.get("auto_complete"):
+            complete_quest(qid)
+            _distribute_quest_rewards(qid, party)
+            completed_now.append(qid)
+    return completed_now
+
+
+def _distribute_quest_rewards(qid, party):
+    """Hand out gold + XP for a completed quest."""
+    from data.story_data import QUESTS
+    q = QUESTS.get(qid, {})
+    gold = q.get("reward_gold", 0)
+    xp   = q.get("reward_xp", 0)
+    if not party or (not gold and not xp):
+        return
+    gold_each = gold // len(party)
+    xp_each   = xp   // len(party)
+    for c in party:
+        if gold_each:
+            c.gold += gold_each
+        if xp_each:
+            c.xp   += xp_each

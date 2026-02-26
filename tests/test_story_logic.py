@@ -606,6 +606,127 @@ except Exception as e:
     check("NPC dialogue check", False, str(e))
     import traceback; traceback.print_exc()
 
+# ═════════════════════════════════════════════════════════════
+#  15. QUEST SYSTEM DEPTH
+# ═════════════════════════════════════════════════════════════
+section("15. Quest System Depth")
+try:
+    from data.story_data import QUESTS, NPC_DIALOGUES
+    from core.story_flags import (
+        reset, set_flag, start_quest, complete_quest,
+        check_quest_objectives, all_objectives_complete,
+        auto_advance_quests, increment,
+    )
+
+    # All 16 quests present
+    check("16 quests defined", len(QUESTS) == 16)
+
+    # Required fields on every quest
+    required_fields = ["name", "description", "act", "objectives",
+                       "reward_gold", "reward_xp", "reward_items", "giver_npc"]
+    all_have_fields = all(
+        all(f in q for f in required_fields)
+        for q in QUESTS.values()
+    )
+    check("All quests have required fields", all_have_fields)
+
+    # Every quest has at least one objective
+    all_have_objs = all(len(q.get("objectives", [])) >= 1 for q in QUESTS.values())
+    check("All quests have ≥1 objective", all_have_objs)
+
+    # Objective flag evaluation
+    reset()
+    set_flag("boss.grak.defeated", True)
+    set_flag("explored.goblin_warren.floor1", True)
+    start_quest("main_goblin_warren")
+    objs = check_quest_objectives("main_goblin_warren")
+    check("goblin_warren objectives tracked", len(objs) == 2)
+    check("goblin_warren all objectives complete", all_objectives_complete("main_goblin_warren"))
+
+    # Wolf pelt >= objective
+    reset()
+    start_quest("side_wolf_pelts")
+    for _ in range(4):
+        increment("wolf_pelts_quest.count")
+    objs = check_quest_objectives("side_wolf_pelts")
+    check("wolf pelts: 4/5 not complete", not objs[0][1])
+    increment("wolf_pelts_quest.count")
+    objs = check_quest_objectives("side_wolf_pelts")
+    check("wolf pelts: 5/5 complete", objs[0][1])
+
+    # Multi-objective quest: all must be done
+    reset()
+    start_quest("main_hearthstone_1")
+    set_flag("explored.abandoned_mine.floor1", True)
+    check("hs1: 1/3 not complete", not all_objectives_complete("main_hearthstone_1"))
+    set_flag("boss.korrath.defeated", True)
+    set_flag("item.hearthstone.1", True)
+    check("hs1: 3/3 complete", all_objectives_complete("main_hearthstone_1"))
+
+    # Auto-advance: quests with turn_in_npc should NOT auto-complete
+    reset()
+    set_flag("boss.grak.defeated", True)
+    set_flag("explored.goblin_warren.floor1", True)
+    start_quest("main_goblin_warren")
+    done = auto_advance_quests([])
+    check("main_goblin_warren NOT auto-completed (has turn_in)", "main_goblin_warren" not in done)
+
+    # Auto-advance: quests with auto_complete=True DO auto-complete
+    reset()
+    set_flag("explored.valdris_spire.floor1", True)
+    start_quest("main_act3_spire")
+    done = auto_advance_quests([])
+    check("main_act3_spire auto-completed", "main_act3_spire" in done)
+
+    # Reward distribution
+    class _FC:
+        def __init__(self): self.gold = 100; self.xp = 50
+    reset()
+    set_flag("explored.sunken_crypt.floor1", True)
+    set_flag("boss.sunken_warden.defeated", True)
+    set_flag("item.hearthstone.2", True)
+    start_quest("main_hearthstone_2")
+    # main_hearthstone_2 has turn_in=Tide Priest Oran, NOT auto_complete
+    # manually complete to test reward distribution
+    from core.story_flags import _distribute_quest_rewards
+    fc = [_FC(), _FC()]
+    _distribute_quest_rewards("main_hearthstone_2", fc)
+    expected_gold = 300 // 2
+    check("quest rewards distributed correctly", fc[0].gold == 100 + expected_gold)
+
+    # Quest log UI integrity
+    from ui.quest_log_ui import QuestLogUI
+    ui = QuestLogUI()
+    check("QuestLogUI instantiates", ui.tab == "quests")
+    check("QuestLogUI has required attrs",
+          hasattr(ui, "selected_qid") and hasattr(ui, "scroll_list") and
+          hasattr(ui, "scroll_detail") and hasattr(ui, "_list_rects"))
+
+    # Dialogue quest references valid
+    bad_refs = []
+    for did, entries in NPC_DIALOGUES.items():
+        for entry in entries:
+            for nid, node in entry.get("tree", {}).get("nodes", {}).items():
+                for act in node.get("on_enter", []) + node.get("on_exit", []):
+                    if act.get("action") in ("start_quest", "complete_quest"):
+                        qref = act.get("quest")
+                        if qref and qref not in QUESTS:
+                            bad_refs.append(f"{did}/{nid}->{qref}")
+    check("No broken quest refs in dialogues", len(bad_refs) == 0, str(bad_refs))
+
+    # All 15 dialogue-wired quests found
+    import re
+    with open("data/story_data.py") as f:
+        sdata = f.read()
+    wired = {m.group(1) for m in re.finditer(r'"quest": "([^"]+)"', sdata)}
+    unwired = [qid for qid in QUESTS if qid not in wired
+               and qid != "main_act3_finale"]  # auto-started by floor hook
+    check("All quests except finale are dialogue-wired", len(unwired) == 0, str(unwired))
+
+except Exception as e:
+    check("Quest system check", False, str(e))
+    import traceback; traceback.print_exc()
+
 # ─────────────────────────────────────────────────────────────
 total = PASS + FAIL
 print(f"\n{'═'*55}")

@@ -31,109 +31,358 @@ OPENING_SEQUENCE = [
 # ═══════════════════════════════════════════════════════════════
 
 QUESTS = {
+    # ── Act 1 — Briarhollow & surroundings ─────────────────────────
     "main_meet_maren": {
         "name": "The Scholar's Plea",
-        "description": "Meet Maren at the tavern in Briarhollow to learn about the Fading.",
+        "description": "Elder Thom mentioned a scholar staying at the inn who knows "
+                       "something about the land sickness. Meet Maren at the Wanderer's Rest.",
         "act": 1,
+        "giver_npc": "Elder Thom",
+        "turn_in_npc": "Maren",
+        "reward_gold": 0,
+        "reward_xp": 50,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Speak with Maren at the Wanderer's Rest",
+                "flag": "npc.maren.met", "op": "==", "val": True,
+            },
+        ],
     },
+
     "main_goblin_warren": {
         "name": "The Goblin Problem",
-        "description": "Investigate the Goblin Warren east of Briarhollow. "
-                       "The goblins have been raiding farms, but Maren suspects "
-                       "there's more to it.",
+        "description": "Maren believes the goblin raids aren't random — something is "
+                       "driving them out of the Warren. Investigate.",
         "act": 1,
+        "giver_npc": "Maren",
+        "turn_in_npc": "Maren",
+        "reward_gold": 150,
+        "reward_xp": 200,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Enter the Goblin Warren",
+                "flag": "explored.goblin_warren.floor1", "op": "==", "val": True,
+            },
+            {
+                "text": "Defeat Grak, the Goblin King",
+                "flag": "boss.grak.defeated", "op": "==", "val": True,
+            },
+        ],
     },
+
     "main_hearthstone_1": {
         "name": "The First Hearthstone",
-        "description": "Explore the Abandoned Mine and recover the first Hearthstone. "
-                       "Maren believes a dwarven Warden once guarded it.",
+        "description": "Maren has identified the Abandoned Mine as the site of the first "
+                       "Hearthstone. A corrupted Warden guards it. Recover the fragment.",
         "act": 1,
+        "giver_npc": "Maren",
+        "turn_in_npc": "Maren",
+        "reward_gold": 200,
+        "reward_xp": 300,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Descend into the Abandoned Mine",
+                "flag": "explored.abandoned_mine.floor1", "op": "==", "val": True,
+            },
+            {
+                "text": "Defeat the Warden Korrath",
+                "flag": "boss.korrath.defeated", "op": "==", "val": True,
+            },
+            {
+                "text": "Recover the First Hearthstone",
+                "flag": "item.hearthstone.1", "op": "==", "val": True,
+            },
+        ],
     },
+
     "main_spiders_nest": {
         "name": "Unnatural Growth",
-        "description": "The Spider's Nest is filled with creatures mutated by the Fading. "
-                       "Investigate the source of the corruption.",
+        "description": "The Spider's Nest creatures have grown massive — a sign of Fading "
+                       "corruption. Investigate and stop the spread.",
         "act": 1,
+        "giver_npc": "Elder Theron",
+        "turn_in_npc": "Maren",
+        "reward_gold": 120,
+        "reward_xp": 180,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Enter the Spider's Nest",
+                "flag": "explored.spiders_nest.floor1", "op": "==", "val": True,
+            },
+            {
+                "text": "Defeat the Spider Queen",
+                "flag": "boss_defeated.spiders_nest", "op": "==", "val": True,
+            },
+        ],
     },
+
     "side_wolf_pelts": {
         "name": "Pelts for the Tanner",
-        "description": "Collect 5 wolf pelts and bring them to the tanner in Briarhollow.",
+        "description": "Captain Aldric mentioned the village tanner needs wolf pelts. "
+                       "The wolves are aggressive and unusually large.",
         "act": 1,
+        "giver_npc": "Captain Aldric",
+        "turn_in_npc": "Captain Aldric",
+        "reward_gold": 80,
+        "reward_xp": 60,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Collect Wolf Pelts (5 needed)",
+                "flag": "wolf_pelts_quest.count", "op": ">=", "val": 5,
+            },
+        ],
     },
+
     "side_missing_patrol": {
         "name": "The Missing Patrol",
         "description": "Captain Aldric's patrol never returned from the eastern road. "
                        "Find out what happened to them.",
         "act": 1,
+        "giver_npc": "Captain Aldric",
+        "turn_in_npc": "Captain Aldric",
+        "reward_gold": 100,
+        "reward_xp": 120,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Search the eastern road and mine area",
+                "flag": "explored.abandoned_mine.floor2", "op": "==", "val": True,
+            },
+        ],
     },
+
+    # ── Act 2 — Wider world ─────────────────────────────────────────
     "main_ashenmoor": {
         "name": "Secrets of Ashenmoor",
-        "description": "The Ruins of Ashenmoor hold the truth about why the wards failed. "
+        "description": "The Ruins of Ashenmoor hold the truth about the first Fading event. "
                        "Maren insists the answers are buried there.",
         "act": 2,
+        "giver_npc": "Maren",
+        "turn_in_npc": "Maren",
+        "reward_gold": 250,
+        "reward_xp": 400,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Reach the Ruins of Ashenmoor",
+                "flag": "explored.ruins_ashenmoor.floor1", "op": "==", "val": True,
+            },
+            {
+                "text": "Defeat Ashvar, the Shadow Warden",
+                "flag": "boss.ashvar.defeated", "op": "==", "val": True,
+            },
+        ],
     },
+
     "main_hearthstone_2": {
         "name": "The Sunken Stone",
-        "description": "Descend into the Sunken Crypt to recover the second Hearthstone "
-                       "from the undead Warden who guards it.",
+        "description": "Tide Priest Oran revealed a Hearthstone sealed under the bay "
+                       "centuries ago. Descend into the Sunken Crypt to reclaim it.",
         "act": 2,
+        "giver_npc": "Tide Priest Oran",
+        "turn_in_npc": "Tide Priest Oran",
+        "reward_gold": 300,
+        "reward_xp": 500,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Enter the Sunken Crypt",
+                "flag": "explored.sunken_crypt.floor1", "op": "==", "val": True,
+            },
+            {
+                "text": "Defeat the Sunken Warden",
+                "flag": "boss.sunken_warden.defeated", "op": "==", "val": True,
+            },
+            {
+                "text": "Recover the Second Hearthstone",
+                "flag": "item.hearthstone.2", "op": "==", "val": True,
+            },
+        ],
     },
+
     "main_hearthstone_3": {
         "name": "Fire and Salt",
-        "description": "The third Hearthstone lies somewhere in the Dragon's Tooth archipelago. "
-                       "Arrange passage from Saltmere and survive whatever waits there.",
+        "description": "The third Hearthstone lies in the Dragon's Tooth archipelago. "
+                       "Arrange passage from Saltmere and survive what waits there.",
         "act": 2,
+        "giver_npc": "Tide Priest Oran",
+        "turn_in_npc": None,
+        "auto_complete": True,
+        "reward_gold": 350,
+        "reward_xp": 550,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Arrange sea passage from Saltmere",
+                "flag": "ship_passage.granted", "op": "==", "val": True,
+            },
+            {
+                "text": "Reach Dragon's Tooth",
+                "flag": "explored.dragons_tooth.floor1", "op": "==", "val": True,
+            },
+            {
+                "text": "Defeat Karreth, the Dragon Warden",
+                "flag": "boss.karreth.defeated", "op": "==", "val": True,
+            },
+            {
+                "text": "Recover the Third Hearthstone",
+                "flag": "item.hearthstone.3", "op": "==", "val": True,
+            },
+        ],
     },
+
     "main_thornhaven": {
         "name": "Audience with the Governor",
-        "description": "Travel to Thornhaven and secure the support of the Imperial Governor. "
-                       "His archives may hold the locations of the remaining Hearthstones.",
+        "description": "Archmage Solen believes the Imperial Governor has access to "
+                       "archives that can locate the remaining Hearthstones. Travel to Thornhaven.",
         "act": 2,
+        "giver_npc": "Archmage Solen",
+        "turn_in_npc": "Governor Aldric",
+        "reward_gold": 0,
+        "reward_xp": 200,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Travel to Thornhaven",
+                "flag": "town.thornhaven.visited", "op": "==", "val": True,
+            },
+            {
+                "text": "Speak with Governor Aldric",
+                "flag": "npc.governor.met", "op": "==", "val": True,
+            },
+        ],
     },
+
     "main_maren_truth": {
         "name": "The Scholar's Secret",
-        "description": "Court Mage Sira has revealed that Maren is the daughter of Valdris, "
-                       "the Traitor Warden. Confront Maren about what she truly intends "
-                       "to do with the Hearthstones.",
+        "description": "Court Mage Sira has revealed that Maren is the daughter of Valdris. "
+                       "Confront her about what she truly intends to do with the Hearthstones.",
         "act": 2,
+        "giver_npc": "Court Mage Sira",
+        "turn_in_npc": "Maren",
+        "reward_gold": 0,
+        "reward_xp": 150,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Confront Maren about her true identity",
+                "flag": "lore.maren_origin", "op": "==", "val": True,
+            },
+        ],
     },
+
     "main_act2_pursuit": {
         "name": "What Maren Took",
-        "description": "Maren has vanished, taking two of the Hearthstone fragments. "
+        "description": "Maren has vanished with two Hearthstone fragments. "
                        "She believes her father's ritual will save the world — "
-                       "but Ashenmoor stands as evidence of what his methods cost. "
-                       "Find her before she reaches Valdris' Spire.",
+                       "but Ashenmoor shows what his methods cost. Find her.",
         "act": 2,
+        "giver_npc": None,
+        "turn_in_npc": None,
+        "auto_complete": True,
+        "reward_gold": 0,
+        "reward_xp": 0,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Track Maren to Valdris' Spire",
+                "flag": "explored.valdris_spire.floor1", "op": "==", "val": True,
+            },
+        ],
     },
+
     "side_guild_initiation": {
         "name": "Proving Ground",
-        "description": "Guildmaster Sable of the Saltmere Thieves' Guild wants proof "
-                       "of your capabilities before offering real work.",
+        "description": "Guildmaster Oren wants proof of your party's capabilities "
+                       "before granting full Guild standing.",
         "act": 2,
+        "giver_npc": "Guildmaster Oren",
+        "turn_in_npc": "Guildmaster Oren",
+        "reward_gold": 200,
+        "reward_xp": 250,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Reach floor 3 of any major dungeon",
+                "flag": "guild_trial.complete", "op": "==", "val": True,
+            },
+        ],
     },
+
     "side_academy_research": {
         "name": "Data for the Archmage",
-        "description": "Archmage Solen wants ley line readings from three locations "
-                       "near active Fading zones. Dangerous work, but the Academy pays well.",
+        "description": "Archmage Solen needs ley line readings from three active Fading zones. "
+                       "Dangerous work — but the Academy pays accordingly.",
         "act": 2,
+        "giver_npc": "Archmage Solen",
+        "turn_in_npc": "Archmage Solen",
+        "reward_gold": 400,
+        "reward_xp": 350,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Ley readings: Abandoned Mine (floor 3)",
+                "flag": "explored.abandoned_mine.floor3", "op": "==", "val": True,
+            },
+            {
+                "text": "Ley readings: Sunken Crypt (floor 2)",
+                "flag": "explored.sunken_crypt.floor2", "op": "==", "val": True,
+            },
+            {
+                "text": "Ley readings: Ruins of Ashenmoor (floor 2)",
+                "flag": "explored.ruins_ashenmoor.floor2", "op": "==", "val": True,
+            },
+        ],
     },
+
+    # ── Act 3 — The Spire ───────────────────────────────────────────
     "main_act3_spire": {
         "name": "The Long Road",
-        "description": "Maren has the fragments and a head start. "
-                       "Valdris' Spire stands at the edge of the known world, "
-                       "and whatever she finds there — whatever he has become — "
-                       "it cannot be allowed to end without you. "
-                       "Reach the Spire.",
+        "description": "Maren has a head start. Valdris' Spire stands at the edge "
+                       "of the known world. Whatever she finds there, you cannot let "
+                       "it end without you. Reach the Spire.",
         "act": 3,
+        "giver_npc": "Guild Commander Varek",
+        "turn_in_npc": None,
+        "auto_complete": True,
+        "reward_gold": 0,
+        "reward_xp": 0,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Reach Valdris' Spire",
+                "flag": "explored.valdris_spire.floor1", "op": "==", "val": True,
+            },
+        ],
     },
+
     "main_act3_finale": {
         "name": "The Last Warden",
-        "description": "You are inside Valdris' Spire. "
-                       "At the top waits what is left of the man who broke the wards "
-                       "and unmade Ashenmoor. "
-                       "Maren is here too — which side she lands on may depend on you. "
-                       "Reach the summit. End this.",
+        "description": "Inside Valdris' Spire. At the top waits what remains of the man "
+                       "who broke the wards and unmade Ashenmoor. Maren is here too — "
+                       "which side she lands on may depend on you. Reach the summit.",
         "act": 3,
+        "giver_npc": None,
+        "turn_in_npc": None,
+        "auto_complete": True,
+        "reward_gold": 0,
+        "reward_xp": 1500,
+        "reward_items": [],
+        "objectives": [
+            {
+                "text": "Ascend to the summit of the Spire",
+                "flag": "explored.valdris_spire.floor5", "op": "==", "val": True,
+            },
+            {
+                "text": "Confront Valdris — or what remains of him",
+                "flag": "boss_defeated.shadow_valdris", "op": "==", "val": True,
+            },
+        ],
     },
 }
 
@@ -3479,6 +3728,25 @@ _NEW_DIALOGUES = {
 
     "captain_aldric": [
         {
+            "conditions": [
+                {"flag": "wolf_pelts_quest.count", "op": ">=", "value": 5},
+                {"flag": "quest.side_wolf_pelts.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "aldric_wolf_turnin",
+                "nodes": {
+                    "start": {
+                        "speaker": "Captain Aldric",
+                        "text": "You've got the pelts? Good. The tanner's been waiting. Here's your coin — well earned.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "side_wolf_pelts"},
+                        ],
+                        "choices": [{"text": "Happy to help.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
             "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
             "tree": {
                 "id": "aldric_post_mine",
@@ -3520,7 +3788,8 @@ _NEW_DIALOGUES = {
                     },
                     "trouble": {
                         "speaker": "Captain Aldric",
-                        "text": "Goblin raids getting bolder. And something's wrong in the old Hearthstone mine — workers won't go near it after dark. I've sent two patrols. Neither came back with good news.",
+                        "text": "Goblin raids getting bolder. And something's wrong in the old Hearthstone mine — workers won't go near it after dark. I've sent two patrols. Neither came back with good news. Oh — if you're heading east, the village tanner needs wolf pelts. Unusually large pack out there.",
+                        "on_enter": [{"action": "start_quest", "quest": "side_wolf_pelts"}],
                         "choices": [{"text": "We'll look into it.", "next": None}],
                     },
                     "mine": {
@@ -3709,6 +3978,25 @@ _NEW_DIALOGUES = {
 
     "guildmaster_oren": [
         {
+            "conditions": [
+                {"flag": "guild_trial.complete", "op": "==", "value": True},
+                {"flag": "quest.side_guild_initiation.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "oren_trial_done",
+                "nodes": {
+                    "start": {
+                        "speaker": "Guildmaster Oren",
+                        "text": "Word reached me. Floor 3 and back. You've earned the charter. Here's your payment — and my respect, which is worth more in this business.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "side_guild_initiation"},
+                        ],
+                        "choices": [{"text": "Good to be in business with you.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
             "conditions": [],
             "tree": {
                 "id": "oren_default",
@@ -3724,7 +4012,8 @@ _NEW_DIALOGUES = {
                     },
                     "register": {
                         "speaker": "Guildmaster Oren",
-                        "text": "Five gold. I write your names in the ledger, you get a charter, and you're recognized from here to the capital. Best investment you'll make.",
+                        "text": "Five gold. I write your names in the ledger, you get a charter, and you're recognized from here to the capital. Best investment you'll make. I'll also need you to prove your worth — reach floor 3 of any major dungeon and come back to me.",
+                        "on_enter": [{"action": "start_quest", "quest": "side_guild_initiation"}],
                         "choices": [{"text": "Sounds reasonable.", "next": None},
                                     {"text": "Maybe later.", "next": None}],
                     },
@@ -4055,12 +4344,38 @@ _NEW_DIALOGUES = {
         },
     ],
 
-    "tide_priest_oran": [
+        "tide_priest_oran": [
+        {
+            "conditions": [{"flag": "item.hearthstone.2", "op": "==", "value": True}],
+            "tree": {
+                "id": "oran_hs3",
+                "nodes": {
+                    "start": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "You recovered the bay stone. The third is in Dragon's Tooth archipelago. I've known its location for twenty years and dreaded this moment. The warden there isn't dead — he's worse than dead.",
+                        "on_enter": [{"action": "start_quest", "quest": "main_hearthstone_3"}],
+                        "choices": [
+                            {"text": "How do we get there?", "next": "passage"},
+                            {"text": "What's waiting for us?", "next": "waiting"},
+                        ],
+                    },
+                    "passage": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Dockhand Riv can arrange passage — she knows every captain who owes a favor. Tell her I sent you. Two days crossing in good weather.",
+                        "choices": [{"text": "We'll find her.", "next": None}],
+                    },
+                    "waiting": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Karreth. The last Warden of the outer islands — a dragon-tamer before the Fading took his mind. He commands the creatures there. Bring fire.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                },
+            },
+        },
         {
             "conditions": [],
             "tree": {
-                "id": "oran_default",
-                "nodes": {
+                "id": "oran_default",             "nodes": {
                     "start": {
                         "speaker": "Tide Priest Oran",
                         "text": "The tides have been wrong for months. Coming in at the wrong hour. Going out too fast. The sea knows something is out of balance — she always does, long before the land catches on.",
@@ -4086,6 +4401,7 @@ _NEW_DIALOGUES = {
                     "active": {
                         "speaker": "Tide Priest Oran",
                         "text": "Then the sea favors you. There's a stone under the bay — it was sealed there centuries ago by the first tide priests. If Valdris finds it, the tides won't be the only thing that goes wrong.",
+                        "on_enter": [{"action": "start_quest", "quest": "main_hearthstone_2"}],
                         "choices": [{"text": "We'll protect it.", "next": None}],
                     },
                     "fading": {
@@ -4331,6 +4647,33 @@ _NEW_DIALOGUES = {
 
     "archmage_solen": [
         {
+            "conditions": [
+                {"flag": "explored.abandoned_mine.floor3", "op": "==", "value": True},
+                {"flag": "explored.sunken_crypt.floor2", "op": "==", "value": True},
+                {"flag": "explored.ruins_ashenmoor.floor2", "op": "==", "value": True},
+                {"flag": "quest.side_academy_research.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "solen_research_done",
+                "nodes": {
+                    "start": {
+                        "speaker": "Archmage Solen",
+                        "text": "You returned. And you have all three readings. Extraordinary — most adventurers wouldn't survive two of these sites, let alone three. Here is your payment, and my genuine gratitude.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "side_academy_research"},
+                        ],
+                        "choices": [{"text": "What does the data show?", "next": "data"},
+                                    {"text": "Glad to help.", "next": None}],
+                    },
+                    "data": {
+                        "speaker": "Archmage Solen",
+                        "text": "Exactly what I feared. The ley resonance at each site has dropped by thirty to forty percent since my last readings. At this rate, the primary network fails within the year. We need those Hearthstones.",
+                        "choices": [{"text": "Then we keep moving.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
             "conditions": [{"flag": "main_hearthstone_1.found", "op": "==", "value": True}],
             "tree": {
                 "id": "solen_knows",
@@ -4390,7 +4733,11 @@ _NEW_DIALOGUES = {
                     },
                     "free": {
                         "speaker": "Archmage Solen",
-                        "text": "Then perhaps you can succeed where letters have failed. Find the stones. Don't let him have them. Come back here when you do — the teleport circle can help you move faster than his agents.",
+                        "text": "Then perhaps you can succeed where letters have failed. Find the stones — don't let him have them. Come back here when you do, the teleport circle can help you move faster than his agents. I also need ley readings from three Fading zones — dangerous work but vital for my models. I'll pay well.",
+                        "on_enter": [
+                            {"action": "start_quest", "quest": "main_thornhaven"},
+                            {"action": "start_quest", "quest": "side_academy_research"},
+                        ],
                         "choices": [{"text": "We'll return.", "next": None}],
                     },
                     "restore": {
@@ -4665,8 +5012,11 @@ _NEW_DIALOGUES = {
                     },
                     "not_stopping": {
                         "speaker": "Guild Commander Varek",
-                        "text": "Good. I have an operative who's been tracking his supply routes for six months. I'll arrange a meeting. Don't mention this to the Council — half of them are his.",
-                        "on_exit": [{"action": "set_flag", "flag": "lore.varek_contact", "value": True}],
+                        "text": "Good. I have an operative who's been tracking his supply routes for six months. I'll arrange a meeting. Don't mention this to the Council — half of them are his. When you're ready to move on the Spire, I can get you resources.",
+                        "on_exit": [
+                            {"action": "start_quest", "quest": "main_act3_spire"},
+                            {"action": "set_flag", "flag": "lore.varek_contact", "value": True},
+                        ],
                         "choices": [{"text": "Understood.", "next": None}],
                     },
                     "contracts": {

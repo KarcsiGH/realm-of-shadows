@@ -328,9 +328,9 @@ class Game:
                         if result == "close" or self.quest_log_ui.finished:
                             self.quest_log_ui = None
                     elif e.button == 4:
-                        self.quest_log_ui.handle_scroll(-1)
+                        self.quest_log_ui.handle_scroll(-1, mx, my)
                     elif e.button == 5:
-                        self.quest_log_ui.handle_scroll(1)
+                        self.quest_log_ui.handle_scroll(1, mx, my)
                     return
                 if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE and self.quest_log_ui:
                     self.quest_log_ui = None
@@ -1867,6 +1867,14 @@ class Game:
                 self.current_town_id = town_id
                 self.town_ui = TownUI(self.party, town_id=town_id)
 
+                # ── Track town visits for quest objectives ──
+                from core.story_flags import set_flag, start_quest, get_flag as _gf
+                set_flag(f"town.{town_id}.visited", True)
+                # Auto-start act3 finale when entering Valdris' Spire (treated as dungeon,
+                # but thornhaven visit starts main_thornhaven objective)
+                if town_id == "thornhaven":
+                    start_quest("main_thornhaven")  # safe: no-op if already started
+
                 # ── Act 1 Climax: Shadow attack on Briarhollow ──
                 # Fires once, after Hearthstone 1 is collected, on next visit to Briarhollow
                 if town_id == "briarhollow":
@@ -2097,6 +2105,16 @@ class Game:
                 # Track exploration for job board
                 from data.job_board import on_dungeon_floor_reached
                 on_dungeon_floor_reached(self.dungeon_state.dungeon_id, floor)
+                # Quest hooks: guild trial, act3 finale
+                from core.story_flags import set_flag as _sf, start_quest as _sq, get_flag as _gf
+                if floor >= 3:
+                    _sf("guild_trial.complete", True)
+                if self.dungeon_state.dungeon_id == "valdris_spire":
+                    _sq("main_act3_finale")  # auto-start finale quest
+
+                # Auto-advance quests (explore objectives)
+                from core.story_flags import auto_advance_quests
+                auto_advance_quests(self.party)
                 # Show story floor message if available
                 from data.story_data import get_dungeon_floor_message
                 msg = get_dungeon_floor_message(self.dungeon_state.dungeon_id, floor)
@@ -2295,6 +2313,20 @@ class Game:
                 for e in self.combat_state.enemies:
                     if not e.get("alive", True):
                         on_enemy_killed(e["name"])
+                        # Track wolf pelts for side quest
+                        if "Wolf" in e.get("name", "") or "wolf" in e.get("name", ""):
+                            from core.story_flags import increment
+                            increment("wolf_pelts_quest.count")
+
+                # ── Auto-advance any quests whose objectives are now met ──
+                from core.story_flags import auto_advance_quests
+                newly_done = auto_advance_quests(self.party)
+                for qid in newly_done:
+                    from data.story_data import QUESTS
+                    qname = QUESTS.get(qid, {}).get("name", qid)
+                    self.save_msg = f"Quest complete: {qname}"
+                    self.save_msg_color = (80, 220, 120)
+                    self.save_msg_timer = 4000
 
                 self.start_post_combat()
             else:
