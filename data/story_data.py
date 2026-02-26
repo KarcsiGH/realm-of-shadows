@@ -3727,6 +3727,38 @@ _NEW_DIALOGUES = {
     # ── Briarhollow ────────────────────────────────────────
 
     "captain_aldric": [
+        # Turn-in: missing patrol found (journal on goblin warren floor 2)
+        {
+            "conditions": [
+                {"flag": "quest.side_missing_patrol.state", "op": ">=", "value": 2},
+                {"flag": "quest.side_missing_patrol.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "aldric_patrol_turnin",
+                "nodes": {
+                    "start": {
+                        "speaker": "Captain Aldric",
+                        "text": "You found the journal? So they're gone. All six of them. I'll need a moment. The road just... wasn't there anymore. That's not wolves or goblins — that's something else entirely.\nThank you for bringing it back. Their families deserved to know.",
+                        "on_enter": [{"action": "complete_quest", "quest": "side_missing_patrol"}],
+                        "choices": [
+                            {"text": "The Fading took the road. It's spreading.", "next": "fading"},
+                            {"text": "We're sorry for your loss.", "next": "sorry"},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "Captain Aldric",
+                        "text": "The Fading. Maren's word for it. I thought it was superstition. Now I don't know what to believe. How do you fight something that erases roads?",
+                        "choices": [{"text": "That's what we're trying to find out.", "next": None}],
+                    },
+                    "sorry": {
+                        "speaker": "Captain Aldric",
+                        "text": "So am I. Good soldiers. Keep moving — I'll handle the paperwork. You have bigger problems to deal with.",
+                        "choices": [{"text": "We will.", "next": None}],
+                    },
+                },
+            },
+        },
+        # Turn-in: wolf pelts collected
         {
             "conditions": [
                 {"flag": "wolf_pelts_quest.count", "op": ">=", "value": 5},
@@ -3782,9 +3814,16 @@ _NEW_DIALOGUES = {
                         "text": "I'm the town guard captain. Twelve men, one broken crossbow, and a gate that sticks. If trouble comes, I'm counting on adventurers more than I should be.",
                         "choices": [
                             {"text": "What kind of trouble?", "next": "trouble"},
+                            {"text": "Any missing patrols?", "next": "patrol"},
                             {"text": "The mine — what do you know about it?", "next": "mine"},
                             {"text": "We can handle ourselves.", "next": "confident"},
                         ],
+                    },
+                    "patrol": {
+                        "speaker": "Captain Aldric",
+                        "text": "Six guards. Good people. I sent them east to check the road near the goblin caves three days ago. Nothing since. If you're heading that way — keep an eye out. Whatever happened to them, I want answers.",
+                        "on_enter": [{"action": "start_quest", "quest": "side_missing_patrol"}],
+                        "choices": [{"text": "We'll find out what happened.", "next": None}],
                     },
                     "trouble": {
                         "speaker": "Captain Aldric",
