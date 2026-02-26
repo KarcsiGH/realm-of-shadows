@@ -160,6 +160,8 @@ def _execute_action(action):
         start_quest(action["quest"])
     elif act == "complete_quest":
         complete_quest(action["quest"])
+        # Distribute rewards — party will be passed in when available
+        # Rewards are distributed in town_ui after dialogue finishes via auto_advance_quests
     elif act == "set_quest":
         set_quest_state(action["quest"], action["state"])
     elif act == "discover_lore":

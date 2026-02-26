@@ -249,16 +249,25 @@ def auto_advance_quests(party=None):
     """
     For any active quest whose all objectives are now satisfied,
     auto-complete it and distribute rewards.
-    Only auto-completes quests with no turn_in_npc (narrative only),
-    or quests whose giver == turn_in (same NPC — player already spoke to them).
+    Also distributes rewards for quests just completed via dialogue
+    (state == -2 but not yet rewarded).
     Returns list of completed quest IDs.
     """
     from data.story_data import QUESTS
     completed_now = []
     for qid, q in QUESTS.items():
         state = _flags.get(f"quest.{qid}.state", 0)
+        rewarded_key = f"quest.{qid}.rewarded"
+
+        # Distribute rewards for quests recently completed via dialogue
+        if state == -2 and not _flags.get(rewarded_key):
+            _distribute_quest_rewards(qid, party)
+            _flags[rewarded_key] = True
+            completed_now.append(qid)
+            continue
+
         if state <= 0 or state == -2:
-            continue  # not active or already done
+            continue  # not active or already fully handled
         if not all_objectives_complete(qid):
             continue
         # Auto-complete: no turn_in, or flagged for auto
@@ -266,6 +275,7 @@ def auto_advance_quests(party=None):
         if turnin is None or q.get("auto_complete"):
             complete_quest(qid)
             _distribute_quest_rewards(qid, party)
+            _flags[rewarded_key] = True
             completed_now.append(qid)
     return completed_now
 

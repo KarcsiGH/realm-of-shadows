@@ -173,9 +173,14 @@ class TownUI:
             self.active_dialogue.draw(surface, mx, my, dt)
             return
 
-        # Clear dialogue if finished
+        # Clear dialogue if finished — distribute any quest rewards
         if self.active_dialogue and self.active_dialogue.finished:
             self.active_dialogue = None
+            try:
+                from core.story_flags import auto_advance_quests
+                auto_advance_quests(self.party)
+            except Exception:
+                pass
 
         surface.fill(TOWN_BG)
 
@@ -1747,7 +1752,11 @@ class TownUI:
             result = self.active_dialogue.handle_click(mx, my)
             if self.active_dialogue.finished:
                 self.active_dialogue = None
-            return None
+                try:
+                    from core.story_flags import auto_advance_quests
+                    auto_advance_quests(self.party)
+                except Exception:
+                    pass
 
         # ── Hub view ──
         if self.view == self.VIEW_HUB:
