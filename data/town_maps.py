@@ -69,6 +69,7 @@ BLD_FORGE     = "forge"
 BLD_EXIT      = "exit"       # town gate
 BLD_HOUSE     = "house"      # generic NPC house
 BLD_JOBBOARD  = "jobboard"   # quest board (future)
+BLD_GUILD     = "guild"      # adventurers/rangers guild
 
 
 # ══════════════════════════════════════════════════════════

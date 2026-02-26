@@ -752,6 +752,19 @@ class TownUI:
         self.walk_interact_timer = 3000
         self.msg_color = color
 
+
+    def _enter_guild(self, bld):
+        """Enter a guild building — show the job board / NPC dialogue."""
+        bld_name = bld.get("name", "Guild")
+        self._show_walk_msg(f"Entered {bld_name}.", CREAM)
+        # Guild buildings use the job board for now;
+        # if the town has a guildmaster NPC they'll be interactable on the map
+        self.view = self.VIEW_JOBBOARD
+
+    def _draw_guild(self, surface, mx, my):
+        """Draw the guild view — currently shares the job board UI."""
+        self._draw_jobboard(surface, mx, my)
+
     def _return_to_town(self):
         """Return to the main town view (walkable or hub)."""
         if self.town_data:

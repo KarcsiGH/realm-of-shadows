@@ -1527,7 +1527,7 @@ class Game:
         self.combat_ui.draw(self.screen, mx, my)
 
         # Auto-execute enemy turns with a small delay for readability
-        if (self.combat_state.phase not in ("victory", "defeat") and
+        if (self.combat_state.phase not in ("victory", "defeat", "fled") and
                 not self.combat_state.is_player_turn()):
             self.enemy_turn_delay += self.clock.get_time()
             self.combat_ui.enemy_anim_timer += self.clock.get_time()
@@ -2404,7 +2404,7 @@ class Game:
                 self._handle_fled_combat()
                 return
 
-                # Reset UI mode after action
+        # Reset UI mode after action
         self.combat_ui.action_mode = "main"
 
 
