@@ -1739,6 +1739,20 @@ class Game:
             prompt = "Press any key to continue" if not is_last else "Press any key"
             txt(prompt, H - 50, 13, (pulse, pulse, pulse))
 
+    def _handle_fled_combat(self):
+        """Handle successful flee from combat.
+        Returns party to dungeon or world map — no rewards granted."""
+        self.combat_state = None
+        self.combat_ui = None
+        if self.dungeon_state:
+            # Fled from a dungeon encounter — return to dungeon
+            self.go_fade(S_DUNGEON)
+        elif self.current_town_id:
+            # Fled from a town-adjacent encounter
+            self.go_fade(S_TOWN)
+        else:
+            self.go_fade(S_WORLD_MAP)
+
     def _trigger_briarhollow_attack(self):
         """Trigger the Act 1 climax: shadow creatures attack Briarhollow.
         Called once when the party returns after collecting Hearthstone 1."""
@@ -2377,123 +2391,20 @@ class Game:
         elif action["type"] == "move":
             self.combat_state.execute_player_action("move", target=action["direction"])
         elif action["type"] == "switch_weapon":
-            # Weapon switch — swap weapon in combatant and character, costs action
-            item = action["item"]
-            actor = self.combat_state.get_current_combatant()
-            if actor:
-                char_ref = actor.get("character_ref")
-                if char_ref:
-                    old_weapon = actor.get("weapon")
-                    # Put old weapon back in inventory (if it's a real item, not starting)
-                    if old_weapon and old_weapon.get("name") != "Unarmed":
-                        old_copy = dict(old_weapon)
-                        old_copy["type"] = "weapon"
-                        old_copy["slot"] = "weapon"
-                        char_ref.inventory.append(old_copy)
-                    # Remove new weapon from inventory
-                    if item in char_ref.inventory:
-                        char_ref.inventory.remove(item)
-                    # Equip new weapon on combatant
-                    actor["weapon"] = dict(item)
-                    self.combat_state.log.append(
-                        f"{actor['name']} switches to {item.get('name', 'a weapon')}!"
-                    )
-                    # Advance turn (costs action)
-                    self.combat_state._advance_turn()
+            self.combat_state.execute_player_action("switch_weapon", item=action["item"])
 
         elif action["type"] == "use_consumable":
-            item = action["item"]
-            actor = self.combat_state.get_current_combatant()
-            if actor:
-                char_ref = actor.get("character_ref")
-                name = item.get("name", "item")
-                used = False
+            self.combat_state.execute_player_action("use_consumable", item=action["item"])
+            sfx.play("heal")  # generic item sound
 
-                # Healing potion
-                if item.get("heal", 0):
-                    from core.classes import get_all_resources
-                    max_res = get_all_resources(char_ref.class_name, char_ref.stats, char_ref.level)
-                    max_hp = max_res.get("HP", 1)
-                    old_hp = char_ref.resources.get("HP", 0)
-                    actor_hp = actor.get("hp", 0)
-                    healed = min(max_hp - old_hp, item["heal"])
-                    char_ref.resources["HP"] = old_hp + healed
-                    actor["hp"] = min(actor.get("max_hp", max_hp), actor_hp + healed)
-                    self.combat_state.log.append(
-                        f"{actor['name']} uses {name}: +{healed} HP!"
-                    )
-                    used = True
+        elif action["type"] == "flee":
+            self.combat_state.execute_player_action("flee")
+            # Check if flee succeeded
+            if self.combat_state.phase == "fled":
+                self._handle_fled_combat()
+                return
 
-                # MP restore
-                elif item.get("restore_mp", 0):
-                    from core.classes import get_all_resources
-                    max_res = get_all_resources(char_ref.class_name, char_ref.stats, char_ref.level)
-                    for rk in char_ref.resources:
-                        if "MP" in rk:
-                            max_val = max_res.get(rk, 0)
-                            old_val = char_ref.resources[rk]
-                            restored = min(max_val - old_val, item["restore_mp"])
-                            char_ref.resources[rk] = old_val + restored
-                            # Also restore combatant mp if tracked
-                            if rk in actor:
-                                actor[rk] = min(actor.get("max_" + rk, max_val), actor[rk] + restored)
-                            self.combat_state.log.append(
-                                f"{actor['name']} uses {name}: +{restored} {rk}!"
-                            )
-                            used = True
-                            break
-
-                # Scroll of Remove Curse
-                elif item.get("effect") == "remove_curse" or "Remove Curse" in name:
-                    cursed_slots = [
-                        s for s, eq in (char_ref.equipment or {}).items()
-                        if eq and eq.get("cursed") and not eq.get("curse_lifted")
-                    ]
-                    for slot in cursed_slots:
-                        eq = char_ref.equipment[slot]
-                        eq["curse_lifted"] = True
-                        char_ref.equipment[slot] = None
-                        char_ref.inventory.append(eq)
-                    self.combat_state.log.append(
-                        f"{actor['name']} uses {name}: curses lifted!"
-                        if cursed_slots else
-                        f"{actor['name']} uses {name}: no curse found."
-                    )
-                    used = True
-
-                # Scroll of Identify
-                elif "Identify" in name or item.get("effect") == "identify":
-                    from core.party_knowledge import mark_item_identified
-                    identified_name = None
-                    for member in self.party:
-                        for inv_item in member.inventory:
-                            if not inv_item.get("identified"):
-                                inv_item["identified"] = True
-                                inv_item["magic_identified"] = True
-                                inv_item["material_identified"] = True
-                                mark_item_identified(inv_item.get("name", ""))
-                                identified_name = inv_item.get("name", "item")
-                                break
-                        if identified_name:
-                            break
-                    self.combat_state.log.append(
-                        f"{actor['name']} uses {name}: identified {identified_name}!"
-                        if identified_name else
-                        f"{actor['name']} uses {name}: nothing to identify."
-                    )
-                    used = True
-
-                if used:
-                    # Consume item
-                    stack = item.get("stack", 1)
-                    if stack > 1:
-                        item["stack"] = stack - 1
-                    elif item in char_ref.inventory:
-                        char_ref.inventory.remove(item)
-                    # Costs the turn
-                    self.combat_state._advance_turn()
-
-        # Reset UI mode after action
+                # Reset UI mode after action
         self.combat_ui.action_mode = "main"
 
 

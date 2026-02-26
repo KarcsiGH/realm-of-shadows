@@ -476,10 +476,19 @@ class CombatUI:
         row_label = actor["row"].capitalize()
         actions.append(("Move", f"Change position (now: {row_label})"))
 
-        # Add items option if character has usable inventory
+        # Add items option if character has usable items
         char_ref = actor.get("character_ref")
-        if char_ref and (char_ref.inventory or any(char_ref.equipment.get(s) for s in ("weapon",))):
-            actions.append(("Items", "Switch weapon or use an item"))
+        has_usable = char_ref and (
+            any(i.get("type") in ("consumable", "potion", "food") or
+                i.get("subtype") in ("potion", "scroll", "food") or
+                i.get("type") == "weapon"
+                for i in (char_ref.inventory or []))
+        )
+        if has_usable:
+            actions.append(("Items", "Use potion or switch weapon"))
+
+        # Flee always available
+        actions.append(("Flee", "Attempt to escape (~45-90% chance)"))
 
         bx = 15
         by = ACTION_Y + 36
@@ -863,9 +872,10 @@ class CombatUI:
             return None
 
         # Check back button in targeting/ability modes
-        back_rect = pygame.Rect(SCREEN_W - 120, ACTION_Y + 5, 100, 30)
+        back_rect = pygame.Rect(SCREEN_W - 140, ACTION_Y + 8, 120, 34)
         if self.action_mode != "main" and back_rect.collidepoint(mx, my):
             self.action_mode = "main"
+            self.selected_ability = None
             return None
 
         if self.action_mode == "main":
@@ -891,6 +901,8 @@ class CombatUI:
                     self.action_mode = "choose_move"
                 elif label == "Items":
                     self.action_mode = "choose_item"
+                elif label == "Flee":
+                    return {"type": "flee"}
             return None
 
         elif self.action_mode == "choose_ability":
@@ -900,13 +912,33 @@ class CombatUI:
                 if self.hover_action < len(abilities):
                     ab = abilities[self.hover_action]
                     ab_type = ab.get("type", "spell")
-                    # Route to proper target mode based on ability type
-                    if ab_type in ("heal", "buff", "cure") or "heal" in ab["name"].lower():
+                    target_field = ab.get("target", "single_enemy")
+                    ab_name_lower = ab["name"].lower()
+
+                    # AoE — auto-execute, no target selection needed
+                    if ab_type in ("aoe", "aoe_heal") or "aoe" in target_field:
+                        self.action_mode = "main"
+                        if "ally" in target_field or ab_type == "aoe_heal":
+                            return {"type": "ability", "ability": ab, "target": None}
+                        else:
+                            return {"type": "ability", "ability": ab, "target": None}
+
+                    # Self / all-allies buffs — no targeting needed
+                    elif target_field in ("self", "all_allies") or (
+                        ab_type == "buff" and target_field not in ("single_enemy",)
+                    ):
+                        self.action_mode = "main"
+                        return {"type": "ability", "ability": ab, "target": actor}
+
+                    # Heal targets allies
+                    elif ab_type in ("heal", "cure", "revive") or "heal" in ab_name_lower:
                         self.selected_ability = ab
-                        self.action_mode = "target_heal"  # targets allies
+                        self.action_mode = "target_heal"
+
+                    # Everything else targets enemies
                     else:
                         self.selected_ability = ab
-                        self.action_mode = "target_ability"  # targets enemies
+                        self.action_mode = "target_ability"
                     return None
 
         elif self.action_mode == "choose_move":

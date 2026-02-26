@@ -724,6 +724,40 @@ def resolve_move_position(combatant, direction):
     }
 
 
+
+
+def resolve_flee(fleers, enemies):
+    """Attempt to flee from combat.
+    Success chance: base 45% + (avg_party_dex - avg_enemy_speed)*2%
+    Caps at 90%, floor at 10%.
+    Returns result dict with 'success' bool and messages."""
+    import random
+    if not fleers or not enemies:
+        return {"action": "flee", "success": True, "messages": ["The party escapes!"]}
+
+    avg_dex = sum(f["stats"].get("DEX", 10) for f in fleers) / len(fleers)
+    avg_espeed = sum(e.get("speed_base", 10) for e in enemies if e.get("alive", True)) / max(1, len(enemies))
+
+    chance = 0.45 + (avg_dex - avg_espeed) * 0.02
+    chance = max(0.10, min(0.90, chance))
+    success = random.random() < chance
+
+    if success:
+        msgs = ["The party manages to escape!"]
+    else:
+        msgs = [f"The party fails to escape! (chance was {int(chance*100)}%)"]
+        # On failure, each enemy gets a free opportunistic strike on the nearest player
+        living_enemies = [e for e in enemies if e.get("alive", True)]
+        living_players = [f for f in fleers if f.get("alive", True)]
+        for enemy in living_enemies[:2]:  # max 2 opportunity attacks
+            if living_players:
+                target = random.choice(living_players)
+                result = resolve_enemy_attack(enemy, target)
+                for m in result.get("messages", []):
+                    msgs.append("  " + m)
+
+    return {"action": "flee", "success": success, "messages": msgs}
+
 def resolve_ability(attacker, target, ability, all_players=None, all_enemies=None):
     """
     Resolve a spell/ability use. Returns result dict.
@@ -1735,22 +1769,49 @@ class CombatState:
 
         self.log(f"── Round {self.round_num} ──")
 
-    def execute_player_action(self, action_type, target=None, ability=None):
-        """Execute a player's chosen action."""
+    def execute_player_action(self, action_type, target=None, ability=None, item=None):
+        """Execute a player's chosen action.
+        action_type: attack | defend | ability | move | flee | switch_weapon | use_consumable
+        target: enemy dict, player dict, direction string, or list (aoe)
+        ability: ability dict (for ability action)
+        item: item dict (for switch_weapon / use_consumable)
+        """
         actor = self.get_current_combatant()
         if not actor or actor["type"] != "player":
             return
 
         if action_type == "attack":
             result = resolve_basic_attack(actor, target, enemies=self.enemies)
+
         elif action_type == "defend":
             result = resolve_defend(actor)
+
         elif action_type == "ability":
             result = resolve_ability(actor, target, ability,
                                      all_players=self.players,
                                      all_enemies=self.enemies)
+
         elif action_type == "move":
             result = resolve_move_position(actor, target)  # target is direction string
+
+        elif action_type == "flee":
+            living_players = [p for p in self.players if p["alive"]]
+            living_enemies  = [e for e in self.enemies  if e["alive"]]
+            result = resolve_flee(living_players, living_enemies)
+            for msg in result.get("messages", []):
+                self.log(msg)
+            if result["success"]:
+                self.phase = "fled"   # caller checks this to exit combat
+            else:
+                self.advance_turn()
+            return  # early return — advance_turn already called or skipped
+
+        elif action_type == "switch_weapon":
+            result = self._exec_switch_weapon(actor, item)
+
+        elif action_type == "use_consumable":
+            result = self._exec_use_consumable(actor, item)
+
         else:
             return
 
@@ -1758,6 +1819,110 @@ class CombatState:
             self.log(msg)
 
         self.advance_turn()
+
+    # ── Internal action helpers ───────────────────────────────────
+
+    def _exec_switch_weapon(self, actor, item):
+        """Swap actor's equipped weapon. Costs action."""
+        from data.weapons import get_weapon
+        char_ref = actor.get("character_ref")
+        if not char_ref or not item:
+            return {"messages": ["Nothing to switch to."]}
+
+        old_weapon = actor.get("weapon")
+        # Return old weapon to inventory (if it's a real droppable item)
+        if old_weapon and old_weapon.get("name") not in ("Unarmed", "Monk Unarmed"):
+            old_copy = dict(old_weapon)
+            old_copy.setdefault("type", "weapon")
+            old_copy.setdefault("slot", "weapon")
+            char_ref.inventory.append(old_copy)
+        # Remove new weapon from inventory
+        if item in char_ref.inventory:
+            char_ref.inventory.remove(item)
+        # Equip
+        actor["weapon"] = dict(item)
+        char_ref.equipment["weapon"] = dict(item)
+        return {"messages": [f"{actor['name']} switches to {item.get('name', 'a weapon')}!"]}
+
+    def _exec_use_consumable(self, actor, item):
+        """Use a consumable item in combat. Costs action."""
+        if not item:
+            return {"messages": []}
+        char_ref = actor.get("character_ref")
+        name = item.get("name", "item")
+        msgs = []
+        used = False
+
+        # ── Healing ──────────────────────────────────────────────
+        if item.get("heal", 0):
+            heal_amt = item["heal"]
+            actual = min(actor["max_hp"] - actor["hp"], heal_amt)
+            actor["hp"] = min(actor["max_hp"], actor["hp"] + heal_amt)
+            if char_ref:
+                char_ref.resources["HP"] = actor["hp"]
+            msgs.append(f"{actor['name']} uses {name}: +{actual} HP!")
+            used = True
+
+        # ── MP restore ───────────────────────────────────────────
+        elif item.get("restore_mp", 0):
+            restore = item["restore_mp"]
+            for rk, cur in actor["resources"].items():
+                if "MP" in rk:
+                    max_val = actor["max_resources"].get(rk, cur)
+                    actual = min(max_val - cur, restore)
+                    actor["resources"][rk] += actual
+                    if char_ref:
+                        char_ref.resources[rk] = actor["resources"][rk]
+                    msgs.append(f"{actor['name']} uses {name}: +{actual} {rk}!")
+                    used = True
+                    break
+
+        # ── Remove Curse ─────────────────────────────────────────
+        elif item.get("effect") == "remove_curse" or "Remove Curse" in name:
+            if char_ref:
+                lifted = []
+                for slot, eq in list((char_ref.equipment or {}).items()):
+                    if eq and eq.get("cursed") and not eq.get("curse_lifted"):
+                        eq["curse_lifted"] = True
+                        char_ref.equipment[slot] = None
+                        char_ref.inventory.append(eq)
+                        lifted.append(eq.get("name", slot))
+                msgs.append(
+                    f"{actor['name']} uses {name}: lifted curse on {', '.join(lifted)}!"
+                    if lifted else
+                    f"{actor['name']} uses {name}: no curses found."
+                )
+            used = True
+
+        # ── Scroll of Identify ────────────────────────────────────
+        elif "Identify" in name or item.get("effect") == "identify":
+            from core.party_knowledge import mark_item_identified
+            found = None
+            if char_ref:
+                for inv_item in char_ref.inventory:
+                    if not inv_item.get("identified"):
+                        inv_item["identified"] = True
+                        inv_item["magic_identified"] = True
+                        inv_item["material_identified"] = True
+                        mark_item_identified(inv_item.get("name", ""))
+                        found = inv_item.get("name", "item")
+                        break
+            msgs.append(
+                f"{actor['name']} uses {name}: identified {found}!"
+                if found else
+                f"{actor['name']} uses {name}: nothing to identify."
+            )
+            used = True
+
+        if used and char_ref:
+            # Consume item (reduce stack or remove)
+            stack = item.get("stack", 1)
+            if stack > 1:
+                item["stack"] = stack - 1
+            elif item in char_ref.inventory:
+                char_ref.inventory.remove(item)
+
+        return {"messages": msgs}
 
     def execute_enemy_turn(self):
         """Let the current enemy take its AI-controlled action."""
