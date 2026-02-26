@@ -759,16 +759,120 @@ class TownUI:
 
 
     def _enter_guild(self, bld):
-        """Enter a guild building — show the job board / NPC dialogue."""
+        """Enter a guild building.
+        - If any party member has a pending ability branch choice, route directly to training.
+        - Otherwise show the guild hub menu.
+        """
         bld_name = bld.get("name", "Guild")
         self._show_walk_msg(f"Entered {bld_name}.", CREAM)
-        # Guild buildings use the job board for now;
-        # if the town has a guildmaster NPC they'll be interactable on the map
-        self.view = self.VIEW_JOBBOARD
+        self._guild_building_name = bld_name
+        self._guild_hover = -1
+
+        # Check for pending branch choices across the whole party
+        from core.abilities import has_branch_choice_pending
+        for c in self.party:
+            pending = has_branch_choice_pending(c)
+            if pending:
+                self.branch_pending_char = c
+                self.branch_pending_opts = pending
+                self.branch_hover_idx = -1
+                self._guild_branch_origin = True   # so Back returns to guild, not inn
+                self.view = self.VIEW_BRANCH_CHOICE
+                return
+
+        self.view = self.VIEW_GUILD
 
     def _draw_guild(self, surface, mx, my):
-        """Draw the guild view — currently shares the job board UI."""
-        self._draw_jobboard(surface, mx, my)
+        """Draw the Guild hub menu."""
+        from core.abilities import has_branch_choice_pending
+        surface.fill(TOWN_BG)
+
+        W, H = SCREEN_W, SCREEN_H
+        name = getattr(self, "_guild_building_name", "Adventurers' Guild")
+
+        # ── Header ──────────────────────────────────────────────────
+        header = pygame.Rect(0, 0, W, 72)
+        pygame.draw.rect(surface, (18, 14, 32), header)
+        pygame.draw.line(surface, (60, 50, 90), (0, 72), (W, 72), 1)
+        draw_text(surface, name.upper(), 28, 18, GOLD, 26, bold=True)
+        draw_text(surface, "\"We take the jobs no one else will touch.\"",
+                  28, 50, (100, 90, 130), 13)
+
+        # Back button
+        back = pygame.Rect(W - 140, 18, 120, 36)
+        draw_button(surface, back, "← Leave", hover=back.collidepoint(mx, my), size=13)
+        self._guild_back_btn = back
+
+        # ── Pending badge ───────────────────────────────────────────
+        pending_chars = [c for c in self.party if has_branch_choice_pending(c)]
+
+        # ── Menu options ────────────────────────────────────────────
+        options = [
+            {
+                "label":   "Take a Job",
+                "sub":     "Browse bounties, fetch quests, and exploration contracts",
+                "accent":  (80, 200, 120),
+                "action":  "jobboard",
+            },
+            {
+                "label":   "Train Abilities" + (" ⚡" if pending_chars else ""),
+                "sub":     (f"{', '.join(c.name for c in pending_chars)} "
+                            f"{'have' if len(pending_chars) > 1 else 'has'} a new path to choose!"
+                            if pending_chars
+                            else "View your class progression and ability paths"),
+                "accent":  (160, 120, 220) if pending_chars else (120, 100, 180),
+                "action":  "train",
+                "badge":   len(pending_chars),
+            },
+            {
+                "label":   "View Abilities",
+                "sub":     "See your full class progression tree",
+                "accent":  (100, 160, 220),
+                "action":  "classtree",
+            },
+        ]
+
+        CARD_W = W - 80
+        CARD_H = 88
+        START_Y = 110
+        GAP = 16
+        self._guild_option_rects = []
+
+        for i, opt in enumerate(options):
+            r = pygame.Rect(40, START_Y + i * (CARD_H + GAP), CARD_W, CARD_H)
+            hover = (getattr(self, "_guild_hover", -1) == i) or r.collidepoint(mx, my)
+            if r.collidepoint(mx, my):
+                self._guild_hover = i
+
+            accent = opt["accent"]
+            bg = tuple(min(255, c + 12) for c in SHOP_BG) if hover else SHOP_BG
+            bd = accent if hover else PANEL_BORDER
+            pygame.draw.rect(surface, bg, r, border_radius=6)
+            pygame.draw.rect(surface, bd, r, 2 if hover else 1, border_radius=6)
+
+            # Accent strip on left
+            strip = pygame.Rect(r.x, r.y + 8, 4, r.height - 16)
+            pygame.draw.rect(surface, accent, strip, border_radius=2)
+
+            # Label
+            draw_text(surface, opt["label"], r.x + 24, r.y + 16,
+                      accent if hover else CREAM, 20, bold=True)
+
+            # Subtitle
+            draw_text(surface, opt["sub"], r.x + 24, r.y + 50,
+                      (160, 150, 170), 13, max_width=CARD_W - 100)
+
+            # Badge for pending choices
+            if opt.get("badge"):
+                badge_r = pygame.Rect(r.right - 56, r.y + r.height // 2 - 14, 44, 28)
+                pygame.draw.rect(surface, (120, 60, 200), badge_r, border_radius=14)
+                draw_text(surface, str(opt["badge"]), badge_r.x + 14, badge_r.y + 6,
+                          (255, 255, 255), 14, bold=True)
+
+            self._guild_option_rects.append((r, opt["action"]))
+
+        # ── Party bar ───────────────────────────────────────────────
+        self._draw_party_bar(surface, mx, my)
 
     def _return_to_town(self):
         """Return to the main town view (walkable or hub)."""
@@ -1266,7 +1370,11 @@ class TownUI:
         c    = self.branch_pending_char
         opts = self.branch_pending_opts
         if not c or not opts:
-            self.view = self.VIEW_INN_LEVELUP_RESULT
+            if getattr(self, "_guild_branch_origin", False):
+                self._guild_branch_origin = False
+                self.view = self.VIEW_GUILD
+            else:
+                self.view = self.VIEW_INN_LEVELUP_RESULT
             return
 
         cls     = CLASSES.get(c.class_name, {})
@@ -2040,7 +2148,11 @@ class TownUI:
             c    = self.branch_pending_char
             opts = self.branch_pending_opts
             if not c or not opts:
-                self.view = self.VIEW_INN_LEVELUP_RESULT
+                if getattr(self, "_guild_branch_origin", False):
+                    self._guild_branch_origin = False
+                    self.view = self.VIEW_GUILD
+                else:
+                    self.view = self.VIEW_INN_LEVELUP_RESULT
                 return None
 
             CARD_W   = SCREEN_W // 2 - 40
@@ -2058,15 +2170,26 @@ class TownUI:
                         self.levelup_summary["branch_label"]  = label
                     self.branch_pending_char = None
                     self.branch_pending_opts = None
-                    self.view = self.VIEW_INN_LEVELUP_RESULT
+                    # Return to guild hub if that's where we came from
+                    if getattr(self, "_guild_branch_origin", False):
+                        self._guild_branch_origin = False
+                        sfx.play("quest_accept")
+                        self._msg(f"{c.name} chose: {label}", (200, 170, 255))
+                        self.view = self.VIEW_GUILD
+                    else:
+                        self.view = self.VIEW_INN_LEVELUP_RESULT
                     return None
 
         elif self.view == self.VIEW_CLASSTREE:
             # Back button
             back_btn = pygame.Rect(SCREEN_W - 130, 12, 110, 34)
             if back_btn.collidepoint(mx, my):
-                # Return to wherever we came from
-                if self.levelup_queue and self.levelup_current < len(self.levelup_queue):
+                # Return to guild if entered from there
+                if getattr(self, "_guild_classtree_origin", False):
+                    self._guild_classtree_origin = False
+                    self.view = self.VIEW_GUILD
+                # Return to wherever we came from in the inn flow
+                elif self.levelup_queue and self.levelup_current < len(self.levelup_queue):
                     self.view = self.VIEW_INN_LEVELUP
                 else:
                     self.view = self.VIEW_INN
@@ -2108,6 +2231,40 @@ class TownUI:
                            self.VIEW_FORGE_UPGRADE, self.VIEW_FORGE_ENCHANT,
                            self.VIEW_FORGE_REPAIR):
             return self._handle_forge_click(mx, my)
+
+        # ── Guild Hub ──
+        elif self.view == self.VIEW_GUILD:
+            # Back button
+            back = getattr(self, "_guild_back_btn", None)
+            if back and back.collidepoint(mx, my):
+                self._return_to_town()
+                return None
+
+            for rect, action in getattr(self, "_guild_option_rects", []):
+                if rect.collidepoint(mx, my):
+                    if action == "jobboard":
+                        self.view = self.VIEW_JOBBOARD
+                    elif action == "train":
+                        from core.abilities import has_branch_choice_pending
+                        # Route to branch choice if anyone has a pending decision
+                        pending_chars = [c for c in self.party if has_branch_choice_pending(c)]
+                        if pending_chars:
+                            c = pending_chars[0]
+                            self.branch_pending_char = c
+                            self.branch_pending_opts = has_branch_choice_pending(c)
+                            self.branch_hover_idx = -1
+                            self._guild_branch_origin = True
+                            self.view = self.VIEW_BRANCH_CHOICE
+                        else:
+                            # No choices pending — open class tree
+                            self.classtree_char_idx = 0
+                            self._guild_classtree_origin = True
+                            self.view = self.VIEW_CLASSTREE
+                    elif action == "classtree":
+                        self.classtree_char_idx = 0
+                        self._guild_classtree_origin = True
+                        self.view = self.VIEW_CLASSTREE
+                    return None
 
         # ── Job Board ──
         elif self.view == self.VIEW_JOBBOARD:
