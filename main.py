@@ -375,9 +375,12 @@ class Game:
                     # Load button
                     load_btn = pygame.Rect(150, 40, 120, 40)
                     if load_btn.collidepoint(mx, my):
-                        ok, party, msg = load_game()
+                        ok, party, world_state, msg = load_game()
                         if ok:
                             self.party = party
+                            if world_state:
+                                self.world_state = world_state
+                                self.world_state.party = self.party
                             self.save_msg = msg
                             self.save_msg_color = GREEN
                         else:
@@ -457,7 +460,7 @@ class Game:
                         # Auto-save when resting at inn
                         from core.save_load import save_game
                         try:
-                            save_game(self.party, self.world_state, "inn_autosave")
+                            save_game(self.party, world_state=self.world_state, slot_name="inn_autosave")
                         except Exception:
                             pass  # save is best-effort
                 elif e.button == 4:

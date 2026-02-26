@@ -273,19 +273,26 @@ def apply_level_up(character, free_stat=None):
     summary["hp_gain"] = hp_gain
 
     # Learn new abilities for this level
-    from core.abilities import CLASS_ABILITIES, get_branch_at_level
+    from core.abilities import CLASS_ABILITIES, get_branch_at_level, ABILITY_BRANCHES
     class_abilities = CLASS_ABILITIES.get(cls, [])
     known_names = {a["name"] for a in character.abilities}
     new_abilities = []
 
-    # Get branch options at this level (if any) — these require player choice, not auto-learn
+    # Collect ALL branch ability names for this class (across every branch level),
+    # not just the current level — prevents early auto-learn of future branch choices.
+    all_branch_names = {
+        opt["name"]
+        for level_opts in ABILITY_BRANCHES.get(cls, {}).values()
+        for opt in level_opts
+    }
+
+    # Get branch options exactly at this level (if any) — player must choose one
     branch_opts = get_branch_at_level(cls, new_level)
-    branch_names = {opt["name"] for opt in branch_opts} if branch_opts else set()
 
     for ab in class_abilities:
         if ab["name"] not in known_names and ab.get("level", 1) <= new_level:
-            # Skip branch abilities — player must choose
-            if ab["name"] in branch_names:
+            # Skip ALL branch abilities — player picks these at the right branch level
+            if ab["name"] in all_branch_names:
                 continue
             character.abilities.append(ab.copy())
             new_abilities.append(ab["name"])

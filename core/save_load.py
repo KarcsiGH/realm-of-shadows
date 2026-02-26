@@ -64,8 +64,63 @@ def deserialize_character(data):
     return char
 
 
-def save_game(party, slot_name="save1", metadata=None):
-    """Save the party to a JSON file. Returns (success, filepath, message)."""
+def serialize_world_state(ws):
+    """Convert a WorldState to a JSON-serializable dict. Returns None if ws is None."""
+    if ws is None:
+        return None
+    try:
+        travel = ws.travel
+        return {
+            "party_x": ws.party_x,
+            "party_y": ws.party_y,
+            "step_counter": ws.step_counter,
+            "discovered_locations": sorted(ws.discovered_locations),
+            "key_items": list(ws.key_items),
+            "seed": getattr(ws, "_seed", 42),
+            "travel": {
+                "has_horse": travel.has_horse,
+                "has_boat": travel.has_boat,
+                "has_carpet": travel.has_carpet,
+                "travel_mode": travel.travel_mode,
+                "boat_location": travel.boat_location,
+                "attuned_circles": list(travel.attuned_circles),
+                "rail_unlocked": travel.rail_unlocked,
+            },
+        }
+    except Exception:
+        return None
+
+
+def deserialize_world_state(data, party):
+    """Reconstruct a WorldState from saved dict. Returns None on failure."""
+    if not data:
+        return None
+    try:
+        from data.world_map import WorldState
+        seed = data.get("seed", 42)
+        ws = WorldState(party, seed=seed)
+        ws.party_x = data.get("party_x", ws.party_x)
+        ws.party_y = data.get("party_y", ws.party_y)
+        ws.step_counter = data.get("step_counter", 0)
+        ws.discovered_locations = set(data.get("discovered_locations", []))
+        ws.key_items = list(data.get("key_items", []))
+        travel_data = data.get("travel", {})
+        ws.travel.has_horse = travel_data.get("has_horse", False)
+        ws.travel.has_boat = travel_data.get("has_boat", False)
+        ws.travel.has_carpet = travel_data.get("has_carpet", False)
+        ws.travel.travel_mode = travel_data.get("travel_mode", "walk")
+        ws.travel.boat_location = travel_data.get("boat_location", None)
+        ws.travel.attuned_circles = list(travel_data.get("attuned_circles", []))
+        ws.travel.rail_unlocked = travel_data.get("rail_unlocked", False)
+        ws._update_fog()
+        return ws
+    except Exception:
+        return None
+
+
+def save_game(party, world_state=None, slot_name="save1", metadata=None):
+    """Save the party (and optionally world state) to a JSON file.
+    Returns (success, filepath, message)."""
     ensure_save_dir()
 
     # Party knowledge (identified items, known enemies)
@@ -77,13 +132,14 @@ def save_game(party, slot_name="save1", metadata=None):
     story = get_story_data()
 
     save_data = {
-        "version": 3,
+        "version": 4,
         "timestamp": datetime.now().isoformat(),
         "slot_name": slot_name,
         "metadata": metadata or {},
         "party": [serialize_character(c) for c in party],
         "knowledge": knowledge,
         "story_flags": story,
+        "world_state": serialize_world_state(world_state),
     }
 
     # Add summary metadata
@@ -102,11 +158,13 @@ def save_game(party, slot_name="save1", metadata=None):
 
 
 def load_game(slot_name="save1"):
-    """Load a party from a JSON file. Returns (success, party, message)."""
+    """Load a party (and world state) from a JSON file.
+    Returns (success, party, world_state, message).
+    world_state may be None if the save predates v4 or had no world data."""
     filepath = os.path.join(SAVE_DIR, f"{slot_name}.json")
 
     if not os.path.exists(filepath):
-        return False, None, f"No save found: {slot_name}"
+        return False, None, None, f"No save found: {slot_name}"
 
     try:
         with open(filepath, "r") as f:
@@ -126,9 +184,12 @@ def load_game(slot_name="save1"):
             from core.story_flags import load_save_data as load_story
             load_story(story)
 
-        return True, party, f"Loaded {slot_name}"
+        # Restore world state (v4+ saves only)
+        world_state = deserialize_world_state(save_data.get("world_state"), party)
+
+        return True, party, world_state, f"Loaded {slot_name}"
     except Exception as e:
-        return False, None, f"Load failed: {e}"
+        return False, None, None, f"Load failed: {e}"
 
 
 def list_saves():
