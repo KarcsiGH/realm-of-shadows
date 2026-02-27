@@ -177,9 +177,10 @@ class DungeonUI:
         self._move_start_y   = self.py
         self._move_target_x  = self.px
         self._move_target_y  = self.py
-        self._move_anim_t    = 0.0   # 0..1 progress
+        self._move_anim_t    = 1.0   # start at 1.0 = no animation in progress
+        self._turn_start     = self.angle
         self._turn_target    = self.angle
-        self._turn_anim_t    = 0.0
+        self._turn_anim_t    = 1.0   # start at 1.0 = no animation in progress
         self._step_cooldown  = 0.0   # seconds before next input accepted
         self.pulse = 0.0
 
