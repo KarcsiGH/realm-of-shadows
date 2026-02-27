@@ -60,6 +60,7 @@ S_CAMP        = 16   # full camp screen (dungeon/overworld)
 S_CHEST       = 17   # chest loot assignment screen
 S_ATTACK_CINEMATIC = 18  # Act 1 climax: shadow attack on Briarhollow
 S_ENDING           = 19  # Epilogue / credits after Valdris defeated
+S_GAME_OVER        = 20  # Party wipe screen before returning to title
 
 
 class Game:
@@ -557,6 +558,8 @@ class Game:
             self._handle_attack_cinematic_input(e)
         elif self.state == S_ENDING:
             self._handle_ending_input(e)
+        elif self.state == S_GAME_OVER:
+            self._handle_game_over_input(e)
 
         elif self.state == S_CAMP:
             if self.camp_ui:
@@ -665,6 +668,7 @@ class Game:
         elif self.state == S_CHEST:     self._draw_chest(mx, my)
         elif self.state == S_ATTACK_CINEMATIC: self._draw_attack_cinematic(mx, my)
         elif self.state == S_ENDING:           self._draw_ending(mx, my)
+        elif self.state == S_GAME_OVER:        self._draw_game_over(mx, my)
 
     # ── Title Screen ──────────────────────────────────────────
 
@@ -1532,8 +1536,17 @@ class Game:
             self.enemy_turn_delay += self.clock.get_time()
             self.combat_ui.enemy_anim_timer += self.clock.get_time()
             if self.enemy_turn_delay > 600:  # 600ms delay between enemy actions
-                self.combat_state.execute_enemy_turn()
-                sfx.play("hit_physical")  # enemy attack sound
+                result = self.combat_state.execute_enemy_turn()
+                # Pick sound from what actually happened
+                if result.get("hit") is False:
+                    sfx.play("miss")
+                elif result.get("is_crit"):
+                    sfx.play("hit_critical")
+                elif result.get("action") == "enemy_attack":
+                    sfx.play("hit_physical")
+                # Play death sound if a player just went down
+                if result.get("defender", {}).get("alive") is False:
+                    sfx.play("death")
                 self.enemy_turn_delay = 0
                 self.combat_ui.enemy_anim_timer = 0
 
@@ -1560,12 +1573,16 @@ class Game:
             "sunken_crypt":    "spire_key",         # unlocks Valdris' Spire
             "ruins_ashenmoor": "crypt_amulet",      # unlocks Sunken Crypt
             "dragons_tooth":   "dragon_scale",      # story trophy; Karreth's scale
+            "pale_coast":      "pale_coast_cleared",
+            "windswept_isle":  "isle_cleared",
         }
         # Hearthstone numbers per dungeon
         HEARTHSTONE_MAP = {
             "abandoned_mine": 1,
             "sunken_crypt":   2,
             "dragons_tooth":  3,
+            "pale_coast":     4,
+            "windswept_isle": 5,
         }
         # Map dungeon IDs to boss NPC IDs (for dialogue conditions)
         BOSS_NPC_IDS = {
@@ -1575,7 +1592,10 @@ class Game:
             "sunken_crypt":    "sunken_warden",
             "ruins_ashenmoor": "ashvar",
             "dragons_tooth":   "karreth",
+            "pale_coast":      "pale_sentinel",
+            "windswept_isle":  "isle_keeper",
             "valdris_spire":   "valdris",
+            "shadow_throne":   "shadow_valdris",
         }
         key = BOSS_KEY_GRANTS.get(dungeon_id)
         if key and self.world_state:
@@ -1603,8 +1623,29 @@ class Game:
         if boss_npc:
             defeat_boss(boss_npc)
 
-        # Check for ending condition: Valdris defeated
-        if dungeon_id == "valdris_spire":
+        # Pale Sentinel — if she yielded peacefully, skip the "boss defeated" fanfare tone
+        if dungeon_id == "pale_coast" and get_flag("sentinel.yielded"):
+            set_flag("boss_defeated.pale_coast", True)  # already set by dialogue, ensure consistency
+
+        # Valdris Phase 1 → trigger Phase 2 immediately
+        if dungeon_id == "shadow_throne":
+            phase1_enc = "boss_valdris_phase1"
+            current_enc = getattr(self, "_last_boss_encounter", None)
+            if current_enc == phase1_enc and not get_flag("valdris.phase2_done"):
+                # Queue phase 2 combat
+                set_flag("valdris.phase2_triggered", True)
+                from data.bestiary_m9 import NEW_ENCOUNTERS
+                phase2 = NEW_ENCOUNTERS.get("boss_valdris_phase2", {})
+                if phase2:
+                    self._queue_phase2_boss = phase2
+                    return  # don't fire ending yet
+
+        # Valdris Phase 2 done → trigger ending
+        if dungeon_id == "shadow_throne" and get_flag("valdris.phase2_triggered"):
+            set_flag("valdris.phase2_done", True)
+            set_flag("boss_defeated.shadow_valdris", True)
+            self._trigger_ending()
+        elif dungeon_id == "shadow_throne":
             self._trigger_ending()
 
     def _sync_flag_keys(self):
@@ -1635,6 +1676,80 @@ class Game:
         self._ending_key_index = 0
         self._ending_input_ready = False
         self.go(S_ENDING)
+
+    # ── Game Over Screen ──────────────────────────────────────────
+
+    def _handle_game_over_input(self, event):
+        import pygame
+        if not self._game_over_ready:
+            return
+        if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+            # Build inn UI with the recovery message, then fade to town
+            self.town_ui = TownUI(self.party, town_id=self.current_town_id)
+            self.town_ui.inn_result = (
+                "Your party has fallen...\n"
+                "You awaken at the inn, battered and bruised.\n"
+                "(25% of your gold was lost)"
+            )
+            self.town_ui.view = self.town_ui.VIEW_INN
+            self.go_fade(S_TOWN)
+
+    def _draw_game_over(self, mx, my):
+        import pygame
+        dt = self.clock.get_time() / 1000.0
+        self._game_over_timer = getattr(self, "_game_over_timer", 0.0) + dt
+        t = self._game_over_timer
+
+        surf = self.screen
+        W, H = surf.get_size()
+
+        # Dark red-tinged background
+        surf.fill((8, 2, 2))
+
+        def fnt(sz):
+            try:    return pygame.font.SysFont("georgia", sz)
+            except: return pygame.font.Font(None, sz + 4)
+
+        def txt(text, y, size=18, color=(220, 200, 190), alpha=255):
+            f = fnt(size)
+            s = f.render(text, True, color)
+            s.set_alpha(min(255, alpha))
+            surf.blit(s, (W // 2 - s.get_width() // 2, y))
+
+        # Fade in over 1.5s
+        fade = min(1.0, t / 1.5)
+        alpha = int(255 * fade)
+
+        # Title
+        txt("YOUR PARTY HAS FALLEN", H // 2 - 120, 38, (200, 60, 60), alpha)
+
+        # Thin red divider
+        if fade > 0.3:
+            line_alpha = int(255 * min(1.0, (t - 0.4) / 0.8))
+            line_surf = pygame.Surface((320, 1), pygame.SRCALPHA)
+            line_surf.fill((160, 40, 40, line_alpha))
+            surf.blit(line_surf, (W // 2 - 160, H // 2 - 72))
+
+        # Character names and HP
+        if fade > 0.5:
+            char_alpha = int(255 * min(1.0, (t - 0.7) / 0.8))
+            y_start = H // 2 - 50
+            for i, c in enumerate(self.party):
+                name_color = (160, 80, 80) if c.resources.get("HP", 0) <= 0 else (180, 160, 140)
+                status = "Fallen" if c.resources.get("HP", 0) <= 0 else "Unconscious"
+                txt(f"{c.name}  —  {status}", y_start + i * 26, 16, name_color, char_alpha)
+
+        # Penalty reminder
+        if fade > 0.8:
+            pen_alpha = int(255 * min(1.0, (t - 1.1) / 0.6))
+            txt("25% of your gold has been lost.", H // 2 + 70, 15, (140, 110, 110), pen_alpha)
+            txt("Your party wakes at the last inn.", H // 2 + 94, 15, (140, 110, 110), pen_alpha)
+
+        # Prompt — appears after 2.5s
+        if t > 2.5:
+            self._game_over_ready = True
+            pulse = int(100 + 80 * abs((t * 1.2) % 2 - 1))
+            txt("Press any key to continue", H - 55, 14, (pulse, pulse // 2, pulse // 2))
 
     def _handle_ending_input(self, event):
         import pygame
@@ -2347,29 +2462,38 @@ class Game:
 
                 self.start_post_combat()
             else:
-                # DEFEAT — TPK handling
+                # DEFEAT — TPK: show game over screen, then restore at inn
                 sfx.stop_music()
                 sfx.play("defeat")
-                # All characters wake at 1 HP with resurrection sickness at last inn
+                # Apply penalties immediately (seen on game over screen)
                 for c in self.party:
                     c.resources["HP"] = 1
-                    # Lose 25% of gold
-                    c.gold = int(c.gold * 0.75)
+                    c.gold = int(c.gold * 0.75)  # 25% gold lost
                 from core.status_effects import add_resurrection_sickness
                 for c in self.party:
                     add_resurrection_sickness(c)
-                # Return to town
+                # Store context for the game over screen
+                self._game_over_dungeon = getattr(self.dungeon_state, "dungeon_id", None)
+                self._game_over_timer   = 0.0
+                self._game_over_ready   = False
+                # Clear dungeon state — recovery happens after screen
                 self.dungeon_state = None
-                self.dungeon_ui = None
-                self.town_ui = TownUI(self.party, town_id=self.current_town_id)
-                self.town_ui.inn_result = "Your party has fallen... You awaken at the inn, battered and bruised. (25% gold lost)"
-                self.town_ui.view = self.town_ui.VIEW_INN
-                self.go_fade(S_TOWN)
+                self.dungeon_ui    = None
+                self.go(S_GAME_OVER)
             return
 
         if action["type"] == "attack":
-            self.combat_state.execute_player_action("attack", target=action["target"])
-            sfx.play("hit_physical")
+            result = self.combat_state.execute_player_action("attack", target=action["target"])
+            # Pick sound from what actually happened
+            if result and result.get("hit") is False:
+                sfx.play("miss")
+            elif result and result.get("is_crit"):
+                sfx.play("hit_critical")
+            else:
+                sfx.play("hit_physical")
+            # Enemy killed?
+            if result and result.get("defender", {}).get("alive") is False:
+                sfx.play("death")
         elif action["type"] == "defend":
             self.combat_state.execute_player_action("defend")
             sfx.play("block")

@@ -308,6 +308,45 @@ def _generate_all_sounds():
     _sounds["item_pickup"]    = _make_sound(_concat(
         _sine(700, 0.10, 0.22), _sine(900, 0.14, 0.28)))
 
+    # ── Exploration ─────────────────────────────────────────────
+    _sounds["encounter"]  = _make_sound(_mix(               # random combat starts
+        _noise(0.20, 0.40),
+        _concat(_sine(180, 0.10, 0.28), _sine(240, 0.10, 0.32), _sine(320, 0.18, 0.38))))
+    _sounds["discovery"]  = _make_sound(_concat(            # new area / secret found
+        _sine(523, 0.14, 0.22), _sine(659, 0.14, 0.26),
+        _sine(784, 0.14, 0.28), _sine(1047, 0.32, 0.36)))
+    _sounds["camp_rest"]  = _make_sound(_concat(            # resting at camp or inn
+        _sine(330, 0.30, 0.18), _silence(0.10),
+        _sine(370, 0.30, 0.18), _silence(0.10),
+        _sine(440, 0.50, 0.20)))
+    _sounds["trap"]       = _make_sound(_mix(               # trap detected / stepped on
+        _noise(0.28, 0.36), _sweep(700, 120, 0.32, 0.28)))
+    _sounds["step"]       = _make_sound(                    # footstep in dungeon
+        _mix(_noise(0.08, 0.12, seed=17), _sine(90, 0.08, 0.10)))
+
+    # ── Ambient loops (kept short; play() on loop channel) ──────
+    # Town: gentle warm hum suggesting hearth and crowd
+    _sounds["town_ambient"]  = _make_sound(_concat(
+        _sine(220, 1.2, 0.06, fade_out=False),
+        _sine(330, 0.8, 0.04, fade_out=False),
+        _sine(220, 1.0, 0.06, fade_out=False)))
+    # World map: open wind-like sweep
+    _sounds["world_ambient"] = _make_sound(
+        _bandpass_noise(3.0, 180, 80, volume=0.08, seed=88))
+    # Dungeon: low resonant drone
+    _sounds["dungeon_ambient"] = _make_sound(_mix(
+        _sine(65, 2.5, 0.08, fade_out=False),
+        _bandpass_noise(2.5, 110, 40, volume=0.05, seed=66)))
+    # Combat music: short tense loop — percussive noise bursts on a rhythm
+    _sounds["combat_music"]  = _make_sound(_concat(
+        _mix(_noise(0.10, 0.32), _sine(110, 0.10, 0.18)), _silence(0.15),
+        _mix(_noise(0.08, 0.28), _sine(110, 0.08, 0.15)), _silence(0.10),
+        _mix(_noise(0.10, 0.32), _sine(110, 0.10, 0.18)), _silence(0.20),
+        _mix(_noise(0.12, 0.36), _sine(90,  0.12, 0.22)), _silence(0.12),
+        _mix(_noise(0.08, 0.28), _sine(110, 0.08, 0.15)), _silence(0.15),
+        _mix(_noise(0.10, 0.32), _sine(110, 0.10, 0.18)), _silence(0.10),
+        _mix(_noise(0.08, 0.28), _sine(110, 0.08, 0.15)), _silence(0.28)))
+
 
 # ═══════════════════════════════════════════════════════════════
 #  PUBLIC API
@@ -321,6 +360,38 @@ def play(name):
     if snd:
         snd.set_volume(_master_vol * _sfx_vol)
         snd.play()
+
+
+def play_music(name):
+    """Play a sound on the music channel, looping indefinitely."""
+    if not _enabled or _music_channel is None:
+        return
+    snd = _sounds.get(name)
+    if snd:
+        snd.set_volume(_master_vol * _music_vol)
+        _music_channel.play(snd, loops=-1)
+
+
+def play_ambient(name):
+    """Play a sound on the ambient channel, looping indefinitely."""
+    if not _enabled or _ambient_channel is None:
+        return
+    snd = _sounds.get(name)
+    if snd:
+        snd.set_volume(_master_vol * _ambient_vol)
+        _ambient_channel.play(snd, loops=-1)
+
+
+def stop_music():
+    """Stop the music channel."""
+    if _enabled and _music_channel:
+        _music_channel.stop()
+
+
+def stop_ambient():
+    """Stop the ambient channel."""
+    if _enabled and _ambient_channel:
+        _ambient_channel.stop()
 
 
 def stop_all():

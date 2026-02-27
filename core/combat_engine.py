@@ -1288,6 +1288,12 @@ def tick_status_effects(combatant):
             messages.append(
                 f"{combatant['name']} takes {tick_dmg} damage from {name}!"
             )
+            # Play poison sound for player characters only (enemies don't need audio feedback)
+            if combatant.get("type") == "player" and name == "Poisoned":
+                try:
+                    import core.sound as _sfx; _sfx.play("poison")
+                except Exception:
+                    pass
             if combatant["hp"] <= 0:
                 combatant["alive"] = False
                 messages.append(f"{combatant['name']} has fallen to {name}!")
@@ -1819,6 +1825,7 @@ class CombatState:
             self.log(msg)
 
         self.advance_turn()
+        return result  # callers read hit/is_crit/damage for sound selection
 
     # ── Internal action helpers ───────────────────────────────────
 
@@ -1928,16 +1935,17 @@ class CombatState:
         """Let the current enemy take its AI-controlled action."""
         actor = self.get_current_combatant()
         if not actor or actor["type"] != "enemy":
-            return
+            return {}
 
         # Skip stunned/frozen/petrified/sleeping
         for status in actor.get("status_effects", []):
             if status["name"] in STATUS_INCAPACITATE:
                 self.log(f"{actor['name']} is {status['name']} and cannot act!")
                 self.advance_turn()
-                return
+                return {}
 
         action, target, ability = enemy_choose_action(actor, self.players, self.enemies)
+        result = {}  # will be overwritten by attack branch
 
         if action == "attack" and target:
             # Apply War Cry damage buff if active
@@ -2028,6 +2036,7 @@ class CombatState:
             self.log(f"{actor['name']} hesitates...")
 
         self.advance_turn()
+        return result
 
     def _calc_rewards(self):
         """Calculate XP (round-conscious %), gold (even split), and loot drops."""

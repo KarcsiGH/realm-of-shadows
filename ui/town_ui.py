@@ -2096,6 +2096,7 @@ class TownUI:
                               if summary.get("new_abilities") else "")
                     self.inn_result = (f"{c.name} reached level {c.level}! "
                                       f"{gains}, +{summary['hp_gain']} base HP{ab_str}")
+                    sfx.play("level_up")
 
                     # If there's a branch choice pending, show that screen first
                     if summary.get("branch_choice"):

@@ -754,6 +754,7 @@ class PostCombatUI:
     def _finalize_loot(self):
         """Move assigned items into character inventories."""
         from core.party_knowledge import auto_identify_if_known, mark_item_identified
+        import core.sound as sfx
         for item_idx, char_idx in self.loot_assignments.items():
             if item_idx < len(self.loot_items) and char_idx < len(self.party):
                 item = self.loot_items[item_idx]
@@ -763,6 +764,8 @@ class PostCombatUI:
                 if item.get("identified"):
                     mark_item_identified(item.get("name", ""))
                 self.party[char_idx].add_item(item)
+        if self.loot_assignments:
+            sfx.play("item_pickup")
 
     # ─────────────────────────────────────────────────────────
     #  HELPERS
