@@ -136,11 +136,18 @@ def save_game(party, world_state=None, slot_name="save1", metadata=None):
         "timestamp": datetime.now().isoformat(),
         "slot_name": slot_name,
         "metadata": metadata or {},
-        "party": [serialize_character(c) for c in party],
+        "party": [],
         "knowledge": knowledge,
         "story_flags": story,
         "world_state": serialize_world_state(world_state),
     }
+
+    # Serialize each character with individual error reporting
+    for i, c in enumerate(party):
+        try:
+            save_data["party"].append(serialize_character(c))
+        except Exception as e:
+            return False, None, f"Save failed: could not serialize {getattr(c, 'name', f'character {i}')}: {e}"
 
     # Add summary metadata
     save_data["metadata"]["party_summary"] = [

@@ -308,7 +308,9 @@ def _distribute_quest_rewards(qid, party):
                 if item is None:
                     continue  # party already has it
                 for c in party:
-                    if hasattr(c, "add_item") and c.add_item(item):
+                    if hasattr(c, "add_item"):
+                        c.add_item(item)
+                        break  # give to first party member only
                         break
         except Exception:
             pass

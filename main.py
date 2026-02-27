@@ -154,15 +154,66 @@ class Game:
                 if e.type == pygame.QUIT:
                     self.running = False
                     return
-                self.on_event(e, mx, my)
+                try:
+                    self.on_event(e, mx, my)
+                except Exception as _exc:
+                    self._show_crash(_exc)
+                    return
             self.screen.fill(BG_COLOR)
-            self.draw_state(mx, my)
+            try:
+                self.draw_state(mx, my)
+            except Exception as _exc:
+                self._show_crash(_exc)
+                return
             # Fade
             if self.fade > 0:
                 s = pygame.Surface((SCREEN_W, SCREEN_H)); s.fill(BLACK)
                 s.set_alpha(self.fade); self.screen.blit(s, (0,0))
                 self.fade = max(0, self.fade - 10)
             pygame.display.flip()
+        pygame.quit()
+
+    def _show_crash(self, exc):
+        """Display a readable crash screen with full traceback instead of silent close."""
+        import traceback as _tb
+        tb_str = _tb.format_exc()
+        print("\n\n--- CRASH ---")
+        print(tb_str)
+        # Write to crash log
+        try:
+            import os, datetime
+            log_dir = os.path.expanduser("~/Documents/RealmOfShadows")
+            os.makedirs(log_dir, exist_ok=True)
+            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            log_path = os.path.join(log_dir, f"crash_{ts}.log")
+            with open(log_path, "w") as f:
+                f.write(f"State: {self.state}\n")
+                f.write(f"Party size: {len(self.party)}\n\n")
+                f.write(tb_str)
+            print(f"Crash log written to: {log_path}")
+        except Exception:
+            pass
+        # Show on-screen error panel for 10 seconds
+        try:
+            self.screen.fill((8, 4, 16))
+            lines = tb_str.strip().split("\n")
+            font = pygame.font.SysFont("courier,monospace", 13)
+            y = 20
+            draw_text(self.screen, "CRASH — please share the log file with the developer",
+                      20, y, (255, 80, 80), 16, bold=True)
+            y += 36
+            for line in lines[-30:]:   # last 30 lines of traceback
+                surf = font.render(line[:120], True, (200, 180, 160))
+                self.screen.blit(surf, (20, y))
+                y += 16
+                if y > SCREEN_H - 40:
+                    break
+            draw_text(self.screen, "Window will close in 10 seconds",
+                      20, SCREEN_H - 30, (150, 130, 120), 13)
+            pygame.display.flip()
+            pygame.time.wait(10000)
+        except Exception:
+            pass
         pygame.quit()
 
     def go(self, state):
