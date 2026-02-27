@@ -41,6 +41,11 @@ def init():
 def set_master_volume(v):
     global _master_vol
     _master_vol = max(0.0, min(1.0, v))
+    # Re-apply to live channels so the change is immediately audible
+    if _music_channel and _enabled:
+        _music_channel.set_volume(_master_vol * _music_vol)
+    if _ambient_channel and _enabled:
+        _ambient_channel.set_volume(_master_vol * _ambient_vol)
 
 def set_sfx_volume(v):
     global _sfx_vol
@@ -51,6 +56,52 @@ def set_music_volume(v):
     _music_vol = max(0.0, min(1.0, v))
     if _music_channel and _enabled:
         _music_channel.set_volume(_master_vol * _music_vol)
+
+def set_ambient_volume(v):
+    global _ambient_vol
+    _ambient_vol = max(0.0, min(1.0, v))
+    if _ambient_channel and _enabled:
+        _ambient_channel.set_volume(_master_vol * _ambient_vol)
+
+def get_master_volume():  return _master_vol
+def get_sfx_volume():     return _sfx_vol
+def get_music_volume():   return _music_vol
+def get_ambient_volume(): return _ambient_vol
+
+
+# ═══════════════════════════════════════════════════════════════
+#  SETTINGS PERSISTENCE
+# ═══════════════════════════════════════════════════════════════
+
+_SETTINGS_FILE = "settings.json"
+
+def save_settings():
+    """Persist current volume settings to settings.json."""
+    import json, os
+    data = {
+        "master_vol":  _master_vol,
+        "sfx_vol":     _sfx_vol,
+        "music_vol":   _music_vol,
+        "ambient_vol": _ambient_vol,
+    }
+    try:
+        with open(_SETTINGS_FILE, "w") as f:
+            json.dump(data, f, indent=2)
+    except Exception:
+        pass
+
+def load_settings():
+    """Load volume settings from settings.json if it exists."""
+    import json
+    try:
+        with open(_SETTINGS_FILE) as f:
+            data = json.load(f)
+        set_master_volume(float(data.get("master_vol",  _master_vol)))
+        set_sfx_volume(   float(data.get("sfx_vol",     _sfx_vol)))
+        set_music_volume( float(data.get("music_vol",   _music_vol)))
+        set_ambient_volume(float(data.get("ambient_vol",_ambient_vol)))
+    except (FileNotFoundError, Exception):
+        pass  # Use defaults if file missing or corrupt
 
 
 # ═══════════════════════════════════════════════════════════════

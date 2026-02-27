@@ -61,6 +61,7 @@ S_CHEST       = 17   # chest loot assignment screen
 S_ATTACK_CINEMATIC = 18  # Act 1 climax: shadow attack on Briarhollow
 S_ENDING           = 19  # Epilogue / credits after Valdris defeated
 S_GAME_OVER        = 20  # Party wipe screen before returning to title
+S_SETTINGS         = 21  # Volume / settings overlay
 
 
 class Game:
@@ -70,6 +71,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
         sfx.init()  # Initialize sound system
+        sfx.load_settings()  # Apply saved volume settings
         self.state = S_TITLE
         self.party = []
         self.current_char = None
@@ -102,6 +104,9 @@ class Game:
         # Inventory
         self.inventory_ui = None
         self.inventory_return_state = S_PARTY
+        # Settings overlay
+        self.settings_ui = None
+        self._settings_return_state = S_PARTY
         # Town
         self.town_ui = None
         # Save/Load
@@ -398,6 +403,14 @@ class Game:
                             self._init_world_map()
                             self.go_fade(S_WORLD_MAP)
                         return
+                    # Settings button
+                    settings_btn = pygame.Rect(20, 88, 120, 32)
+                    if settings_btn.collidepoint(mx, my):
+                        from ui.settings_ui import SettingsUI
+                        self.settings_ui = SettingsUI()
+                        self._settings_return_state = S_PARTY
+                        self.go(S_SETTINGS)
+                        return
                     if self.debug_mode:
                         # Check encounter buttons
                         from data.enemies import ENCOUNTERS
@@ -437,11 +450,13 @@ class Game:
                     result = self.chest_ui.handle_event(e)
                     if self.chest_ui.finished:
                         self.chest_ui = None
+                        self._fire_chest_hint_if_pending()
                         self.go(self.chest_return_state)
                 elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
                     result = self.chest_ui.handle_click(mx, my)
                     if self.chest_ui.finished:
                         self.chest_ui = None
+                        self._fire_chest_hint_if_pending()
                         self.go(self.chest_return_state)
 
         elif self.state == S_TOWN:
@@ -561,6 +576,13 @@ class Game:
         elif self.state == S_GAME_OVER:
             self._handle_game_over_input(e)
 
+        elif self.state == S_SETTINGS:
+            if self.settings_ui:
+                result = self.settings_ui.handle_event(e)
+                if result == "close" or self.settings_ui.finished:
+                    self.settings_ui = None
+                    self.go(self._settings_return_state)
+
         elif self.state == S_CAMP:
             if self.camp_ui:
                 if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
@@ -668,6 +690,7 @@ class Game:
         elif self.state == S_CHEST:     self._draw_chest(mx, my)
         elif self.state == S_ATTACK_CINEMATIC: self._draw_attack_cinematic(mx, my)
         elif self.state == S_ENDING:           self._draw_ending(mx, my)
+        elif self.state == S_SETTINGS:         self._draw_settings(mx, my)
         elif self.state == S_GAME_OVER:        self._draw_game_over(mx, my)
 
     # ── Title Screen ──────────────────────────────────────────
@@ -1235,6 +1258,9 @@ class Game:
             back_label = "Back to Dungeon" if self.dungeon_state else "World Map"
             draw_button(self.screen, world_btn, back_label,
                         hover=world_btn.collidepoint(mx, my), size=14 if self.dungeon_state else 16)
+            settings_btn = pygame.Rect(20, 88, 120, 32)
+            draw_button(self.screen, settings_btn, "⚙ Settings",
+                        hover=settings_btn.collidepoint(mx, my), size=13)
 
             # Save/load message
             if hasattr(self, 'save_msg') and self.save_msg_timer > 0:
@@ -1473,6 +1499,12 @@ class Game:
         """Open the chest loot assignment screen."""
         self.chest_ui = ChestUI(self.party, gold, items, is_secret=is_secret)
         self.chest_return_state = return_state if return_state is not None else S_DUNGEON
+        # Tutorial: hint on first unidentified item
+        if any(not item.get("identified", True) for item in items):
+            from core.tutorial import fire_combat_hints, _should_show, _mark_shown
+            if _should_show("identification"):
+                # Queue it so it shows after returning from chest to dungeon
+                self._chest_hint_unidentified = True
         self.go(S_CHEST)
 
     def _draw_chest(self, mx, my):
@@ -1486,6 +1518,18 @@ class Game:
         if self.chest_ui:
             dt = self.clock.get_time() / 1000.0
             self.chest_ui.draw(self.screen, mx, my, dt)
+
+    def _fire_chest_hint_if_pending(self):
+        """Fire the unidentified-item hint if queued and dungeon_ui is available."""
+        if getattr(self, "_chest_hint_unidentified", False) and self.dungeon_ui:
+            from core.tutorial import _should_show, _mark_shown
+            if _should_show("identification"):
+                self.dungeon_ui.show_event(
+                    "Unidentified items need appraisal — Mage or Thief can identify in Inventory.",
+                    (210, 180, 100)
+                )
+                _mark_shown("identification")
+            self._chest_hint_unidentified = False
 
     def start_camp(self, location="dungeon", dungeon_floor=1, return_state=None):
         """Open the full camp screen."""
@@ -1514,6 +1558,13 @@ class Game:
             # Cancel — just go back
             self.go(return_state)
 
+    def _draw_settings(self, mx, my):
+        """Draw the volume settings overlay."""
+        # Draw whatever was underneath (party screen)
+        self.draw_party(mx, my)
+        if self.settings_ui:
+            self.settings_ui.draw(self.screen, mx, my)
+
     def _draw_camp(self, mx, my):
         """Draw the camp screen."""
         if self.camp_ui:
@@ -1524,11 +1575,21 @@ class Game:
         self.combat_state = CombatState(self.party, encounter_key)
         self.combat_ui = CombatUI(self.combat_state)
         self.enemy_turn_delay = 0
+        # Tutorial hints — queue first-combat hints with a short delay
+        from core.tutorial import fire_combat_hints_delayed
+        self._pending_hints = fire_combat_hints_delayed("first_combat", self.combat_ui, delay_ms=2800)
         self.go(S_COMBAT)
 
     def draw_combat(self, mx, my):
         """Draw the combat screen and handle enemy AI timing."""
         self.combat_ui.draw(self.screen, mx, my)
+
+        # Tick pending tutorial hints
+        if getattr(self, "_pending_hints", None):
+            from core.tutorial import tick_pending_hints
+            self._pending_hints = tick_pending_hints(
+                self._pending_hints, self.clock.get_time(), self.combat_ui
+            )
 
         # Auto-execute enemy turns with a small delay for readability
         if (self.combat_state.phase not in ("victory", "defeat", "fled") and
@@ -2059,6 +2120,9 @@ class Game:
                         msg = get_dungeon_floor_message(dungeon_id, 1)
                         if msg:
                             self.dungeon_ui.show_event(msg, (180, 160, 120))
+                        # Tutorial hints — first dungeon floor
+                        from core.tutorial import fire_dungeon_hints
+                        fire_dungeon_hints("first_floor", self.dungeon_ui)
                         print(f"[DEBUG] Entered dungeon! State={self.state}")
                     else:
                         self.world_map_ui._show_event(reason, RED)
@@ -2262,6 +2326,10 @@ class Game:
                 msg = get_dungeon_floor_message(self.dungeon_state.dungeon_id, floor)
                 if msg:
                     self.dungeon_ui.show_event(msg, (180, 160, 120))
+                # Tutorial hint — back row tip fires on second floor first visit
+                if floor == 2:
+                    from core.tutorial import fire_dungeon_hints
+                    fire_dungeon_hints("second_floor", self.dungeon_ui)
                 # Maren reunion — fires on Valdris Spire floor 5, once
                 dungeon_id = self.dungeon_state.dungeon_id
                 if dungeon_id == "valdris_spire" and floor == 5:
@@ -2369,6 +2437,9 @@ class Game:
             if was_detected:
                 prefix = f"Detected {trap_name} (Tier {data.get('tier',1)})!"
                 color = ORANGE
+                # Tutorial: first detected trap — hint about disarming
+                from core.tutorial import fire_dungeon_hints
+                fire_dungeon_hints("first_trap", self.dungeon_ui)
             else:
                 prefix = f"{trap_name} (Tier {data.get('tier',1)})!"
                 data["detected"] = True
@@ -2532,6 +2603,9 @@ class Game:
             sfx.play("heal")  # generic item sound
 
         elif action["type"] == "flee":
+            # Tutorial: hint fires the first time flee is attempted
+            from core.tutorial import fire_combat_hints
+            fire_combat_hints("first_flee", self.combat_ui)
             self.combat_state.execute_player_action("flee")
             # Check if flee succeeded
             if self.combat_state.phase == "fled":
