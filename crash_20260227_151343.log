@@ -1,0 +1,17 @@
+State: 13
+Party size: 6
+
+Traceback (most recent call last):
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 164, in run
+    self.draw_state(mx, my)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 736, in draw_state
+    elif self.state == S_DUNGEON:   self.draw_dungeon(mx, my)
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 2084, in draw_dungeon
+    self.dungeon_ui.draw(self.screen, mx, my, dt)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/ui/dungeon_ui.py", line 295, in draw
+    self._process_held_keys(ds)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/ui/dungeon_ui.py", line 641, in _process_held_keys
+    self.angle = self._turn_start + (self._turn_target - self._turn_start) * t
+                 ^^^^^^^^^^^^^^^^
+AttributeError: 'DungeonUI' object has no attribute '_turn_start'

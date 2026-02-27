@@ -223,7 +223,7 @@ class Game:
         # Ambient sound management on state change
         if state == S_TOWN:
             sfx.stop_music()
-            sfx.play_ambient("town_ambient")
+            sfx.stop_ambient()
         elif state == S_WORLD_MAP:
             sfx.stop_music()
             sfx.play_ambient("world_ambient")

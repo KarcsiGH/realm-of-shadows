@@ -71,11 +71,6 @@ BLD_HOUSE     = "house"      # generic NPC house
 BLD_JOBBOARD  = "jobboard"   # quest board (future)
 BLD_GUILD     = "guild"      # adventurers/rangers guild
 
-
-# ══════════════════════════════════════════════════════════
-#  BRIARHOLLOW — Starter Village
-# ══════════════════════════════════════════════════════════
-
 # Helper to ensure map rows are exactly the right width
 def _pad_map(lines, w):
     result = []
@@ -88,155 +83,192 @@ def _pad_map(lines, w):
     return result
 
 
-# 24x20 tile map
+
+# ══════════════════════════════════════════════════════════
+#  BRIARHOLLOW — Starter Village  (44x32)
+# ══════════════════════════════════════════════════════════
+#
+#  Large buildings with walkable interiors — NPCs are INSIDE.
+#  Walk through a door (D) to enter.  Face an NPC and press ENTER.
+#
+#  North row:  Inn (2-13), Shop (15-26), Elder's House (28-41)
+#  Main street: row 10
+#  Town square: rows 11-12  (sign @13,11 / well @21,11)
+#  South row:  Tavern (2-15), Temple (17-29), Forge (31-41)
+#  Path network: rows 24-28
+#  Exit gate:  row 30, cols 20-22
+
 BRIARHOLLOW_MAP_RAW = [
-    "TTTTTTTTTTTTTTTTTTTTTTTT",  # 0
-    "T......................T",  # 1
-    "T..TT..............TT.T",  # 2
-    "T..TT..####..####..TT.T",  # 3
-    "T......#..#..#..#.....T",  # 4
-    "T......#..D..D..#.....T",  # 5  inn(10,5) shop(13,5)
-    "T......####..####.....T",  # 6
-    "T......................T",  # 7
-    "T..PPPPPPPPPPPPPPPPPP.T",  # 8
-    "T..P..................T",  # 9
-    "T..P.####..S...####..T",  # 10
-    "T..P.#..#......#..#..T",  # 11
-    "T..P.#..D......D..#..T",  # 12 temple(8,12) tavern(15,12)
-    "T..P.####......####..T",  # 13
-    "T..P..................T",  # 14
-    "T..P..####....####...T",  # 15
-    "T..P..#..#....#..#...T",  # 16
-    "T..P..#..D....D..#...T",  # 17 forge(9,17) home(14,17)
-    "T..P..####....####...T",  # 18
-    "TPPPPPPPPPEEPPPPPPPPPT",  # 19 exits(10,19)(11,19)
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",  #  0
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",  #  1
+    "TT############.############.##############TT",  #  2  north building walls
+    "TT#..........#.#..........#.#............#TT",  #  3
+    "TT#..........#.#..........#.#............#TT",  #  4
+    "TT#..........#.#..........#.#............#TT",  #  5
+    "TT#..........#.#..........#.#............#TT",  #  6
+    "TT#..........#.#..........#.#............#TT",  #  7
+    "TT#..........#.#..........#.#............#TT",  #  8
+    "TT#####D######.#####D######.######D#######TT",  #  9  inn(7,9) shop(20,9) elder(34,9)
+    "TTPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPTT",  # 10  main street
+    "TT..T........S....FFFWFFF...............T.TT",  # 11  sign(13,11) well(21,11)
+    "TT..T.........T...FFF.FFF...T...........T.TT",  # 12
+    "TT######D#######.#####D#######.####D######TT",  # 13  tavern(8,13) temple(22,13) forge(36,13)
+    "TT#............#.#...........#.#.........#TT",  # 14
+    "TT#............#.#...........#.#.........#TT",  # 15
+    "TT#............#.#...........#.#.........#TT",  # 16
+    "TT#............#.#...........#.#.........#TT",  # 17
+    "TT#............#.#...........#.#.........#TT",  # 18
+    "TT#............#.#...........#.#.........#TT",  # 19
+    "TT#............#.#...........#.#.........#TT",  # 20
+    "TT#............#.#...........#.#.........#TT",  # 21
+    "TT#............#.#...........#.#.........#TT",  # 22
+    "TT##############.#############.###########TT",  # 23  south building walls
+    "TTPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPTT",  # 24  south path
+    "TT......P....T.......P.............P..T...TT",  # 25
+    "TT...T..P............P....T........P......TT",  # 26
+    "TT...T..P....T.......P....T........P..T...TT",  # 27
+    "TT......PPPPPPPPPPPPPPPPPPPPPPPPPPPP......TT",  # 28
+    "TT.................##..##.................TT",  # 29  gatehouse posts
+    "TTPPPPPPPPPPPPPPPPPPEEEPPPPPPPPPPPPPPPPPPPTT",  # 30  exits (20,21,22)
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",  # 31
 ]
 
-BRIARHOLLOW_MAP = _pad_map(BRIARHOLLOW_MAP_RAW, 24)
+BRIARHOLLOW_MAP = _pad_map(BRIARHOLLOW_MAP_RAW, 44)
 
 
 BRIARHOLLOW_BUILDINGS = {
     "inn": {
         "name": "The Wanderer's Rest",
         "type": BLD_INN,
-        "door": (10, 5),
-        "color": (180, 160, 100),
-        "label_pos": (7, 3),
+        "door": (7, 9),
+        "color": (180, 155, 95),
+        "label_pos": (2, 2),
         "npc_name": "Innkeeper Bess",
     },
     "shop": {
         "name": "General Store",
         "type": BLD_SHOP,
-        "door": (13, 5),
-        "color": (100, 180, 120),
-        "label_pos": (12, 3),
+        "door": (20, 9),
+        "color": (100, 170, 110),
+        "label_pos": (15, 2),
         "npc_name": "Merchant Kira",
     },
-    "temple": {
-        "name": "Shrine of Light",
-        "type": BLD_TEMPLE,
-        "door": (8, 12),
-        "color": (200, 200, 140),
-        "label_pos": (5, 10),
-        "npc_name": "Priestess Alia",
+    "elder": {
+        "name": "Elder's House",
+        "type": BLD_HOUSE,
+        "door": (34, 9),
+        "color": (145, 130, 155),
+        "label_pos": (28, 2),
+        "npc_name": "Elder Thom",
     },
     "tavern": {
         "name": "The Rusty Flagon",
         "type": BLD_TAVERN,
-        "door": (15, 12),
-        "color": (200, 140, 80),
-        "label_pos": (14, 10),
+        "door": (8, 13),
+        "color": (195, 130, 65),
+        "label_pos": (2, 13),
         "npc_name": "Barkeep Thom",
+    },
+    "temple": {
+        "name": "Shrine of Light",
+        "type": BLD_TEMPLE,
+        "door": (22, 13),
+        "color": (205, 205, 140),
+        "label_pos": (17, 13),
+        "npc_name": "Priestess Alia",
     },
     "forge": {
         "name": "Dunn's Forge",
         "type": BLD_FORGE,
-        "door": (9, 17),
-        "color": (220, 120, 50),
-        "label_pos": (6, 15),
+        "door": (36, 13),
+        "color": (215, 115, 45),
+        "label_pos": (31, 13),
         "npc_name": "Forgemaster Dunn",
-    },
-    "home": {
-        "name": "Elder's House",
-        "type": BLD_HOUSE,
-        "door": (14, 17),
-        "color": (140, 140, 160),
-        "label_pos": (13, 15),
     },
 }
 
+
 BRIARHOLLOW_NPCS = [
-    {
-        "name": "Maren",
-        "x": 12, "y": 8,
-        "dialogue_id": "maren",
-        "description": "A determined woman with knowing eyes.",
-        "color": (180, 140, 220),
-        "hide_if": "maren.left",
-    },
-    {
-        "name": "Captain Aldric",
-        "x": 16, "y": 14,  # near tavern, on grass
-        "dialogue_id": "captain_aldric",
-        "description": "The town's guard captain, nursing an ale.",
-        "color": (140, 160, 200),
-    },
-    {
-        "name": "Elder Thom",
-        "x": 15, "y": 17,  # near elder's house
-        "dialogue_id": "elder_thom",
-        "description": "The village elder, weathered but sharp.",
-        "color": (180, 170, 140),
-    },
-    # ── Building NPCs (shopkeepers standing near their doors) ──
+    # ── NPCs INSIDE BUILDINGS — face them and press ENTER ─────────
+    # Inn interior (cols 3-12, rows 3-8)
     {
         "name": "Innkeeper Bess",
-        "x": 11, "y": 5,  # walkable tile next to inn door (10,5)
+        "x": 7,  "y": 6,
         "service": "inn",
         "dialogue_id": "bess",
         "description": "A warm, bustling woman who runs the Wanderer's Rest.",
-        "color": (200, 170, 120),
+        "color": (210, 175, 120),
     },
+    # Shop interior (cols 16-25, rows 3-8)
     {
         "name": "Merchant Kira",
-        "x": 14, "y": 5,  # walkable tile next to shop door (13,5)
+        "x": 20, "y": 5,
         "service": "shop",
         "dialogue_id": "merchant_kira",
         "description": "A shrewd traveling merchant with goods from afar.",
-        "color": (120, 180, 140),
+        "color": (120, 190, 140),
     },
+    # Elder's House interior (cols 29-40, rows 3-8)
     {
-        "name": "Priestess Alia",
-        "x": 9, "y": 12,  # walkable tile next to temple door (8,12)
-        "service": "temple",
-        "dialogue_id": None,
-        "description": "A serene priestess of the Shrine of Light.",
-        "color": (220, 220, 160),
+        "name": "Elder Thom",
+        "x": 34, "y": 6,
+        "dialogue_id": "elder_thom",
+        "description": "The village elder, weathered but sharp.",
+        "color": (185, 175, 140),
     },
+    # Tavern interior (cols 3-14, rows 14-22) — Maren is HERE
     {
         "name": "Barkeep Thom",
-        "x": 14, "y": 12,  # walkable tile next to tavern door (15,12)
+        "x": 8,  "y": 17,
         "service": "tavern",
         "dialogue_id": None,
         "description": "A grizzled barkeep who hears all the rumors.",
-        "color": (180, 130, 80),
+        "color": (185, 135, 80),
     },
     {
+        "name": "Maren",
+        "x": 11, "y": 20,
+        "dialogue_id": "maren",
+        "description": "A determined woman with knowing eyes. She sits at a corner table.",
+        "color": (180, 140, 220),
+        "hide_if": "maren.left",
+    },
+    # Temple interior (cols 18-28, rows 14-22)
+    {
+        "name": "Priestess Alia",
+        "x": 22, "y": 20,
+        "service": "temple",
+        "dialogue_id": None,
+        "description": "A serene priestess tending the Shrine of Light.",
+        "color": (225, 225, 165),
+    },
+    # Forge interior (cols 32-40, rows 14-22)
+    {
         "name": "Forgemaster Dunn",
-        "x": 10, "y": 17,  # walkable tile next to forge door (9,17)
+        "x": 36, "y": 19,
         "service": "forge",
         "dialogue_id": "forgemaster_dunn",
         "description": "A stocky dwarf who runs the town forge.",
-        "color": (220, 140, 60),
+        "color": (225, 145, 60),
+    },
+    # ── OUTDOOR NPCs ──────────────────────────────────────────────
+    {
+        "name": "Captain Aldric",
+        "x": 21, "y": 26,
+        "dialogue_id": "captain_aldric",
+        "description": "The town's guard captain, keeping watch over the common.",
+        "color": (145, 165, 205),
     },
 ]
 
 BRIARHOLLOW_SIGNS = {
-    (11, 10): "Job Board — Check here for work.",
+    (13, 11): "Job Board — Check here for local work and bounties.",
 }
 
-BRIARHOLLOW_SPAWN = (11, 18)  # on the path near bottom
-BRIARHOLLOW_EXIT = [(10, 19), (11, 19)]  # exit tiles
+BRIARHOLLOW_SPAWN = (21, 29)   # just inside gate, south path
+BRIARHOLLOW_EXIT = [(20, 30), (21, 30), (22, 30)]
+
+
 
 
 # ══════════════════════════════════════════════════════════
@@ -1459,14 +1491,13 @@ TOWN_MAPS = {
     "briarhollow": {
         "name": "Briarhollow",
         "map": BRIARHOLLOW_MAP,
-        "width": 24,
-        "height": 20,
+        "width": 44,
+        "height": 32,
         "buildings": BRIARHOLLOW_BUILDINGS,
         "npcs": BRIARHOLLOW_NPCS,
         "signs": BRIARHOLLOW_SIGNS,
         "spawn": BRIARHOLLOW_SPAWN,
         "exits": BRIARHOLLOW_EXIT,
-        "ambient": "town_ambient",
     },
     "woodhaven": {
         "name": "Woodhaven",
@@ -1478,7 +1509,6 @@ TOWN_MAPS = {
         "signs": WOODHAVEN_SIGNS,
         "spawn": WOODHAVEN_SPAWN,
         "exits": WOODHAVEN_EXIT,
-        "ambient": "town_ambient",
     },
     "ironhearth": {
         "name": "Ironhearth",
@@ -1490,7 +1520,6 @@ TOWN_MAPS = {
         "signs": IRONHEARTH_SIGNS,
         "spawn": IRONHEARTH_SPAWN,
         "exits": IRONHEARTH_EXIT,
-        "ambient": "town_ambient",
     },
     "greenwood": {
         "name": "Greenwood",
@@ -1502,7 +1531,6 @@ TOWN_MAPS = {
         "signs": GREENWOOD_SIGNS,
         "spawn": GREENWOOD_SPAWN,
         "exits": GREENWOOD_EXIT,
-        "ambient": "town_ambient",
     },
     "saltmere": {
         "name": "Saltmere",
@@ -1514,7 +1542,6 @@ TOWN_MAPS = {
         "signs": SALTMERE_SIGNS,
         "spawn": SALTMERE_SPAWN,
         "exits": SALTMERE_EXIT,
-        "ambient": "town_ambient",
     },
     "sanctum": {
         "name": "Sanctum",
@@ -1526,7 +1553,6 @@ TOWN_MAPS = {
         "signs": SANCTUM_SIGNS,
         "spawn": SANCTUM_SPAWN,
         "exits": SANCTUM_EXIT,
-        "ambient": "town_ambient",
     },
     "crystalspire": {
         "name": "Crystalspire",
@@ -1538,7 +1564,6 @@ TOWN_MAPS = {
         "signs": CRYSTALSPIRE_SIGNS,
         "spawn": CRYSTALSPIRE_SPAWN,
         "exits": CRYSTALSPIRE_EXIT,
-        "ambient": "town_ambient",
     },
     "thornhaven": {
         "name": "Thornhaven",
@@ -1550,7 +1575,6 @@ TOWN_MAPS = {
         "signs": THORNHAVEN_SIGNS,
         "spawn": THORNHAVEN_SPAWN,
         "exits": THORNHAVEN_EXIT,
-        "ambient": "town_ambient",
     },
 }
 
