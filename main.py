@@ -1827,10 +1827,20 @@ class Game:
              ("they are something new.", H // 2 + 14, 17, (210, 195, 165)),
              ("They do not require blood. They do not require vigil.", H // 2 + 50, 15, (170, 160, 140)),
              ("They simply hold.", H // 2 + 72, 15, (170, 160, 140))],
-            # Page 4 — THE END
-            [("REALM OF SHADOWS", H // 2 - 60, 40, (255, 240, 200)),
-             ("", H // 2, 1, (0, 0, 0)),
-             ("Thank you for playing.", H // 2 + 40, 20, (180, 165, 140))],
+            # Page 4 — party names
+            [("THE WARDENS", H // 2 - 110, 30, (255, 240, 200)),
+             ("The order is gone.", H // 2 - 60, 17, (210, 195, 165)),
+             ("But the work continues.", H // 2 - 38, 17, (210, 195, 165))] +
+            [(c.name, H // 2 - 5 + i * 26, 18, (220, 200, 160))
+             for i, c in enumerate(self.party)] +
+            [("Their names are not recorded.", H // 2 + 90, 14, (140, 130, 115)),
+             ("Only the holding matters.", H // 2 + 110, 14, (140, 130, 115))],
+            # Page 5 — THE END / credits
+            [("REALM OF SHADOWS", H // 2 - 80, 40, (255, 240, 200)),
+             ("", H // 2 - 20, 1, (0, 0, 0)),
+             ("A game by Charles Gasper", H // 2 + 10, 16, (170, 160, 140)),
+             ("", H // 2 + 35, 1, (0, 0, 0)),
+             ("Thank you for playing.", H // 2 + 60, 18, (210, 195, 165))],
         ]
 
         if ki >= len(PAGES):

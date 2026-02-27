@@ -499,6 +499,84 @@ UNIQUE_ITEMS = {
             "discovered in a sealed vault beneath the ruins, still clean."
         ),
     },
+
+    # ── Act 3 Quest Rewards ────────────────────────────────────────────
+    "sirenne_buckler": {
+        "name": "Sentinel's Vow",
+        "type": "armor",
+        "subtype": "shield",
+        "slot": "offhand",
+        "rarity": "legendary",
+        "unique": True,
+        "defense": 12,
+        "magic_resist": 10,
+        "stat_bonuses": {"CON": 2, "WIS": 2},
+        "identified": False,
+        "estimated_value": 360,
+        "description": (
+            "Warden Sirenne's buckler. She carried it for decades of exile — "
+            "armored always, facing always inward, toward what she protected. "
+            "+2 CON, +2 WIS, strong defense and magic resist."
+        ),
+        "lore": (
+            "The buckler is old enough that the Warden crest has worn away, but "
+            "the inner face is still polished bright. Sirenne looked at her own "
+            "reflection every morning. She said it reminded her what she was "
+            "guarding against."
+        ),
+    },
+
+    "keeper_pendant": {
+        "name": "The Nameless Keeper's Seal",
+        "type": "accessory",
+        "subtype": "amulet",
+        "slot": "accessory2",
+        "rarity": "legendary",
+        "unique": True,
+        "stat_bonuses": {"INT": 3, "WIS": 3},
+        "magic_resist": 8,
+        "enchant_element": "wind",
+        "enchant_bonus": 5,
+        "enchant_name": "Gale",
+        "identified": False,
+        "estimated_value": 400,
+        "description": (
+            "Left on the pedestal when the elemental dispersed. No inscription. "
+            "The Will chose to be remembered only for its purpose — but it left "
+            "this behind anyway. +3 INT, +3 WIS, wind damage bonus, magic resist."
+        ),
+        "lore": (
+            "The survey record says the keeper requested its name not be recorded. "
+            "It left no name on this seal either. But it left the seal. "
+            "Perhaps that was the name."
+        ),
+    },
+
+    "warden_seal": {
+        "name": "The Last Warden's Seal",
+        "type": "accessory",
+        "subtype": "ring",
+        "slot": "accessory1",
+        "rarity": "legendary",
+        "unique": True,
+        "stat_bonuses": {"STR": 2, "INT": 2, "WIS": 2},
+        "magic_resist": 12,
+        "enchant_element": "divine",
+        "enchant_bonus": 6,
+        "enchant_name": "Ward",
+        "identified": False,
+        "estimated_value": 500,
+        "description": (
+            "Recovered from the rift after Valdris's dissolution. "
+            "The seal of the Warden High Commander — the one who never came back. "
+            "+2 STR, +2 INT, +2 WIS, high magic resist, ward damage bonus."
+        ),
+        "lore": (
+            "The ring was found in the exact center of the rift, resting on "
+            "nothing. The Warden order is gone. The wards are new. "
+            "Someone has to hold what they protected."
+        ),
+    },
 }
 
 

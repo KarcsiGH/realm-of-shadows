@@ -281,17 +281,34 @@ def auto_advance_quests(party=None):
 
 
 def _distribute_quest_rewards(qid, party):
-    """Hand out gold + XP for a completed quest."""
+    """Hand out gold + XP + unique items for a completed quest."""
     from data.story_data import QUESTS
     q = QUESTS.get(qid, {})
-    gold = q.get("reward_gold", 0)
-    xp   = q.get("reward_xp", 0)
-    if not party or (not gold and not xp):
+    gold  = q.get("reward_gold", 0)
+    xp    = q.get("reward_xp", 0)
+    items = q.get("reward_items", [])
+    if not party:
         return
-    gold_each = gold // len(party)
-    xp_each   = xp   // len(party)
+    gold_each = gold // len(party) if gold else 0
+    xp_each   = xp   // len(party) if xp   else 0
     for c in party:
         if gold_each:
             c.gold += gold_each
         if xp_each:
             c.xp   += xp_each
+    # Give unique items to the first party member with inventory space
+    if items:
+        try:
+            from data.magic_items import get_unique_item
+            for reward in items:
+                item_id = reward.get("id") if isinstance(reward, dict) else None
+                if not item_id:
+                    continue
+                item = get_unique_item(item_id, party)
+                if item is None:
+                    continue  # party already has it
+                for c in party:
+                    if hasattr(c, "add_item") and c.add_item(item):
+                        break
+        except Exception:
+            pass

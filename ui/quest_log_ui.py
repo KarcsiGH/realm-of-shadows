@@ -329,7 +329,8 @@ class QuestLogUI:
                 draw_text(surface, f"★  {rx} XP",   x0 + 10, y, REWARD_XP, 12)
                 y += 17
             for itm in ri:
-                draw_text(surface, f"⚔  {itm}",     x0 + 10, y, (200, 160, 220), 12)
+                label = itm["name"] if isinstance(itm, dict) else itm
+                draw_text(surface, f"⚔  {label}",     x0 + 10, y, (200, 160, 220), 12)
                 y += 17
             if not rg and not rx and not ri:
                 draw_text(surface, "— story progression —", x0 + 10, y, DARK_GREY, 11)

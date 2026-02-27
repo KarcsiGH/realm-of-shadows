@@ -285,8 +285,8 @@ QUESTS = {
         "giver_npc": None,
         "turn_in_npc": None,
         "auto_complete": True,
-        "reward_gold": 0,
-        "reward_xp": 0,
+        "reward_gold": 180,
+        "reward_xp": 350,
         "reward_items": [],
         "objectives": [
             {
@@ -350,8 +350,8 @@ QUESTS = {
         "giver_npc": "Guild Commander Varek",
         "turn_in_npc": None,
         "auto_complete": True,
-        "reward_gold": 0,
-        "reward_xp": 0,
+        "reward_gold": 250,
+        "reward_xp": 500,
         "reward_items": [],
         "objectives": [
             {
@@ -373,7 +373,7 @@ QUESTS = {
         "auto_complete": True,
         "reward_gold": 500,
         "reward_xp": 800,
-        "reward_items": [],
+        "reward_items": [{"id": "sirenne_buckler", "name": "Sentinel's Vow"}],
         "objectives": [
             {
                 "text": "Recover the fourth Hearthstone from the Pale Coast Catacombs",
@@ -394,7 +394,7 @@ QUESTS = {
         "auto_complete": True,
         "reward_gold": 500,
         "reward_xp": 800,
-        "reward_items": [],
+        "reward_items": [{"id": "keeper_pendant", "name": "The Nameless Keeper's Seal"}],
         "objectives": [
             {
                 "text": "Recover the fifth Hearthstone from the Windswept Isle Ruins",
@@ -412,9 +412,9 @@ QUESTS = {
         "giver_npc": None,
         "turn_in_npc": None,
         "auto_complete": True,
-        "reward_gold": 0,
+        "reward_gold": 1000,
         "reward_xp": 1500,
-        "reward_items": [],
+        "reward_items": [{"id": "warden_seal", "name": "The Last Warden's Seal"}],
         "objectives": [
             {
                 "text": "Ascend to the summit of the Spire",
@@ -3569,6 +3569,17 @@ DUNGEON_STORY_EVENTS = {
                 "lore_id": None,
                 "on_find": [{"action": "set_quest", "quest": "side_missing_patrol", "state": 2}],
             },
+            {
+                "floor": 3,
+                "title": "Grak's War-Marks",
+                "text": "Carved in a clumsy but deliberate hand beside the chief's chamber door: "
+                        "a list of names, each with a small tally beside it. "
+                        "Not enemies killed — the marks beside each are too small, too sad. "
+                        "These are goblins who didn't make it here. "
+                        "The ones who died in the flight from the Fading. "
+                        "Grak has been keeping count.",
+                "lore_id": "grak_memorial",
+            },
         ],
         # Boss dialogue triggers before combat on boss floor
         "boss_dialogue": "grak",
@@ -3587,6 +3598,20 @@ DUNGEON_STORY_EVENTS = {
         },
         "journal_entries": [
             {
+                "floor": 1,
+                "title": "Exterminator's Contract",
+                "text": "A crumpled work order stamped with the Greenwood Guild seal: "
+                        "'Authorization for pest removal — Spider's Nest cavern system, "
+                        "eastern approach. Payment: 40 silver upon proof of queen's death. "
+                        "Note: previous two teams have not returned. "
+                        "Contractor assumes all risk.' "
+                        "Below, scrawled in panicked handwriting: "
+                        "'They knew we were coming. They were waiting at the entrance. "
+                        "The silk — it's not natural. It pulled Aldous off the path. "
+                        "I'm going back. I'm not going back.'",
+                "lore_id": None,
+            },
+            {
                 "floor": 2,
                 "title": "Researcher's Notes",
                 "text": "The specimens exhibit clear mutagenic effects consistent with "
@@ -3594,6 +3619,22 @@ DUNGEON_STORY_EVENTS = {
                         "destroy — it transforms. These creatures are adapting to exist "
                         "between realities. — E.V.",
                 "lore_id": "spider_queen_observed",
+            },
+            {
+                "floor": 3,
+                "title": "E.V.'s Final Entry",
+                "text": "The same hand as the Researcher's Notes, now shaking: "
+                        "'She is aware of me. Has been, I think, since I arrived. "
+                        "She watches through the web — I can feel it. "
+                        "She is not mindless. She is not simply territorial. "
+                        "She is protecting something and she knows exactly what it is. "
+                        "The stone at the nest's center is feeding her awareness. "
+                        "She may be more than a spider now. "
+                        "She may be more than anything I have a word for. "
+                        "I am going to try to speak with her. "
+                        "E.V.' — The initials match Valdris's early research logs.",
+                "lore_id": "spider_queen_sapient",
+                "on_find": [{"action": "set_flag", "flag": "lore.spider_queen_sapient", "value": True}],
             },
         ],
         "boss_dialogue": "spider_queen",
@@ -3606,8 +3647,28 @@ DUNGEON_STORY_EVENTS = {
                "is still powered by the old magic.",
             3: "Ancient ward-circles are carved into every wall. This wasn't "
                "just a mine — it was a vault. A place to protect something precious.",
+            4: "The air here is wrong — too clean, too still. The dust should "
+               "have settled decades ago. Something is keeping this floor in a kind of "
+               "stasis. Korrath's work extends further than the records said.",
+            5: "The deepest chamber. The original ward-anchor is here — "
+               "cracked, dark, but not destroyed. Whatever Valdris's people extracted, "
+               "they couldn't take this. Korrath stands over it. "
+               "He has stood over it for twenty years.",
         },
         "journal_entries": [
+            {
+                "floor": 1,
+                "title": "Foreman's Last Report",
+                "text": "Scrawled on the back of a work roster: "
+                        "'Workers refusing to go past level 2. Say the stone talks at night. "
+                        "Pay them double and they still won't go. "
+                        "Valdris's men arrived yesterday — said they have authorization from "
+                        "the order to inspect the anchor. "
+                        "Something about their eyes isn't right. "
+                        "Sending the crew home. Posting this at the entrance. "
+                        "If anyone from the Guild reads this: don't open what they sealed.'",
+                "lore_id": None,
+            },
             {
                 "floor": 2,
                 "title": "Dwarven Inscription",
@@ -3615,6 +3676,34 @@ DUNGEON_STORY_EVENTS = {
                         "Korrath, sealed until the world has need again. "
                         "Let the stone judge the worthy.'",
                 "lore_id": None,
+            },
+            {
+                "floor": 3,
+                "title": "Valdris's Field Notes",
+                "text": "Dense, precise handwriting on oilskin paper: "
+                        "'The Hearthstone fragment here is the most intact I've found. "
+                        "Extraction would require bypassing the ward-guardian — Korrath, "
+                        "if the records are right. He is listed as 'sealed,' not 'dead.' "
+                        "There is a difference. "
+                        "My team will attempt extraction on the third night. "
+                        "If the guardian wakes, we fall back to contingency. "
+                        "The fragment must not be left here. He will corrupt it eventually.'",
+                "lore_id": "valdris_mine_notes",
+                "on_find": [{"action": "set_flag", "flag": "lore.valdris_mine_notes", "value": True}],
+            },
+            {
+                "floor": 4,
+                "title": "Korrath's Ward-Log",
+                "text": "Etched directly into the stone wall — years of marks: "
+                        "'Year 1: Valdris's men came. Drove them back. Stone is safe. "
+                        "Year 3: They came again with shadow-weapons. Lost my left arm at the elbow. "
+                        "Stone is safe. "
+                        "Year 7: No one came. Beginning to wonder if the order still exists. "
+                        "Year 12: A Warden passed through. She left quickly. Didn't explain. "
+                        "Year 19: Something changes in the stone. The network is strained. "
+                        "I am still here. "
+                        "Stone is safe.'",
+                "lore_id": "korrath_ward_log",
             },
         ],
         "boss_dialogue": "korrath",
@@ -3632,6 +3721,22 @@ DUNGEON_STORY_EVENTS = {
                "from what the destruction left behind. It waits at the center.",
         },
         "journal_entries": [
+            {
+                "floor": 1,
+                "title": "Imperial Survey Report",
+                "text": "Stamped with a faded Imperial seal: "
+                        "'Site assessment, Ashenmoor — declared uninhabitable following "
+                        "the ward-collapse event of Year 14 I.R. "
+                        "Structural instability throughout. Residual magical energy readings "
+                        "exceed safe thresholds. Population: none surviving. "
+                        "Cause of collapse: under investigation. "
+                        "Recommendation: seal all entrances. "
+                        "Note appended in different ink: "
+                        "Warden Valdris was seen in the area three days before the collapse. "
+                        "This information is not to be included in the official record.'",
+                "lore_id": "ashenmoor_survey",
+                "on_find": [{"action": "set_flag", "flag": "lore.ashenmoor_survey", "value": True}],
+            },
             {
                 "floor": 2,
                 "title": "Warden Commander's Log",
@@ -3651,6 +3756,24 @@ DUNGEON_STORY_EVENTS = {
                         "into the Ashenmoor ward-anchor collapse. The death toll is two hundred "
                         "and twelve. Valdris has not been located. — Signed, Commander Ashvar'",
                 "lore_id": "ashenmoor_fall",
+            },
+            {
+                "floor": 4,
+                "title": "Ashvar's Private Letter",
+                "text": "Written to no recipient, never sent: "
+                        "'I signed the order. I accused him publicly. "
+                        "I told the Council what happened. "
+                        "What I didn't tell them: Valdris came to me the night before the collapse. "
+                        "He told me the anchor was failing — that it had been failing for a year "
+                        "and the order refused to act. He was trying to fix it. "
+                        "He failed. "
+                        "Two hundred people died. "
+                        "He failed. "
+                        "But I'm not sure I was right to call it murder. "
+                        "I am not sure what I would call it. "
+                        "I have been here for twelve years and I am still not sure.'",
+                "lore_id": "ashvar_doubt",
+                "on_find": [{"action": "set_flag", "flag": "lore.ashvar_doubt", "value": True}],
             },
         ],
         "boss_dialogue": "ashvar",
@@ -3791,6 +3914,21 @@ DUNGEON_STORY_EVENTS = {
                         "It only knows it must protect the warm thing at its center.'",
                 "lore_id": "dragon_karreth",
             },
+            {
+                "floor": 3,
+                "title": "Scratched on the Hoard Room Doorframe",
+                "text": "Cut into the volcanic rock at shoulder height — "
+                        "someone standing in the entrance, watching the dragon sleep: "
+                        "'I could see the stone from here. Glowing. Beautiful. "
+                        "Karreth moved when I stepped inside and I ran. "
+                        "Ran all the way back to the shore. "
+                        "But I stood there for a long time first. "
+                        "Looking. "
+                        "I keep thinking about how it curled around the light. "
+                        "Like it was keeping it warm. "
+                        "Like it remembered what warm meant.'",
+                "lore_id": None,
+            },
         ],
         "boss_dialogue": "karreth",
     },
@@ -3890,6 +4028,20 @@ DUNGEON_STORY_EVENTS = {
                         "This entry requires no response.'",
                 "lore_id": "windswept_keeper",
             },
+            {
+                "floor": 3,
+                "title": "Warden Survey — Site Designation W-7",
+                "text": "A formal assessment, ink still sharp after centuries: "
+                        "'The elemental bound here is not a construct — it is a Will, "
+                        "recruited rather than manufactured. It had a name once. "
+                        "It requested, before binding, that the name not be recorded. "
+                        "It said: the purpose is enough. I should not be remembered for what I guard. "
+                        "I should be remembered for guarding it. "
+                        "We have honored this. "
+                        "The surveyor notes, in a smaller hand below the seal: "
+                        "I think about this one sometimes.'",
+                "lore_id": None,
+            },
         ],
         "boss_dialogue": "isle_keeper",
     },
@@ -3954,6 +4106,21 @@ DUNGEON_STORY_EVENTS = {
                         "the slow bleeding of every Warden for centuries — was worse. "
                         "I am no longer certain I believe that.",
                 "lore_id": "valdris_notes_3",
+            },
+            {
+                "floor": 4,
+                "title": "Valdris — Personal Notes, Year 19",
+                "text": "The Fading has begun to respond to me. "
+                        "I do not mean that it is slowing — I mean that it moves differently "
+                        "when I am present. Toward me, sometimes. As if recognizing something. "
+                        "My colleague Sira believes I have been compromised. "
+                        "She is probably correct. "
+                        "I find I am no longer frightened by this. "
+                        "I find that I am no longer certain what frightened me means. "
+                        "I find that this itself does not alarm me. "
+                        "I find that this itself does not alarm me. "
+                        "I have written that sentence twice. I am not sure when.",
+                "lore_id": None,
             },
             {
                 "floor": 5,
