@@ -156,7 +156,14 @@ class TownUI:
             self.walk_facing = "down"
             self.walk_interact_msg = ""   # message shown at bottom
             self.walk_interact_timer = 0
-            self.walk_tile_size = 32
+            # Dynamic tile size: bigger map = smaller tiles so it fits
+            tw = self.town_data["width"]
+            if tw >= 40:
+                self.walk_tile_size = 20
+            elif tw >= 30:
+                self.walk_tile_size = 24
+            else:
+                self.walk_tile_size = 28
             self.walk_anim_t = 0
         else:
             self._return_to_town()
@@ -369,10 +376,40 @@ class TownUI:
                     pygame.draw.line(surface, (color[0]//2, color[1]//2, color[2]//2),
                                      (px, py + ts//3), (px + ts, py + ts//3))
 
+                # Wall tile — draw building roof colour as top stripe
+                if tile == TT_WALL:
+                    # Find nearest building to tint the roof
+                    bld_color = None
+                    for bld in td["buildings"].values():
+                        bx, by = bld["door"]
+                        if abs(tx - bx) <= 8 and abs(ty - by) <= 8:
+                            bld_color = bld.get("color")
+                            break
+                    if bld_color:
+                        rc = tuple(min(255, int(c * 0.75)) for c in bld_color)
+                        pygame.draw.rect(surface, rc, (px, py, ts, ts // 3))
+                        pygame.draw.line(surface, (color[0]//2, color[1]//2, color[2]//2),
+                                         (px, py + ts//3), (px + ts, py + ts//3))
+
+                # Interior floor — warm stone colour inside buildings
+                if tile == TT_GRASS:
+                    # Check if surrounded by walls (= interior)
+                    neighbors = [get_tile(td, tx+ddx, ty+ddy) for ddx,ddy in [(-1,0),(1,0),(0,-1),(0,1)]]
+                    if TT_WALL in neighbors or TT_DOOR in neighbors:
+                        ic = (110, 95, 72)   # warm stone floor
+                        pygame.draw.rect(surface, ic, (px, py, ts, ts))
+                        # Subtle plank lines
+                        for pi in range(0, ts, max(4, ts//4)):
+                            pygame.draw.line(surface, (95, 82, 60), (px, py+pi), (px+ts, py+pi))
+                        pygame.draw.rect(surface, (80, 68, 50), (px, py, ts, ts), 1)
+
                 # Door highlight
                 if tile == TT_DOOR:
-                    pygame.draw.rect(surface, (160, 120, 60), (px + ts//4, py + ts//6, ts//2, ts*2//3), border_radius=2)
-                    pygame.draw.rect(surface, (200, 160, 80), (px + ts//4, py + ts//6, ts//2, ts*2//3), 1, border_radius=2)
+                    pygame.draw.rect(surface, (130, 90, 45), (px, py, ts, ts))
+                    pygame.draw.rect(surface, (170, 125, 60), (px + ts//5, py + ts//8, ts*3//5, ts*3//4), border_radius=2)
+                    pygame.draw.rect(surface, (220, 180, 100), (px + ts//5, py + ts//8, ts*3//5, ts*3//4), 1, border_radius=2)
+                    # Door handle dot
+                    pygame.draw.circle(surface, (220, 180, 80), (px + ts*3//4, py + ts//2), max(2, ts//8))
 
                 # Exit tiles — subtle glow
                 if tile == TT_EXIT:
@@ -580,13 +617,6 @@ class TownUI:
         if sign_text:
             return "[ENTER] Read Sign"
 
-        # Check current tile too for NPCs
-        npc = get_npc_at(td, x, y)
-        if npc:
-            service = npc.get("service", "")
-            service_hint = f" ({service.title()})" if service else ""
-            return f"[ENTER] Talk to {npc['name']}{service_hint}"
-
         return ""
 
     def handle_key(self, key):
@@ -620,8 +650,9 @@ class TownUI:
 
         if dx != 0 or dy != 0:
             nx, ny = self.walk_x + dx, self.walk_y + dy
-            # Can walk onto NPC tiles (they're on walkable ground)
-            if is_walkable(td, nx, ny):
+            # NPCs block movement — interact with ENTER when facing them
+            npc_blocking = get_npc_at(td, nx, ny) is not None
+            if is_walkable(td, nx, ny) and not npc_blocking:
                 self.walk_x = nx
                 self.walk_y = ny
                 sfx.play("step")
@@ -687,8 +718,6 @@ class TownUI:
         fx, fy = x + fdx, y + fdy
 
         npc = get_npc_at(td, fx, fy)
-        if not npc:
-            npc = get_npc_at(td, x, y)  # also check current tile
         if npc:
             sfx.play("npc_talk")
 
@@ -875,11 +904,8 @@ class TownUI:
         self._draw_party_bar(surface, mx, my)
 
     def _return_to_town(self):
-        """Return to the main town view (walkable or hub)."""
-        if self.town_data:
-            self.view = self.VIEW_WALK
-        else:
-            self.view = self.VIEW_HUB
+        """Return to the main town hub menu."""
+        self.view = self.VIEW_HUB
 
     # ─────────────────────────────────────────────────────────
     #  GENERAL STORE — Menu

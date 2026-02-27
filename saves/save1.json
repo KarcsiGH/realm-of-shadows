@@ -1,13 +1,13 @@
 {
   "version": 4,
-  "timestamp": "2026-02-27T14:27:00.865335",
+  "timestamp": "2026-02-27T15:24:13.910640",
   "slot_name": "save1",
   "metadata": {
     "party_summary": [
       "F Lv.1 Half-Orc Fighter",
-      "R Lv.1 Half-Orc Ranger",
-      "T Lv.1 Elf Thief",
       "M Lv.1 Human Monk",
+      "T Lv.1 Elf Thief",
+      "R Lv.1 Elf Ranger",
       "C Lv.1 Human Cleric",
       "MA Lv.1 Elf Mage"
     ],
@@ -22,17 +22,17 @@
       "xp": 0,
       "gold": 0,
       "stats": {
-        "STR": 17,
+        "STR": 19,
         "DEX": 10,
-        "CON": 13,
+        "CON": 12,
         "INT": 5,
-        "WIS": 8,
-        "PIE": 4
+        "WIS": 10,
+        "PIE": 5
       },
       "resources": {
-        "HP": 104,
-        "Ki": 134,
-        "STR-SP": 57
+        "HP": 101,
+        "Ki": 141,
+        "STR-SP": 63
       },
       "abilities": [
         {
@@ -110,22 +110,186 @@
       "human_bonus_stat": null
     },
     {
-      "name": "R",
-      "class_name": "Ranger",
-      "race_name": "Half-Orc",
+      "name": "M",
+      "class_name": "Monk",
+      "race_name": "Human",
       "level": 1,
       "xp": 0,
       "gold": 0,
       "stats": {
-        "STR": 16,
+        "STR": 12,
         "DEX": 15,
         "CON": 12,
-        "INT": 10,
-        "WIS": 16,
-        "PIE": 7
+        "INT": 8,
+        "WIS": 17,
+        "PIE": 10
       },
       "resources": {
         "HP": 91,
+        "Ki": 165,
+        "WIS-MP": 95,
+        "DEX-SP": 51
+      },
+      "abilities": [
+        {
+          "name": "Flurry of Blows",
+          "cost": 10,
+          "resource": "Ki",
+          "desc": "Unleash multiple rapid unarmed strikes."
+        },
+        {
+          "name": "Iron Skin",
+          "cost": 8,
+          "resource": "Ki",
+          "desc": "Harden your body to reduce incoming damage."
+        }
+      ],
+      "inventory": [],
+      "equipment": {
+        "weapon": {
+          "name": "Unarmed (Monk)",
+          "type": "Fists",
+          "damage": 2,
+          "damage_stat": {
+            "STR": 0.5,
+            "DEX": 0.5
+          },
+          "range": "melee",
+          "speed_mod": 2,
+          "accuracy_mod": 5,
+          "crit_mod": 0,
+          "weight_class": "light",
+          "phys_type": "blunt",
+          "requirements": {},
+          "spell_bonus": 0,
+          "special": {
+            "monk_scaling": true
+          },
+          "identified": true,
+          "slot": "weapon"
+        },
+        "off_hand": null,
+        "head": null,
+        "body": {
+          "name": "Traveler's Clothes",
+          "slot": "body",
+          "armor_tier": "clothing",
+          "defense": 1,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {},
+          "rarity": "common",
+          "value": 5,
+          "description": "Simple clothing. Offers minimal protection.",
+          "identified": true
+        },
+        "hands": null,
+        "feet": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "life_path": [],
+      "backstory_parts": [],
+      "quick_rolled": true,
+      "human_bonus_stat": "WIS"
+    },
+    {
+      "name": "T",
+      "class_name": "Thief",
+      "race_name": "Elf",
+      "level": 1,
+      "xp": 0,
+      "gold": 0,
+      "stats": {
+        "STR": 10,
+        "DEX": 18,
+        "CON": 7,
+        "INT": 12,
+        "WIS": 10,
+        "PIE": 4
+      },
+      "resources": {
+        "HP": 66,
+        "Ki": 136,
+        "DEX-SP": 60
+      },
+      "abilities": [
+        {
+          "name": "Quick Strike",
+          "cost": 8,
+          "resource": "DEX-SP",
+          "desc": "Fast attack with a chance to strike first."
+        },
+        {
+          "name": "Evade",
+          "cost": 6,
+          "resource": "DEX-SP",
+          "desc": "Dodge the next incoming attack entirely."
+        }
+      ],
+      "inventory": [],
+      "equipment": {
+        "weapon": {
+          "name": "Rusty Knife",
+          "type": "Dagger",
+          "damage": 5,
+          "damage_stat": {
+            "DEX": 1.0
+          },
+          "range": "melee",
+          "speed_mod": 2,
+          "accuracy_mod": 5,
+          "crit_mod": 5,
+          "weight_class": "light",
+          "phys_type": "piercing",
+          "requirements": {},
+          "spell_bonus": 0,
+          "special": {},
+          "identified": true,
+          "slot": "weapon"
+        },
+        "off_hand": null,
+        "head": null,
+        "body": {
+          "name": "Leather Vest",
+          "slot": "body",
+          "armor_tier": "light",
+          "defense": 4,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {},
+          "rarity": "common",
+          "value": 20,
+          "description": "Basic leather protection.",
+          "identified": true
+        },
+        "hands": null,
+        "feet": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "life_path": [],
+      "backstory_parts": [],
+      "quick_rolled": true,
+      "human_bonus_stat": null
+    },
+    {
+      "name": "R",
+      "class_name": "Ranger",
+      "race_name": "Elf",
+      "level": 1,
+      "xp": 0,
+      "gold": 0,
+      "stats": {
+        "STR": 11,
+        "DEX": 15,
+        "CON": 10,
+        "INT": 13,
+        "WIS": 16,
+        "PIE": 6
+      },
+      "resources": {
+        "HP": 85,
         "Ki": 135,
         "WIS-MP": 90,
         "DEX-SP": 51
@@ -195,170 +359,6 @@
       "human_bonus_stat": null
     },
     {
-      "name": "T",
-      "class_name": "Thief",
-      "race_name": "Elf",
-      "level": 1,
-      "xp": 0,
-      "gold": 0,
-      "stats": {
-        "STR": 11,
-        "DEX": 18,
-        "CON": 7,
-        "INT": 13,
-        "WIS": 8,
-        "PIE": 4
-      },
-      "resources": {
-        "HP": 66,
-        "Ki": 139,
-        "DEX-SP": 60
-      },
-      "abilities": [
-        {
-          "name": "Quick Strike",
-          "cost": 8,
-          "resource": "DEX-SP",
-          "desc": "Fast attack with a chance to strike first."
-        },
-        {
-          "name": "Evade",
-          "cost": 6,
-          "resource": "DEX-SP",
-          "desc": "Dodge the next incoming attack entirely."
-        }
-      ],
-      "inventory": [],
-      "equipment": {
-        "weapon": {
-          "name": "Rusty Knife",
-          "type": "Dagger",
-          "damage": 5,
-          "damage_stat": {
-            "DEX": 1.0
-          },
-          "range": "melee",
-          "speed_mod": 2,
-          "accuracy_mod": 5,
-          "crit_mod": 5,
-          "weight_class": "light",
-          "phys_type": "piercing",
-          "requirements": {},
-          "spell_bonus": 0,
-          "special": {},
-          "identified": true,
-          "slot": "weapon"
-        },
-        "off_hand": null,
-        "head": null,
-        "body": {
-          "name": "Leather Vest",
-          "slot": "body",
-          "armor_tier": "light",
-          "defense": 4,
-          "magic_resist": 0,
-          "speed_mod": 0,
-          "stat_bonuses": {},
-          "rarity": "common",
-          "value": 20,
-          "description": "Basic leather protection.",
-          "identified": true
-        },
-        "hands": null,
-        "feet": null,
-        "accessory1": null,
-        "accessory2": null
-      },
-      "life_path": [],
-      "backstory_parts": [],
-      "quick_rolled": true,
-      "human_bonus_stat": null
-    },
-    {
-      "name": "M",
-      "class_name": "Monk",
-      "race_name": "Human",
-      "level": 1,
-      "xp": 0,
-      "gold": 0,
-      "stats": {
-        "STR": 13,
-        "DEX": 16,
-        "CON": 11,
-        "INT": 10,
-        "WIS": 17,
-        "PIE": 12
-      },
-      "resources": {
-        "HP": 88,
-        "Ki": 168,
-        "WIS-MP": 95,
-        "DEX-SP": 54
-      },
-      "abilities": [
-        {
-          "name": "Flurry of Blows",
-          "cost": 10,
-          "resource": "Ki",
-          "desc": "Unleash multiple rapid unarmed strikes."
-        },
-        {
-          "name": "Iron Skin",
-          "cost": 8,
-          "resource": "Ki",
-          "desc": "Harden your body to reduce incoming damage."
-        }
-      ],
-      "inventory": [],
-      "equipment": {
-        "weapon": {
-          "name": "Unarmed (Monk)",
-          "type": "Fists",
-          "damage": 2,
-          "damage_stat": {
-            "STR": 0.5,
-            "DEX": 0.5
-          },
-          "range": "melee",
-          "speed_mod": 2,
-          "accuracy_mod": 5,
-          "crit_mod": 0,
-          "weight_class": "light",
-          "phys_type": "blunt",
-          "requirements": {},
-          "spell_bonus": 0,
-          "special": {
-            "monk_scaling": true
-          },
-          "identified": true,
-          "slot": "weapon"
-        },
-        "off_hand": null,
-        "head": null,
-        "body": {
-          "name": "Traveler's Clothes",
-          "slot": "body",
-          "armor_tier": "clothing",
-          "defense": 1,
-          "magic_resist": 0,
-          "speed_mod": 0,
-          "stat_bonuses": {},
-          "rarity": "common",
-          "value": 5,
-          "description": "Simple clothing. Offers minimal protection.",
-          "identified": true
-        },
-        "hands": null,
-        "feet": null,
-        "accessory1": null,
-        "accessory2": null
-      },
-      "life_path": [],
-      "backstory_parts": [],
-      "quick_rolled": true,
-      "human_bonus_stat": "WIS"
-    },
-    {
       "name": "C",
       "class_name": "Cleric",
       "race_name": "Human",
@@ -366,18 +366,18 @@
       "xp": 0,
       "gold": 0,
       "stats": {
-        "STR": 10,
-        "DEX": 8,
-        "CON": 12,
-        "INT": 12,
-        "WIS": 12,
-        "PIE": 16
+        "STR": 8,
+        "DEX": 10,
+        "CON": 11,
+        "INT": 11,
+        "WIS": 13,
+        "PIE": 17
       },
       "resources": {
-        "HP": 86,
-        "Ki": 126,
-        "WIS-MP": 70,
-        "PIE-MP": 90
+        "HP": 83,
+        "Ki": 134,
+        "WIS-MP": 75,
+        "PIE-MP": 95
       },
       "abilities": [
         {
@@ -464,17 +464,17 @@
       "gold": 0,
       "stats": {
         "STR": 4,
-        "DEX": 10,
-        "CON": 6,
-        "INT": 20,
-        "WIS": 13,
-        "PIE": 6
+        "DEX": 9,
+        "CON": 7,
+        "INT": 19,
+        "WIS": 14,
+        "PIE": 8
       },
       "resources": {
-        "HP": 53,
-        "Ki": 149,
-        "INT-MP": 110,
-        "WIS-MP": 75
+        "HP": 56,
+        "Ki": 147,
+        "INT-MP": 105,
+        "WIS-MP": 80
       },
       "abilities": [
         {
@@ -541,15 +541,15 @@
   "knowledge": {
     "identified_items": [
       "Monk Unarmed",
-      "Worn Longsword",
-      "Chain Shirt",
-      "Wooden Club",
-      "Walking Stick",
       "Leather Vest",
-      "Wooden Shield",
-      "Rusty Knife",
       "Traveler's Clothes",
-      "Short Bow"
+      "Chain Shirt",
+      "Rusty Knife",
+      "Walking Stick",
+      "Wooden Club",
+      "Wooden Shield",
+      "Short Bow",
+      "Worn Longsword"
     ],
     "known_enemies": {}
   },

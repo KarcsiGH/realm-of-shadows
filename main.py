@@ -226,11 +226,11 @@ class Game:
             sfx.stop_ambient()
         elif state == S_WORLD_MAP:
             sfx.stop_music()
-            sfx.play_ambient("world_ambient")
+            pass  # ambient disabled
             self._sync_flag_keys()
         elif state == S_DUNGEON:
             sfx.stop_music()
-            sfx.play_ambient("dungeon_ambient")
+            pass  # ambient disabled
         elif state == S_COMBAT:
             sfx.stop_ambient()
             sfx.play_music("combat_music")

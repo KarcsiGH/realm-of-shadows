@@ -114,7 +114,7 @@ SPRITE_COLORS = {
     DT_TREASURE:     (255, 220, 50),
     DT_STAIRS_DOWN:  (100, 220, 255),
     DT_STAIRS_UP:    (80,  200, 255),
-    DT_ENTRANCE:     (100, 230, 120),
+    DT_ENTRANCE:     (255, 200, 80),   # warm golden arch
     DT_TRAP:         (230, 50,  50),
     DT_INTERACTABLE: (80,  200, 255),
     "enemy":         (200, 40,  40),
@@ -182,6 +182,7 @@ class DungeonUI:
         self._turn_target    = self.angle
         self._turn_anim_t    = 1.0   # start at 1.0 = no animation in progress
         self._step_cooldown  = 0.0   # seconds before next input accepted
+        self._pending_event  = None   # event returned by dungeon.move()
         self.pulse = 0.0
 
         self._sync_grid_pos()
@@ -438,18 +439,81 @@ class DungeonUI:
             color = SPRITE_COLORS.get(icon_key, (200, 200, 200))
             fog_t  = min(1.0, dist / TORCH_DIST)
             alpha  = int(255 * (1.0 - fog_t * 0.88))
-            color_a = (*color, alpha)
 
-            # Draw as a glowing circle with label
-            cx = (start_x + end_x) // 2
-            cy = (start_y + end_y) // 2
-            r  = max(4, sp_h // 4)
-            # Check z-buffer at center
-            if 0 <= cx < VP_W and ty_ < zbuf[cx]:
-                glow_surf = pygame.Surface((r*4, r*4), pygame.SRCALPHA)
-                pygame.draw.circle(glow_surf, (*color, alpha//3), (r*2, r*2), r*2)
-                pygame.draw.circle(glow_surf, (*color, alpha),    (r*2, r*2), max(2,r//2))
-                view.blit(glow_surf, (cx - r*2, cy - r*2))
+            cx_s = (start_x + end_x) // 2
+            cy_s = (start_y + end_y) // 2
+            r    = max(4, sp_h // 4)
+
+            if 0 <= cx_s < VP_W and ty_ < zbuf[cx_s]:
+                surf_w = max(8, sp_w)
+                surf_h = max(8, sp_h)
+                spr = pygame.Surface((surf_w, surf_h), pygame.SRCALPHA)
+                c_a = (*color, alpha)
+                dim = (int(color[0]*0.4), int(color[1]*0.4), int(color[2]*0.4), alpha//2)
+
+                if icon_key == DT_ENTRANCE:
+                    # Golden stone arch
+                    aw = max(6, surf_w * 3 // 4)
+                    ah = max(8, surf_h * 4 // 5)
+                    ox, oy = (surf_w - aw) // 2, surf_h - ah
+                    pygame.draw.rect(spr, dim, (ox, oy, aw, ah), border_radius=aw//2)
+                    pygame.draw.rect(spr, c_a, (ox, oy, aw, ah), 2, border_radius=aw//2)
+                    # Opening
+                    iw, ih = max(2, aw//2), max(3, ah*2//3)
+                    pygame.draw.rect(spr, (0,0,0,200), ((surf_w-iw)//2, surf_h-ih, iw, ih))
+
+                elif icon_key in (DT_STAIRS_DOWN, DT_STAIRS_UP, DT_INTERACTABLE):
+                    # Stairs — stacked horizontal lines
+                    steps = 4
+                    sw = max(4, surf_w * 3 // 4)
+                    sh = max(2, surf_h // (steps + 1))
+                    ox = (surf_w - sw) // 2
+                    for si in range(steps):
+                        sy_ = surf_h - (si + 1) * (surf_h // steps)
+                        iw_ = sw * (si + 1) // steps
+                        pygame.draw.rect(spr, c_a, (ox + (sw - iw_)//2, sy_, iw_, max(2, sh)))
+
+                elif icon_key == DT_TREASURE:
+                    # Treasure chest — rectangle with lid line
+                    cw, ch_ = max(6, surf_w*3//4), max(4, surf_h*3//5)
+                    ox, oy = (surf_w-cw)//2, (surf_h-ch_)//2
+                    pygame.draw.rect(spr, dim, (ox, oy, cw, ch_), border_radius=2)
+                    pygame.draw.rect(spr, c_a, (ox, oy, cw, ch_), 2, border_radius=2)
+                    pygame.draw.line(spr, c_a, (ox, oy + ch_//3), (ox+cw, oy + ch_//3), 2)
+                    # Lock dot
+                    pygame.draw.circle(spr, c_a, (surf_w//2, oy + ch_//2), max(2, r//4))
+
+                elif icon_key in ("enemy", "boss"):
+                    # Menacing skull-ish shape
+                    er = max(3, r * 3 // 4)
+                    pygame.draw.circle(spr, dim, (surf_w//2, surf_h//2 - er//4), er)
+                    pygame.draw.circle(spr, c_a, (surf_w//2, surf_h//2 - er//4), er, 2)
+                    # Eye dots
+                    ew = max(1, er//3)
+                    pygame.draw.circle(spr, c_a, (surf_w//2 - er//3, surf_h//2 - er//3), ew)
+                    pygame.draw.circle(spr, c_a, (surf_w//2 + er//3, surf_h//2 - er//3), ew)
+
+                elif icon_key == DT_TRAP:
+                    # Warning triangle
+                    pts = [(surf_w//2, 2), (surf_w-2, surf_h-2), (2, surf_h-2)]
+                    pygame.draw.polygon(spr, dim, pts)
+                    pygame.draw.polygon(spr, c_a, pts, 2)
+                    pygame.draw.line(spr, c_a, (surf_w//2, surf_h//4), (surf_w//2, surf_h*2//3), 2)
+
+                elif icon_key == "journal":
+                    # Book rectangle
+                    bw, bh_ = max(4, surf_w//2), max(5, surf_h*2//3)
+                    ox, oy = (surf_w-bw)//2, (surf_h-bh_)//2
+                    pygame.draw.rect(spr, dim, (ox, oy, bw, bh_))
+                    pygame.draw.rect(spr, c_a, (ox, oy, bw, bh_), 1)
+                    pygame.draw.line(spr, c_a, (surf_w//2, oy+2), (surf_w//2, oy+bh_-2), 1)
+
+                else:
+                    # Generic: simple lit square
+                    pygame.draw.rect(spr, dim, (2, 2, surf_w-4, surf_h-4), border_radius=2)
+                    pygame.draw.rect(spr, c_a, (2, 2, surf_w-4, surf_h-4), 2, border_radius=2)
+
+                view.blit(spr, (cx_s - surf_w//2, cy_s - surf_h//2))
 
     def _fading_overlay(self, view):
         intensity = self.fading_intensity
@@ -671,32 +735,32 @@ class DungeonUI:
         moved = False
 
         if key in (pygame.K_UP, pygame.K_w):
-            # Move forward
-            tx = int(self.px) + fdx
-            ty = int(self.py) + fdy
-            if not self._is_solid(tx, ty):
+            # Move forward — route through dungeon.move() so fog/encounters work
+            event = self.dungeon.move(fdx, fdy)
+            tx, ty = self.dungeon.party_x, self.dungeon.party_y
+            if tx != int(self.px) or ty != int(self.py):
                 self._move_start_x = self.px
                 self._move_start_y = self.py
                 self._move_target_x = tx + 0.5
                 self._move_target_y = ty + 0.5
                 self._move_anim_t = 0.0
-                self.dungeon.party_x = tx
-                self.dungeon.party_y = ty
                 moved = True
+            if event:
+                self._pending_event = event
 
         elif key in (pygame.K_DOWN, pygame.K_s):
-            # Move backward
-            tx = int(self.px) - fdx
-            ty = int(self.py) - fdy
-            if not self._is_solid(tx, ty):
+            # Move backward — route through dungeon.move()
+            event = self.dungeon.move(-fdx, -fdy)
+            tx, ty = self.dungeon.party_x, self.dungeon.party_y
+            if tx != int(self.px) or ty != int(self.py):
                 self._move_start_x = self.px
                 self._move_start_y = self.py
                 self._move_target_x = tx + 0.5
                 self._move_target_y = ty + 0.5
                 self._move_anim_t = 0.0
-                self.dungeon.party_x = tx
-                self.dungeon.party_y = ty
                 moved = True
+            if event:
+                self._pending_event = event
 
         elif key in (pygame.K_LEFT, pygame.K_q, pygame.K_a):
             # Turn left 90°
@@ -723,7 +787,10 @@ class DungeonUI:
         )
         if key in movement_keys:
             self._grid_step(key)
-            return None
+            # Return any dungeon event (encounter, stairs, trap, etc.)
+            ev = self._pending_event
+            self._pending_event = None
+            return ev
 
         if self.show_camp_confirm or self.show_stairs_confirm:
             return None
