@@ -1,0 +1,562 @@
+{
+  "version": 4,
+  "timestamp": "2026-02-27T14:27:00.865335",
+  "slot_name": "save1",
+  "metadata": {
+    "party_summary": [
+      "F Lv.1 Half-Orc Fighter",
+      "R Lv.1 Half-Orc Ranger",
+      "T Lv.1 Elf Thief",
+      "M Lv.1 Human Monk",
+      "C Lv.1 Human Cleric",
+      "MA Lv.1 Elf Mage"
+    ],
+    "total_gold": 0
+  },
+  "party": [
+    {
+      "name": "F",
+      "class_name": "Fighter",
+      "race_name": "Half-Orc",
+      "level": 1,
+      "xp": 0,
+      "gold": 0,
+      "stats": {
+        "STR": 17,
+        "DEX": 10,
+        "CON": 13,
+        "INT": 5,
+        "WIS": 8,
+        "PIE": 4
+      },
+      "resources": {
+        "HP": 104,
+        "Ki": 134,
+        "STR-SP": 57
+      },
+      "abilities": [
+        {
+          "name": "Power Strike",
+          "cost": 10,
+          "resource": "STR-SP",
+          "desc": "Heavy melee attack dealing bonus physical damage."
+        },
+        {
+          "name": "Defensive Stance",
+          "cost": 8,
+          "resource": "STR-SP",
+          "desc": "Reduce incoming damage for one turn."
+        }
+      ],
+      "inventory": [],
+      "equipment": {
+        "weapon": {
+          "name": "Worn Longsword",
+          "type": "Longsword",
+          "damage": 8,
+          "damage_stat": {
+            "STR": 0.7,
+            "DEX": 0.3
+          },
+          "range": "melee",
+          "speed_mod": 0,
+          "accuracy_mod": 0,
+          "crit_mod": 0,
+          "weight_class": "medium",
+          "phys_type": "slashing",
+          "requirements": {
+            "STR": 10
+          },
+          "spell_bonus": 0,
+          "special": {},
+          "identified": true,
+          "slot": "weapon"
+        },
+        "off_hand": {
+          "name": "Wooden Shield",
+          "slot": "off_hand",
+          "armor_tier": "shield",
+          "defense": 3,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {},
+          "rarity": "common",
+          "value": 10,
+          "description": "A simple round wooden shield.",
+          "identified": true
+        },
+        "head": null,
+        "body": {
+          "name": "Leather Vest",
+          "slot": "body",
+          "armor_tier": "light",
+          "defense": 4,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {},
+          "rarity": "common",
+          "value": 20,
+          "description": "Basic leather protection.",
+          "identified": true
+        },
+        "hands": null,
+        "feet": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "life_path": [],
+      "backstory_parts": [],
+      "quick_rolled": true,
+      "human_bonus_stat": null
+    },
+    {
+      "name": "R",
+      "class_name": "Ranger",
+      "race_name": "Half-Orc",
+      "level": 1,
+      "xp": 0,
+      "gold": 0,
+      "stats": {
+        "STR": 16,
+        "DEX": 15,
+        "CON": 12,
+        "INT": 10,
+        "WIS": 16,
+        "PIE": 7
+      },
+      "resources": {
+        "HP": 91,
+        "Ki": 135,
+        "WIS-MP": 90,
+        "DEX-SP": 51
+      },
+      "abilities": [
+        {
+          "name": "Aimed Shot",
+          "cost": 8,
+          "resource": "DEX-SP",
+          "desc": "Precise ranged attack with bonus accuracy."
+        },
+        {
+          "name": "Track",
+          "cost": 5,
+          "resource": "WIS-MP",
+          "desc": "Locate nearby enemies and resources."
+        }
+      ],
+      "inventory": [],
+      "equipment": {
+        "weapon": {
+          "name": "Short Bow",
+          "type": "Bow",
+          "damage": 7,
+          "damage_stat": {
+            "DEX": 0.8,
+            "STR": 0.2
+          },
+          "range": "ranged",
+          "speed_mod": 0,
+          "accuracy_mod": 5,
+          "crit_mod": 3,
+          "weight_class": "medium",
+          "phys_type": "piercing",
+          "requirements": {
+            "DEX": 10,
+            "STR": 8
+          },
+          "spell_bonus": 0,
+          "special": {},
+          "identified": true,
+          "slot": "weapon"
+        },
+        "off_hand": null,
+        "head": null,
+        "body": {
+          "name": "Leather Vest",
+          "slot": "body",
+          "armor_tier": "light",
+          "defense": 4,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {},
+          "rarity": "common",
+          "value": 20,
+          "description": "Basic leather protection.",
+          "identified": true
+        },
+        "hands": null,
+        "feet": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "life_path": [],
+      "backstory_parts": [],
+      "quick_rolled": true,
+      "human_bonus_stat": null
+    },
+    {
+      "name": "T",
+      "class_name": "Thief",
+      "race_name": "Elf",
+      "level": 1,
+      "xp": 0,
+      "gold": 0,
+      "stats": {
+        "STR": 11,
+        "DEX": 18,
+        "CON": 7,
+        "INT": 13,
+        "WIS": 8,
+        "PIE": 4
+      },
+      "resources": {
+        "HP": 66,
+        "Ki": 139,
+        "DEX-SP": 60
+      },
+      "abilities": [
+        {
+          "name": "Quick Strike",
+          "cost": 8,
+          "resource": "DEX-SP",
+          "desc": "Fast attack with a chance to strike first."
+        },
+        {
+          "name": "Evade",
+          "cost": 6,
+          "resource": "DEX-SP",
+          "desc": "Dodge the next incoming attack entirely."
+        }
+      ],
+      "inventory": [],
+      "equipment": {
+        "weapon": {
+          "name": "Rusty Knife",
+          "type": "Dagger",
+          "damage": 5,
+          "damage_stat": {
+            "DEX": 1.0
+          },
+          "range": "melee",
+          "speed_mod": 2,
+          "accuracy_mod": 5,
+          "crit_mod": 5,
+          "weight_class": "light",
+          "phys_type": "piercing",
+          "requirements": {},
+          "spell_bonus": 0,
+          "special": {},
+          "identified": true,
+          "slot": "weapon"
+        },
+        "off_hand": null,
+        "head": null,
+        "body": {
+          "name": "Leather Vest",
+          "slot": "body",
+          "armor_tier": "light",
+          "defense": 4,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {},
+          "rarity": "common",
+          "value": 20,
+          "description": "Basic leather protection.",
+          "identified": true
+        },
+        "hands": null,
+        "feet": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "life_path": [],
+      "backstory_parts": [],
+      "quick_rolled": true,
+      "human_bonus_stat": null
+    },
+    {
+      "name": "M",
+      "class_name": "Monk",
+      "race_name": "Human",
+      "level": 1,
+      "xp": 0,
+      "gold": 0,
+      "stats": {
+        "STR": 13,
+        "DEX": 16,
+        "CON": 11,
+        "INT": 10,
+        "WIS": 17,
+        "PIE": 12
+      },
+      "resources": {
+        "HP": 88,
+        "Ki": 168,
+        "WIS-MP": 95,
+        "DEX-SP": 54
+      },
+      "abilities": [
+        {
+          "name": "Flurry of Blows",
+          "cost": 10,
+          "resource": "Ki",
+          "desc": "Unleash multiple rapid unarmed strikes."
+        },
+        {
+          "name": "Iron Skin",
+          "cost": 8,
+          "resource": "Ki",
+          "desc": "Harden your body to reduce incoming damage."
+        }
+      ],
+      "inventory": [],
+      "equipment": {
+        "weapon": {
+          "name": "Unarmed (Monk)",
+          "type": "Fists",
+          "damage": 2,
+          "damage_stat": {
+            "STR": 0.5,
+            "DEX": 0.5
+          },
+          "range": "melee",
+          "speed_mod": 2,
+          "accuracy_mod": 5,
+          "crit_mod": 0,
+          "weight_class": "light",
+          "phys_type": "blunt",
+          "requirements": {},
+          "spell_bonus": 0,
+          "special": {
+            "monk_scaling": true
+          },
+          "identified": true,
+          "slot": "weapon"
+        },
+        "off_hand": null,
+        "head": null,
+        "body": {
+          "name": "Traveler's Clothes",
+          "slot": "body",
+          "armor_tier": "clothing",
+          "defense": 1,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {},
+          "rarity": "common",
+          "value": 5,
+          "description": "Simple clothing. Offers minimal protection.",
+          "identified": true
+        },
+        "hands": null,
+        "feet": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "life_path": [],
+      "backstory_parts": [],
+      "quick_rolled": true,
+      "human_bonus_stat": "WIS"
+    },
+    {
+      "name": "C",
+      "class_name": "Cleric",
+      "race_name": "Human",
+      "level": 1,
+      "xp": 0,
+      "gold": 0,
+      "stats": {
+        "STR": 10,
+        "DEX": 8,
+        "CON": 12,
+        "INT": 12,
+        "WIS": 12,
+        "PIE": 16
+      },
+      "resources": {
+        "HP": 86,
+        "Ki": 126,
+        "WIS-MP": 70,
+        "PIE-MP": 90
+      },
+      "abilities": [
+        {
+          "name": "Heal",
+          "cost": 12,
+          "resource": "PIE-MP",
+          "desc": "Restore an ally's health with divine power."
+        },
+        {
+          "name": "Smite",
+          "cost": 10,
+          "resource": "PIE-MP",
+          "desc": "Strike an enemy with holy radiance."
+        }
+      ],
+      "inventory": [],
+      "equipment": {
+        "weapon": {
+          "name": "Wooden Club",
+          "type": "Mace",
+          "damage": 6,
+          "damage_stat": {
+            "STR": 1.0
+          },
+          "range": "melee",
+          "speed_mod": -1,
+          "accuracy_mod": -5,
+          "crit_mod": 2,
+          "weight_class": "medium",
+          "phys_type": "blunt",
+          "requirements": {
+            "STR": 8
+          },
+          "spell_bonus": 0,
+          "special": {
+            "armor_bypass": 0.3
+          },
+          "identified": true,
+          "slot": "weapon"
+        },
+        "off_hand": {
+          "name": "Wooden Shield",
+          "slot": "off_hand",
+          "armor_tier": "shield",
+          "defense": 3,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {},
+          "rarity": "common",
+          "value": 10,
+          "description": "A simple round wooden shield.",
+          "identified": true
+        },
+        "head": null,
+        "body": {
+          "name": "Chain Shirt",
+          "slot": "body",
+          "armor_tier": "medium",
+          "defense": 9,
+          "magic_resist": 0,
+          "speed_mod": -1,
+          "stat_bonuses": {},
+          "rarity": "common",
+          "value": 60,
+          "description": "A shirt of interlocking metal rings.",
+          "identified": true
+        },
+        "hands": null,
+        "feet": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "life_path": [],
+      "backstory_parts": [],
+      "quick_rolled": true,
+      "human_bonus_stat": "PIE"
+    },
+    {
+      "name": "MA",
+      "class_name": "Mage",
+      "race_name": "Elf",
+      "level": 1,
+      "xp": 0,
+      "gold": 0,
+      "stats": {
+        "STR": 4,
+        "DEX": 10,
+        "CON": 6,
+        "INT": 20,
+        "WIS": 13,
+        "PIE": 6
+      },
+      "resources": {
+        "HP": 53,
+        "Ki": 149,
+        "INT-MP": 110,
+        "WIS-MP": 75
+      },
+      "abilities": [
+        {
+          "name": "Magic Missile",
+          "cost": 8,
+          "resource": "INT-MP",
+          "desc": "Basic arcane bolt that never misses."
+        },
+        {
+          "name": "Arcane Shield",
+          "cost": 10,
+          "resource": "INT-MP",
+          "desc": "Conjure a magical barrier for protection."
+        }
+      ],
+      "inventory": [],
+      "equipment": {
+        "weapon": {
+          "name": "Walking Stick",
+          "type": "Staff",
+          "damage": 3,
+          "damage_stat": {
+            "STR": 0.4,
+            "INT": 0.6
+          },
+          "range": "melee",
+          "speed_mod": 0,
+          "accuracy_mod": 0,
+          "crit_mod": 0,
+          "weight_class": "medium",
+          "phys_type": "blunt",
+          "requirements": {},
+          "spell_bonus": 2,
+          "special": {},
+          "identified": true,
+          "slot": "weapon"
+        },
+        "off_hand": null,
+        "head": null,
+        "body": {
+          "name": "Traveler's Clothes",
+          "slot": "body",
+          "armor_tier": "clothing",
+          "defense": 1,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {},
+          "rarity": "common",
+          "value": 5,
+          "description": "Simple clothing. Offers minimal protection.",
+          "identified": true
+        },
+        "hands": null,
+        "feet": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "life_path": [],
+      "backstory_parts": [],
+      "quick_rolled": true,
+      "human_bonus_stat": null
+    }
+  ],
+  "knowledge": {
+    "identified_items": [
+      "Monk Unarmed",
+      "Worn Longsword",
+      "Chain Shirt",
+      "Wooden Club",
+      "Walking Stick",
+      "Leather Vest",
+      "Wooden Shield",
+      "Rusty Knife",
+      "Traveler's Clothes",
+      "Short Bow"
+    ],
+    "known_enemies": {}
+  },
+  "story_flags": {
+    "act": 1,
+    "intro_seen": true,
+    "quest.main_meet_maren.state": 1
+  },
+  "world_state": null
+}

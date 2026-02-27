@@ -172,6 +172,15 @@ class DungeonUI:
         self._update_fading()
 
         self.t     = 0.0
+        # Grid-snap movement animation
+        self._move_start_x   = self.px
+        self._move_start_y   = self.py
+        self._move_target_x  = self.px
+        self._move_target_y  = self.py
+        self._move_anim_t    = 0.0   # 0..1 progress
+        self._turn_target    = self.angle
+        self._turn_anim_t    = 0.0
+        self._step_cooldown  = 0.0   # seconds before next input accepted
         self.pulse = 0.0
 
         self._sync_grid_pos()
@@ -610,33 +619,100 @@ class DungeonUI:
     #  INPUT
     # ─────────────────────────────────────────────────────────
 
-    def _process_held_keys(self, dt):
+    def _process_held_keys(self, ds):
+        """Animate in-progress move/turn. Called every frame."""
         if self.show_camp_confirm or self.show_stairs_confirm:
             return
-        keys = self._keys
-        if pygame.K_LEFT in keys or pygame.K_q in keys:
-            self.angle -= ROT_SPEED * dt
+
+        MOVE_DUR = 0.12   # seconds to slide one tile
+        TURN_DUR = 0.10   # seconds to snap 90°
+
+        # Animate position
+        if self._move_anim_t < 1.0:
+            self._move_anim_t = min(1.0, self._move_anim_t + ds / MOVE_DUR)
+            t = self._ease(self._move_anim_t)
+            self.px = self._move_start_x + (self._move_target_x - self._move_start_x) * t
+            self.py = self._move_start_y + (self._move_target_y - self._move_start_y) * t
+
+        # Animate turn
+        if self._turn_anim_t < 1.0:
+            self._turn_anim_t = min(1.0, self._turn_anim_t + ds / TURN_DUR)
+            t = self._ease(self._turn_anim_t)
+            self.angle = self._turn_start + (self._turn_target - self._turn_start) * t
             self._recalc_camera()
-        if pygame.K_RIGHT in keys or pygame.K_e in keys:
-            self.angle += ROT_SPEED * dt
-            self._recalc_camera()
-        md = MOVE_SPEED * dt
-        nx, ny = self.px, self.py
+
+        # Reduce input cooldown
+        if self._step_cooldown > 0:
+            self._step_cooldown = max(0.0, self._step_cooldown - ds)
+
+    @staticmethod
+    def _ease(t):
+        """Smooth step easing."""
+        return t * t * (3 - 2 * t)
+
+    def _grid_step(self, key):
+        """Handle a single discrete movement or turn keypress."""
+        if self.show_camp_confirm or self.show_stairs_confirm:
+            return
+        if self._step_cooldown > 0:
+            return
+
+        COOLDOWN = 0.13   # min seconds between steps
+
+        import math as _m
+        TWO_PI = 2 * _m.pi
+
+        # Snap current angle to nearest 90° before computing direction
+        snapped = round(self.angle / (_m.pi / 2)) * (_m.pi / 2)
+        fdx = round(_m.cos(snapped))   # -1, 0, or 1
+        fdy = round(_m.sin(snapped))
+
         moved = False
-        if pygame.K_UP in keys or pygame.K_w in keys:
-            nx += self.dx*md; ny += self.dy*md; moved = True
-        if pygame.K_DOWN in keys or pygame.K_s in keys:
-            nx -= self.dx*md; ny -= self.dy*md; moved = True
-        if pygame.K_a in keys:
-            nx += self.dy*md*0.7; ny -= self.dx*md*0.7; moved = True
-        if pygame.K_d in keys:
-            nx -= self.dy*md*0.7; ny += self.dx*md*0.7; moved = True
+
+        if key in (pygame.K_UP, pygame.K_w):
+            # Move forward
+            tx = int(self.px) + fdx
+            ty = int(self.py) + fdy
+            if not self._is_solid(tx, ty):
+                self._move_start_x = self.px
+                self._move_start_y = self.py
+                self._move_target_x = tx + 0.5
+                self._move_target_y = ty + 0.5
+                self._move_anim_t = 0.0
+                self.dungeon.party_x = tx
+                self.dungeon.party_y = ty
+                moved = True
+
+        elif key in (pygame.K_DOWN, pygame.K_s):
+            # Move backward
+            tx = int(self.px) - fdx
+            ty = int(self.py) - fdy
+            if not self._is_solid(tx, ty):
+                self._move_start_x = self.px
+                self._move_start_y = self.py
+                self._move_target_x = tx + 0.5
+                self._move_target_y = ty + 0.5
+                self._move_anim_t = 0.0
+                self.dungeon.party_x = tx
+                self.dungeon.party_y = ty
+                moved = True
+
+        elif key in (pygame.K_LEFT, pygame.K_q, pygame.K_a):
+            # Turn left 90°
+            self._turn_start  = self.angle
+            self._turn_target = self.angle - _m.pi / 2
+            self._turn_anim_t = 0.0
+            moved = True
+
+        elif key in (pygame.K_RIGHT, pygame.K_e, pygame.K_d):
+            # Turn right 90°
+            self._turn_start  = self.angle
+            self._turn_target = self.angle + _m.pi / 2
+            self._turn_anim_t = 0.0
+            moved = True
+
         if moved:
-            if not self._is_solid(int(nx), int(self.py)):
-                self.px = nx
-            if not self._is_solid(int(self.px), int(ny)):
-                self.py = ny
-            self._sync_grid_pos()
+            self._step_cooldown = COOLDOWN
 
     def handle_key(self, key):
         movement_keys = (
@@ -645,7 +721,7 @@ class DungeonUI:
             pygame.K_q, pygame.K_e,
         )
         if key in movement_keys:
-            self._keys.add(key)
+            self._grid_step(key)
             return None
 
         if self.show_camp_confirm or self.show_stairs_confirm:
@@ -666,6 +742,9 @@ class DungeonUI:
         if key == pygame.K_t:
             return self._try_disarm()
         return None
+
+    def handle_keyup(self, key):
+        pass   # no held-key state in grid-snap mode
 
     def handle_keyup(self, key):
         self._keys.discard(key)

@@ -1,0 +1,10 @@
+State: 7
+Party size: 6
+
+Traceback (most recent call last):
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 158, in run
+    self.on_event(e, mx, my)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 427, in on_event
+    ok, path, msg = save_game(self.party)
+                    ^^^^^^^^^
+UnboundLocalError: cannot access local variable 'save_game' where it is not associated with a value

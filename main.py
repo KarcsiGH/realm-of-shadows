@@ -525,7 +525,6 @@ class Game:
                         self.go_fade(S_WORLD_MAP)
                     elif result == "inn_save":
                         # Auto-save when resting at inn
-                        from core.save_load import save_game
                         try:
                             save_game(self.party, world_state=self.world_state, slot_name="inn_autosave")
                         except Exception:
