@@ -23,6 +23,10 @@ GREEN       = (60, 200, 80)
 DIM_GREEN   = (40, 120, 50)
 PURPLE      = (160, 100, 220)
 ORANGE      = (220, 150, 40)
+HEAL_COL    = (80, 255, 180)
+RUMOR_COL   = (180, 160, 220)
+BUY_COL     = (80, 220, 120)
+SELL_COL    = (220, 180, 80)
 
 FIT_COLORS = {
     "Natural Fit": GREEN,
