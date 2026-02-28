@@ -1,0 +1,18 @@
+State: 17
+Party size: 6
+
+Traceback (most recent call last):
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 164, in run
+    self.draw_state(mx, my)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 740, in draw_state
+    elif self.state == S_CHEST:     self._draw_chest(mx, my)
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 1570, in _draw_chest
+    self.chest_ui.draw(self.screen, mx, my, dt)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/ui/chest_ui.py", line 158, in draw
+    desc = get_item_display_desc(item)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/charlesgasper/Documents/RealmOfShadows/core/identification.py", line 370, in get_item_display_desc
+    val = item.get("effect", {}).get(effect_key, 0)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'get'

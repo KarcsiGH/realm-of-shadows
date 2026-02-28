@@ -1,0 +1,17 @@
+State: 13
+Party size: 6
+
+Traceback (most recent call last):
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 158, in run
+    self.on_event(e, mx, my)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 548, in on_event
+    self._process_dungeon_event(event)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 2257, in _process_dungeon_event
+    self.start_combat(enc_key)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 1625, in start_combat
+    self.combat_state = CombatState(self.party, encounter_key)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/charlesgasper/Documents/RealmOfShadows/core/combat_engine.py", line 1725, in __init__
+    int(e["attack_damage"][0] * scale),
+        ~~~~~~~~~~~~~~~~~~^^^
+TypeError: 'int' object is not subscriptable

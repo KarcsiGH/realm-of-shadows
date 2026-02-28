@@ -35,8 +35,8 @@ FIT_COLORS = {
 }
 
 # ── Screen Settings ───────────────────────────────────────────
-SCREEN_W = 1280
-SCREEN_H = 960
+SCREEN_W = 1440
+SCREEN_H = 900
 
 # ── Font Cache ────────────────────────────────────────────────
 _font_cache = {}

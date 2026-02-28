@@ -1,0 +1,19 @@
+State: 8
+Party size: 6
+
+Traceback (most recent call last):
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 164, in run
+    self.draw_state(mx, my)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 731, in draw_state
+    elif self.state == S_COMBAT:   self.draw_combat(mx, my)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 1650, in draw_combat
+    result = self.combat_state.execute_enemy_turn()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/charlesgasper/Documents/RealmOfShadows/core/combat_engine.py", line 2011, in execute_enemy_turn
+    result = resolve_enemy_attack(actor, target)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/charlesgasper/Documents/RealmOfShadows/core/combat_engine.py", line 657, in resolve_enemy_attack
+    raw = (base_dmg + str_bonus) * pos_dmg
+           ~~~~~~~~~^~~~~~~~~~~
+TypeError: can only concatenate tuple (not "float") to tuple

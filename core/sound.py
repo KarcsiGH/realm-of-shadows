@@ -75,6 +75,15 @@ def get_ambient_volume(): return _ambient_vol
 
 _SETTINGS_FILE = "settings.json"
 
+_display_mode = "fullscreen"  # "fullscreen" | "1440x900" | "1280x800"
+
+def get_display_mode():
+    return _display_mode
+
+def set_display_mode(mode):
+    global _display_mode
+    _display_mode = mode
+
 def save_settings():
     """Persist current volume settings to settings.json."""
     import json, os
@@ -83,6 +92,7 @@ def save_settings():
         "sfx_vol":     _sfx_vol,
         "music_vol":   _music_vol,
         "ambient_vol": _ambient_vol,
+        "display_mode": _display_mode,
     }
     try:
         with open(_SETTINGS_FILE, "w") as f:
@@ -100,6 +110,7 @@ def load_settings():
         set_sfx_volume(   float(data.get("sfx_vol",     _sfx_vol)))
         set_music_volume( float(data.get("music_vol",   _music_vol)))
         set_ambient_volume(float(data.get("ambient_vol",_ambient_vol)))
+        set_display_mode(data.get("display_mode", "fullscreen"))
     except (FileNotFoundError, Exception):
         pass  # Use defaults if file missing or corrupt
 

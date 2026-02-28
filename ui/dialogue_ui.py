@@ -154,24 +154,40 @@ class DialogueUI:
     def _draw_choices(self, surface, mx, my, top_y):
         self.hover_choice = -1
         choices = self.state.get_choices()
+        if not hasattr(self, "choice_scroll"):
+            self.choice_scroll = 0
 
-        for i, choice in enumerate(choices):
+        # How many choices fit on screen
+        available_h = SCREEN_H - top_y - CHOICES_BOTTOM_MARGIN
+        max_visible = max(3, available_h // 44)
+        total = len(choices)
+        self.choice_scroll = min(self.choice_scroll, max(0, total - max_visible))
+        visible = choices[self.choice_scroll:self.choice_scroll + max_visible]
+
+        for i, choice in enumerate(visible):
+            real_i = i + self.choice_scroll
             rect = pygame.Rect(DIALOGUE_MARGIN + 20, top_y + i * 44,
                                SCREEN_W - DIALOGUE_MARGIN * 2 - 40, 38)
             hover = rect.collidepoint(mx, my)
             if hover:
-                self.hover_choice = i
+                self.hover_choice = real_i
 
             bg = CHOICE_HOVER if hover else CHOICE_BG
             border = CHOICE_HOVER_BORDER if hover else CHOICE_BORDER
             pygame.draw.rect(surface, bg, rect, border_radius=4)
             pygame.draw.rect(surface, border, rect, 2, border_radius=4)
 
-            # Number prefix for keyboard selection
-            num = str(i + 1)
+            num = str(real_i + 1)
             col = GOLD if hover else CREAM
             draw_text(surface, f"{num}.", rect.x + 8, rect.y + 9, DIM_GOLD, 13)
             draw_text(surface, choice["text"], rect.x + 28, rect.y + 9, col, 14)
+
+        # Scroll indicators
+        if self.choice_scroll > 0:
+            draw_text(surface, "▲ scroll up", DIALOGUE_MARGIN + 20, top_y - 16, DARK_GREY, 11)
+        if self.choice_scroll + max_visible < total:
+            draw_text(surface, "▼ scroll down (mouse wheel)", DIALOGUE_MARGIN + 20,
+                      top_y + max_visible * 44 + 2, DARK_GREY, 11)
 
     def handle_click(self, mx, my):
         """Handle mouse click. Returns action string or None."""

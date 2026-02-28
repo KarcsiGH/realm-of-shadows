@@ -149,6 +149,14 @@ class TownUI:
 
         # Always use hub menu — walkable town removed
         self.town_data = None
+        # Safe defaults for walk attributes (walk mode disabled but referenced in draw)
+        self.walk_x = 0
+        self.walk_y = 0
+        self.walk_facing = "down"
+        self.walk_anim_t = 0
+        self.walk_interact_msg = ""
+        self.walk_interact_timer = 0
+        self.walk_tile_size = 24
         self._return_to_town()
 
     # ─────────────────────────────────────────────────────────
@@ -242,6 +250,8 @@ class TownUI:
              (50, 100, 120), HEAL_COL),
             ("The Shadowed Flagon", "Hear rumors and rest your feet",
              (100, 60, 100), RUMOR_COL),
+            ("Job Board", "Browse available quests and contracts",
+             (40, 80, 60), (80, 200, 120)),
             ("Leave Town", "Return to the wilds",
              (80, 40, 40), RED),
         ]
@@ -1877,7 +1887,7 @@ class TownUI:
 
         # ── Hub view ──
         if self.view == self.VIEW_HUB:
-            locations = ["inn", "shop", "forge", "temple", "tavern", "exit"]
+            locations = ["inn", "shop", "forge", "temple", "tavern", "jobboard", "exit"]
             by = 140
             for i, loc in enumerate(locations):
                 btn = pygame.Rect(SCREEN_W // 2 - 300, by + i * 90, 420, 78)
@@ -1896,6 +1906,8 @@ class TownUI:
                         self.view = self.VIEW_TAVERN
                     elif loc == "inn":
                         self.view = self.VIEW_INN
+                    elif loc == "jobboard":
+                        self.view = self.VIEW_JOBBOARD
                     return None
 
             # NPC clicks

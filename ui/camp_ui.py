@@ -405,7 +405,12 @@ class CampUI:
     # ──────────────────────────────────────────────────────────
 
     def _draw_char_selector(self, surface, mx, my, top):
-        """Draw character tabs for selecting party member."""
+        """Draw character tabs for selecting party member, with reorder arrows."""
+        # Reorder arrows (◄ ►) for selected char
+        self._reorder_left_rect  = None
+        self._reorder_right_rect = None
+
+        draw_text(surface, "Order:", 8, top + 7, GREY, 11)
         cx = 60
         for i, c in enumerate(self.party):
             w = max(80, len(c.name) * 8 + 20)
@@ -415,6 +420,22 @@ class CampUI:
             pygame.draw.rect(surface, bg, r, border_radius=3)
             if i == self.selected_char:
                 pygame.draw.rect(surface, GOLD, r, 2, border_radius=3)
+                # Draw ◄ left arrow if not first
+                if i > 0:
+                    lr = pygame.Rect(cx - 22, top + 4, 18, 22)
+                    lhov = lr.collidepoint(mx, my)
+                    pygame.draw.rect(surface, (50,40,20) if lhov else (30,25,12), lr, border_radius=3)
+                    pygame.draw.rect(surface, GOLD if lhov else DIM_GOLD, lr, 1, border_radius=3)
+                    draw_text(surface, "◄", lr.x + 2, lr.y + 3, GOLD if lhov else DIM_GOLD, 12)
+                    self._reorder_left_rect = lr
+                # Draw ► right arrow if not last
+                if i < len(self.party) - 1:
+                    rr = pygame.Rect(cx + w + 2, top + 4, 18, 22)
+                    rhov = rr.collidepoint(mx, my)
+                    pygame.draw.rect(surface, (50,40,20) if rhov else (30,25,12), rr, border_radius=3)
+                    pygame.draw.rect(surface, GOLD if rhov else DIM_GOLD, rr, 1, border_radius=3)
+                    draw_text(surface, "►", rr.x + 2, rr.y + 3, GOLD if rhov else DIM_GOLD, 12)
+                    self._reorder_right_rect = rr
             col = GOLD if i == self.selected_char else CREAM
             draw_text(surface, c.name, r.x + 8, r.y + 6, col, 12, bold=(i == self.selected_char))
             cx += w + 6
@@ -456,6 +477,20 @@ class CampUI:
                 self.selected_item = -1
                 self.scroll_offset = 0
                 return None
+
+        # Character reorder arrows (visible on all tabs)
+        if getattr(self, "_reorder_left_rect", None) and self._reorder_left_rect.collidepoint(mx, my):
+            i = self.selected_char
+            if i > 0:
+                self.party[i], self.party[i-1] = self.party[i-1], self.party[i]
+                self.selected_char = i - 1
+            return None
+        if getattr(self, "_reorder_right_rect", None) and self._reorder_right_rect.collidepoint(mx, my):
+            i = self.selected_char
+            if i < len(self.party) - 1:
+                self.party[i], self.party[i+1] = self.party[i+1], self.party[i]
+                self.selected_char = i + 1
+            return None
 
         # Character selector (tabs that have it)
         if self.tab in (TAB_INVENTORY, TAB_EQUIP, TAB_STATS):

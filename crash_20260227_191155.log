@@ -1,0 +1,17 @@
+State: 11
+Party size: 6
+
+Traceback (most recent call last):
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 164, in run
+    self.draw_state(mx, my)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 734, in draw_state
+    elif self.state == S_TOWN:      self.draw_town(mx, my)
+                                    ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 2074, in draw_town
+    self.town_ui.draw(self.screen, mx, my, dt)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/ui/town_ui.py", line 197, in draw
+    self._draw_walk(surface, mx, my)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/ui/town_ui.py", line 395, in _draw_walk
+    if tile == TT_GRASS:
+               ^^^^^^^^
+UnboundLocalError: cannot access local variable 'TT_GRASS' where it is not associated with a value

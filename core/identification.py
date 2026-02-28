@@ -367,7 +367,8 @@ def get_item_display_desc(item):
         }
         combined_stat_bonuses = dict(item.get("stat_bonus", {}))
         for effect_key, stat in _EFFECT_TO_STAT.items():
-            val = item.get("effect", {}).get(effect_key, 0)
+            eff = item.get("effect", {})
+            val = eff.get(effect_key, 0) if isinstance(eff, dict) else 0
             if val:
                 combined_stat_bonuses[stat] = combined_stat_bonuses.get(stat, 0) + val
         for stat, val in combined_stat_bonuses.items():

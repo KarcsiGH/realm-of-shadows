@@ -34,7 +34,7 @@ except ImportError:
 # ═══════════════════════════════════════════════════════════════
 
 VP_X, VP_Y   = 0,   50
-VP_W, VP_H   = 940, 820
+VP_W, VP_H   = 1100, 810
 HUD_H        = 90
 
 MM_X    = VP_X + VP_W + 8
@@ -211,8 +211,8 @@ class DungeonUI:
     def _recalc_camera(self):
         self.dx =  math.cos(self.angle)
         self.dy =  math.sin(self.angle)
-        self.cx = -self.dy * 0.825
-        self.cy =  self.dx * 0.825
+        self.cx = -self.dy * 0.6494
+        self.cy =  self.dx * 0.6494
 
     def _update_fading(self):
         f = self.dungeon.current_floor
@@ -242,7 +242,12 @@ class DungeonUI:
     # ─────────────────────────────────────────────────────────
 
     def _cast_ray(self, ray_dx, ray_dy):
-        """DDA ray → (dist, wall_x_frac, is_ns, is_door)."""
+        """DDA ray → (dist, wall_x_frac, is_ns, is_door).
+        
+        Doors use Wolfenstein-style half-tile offset: the door surface sits at
+        the tile's midpoint, framed by wall texture on both sides. Rays that
+        don't reach the midpoint hit the wall frame instead.
+        """
         if ray_dx == 0: ray_dx = 1e-10
         if ray_dy == 0: ray_dy = 1e-10
 
@@ -259,9 +264,9 @@ class DungeonUI:
         sdx = (1.0 - frac_x) * delta_x if ray_dx > 0 else frac_x * delta_x
         sdy = (1.0 - frac_y) * delta_y if ray_dy > 0 else frac_y * delta_y
 
-        fl   = self.dungeon.get_current_floor_data()
-        fw   = fl["width"]
-        fh   = fl["height"]
+        fl    = self.dungeon.get_current_floor_data()
+        fw    = fl["width"]
+        fh    = fl["height"]
         tiles = fl["tiles"]
 
         for _ in range(64):
@@ -281,7 +286,8 @@ class DungeonUI:
             is_s = tt == DT_SECRET_DOOR and not tile.get("secret_found")
             is_w = tt == DT_WALL or is_s
             is_d = tt == DT_DOOR
-            if is_w or is_d:
+
+            if is_w:
                 if not ns:
                     dist = (map_x - self.px + (1 - step_x)/2) / ray_dx
                 else:
@@ -291,7 +297,40 @@ class DungeonUI:
                 else:
                     wx = self.px + dist * ray_dx
                 wx -= math.floor(wx)
-                return max(0.01, dist), wx, ns, is_d
+                return max(0.01, dist), wx, ns, False
+
+            if is_d:
+                # Advance ray half a tile to door's midpoint
+                if not ns:
+                    dist_face = (map_x - self.px + (1 - step_x)/2) / ray_dx
+                    dist_mid  = dist_face + 0.5 / abs(ray_dx) if ray_dx != 0 else dist_face
+                else:
+                    dist_face = (map_y - self.py + (1 - step_y)/2) / ray_dy
+                    dist_mid  = dist_face + 0.5 / abs(ray_dy) if ray_dy != 0 else dist_face
+
+                # Where does the ray cross the door midplane?
+                if not ns:
+                    wx_mid = self.py + dist_mid * ray_dy
+                else:
+                    wx_mid = self.px + dist_mid * ray_dx
+                wx_mid -= math.floor(wx_mid)
+
+                # If ray doesn't reach the door opening (0.25–0.75 range), it hits frame
+                # The door spans the middle 60% of the tile; edges are wall frame
+                if wx_mid < 0.2 or wx_mid > 0.8:
+                    # Hit the wall frame — render as wall texture
+                    if not ns:
+                        dist = (map_x - self.px + (1 - step_x)/2) / ray_dx
+                        wx = self.py + dist * ray_dy
+                    else:
+                        dist = (map_y - self.py + (1 - step_y)/2) / ray_dy
+                        wx = self.px + dist * ray_dx
+                    wx -= math.floor(wx)
+                    return max(0.01, dist), wx, ns, False
+                else:
+                    # Ray hits the door face at tile midpoint
+                    return max(0.01, dist_mid), wx_mid, ns, True
+
         return 20.0, 0.0, False, False
 
     # ─────────────────────────────────────────────────────────
@@ -473,43 +512,106 @@ class DungeonUI:
                     iw, ih = max(2, aw//2), max(3, ah*2//3)
                     pygame.draw.rect(spr, (0,0,0,200), ((surf_w-iw)//2, surf_h-ih, iw, ih))
 
-                elif icon_key in (DT_STAIRS_DOWN, DT_STAIRS_UP, DT_INTERACTABLE):
-                    # Stairs — stacked horizontal lines
-                    steps = 4
-                    sw = max(4, surf_w * 3 // 4)
-                    sh = max(2, surf_h // (steps + 1))
+                elif icon_key == DT_STAIRS_DOWN:
+                    # Downward stairs: wide at top, narrow at bottom (descending)
+                    steps = 5
+                    sw = max(6, surf_w * 4 // 5)
                     ox = (surf_w - sw) // 2
                     for si in range(steps):
-                        sy_ = surf_h - (si + 1) * (surf_h // steps)
-                        iw_ = sw * (si + 1) // steps
-                        pygame.draw.rect(spr, c_a, (ox + (sw - iw_)//2, sy_, iw_, max(2, sh)))
+                        frac = (steps - si) / steps
+                        iw_ = max(2, int(sw * frac))
+                        sy_ = surf_h - (si + 1) * surf_h // (steps + 1)
+                        sh_ = max(2, surf_h // (steps + 2))
+                        pygame.draw.rect(spr, dim, (ox + (sw - iw_)//2, sy_, iw_, sh_))
+                        pygame.draw.rect(spr, c_a, (ox + (sw - iw_)//2, sy_, iw_, sh_), 1)
+
+                elif icon_key == DT_STAIRS_UP:
+                    # Upward stairs: narrow at top, wide at bottom (ascending)
+                    steps = 5
+                    sw = max(6, surf_w * 4 // 5)
+                    ox = (surf_w - sw) // 2
+                    for si in range(steps):
+                        frac = (si + 1) / steps
+                        iw_ = max(2, int(sw * frac))
+                        sy_ = si * surf_h // (steps + 1)
+                        sh_ = max(2, surf_h // (steps + 2))
+                        pygame.draw.rect(spr, dim, (ox + (sw - iw_)//2, sy_, iw_, sh_))
+                        pygame.draw.rect(spr, c_a, (ox + (sw - iw_)//2, sy_, iw_, sh_), 1)
+
+                elif icon_key == DT_INTERACTABLE:
+                    # Shrine/fountain — check if already used
+                    fl_d2 = self.dungeon.get_current_floor_data()
+                    _ity, _itx = int(ty), int(tx)
+                    if 0<=_ity<fl_d2["height"] and 0<=_itx<fl_d2["width"]:
+                        i_ev = (fl_d2["tiles"][_ity][_itx].get("event") or {})
+                        i_used = i_ev.get("used", False)
+                    else:
+                        i_used = False
+                    bw = max(6, surf_w * 3 // 4)
+                    bh = max(3, surf_h // 5)
+                    ox = (surf_w - bw) // 2
+                    if i_used:
+                        # Dry, spent shrine — dim grey, no glow
+                        dry = (70, 65, 60, alpha // 2)
+                        dry_b = (90, 85, 80, alpha // 2)
+                        pygame.draw.ellipse(spr, dry, (ox, surf_h - bh - 2, bw, bh))
+                        pygame.draw.ellipse(spr, dry_b, (ox, surf_h - bh - 2, bw, bh), 1)
+                        pw2 = max(2, surf_w // 6)
+                        pygame.draw.rect(spr, dry, ((surf_w - pw2)//2, surf_h//4, pw2, surf_h//2))
+                        # Crack mark instead of glow
+                        pygame.draw.line(spr, dry_b, (surf_w//2-2, surf_h//6), (surf_w//2+2, surf_h//4), 1)
+                    else:
+                        # Active shrine — glowing basin + pillar
+                        pygame.draw.ellipse(spr, dim, (ox, surf_h - bh - 2, bw, bh))
+                        pygame.draw.ellipse(spr, c_a, (ox, surf_h - bh - 2, bw, bh), 2)
+                        pw2 = max(2, surf_w // 6)
+                        pygame.draw.rect(spr, dim, ((surf_w - pw2)//2, surf_h//4, pw2, surf_h//2))
+                        pygame.draw.rect(spr, c_a, ((surf_w - pw2)//2, surf_h//4, pw2, surf_h//2), 1)
+                        pygame.draw.circle(spr, c_a, (surf_w//2, surf_h//5), max(2, surf_w//8))
 
                 elif icon_key == DT_TREASURE:
-                    # Treasure chest — rectangle with lid line
-                    cw, ch_ = max(6, surf_w*3//4), max(4, surf_h*3//5)
-                    ox, oy = (surf_w-cw)//2, (surf_h-ch_)//2
-                    pygame.draw.rect(spr, dim, (ox, oy, cw, ch_), border_radius=2)
-                    pygame.draw.rect(spr, c_a, (ox, oy, cw, ch_), 2, border_radius=2)
-                    pygame.draw.line(spr, c_a, (ox, oy + ch_//3), (ox+cw, oy + ch_//3), 2)
-                    # Lock dot
-                    pygame.draw.circle(spr, c_a, (surf_w//2, oy + ch_//2), max(2, r//4))
+                    # Chest: sits on floor (bottom 2/3 of sprite), wood+metal
+                    cw = max(6, surf_w * 3 // 4)
+                    ch_ = max(4, surf_h * 2 // 5)   # shorter = less floating
+                    ox = (surf_w - cw) // 2
+                    oy = surf_h - ch_ - 2            # grounded at bottom
+                    # Body
+                    pygame.draw.rect(spr, dim, (ox, oy + ch_//3, cw, ch_ * 2//3))
+                    pygame.draw.rect(spr, c_a, (ox, oy + ch_//3, cw, ch_ * 2//3), 2)
+                    # Lid (slightly wider)
+                    pygame.draw.rect(spr, (int(color[0]*0.7), int(color[1]*0.7), int(color[2]*0.7), alpha),
+                                     (ox - 1, oy, cw + 2, ch_//3 + 2), border_radius=1)
+                    pygame.draw.rect(spr, c_a, (ox - 1, oy, cw + 2, ch_//3 + 2), 1, border_radius=1)
+                    # Lock
+                    pygame.draw.circle(spr, c_a, (surf_w//2, oy + ch_//2), max(2, cw//8))
+                    # Metal bands
+                    pygame.draw.line(spr, c_a, (ox, oy + ch_//3 + ch_//4), (ox+cw, oy + ch_//3 + ch_//4), 1)
 
                 elif icon_key in ("enemy", "boss"):
-                    # Menacing skull-ish shape
+                    # Menacing skull shape
                     er = max(3, r * 3 // 4)
                     pygame.draw.circle(spr, dim, (surf_w//2, surf_h//2 - er//4), er)
                     pygame.draw.circle(spr, c_a, (surf_w//2, surf_h//2 - er//4), er, 2)
-                    # Eye dots
                     ew = max(1, er//3)
                     pygame.draw.circle(spr, c_a, (surf_w//2 - er//3, surf_h//2 - er//3), ew)
                     pygame.draw.circle(spr, c_a, (surf_w//2 + er//3, surf_h//2 - er//3), ew)
 
                 elif icon_key == DT_TRAP:
-                    # Warning triangle
-                    pts = [(surf_w//2, 2), (surf_w-2, surf_h-2), (2, surf_h-2)]
-                    pygame.draw.polygon(spr, dim, pts)
-                    pygame.draw.polygon(spr, c_a, pts, 2)
-                    pygame.draw.line(spr, c_a, (surf_w//2, surf_h//4), (surf_w//2, surf_h*2//3), 2)
+                    # Floor spike plate — flat, ground-level, spikes pointing up
+                    pw = max(6, surf_w * 4 // 5)
+                    ph = max(3, surf_h // 6)
+                    ox = (surf_w - pw) // 2
+                    oy = surf_h - ph - 1  # flush with floor
+                    # Base plate
+                    pygame.draw.rect(spr, dim, (ox, oy, pw, ph))
+                    pygame.draw.rect(spr, c_a, (ox, oy, pw, ph), 1)
+                    # Spikes
+                    num_spikes = max(3, pw // 5)
+                    spike_h = max(3, surf_h // 3)
+                    for si in range(num_spikes):
+                        sx_ = ox + (si * pw // num_spikes) + pw // (num_spikes * 2)
+                        pts = [(sx_-2, oy), (sx_+2, oy), (sx_, oy - spike_h)]
+                        pygame.draw.polygon(spr, c_a, pts)
 
                 elif icon_key == "journal":
                     # Book rectangle
@@ -572,7 +674,11 @@ class DungeonUI:
                 elif tt == DT_TREASURE:
                     c = (255,215,40,255)
                 elif tt == DT_TRAP and tile.get("event",{}).get("detected"):
-                    c = (220,50,50,255)
+                    ev_t = tile.get("event") or {}
+                    c = (100,100,100,180) if ev_t.get("disarmed") else (220,50,50,255)
+                elif tt == DT_INTERACTABLE:
+                    ev_i = tile.get("event") or {}
+                    c = (80,80,75,150) if ev_i.get("used") else (80,200,255,255)
                 else:
                     c = (88,78,62,200)
                 sx = (tx-x0)*ts
@@ -625,17 +731,23 @@ class DungeonUI:
                 pygame.draw.rect(surface, (55,12,12), (cx_h, cy_h, col_w-12, 7))
                 pygame.draw.rect(surface, (185,38,38), (cx_h, cy_h, hw, 7))
                 surface.blit(fs.render(f"{cur_hp}/{max_hp}", True, (190,150,145)), (cx_h, cy_h+8))
-                # Second resource (MP/Ki/etc.)
+                # All secondary resources (MP, SP, Ki, etc.) — each with bar + cur/max
                 res_keys = [k for k in ch.resources if k != "HP"]
-                if res_keys:
+                RES_COLORS = {
+                    "MP":  ((12,12,55),  (45,75,205),  (130,140,215)),
+                    "SP":  ((40,30,10),  (200,160,40), (210,180,80)),
+                    "Ki":  ((10,35,20),  (40,160,80),  (100,200,130)),
+                    "EP":  ((35,10,35),  (150,60,180), (180,120,210)),
+                }
+                for rk in res_keys[:2]:  # max 2 secondary resources shown
                     cy_h += 20
-                    rk     = res_keys[0]
                     cur_r  = ch.resources.get(rk, 0)
                     max_r  = max(1, max_res.get(rk, cur_r) or cur_r)
                     mw     = max(0, int((cur_r/max_r)*(col_w-12)))
-                    pygame.draw.rect(surface, (12,12,55), (cx_h, cy_h, col_w-12, 7))
-                    pygame.draw.rect(surface, (45,75,205), (cx_h, cy_h, mw, 7))
-                    surface.blit(fs.render(f"{rk} {cur_r}/{max_r}", True, (130,140,215)), (cx_h, cy_h+8))
+                    bg_c, fill_c, text_c = RES_COLORS.get(rk, ((20,20,20),(100,100,200),(160,160,220)))
+                    pygame.draw.rect(surface, bg_c,   (cx_h, cy_h, col_w-12, 7))
+                    pygame.draw.rect(surface, fill_c, (cx_h, cy_h, mw, 7))
+                    surface.blit(fs.render(f"{rk}: {cur_r}/{max_r}", True, text_c), (cx_h, cy_h+8))
 
         # Buttons
         bx = 8
@@ -687,9 +799,18 @@ class DungeonUI:
         font   = pygame.font.SysFont("courier,monospace", 15, bold=True)
         base_y = VP_Y + VP_H - 70
         for i, (msg, col, timer) in enumerate(reversed(list(self.event_queue[-4:]))):
+            alpha  = min(255, int(timer/300*255))
             ts = font.render(msg, True, col)
-            ts.set_alpha(min(255, int(timer/300*255)))
-            surface.blit(ts, (VP_X + VP_W//2 - ts.get_width()//2, base_y - i*22))
+            tw, th = ts.get_width(), ts.get_height()
+            tx = VP_X + VP_W//2 - tw//2
+            ty = base_y - i*22
+            # Dark backdrop for readability
+            pad = 4
+            bg = pygame.Surface((tw + pad*2, th + pad), pygame.SRCALPHA)
+            bg.fill((0, 0, 0, min(180, alpha)))
+            surface.blit(bg, (tx - pad, ty - 1))
+            ts.set_alpha(alpha)
+            surface.blit(ts, (tx, ty))
 
     # ─────────────────────────────────────────────────────────
     #  INPUT

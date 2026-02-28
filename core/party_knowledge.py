@@ -75,6 +75,39 @@ def is_enemy_known(enemy_name):
     return _known_enemies.get(enemy_name, -1) >= 1
 
 
+def get_enemy_display_name(enemy_instance, enemies_data=None):
+    """Return the name/description to show for an enemy based on knowledge tier.
+    
+    enemy_instance: the live enemy dict from combat (has template_key, name, knowledge_tier)
+    enemies_data: optionally pass the ENEMIES dict to get description_tiers
+    
+    Tier -1/0: description_tiers[0]  (e.g. "A small, snarling creature")
+    Tier 1:    description_tiers[1]  (e.g. "Goblin Warrior")
+    Tier 2:    description_tiers[2]  (e.g. "Goblin Warrior — weak but dangerous in numbers")
+    """
+    template_key = enemy_instance.get("template_key") or enemy_instance.get("name", "Unknown")
+    tier = enemy_instance.get("knowledge_tier", -1)
+    if tier < 0:
+        tier = _known_enemies.get(template_key, -1)
+
+    if enemies_data is None:
+        try:
+            from data.enemies import ENEMIES
+            enemies_data = ENEMIES
+        except ImportError:
+            return enemy_instance.get("name", "Unknown")
+
+    template = enemies_data.get(template_key, {})
+    desc_tiers = template.get("description_tiers", {})
+
+    if tier <= 0:
+        return desc_tiers.get(0, enemy_instance.get("name", "Unknown creature"))
+    elif tier == 1:
+        return desc_tiers.get(1, enemy_instance.get("name", "Unknown"))
+    else:
+        return desc_tiers.get(2, desc_tiers.get(1, enemy_instance.get("name", "Unknown")))
+
+
 # ═══════════════════════════════════════════════════════════════
 #  SAVE / LOAD
 # ═══════════════════════════════════════════════════════════════

@@ -56,7 +56,7 @@ S_WORLD_MAP   = 12
 S_DUNGEON     = 13
 S_OPENING     = 14   # opening narrative sequence
 S_DIALOGUE    = 15   # standalone dialogue (e.g., boss pre-fight)
-S_CAMP        = 16   # full camp screen (dungeon/overworld)
+S_CAMP        = 22   # full camp screen (dungeon/overworld)
 S_CHEST       = 17   # chest loot assignment screen
 S_ATTACK_CINEMATIC = 18  # Act 1 climax: shadow attack on Briarhollow
 S_ENDING           = 19  # Epilogue / credits after Valdris defeated
@@ -66,8 +66,21 @@ S_SETTINGS         = 21  # Volume / settings overlay
 
 class Game:
     def __init__(self):
-        self.screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+        self.screen = self._create_window()
         pygame.display.set_caption("Realm of Shadows")
+
+    def _create_window(self):
+        """Create display surface based on saved display_mode preference."""
+        import core.sound as sfx_mod
+        mode = sfx_mod.get_display_mode()
+        if mode == "fullscreen":
+            # SCALED: logical 1440x900 surface, pygame scales to native resolution
+            return pygame.display.set_mode((SCREEN_W, SCREEN_H),
+                                           pygame.FULLSCREEN | pygame.SCALED)
+        elif mode == "1280x800":
+            return pygame.display.set_mode((1280, 800), pygame.SCALED)
+        else:  # "1440x900" or default windowed
+            return pygame.display.set_mode((SCREEN_W, SCREEN_H))
         self.clock = pygame.time.Clock()
         self.running = True
         sfx.init()  # Initialize sound system

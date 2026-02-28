@@ -107,8 +107,8 @@ CLASSES = {
         "starting_abilities": [
             {"name": "Aimed Shot", "cost": 8, "resource": "DEX-SP",
              "desc": "Precise ranged attack with bonus accuracy."},
-            {"name": "Track", "cost": 5, "resource": "WIS-MP",
-             "desc": "Locate nearby enemies and resources."},
+            {"name": "Splitting Arrow", "cost": 8, "resource": "DEX-SP",
+             "desc": "Arrow pierces front row, hitting back row too. Reduced damage."},
         ],
         "ki_formula": lambda s, lvl: (s["WIS"] * 5) + (s["DEX"] * 3) + (lvl * 10),
         "resources": ["HP", "WIS-MP", "DEX-SP", "Ki"],

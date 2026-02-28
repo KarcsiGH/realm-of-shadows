@@ -504,7 +504,21 @@ def _place_wall_door(tiles, scan_range, wall_coord, corr_coord, axis, height, wi
     
     axis="h": scanning x values, wall_coord/corr_coord are y values
     axis="v": scanning y values, wall_coord/corr_coord are x values
+    
+    Skip entirely if there is already an open floor connection on this wall segment.
     """
+    # Pre-check: if any tile on the wall side is already floor/corridor (open connection), skip
+    scan_list = list(scan_range)
+    for pos in scan_list:
+        if axis == "h":
+            wy, wx = wall_coord, pos
+        else:
+            wy, wx = pos, wall_coord
+        if 0 <= wy < height and 0 <= wx < width:
+            wt = tiles[wy][wx]["type"]
+            if wt in (DT_FLOOR, DT_CORRIDOR):
+                return  # open connection already exists — no door
+
     in_segment = False
     segment_candidates = []
 
@@ -549,14 +563,26 @@ def _place_wall_door(tiles, scan_range, wall_coord, corr_coord, axis, height, wi
 
 def _pick_door(tiles, candidates, rng):
     """From a list of wall positions in a contiguous corridor segment,
-    pick one to become a door (prefer the middle)."""
+    pick one to become a door (prefer the middle). Never place at a corner."""
     if not candidates:
         return
     if rng.random() < 0.3:
         return  # 30% chance no door at all for this entry
-    # Pick the middle candidate
-    mid = len(candidates) // 2
-    x, y = candidates[mid]
+    # Filter out corner positions (adjacent to walls on perpendicular axes)
+    def is_corner(x, y):
+        h = len(tiles); w = len(tiles[0])
+        neighbors = [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]
+        wall_neighbors = sum(
+            1 for nx,ny in neighbors
+            if 0<=nx<w and 0<=ny<h and tiles[ny][nx]["type"] == DT_WALL
+        )
+        return wall_neighbors >= 3  # corner = 3+ adjacent walls
+
+    valid = [(x,y) for x,y in candidates if not is_corner(x,y)]
+    if not valid:
+        return  # all candidates are corners — skip
+    mid = len(valid) // 2
+    x, y = valid[mid]
     tiles[y][x]["type"] = DT_DOOR
 
 

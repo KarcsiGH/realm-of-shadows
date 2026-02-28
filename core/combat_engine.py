@@ -652,7 +652,11 @@ def resolve_enemy_attack(attacker, defender):
         return result
 
     # Enemy damage: attack_damage + STR scaling + variance - defense
-    base_dmg = attacker.get("attack_damage", 5)
+    ad = attacker.get("attack_damage", 5)
+    if isinstance(ad, (list, tuple)):
+        base_dmg = random.randint(int(ad[0]), max(int(ad[0]), int(ad[1])))
+    else:
+        base_dmg = int(ad)
     str_bonus = attacker["stats"].get("STR", 0) * 0.3
     raw = (base_dmg + str_bonus) * pos_dmg
     raw *= random.uniform(DAMAGE_VARIANCE_MIN, DAMAGE_VARIANCE_MAX)
@@ -1230,16 +1234,20 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         result["is_crit"] = any_crit
         result["hit"]     = total_damage > 0 or any_crit
 
-        # Splitting Arrow: also hit mid/back row enemies at reduced power
+        # Splitting Arrow: pierce through front row and hit mid/back enemies
         if ability.get("pierce_rows") and total_damage > 0 and all_enemies:
             pierced = [e for e in all_enemies
                        if e["alive"] and e["row"] in (MID, BACK) and e not in aoe_targets]
-            for ptgt in pierced[:2]:
-                pdmg, _, pmsgs = _apply_physical_hit(ptgt, 0.6)
-                result["messages"].extend(pmsgs)
-                result["damage"] += pdmg
-                if not ptgt["alive"]:
-                    _log_death(ptgt)
+            if pierced:
+                result["messages"].append(f"The arrow pierces through!")
+                for ptgt in pierced[:2]:
+                    pdmg, _, pmsgs = _apply_physical_hit(ptgt, 0.6)
+                    result["messages"].extend(pmsgs)
+                    result["damage"] += pdmg
+                    if not ptgt["alive"]:
+                        _log_death(ptgt)
+            else:
+                result["messages"].append(f"No enemies in back rows to pierce.")
 
         # Self-damage recoil (Reckless Charge)
         if ability.get("self_damage_pct") and total_damage > 0:
@@ -1350,7 +1358,9 @@ def _calc_player_threat(player):
 
 def _calc_finish_bonus(player, enemy):
     """If an enemy can likely one-shot a player, that's very attractive."""
-    estimated_dmg = enemy.get("attack_damage", 5) + enemy["stats"].get("STR", 0) * 0.3
+    _ad = enemy.get("attack_damage", 5)
+    _ad_val = ((_ad[0] + _ad[1]) / 2) if isinstance(_ad, (list, tuple)) else _ad
+    estimated_dmg = _ad_val + enemy["stats"].get("STR", 0) * 0.3
     if player["hp"] <= estimated_dmg * 1.2:
         return 8  # big bonus for finishable targets
     return 0
@@ -1681,14 +1691,16 @@ class CombatState:
         # Build enemies
         self.enemies, self.encounter_name = build_encounter(encounter_key)
 
-        # If all enemies share the same non-FRONT row, push them to FRONT
-        # (no point having enemies hiding in BACK with nothing in FRONT)
+        # Ensure at least one enemy is in FRONT — promote the closest row if needed
         alive_enemies = [e for e in self.enemies if e.get("alive", True)]
         rows_used = {e["row"] for e in alive_enemies}
         if rows_used and FRONT not in rows_used:
+            # Find the "closest" occupied row and promote it to FRONT
+            promote = MID if MID in rows_used else BACK
             for e in self.enemies:
-                e["row"] = FRONT
-                e["preferred_row"] = FRONT
+                if e["row"] == promote:
+                    e["row"] = FRONT
+                    e["preferred_row"] = FRONT
 
         # Vary enemy counts ±1-2 for flavour (not for boss encounters)
         import random as _rnd
@@ -1710,8 +1722,23 @@ class CombatState:
                         extra["preferred_row"] = base["preferred_row"]
                         self.enemies.append(extra)
             elif tweak == -1 and len(self.enemies) > 1:
-                # Remove a random non-unique enemy
-                self.enemies.pop(_rnd.randrange(len(self.enemies)))
+                # Never remove the last FRONT enemy
+                front_enemies = [e for e in self.enemies if e["row"] == FRONT]
+                removable = self.enemies if len(front_enemies) > 1 else [
+                    e for e in self.enemies if e["row"] != FRONT
+                ]
+                if removable:
+                    self.enemies.remove(_rnd.choice(removable))
+
+        # After count variation, ensure FRONT row is still occupied
+        alive_after = [e for e in self.enemies if e.get("alive", True)]
+        if alive_after and not any(e["row"] == FRONT for e in alive_after):
+            promote = MID if any(e["row"] == MID for e in alive_after) else BACK
+            for e in self.enemies:
+                if e["row"] == promote:
+                    e["row"] = FRONT
+                    e["preferred_row"] = FRONT
+                    break
 
         # Scale enemy power to party average level
         if party_chars:
@@ -1721,10 +1748,11 @@ class CombatState:
                 if "boss" not in e.get("template_key", "").lower():
                     e["hp"]      = max(1, int(e["hp"]     * scale))
                     e["max_hp"]  = max(1, int(e["max_hp"] * scale))
-                    e["attack_damage"] = (
-                        int(e["attack_damage"][0] * scale),
-                        int(e["attack_damage"][1] * scale),
-                    )
+                    ad = e["attack_damage"]
+                    if isinstance(ad, (list, tuple)):
+                        e["attack_damage"] = (int(ad[0] * scale), int(ad[1] * scale))
+                    else:
+                        e["attack_damage"] = (int(ad * scale), int(ad * scale))
 
         # Initial turn order
         self.all_combatants = self.players + self.enemies
@@ -1830,6 +1858,44 @@ class CombatState:
                 self.rounds_alive[p["uid"]] += 1
 
         self.log(f"── Round {self.round_num} ──")
+
+        # ── Knowledge tier advancement ──
+        # Highest INT in party gets a chance to learn more about each enemy
+        self._advance_enemy_knowledge()
+
+    def _advance_enemy_knowledge(self):
+        """Each round, highest-INT party member may advance knowledge of enemies."""
+        from core.party_knowledge import get_enemy_knowledge_tier, mark_enemy_encountered
+        # Find the original Character objects (players list contains dicts)
+        # Use INT from player dict stats
+        max_int = max((p["stats"].get("INT", 5) for p in self.players if p["alive"]), default=5)
+        # Base advance chance: INT 10 = 40%, each point above adds 5%, max 90%
+        advance_chance = min(0.90, 0.40 + (max_int - 10) * 0.05)
+
+        import random
+        for enemy in self.enemies:
+            if not enemy["alive"]:
+                continue
+            ename = enemy.get("template_key") or enemy["name"]
+            current_tier = get_enemy_knowledge_tier(ename)
+
+            if current_tier < 0:
+                # First sighting — always advance to tier 0
+                mark_enemy_encountered(ename, tier=0)
+                enemy["knowledge_tier"] = 0
+            elif current_tier == 0 and random.random() < advance_chance:
+                # Tier 0 → 1: recognized as type
+                mark_enemy_encountered(ename, tier=1)
+                enemy["knowledge_tier"] = 1
+            elif current_tier == 1 and max_int >= 14 and random.random() < advance_chance * 0.6:
+                # Tier 1 → 2: fully identified (needs INT 14+)
+                mark_enemy_encountered(ename, tier=2)
+                enemy["knowledge_tier"] = 2
+
+            # Sync current instance tier to highest known
+            best = get_enemy_knowledge_tier(ename)
+            if best > enemy.get("knowledge_tier", 0):
+                enemy["knowledge_tier"] = best
 
     def execute_player_action(self, action_type, target=None, ability=None, item=None):
         """Execute a player's chosen action.

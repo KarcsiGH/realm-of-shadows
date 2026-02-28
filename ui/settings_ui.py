@@ -6,14 +6,14 @@ All sliders give live audio feedback.  Changes persist to settings.json on Close
 import pygame
 from ui.renderer import (
     SCREEN_W, SCREEN_H, GOLD, CREAM, GREY, DARK_GREY, PANEL_BORDER,
-    draw_text, draw_panel, draw_button,
+    draw_text, draw_panel, draw_button, get_font,
 )
 
 # ──────────────────────────────────────────────────────────────
 #  Layout
 # ──────────────────────────────────────────────────────────────
 PANEL_W  = 520
-PANEL_H  = 420
+PANEL_H  = 540
 PANEL_X  = SCREEN_W  // 2 - PANEL_W // 2
 PANEL_Y  = SCREEN_H  // 2 - PANEL_H // 2
 
@@ -27,6 +27,7 @@ LABEL_X    = PANEL_X + 30
 VALUE_X    = PANEL_X + PANEL_W - 70
 
 CLOSE_RECT  = pygame.Rect(PANEL_X + PANEL_W // 2 - 80, PANEL_Y + PANEL_H - 56, 160, 38)
+RESET_DISPLAY_NOTE = "(takes effect on restart)"
 RESET_RECT  = pygame.Rect(PANEL_X + 30, PANEL_Y + PANEL_H - 56, 110, 38)
 
 # Default volumes (mirroring sound.py defaults)
@@ -65,6 +66,10 @@ class SettingsUI:
         ]
         self._dragging = None   # index of slider being dragged
         self.finished  = False
+        self._display_mode = sfx.get_display_mode()
+        self._display_options = ["fullscreen", "1440x900", "1280x800"]
+        self._display_labels  = ["Fullscreen (native)", "Windowed 1440×900", "Windowed 1280×800"]
+        self._display_changed = False
 
     # ── helpers ───────────────────────────────────────────────
 
@@ -91,6 +96,12 @@ class SettingsUI:
         elif name == "Music": sfx.set_music_volume(val)
         else:                 sfx.set_ambient_volume(val)
 
+    def _display_btn_rect(self, idx):
+        """Rect for display mode button at index idx."""
+        base_y = SLIDER_Y_START + 4 * SLIDER_GAP + 20
+        btn_w = (PANEL_W - 60) // 3
+        return pygame.Rect(PANEL_X + 30 + idx * (btn_w + 8), base_y, btn_w, 32)
+
     def _save_and_close(self):
         import core.sound as sfx
         sfx.save_settings()
@@ -114,6 +125,16 @@ class SettingsUI:
                 sfx.set_music_volume(_DEFAULTS["Music"])
                 sfx.set_ambient_volume(_DEFAULTS["Ambient"])
                 return None
+            # Display mode buttons
+            for di, opt in enumerate(self._display_options):
+                btn = self._display_btn_rect(di)
+                if btn.collidepoint(mx, my):
+                    import core.sound as sfx
+                    self._display_mode = opt
+                    sfx.set_display_mode(opt)
+                    self._display_changed = True
+                    return None
+
             # Start dragging a knob or clicking the track
             for i in range(len(self._sliders)):
                 r = self._slider_rect(i)
@@ -195,6 +216,25 @@ class SettingsUI:
 
             # Value label
             draw_text(surface, f"{pct}%", VALUE_X, ly, CREAM, 15, bold=True)
+
+        # ── Display Mode Section ──
+        disp_y = SLIDER_Y_START + 4 * SLIDER_GAP + 5
+        draw_text(surface, "Display Mode", LABEL_X, disp_y, CREAM, 14, bold=True)
+        if self._display_changed:
+            draw_text(surface, "(restart required)", LABEL_X + 150, disp_y + 2, (180, 130, 80), 11)
+
+        for di, (opt, lbl) in enumerate(zip(self._display_options, self._display_labels)):
+            btn = self._display_btn_rect(di)
+            is_active = (self._display_mode == opt)
+            is_hover  = btn.collidepoint(mx, my)
+            bg = (60, 50, 90) if is_active else ((40, 35, 60) if is_hover else (25, 20, 42))
+            border = GOLD if is_active else ((140, 110, 200) if is_hover else PANEL_BORDER)
+            pygame.draw.rect(surface, bg, btn, border_radius=4)
+            pygame.draw.rect(surface, border, btn, 2 if is_active else 1, border_radius=4)
+            txt_col = GOLD if is_active else (CREAM if is_hover else GREY)
+            tw = get_font(12).size(lbl)[0]
+            draw_text(surface, lbl, btn.x + (btn.w - tw) // 2, btn.y + 9, txt_col, 12,
+                      bold=is_active)
 
         # Buttons
         draw_button(surface, RESET_RECT, "Reset",
