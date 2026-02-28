@@ -1,0 +1,16 @@
+State: 8
+Party size: 6
+
+Traceback (most recent call last):
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 183, in run
+    self.draw_state(mx, my)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 750, in draw_state
+    elif self.state == S_COMBAT:   self.draw_combat(mx, my)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 1654, in draw_combat
+    self.combat_ui.draw(self.screen, mx, my)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/ui/combat_ui.py", line 188, in draw
+    self._draw_flash(surface)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/ui/combat_ui.py", line 686, in _draw_flash
+    bg.fill((0, 0, 0, min(160, alpha)))
+ValueError: invalid color argument

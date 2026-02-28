@@ -677,7 +677,7 @@ class CombatUI:
         self.flash_messages = [(m, c, t - 16) for m, c, t in self.flash_messages if t > 0]
         font = get_font(16)
         for i, (msg, col, timer) in enumerate(self.flash_messages[-5:]):
-            alpha = min(255, int(timer / 200 * 255))
+            alpha = max(0, min(255, int(timer / 200 * 255)))
             ts = font.render(msg, True, col)
             ts.set_alpha(alpha)
             x = RIGHT_X + RIGHT_W // 2 - ts.get_width() // 2
