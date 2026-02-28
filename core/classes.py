@@ -47,7 +47,7 @@ CLASSES = {
         "starting_abilities": [
             {"name": "Magic Missile", "cost": 8, "resource": "INT-MP",
              "desc": "Basic arcane bolt that never misses."},
-            {"name": "Arcane Shield", "cost": 10, "resource": "INT-MP",
+            {"name": "Arcane Shield", "cost": 10, "resource": "INT-MP", "self_only": True,
              "desc": "Conjure a magical barrier for protection."},
         ],
         "ki_formula": lambda s, lvl: (s["INT"] * 5) + (s["WIS"] * 3) + (lvl * 10),
@@ -127,7 +127,7 @@ CLASSES = {
         "starting_abilities": [
             {"name": "Flurry of Blows", "cost": 10, "resource": "Ki",
              "desc": "Unleash multiple rapid unarmed strikes."},
-            {"name": "Iron Skin", "cost": 8, "resource": "Ki",
+            {"name": "Iron Skin", "cost": 8, "resource": "Ki", "self_only": True,
              "desc": "Harden your body to reduce incoming damage."},
         ],
         "ki_formula": lambda s, lvl: (s["WIS"] * 5) + (s["DEX"] * 3) + (lvl * 10) + 25,

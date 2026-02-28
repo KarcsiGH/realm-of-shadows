@@ -37,7 +37,8 @@ CLASS_ABILITIES = {
         {"name": "Magic Missile",    "cost": 8,  "resource": "INT-MP", "type": "spell",
          "level": 1, "power": 1.0, "element": "arcane", "auto_hit": True, "desc": "Arcane bolt that never misses."},
         {"name": "Arcane Shield",    "cost": 10, "resource": "INT-MP", "type": "buff",
-         "level": 1, "buff": "magic_shield", "duration": 3, "desc": "Magical barrier absorbing damage."},
+         "level": 1, "buff": "magic_shield", "duration": 3, "self_only": True,
+         "desc": "Erect a personal arcane barrier. Reduces all damage taken for 3 turns."},
         {"name": "Firebolt",         "cost": 10, "resource": "INT-MP", "type": "spell",
          "level": 2, "power": 1.3, "element": "fire", "dot": "burning", "dot_duration": 2,
          "desc": "Fire bolt that sets the target ablaze for 2 turns."},
@@ -91,8 +92,8 @@ CLASS_ABILITIES = {
     "Ranger": [
         {"name": "Aimed Shot",       "cost": 10, "resource": "DEX-SP", "type": "attack",
          "level": 1, "power": 1.5, "bonus_accuracy": 20, "desc": "Carefully aimed ranged attack. +20% accuracy."},
-        {"name": "Track",            "cost": 5,  "resource": "WIS-MP", "type": "buff",
-         "level": 1, "buff": "tracking", "duration": 5, "desc": "Heighten awareness. Reveal hidden enemies."},
+        {"name": "Splitting Arrow",  "cost": 8,  "resource": "DEX-SP", "type": "attack",
+         "level": 1, "power": 0.8, "pierce_rows": True, "desc": "Arrow pierces front row, hitting back row too. Reduced damage."},
         {"name": "Entangle",         "cost": 12, "resource": "WIS-MP", "type": "debuff",
          "level": 3, "element": "nature", "slow_duration": 2, "desc": "Roots slow a target for 2 turns."},
         {"name": "Barrage",          "cost": 18, "resource": "DEX-SP", "type": "aoe",
@@ -106,7 +107,8 @@ CLASS_ABILITIES = {
         {"name": "Flurry of Blows",  "cost": 8,  "resource": "Ki", "type": "attack",
          "level": 1, "power": 0.6, "hits": 3, "desc": "Three rapid strikes at reduced power each."},
         {"name": "Iron Skin",        "cost": 10, "resource": "Ki", "type": "buff",
-         "level": 1, "buff": "iron_skin", "duration": 3, "desc": "Harden body, reducing physical damage taken."},
+         "level": 1, "buff": "iron_skin", "duration": 3, "self_only": True,
+         "desc": "Harden the body. Reduces physical damage taken for 3 turns (self only)."},
         {"name": "Stunning Fist",    "cost": 12, "resource": "Ki", "type": "attack",
          "level": 3, "power": 1.3, "stun_chance": 0.45, "desc": "Precise strike. 45% chance to stun."},
         {"name": "Inner Peace",      "cost": 15, "resource": "Ki", "type": "heal",
@@ -365,6 +367,51 @@ ENEMY_ABILITIES = {
     "Enrage": {
         "name": "Enrage", "type": "buff", "buff": "enrage", "duration": 4,
         "cost": 0, "resource": "", "desc": "Become enraged, dealing double damage",
+    },
+    # Act 3 — Pale Sentinel
+    "Tide of Judgment": {
+        "name": "Tide of Judgment", "type": "aoe", "power": 1.4, "element": "divine",
+        "cost": 0, "resource": "", "desc": "Wave of divine energy hits all enemies",
+    },
+    "Ward of Isolation": {
+        "name": "Ward of Isolation", "type": "buff", "buff": "ward_isolation", "duration": 2,
+        "cost": 0, "resource": "", "desc": "Reduces all incoming damage by 40% for 2 turns",
+    },
+    "Sentinel's Resolve": {
+        "name": "Sentinel's Resolve", "type": "heal", "power": 180,
+        "cost": 0, "resource": "", "cooldown": 5, "desc": "Draws on decades of vigil to restore vitality",
+    },
+    # Act 3 — Last Keeper
+    "Tempest Barrage": {
+        "name": "Tempest Barrage", "type": "aoe", "power": 1.3, "element": "lightning",
+        "cost": 0, "resource": "", "desc": "Fires arcs of lightning at every enemy",
+    },
+    "Cyclone Ward": {
+        "name": "Cyclone Ward", "type": "buff", "buff": "cyclone_ward", "duration": 2,
+        "cost": 0, "resource": "", "desc": "Cyclone deflects physical attacks for 2 turns",
+    },
+    "Chain Lightning": {
+        "name": "Chain Lightning", "type": "aoe", "power": 1.2, "element": "lightning",
+        "cost": 0, "resource": "", "desc": "Lightning jumps between all enemies",
+    },
+    # Act 3 — Valdris Phase 1
+    "Ward Shatter": {
+        "name": "Ward Shatter", "type": "debuff", "apply_curse": "ward_shatter",
+        "cost": 0, "resource": "", "desc": "Tears protective wards, reducing magic resist by 15 for 3 turns",
+    },
+    # Act 3 — Valdris Phase 2
+    "Desperate Nova": {
+        "name": "Desperate Nova", "type": "aoe", "power": 1.6, "element": "arcane",
+        "cost": 0, "resource": "", "desc": "Last surge of power blasting all enemies",
+    },
+    "Last Ward": {
+        "name": "Last Ward", "type": "buff", "buff": "last_ward", "duration": 1,
+        "cost": 0, "resource": "", "desc": "Erects a final protective ward",
+    },
+    "Plea of the Fallen": {
+        "name": "Plea of the Fallen", "type": "debuff",
+        "effect": {"morale_break": True, "duration": 2},
+        "cost": 0, "resource": "", "desc": "Sorrow radiates outward, reducing party attack by 20% for 2 turns",
     },
 }
 

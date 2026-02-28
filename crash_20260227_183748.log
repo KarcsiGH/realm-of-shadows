@@ -1,0 +1,17 @@
+State: 10
+Party size: 6
+
+Traceback (most recent call last):
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 164, in run
+    self.draw_state(mx, my)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 733, in draw_state
+    elif self.state == S_INVENTORY: self.draw_inventory(mx, my)
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/charlesgasper/Documents/RealmOfShadows/main.py", line 2069, in draw_inventory
+    self.inventory_ui.draw(self.screen, mx, my, dt)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/ui/inventory_ui.py", line 169, in draw
+    self._draw_inventory(surface, mx, my, char, content_y)
+  File "/Users/charlesgasper/Documents/RealmOfShadows/ui/inventory_ui.py", line 507, in _draw_inventory
+    rect.y + 4, HEAL_COL, 11)
+                ^^^^^^^^
+NameError: name 'HEAL_COL' is not defined

@@ -75,12 +75,23 @@ def _gen_texture(wall_light, wall_dark, is_door=False):
     rng  = random.Random(hash((wall_light, is_door)))
 
     if is_door:
-        surf.fill(tuple(int(v * 0.85) for v in wall_light))
-        for py in range(0, TEX_H, 12):
-            pygame.draw.line(surf, tuple(int(v*0.55) for v in wall_light), (0,py),(TEX_W,py))
-        for px in range(0, TEX_W, 8):
-            c = tuple(int(v*(0.7+rng.random()*0.25)) for v in wall_light)
-            pygame.draw.line(surf, c, (px,0),(px,TEX_H))
+        # Warm brown wood door — clearly distinct from stone walls
+        WOOD_BASE  = (120, 75, 35)
+        WOOD_DARK  = (80,  50, 20)
+        WOOD_LIGHT = (160, 105, 55)
+        surf.fill(WOOD_BASE)
+        # Vertical planks
+        for px in range(0, TEX_W, 6):
+            tone = rng.uniform(0.85, 1.15)
+            c = tuple(min(255, int(v * tone)) for v in WOOD_BASE)
+            pygame.draw.line(surf, c, (px, 0), (px, TEX_H))
+        # Horizontal cross-beams at top/middle/bottom
+        for py in [TEX_H//6, TEX_H//2, TEX_H*5//6]:
+            pygame.draw.rect(surf, WOOD_DARK, (0, py-2, TEX_W, 4))
+            pygame.draw.rect(surf, WOOD_LIGHT, (0, py-3, TEX_W, 1))
+        # Door handle
+        pygame.draw.circle(surf, (200, 160, 40), (TEX_W*3//4, TEX_H//2), 4)
+        pygame.draw.circle(surf, (240, 200, 80), (TEX_W*3//4, TEX_H//2), 3)
         return surf
 
     brick_h = 8

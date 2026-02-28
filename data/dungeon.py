@@ -36,7 +36,7 @@ DUNGEONS = {
     "goblin_warren": {
         "name": "Goblin Warren",
         "floors": 3,
-        "width": 30, "height": 25,
+        "width": 50, "height": 40,
         "encounter_table": {
             1: ["medium_goblins", "wolves"],
             2: ["medium_goblins", "wolves"],
@@ -136,8 +136,64 @@ DUNGEONS = {
         },
         "boss_floor": 3,
         "boss_encounter": "boss_karreth",
-        "theme": "cave",           # volcanic cave reuses cave theme renderer
+        "theme": "cave",
         "encounter_rate": 7,
+    },
+
+    # ── ACT 3 DUNGEONS ──────────────────────────────────────
+
+    "pale_coast": {
+        "name": "Pale Coast Catacombs",
+        "floors": 4,
+        "width": 35, "height": 28,
+        "encounter_table": {
+            1: ["pc_drowned", "pc_shades"],
+            2: ["pc_tide", "pc_drowned_mob"],
+            3: ["pc_golem", "pc_tide", "pc_drowned_mob"],
+            4: ["pc_twin_golems", "pc_golem"],
+        },
+        "boss_floor": 4,
+        "boss_encounter": "boss_pale_warden",
+        "theme": "crypt",
+        "encounter_rate": 7,
+        "act": 3,
+    },
+
+    "windswept_isle": {
+        "name": "Windswept Isle Ruins",
+        "floors": 3,
+        "width": 32, "height": 26,
+        "encounter_table": {
+            1: ["wi_wraiths", "wi_sprites"],
+            2: ["wi_mixed", "wi_golem"],
+            3: ["wi_storm_mob", "wi_golem"],
+        },
+        "boss_floor": 3,
+        "boss_encounter": "boss_isle_keeper",
+        "theme": "ruins",
+        "encounter_rate": 7,
+        "act": 3,
+    },
+
+    "shadow_throne": {
+        "name": "The Shadow Throne",
+        "floors": 8,
+        "width": 40, "height": 32,
+        "encounter_table": {
+            1: ["st_shades", "st_mixed"],
+            2: ["st_shades", "st_echoes"],
+            3: ["st_echoes", "st_abominations"],
+            4: ["st_elite", "st_abominations"],
+            5: ["st_void", "st_elite"],
+            6: ["st_shadow_squad", "st_warden_elite"],
+            7: ["st_warden_elite", "st_shadow_squad", "st_elite"],
+            8: ["st_void", "st_shadow_squad"],
+        },
+        "boss_floor": 8,
+        "boss_encounter": "boss_valdris_phase1",
+        "theme": "crypt",
+        "encounter_rate": 6,
+        "act": 3,
     },
 }
 
@@ -512,9 +568,9 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
               for _ in range(width)] for _ in range(height)]
 
     rooms = []
-    max_rooms = 6 + floor_num * 2
-    min_room = 4
-    max_room = 8
+    max_rooms = 10 + floor_num * 2
+    min_room = 5
+    max_room = 10
 
     # ── Place rooms ──
     for _ in range(max_rooms * 5):  # attempts
@@ -621,18 +677,23 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
                 tiles[ty][tx]["event"] = _make_treasure_event(floor_num, rng)
                 placed_treasure += 1
 
-        # ── Place traps (deeper floors = more traps) ──
-        trap_count = floor_num
+        # ── Place traps (floor 1: 3 traps, scales up) ──
+        trap_count = 2 + floor_num * 2
         placed_traps = 0
+        trap_tiles = []
         for y in range(height):
             for x in range(width):
-                if placed_traps >= trap_count:
-                    break
-                if tiles[y][x]["type"] == DT_CORRIDOR and rng.random() < 0.03:
-                    tiles[y][x]["type"] = DT_TRAP
-                    trap_tier = min(5, max(1, floor_num + _dungeon_trap_offset(dungeon_id)))
-                    tiles[y][x]["event"] = _make_tiered_trap(trap_tier, rng)
-                    placed_traps += 1
+                if tiles[y][x]["type"] in (DT_CORRIDOR, DT_FLOOR):
+                    trap_tiles.append((x, y))
+        rng.shuffle(trap_tiles)
+        for tx2, ty2 in trap_tiles:
+            if placed_traps >= trap_count:
+                break
+            if tiles[ty2][tx2]["type"] in (DT_CORRIDOR, DT_FLOOR):
+                tiles[ty2][tx2]["type"] = DT_TRAP
+                trap_tier = min(5, max(1, floor_num + _dungeon_trap_offset(dungeon_id)))
+                tiles[ty2][tx2]["event"] = _make_tiered_trap(trap_tier, rng)
+                placed_traps += 1
 
         # ── Fixed encounters in some rooms ──
         for ri, room in enumerate(rooms[1:], 1):

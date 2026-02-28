@@ -233,7 +233,7 @@ class Game:
             pass  # ambient disabled
         elif state == S_COMBAT:
             sfx.stop_ambient()
-            sfx.play_music("combat_music")
+            sfx.stop_music()
             sfx.play("combat_start")
         elif state in (S_PARTY, S_POST_COMBAT):
             sfx.stop_music()

@@ -10,12 +10,17 @@ import random
 # ═══════════════════════════════════════════════════════════════
 
 XP_TABLE = {
-    1: 0, 2: 100, 3: 300, 4: 600, 5: 1000,
-    6: 1500, 7: 2200, 8: 3100, 9: 4200, 10: 5500,
-    11: 7000, 12: 8500, 13: 10000, 14: 11500, 15: 13000,
-    16: 15000, 17: 17500, 18: 20500, 19: 24000, 20: 28000,
-    21: 33000, 22: 39000, 23: 46000, 24: 54000, 25: 64000,
-    26: 76000, 27: 90000, 28: 108000, 29: 130000, 30: 160000,
+    # Early (L1-5): ~5-8 encounters per level — feels earnable, not trivial
+    1: 0, 2: 400, 3: 900, 4: 1600, 5: 2600,
+    # Mid (L6-10): ~10-15 encounters per level — dungeons feel like real progress
+    6: 3900, 7: 5600, 8: 7800, 9: 10500, 10: 14000,
+    # Late (L11-15): each level is a meaningful milestone
+    11: 18500, 12: 24000, 13: 30500, 14: 38000, 15: 47000,
+    # Endgame (L16-20): serious investment
+    16: 57500, 17: 70000, 18: 85000, 19: 103000, 20: 124000,
+    # Prestige (L21-30): for the truly dedicated
+    21: 148000, 22: 176000, 23: 208000, 24: 244000, 25: 285000,
+    26: 330000, 27: 380000, 28: 435000, 29: 496000, 30: 564000,
 }
 
 MAX_LEVEL = 30
@@ -364,20 +369,8 @@ TRICKLE_MP_PCT = 0.01   # 1% max MP per step
 TRICKLE_SP_PCT = 0.015  # 1.5% max SP per step
 
 def apply_step_regen(character, max_resources):
-    """Apply per-step resource trickle. Call after each movement step."""
-    for res_name, current in character.resources.items():
-        max_val = max_resources.get(res_name, 0)
-        if max_val <= 0 or current >= max_val:
-            continue
-        if res_name == "HP":
-            gain = max(1, int(max_val * TRICKLE_HP_PCT))
-        elif "MP" in res_name or res_name == "Ki":
-            gain = max(1, int(max_val * TRICKLE_MP_PCT))
-        elif "SP" in res_name:
-            gain = max(1, int(max_val * TRICKLE_SP_PCT))
-        else:
-            continue
-        character.resources[res_name] = min(max_val, current + gain)
+    """No trickle regen — resources only restored at camp, inn, or via spells/potions."""
+    pass
 
 
 # ═══════════════════════════════════════════════════════════════

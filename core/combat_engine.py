@@ -1230,6 +1230,17 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         result["is_crit"] = any_crit
         result["hit"]     = total_damage > 0 or any_crit
 
+        # Splitting Arrow: also hit mid/back row enemies at reduced power
+        if ability.get("pierce_rows") and total_damage > 0 and all_enemies:
+            pierced = [e for e in all_enemies
+                       if e["alive"] and e["row"] in (MID, BACK) and e not in aoe_targets]
+            for ptgt in pierced[:2]:
+                pdmg, _, pmsgs = _apply_physical_hit(ptgt, 0.6)
+                result["messages"].extend(pmsgs)
+                result["damage"] += pdmg
+                if not ptgt["alive"]:
+                    _log_death(ptgt)
+
         # Self-damage recoil (Reckless Charge)
         if ability.get("self_damage_pct") and total_damage > 0:
             recoil = max(1, int(attacker["max_hp"] * ability["self_damage_pct"]))
@@ -1669,6 +1680,51 @@ class CombatState:
 
         # Build enemies
         self.enemies, self.encounter_name = build_encounter(encounter_key)
+
+        # If all enemies share the same non-FRONT row, push them to FRONT
+        # (no point having enemies hiding in BACK with nothing in FRONT)
+        alive_enemies = [e for e in self.enemies if e.get("alive", True)]
+        rows_used = {e["row"] for e in alive_enemies}
+        if rows_used and FRONT not in rows_used:
+            for e in self.enemies:
+                e["row"] = FRONT
+                e["preferred_row"] = FRONT
+
+        # Vary enemy counts ±1-2 for flavour (not for boss encounters)
+        import random as _rnd
+        if not any("boss" in e.get("template_key","").lower() or
+                   "king" in e.get("template_key","").lower() or
+                   "queen" in e.get("template_key","").lower()
+                   for e in self.enemies):
+            tweak = _rnd.randint(-1, 2)
+            if tweak > 0:
+                # Duplicate a random non-boss enemy
+                candidates = [e for e in self.enemies]
+                for _ in range(tweak):
+                    if candidates:
+                        from data.enemies import create_enemy_instance
+                        base = _rnd.choice(candidates)
+                        uid = max(e["uid"] for e in self.enemies) + 1
+                        extra = create_enemy_instance(base["template_key"], uid)
+                        extra["row"] = base["row"]
+                        extra["preferred_row"] = base["preferred_row"]
+                        self.enemies.append(extra)
+            elif tweak == -1 and len(self.enemies) > 1:
+                # Remove a random non-unique enemy
+                self.enemies.pop(_rnd.randrange(len(self.enemies)))
+
+        # Scale enemy power to party average level
+        if party_chars:
+            avg_level = sum(getattr(c, "level", 1) for c in party_chars) / len(party_chars)
+            scale = max(1.0, avg_level * 0.65)  # gentle curve, not 1:1
+            for e in self.enemies:
+                if "boss" not in e.get("template_key", "").lower():
+                    e["hp"]      = max(1, int(e["hp"]     * scale))
+                    e["max_hp"]  = max(1, int(e["max_hp"] * scale))
+                    e["attack_damage"] = (
+                        int(e["attack_damage"][0] * scale),
+                        int(e["attack_damage"][1] * scale),
+                    )
 
         # Initial turn order
         self.all_combatants = self.players + self.enemies
