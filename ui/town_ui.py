@@ -147,26 +147,9 @@ class TownUI:
         self.forge_selected_item = None
         self.forge_selected_enchant = None
 
-        # ── Walkable town state ──
-        from data.town_maps import get_town_data
-        self.town_data = get_town_data(town_id)
-        if self.town_data:
-            self.view = self.VIEW_WALK
-            self.walk_x, self.walk_y = self.town_data["spawn"]
-            self.walk_facing = "down"
-            self.walk_interact_msg = ""   # message shown at bottom
-            self.walk_interact_timer = 0
-            # Dynamic tile size: bigger map = smaller tiles so it fits
-            tw = self.town_data["width"]
-            if tw >= 40:
-                self.walk_tile_size = 20
-            elif tw >= 30:
-                self.walk_tile_size = 24
-            else:
-                self.walk_tile_size = 28
-            self.walk_anim_t = 0
-        else:
-            self._return_to_town()
+        # Always use hub menu — walkable town removed
+        self.town_data = None
+        self._return_to_town()
 
     # ─────────────────────────────────────────────────────────
     #  MAIN DRAW
