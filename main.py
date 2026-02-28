@@ -68,19 +68,6 @@ class Game:
     def __init__(self):
         self.screen = self._create_window()
         pygame.display.set_caption("Realm of Shadows")
-
-    def _create_window(self):
-        """Create display surface based on saved display_mode preference."""
-        import core.sound as sfx_mod
-        mode = sfx_mod.get_display_mode()
-        if mode == "fullscreen":
-            # SCALED: logical 1440x900 surface, pygame scales to native resolution
-            return pygame.display.set_mode((SCREEN_W, SCREEN_H),
-                                           pygame.FULLSCREEN | pygame.SCALED)
-        elif mode == "1280x800":
-            return pygame.display.set_mode((1280, 800), pygame.SCALED)
-        else:  # "1440x900" or default windowed
-            return pygame.display.set_mode((SCREEN_W, SCREEN_H))
         self.clock = pygame.time.Clock()
         self.running = True
         sfx.init()  # Initialize sound system
@@ -155,6 +142,25 @@ class Game:
         self.debug_mode = False
         self.debug_encounter = "tutorial"
         self.debug_enc_hover = -1
+
+    def _create_window(self):
+        """Create display surface based on saved display_mode preference."""
+        try:
+            import core.sound as sfx_mod
+            sfx_mod.load_settings()
+            mode = sfx_mod.get_display_mode()
+        except Exception:
+            mode = "windowed"
+        try:
+            if mode == "fullscreen":
+                return pygame.display.set_mode((SCREEN_W, SCREEN_H),
+                                               pygame.FULLSCREEN | pygame.SCALED)
+            elif mode == "1280x800":
+                return pygame.display.set_mode((1280, 800), pygame.SCALED)
+            else:
+                return pygame.display.set_mode((SCREEN_W, SCREEN_H))
+        except Exception:
+            return pygame.display.set_mode((SCREEN_W, SCREEN_H))
 
     def run(self):
         while self.running:
