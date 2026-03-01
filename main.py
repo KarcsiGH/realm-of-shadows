@@ -13,6 +13,7 @@ import sys, os, random
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import pygame
+pygame.mixer.pre_init(22050, -16, 1, 1024)  # Must match core/sound.py SR=22050, mono
 pygame.init()
 
 from ui.renderer import *

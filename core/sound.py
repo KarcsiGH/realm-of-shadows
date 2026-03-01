@@ -27,7 +27,11 @@ def init():
     if _mixer is None:
         return
     try:
-        if not _mixer.get_init():
+        current = _mixer.get_init()
+        # Re-init if not initialized or if format doesn't match (freq, size, channels)
+        if not current or current[0] != 22050 or current[2] != 1:
+            if current:
+                _mixer.quit()
             _mixer.init(22050, -16, 1, 1024)
         _mixer.set_num_channels(12)
         _music_channel   = _mixer.Channel(10)

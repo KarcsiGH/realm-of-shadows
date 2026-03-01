@@ -25,7 +25,7 @@ from ui.renderer import (
     PANEL_BG, PANEL_BORDER, HIGHLIGHT, DIM_GOLD, ORANGE, RED, HEAL_COL,
     draw_text, get_font,
 )
-from ui.silhouettes import draw_character_silhouette, draw_enemy_silhouette, CLASS_COLORS
+from ui.pixel_art import draw_character_silhouette, draw_enemy_silhouette, CLASS_COLORS
 from core.combat_config import FRONT, MID, BACK
 from core.party_knowledge import get_enemy_display_name
 
@@ -512,12 +512,16 @@ class CombatUI:
     def _action_available(self, label, actor):
         if label == "Spell":
             abilities = actor.get("abilities", [])
-            return any(a.get("type") in ("spell", "magic", "heal", "buff", "aoe", "curse")
-                       for a in abilities)
+            return any(
+                "MP" in a.get("resource","") or "INT" in a.get("resource","") or "PIE" in a.get("resource","")
+                or (not a.get("resource","") and a.get("type","") in ("spell","magic","heal","cure","aoe_heal"))
+                for a in abilities)
         if label == "Skill":
             abilities = actor.get("abilities", [])
-            return any(a.get("type") not in ("spell", "magic", "heal", "buff", "aoe", "curse")
-                       for a in abilities)
+            return any(
+                "SP" in a.get("resource","") or "Ki" in a.get("resource","") or "EP" in a.get("resource","")
+                or (not a.get("resource","") and a.get("type","skill") not in ("spell","magic","heal","cure","aoe_heal"))
+                for a in abilities)
         if label == "Item":
             ref = actor.get("character_ref")
             if not ref: return False
@@ -541,13 +545,22 @@ class CombatUI:
 
         elif label in ("spell", "skill"):
             abilities = actor.get("abilities", [])
-            spell_types = {"spell", "magic", "heal", "buff", "aoe", "curse"}
             for ab in abilities:
-                ab_type = ab.get("type", "skill")
-                is_spell = ab_type in spell_types
+                resource = ab.get("resource", "")
+                ab_type  = ab.get("type", "skill")
+                # Primary signal: resource determines spell vs skill category
+                if "MP" in resource or "INT" in resource or "PIE" in resource:
+                    is_spell = True
+                elif "SP" in resource or "Ki" in resource or "EP" in resource:
+                    is_spell = False
+                else:
+                    # Fallback: use type field
+                    spell_types = {"spell", "magic", "heal", "cure", "aoe_heal"}
+                    is_spell = ab_type in spell_types
                 if (label == "spell" and is_spell) or (label == "skill" and not is_spell):
-                    mp   = ab.get("mp_cost", ab.get("cost", 0))
-                    cost = f" [{mp} MP]" if mp else ""
+                    res_cost = ab.get("cost", ab.get("mp_cost", 0))
+                    res_name = "MP" if is_spell else (resource.split("-")[-1] if resource else "SP")
+                    cost = f" [{res_cost} {res_name}]" if res_cost else ""
                     items.append((f"{ab['name']}{cost}", {"type": "ability", "ability": ab}))
 
         elif label == "item":

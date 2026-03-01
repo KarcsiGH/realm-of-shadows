@@ -35,7 +35,7 @@ except ImportError:
 
 VP_X, VP_Y   = 0,   50
 VP_W, VP_H   = 1100, 810
-HUD_H        = 90
+HUD_H        = 110
 
 MM_X    = VP_X + VP_W + 8
 MM_Y    = VP_Y + 4
