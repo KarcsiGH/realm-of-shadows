@@ -671,8 +671,8 @@ class CombatUI:
 
         if phase == "victory":
             rw = getattr(self.combat, "rewards", {})
-            xp  = rw.get("xp", 0)
-            gld = rw.get("gold", 0)
+            xp  = rw.get("total_xp", rw.get("xp", 0))
+            gld = rw.get("total_gold", rw.get("gold", 0))
             draw_text(surface, f"+{xp} XP   +{gld} Gold",
                       SCREEN_W // 2 - 80, SCREEN_H // 3 + 62, GOLD, 20)
 
@@ -820,12 +820,19 @@ class CombatUI:
         if t == "ability":
             ab = data["ability"]
             ab_type = ab.get("type", "skill")
-            target_field = ab.get("target", "single_enemy")
             ab_name = ab.get("name", "").lower()
+            target_field = ab.get("target", "")
+
+            # Buff abilities without explicit enemy target → always self/ally
+            if ab_type == "buff" and target_field not in ("single_enemy", "all_enemies"):
+                tgt_spec = ab.get("targets", ab.get("target", "self"))
+                if tgt_spec == "all_allies":
+                    return {"type": "ability", "ability": ab, "target": actor}  # engine handles aoe
+                return {"type": "ability", "ability": ab, "target": actor}
 
             if ab_type in ("aoe", "aoe_heal") or "aoe" in target_field:
                 return {"type": "ability", "ability": ab, "target": None}
-            if target_field in ("self", "all_allies") or (ab_type == "buff" and "enemy" not in target_field):
+            if target_field in ("self", "all_allies"):
                 return {"type": "ability", "ability": ab, "target": actor}
             if ab_type in ("heal", "cure", "revive") or "heal" in ab_name or "revive" in ab_name:
                 self.selected_ability = ab

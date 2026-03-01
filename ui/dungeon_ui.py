@@ -695,7 +695,7 @@ class DungeonUI:
         pygame.draw.rect(bg, (100,90,72,200), (0,0,cols*ts,rows*ts), 1)
 
         surface.blit(bg, (MM_X, MM_Y))
-        font = pygame.font.SysFont("courier,monospace", 11)
+        font = pygame.font.SysFont("courier,monospace", 14)
         lbl  = font.render(f"Floor {self.dungeon.current_floor}", True, (170,160,130))
         surface.blit(lbl, (MM_X+2, MM_Y+rows*ts+2))
 
@@ -708,8 +708,8 @@ class DungeonUI:
         pygame.draw.rect(surface, (14,11,8), (0, by, SCREEN_W, HUD_H))
         pygame.draw.line(surface, GOLD, (0, by), (SCREEN_W, by), 2)
 
-        fb = pygame.font.SysFont("courier,consolas,monospace", 13, bold=True)
-        fs = pygame.font.SysFont("courier,consolas,monospace", 11)
+        fb = pygame.font.SysFont("courier,consolas,monospace", 16, bold=True)
+        fs = pygame.font.SysFont("courier,consolas,monospace", 14)
 
         party = self.dungeon.party
         if party:

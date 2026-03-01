@@ -36,7 +36,8 @@ TAB_INVENTORY = 1
 TAB_EQUIP = 2
 TAB_IDENTIFY = 3
 TAB_STATS = 4
-TAB_NAMES = ["Rest", "Inventory", "Equipment", "Identify", "Party"]
+TAB_TRANSFER = 5
+TAB_NAMES = ["Rest", "Inventory", "Equipment", "Identify", "Party", "Transfer"]
 TAB_COUNT = len(TAB_NAMES)
 
 # ── Slots ──
@@ -68,6 +69,11 @@ class CampUI:
         self.identify_char = -1
         self.identify_target_char = -1
         self.identify_target_item = -1
+
+        # Transfer state
+        self.transfer_src_char = 0
+        self.transfer_dst_char = 1 if len(party) > 1 else 0
+        self.transfer_selected_item = -1
 
     def draw(self, surface, mx, my, dt=16):
         surface.fill(CAMP_BG)
@@ -103,6 +109,8 @@ class CampUI:
             self._draw_identify(surface, mx, my, content_y)
         elif self.tab == TAB_STATS:
             self._draw_stats(surface, mx, my, content_y)
+        elif self.tab == TAB_TRANSFER:
+            self._draw_transfer(surface, mx, my, content_y)
 
         # Message bar
         if self.msg_timer > 0:
@@ -456,6 +464,195 @@ class CampUI:
         self.msg_timer = 3000
 
     # ──────────────────────────────────────────────────────────
+    #  TRANSFER TAB
+    # ──────────────────────────────────────────────────────────
+
+    def _draw_transfer(self, surface, mx, my, top):
+        """Draw the item/equipment transfer screen between party members."""
+        if len(self.party) < 2:
+            draw_text(surface, "Need at least 2 party members to transfer items.",
+                      80, top + 30, GREY, 15)
+            return
+
+        # ── Layout ──
+        panel_w = SCREEN_W // 2 - 40
+        left_x  = 30
+        right_x = SCREEN_W // 2 + 10
+        item_h  = 32
+
+        # ── Source char selector (left panel header) ──
+        draw_text(surface, "FROM:", left_x, top, STAT_LABEL, 13)
+        for i, ch in enumerate(self.party):
+            bx = left_x + i * 110
+            by = top + 14
+            btn = pygame.Rect(bx, by, 105, 26)
+            active = (i == self.transfer_src_char)
+            pygame.draw.rect(surface, TAB_ACTIVE if active else TAB_BG, btn)
+            pygame.draw.rect(surface, TAB_BORDER if active else PANEL_BORDER, btn, 1)
+            draw_text(surface, ch.name[:10], bx + 5, by + 5,
+                      GOLD if active else GREY, 13, bold=active)
+
+        # ── Destination char selector (right panel header) ──
+        draw_text(surface, "TO:", right_x, top, STAT_LABEL, 13)
+        for i, ch in enumerate(self.party):
+            bx = right_x + i * 110
+            by = top + 14
+            btn = pygame.Rect(bx, by, 105, 26)
+            active = (i == self.transfer_dst_char)
+            pygame.draw.rect(surface, TAB_ACTIVE if active else TAB_BG, btn)
+            pygame.draw.rect(surface, TAB_BORDER if active else PANEL_BORDER, btn, 1)
+            draw_text(surface, ch.name[:10], bx + 5, by + 5,
+                      GOLD if active else GREY, 13, bold=active)
+
+        src  = self.party[self.transfer_src_char]
+        dst  = self.party[self.transfer_dst_char]
+        list_top = top + 50
+
+        # ── Source inventory list ──
+        draw_text(surface, f"{src.name}'s Items", left_x, list_top, CREAM, 14, bold=True)
+        iy = list_top + 22
+        all_items = list(src.inventory)
+        # Also list equipped items
+        if hasattr(src, "equipment") and src.equipment:
+            for slot, item in src.equipment.items():
+                if item:
+                    all_items.append({**item, "_equipped_slot": slot})
+
+        if not all_items:
+            draw_text(surface, "No items.", left_x + 10, iy, GREY, 13)
+        for idx, item in enumerate(all_items[:14]):
+            row = pygame.Rect(left_x, iy + idx * item_h, panel_w, item_h - 2)
+            selected = (idx == self.transfer_selected_item)
+            hov = row.collidepoint(mx, my)
+            pygame.draw.rect(surface, ITEM_HOVER if (selected or hov) else ITEM_BG, row)
+            pygame.draw.rect(surface, GOLD if selected else PANEL_BORDER, row, 1)
+            from core.identification import get_item_display_name
+            name = get_item_display_name(item)
+            slot_tag = f" [EQ:{item.get('_equipped_slot','').upper()}]" if "_equipped_slot" in item else ""
+            stack = item.get("stack", 1)
+            stack_str = f" x{stack}" if stack > 1 else ""
+            draw_text(surface, f"{name}{slot_tag}{stack_str}", left_x + 6, iy + idx * item_h + 7,
+                      GOLD if selected else CREAM, 13)
+
+        # ── Transfer button (center) ──
+        btn_x = SCREEN_W // 2 - 40
+        btn_y = list_top + 22 + 7 * item_h
+        transfer_btn = pygame.Rect(btn_x, btn_y, 80, 34)
+        can_transfer = (self.transfer_selected_item >= 0 and
+                        self.transfer_src_char != self.transfer_dst_char and
+                        self.transfer_selected_item < len(all_items))
+        hov = transfer_btn.collidepoint(mx, my)
+        pygame.draw.rect(surface, (40,80,40) if (can_transfer and hov) else (25,40,25), transfer_btn)
+        pygame.draw.rect(surface, (80,180,80) if can_transfer else DARK_GREY, transfer_btn, 1)
+        draw_text(surface, "→ Give →", btn_x + 4, btn_y + 9,
+                  GREEN if can_transfer else DARK_GREY, 13, bold=True)
+
+        # ── Destination inventory list (read-only preview) ──
+        draw_text(surface, f"{dst.name}'s Items", right_x, list_top, CREAM, 14, bold=True)
+        dy = list_top + 22
+        dst_items = list(dst.inventory)
+        if hasattr(dst, "equipment") and dst.equipment:
+            for slot, item in dst.equipment.items():
+                if item:
+                    dst_items.append({**item, "_equipped_slot": slot})
+        if not dst_items:
+            draw_text(surface, "No items.", right_x + 10, dy, GREY, 13)
+        for idx, item in enumerate(dst_items[:14]):
+            row = pygame.Rect(right_x, dy + idx * item_h, panel_w, item_h - 2)
+            pygame.draw.rect(surface, ITEM_BG, row)
+            pygame.draw.rect(surface, PANEL_BORDER, row, 1)
+            from core.identification import get_item_display_name
+            name = get_item_display_name(item)
+            slot_tag = f" [EQ:{item.get('_equipped_slot','').upper()}]" if "_equipped_slot" in item else ""
+            draw_text(surface, f"{name}{slot_tag}", right_x + 6, dy + idx * item_h + 7, GREY, 13)
+
+        # ── Status message ──
+        if self.message and self.msg_timer > 0:
+            draw_text(surface, self.message, left_x, list_top + 14 * item_h + 30,
+                      self.msg_color, 14)
+
+        # store for click handler
+        self._transfer_all_items = all_items
+        self._transfer_list_top  = list_top
+        self._transfer_item_h    = item_h
+        self._transfer_left_x    = left_x
+        self._transfer_panel_w   = panel_w
+        self._transfer_btn       = transfer_btn
+
+    def _handle_transfer_click(self, mx, my):
+        if len(self.party) < 2:
+            return None
+
+        top = 80
+
+        # Source char selector clicks
+        for i in range(len(self.party)):
+            bx = 30 + i * 110
+            btn = pygame.Rect(bx, top + 14, 105, 26)
+            if btn.collidepoint(mx, my):
+                self.transfer_src_char = i
+                if self.transfer_dst_char == i:
+                    self.transfer_dst_char = (i + 1) % len(self.party)
+                self.transfer_selected_item = -1
+                return None
+
+        # Destination char selector clicks
+        right_x = SCREEN_W // 2 + 10
+        for i in range(len(self.party)):
+            bx = right_x + i * 110
+            btn = pygame.Rect(bx, top + 14, 105, 26)
+            if btn.collidepoint(mx, my):
+                self.transfer_dst_char = i
+                if self.transfer_src_char == i:
+                    self.transfer_src_char = (i + 1) % len(self.party)
+                return None
+
+        # Item list clicks (source side)
+        list_top = top + 50
+        item_h = 32
+        left_x = 30
+        panel_w = SCREEN_W // 2 - 40
+
+        src = self.party[self.transfer_src_char]
+        all_items = list(src.inventory)
+        if hasattr(src, "equipment") and src.equipment:
+            for slot, item in src.equipment.items():
+                if item:
+                    all_items.append({**item, "_equipped_slot": slot})
+
+        for idx in range(min(14, len(all_items))):
+            row = pygame.Rect(left_x, list_top + 22 + idx * item_h, panel_w, item_h - 2)
+            if row.collidepoint(mx, my):
+                self.transfer_selected_item = idx
+                return None
+
+        # Transfer button
+        btn_x = SCREEN_W // 2 - 40
+        btn_y = list_top + 22 + 7 * item_h
+        transfer_btn = pygame.Rect(btn_x, btn_y, 80, 34)
+        if transfer_btn.collidepoint(mx, my):
+            if (self.transfer_selected_item >= 0 and
+                    self.transfer_src_char != self.transfer_dst_char and
+                    self.transfer_selected_item < len(all_items)):
+                item = all_items[self.transfer_selected_item]
+                dst = self.party[self.transfer_dst_char]
+                # Handle equipped vs inventory
+                if "_equipped_slot" in item:
+                    clean = {k: v for k, v in item.items() if k != "_equipped_slot"}
+                    slot = item["_equipped_slot"]
+                    src.equipment[slot] = None
+                    dst.inventory.append(clean)
+                    self.message = f"Unequipped & gave {clean.get('name','item')} to {dst.name}"
+                else:
+                    src.inventory.remove(item)
+                    dst.inventory.append(item)
+                    self.message = f"Gave {item.get('name','item')} to {dst.name}"
+                self.msg_color = GREEN
+                self.msg_timer = 180
+                self.transfer_selected_item = -1
+        return None
+
+    # ──────────────────────────────────────────────────────────
     #  INPUT HANDLING
     # ──────────────────────────────────────────────────────────
 
@@ -514,6 +711,8 @@ class CampUI:
             return self._handle_equip_click(mx, my)
         elif self.tab == TAB_IDENTIFY:
             return self._handle_identify_click(mx, my)
+        elif self.tab == TAB_TRANSFER:
+            return self._handle_transfer_click(mx, my)
 
         return None
 
