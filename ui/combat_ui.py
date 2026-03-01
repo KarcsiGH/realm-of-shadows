@@ -134,6 +134,33 @@ def _wrap(text, font, max_w):
 # ═══════════════════════════════════════════════════════════════
 #  COMBAT UI
 # ═══════════════════════════════════════════════════════════════
+
+_ELEMENT_FLASH_COLORS = {
+    "fire":      (255, 120,  40),
+    "ice":       ( 80, 200, 255),
+    "frost":     ( 80, 200, 255),
+    "lightning": (240, 220,  60),
+    "nature":    ( 80, 200,  80),
+    "holy":      (255, 240, 180),
+    "shadow":    (160,  80, 220),
+    "poison":    (120, 200,  60),
+    "heal":      (100, 255, 140),
+    "crit":      (255, 220,  40),
+}
+
+def _ability_flash_color(ability, result):
+    """Pick flash color based on ability element/type."""
+    if not ability:
+        return (255, 255, 255)
+    elem = ability.get("element", "")
+    if elem in _ELEMENT_FLASH_COLORS:
+        return _ELEMENT_FLASH_COLORS[elem]
+    ab_type = ability.get("type", "")
+    if "heal" in ab_type or "heal" in ability.get("name","").lower():
+        return _ELEMENT_FLASH_COLORS["heal"]
+    if result.get("is_crit"):
+        return _ELEMENT_FLASH_COLORS["crit"]
+    return (220, 200, 255)
 class CombatUI:
     def __init__(self, combat_state):
         self.combat = combat_state
@@ -305,13 +332,36 @@ class CombatUI:
                 if bar_y > r.bottom - 10:
                     break
 
-            # Status effects
-            se = p.get("status_effects", {})
+            # Status effects — colored badges
+            se = p.get("status_effects", [])
             if se:
+                BUFF_NAMES  = {"defense_up","iron_skin","magic_shield","bulwark","war_cry",
+                                "hawk_eye","ki_deflect","last_stand","evasion","smoke_screen",
+                                "courage_aura","empty_mind","WarCry","Defending","Blessed"}
+                DEBUFF_NAMES = {"Poisoned","Burning","Stunned","Slowed","Blinded","Confused",
+                                "Cursed","death_mark","Weakened"}
                 sx = ix
-                for sname in list(se.keys())[:3]:
-                    draw_text(surface, sname[:6], sx, r.bottom - 13, ORANGE, 9)
-                    sx += 40
+                for effect in list(se)[:4]:
+                    sname = effect["name"] if isinstance(effect, dict) else effect
+                    dur   = effect.get("duration","") if isinstance(effect, dict) else ""
+                    dur_s = f"{dur}" if dur else ""
+                    if sname in BUFF_NAMES:
+                        col = (100, 230, 130)   # green — buff
+                        abbr = sname[:3].upper()
+                    elif sname in DEBUFF_NAMES:
+                        col = (230, 80, 60)    # red — debuff
+                        abbr = sname[:3].upper()
+                    else:
+                        col = ORANGE
+                        abbr = sname[:3].upper()
+                    bw = 28
+                    badge = pygame.Rect(sx, r.bottom - 16, bw, 13)
+                    pygame.draw.rect(surface, (int(col[0]*0.25),int(col[1]*0.25),int(col[2]*0.25)), badge)
+                    pygame.draw.rect(surface, col, badge, 1)
+                    draw_text(surface, abbr, sx + 2, r.bottom - 14, col, 9)
+                    if dur_s:
+                        draw_text(surface, dur_s, sx + bw - 8, r.bottom - 14, col, 8)
+                    sx += bw + 2
 
     # ─────────────────────────────────────────────────────────
     #  ENEMY ZONE
@@ -420,14 +470,24 @@ class CombatUI:
                     rc2 = ROW_COLORS[enemy.get("row", FRONT)]
                     draw_text(surface, f"[{row_key[0].upper()}]",
                                draw_r.right - 22, draw_r.y + 3, rc2, 9)
-                    # Status effects (hover only)
+                    # Status effects (hover) — colored badges
                     if is_hover:
-                        se = enemy.get("status_effects", {})
+                        se = enemy.get("status_effects", [])
                         if se:
                             sey = bar_y + 22
-                            for sname in list(se.keys())[:3]:
-                                draw_text(surface, sname[:8], draw_r.x + 4, sey, ORANGE, 9)
-                                sey += 11
+                            DEBUFF_C = (230, 80, 60); BUFF_C = (100, 230, 130)
+                            DEBUFF_N = {"Poisoned","Burning","Stunned","Slowed","Blinded","Weakened","Cursed"}
+                            sex = draw_r.x + 4
+                            for effect in list(se)[:4]:
+                                sname = effect["name"] if isinstance(effect, dict) else effect
+                                col = DEBUFF_C if sname in DEBUFF_N else BUFF_C
+                                bw = 28
+                                badge = pygame.Rect(sex, sey, bw, 12)
+                                pygame.draw.rect(surface, (int(col[0]*0.2),int(col[1]*0.2),int(col[2]*0.2)), badge)
+                                pygame.draw.rect(surface, col, badge, 1)
+                                draw_text(surface, sname[:3].upper(), sex + 2, sey + 1, col, 8)
+                                sex += bw + 2
+                                if sex + bw > draw_r.right: sex = draw_r.x + 4; sey += 14
                 else:
                     draw_text(surface, "DEAD", draw_r.x + 4, bar_y, DEAD_COLOR, 10)
 

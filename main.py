@@ -2649,20 +2649,48 @@ class Game:
             self.combat_state.execute_player_action("defend")
             sfx.play("block")
         elif action["type"] == "ability":
-            self.combat_state.execute_player_action(
+            result = self.combat_state.execute_player_action(
                 "ability", target=action["target"], ability=action["ability"]
             )
-            # Pick sound based on ability type
+            # Pick sound and flash color based on ability type
             ab = action.get("ability", {})
             ab_type = ab.get("type", "") if isinstance(ab, dict) else ""
-            if ab_type in ("heal", "heal_aoe"):
+            ab_elem = ab.get("element", "") if isinstance(ab, dict) else ""
+            ab_name = ab.get("name", "Ability") if isinstance(ab, dict) else "Ability"
+
+            # Element → flash color
+            _ELEM_COL = {
+                "fire": (255, 110, 30), "ice": (80, 210, 255), "frost": (80, 210, 255),
+                "lightning": (245, 225, 55), "nature": (80, 210, 80),
+                "holy": (255, 245, 180), "shadow": (180, 80, 240),
+                "poison": (130, 215, 65),
+            }
+            if ab_type in ("heal", "aoe_heal"):
                 sfx.play("heal")
-            elif ab_type in ("buff", "shield"):
+                if result:
+                    amt = result.get("healing", 0)
+                    self.combat_ui.add_flash(f"♥ {ab_name} +{amt} HP", (100, 255, 140))
+            elif ab_type == "buff":
                 sfx.play("buff")
-            elif ab_type in ("debuff", "dot"):
+                buff_name = ab.get("buff", ab_name)
+                self.combat_ui.add_flash(f"✦ {buff_name.upper()} active!", (100, 220, 130))
+            elif ab_type in ("debuff",):
                 sfx.play("debuff")
+                self.combat_ui.add_flash(f"↓ {ab_name}!", (220, 160, 60))
             else:
                 sfx.play("hit_magic")
+                if result and result.get("hit") is False:
+                    self.combat_ui.add_flash(f"{ab_name} — RESISTED!", (150, 120, 180))
+                elif result:
+                    dmg = result.get("damage", 0)
+                    is_crit = result.get("is_crit", False)
+                    col = _ELEM_COL.get(ab_elem, (200, 160, 255))
+                    if is_crit:
+                        self.combat_ui.add_flash(f"✦ CRITICAL! {ab_name} {dmg}", (255, 215, 40))
+                    elif ab_type == "aoe":
+                        self.combat_ui.add_flash(f"◈ {ab_name} hits all! {dmg}", col)
+                    else:
+                        self.combat_ui.add_flash(f"◆ {ab_name} {dmg}", col)
         elif action["type"] == "move":
             self.combat_state.execute_player_action("move", target=action["direction"])
         elif action["type"] == "switch_weapon":

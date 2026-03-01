@@ -122,15 +122,17 @@ def _gen_texture(wall_light, wall_dark, is_door=False):
 # ═══════════════════════════════════════════════════════════════
 
 SPRITE_COLORS = {
-    DT_TREASURE:     (255, 220, 50),
-    DT_STAIRS_DOWN:  (100, 220, 255),
-    DT_STAIRS_UP:    (80,  200, 255),
-    DT_ENTRANCE:     (255, 200, 80),   # warm golden arch
-    DT_TRAP:         (230, 50,  50),
-    DT_INTERACTABLE: (80,  200, 255),
-    "enemy":         (200, 40,  40),
-    "boss":          (255, 20,  100),
-    "journal":       (220, 200, 130),
+    DT_TREASURE:        (255, 220, 50),
+    DT_STAIRS_DOWN:     (180, 80,  220),   # deep purple — descending into darkness
+    DT_STAIRS_UP:       (255, 200, 55),    # warm gold — ascending toward light
+    DT_ENTRANCE:        (255, 200, 80),    # warm golden arch
+    DT_TRAP:            (220, 40,  40),    # armed trap — red spikes
+    "trap_disarmed":    (90,  140, 80),    # disarmed trap — green/grey flat plate
+    "trap_tripped":     (110, 100, 90),    # tripped trap — dull grey plate
+    DT_INTERACTABLE:    (80,  200, 255),
+    "enemy":            (200, 40,  40),
+    "boss":             (255, 20,  100),
+    "journal":          (220, 200, 130),
 }
 
 
@@ -380,17 +382,27 @@ class DungeonUI:
         flick = 0.95 + 0.05 * self.pulse
         FOG   = TORCH_DIST
 
-        # ── Ceiling / floor scanlines ──
+        # ── Ceiling / floor scanlines with perspective gradient ──
         for sy in range(VH):
             if sy == HH:
                 continue
             row_dist = PROJ_DIST / max(1, abs(sy - HH))
             fog_t    = min(1.0, row_dist * 0.35 / FOG)
+            # Distance from horizon (0=horizon, 1=screen edge)
+            horizon_t = abs(sy - HH) / HH
             if sy < HH:
-                c = tuple(int(self.ceil_c[i]*(1-fog_t) + self.fog_c[i]*fog_t) for i in range(3))
+                # Ceiling: dark at horizon, slightly lighter at top
+                base = tuple(int(self.ceil_c[i]*(1-fog_t) + self.fog_c[i]*fog_t) for i in range(3))
+                c = tuple(max(0, int(v * (0.35 + 0.65 * horizon_t))) for v in base)
             else:
-                c = tuple(int(self.floor_c[i]*(1-fog_t*0.85) + self.fog_c[i]*fog_t*0.85) for i in range(3))
+                # Floor: dark at horizon, lighter at bottom
+                base = tuple(int(self.floor_c[i]*(1-fog_t*0.85) + self.fog_c[i]*fog_t*0.85) for i in range(3))
+                c = tuple(max(0, int(v * (0.45 + 0.55 * horizon_t))) for v in base)
             pygame.draw.line(view, c, (0, sy), (VW-1, sy))
+        # Dark horizon band — separates floor from ceiling sharply
+        for band_y in range(HH - 1, HH + 2):
+            if 0 <= band_y < VH:
+                pygame.draw.line(view, (4, 3, 5), (0, band_y), (VW-1, band_y))
 
         # ── Wall columns ──
         wall_cols = self._wall_cols
@@ -412,7 +424,7 @@ class DungeonUI:
 
             # Lighting
             fog_t = min(1.0, dist / FOG)
-            ns_f  = 0.70 if ns else 1.0
+            ns_f  = 0.52 if ns else 1.0
             bright = ns_f * (1.0 - fog_t * 0.82) * flick
             bright = max(0.0, min(1.0, bright))
             fog_c  = self.fog_c
@@ -451,7 +463,17 @@ class DungeonUI:
                     continue
                 tt = tile["type"]
                 icon_key = None
-                if tt in SPRITE_COLORS:
+                if tt == DT_TRAP:
+                    # Only show trap sprite if the party knows about it
+                    ev = tile.get("event", {})
+                    if ev.get("disarmed"):
+                        icon_key = "trap_disarmed"
+                    elif ev.get("tripped"):
+                        icon_key = "trap_tripped"
+                    elif ev.get("detected"):
+                        icon_key = DT_TRAP     # armed and detected — red spikes
+                    # else undiscovered — no sprite shown
+                elif tt in SPRITE_COLORS:
                     icon_key = tt
                 enc = tile.get("encounter")
                 if enc and not enc.get("cleared"):
@@ -597,21 +619,46 @@ class DungeonUI:
                     pygame.draw.circle(spr, c_a, (surf_w//2 + er//3, surf_h//2 - er//3), ew)
 
                 elif icon_key == DT_TRAP:
-                    # Floor spike plate — flat, ground-level, spikes pointing up
+                    # Armed detected trap — red spike plate
                     pw = max(6, surf_w * 4 // 5)
                     ph = max(3, surf_h // 6)
                     ox = (surf_w - pw) // 2
-                    oy = surf_h - ph - 1  # flush with floor
-                    # Base plate
+                    oy = surf_h - ph - 1
                     pygame.draw.rect(spr, dim, (ox, oy, pw, ph))
                     pygame.draw.rect(spr, c_a, (ox, oy, pw, ph), 1)
-                    # Spikes
                     num_spikes = max(3, pw // 5)
                     spike_h = max(3, surf_h // 3)
                     for si in range(num_spikes):
                         sx_ = ox + (si * pw // num_spikes) + pw // (num_spikes * 2)
                         pts = [(sx_-2, oy), (sx_+2, oy), (sx_, oy - spike_h)]
                         pygame.draw.polygon(spr, c_a, pts)
+
+                elif icon_key == "trap_disarmed":
+                    # Disarmed trap — flat green-grey plate with X mark
+                    pw = max(6, surf_w * 4 // 5)
+                    ph = max(3, surf_h // 5)
+                    ox = (surf_w - pw) // 2
+                    oy = surf_h - ph - 1
+                    pygame.draw.rect(spr, dim, (ox, oy, pw, ph))
+                    pygame.draw.rect(spr, c_a, (ox, oy, pw, ph), 1)
+                    # X mark showing disarmed
+                    cx2, cy2 = surf_w // 2, oy + ph // 2
+                    m = max(2, ph // 2)
+                    pygame.draw.line(spr, c_a, (cx2-m, cy2-m), (cx2+m, cy2+m), 1)
+                    pygame.draw.line(spr, c_a, (cx2+m, cy2-m), (cx2-m, cy2+m), 1)
+
+                elif icon_key == "trap_tripped":
+                    # Tripped/sprung trap — depressed flat grey plate, spikes bent down
+                    pw = max(6, surf_w * 4 // 5)
+                    ph = max(2, surf_h // 8)
+                    ox = (surf_w - pw) // 2
+                    oy = surf_h - ph - 1
+                    pygame.draw.rect(spr, dim, (ox, oy, pw, ph))
+                    pygame.draw.rect(spr, c_a, (ox, oy, pw, ph), 1)
+                    # Bent/broken spikes (horizontal lines suggesting sprung state)
+                    for si in range(max(2, pw // 6)):
+                        sx_ = ox + si * pw // max(2, pw // 6)
+                        pygame.draw.line(spr, c_a, (sx_, oy - 1), (sx_ + 3, oy - 2), 1)
 
                 elif icon_key == "journal":
                     # Book rectangle
@@ -669,13 +716,22 @@ class DungeonUI:
                     c = (55,50,45,220)
                 elif tt == DT_DOOR:
                     c = (180,130,60,255)
-                elif tt in (DT_STAIRS_DOWN, DT_STAIRS_UP):
-                    c = (80,200,255,255)
+                elif tt == DT_STAIRS_DOWN:
+                    c = (180, 80, 220, 255)   # purple — going down
+                elif tt == DT_STAIRS_UP:
+                    c = (255, 200, 55, 255)   # gold — going up
                 elif tt == DT_TREASURE:
                     c = (255,215,40,255)
-                elif tt == DT_TRAP and tile.get("event",{}).get("detected"):
+                elif tt == DT_TRAP:
                     ev_t = tile.get("event") or {}
-                    c = (100,100,100,180) if ev_t.get("disarmed") else (220,50,50,255)
+                    if ev_t.get("disarmed"):
+                        c = (90, 140, 80, 220)    # green — disarmed
+                    elif ev_t.get("tripped"):
+                        c = (110, 100, 90, 200)   # grey — sprung
+                    elif ev_t.get("detected"):
+                        c = (220, 50, 50, 255)    # red — armed and known
+                    else:
+                        continue  # undiscovered trap — don't show on minimap
                 elif tt == DT_INTERACTABLE:
                     ev_i = tile.get("event") or {}
                     c = (80,80,75,150) if ev_i.get("used") else (80,200,255,255)
