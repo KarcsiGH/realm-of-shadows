@@ -63,6 +63,7 @@ S_ATTACK_CINEMATIC = 18  # Act 1 climax: shadow attack on Briarhollow
 S_ENDING           = 19  # Epilogue / credits after Valdris defeated
 S_GAME_OVER        = 20  # Party wipe screen before returning to title
 S_SETTINGS         = 21  # Volume / settings overlay
+S_INN_RECRUIT      = 23  # Inn: recruit 5 companions after hero creation
 
 
 class Game:
@@ -385,16 +386,25 @@ class Game:
                     self.char_index += 1
                     if self.char_index >= PARTY_SIZE:
                         self.party_scroll = 0
-                        # Show opening narrative on first playthrough
                         from core.story_flags import has
                         if not has("intro_seen"):
                             self._start_opening()
                         else:
                             self.go(S_PARTY)
+                    elif self.char_index == 1:
+                        # Hero created — now recruit companions from the Inn
+                        self._gen_inn_recruits()
+                        self.inn_selected = set()
+                        self.inn_hover = -1
+                        self.go(S_INN_RECRUIT)
                     else:
                         self.go(S_MODE)
                 elif r_redo.collidepoint(mx, my):
                     self.go(S_MODE)
+
+        elif self.state == S_INN_RECRUIT:
+            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                self._handle_inn_click(mx, my)
 
         elif self.state == S_PARTY:
             if e.type == pygame.MOUSEBUTTONDOWN:
@@ -734,6 +744,238 @@ class Game:
         self.scroll = 0
         self.class_hover = -1
 
+
+    # ══════════════════════════════════════════════════════════
+    #  INN RECRUITMENT
+    # ══════════════════════════════════════════════════════════
+
+    _INN_NAMES = [
+        ("Brom","Male"),("Syla","Female"),("Garrett","Male"),("Enna","Female"),
+        ("Torvin","Male"),("Mira","Female"),("Cade","Male"),("Vesna","Female"),
+        ("Aldus","Male"),("Kyra","Female"),("Renn","Male"),("Shael","Female"),
+        ("Dax","Male"),("Lira","Female"),("Wulf","Male"),("Asha","Female"),
+    ]
+    _INN_BLURBS = {
+        "Fighter":    ["Veteran of the Border Wars, looking for steady work.",
+                       "Ex-city-guard, left after seeing too much corruption.",
+                       "Raised in the fighting pits, knows no other life."],
+        "Mage":       ["Left the Academy before graduation — too many rules.",
+                       "Discovered a talent for fire; now no guild will have them.",
+                       "Studies ancient runes in their spare time."],
+        "Cleric":     ["Wandering priest of the Old Faith, oath of service.",
+                       "Left the monastery to see what the gods really want.",
+                       "Carries a relic of uncertain holiness."],
+        "Thief":      ["Claims to be a retired locksmith. Nobody believes it.",
+                       "Owes a debt to someone dangerous; adventure is the way out.",
+                       "Light fingers, quick feet, questionable morals."],
+        "Ranger":     ["Spent ten years mapping the Ashwood alone.",
+                       "Follows a trail only they can read.",
+                       "Their wolf companion died last winter; haven't been the same."],
+        "Monk":       ["Seven years in a mountain monastery, now seeking truth outside it.",
+                       "Practices a forbidden martial form banned by the temples.",
+                       "Quiet, fast, and terrifyingly calm in a fight."],
+        "Paladin":    ["Champion of a fallen order, still holding to the oath.",
+                       "Blessed by a god who never speaks to them directly.",
+                       "Believes deeply in justice; has a flexible definition of it."],
+        "Assassin":   ["Won't say who trained them. Won't say who they've killed.",
+                       "Claims to be a traveling merchant. The blades suggest otherwise.",
+                       "Retired from the guild; the guild hasn't agreed yet."],
+        "Warden":     ["Protector of a forest that no longer exists.",
+                       "Their shield has stopped a hundred blows. The dents prove it.",
+                       "Slow to anger, devastating when it arrives."],
+        "Warder":     ["Last survivor of a legendary warband.",
+                       "Carries a chip in their axe from the night everything went wrong."],
+        "Spellblade": ["Taught themselves to weave magic into swordplay. Painfully.",
+                       "Expelled from both the mages' college and the fighters' guild."],
+        "Templar":    ["Holy warrior. The holy part is debatable.",
+                       "Wears faith like armor. Also wears actual armor."],
+        "Witch":      ["Collects odd herbs and odder secrets.",
+                       "The townsfolk made them leave. Their loss."],
+        "Necromancer":["Academic interest in the undead. Purely academic.",
+                       "The smell follows them everywhere. They've stopped noticing."],
+    }
+
+    def _gen_inn_recruits(self):
+        """Generate 8 pre-rolled adventurers available at the Inn."""
+        from core.character import Character
+        from core.classes import CLASS_ORDER
+        from core.races import RACE_ORDER
+        import random
+        hero_class = self.party[0].class_name if self.party else None
+        pool = [c for c in CLASS_ORDER if c != hero_class]
+        # We need 8 recruits from potentially only 5 classes:
+        # ensure all non-hero classes appear at least once, then fill with repeats
+        # using different races/backstories to create variety
+        chosen_classes = list(pool)  # one of each non-hero class first
+        random.shuffle(chosen_classes)
+        # Fill remaining slots with repeats (different race/backstory)
+        extras = [random.choice(pool) for _ in range(8 - len(chosen_classes))]
+        chosen_classes = (chosen_classes + extras)[:8]
+
+        used_names = set()
+        self.inn_recruits = []
+        name_pool = list(self._INN_NAMES)
+        random.shuffle(name_pool)
+
+        for cls in chosen_classes:
+            # Pick unique name
+            for name, _ in name_pool:
+                if name not in used_names:
+                    used_names.add(name)
+                    break
+            race = random.choice(RACE_ORDER[:5])  # no exotic races in the Inn
+            c = Character(name, race_name=race)
+            c.quick_roll(cls)
+            # Blurb
+            blurbs = self._INN_BLURBS.get(cls, ["A seasoned adventurer seeking work."])
+            c.inn_blurb = random.choice(blurbs)
+            self.inn_recruits.append(c)
+
+    def _handle_inn_click(self, mx, my):
+        """Handle clicks on the Inn recruitment screen."""
+        from core.classes import CLASSES
+        SCREEN_W = pygame.display.get_surface().get_width()
+        SCREEN_H = pygame.display.get_surface().get_height()
+        NEED = 5
+
+        # Recruit cards layout: 4 per row, 2 rows
+        card_w, card_h = 270, 175
+        cols = 4
+        start_x = (SCREEN_W - cols * (card_w + 14)) // 2
+        start_y = 110
+
+        for i, c in enumerate(self.inn_recruits):
+            col = i % cols
+            row = i // cols
+            rx = start_x + col * (card_w + 14)
+            ry = start_y + row * (card_h + 12)
+            r = pygame.Rect(rx, ry, card_w, card_h)
+            if r.collidepoint(mx, my):
+                if i in self.inn_selected:
+                    self.inn_selected.discard(i)
+                elif len(self.inn_selected) < NEED:
+                    self.inn_selected.add(i)
+                return
+
+        # Confirm button
+        if len(self.inn_selected) == NEED:
+            btn = pygame.Rect(SCREEN_W//2 - 160, SCREEN_H - 68, 320, 50)
+            if btn.collidepoint(mx, my):
+                for i in sorted(self.inn_selected):
+                    self.party.append(self.inn_recruits[i])
+                    self.char_index += 1
+                self.party_scroll = 0
+                from core.story_flags import has
+                if not has("intro_seen"):
+                    self._start_opening()
+                else:
+                    self.go(S_PARTY)
+
+    def _draw_inn_recruit(self, mx, my):
+        """Draw the Inn recruitment screen."""
+        from ui.renderer import (SCREEN_W, SCREEN_H, draw_text, draw_panel,
+                                  draw_button, GOLD, CREAM, GREY, DARK_GREY,
+                                  PANEL_BG, PANEL_BORDER, HIGHLIGHT, DIM_GOLD,
+                                  GREEN, RED, ORANGE)
+        from ui.pixel_art import draw_character_silhouette
+        from core.classes import CLASSES, STAT_NAMES
+
+        BG = (8, 6, 16)
+        self.screen.fill(BG)
+
+        # Header
+        draw_text(self.screen, "The Wanderer's Inn", SCREEN_W//2 - 140, 22,
+                  GOLD, 26, bold=True)
+        hero = self.party[0]
+        draw_text(self.screen,
+                  f"{hero.name} surveys the common room. Five companions are needed.",
+                  SCREEN_W//2 - 310, 60, CREAM, 15)
+
+        NEED = 5
+        n_sel = len(self.inn_selected)
+        sel_col = GREEN if n_sel == NEED else ORANGE
+        draw_text(self.screen, f"Selected: {n_sel} / {NEED}",
+                  SCREEN_W//2 - 55, 85, sel_col, 14, bold=True)
+
+        # Cards
+        card_w, card_h = 270, 175
+        cols = 4
+        start_x = (SCREEN_W - cols * (card_w + 14)) // 2
+        start_y = 110
+
+        for i, c in enumerate(self.inn_recruits):
+            col_i = i % cols
+            row_i = i // cols
+            rx = start_x + col_i * (card_w + 14)
+            ry = start_y + row_i * (card_h + 12)
+            r = pygame.Rect(rx, ry, card_w, card_h)
+            selected = (i in self.inn_selected)
+            hover = r.collidepoint(mx, my)
+            cls_data = CLASSES.get(c.class_name, {})
+            cls_col = cls_data.get("color", (160, 150, 170))
+
+            if selected:
+                border = GREEN
+                bg = (12, 28, 12)
+            elif hover:
+                border = cls_col
+                bg = (22, 18, 35)
+            else:
+                border = PANEL_BORDER
+                bg = PANEL_BG
+
+            draw_panel(self.screen, r, bg_color=bg, border_color=border)
+
+            # Silhouette
+            sil_r = pygame.Rect(rx + 4, ry + 4, 52, 72)
+            draw_character_silhouette(self.screen, sil_r, c.class_name,
+                                       highlight=selected or hover)
+
+            # Name + class
+            draw_text(self.screen, c.name, rx + 62, ry + 6,
+                      cls_col, 15, bold=True)
+            race_str = getattr(c, "race_name", "Human")
+            draw_text(self.screen, f"{race_str} {c.class_name}",
+                      rx + 62, ry + 24, CREAM, 12)
+
+            # Key stats (STR DEX CON INT)
+            sy = ry + 44
+            for si, stat in enumerate(["STR","DEX","CON","INT","WIS","PIE"]):
+                val = c.stats.get(stat, 0)
+                col_v = GREEN if val >= 13 else (CREAM if val >= 9 else GREY)
+                sx2 = rx + 62 + (si % 3) * 68
+                sy2 = sy + (si // 3) * 17
+                draw_text(self.screen, f"{stat}:{val}", sx2, sy2, col_v, 12)
+
+            # Resources
+            ry2 = sy + 38
+            for rname, rval in list(c.resources.items())[:2]:
+                draw_text(self.screen, f"{rname} {rval}", rx + 62, ry2, DIM_GOLD, 11)
+                ry2 += 13
+
+            # Blurb
+            blurb = getattr(c, "inn_blurb", "")
+            if blurb:
+                draw_text(self.screen, f'\"{blurb}\"',
+                          rx + 6, ry + card_h - 32, GREY, 10,
+                          max_width=card_w - 12)
+
+            # Selected checkmark
+            if selected:
+                draw_text(self.screen, "✓ Selected", rx + card_w - 82, ry + 4,
+                          GREEN, 11, bold=True)
+
+        # Confirm button
+        if n_sel == NEED:
+            btn = pygame.Rect(SCREEN_W//2 - 160, SCREEN_H - 68, 320, 50)
+            draw_button(self.screen, btn, "Set Forth Together!",
+                        hover=btn.collidepoint(mx, my), size=17)
+        else:
+            rem = NEED - n_sel
+            draw_text(self.screen,
+                      f"Choose {rem} more companion{'s' if rem != 1 else ''}.",
+                      SCREEN_W//2 - 100, SCREEN_H - 50, GREY, 14)
+
     # ══════════════════════════════════════════════════════════
     #  DRAWING
     # ══════════════════════════════════════════════════════════
@@ -760,6 +1002,7 @@ class Game:
         elif self.state == S_CHEST:     self._draw_chest(mx, my)
         elif self.state == S_ATTACK_CINEMATIC: self._draw_attack_cinematic(mx, my)
         elif self.state == S_ENDING:           self._draw_ending(mx, my)
+        elif self.state == S_INN_RECRUIT:       self._draw_inn_recruit(mx, my)
         elif self.state == S_SETTINGS:         self._draw_settings(mx, my)
         elif self.state == S_GAME_OVER:        self._draw_game_over(mx, my)
 

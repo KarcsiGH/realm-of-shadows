@@ -1418,8 +1418,8 @@ def _should_use_buff(enemy, enemies):
     return True, living_allies, ability
 
 
-def _should_use_offensive_ability(enemy, players):
-    """Check if an offensive ability should be used. Returns (should_use, target, ability) or (False, None, None)."""
+def _should_use_offensive_ability(enemy, players, use_threshold=0.55):
+    """Check if an offensive ability should be used. Returns (should_use, target, ability) or (False, None, None). use_threshold: probability to skip (lower = more aggressive)."""""
     offense_abilities = [a for a in enemy.get("abilities", [])
                          if a.get("type") == "damage"]
     if not offense_abilities:
@@ -1430,8 +1430,8 @@ def _should_use_offensive_ability(enemy, players):
     if not living_players:
         return False, None, None
 
-    # 60% chance to use offensive ability when available
-    if random.random() > 0.60:
+    # Use ability with probability (1 - use_threshold)
+    if random.random() > use_threshold:
         return False, None, None
 
     # Prefer high-threat targets
@@ -1468,6 +1468,16 @@ def enemy_choose_action(enemy, players, enemies):
 
     ai_type = enemy.get("ai_type", "random")
     attack_type = enemy.get("attack_type", "melee")
+
+    # ── Morale check: cowardly enemies flee when badly wounded ──
+    if enemy.get("cowardly") and ai_type not in ("boss",):
+        hp_pct = enemy["hp"] / max(1, enemy.get("max_hp", enemy["hp"] or 1))
+        if hp_pct < 0.20 and random.random() < 0.60:
+            return "flee", None, None
+
+    # ── Outnumbered flag for ability escalation ──
+    living_enemies = [e for e in enemies if e.get("alive", True)]
+    outnumbered = len(living_players) > len(living_enemies)
 
     # ── Position correction: move toward preferred row if mispositioned ──
     # Skip for boss AI (they hold position) and supportive AI (they stay safe)
@@ -1532,8 +1542,10 @@ def enemy_choose_action(enemy, players, enemies):
 
     # ── Tactical AI ───────────────────────────────────────────
     if ai_type == "tactical":
-        # Check for offensive abilities first
-        should_attack, atk_target, atk_ability = _should_use_offensive_ability(enemy, living_players)
+        # Escalate ability use when outnumbered
+        ab_threshold = 0.40 if outnumbered else 0.55
+        should_attack, atk_target, atk_ability = _should_use_offensive_ability(
+            enemy, living_players, use_threshold=ab_threshold)
         if should_attack:
             return "ability", atk_target, atk_ability
 
@@ -1542,6 +1554,19 @@ def enemy_choose_action(enemy, players, enemies):
 
     # ── Aggressive AI ─────────────────────────────────────────
     if ai_type == "aggressive":
+        # Pack tactics: pile on the same target an ally is attacking
+        if enemy.get("pack_tactics") and random.random() < 0.65:
+            living_enemies = [e for e in enemies if e.get("alive", True)]
+            ally_targets = []
+            for ally in living_enemies:
+                if ally is not enemy and ally.get("last_target_uid"):
+                    tgt = next((p for p in living_players
+                                if p.get("uid") == ally.get("last_target_uid")), None)
+                    if tgt:
+                        ally_targets.append(tgt)
+            if ally_targets:
+                return "attack", random.choice(ally_targets), None
+
         # Target the most threatening player, weighted by position
         scored = []
         for p in living_players:
@@ -2069,7 +2094,17 @@ class CombatState:
         action, target, ability = enemy_choose_action(actor, self.players, self.enemies)
         result = {}  # will be overwritten by attack branch
 
-        if action == "attack" and target:
+        if action == "flee":
+            # Cowardly enemy escapes
+            self.log(f"{actor['name']} flees from the battle!")
+            actor["alive"] = False
+            actor["fled"] = True
+            self.advance_turn()
+            return {"fled": True, "name": actor["name"]}
+
+        elif action == "attack" and target:
+            # Record who this enemy attacked (for pack_tactics)
+            actor["last_target_uid"] = target.get("uid")
             # Apply War Cry damage buff if active
             if has_status(actor, "WarCry"):
                 actor["_temp_dmg_buff"] = ENEMY_BUFF_DMG_MULT

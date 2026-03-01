@@ -23,7 +23,7 @@ ENEMIES = {
         "attack_damage": 25, "attack_type": "melee", "phys_type": "slashing",
         "accuracy_bonus": 0,
         "preferred_row": FRONT,
-        "ai_type": "aggressive",
+        "ai_type": "aggressive", "pack_tactics": True, "cowardly": True,
         "xp_reward": 15, "gold_reward": (5, 12),
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
@@ -75,7 +75,7 @@ ENEMIES = {
         "attack_damage": 28, "attack_type": "ranged", "phys_type": "piercing",
         "accuracy_bonus": 5,
         "preferred_row": MID,
-        "ai_type": "aggressive",
+        "ai_type": "aggressive", "pack_tactics": True, "cowardly": True,
         "xp_reward": 18, "gold_reward": (6, 14),
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
@@ -179,7 +179,7 @@ ENEMIES = {
         "attack_damage": 32, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 5,
         "preferred_row": FRONT,
-        "ai_type": "aggressive",
+        "ai_type": "aggressive", "pack_tactics": True,
         "xp_reward": 22, "gold_reward": (2, 6),  # wolves carry some scraps
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
