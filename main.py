@@ -927,30 +927,31 @@ class Game:
             draw_panel(self.screen, r, bg_color=bg, border_color=border)
 
             # Silhouette
-            sil_r = pygame.Rect(rx + 4, ry + 4, 52, 72)
+            sil_r = pygame.Rect(rx + 4, ry + 4, 80, 112)
             draw_character_silhouette(self.screen, sil_r, c.class_name,
                                        highlight=selected or hover)
 
-            # Name + class
-            draw_text(self.screen, c.name, rx + 62, ry + 6,
+            # Name + class (right of portrait)
+            tx = rx + 90
+            draw_text(self.screen, c.name, tx, ry + 6,
                       cls_col, 15, bold=True)
             race_str = getattr(c, "race_name", "Human")
             draw_text(self.screen, f"{race_str} {c.class_name}",
-                      rx + 62, ry + 24, CREAM, 12)
+                      tx, ry + 24, CREAM, 12)
 
             # Key stats (STR DEX CON INT)
             sy = ry + 44
             for si, stat in enumerate(["STR","DEX","CON","INT","WIS","PIE"]):
                 val = c.stats.get(stat, 0)
                 col_v = GREEN if val >= 13 else (CREAM if val >= 9 else GREY)
-                sx2 = rx + 62 + (si % 3) * 68
+                sx2 = tx + (si % 3) * 58
                 sy2 = sy + (si // 3) * 17
                 draw_text(self.screen, f"{stat}:{val}", sx2, sy2, col_v, 12)
 
             # Resources
             ry2 = sy + 38
             for rname, rval in list(c.resources.items())[:2]:
-                draw_text(self.screen, f"{rname} {rval}", rx + 62, ry2, DIM_GOLD, 11)
+                draw_text(self.screen, f"{rname} {rval}", tx, ry2, DIM_GOLD, 11)
                 ry2 += 13
 
             # Blurb
@@ -1411,6 +1412,18 @@ class Game:
     def draw_summary(self, mx, my):
         c = self.current_char
         cls = CLASSES[c.class_name]
+        from ui.pixel_art import draw_character_silhouette as _dcs
+
+        # Large portrait — right column
+        por_w, por_h = 130, 196
+        por_x = SCREEN_W - por_w - 40
+        por_r = pygame.Rect(por_x, 25, por_w, por_h)
+        draw_panel(self.screen, pygame.Rect(por_x - 4, 21, por_w + 8, por_h + 8),
+                   border_color=cls["color"])
+        equip = getattr(c, "equipment", {})
+        armor_t = equip.get("armor", {}).get("armor_tier") if equip.get("armor") else None
+        _dcs(self.screen, por_r, c.class_name,
+             equipped_weapon=equip.get("weapon"), armor_tier=armor_t, highlight=True)
 
         draw_text(self.screen, c.name, 80, 25, cls["color"], 26, bold=True)
         # Class badge next to name
@@ -1499,31 +1512,42 @@ class Game:
             rect = pygame.Rect(cx, cy, card_w, card_h)
             draw_panel(self.screen, rect, border_color=cls["color"])
 
-            # Class badge + Name and class
+            # Portrait silhouette (right side of card)
+            from ui.pixel_art import draw_character_silhouette as _dcs
+            por_w, por_h = 62, card_h - 10
+            por_r = pygame.Rect(cx + card_w - por_w - 4, cy + 4, por_w, por_h)
+            equip = getattr(c, "equipment", {})
+            armor_t = equip.get("armor", {}).get("armor_tier") if equip.get("armor") else None
+            _dcs(self.screen, por_r, c.class_name,
+                 equipped_weapon=equip.get("weapon"), armor_tier=armor_t)
+
+            # Class badge + Name and class (left side)
             draw_class_badge(self.screen, c.class_name, cx + 6, cy + 6, 14)
             draw_text(self.screen, c.name, cx + 44, cy + 8, cls["color"], 16, bold=True)
             race_str = getattr(c, "race_name", "Human")
             draw_text(self.screen, f"{race_str} {c.class_name}", cx + 44, cy + 28, CREAM, 13)
 
-            # Stats in compact form
+            # Stats in compact form (only left of portrait)
             sy = cy + 50
+            stat_w = card_w - por_w - 20
             for i, stat in enumerate(STAT_NAMES):
                 val = c.stats[stat]
-                sx = cx + 10 + (i % 3) * 150
-                sdy = sy + (i // 3) * 20
-                draw_text(self.screen, f"{stat}: {val}", sx, sdy, HIGHLIGHT, 12)
+                col_v = (120, 200, 120) if val >= 13 else HIGHLIGHT if val >= 9 else GREY
+                sx = cx + 10 + (i % 2) * (stat_w // 2)
+                sdy = sy + (i // 2) * 20
+                draw_text(self.screen, f"{stat}: {val}", sx, sdy, col_v, 12)
 
             # Resources compact
-            ry = sy + 50
-            for rname, rval in c.resources.items():
+            ry = sy + 68
+            for rname, rval in list(c.resources.items())[:3]:
                 draw_text(self.screen, f"{rname}: {rval}", cx + 10, ry, DIM_GREEN, 11)
-                ry += 16
+                ry += 14
 
             # Abilities
             ab_names = [a["name"] for a in c.abilities]
             draw_text(self.screen, "Skills: " + ", ".join(ab_names),
                       cx + 10, cy + card_h - 25, DARK_GREY, 10,
-                      max_width=card_w - 20)
+                      max_width=card_w - por_w - 20)
 
         # Begin button (or encounter picker in debug)
         if self.debug_mode:
