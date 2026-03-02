@@ -246,7 +246,7 @@ class CombatUI:
             fw = max(0, int((r.w - 2) * hp / max(1, mhp)))
             pygame.draw.rect(surface, (30, 10, 10), (r.x + 1, r.y + r.h - 5, r.w - 2, 4))
             if fw: pygame.draw.rect(surface, col, (r.x + 1, r.y + r.h - 5, fw, 4))
-            draw_text(surface, name, r.x + 4, r.y + 4, GOLD if is_cur else CREAM, 11, bold=is_cur)
+            draw_text(surface, name, r.x + 4, r.y + 4, GOLD if is_cur else CREAM, 13, bold=is_cur)
             x += slot_w
 
     # ─────────────────────────────────────────────────────────
@@ -296,12 +296,12 @@ class CombatUI:
             iw = r.w - sil_w - 12
 
             name_col = DEAD_COLOR if is_dead else (GOLD if is_cur else CREAM)
-            draw_text(surface, p["name"][:14], ix, iy, name_col, 12, bold=is_cur)
+            draw_text(surface, p["name"][:14], ix, iy, name_col, 14, bold=is_cur)
             draw_text(surface, f"Lv.{p.get('level', 1)} {cls[:10]}", ix, iy + 14,
-                      DARK_GREY, 10)
+                      GREY, 13)
 
             if is_dead:
-                draw_text(surface, "FALLEN", ix, iy + 30, DEAD_COLOR, 11, bold=True)
+                draw_text(surface, "FALLEN", ix, iy + 30, DEAD_COLOR, 13, bold=True)
                 continue
 
             # Resource bars
@@ -364,9 +364,9 @@ class CombatUI:
                     badge = pygame.Rect(sx, r.bottom - 16, bw, 13)
                     pygame.draw.rect(surface, (int(col[0]*0.25),int(col[1]*0.25),int(col[2]*0.25)), badge)
                     pygame.draw.rect(surface, col, badge, 1)
-                    draw_text(surface, abbr, sx + 2, r.bottom - 14, col, 9)
+                    draw_text(surface, abbr, sx + 2, r.bottom - 14, col, 10)
                     if dur_s:
-                        draw_text(surface, dur_s, sx + bw - 8, r.bottom - 14, col, 8)
+                        draw_text(surface, dur_s, sx + bw - 8, r.bottom - 14, col, 9)
                     sx += bw + 2
 
     # ─────────────────────────────────────────────────────────
@@ -397,7 +397,7 @@ class CombatUI:
             rc = ROW_COLORS[row_key]
             pygame.draw.rect(surface, (rc[0]//5, rc[1]//5, rc[2]//5),
                              (RIGHT_X, ry, ROW_LABEL_W, ROW_H))
-            draw_text(surface, row_label, RIGHT_X + 4, ry + ROW_H//2 - 7, rc, 11, bold=True)
+            draw_text(surface, row_label, RIGHT_X + 4, ry + ROW_H//2 - 7, rc, 13, bold=True)
             pygame.draw.line(surface, PANEL_BORDER, (RIGHT_X, ry), (SCREEN_W, ry))
 
             row_enemies = enemies_by_row.get(row_key, [])
@@ -495,7 +495,7 @@ class CombatUI:
                     display_name = display_name[:-4] + "…"
                     break
                 name_col = DEAD_COLOR if not alive else (CREAM if not is_hover else GOLD)
-                draw_text(surface, display_name, cx + 4, name_y, name_col, 10)
+                draw_text(surface, display_name, cx + 4, name_y, name_col, 13)
 
                 # HP bar — for stacks show total HP of all alive enemies
                 bar_y = name_y + 14
@@ -536,7 +536,7 @@ class CombatUI:
                                     pygame.draw.rect(surface,
                                         (int(col[0]*.2),int(col[1]*.2),int(col[2]*.2)), badge)
                                     pygame.draw.rect(surface, col, badge, 1)
-                                    draw_text(surface, sname[:3].upper(), sex+2, sey+1, col, 8)
+                                    draw_text(surface, sname[:3].upper(), sex+2, sey+1, col, 9)
                                     sex += bw + 2
                                     if sex + bw > card_r.right:
                                         sex = cx + 4; sey += 14
@@ -547,7 +547,7 @@ class CombatUI:
                         draw_text(surface, hint, cx + 4, cy + card_h - 14,
                                   (160, 120, 200), 9)
                 else:
-                    draw_text(surface, "DEAD", cx + 4, bar_y, DEAD_COLOR, 10)
+                    draw_text(surface, "DEAD", cx + 4, bar_y, DEAD_COLOR, 12)
 
         # ── Draw stack popover on top of everything ──
         if self.stack_popover_key:
@@ -598,7 +598,7 @@ class CombatUI:
         pygame.draw.rect(surface, (180, 140, 220), pop_r, 1, border_radius=5)
 
         # Header
-        draw_text(surface, "Select Target", px + PAD, py + 4, (180, 140, 220), 10, bold=True)
+        draw_text(surface, "Select Target", px + PAD, py + 4, (180, 140, 220), 13, bold=True)
         pygame.draw.line(surface, (80, 60, 100), (px, py + 18), (px + POP_W, py + 18))
 
         # Enemy rows
@@ -636,11 +636,11 @@ class CombatUI:
         pygame.draw.rect(surface, LOG_BG, r)
         pygame.draw.rect(surface, LOG_BORDER, r, 1)
 
-        draw_text(surface, "Combat Log", RIGHT_X + 6, LOG_Y + 3, DARK_GREY, 10, bold=True)
+        draw_text(surface, "Combat Log", RIGHT_X + 6, LOG_Y + 3, GREY, 12, bold=True)
 
         log = self.combat.combat_log
-        font = get_font(11)
-        line_h = 14
+        font = get_font(13)
+        line_h = 17
         visible = max(1, (LOG_H - 18) // line_h)
         total = len(log)
         start = max(0, total - visible - self.log_scroll)
@@ -659,7 +659,7 @@ class CombatUI:
         # Scroll indicator
         if self.log_scroll > 0:
             draw_text(surface, f"↑ {self.log_scroll} more", SCREEN_W - 90, LOG_Y + 4,
-                      DARK_GREY, 9)
+                      GREY, 13)
 
     # ─────────────────────────────────────────────────────────
     #  ACTION BAR
@@ -676,7 +676,7 @@ class CombatUI:
             return
 
         # Actor name banner
-        draw_text(surface, f"{actor['name']}'s Turn", 8, ACTION_Y + 4, GOLD, 13, bold=True)
+        draw_text(surface, f"{actor['name']}'s Turn", 8, ACTION_Y + 4, GOLD, 15, bold=True)
 
         self.hover_action = -1
         for i, label in enumerate(_ACT_LABELS):
@@ -835,17 +835,17 @@ class CombatUI:
             draw_text(surface, lbl[:40], ir.x + 8, ir.y + 10, item_col, 13)
 
             # Number shortcut
-            draw_text(surface, str(real_i + 1), ir.x - 14, ir.y + 10, DARK_GREY, 11)
+            draw_text(surface, str(real_i + 1), ir.x - 14, ir.y + 10, GREY, 13)
 
         # Scroll indicators
         if start > 0:
-            draw_text(surface, "▲", pop_x + POP_W - 18, pop_y + 24, GREY, 11)
+            draw_text(surface, "▲", pop_x + POP_W - 18, pop_y + 24, GREY, 13)
         if end < len(items):
-            draw_text(surface, "▼", pop_x + POP_W - 18, pop_y + POP_H - 18, GREY, 11)
+            draw_text(surface, "▼", pop_x + POP_W - 18, pop_y + POP_H - 18, GREY, 13)
 
         # ESC hint
         draw_text(surface, "ESC to cancel", pop_x + PAD, pop_y + POP_H - 14,
-                  DARK_GREY, 9)
+                  GREY, 13)
 
     # ─────────────────────────────────────────────────────────
     #  END / THINKING
@@ -876,7 +876,7 @@ class CombatUI:
         draw_text(surface, lbl, btn.x + (btn.w - lw) // 2, btn.y + 13, GOLD if hov else CREAM, 18)
 
     def _draw_enemy_thinking(self, surface):
-        draw_text(surface, "Enemy acting...", 8, ACTION_Y + 6, (140, 120, 160), 13)
+        draw_text(surface, "Enemy acting...", 8, ACTION_Y + 6, (140, 120, 160), 15)
 
     def _draw_flash(self, surface):
         self.flash_messages = [(m, c, t - 16) for m, c, t in self.flash_messages if t > 0]

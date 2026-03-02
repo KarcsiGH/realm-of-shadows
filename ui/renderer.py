@@ -7,15 +7,16 @@ import pygame
 # ── Colors ────────────────────────────────────────────────────
 BLACK       = (0, 0, 0)
 WHITE       = (255, 255, 255)
-GREY        = (160, 160, 160)
-DARK_GREY   = (80, 80, 80)
+GREY        = (195, 188, 175)   # warmer, more readable on dark panels
+DARK_GREY   = (130, 122, 110)   # was (80,80,80) — nearly invisible before
 DARKER_GREY = (40, 40, 40)
 BG_COLOR    = (12, 10, 24)
-PANEL_BG    = (20, 18, 36)
+PANEL_BG    = (22, 20, 38)
 PANEL_BORDER= (70, 60, 110)
 GOLD        = (255, 215, 0)
 DIM_GOLD    = (180, 150, 40)
-CREAM       = (240, 230, 200)
+CREAM       = (245, 232, 200)   # slightly warmer/brighter parchment
+PARCHMENT   = (245, 232, 200)   # alias — use for body text
 HIGHLIGHT   = (100, 180, 255)
 DIM_BLUE    = (60, 80, 140)
 RED         = (220, 60, 60)
@@ -60,6 +61,36 @@ def draw_text(surface, text, x, y, color=WHITE, size=16, bold=False, max_width=N
         return rendered.get_height()
     else:
         return draw_wrapped_text(surface, text, x, y, max_width, color, font)
+
+
+def draw_text_shadowed(surface, text, x, y, color=CREAM, size=16, bold=False,
+                       shadow_color=(0, 0, 0), offset=1):
+    """Draw text with a drop shadow for readability on complex backgrounds."""
+    font = get_font(size, bold)
+    shadow = font.render(text, True, shadow_color)
+    surface.blit(shadow, (x + offset, y + offset))
+    rendered = font.render(text, True, color)
+    surface.blit(rendered, (x, y))
+    return rendered.get_height()
+
+
+def draw_text_on_panel(surface, text, x, y, color=CREAM, size=16, bold=False,
+                       max_width=None, pad=4):
+    """Draw text on a semi-transparent backing rect — for text over busy backgrounds."""
+    font = get_font(size, bold)
+    if max_width:
+        # Approximate height for backing
+        lines = max(1, len(text) // max(1, (max_width // (size * 0.55))))
+        w = max_width
+        h = font.get_linesize() * lines + pad * 2
+    else:
+        rendered_size = font.size(text)
+        w = rendered_size[0] + pad * 2
+        h = rendered_size[1] + pad * 2
+    backing = pygame.Surface((w, h), pygame.SRCALPHA)
+    backing.fill((10, 8, 20, 160))
+    surface.blit(backing, (x - pad, y - pad))
+    return draw_text(surface, text, x, y, color, size, bold, max_width)
 
 
 def draw_wrapped_text(surface, text, x, y, max_width, color, font):

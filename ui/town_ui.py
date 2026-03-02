@@ -294,7 +294,7 @@ class TownUI:
                 iw = get_font(22).size(initial)[0]
                 draw_text(surface, initial, pi.x + (44 - iw) // 2, pi.y + 10,
                           WHITE, 22, bold=True)
-                draw_text(surface, npc_data["name"], nr.x + 56, nr.y + 6, CREAM, 14, bold=True)
+                draw_text(surface, npc_data["name"], nr.x + 56, nr.y + 6, CREAM, 16, bold=True)
                 draw_text(surface, npc_data.get("title", ""), nr.x + 56, nr.y + 24,
                           DARK_GREY, 11)
 
@@ -311,8 +311,8 @@ class TownUI:
         for i, c in enumerate(self.party):
             cx = 20 + i * cw
             cls = CLASSES[c.class_name]
-            draw_text(surface, c.name, cx, bar_y + 8, cls["color"], 13, bold=True)
-            draw_text(surface, f"Lv.{c.level} {c.class_name}", cx, bar_y + 24, GREY, 11)
+            draw_text(surface, c.name, cx, bar_y + 8, cls["color"], 15, bold=True)
+            draw_text(surface, f"Lv.{c.level} {c.class_name}", cx, bar_y + 24, GREY, 13)
             hp = c.resources.get("HP", 0)
             draw_text(surface, f"HP: {hp}  Gold: {c.gold}  Items: {len(c.inventory)}",
                       cx, bar_y + 40, DIM_GREEN, 11)
@@ -323,7 +323,7 @@ class TownUI:
             if statuses:
                 sx = cx
                 for sname, scolor in statuses[:3]:  # max 3 shown
-                    draw_text(surface, sname, sx, bar_y + 56, scolor, 9)
+                    draw_text(surface, sname, sx, bar_y + 56, scolor, 11)
                     sx += 80
 
     # ─────────────────────────────────────────────────────────
@@ -459,7 +459,7 @@ class TownUI:
                                    (npx + ts//2, npy + ts//5), ts//5)
                 # Name above
                 nw = get_font(9).size(npc["name"])[0]
-                draw_text(surface, npc["name"], npx + ts//2 - nw//2, npy - 12, nc, 9)
+                draw_text(surface, npc["name"], npx + ts//2 - nw//2, npy - 12, nc, 11)
 
         # Draw building labels
         for bld_id, bld in td["buildings"].items():
@@ -490,7 +490,7 @@ class TownUI:
         # Town name + gold (left side)
         draw_text(surface, td["name"], 14, bar_y + 6, GOLD, 16, bold=True)
         total_gold = sum(c.gold for c in self.party)
-        draw_text(surface, f"✦ {total_gold}g", 14, bar_y + 26, DIM_GOLD, 12)
+        draw_text(surface, f"✦ {total_gold}g", 14, bar_y + 26, DIM_GOLD, 14)
 
         # Interaction prompt (center)
         prompt = self._get_walk_prompt()
@@ -554,7 +554,7 @@ class TownUI:
             cls = CLASSES[c.class_name]
             cx = px_start + i * 72
             # Name
-            draw_text(surface, c.name[:5], cx, bar_y + 6, cls["color"], 10, bold=True)
+            draw_text(surface, c.name[:5], cx, bar_y + 6, cls["color"], 12, bold=True)
             # HP
             hp = c.resources.get("HP", 0)
             max_resources = get_all_resources(c.class_name, c.stats, c.level)
@@ -566,7 +566,7 @@ class TownUI:
             bar_h = 6
             pygame.draw.rect(surface, (30, 20, 20), (cx, bar_y + 20, bar_w, bar_h))
             pygame.draw.rect(surface, hp_color, (cx, bar_y + 20, int(bar_w * hp_ratio), bar_h))
-            draw_text(surface, f"HP {hp}/{max_hp}", cx, bar_y + 29, hp_color, 9)
+            draw_text(surface, f"HP {hp}/{max_hp}", cx, bar_y + 29, hp_color, 11)
             # MP (if class has it)
             mp = c.resources.get("MP", -1)
             if mp >= 0:
@@ -906,7 +906,7 @@ class TownUI:
 
     def _draw_shop_menu(self, surface, mx, my):
         draw_text(surface, self.shop.get("name", "General Store"), SCREEN_W // 2 - 90, 20, GOLD, 24, bold=True)
-        draw_text(surface, self.shop["welcome"], SCREEN_W // 2 - 150, 55, GREY, 14)
+        draw_text(surface, self.shop["welcome"], SCREEN_W // 2 - 150, 55, CREAM, 15)
 
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 60, 85, DIM_GOLD, 16)
@@ -924,7 +924,7 @@ class TownUI:
             pygame.draw.rect(surface, bg, btn, border_radius=4)
             pygame.draw.rect(surface, accent if hover else PANEL_BORDER, btn, 2, border_radius=4)
             draw_text(surface, name, btn.x + 20, btn.y + 12, accent if hover else CREAM, 20, bold=True)
-            draw_text(surface, desc, btn.x + 20, btn.y + 42, DARK_GREY, 13)
+            draw_text(surface, desc, btn.x + 20, btn.y + 42, GREY, 15)
 
         self._draw_party_bar(surface, mx, my)
 
@@ -998,7 +998,7 @@ class TownUI:
                 desc = item.get("description", "")
                 if len(desc) > 80:
                     desc = desc[:77] + "..."
-                draw_text(surface, desc, row.x + 10, row.y + 24, GREY, 12)
+                draw_text(surface, desc, row.x + 10, row.y + 24, GREY, 15)
 
                 # Stats
                 parts = []
@@ -1011,7 +1011,7 @@ class TownUI:
                 for stat, val in item.get("stat_bonuses", {}).items():
                     parts.append(f"{stat}+{val}")
                 if parts:
-                    draw_text(surface, "  ".join(parts), row.x + 10, row.y + 44, GREY, 11)
+                    draw_text(surface, "  ".join(parts), row.x + 10, row.y + 44, GREY, 13)
 
                 # Price + buy hint
                 price = item.get("buy_price", 0)
@@ -1027,9 +1027,9 @@ class TownUI:
 
             # Scroll hints
             if self.shop_scroll > 0:
-                draw_text(surface, "^ scroll up", panel.x + panel.width // 2 - 40, panel.y + 2, DIM_GOLD, 11)
+                draw_text(surface, "^ scroll up", panel.x + panel.width // 2 - 40, panel.y + 2, DIM_GOLD, 13)
             if end < len(items):
-                draw_text(surface, "v scroll down", panel.x + panel.width // 2 - 45, iy + 2, DIM_GOLD, 11)
+                draw_text(surface, "v scroll down", panel.x + panel.width // 2 - 45, iy + 2, DIM_GOLD, 13)
 
         self._draw_party_bar(surface, mx, my)
 
@@ -1100,9 +1100,9 @@ class TownUI:
                 iy += 72
 
             if self.sell_scroll > 0:
-                draw_text(surface, "^ scroll up", panel.x + panel.width // 2 - 40, panel.y + 2, DIM_GOLD, 11)
+                draw_text(surface, "^ scroll up", panel.x + panel.width // 2 - 40, panel.y + 2, DIM_GOLD, 13)
             if end < len(char.inventory):
-                draw_text(surface, "v scroll down", panel.x + panel.width // 2 - 45, iy + 2, DIM_GOLD, 11)
+                draw_text(surface, "v scroll down", panel.x + panel.width // 2 - 45, iy + 2, DIM_GOLD, 13)
 
         self._draw_party_bar(surface, mx, my)
 

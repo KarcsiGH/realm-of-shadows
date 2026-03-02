@@ -73,7 +73,7 @@ class DialogueUI:
             else:
                 prefix = f"  {log_text[:90]}{'...' if len(log_text) > 90 else ''}"
                 col = (100, 95, 110)
-            draw_text(surface, prefix, DIALOGUE_MARGIN, log_y, col, 11)
+            draw_text(surface, prefix, DIALOGUE_MARGIN, log_y, col, 13)
             log_y += 16
 
         # ── Divider ──
@@ -128,7 +128,7 @@ class DialogueUI:
         visible_lines = lines[self.text_scroll:self.text_scroll + max_visible]
         for i, line in enumerate(visible_lines):
             col = TEXT_COL if speaker else NARRATOR_COL
-            draw_text(surface, line, text_x, text_y + i * line_h, col, 15)
+            draw_text(surface, line, text_x, text_y + i * line_h, col, 17)
 
         # Scroll indicator
         if len(lines) > max_visible:
@@ -179,15 +179,15 @@ class DialogueUI:
 
             num = str(real_i + 1)
             col = GOLD if hover else CREAM
-            draw_text(surface, f"{num}.", rect.x + 8, rect.y + 9, DIM_GOLD, 13)
-            draw_text(surface, choice["text"], rect.x + 28, rect.y + 9, col, 14)
+            draw_text(surface, f"{num}.", rect.x + 8, rect.y + 9, DIM_GOLD, 15)
+            draw_text(surface, choice["text"], rect.x + 28, rect.y + 9, col, 16)
 
         # Scroll indicators
         if self.choice_scroll > 0:
-            draw_text(surface, "▲ scroll up", DIALOGUE_MARGIN + 20, top_y - 16, DARK_GREY, 11)
+            draw_text(surface, "▲ scroll up", DIALOGUE_MARGIN + 20, top_y - 16, GREY, 13)
         if self.choice_scroll + max_visible < total:
             draw_text(surface, "▼ scroll down (mouse wheel)", DIALOGUE_MARGIN + 20,
-                      top_y + max_visible * 44 + 2, DARK_GREY, 11)
+                      top_y + max_visible * 44 + 2, GREY, 13)
 
     def handle_click(self, mx, my):
         """Handle mouse click. Returns action string or None."""

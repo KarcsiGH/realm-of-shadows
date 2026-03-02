@@ -946,19 +946,19 @@ class Game:
                 col_v = GREEN if val >= 13 else (CREAM if val >= 9 else GREY)
                 sx2 = tx + (si % 3) * 58
                 sy2 = sy + (si // 3) * 17
-                draw_text(self.screen, f"{stat}:{val}", sx2, sy2, col_v, 12)
+                draw_text(self.screen, f"{stat}:{val}", sx2, sy2, col_v, 14)
 
             # Resources
             ry2 = sy + 38
             for rname, rval in list(c.resources.items())[:2]:
-                draw_text(self.screen, f"{rname} {rval}", tx, ry2, DIM_GOLD, 11)
+                draw_text(self.screen, f"{rname} {rval}", tx, ry2, DIM_GOLD, 13)
                 ry2 += 13
 
             # Blurb
             blurb = getattr(c, "inn_blurb", "")
             if blurb:
                 draw_text(self.screen, f'\"{blurb}\"',
-                          rx + 6, ry + card_h - 32, GREY, 10,
+                          rx + 6, ry + card_h - 32, GREY, 13,
                           max_width=card_w - 12)
 
             # Selected checkmark
@@ -975,7 +975,7 @@ class Game:
             rem = NEED - n_sel
             draw_text(self.screen,
                       f"Choose {rem} more companion{'s' if rem != 1 else ''}.",
-                      SCREEN_W//2 - 100, SCREEN_H - 50, GREY, 14)
+                      SCREEN_W//2 - 100, SCREEN_H - 50, CREAM, 15)
 
     # ══════════════════════════════════════════════════════════
     #  DRAWING
@@ -1092,7 +1092,7 @@ class Game:
 
         # ── Version / credit ──
         draw_text(self.screen, "An Advanced Class System RPG",
-                  SCREEN_W // 2 - 160, SCREEN_H - 42, DARK_GREY, 13)
+                  SCREEN_W // 2 - 160, SCREEN_H - 42, GREY, 14)
 
     # ── Choose Mode ───────────────────────────────────────────
 
@@ -1120,11 +1120,11 @@ class Game:
 
         draw_button(self.screen, r1, "Tell My Story", hover=h1, size=18)
         draw_text(self.screen, "Shape your character through life events",
-                  SCREEN_W//2 - 200, 418, DARK_GREY, 12)
+                  SCREEN_W//2 - 200, 418, GREY, 14)
 
         draw_button(self.screen, r2, "Quick Roll", hover=h2, size=18)
         draw_text(self.screen, "Pick a class and start immediately",
-                  SCREEN_W//2 - 175, 498, DARK_GREY, 12)
+                  SCREEN_W//2 - 175, 498, GREY, 14)
 
     # ── Name Input ────────────────────────────────────────────
 
@@ -1145,7 +1145,7 @@ class Game:
         draw_text(self.screen, display + cursor, box.x + 15, box.y + 14, WHITE, 20)
 
         draw_text(self.screen, "Press ENTER to continue",
-                  SCREEN_W//2 - 120, 340, DARK_GREY, 14)
+                  SCREEN_W//2 - 120, 340, GREY, 15)
 
     # ── Race Selection ─────────────────────────────────────────
 
@@ -1158,7 +1158,7 @@ class Game:
 
         mode = "Quick Roll" if self.quick else "Life Path"
         draw_text(self.screen, f"Mode: {mode}",
-                  40, 55, GREY, 13)
+                  40, 55, CREAM, 14)
 
         # If human stat pick mode — show stat selection
         if self.human_stat_pick:
@@ -1214,7 +1214,7 @@ class Game:
 
             # Description
             draw_text(self.screen, race["description"], rect.x + 12, rect.y + 34,
-                      GREY if not is_hover else WHITE, 13,
+                      GREY if not is_hover else CREAM, 15,
                       max_width=rect.width - 24)
 
             # Lore preview on hover
@@ -1226,11 +1226,11 @@ class Game:
         # Scroll hint
         if len(RACE_ORDER) > visible:
             draw_text(self.screen, "↑↓ Scroll for more races",
-                      SCREEN_W//2 - 100, start_y + visible * item_h + 5, DARK_GREY, 12)
+                      SCREEN_W//2 - 100, start_y + visible * item_h + 5, GREY, 13)
 
         # ESC hint
         draw_text(self.screen, "ESC to go back",
-                  40, SCREEN_H - 30, DARK_GREY, 12)
+                  40, SCREEN_H - 30, GREY, 13)
 
     # ── Life Path ─────────────────────────────────────────────
 
@@ -1252,7 +1252,7 @@ class Game:
             val = self.current_char.stats[stat]
             bar_w = min(100, val * 5)
             col = HIGHLIGHT if val > 8 else GREY if val > 5 else DARK_GREY
-            draw_text(self.screen, f"{stat}", x_stats, y, GREY, 12)
+            draw_text(self.screen, f"{stat}", x_stats, y, CREAM, 14)
             draw_text(self.screen, f"{val:2d}", x_stats + 40, y, col, 12)
             pygame.draw.rect(self.screen, DARKER_GREY, (x_stats + 65, y+3, 100, 10))
             pygame.draw.rect(self.screen, col, (x_stats + 65, y+3, bar_w, 10))
@@ -1260,7 +1260,7 @@ class Game:
 
         # Progress dots
         dot_y = 195
-        draw_text(self.screen, "Progress:", 40, dot_y, DARK_GREY, 12)
+        draw_text(self.screen, "Progress:", 40, dot_y, GREY, 13)
         for i in range(1, 10):
             dx = 130 + (i-1) * 28
             col = GREEN if i < self.slot else GOLD if i == self.slot else DARK_GREY
@@ -1299,9 +1299,9 @@ class Game:
 
         # Scroll hints
         if self.scroll > 0:
-            draw_text(self.screen, "^ more above ^", SCREEN_W//2 - 60, 218, DIM_GOLD, 11)
+            draw_text(self.screen, "^ more above ^", SCREEN_W//2 - 60, 218, DIM_GOLD, 13)
         if self.scroll + visible < len(self.choices):
-            draw_text(self.screen, "v more below v", SCREEN_W//2 - 60, cy + 5, DIM_GOLD, 11)
+            draw_text(self.screen, "v more below v", SCREEN_W//2 - 60, cy + 5, DIM_GOLD, 13)
 
     # ── Random Outcome ────────────────────────────────────────
 
@@ -1363,7 +1363,7 @@ class Game:
                 draw_panel(self.screen, pygame.Rect(35, 115, SCREEN_W - 70, 60),
                            bg_color=(25, 20, 40))
                 draw_wrapped_text(self.screen, bs, 45, 122, SCREEN_W - 90,
-                                  GREY, get_font(12))
+                                  GREY, get_font(14))
 
         start_y = 190 if not self.quick else 120
         item_h = 85
@@ -1399,7 +1399,7 @@ class Game:
 
             # Description
             draw_text(self.screen, cls["description"], rect.x + 46, rect.y + 32,
-                      GREY if not is_hover else WHITE, 13,
+                      GREY if not is_hover else CREAM, 15,
                       max_width=rect.width - 58)
 
             # Starting abilities
@@ -1442,7 +1442,7 @@ class Game:
         y = 125
         for stat in STAT_NAMES:
             val = c.stats[stat]
-            draw_text(self.screen, f"{STAT_FULL_NAMES[stat]}", 50, y, CREAM, 13)
+            draw_text(self.screen, f"{STAT_FULL_NAMES[stat]}", 50, y, CREAM, 15)
             draw_text(self.screen, f"{val}", 200, y, HIGHLIGHT, 14, bold=True)
             bar_w = min(80, val * 4)
             pygame.draw.rect(self.screen, DARKER_GREY, (230, y+3, 80, 10))
@@ -1454,7 +1454,7 @@ class Game:
         draw_text(self.screen, "Resources", 370, 102, GOLD, 14, bold=True)
         y = 125
         for rname, rval in c.resources.items():
-            draw_text(self.screen, f"{rname}:", 370, y, CREAM, 13)
+            draw_text(self.screen, f"{rname}:", 370, y, CREAM, 15)
             draw_text(self.screen, f"{rval}", 470, y, GREEN, 14, bold=True)
             y += 23
 
@@ -1525,7 +1525,7 @@ class Game:
             draw_class_badge(self.screen, c.class_name, cx + 6, cy + 6, 14)
             draw_text(self.screen, c.name, cx + 44, cy + 8, cls["color"], 16, bold=True)
             race_str = getattr(c, "race_name", "Human")
-            draw_text(self.screen, f"{race_str} {c.class_name}", cx + 44, cy + 28, CREAM, 13)
+            draw_text(self.screen, f"{race_str} {c.class_name}", cx + 44, cy + 28, CREAM, 15)
 
             # Stats in compact form (only left of portrait)
             sy = cy + 50
@@ -1535,12 +1535,12 @@ class Game:
                 col_v = (120, 200, 120) if val >= 13 else HIGHLIGHT if val >= 9 else GREY
                 sx = cx + 10 + (i % 2) * (stat_w // 2)
                 sdy = sy + (i // 2) * 20
-                draw_text(self.screen, f"{stat}: {val}", sx, sdy, col_v, 12)
+                draw_text(self.screen, f"{stat}: {val}", sx, sdy, col_v, 14)
 
             # Resources compact
             ry = sy + 68
             for rname, rval in list(c.resources.items())[:3]:
-                draw_text(self.screen, f"{rname}: {rval}", cx + 10, ry, DIM_GREEN, 11)
+                draw_text(self.screen, f"{rname}: {rval}", cx + 10, ry, DIM_GREEN, 13)
                 ry += 14
 
             # Abilities
