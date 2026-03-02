@@ -180,6 +180,12 @@ class CombatUI:
         self.hover_action   = -1
         self.hover_pop_item = -1
 
+        # Stack popover (click stack card to pick individual target)
+        self.stack_popover_key    = None   # template_key of open stack, or None
+        self.stack_popover_rect   = None   # pygame.Rect of the open popover
+        self.stack_popover_card_rect = None  # rect of the card that opened it
+        self.hover_stack_enemy    = None   # enemy hovered inside stack popover
+
         # Log
         self.log_scroll     = 0
 
@@ -372,14 +378,20 @@ class CombatUI:
 
         is_targeting = self.action_mode in ("target_attack", "target_ability")
         self.hover_enemy = None
+        self.hover_stack_enemy = None
 
         rows = [BACK, MID, FRONT]
         enemies_by_row = {r: [] for r in rows}
         for e in self.combat.enemies:
             enemies_by_row.setdefault(e["row"], []).append(e)
 
+        # Track all card rects for this frame (used by click handler)
+        self._card_rects = []        # [(card_rect, group_key, enemies_in_group)]
+        self._stack_popover_draw = None  # set below if popover is open
+
         for ri, row_key in enumerate(rows):
             ry = RIGHT_Y + ri * ROW_H
+
             # Row label
             row_label = row_key[0].upper() + row_key[1:]
             rc = ROW_COLORS[row_key]
@@ -394,107 +406,227 @@ class CombatUI:
                           ry + ROW_H // 2 - 7, DARK_GREY, 12)
                 continue
 
-            n = len(row_enemies)
-            # Each card normally; hovered card is larger
-            NORM_W, NORM_H = 180, ROW_H - 14
-            HOVERED_W, HOVERED_H = 230, ROW_H + 20  # expands
+            # ── Group enemies by template_key (stacking same-type) ──
+            groups = {}   # template_key -> list of enemies
+            group_order = []
+            for e in row_enemies:
+                key = e.get("template_key") or e.get("name", "Unknown")
+                if key not in groups:
+                    groups[key] = []
+                    group_order.append(key)
+                groups[key].append(e)
 
-            # Calculate positions
-            total_norm_w = n * NORM_W + (n - 1) * 8
-            start_x = ROW_AREA_X + (ROW_AREA_W - total_norm_w) // 2
+            num_groups = len(group_order)
+            GAP = 6
 
-            for ei, enemy in enumerate(row_enemies):
-                cx = start_x + ei * (NORM_W + 8)
+            # Dynamic card width — fit all groups in available space
+            MAX_CARD_W = 200
+            card_w = min(MAX_CARD_W, (ROW_AREA_W - (num_groups - 1) * GAP) // num_groups)
+            card_w = max(100, card_w)   # never go below readable minimum
+            card_h = ROW_H - 14
+
+            total_w = num_groups * card_w + (num_groups - 1) * GAP
+            start_x = ROW_AREA_X + (ROW_AREA_W - total_w) // 2
+
+            for gi, group_key in enumerate(group_order):
+                group_enemies = groups[group_key]
+                alive_enemies = [e for e in group_enemies if e.get("alive", True)]
+                is_stack = len(group_enemies) > 1
+
+                cx = start_x + gi * (card_w + GAP)
                 cy = ry + 7
+                card_r = pygame.Rect(cx, cy, card_w, card_h)
+                self._card_rects.append((card_r, group_key, group_enemies))
 
-                is_hover = False
-                card_r = pygame.Rect(cx, cy, NORM_W, NORM_H)
-                if card_r.collidepoint(mx, my) and enemy.get("alive"):
-                    is_hover = True
-                    self.hover_enemy = enemy
+                # Hover detection — entire card
+                is_hover = card_r.collidepoint(mx, my)
+                if is_hover and alive_enemies and not is_stack:
+                    # Single enemy — hover sets target directly
+                    self.hover_enemy = alive_enemies[0]
+                elif is_hover and alive_enemies and is_stack:
+                    # Stack — hover highlights card but doesn't set single target
+                    pass
 
-                # Expanded hover card renders larger and on top
-                if is_hover:
-                    draw_r = pygame.Rect(cx - (HOVERED_W - NORM_W) // 2,
-                                         cy - (HOVERED_H - NORM_H) // 2,
-                                         HOVERED_W, HOVERED_H)
-                else:
-                    draw_r = card_r
+                # Pick representative enemy for display (topmost alive, or first dead)
+                rep = alive_enemies[0] if alive_enemies else group_enemies[0]
+                alive = bool(alive_enemies)
 
-                alive = enemy.get("alive", True)
+                # Card colours
+                stack_open = (self.stack_popover_key == group_key)
                 if not alive:
                     bg, border = (12, 8, 12), DEAD_COLOR
-                elif is_hover and is_targeting:
+                elif stack_open:
+                    bg, border = (50, 30, 50), (200, 140, 220)
+                elif is_hover and is_targeting and alive:
                     bg, border = (60, 20, 20), (255, 100, 100)
-                elif is_hover:
+                elif is_hover and alive:
                     bg, border = ENEMY_HOVER_BG, (180, 100, 80)
                 else:
                     bg, border = ENEMY_BG, (80, 50, 55)
 
-                _draw_panel(surface, draw_r, bg, border, radius=5)
+                _draw_panel(surface, card_r, bg, border, radius=5)
 
-                # Silhouette (top portion of card)
-                sil_h = draw_r.h - 50
-                sil_r = pygame.Rect(draw_r.x + 4, draw_r.y + 4,
-                                     draw_r.w - 8, max(30, sil_h))
-                tier = enemy.get("knowledge_tier", -1)
-                tkey = enemy.get("template_key") or enemy.get("name", "")
+                # Silhouette
+                sil_h = card_h - 50
+                sil_r = pygame.Rect(cx + 4, cy + 4, card_w - 8, max(30, sil_h))
+                tier = rep.get("knowledge_tier", -1)
+                tkey = rep.get("template_key") or rep.get("name", "")
                 draw_enemy_silhouette(surface, sil_r, tkey,
-                                       knowledge_tier=tier,
-                                       hover=is_hover,
-                                       dead=not alive)
+                                      knowledge_tier=tier,
+                                      hover=is_hover,
+                                      dead=not alive)
 
-                # Name (knowledge-tier based)
-                name_y = draw_r.y + max(30, sil_h) + 5
-                display_name = get_enemy_display_name(enemy)
-                # Truncate display name for card width
+                # Stack ×N badge (top-left corner)
+                if is_stack:
+                    alive_count = len(alive_enemies)
+                    badge_label = f"×{len(group_enemies)}" if alive_count == len(group_enemies) \
+                                  else f"×{alive_count}/{len(group_enemies)}"
+                    badge_col = (220, 160, 80) if alive_count > 0 else DEAD_COLOR
+                    pygame.draw.rect(surface, (30, 20, 10), (cx + 2, cy + 2, 28, 14), border_radius=3)
+                    pygame.draw.rect(surface, badge_col, (cx + 2, cy + 2, 28, 14), 1, border_radius=3)
+                    draw_text(surface, badge_label, cx + 4, cy + 3, badge_col, 9, bold=True)
+
+                # Name
+                name_y = cy + max(30, sil_h) + 5
+                display_name = get_enemy_display_name(rep)
                 font_s = get_font(10)
-                max_name_w = draw_r.w - 8
-                while font_s.size(display_name)[0] > max_name_w and len(display_name) > 4:
-                    display_name = display_name[:-4] + "..."
+                max_name_w = card_w - 8
+                while font_s.size(display_name)[0] > max_name_w and len(display_name) > 6:
+                    display_name = display_name[:-4] + "…"
                     break
                 name_col = DEAD_COLOR if not alive else (CREAM if not is_hover else GOLD)
-                draw_text(surface, display_name, draw_r.x + 4, name_y, name_col, 10)
+                draw_text(surface, display_name, cx + 4, name_y, name_col, 10)
 
-                # HP bar
-                hp, mhp = enemy.get("hp", 0), enemy.get("max_hp", 1)
+                # HP bar — for stacks show total HP of all alive enemies
                 bar_y = name_y + 14
                 if alive:
-                    _draw_resource_bar(surface, draw_r.x + 4, bar_y,
-                                        draw_r.w - 8, 7, hp, mhp,
-                                        (HP_BG, _hp_color(hp, mhp), (190,150,145)))
-                    hp_text = f"{hp}/{mhp}"
-                    draw_text(surface, hp_text, draw_r.x + 4, bar_y + 9,
-                               _hp_color(hp, mhp), 9)
-                    # Row badge top-right
-                    rc2 = ROW_COLORS[enemy.get("row", FRONT)]
-                    draw_text(surface, f"[{row_key[0].upper()}]",
-                               draw_r.right - 22, draw_r.y + 3, rc2, 9)
-                    # Status effects (hover) — colored badges
-                    if is_hover:
-                        se = enemy.get("status_effects", [])
-                        if se:
-                            sey = bar_y + 22
-                            DEBUFF_C = (230, 80, 60); BUFF_C = (100, 230, 130)
-                            DEBUFF_N = {"Poisoned","Burning","Stunned","Slowed","Blinded","Weakened","Cursed"}
-                            sex = draw_r.x + 4
-                            for effect in list(se)[:4]:
-                                sname = effect["name"] if isinstance(effect, dict) else effect
-                                col = DEBUFF_C if sname in DEBUFF_N else BUFF_C
-                                bw = 28
-                                badge = pygame.Rect(sex, sey, bw, 12)
-                                pygame.draw.rect(surface, (int(col[0]*0.2),int(col[1]*0.2),int(col[2]*0.2)), badge)
-                                pygame.draw.rect(surface, col, badge, 1)
-                                draw_text(surface, sname[:3].upper(), sex + 2, sey + 1, col, 8)
-                                sex += bw + 2
-                                if sex + bw > draw_r.right: sex = draw_r.x + 4; sey += 14
-                else:
-                    draw_text(surface, "DEAD", draw_r.x + 4, bar_y, DEAD_COLOR, 10)
+                    if is_stack:
+                        total_hp  = sum(e.get("hp", 0) for e in alive_enemies)
+                        total_mhp = sum(e.get("max_hp", 1) for e in alive_enemies)
+                        _draw_resource_bar(surface, cx + 4, bar_y,
+                                           card_w - 8, 7, total_hp, total_mhp,
+                                           (HP_BG, _hp_color(total_hp, total_mhp), (190,150,145)))
+                        draw_text(surface, f"{total_hp} HP total",
+                                  cx + 4, bar_y + 9, _hp_color(total_hp, total_mhp), 9)
+                    else:
+                        hp, mhp = rep.get("hp", 0), rep.get("max_hp", 1)
+                        _draw_resource_bar(surface, cx + 4, bar_y,
+                                           card_w - 8, 7, hp, mhp,
+                                           (HP_BG, _hp_color(hp, mhp), (190,150,145)))
+                        draw_text(surface, f"{hp}/{mhp}",
+                                  cx + 4, bar_y + 9, _hp_color(hp, mhp), 9)
+                        # Row badge
+                        rc2 = ROW_COLORS[rep.get("row", FRONT)]
+                        draw_text(surface, f"[{row_key[0].upper()}]",
+                                  card_r.right - 22, cy + 3, rc2, 9)
+                        # Status effects on hover (single cards only)
+                        if is_hover:
+                            se = rep.get("status_effects", [])
+                            if se:
+                                sey = bar_y + 22
+                                DEBUFF_C = (230,80,60); BUFF_C = (100,230,130)
+                                DEBUFF_N = {"Poisoned","Burning","Stunned","Slowed",
+                                            "Blinded","Weakened","Cursed"}
+                                sex = cx + 4
+                                for effect in list(se)[:4]:
+                                    sname = effect["name"] if isinstance(effect,dict) else effect
+                                    col = DEBUFF_C if sname in DEBUFF_N else BUFF_C
+                                    bw = 28
+                                    badge = pygame.Rect(sex, sey, bw, 12)
+                                    pygame.draw.rect(surface,
+                                        (int(col[0]*.2),int(col[1]*.2),int(col[2]*.2)), badge)
+                                    pygame.draw.rect(surface, col, badge, 1)
+                                    draw_text(surface, sname[:3].upper(), sex+2, sey+1, col, 8)
+                                    sex += bw + 2
+                                    if sex + bw > card_r.right:
+                                        sex = cx + 4; sey += 14
 
-        # Bottom border of enemy zone
+                    # Stack hint text (when in targeting mode)
+                    if is_stack and alive and is_targeting:
+                        hint = "▲ click to pick"
+                        draw_text(surface, hint, cx + 4, cy + card_h - 14,
+                                  (160, 120, 200), 9)
+                else:
+                    draw_text(surface, "DEAD", cx + 4, bar_y, DEAD_COLOR, 10)
+
+        # ── Draw stack popover on top of everything ──
+        if self.stack_popover_key:
+            self._draw_stack_popover(surface, mx, my)
+
+        # Bottom border
         pygame.draw.line(surface, PANEL_BORDER,
                          (RIGHT_X, RIGHT_Y + ENEMY_H),
                          (SCREEN_W, RIGHT_Y + ENEMY_H))
+
+    def _draw_stack_popover(self, surface, mx, my):
+        """Draw the mini popover listing all enemies in an open stack."""
+        key = self.stack_popover_key
+        # Find the card rect that owns this stack
+        card_r = None
+        enemies_in_stack = []
+        for cr, gk, ge in self._card_rects:
+            if gk == key:
+                card_r = cr
+                enemies_in_stack = ge
+                break
+        if card_r is None:
+            self.stack_popover_key = None
+            return
+
+        alive = [e for e in enemies_in_stack if e.get("alive", True)]
+        if not alive:
+            self.stack_popover_key = None
+            return
+
+        is_targeting = self.action_mode in ("target_attack", "target_ability")
+
+        ITEM_H = 36
+        PAD = 8
+        POP_W = max(180, card_r.width + 20)
+        POP_H = len(alive) * ITEM_H + PAD * 2 + 18
+
+        # Position above the card, clamped to screen
+        px = max(RIGHT_X + 2, min(card_r.centerx - POP_W // 2, SCREEN_W - POP_W - 2))
+        py = max(RIGHT_Y + 2, card_r.top - POP_H - 6)
+        pop_r = pygame.Rect(px, py, POP_W, POP_H)
+        self.stack_popover_rect = pop_r
+
+        # Background
+        bg_surf = pygame.Surface((POP_W, POP_H), pygame.SRCALPHA)
+        bg_surf.fill((20, 12, 32, 230))
+        surface.blit(bg_surf, (px, py))
+        pygame.draw.rect(surface, (180, 140, 220), pop_r, 1, border_radius=5)
+
+        # Header
+        draw_text(surface, "Select Target", px + PAD, py + 4, (180, 140, 220), 10, bold=True)
+        pygame.draw.line(surface, (80, 60, 100), (px, py + 18), (px + POP_W, py + 18))
+
+        # Enemy rows
+        self.hover_stack_enemy = None
+        for i, enemy in enumerate(alive):
+            iy = py + 20 + i * ITEM_H
+            item_r = pygame.Rect(px + 4, iy, POP_W - 8, ITEM_H - 4)
+            is_hover = item_r.collidepoint(mx, my)
+            if is_hover:
+                self.hover_stack_enemy = enemy
+                if is_targeting:
+                    pygame.draw.rect(surface, (80, 30, 30), item_r, border_radius=3)
+                    pygame.draw.rect(surface, (255, 100, 100), item_r, 1, border_radius=3)
+                else:
+                    pygame.draw.rect(surface, (50, 35, 55), item_r, border_radius=3)
+                    pygame.draw.rect(surface, (180, 140, 220), item_r, 1, border_radius=3)
+
+            # Enemy name with number
+            name = enemy.get("name", "Enemy")
+            hp, mhp = enemy.get("hp", 0), enemy.get("max_hp", 1)
+            draw_text(surface, f"{i+1}. {name}", px + PAD + 2, iy + 3,
+                      (255, 100, 100) if is_hover and is_targeting else CREAM, 11)
+            # HP bar
+            _draw_resource_bar(surface, px + PAD + 2, iy + 18,
+                               POP_W - PAD * 2 - 4, 6, hp, mhp,
+                               (HP_BG, _hp_color(hp, mhp), (190,150,145)))
+            draw_text(surface, f"{hp}/{mhp}", px + PAD + POP_W - PAD*2 - 34,
+                      iy + 19, _hp_color(hp, mhp), 9)
 
     # ─────────────────────────────────────────────────────────
     #  COMBAT LOG
@@ -777,6 +909,28 @@ class CombatUI:
 
         actor = self.combat.get_current_combatant()
 
+        # ── Stack popover open — check it first ──
+        if self.stack_popover_key is not None:
+            pop_r = self.stack_popover_rect
+            if pop_r and pop_r.collidepoint(mx, my):
+                # Click inside stack popover — pick enemy
+                if self.hover_stack_enemy and self.hover_stack_enemy.get("alive"):
+                    target = self.hover_stack_enemy
+                    self.stack_popover_key = None
+                    is_targeting = self.action_mode in ("target_attack", "target_ability")
+                    if is_targeting:
+                        mode = self.action_mode
+                        self.action_mode = "main"
+                        if mode == "target_attack":
+                            return {"type": "attack", "target": target}
+                        else:
+                            return {"type": "ability", "ability": self.selected_ability,
+                                    "target": target}
+            else:
+                # Click outside stack popover — close it
+                self.stack_popover_key = None
+            return None
+
         # ── Popover open — handle popover clicks ──
         if self.popover:
             label = self.popover
@@ -821,12 +975,26 @@ class CombatUI:
             if self.hover_enemy and self.hover_enemy["alive"]:
                 self.action_mode = "main"
                 return {"type": "attack", "target": self.hover_enemy}
+            # Click on a stack card → open stack popover
+            for card_r, group_key, group_enemies in getattr(self, "_card_rects", []):
+                if card_r.collidepoint(mx, my) and len(group_enemies) > 1:
+                    alive_in_group = [e for e in group_enemies if e.get("alive", True)]
+                    if alive_in_group:
+                        self.stack_popover_key = group_key
+                        return None
 
         elif self.action_mode == "target_ability":
             if self.hover_enemy and self.hover_enemy["alive"]:
                 self.action_mode = "main"
                 return {"type": "ability", "ability": self.selected_ability,
                         "target": self.hover_enemy}
+            # Click on a stack card → open stack popover
+            for card_r, group_key, group_enemies in getattr(self, "_card_rects", []):
+                if card_r.collidepoint(mx, my) and len(group_enemies) > 1:
+                    alive_in_group = [e for e in group_enemies if e.get("alive", True)]
+                    if alive_in_group:
+                        self.stack_popover_key = group_key
+                        return None
 
         elif self.action_mode == "target_heal":
             if self.hover_player and self.hover_player.get("alive"):
@@ -931,7 +1099,9 @@ class CombatUI:
     def handle_key(self, key):
         """Keyboard shortcuts: ESC closes popover/targeting, number keys select popover items."""
         if key == pygame.K_ESCAPE:
-            if self.popover:
+            if self.stack_popover_key is not None:
+                self.stack_popover_key = None
+            elif self.popover:
                 self.popover = None
             elif self.action_mode != "main":
                 self.action_mode = "main"
