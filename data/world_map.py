@@ -260,34 +260,43 @@ RAIL_STATIONS_ACT2 = ["crystalspire", "thornhaven", "sanctum"]
 # ═══════════════════════════════════════════════════════════════
 
 ENCOUNTER_ZONES = {
+    # ── Act 1 starting region — Fading spreading from wilderness, bandits on roads ──
     "briarhollow": {
-        "easy": ["tutorial", "easy_goblins", "gw_scouts"],
-        "medium": ["wolves", "wm_wolves_dire", "medium_bandits"],
+        "easy":   ["easy_goblins", "gw_scouts", "fading_hounds", "fading_wolves", "wolves"],
+        "medium": ["fading_boar_pack", "fading_stag_pack", "bandit_skirmish", "bandit_ambush", "medium_bandits"],
+        "hard":   ["fading_bear_solo", "bandit_warband", "bandit_with_mage"],
     },
+    # ── Act 1 wilderness west — heavier Fading presence, bandits on roads ──
     "thornwood": {
-        "easy": ["wolves", "gw_bats"],
-        "medium": ["wm_wolves_dire", "medium_goblins", "gw_fungal"],
-        "hard": ["wm_highway", "medium_bandits"],
+        "easy":   ["fading_wolves", "fading_hounds", "wolves"],
+        "medium": ["fading_boar_pack", "fading_stag_pack", "bandit_ambush", "bandit_with_mage", "medium_goblins"],
+        "hard":   ["fading_bear_solo", "fading_bear_pack", "bandit_warband", "hard_mixed"],
     },
+    # ── Act 2 lead-in — Valdris's mercs operating, Imperials beginning to appear ──
     "iron_ridge": {
-        "medium": ["am_kobolds", "medium_bandits", "wm_highway"],
-        "hard": ["am_kobold_fire", "wm_bandit_camp", "hard_mixed"],
+        "medium": ["merc_patrol", "fading_wolves", "bandit_ambush", "fading_boar_pack"],
+        "hard":   ["merc_squad", "merc_warband", "imperial_patrol", "fading_bear_solo", "hard_mixed"],
     },
+    # ── Act 2 heavy — Imperial territory, mercs and inquisitors on the roads ──
     "ashlands": {
-        "medium": ["ra_bandits", "hard_mixed"],
-        "hard": ["ra_cultists", "wm_bandit_camp", "orc_patrol"],
+        "medium": ["imperial_patrol", "merc_patrol", "fading_wolves"],
+        "hard":   ["imperial_squad", "imperial_with_mage", "imperial_inquisitor_enc",
+                   "imperial_commander_enc", "merc_warband"],
     },
+    # ── Southern swamp — Fading corruption strong, cultists drawn to the darkness ──
     "mirehollow": {
-        "medium": ["wm_swamp", "medium_goblins"],
-        "hard": ["wm_troll", "wm_swamp", "hard_mixed"],
+        "medium": ["fading_hounds", "fading_boar_pack", "cult_patrol"],
+        "hard":   ["fading_stag_pack", "fading_bear_solo", "cult_warband", "hard_mixed"],
     },
+    # ── Coastal region — Crypt Guard and cultists, pirates near Dragon's Tooth ──
     "pale_coast": {
-        "easy": ["easy_goblins", "gw_scouts"],
-        "medium": ["medium_bandits", "wolves"],
+        "easy":   ["fading_hounds", "fading_wolves"],
+        "medium": ["cult_patrol", "bandit_skirmish", "fading_boar_pack"],
+        "hard":   ["cult_warband", "merc_patrol", "fading_bear_solo"],
     },
     "ocean": {
         "medium": ["medium_bandits"],
-        "hard": ["wm_highway"],
+        "hard":   ["bandit_warband"],
     },
 }
 
