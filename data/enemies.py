@@ -1012,3 +1012,41 @@ try:
         pass
 except ImportError:
     pass
+
+# ── Humanoid class-based enemies ──
+from data.humanoid_enemies import (
+    HUMANOID_ENEMIES, HUMANOID_ENCOUNTERS, HUMANOID_ENCOUNTER_TABLE_UPDATES,
+)
+
+ENEMIES.update(HUMANOID_ENEMIES)
+ENCOUNTERS.update(HUMANOID_ENCOUNTERS)
+
+# Merge encounter table additions (extend existing lists rather than replace)
+for dungeon_id, floors in HUMANOID_ENCOUNTER_TABLE_UPDATES.items():
+    if dungeon_id not in DUNGEON_ENCOUNTER_TABLES:
+        DUNGEON_ENCOUNTER_TABLES[dungeon_id] = {}
+    for floor, new_keys in floors.items():
+        existing = DUNGEON_ENCOUNTER_TABLES[dungeon_id].get(floor, [])
+        if isinstance(existing, str):
+            existing = [existing]
+        merged = list(dict.fromkeys(existing + new_keys))  # deduplicate, preserve order
+        DUNGEON_ENCOUNTER_TABLES[dungeon_id][floor] = merged
+
+# ── New faction enemies (beasts, fallen wardens, pirates, imperial, dwarves) ──
+from data.new_factions import (
+    ALL_NEW_FACTION_ENEMIES, ALL_NEW_FACTION_ENCOUNTERS,
+    NEW_FACTION_ENCOUNTER_TABLE_UPDATES,
+)
+
+ENEMIES.update(ALL_NEW_FACTION_ENEMIES)
+ENCOUNTERS.update(ALL_NEW_FACTION_ENCOUNTERS)
+
+for dungeon_id, floors in NEW_FACTION_ENCOUNTER_TABLE_UPDATES.items():
+    if dungeon_id not in DUNGEON_ENCOUNTER_TABLES:
+        DUNGEON_ENCOUNTER_TABLES[dungeon_id] = {}
+    for floor, new_keys in floors.items():
+        existing = DUNGEON_ENCOUNTER_TABLES[dungeon_id].get(floor, [])
+        if isinstance(existing, str):
+            existing = [existing]
+        merged = list(dict.fromkeys(existing + new_keys))
+        DUNGEON_ENCOUNTER_TABLES[dungeon_id][floor] = merged

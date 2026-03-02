@@ -1446,6 +1446,30 @@ _ENEMY_GRIDS = {
     "Skeletal Archer":      SKELETON,
     "Bone Colossus":        SKELETON,
     "Undead Foreman":       DEATH_KNIGHT,
+    # ── Humanoid enemies: use character class grids ──
+    # Bandits — rough fighters using base class shapes
+    "Bandit Fighter":       FIGHTER,
+    "Bandit Archer":        RANGER,
+    "Bandit Thief":         THIEF,
+    "Bandit Mage":          MAGE,
+    "Bandit Captain":       CHAMPION,
+    # Iron Mercenaries — professional soldiers
+    "Sellsword":            WARDER,
+    "Mercenary Scout":      RANGER,
+    "Mercenary Monk":       MONK,
+    "Mercenary War-Cleric": CLERIC,
+    "Mercenary Spellblade": SPELLBLADE,
+    # Ashenmoor Cultists — corrupted spellcasters
+    "Cultist Initiate":     MAGE,
+    "Cultist Warrior":      WARDER,
+    "Cultist Hexblade":     SPELLBLADE,
+    "Cult Sorcerer":        ARCHMAGE,
+    "High Cultist":         NECROMANCER,
+    # Corrupted Guard — undead former soldiers
+    "Crypt Soldier":    FIGHTER,
+    "Crypt Ranger":     RANGER,
+    "Crypt Paladin":    PALADIN,
+    "Crypt Archmage":   ARCHMAGE,
 }
 
 # Per-enemy color overrides (C=mid, D=shadow, H=highlight, K=outline, plus others)
@@ -1527,6 +1551,29 @@ _ENEMY_BASE_COLORS = {
     "Orc Chieftain":    (88,112,55,255),
     "Goblin King":      (72,112,58,255),
     "Cave Bat":         (52,38,68,255),
+    # ── Bandits: rough leathers, browns and tawny rusts ──
+    "Bandit Fighter":   (115, 82, 52, 255),
+    "Bandit Archer":    (88, 102, 58, 255),
+    "Bandit Thief":     (62, 58, 72, 255),
+    "Bandit Mage":      (72, 52, 95, 255),
+    "Bandit Captain":   (130, 75, 40, 255),
+    # ── Iron Mercenaries: cold steel blues and greens ──
+    "Sellsword":              (90, 105, 120, 255),
+    "Mercenary Scout":        (68, 95, 68, 255),
+    "Mercenary Monk":         (95, 88, 68, 255),
+    "Mercenary War-Cleric":   (110, 105, 80, 255),
+    "Mercenary Spellblade":   (75, 88, 130, 255),
+    # ── Cultists: deep purples and blacks ──
+    "Cultist Initiate":  (72, 42, 95, 255),
+    "Cultist Warrior":   (55, 35, 75, 255),
+    "Cultist Hexblade":  (48, 30, 80, 255),
+    "Cult Sorcerer":     (35, 18, 72, 255),
+    "High Cultist":      (25, 12, 58, 255),
+    # ── Corrupted Guard: sickly greys and rot greens ──
+    "Crypt Soldier":  (72, 78, 68, 255),
+    "Crypt Ranger":   (65, 72, 60, 255),
+    "Crypt Paladin":  (62, 68, 58, 255),
+    "Crypt Archmage": (58, 60, 75, 255),
 }
 
 # ═══════════════════════════════════════════════════════════════
