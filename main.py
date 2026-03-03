@@ -796,37 +796,45 @@ class Game:
     }
 
     def _gen_inn_recruits(self):
-        """Generate 8 pre-rolled adventurers available at the Inn."""
+        """Generate 12 pre-rolled adventurers available at the Inn."""
         from core.character import Character
         from core.classes import CLASS_ORDER
         from core.races import RACE_ORDER
         import random
+
         hero_class = self.party[0].class_name if self.party else None
-        pool = [c for c in CLASS_ORDER if c != hero_class]
-        # We need 8 recruits from potentially only 5 classes:
-        # ensure all non-hero classes appear at least once, then fill with repeats
-        # using different races/backstories to create variety
-        chosen_classes = list(pool)  # one of each non-hero class first
+        pool = [c for c in CLASS_ORDER if c != hero_class]   # 5 non-hero classes
+        all_races = list(RACE_ORDER)   # all 7 races
+
+        # Strategy: 12 slots total.
+        # — Each non-hero class appears at least twice (5×2 = 10 slots)
+        # — Fill final 2 with random picks from pool
+        # This gives good class coverage. Then assign races ensuring
+        # every race appears at least once across the 12.
+        chosen_classes = pool * 2                         # each class ×2 = 10
+        extras = [random.choice(pool) for _ in range(2)] # 2 more
+        chosen_classes = chosen_classes + extras          # 12 total
         random.shuffle(chosen_classes)
-        # Fill remaining slots with repeats (different race/backstory)
-        extras = [random.choice(pool) for _ in range(8 - len(chosen_classes))]
-        chosen_classes = (chosen_classes + extras)[:8]
+
+        # Build a race assignment list: every race at least once (7 races),
+        # then fill remaining 5 slots randomly.
+        race_pool = all_races[:]   # 7 unique
+        extras_r  = [random.choice(all_races) for _ in range(12 - len(race_pool))]
+        race_assignments = race_pool + extras_r   # 12 total
+        random.shuffle(race_assignments)
 
         used_names = set()
         self.inn_recruits = []
         name_pool = list(self._INN_NAMES)
         random.shuffle(name_pool)
 
-        for cls in chosen_classes:
-            # Pick unique name
+        for cls, race in zip(chosen_classes, race_assignments):
             for name, _ in name_pool:
                 if name not in used_names:
                     used_names.add(name)
                     break
-            race = random.choice(RACE_ORDER[:5])  # no exotic races in the Inn
             c = Character(name, race_name=race)
             c.quick_roll(cls)
-            # Blurb
             blurbs = self._INN_BLURBS.get(cls, ["A seasoned adventurer seeking work."])
             c.inn_blurb = random.choice(blurbs)
             self.inn_recruits.append(c)
@@ -838,17 +846,18 @@ class Game:
         SCREEN_H = pygame.display.get_surface().get_height()
         NEED = 5
 
-        # Recruit cards layout: 4 per row, 2 rows
-        card_w, card_h = 270, 175
+        # Recruit cards layout: 4 per row, 3 rows (12 recruits)
+        card_w, card_h = 338, 160
         cols = 4
-        start_x = (SCREEN_W - cols * (card_w + 14)) // 2
-        start_y = 110
+        gap_x, gap_y = 10, 8
+        start_x = (SCREEN_W - cols * (card_w + gap_x)) // 2
+        start_y = 102
 
         for i, c in enumerate(self.inn_recruits):
             col = i % cols
             row = i // cols
-            rx = start_x + col * (card_w + 14)
-            ry = start_y + row * (card_h + 12)
+            rx = start_x + col * (card_w + gap_x)
+            ry = start_y + row * (card_h + gap_y)
             r = pygame.Rect(rx, ry, card_w, card_h)
             if r.collidepoint(mx, my):
                 if i in self.inn_selected:
@@ -859,7 +868,7 @@ class Game:
 
         # Confirm button
         if len(self.inn_selected) == NEED:
-            btn = pygame.Rect(SCREEN_W//2 - 160, SCREEN_H - 68, 320, 50)
+            btn = pygame.Rect(SCREEN_W//2 - 160, SCREEN_H - 58, 320, 46)
             if btn.collidepoint(mx, my):
                 for i in sorted(self.inn_selected):
                     self.party.append(self.inn_recruits[i])
@@ -871,8 +880,9 @@ class Game:
                 else:
                     self.go(S_PARTY)
 
+
     def _draw_inn_recruit(self, mx, my):
-        """Draw the Inn recruitment screen."""
+        """Draw the Inn recruitment screen — 12 candidates in a 4x3 grid."""
         from ui.renderer import (SCREEN_W, SCREEN_H, draw_text, draw_panel,
                                   draw_button, GOLD, CREAM, GREY, DARK_GREY,
                                   PANEL_BG, PANEL_BORDER, HIGHLIGHT, DIM_GOLD,
@@ -883,31 +893,31 @@ class Game:
         BG = (8, 6, 16)
         self.screen.fill(BG)
 
-        # Header
-        draw_text(self.screen, "The Wanderer's Inn", SCREEN_W//2 - 140, 22,
+        draw_text(self.screen, "The Wanderer's Inn", SCREEN_W//2 - 140, 18,
                   GOLD, 26, bold=True)
         hero = self.party[0]
         draw_text(self.screen,
                   f"{hero.name} surveys the common room. Five companions are needed.",
-                  SCREEN_W//2 - 310, 60, CREAM, 15)
+                  SCREEN_W//2 - 310, 54, CREAM, 15)
 
         NEED = 5
         n_sel = len(self.inn_selected)
         sel_col = GREEN if n_sel == NEED else ORANGE
         draw_text(self.screen, f"Selected: {n_sel} / {NEED}",
-                  SCREEN_W//2 - 55, 85, sel_col, 14, bold=True)
+                  SCREEN_W//2 - 55, 76, sel_col, 14, bold=True)
 
-        # Cards
-        card_w, card_h = 270, 175
+        # Cards — 4 columns x 3 rows to show all 12 recruits
+        card_w, card_h = 338, 160
         cols = 4
-        start_x = (SCREEN_W - cols * (card_w + 14)) // 2
-        start_y = 110
+        gap_x, gap_y = 10, 8
+        start_x = (SCREEN_W - cols * (card_w + gap_x)) // 2
+        start_y = 102
 
         for i, c in enumerate(self.inn_recruits):
             col_i = i % cols
             row_i = i // cols
-            rx = start_x + col_i * (card_w + 14)
-            ry = start_y + row_i * (card_h + 12)
+            rx = start_x + col_i * (card_w + gap_x)
+            ry = start_y + row_i * (card_h + gap_y)
             r = pygame.Rect(rx, ry, card_w, card_h)
             selected = (i in self.inn_selected)
             hover = r.collidepoint(mx, my)
@@ -926,60 +936,54 @@ class Game:
 
             draw_panel(self.screen, r, bg_color=bg, border_color=border)
 
-            # Silhouette
-            sil_r = pygame.Rect(rx + 4, ry + 4, 80, 112)
+            # Portrait
+            sil_r = pygame.Rect(rx + 4, ry + 4, 72, 100)
             draw_character_silhouette(self.screen, sil_r, c.class_name,
                                        highlight=selected or hover)
 
-            # Name + class (right of portrait)
-            tx = rx + 90
-            draw_text(self.screen, c.name, tx, ry + 6,
-                      cls_col, 15, bold=True)
+            # Name + race + class
+            tx = rx + 82
+            draw_text(self.screen, c.name, tx, ry + 5, cls_col, 14, bold=True)
             race_str = getattr(c, "race_name", "Human")
-            draw_text(self.screen, f"{race_str} {c.class_name}",
-                      tx, ry + 24, CREAM, 12)
+            draw_text(self.screen, f"{race_str}  {c.class_name}",
+                      tx, ry + 21, CREAM, 12)
 
-            # Key stats (STR DEX CON INT)
-            sy = ry + 44
-            for si, stat in enumerate(["STR","DEX","CON","INT","WIS","PIE"]):
+            # Stats — two rows of 3
+            sy = ry + 38
+            for si, stat in enumerate(["STR", "DEX", "CON", "INT", "WIS", "PIE"]):
                 val = c.stats.get(stat, 0)
                 col_v = GREEN if val >= 13 else (CREAM if val >= 9 else GREY)
-                sx2 = tx + (si % 3) * 58
-                sy2 = sy + (si // 3) * 17
-                draw_text(self.screen, f"{stat}:{val}", sx2, sy2, col_v, 14)
+                sx2 = tx + (si % 3) * 62
+                sy2 = sy + (si // 3) * 16
+                draw_text(self.screen, f"{stat}:{val}", sx2, sy2, col_v, 13)
 
             # Resources
-            ry2 = sy + 38
+            ry2 = sy + 36
             for rname, rval in list(c.resources.items())[:2]:
-                draw_text(self.screen, f"{rname} {rval}", tx, ry2, DIM_GOLD, 13)
-                ry2 += 13
+                draw_text(self.screen, f"{rname} {rval}", tx, ry2, DIM_GOLD, 12)
+                ry2 += 12
 
             # Blurb
             blurb = getattr(c, "inn_blurb", "")
             if blurb:
-                draw_text(self.screen, f'\"{blurb}\"',
-                          rx + 6, ry + card_h - 32, GREY, 13,
+                draw_text(self.screen, f'"{blurb}"',
+                          rx + 6, ry + card_h - 26, GREY, 12,
                           max_width=card_w - 12)
 
-            # Selected checkmark
             if selected:
-                draw_text(self.screen, "✓ Selected", rx + card_w - 82, ry + 4,
-                          GREEN, 11, bold=True)
+                draw_text(self.screen, "✓", rx + card_w - 22, ry + 4,
+                          GREEN, 14, bold=True)
 
-        # Confirm button
         if n_sel == NEED:
-            btn = pygame.Rect(SCREEN_W//2 - 160, SCREEN_H - 68, 320, 50)
+            btn = pygame.Rect(SCREEN_W//2 - 160, SCREEN_H - 58, 320, 46)
             draw_button(self.screen, btn, "Set Forth Together!",
                         hover=btn.collidepoint(mx, my), size=17)
         else:
             rem = NEED - n_sel
             draw_text(self.screen,
                       f"Choose {rem} more companion{'s' if rem != 1 else ''}.",
-                      SCREEN_W//2 - 100, SCREEN_H - 50, CREAM, 15)
+                      SCREEN_W//2 - 100, SCREEN_H - 42, CREAM, 15)
 
-    # ══════════════════════════════════════════════════════════
-    #  DRAWING
-    # ══════════════════════════════════════════════════════════
 
     def draw_state(self, mx, my):
         if self.state == S_TITLE:      self.draw_title()
