@@ -569,24 +569,8 @@ def resolve_basic_attack(attacker, defender, enemies=None):
         if dodge > 0 and random.random() < dodge:
             hit = False  # dodged!
 
-    # Check defender buff status: evasion, absorb (bulwark/ki_deflect)
-    evaded = False
-    absorbed = False
-    if hit:
-        _, def_bonus, evade_chance, absorb_next = get_active_buff_mods(defender)
-        if evade_chance > 0 and random.random() < evade_chance:
-            hit = False
-            evaded = True
-        elif absorb_next:
-            hit = False
-            absorbed = True
-            # Consume the absorb buff
-            defender["status_effects"] = [
-                s for s in defender.get("status_effects", [])
-                if s["name"] not in ("bulwark", "ki_deflect", "unbreakable")
-            ]
-    else:
-        def_bonus = 0
+    # Enemy defender: only read defense buff bonus — evasion/absorb are player protections only
+    _, def_bonus, _, _ = get_active_buff_mods(defender) if hit else (1.0, 0, 0.0, False)
 
     result = {
         "action": "attack",
@@ -601,12 +585,6 @@ def resolve_basic_attack(attacker, defender, enemies=None):
         "messages": [],
     }
 
-    if evaded:
-        result["messages"].append(f"{defender['name']} EVADES {attacker['name']}'s attack!")
-        return result
-    if absorbed:
-        result["messages"].append(f"{defender['name']} BLOCKS {attacker['name']}'s attack!")
-        return result
     if not hit:
         result["messages"].append(f"{attacker['name']} attacks {defender['name']} — MISS!")
         return result
