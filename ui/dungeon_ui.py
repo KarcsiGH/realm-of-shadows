@@ -500,7 +500,8 @@ class DungeonUI:
             if ty_ <= 0.1:
                 continue
             screen_x = int((VP_W/2) * (1 + tx_ / ty_))
-            sp_h = max(1, abs(int(PROJ_DIST / ty_)))
+            full_wall_h = max(1, abs(int(PROJ_DIST / ty_)))  # unscaled wall height
+            sp_h = full_wall_h
             sp_w = sp_h
 
             # Scale objects down relative to wall height — walls fill the space,
@@ -521,8 +522,29 @@ class DungeonUI:
             scale = _OBJ_SCALE.get(icon_key, 0.60)
             sp_h = max(1, int(sp_h * scale))
             sp_w = sp_h
-            start_y = max(0, VP_H//2 - sp_h//2)
-            end_y   = min(VP_H, VP_H//2 + sp_h//2)
+
+            # Floor line: where the floor meets the wall at this distance
+            floor_y = VP_H // 2 + full_wall_h // 2
+
+            # Objects that sit ON the floor — bottom edge anchored to floor_y.
+            # Objects that float (enemies, boss) — centered at horizon as before.
+            # Stairs are also capped in height so they don't fill the view up close.
+            _FLOOR_ANCHORED = {
+                DT_TREASURE, DT_STAIRS_DOWN, DT_STAIRS_UP,
+                DT_INTERACTABLE, DT_TRAP,
+                "trap_disarmed", "trap_tripped", "journal",
+            }
+            if icon_key in _FLOOR_ANCHORED:
+                # Cap stairs height so they don't run floor-to-ceiling up close
+                if icon_key in (DT_STAIRS_DOWN, DT_STAIRS_UP):
+                    sp_h = min(sp_h, VP_H // 3)
+                    sp_w = sp_h
+                blit_y = floor_y - sp_h   # bottom of sprite sits on floor
+            else:
+                blit_y = VP_H // 2 - sp_h // 2   # centered at horizon (enemies)
+
+            start_y = max(0, blit_y)
+            end_y   = min(VP_H, blit_y + sp_h)
             start_x = max(0, screen_x - sp_w//2)
             end_x   = min(VP_W, screen_x + sp_w//2)
             if start_x >= end_x:
@@ -642,7 +664,7 @@ class DungeonUI:
                     pygame.draw.rect(spr, dim, (2, 2, surf_w-4, surf_h-4), border_radius=2)
                     pygame.draw.rect(spr, c_a, (2, 2, surf_w-4, surf_h-4), 2, border_radius=2)
 
-                view.blit(spr, (cx_s - surf_w//2, cy_s - surf_h//2))
+                view.blit(spr, (cx_s - surf_w//2, blit_y))
 
     def _fading_overlay(self, view):
         intensity = self.fading_intensity
