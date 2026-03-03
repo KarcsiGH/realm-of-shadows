@@ -1903,6 +1903,9 @@ class TownUI:
                     elif loc == "temple":
                         self.view = self.VIEW_TEMPLE
                     elif loc == "tavern":
+                        # Refresh rumor based on current story act
+                        from data.story_data import get_rumor
+                        self.current_rumor = get_rumor()
                         self.view = self.VIEW_TAVERN
                     elif loc == "inn":
                         self.view = self.VIEW_INN

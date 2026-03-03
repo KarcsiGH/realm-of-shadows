@@ -2466,6 +2466,11 @@ class Game:
                         # Track floor 1 for job board
                         from data.job_board import on_dungeon_floor_reached
                         on_dungeon_floor_reached(dungeon_id, 1)
+                        # Set explored flag (quest objectives check these)
+                        from core.story_flags import set_flag as _sf_fl
+                        _sf_fl(f"explored.{dungeon_id}.floor1", True)
+                        auto_advance_quests = __import__("core.story_flags", fromlist=["auto_advance_quests"]).auto_advance_quests
+                        auto_advance_quests(self.party)
                         # Show floor 1 story message
                         from data.story_data import get_dungeon_floor_message
                         msg = get_dungeon_floor_message(dungeon_id, 1)
@@ -2579,6 +2584,11 @@ class Game:
             # Show journal text as dungeon event
             self.dungeon_ui.show_event(f"📜 {title}", GOLD)
             self.dungeon_ui.show_event(text, (180, 160, 120))
+            # Mark the tile as read so the book icon clears
+            t = self.dungeon_state.get_tile(self.dungeon_state.party_x,
+                                            self.dungeon_state.party_y)
+            if t:
+                t["journal_read"] = True
 
         elif event["type"] == "interactable":
             data = event["data"]
@@ -2668,6 +2678,8 @@ class Game:
                     _sf("guild_trial.complete", True)
                 if self.dungeon_state.dungeon_id == "valdris_spire":
                     _sq("main_act3_finale")  # auto-start finale quest
+                # Set explored flag (quest objectives check these)
+                _sf(f"explored.{self.dungeon_state.dungeon_id}.floor{floor}", True)
 
                 # Auto-advance quests (explore objectives)
                 from core.story_flags import auto_advance_quests

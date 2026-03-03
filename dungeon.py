@@ -883,6 +883,57 @@ class DungeonState:
             )
             # Spawn visible enemies on the floor
             self._spawn_floor_enemies(floor_num, rng)
+            # Place story journals from DUNGEON_STORY_EVENTS
+            self._place_story_journals(floor_num, rng)
+
+    def _place_story_journals(self, floor_num, rng):
+        """Place journal tiles from DUNGEON_STORY_EVENTS onto the floor."""
+        try:
+            from data.story_data import get_dungeon_journals
+        except ImportError:
+            return
+        journals = get_dungeon_journals(self.dungeon_id, floor_num)
+        if not journals:
+            return
+        floor = self.floors[floor_num]
+        tiles = floor["tiles"]
+        fw, fh = floor["width"], floor["height"]
+        entrance = floor.get("entrance", (0, 0))
+        stairs_dn = floor.get("stairs_down")
+        stairs_up = floor.get("stairs_up")
+        # Build exclusion zone around entrance / stairs
+        avoid = set()
+        for pt in [entrance] + ([stairs_dn] if stairs_dn else []) + ([stairs_up] if stairs_up else []):
+            if pt:
+                for ddx in range(-3, 4):
+                    for ddy in range(-3, 4):
+                        avoid.add((pt[0] + ddx, pt[1] + ddy))
+        # Collect eligible DT_FLOOR tiles with no existing event
+        eligible = [
+            (x, y)
+            for y in range(fh)
+            for x in range(fw)
+            if tiles[y][x]["type"] == DT_FLOOR
+            and not tiles[y][x].get("event")
+            and (x, y) not in avoid
+        ]
+        if not eligible:
+            return
+        rng.shuffle(eligible)
+        for j_idx, jdata in enumerate(journals):
+            if j_idx >= len(eligible):
+                break
+            px, py = eligible[j_idx]
+            tiles[py][px]["has_journal"] = True
+            tiles[py][px]["journal_read"] = False
+            tiles[py][px]["event"] = {
+                "type":     "journal",
+                "title":    jdata.get("title", "Journal Entry"),
+                "text":     jdata.get("text", ""),
+                "lore_id":  jdata.get("lore_id"),
+                "on_find":  jdata.get("on_find", []),
+                "triggered": False,
+            }
 
     def _spawn_floor_enemies(self, floor_num, rng):
         """Place visible enemy entities on floor tiles."""
