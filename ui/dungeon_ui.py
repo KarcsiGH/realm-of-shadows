@@ -502,6 +502,25 @@ class DungeonUI:
             screen_x = int((VP_W/2) * (1 + tx_ / ty_))
             sp_h = max(1, abs(int(PROJ_DIST / ty_)))
             sp_w = sp_h
+
+            # Scale objects down relative to wall height — walls fill the space,
+            # objects should sit within it. Enemies stay full-ish, objects smaller.
+            _OBJ_SCALE = {
+                DT_TREASURE:     0.35,   # chest — squat, sits on floor
+                DT_STAIRS_DOWN:  0.55,   # stairs — wide, not tall
+                DT_STAIRS_UP:    0.55,
+                DT_INTERACTABLE: 0.50,   # shrine/fountain — pedestal height
+                DT_ENTRANCE:     0.80,   # archway — tall but not full wall
+                DT_TRAP:         0.20,   # trap plate — nearly flush with floor
+                "trap_disarmed": 0.20,
+                "trap_tripped":  0.20,
+                "journal":       0.30,
+                "enemy":         0.85,
+                "boss":          1.00,
+            }
+            scale = _OBJ_SCALE.get(icon_key, 0.60)
+            sp_h = max(1, int(sp_h * scale))
+            sp_w = sp_h
             start_y = max(0, VP_H//2 - sp_h//2)
             end_y   = min(VP_H, VP_H//2 + sp_h//2)
             start_x = max(0, screen_x - sp_w//2)
