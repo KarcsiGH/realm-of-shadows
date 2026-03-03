@@ -1213,11 +1213,13 @@ NEW_FACTION_ENCOUNTER_TABLE_UPDATES = {
         3: ["cult_with_sorcerer", "merc_squad", "cult_warband"],
         4: ["cult_elite", "merc_warband", "cult_with_sorcerer"],
     },
-    # ── Dragon's Tooth — pirates from floor 1, plus volcanic creatures ──
+    # ── Dragon's Tooth — pirates camped near the entrance, volcanic creatures
+    #    deeper in the tunnels. Floor 1 mixes both; floors 2-3 shift toward
+    #    native creatures with pirates still present. ──
     "dragons_tooth": {
-        1: ["pirate_crew", "pirate_ambush"],
-        2: ["pirate_with_witch", "pirate_ambush", "pirate_officers"],
-        3: ["pirate_captain_enc", "pirate_officers", "pirate_with_witch"],
+        1: ["pirate_crew", "pirate_ambush", "dt_hatchlings", "dt_beetles"],
+        2: ["pirate_with_witch", "pirate_ambush", "dt_drakes", "dt_beetles", "dt_troll"],
+        3: ["dt_mixed", "dt_drake_swarm", "dt_drakes", "pirate_officers", "pirate_captain_enc"],
     },
     # ── Pale Coast — cultists drawn to the coast, Crypt Guard drowned variant ──
     "pale_coast": {
