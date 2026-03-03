@@ -395,6 +395,7 @@ class Game:
                         # Hero created — now recruit companions from the Inn
                         self._gen_inn_recruits()
                         self.inn_selected = set()
+                        self.inn_max_flash = 0.0
                         self.inn_hover = -1
                         self.go(S_INN_RECRUIT)
                     else:
@@ -862,8 +863,11 @@ class Game:
             if r.collidepoint(mx, my):
                 if i in self.inn_selected:
                     self.inn_selected.discard(i)
+                    self.inn_max_flash = 0.0
                 elif len(self.inn_selected) < NEED:
                     self.inn_selected.add(i)
+                else:
+                    self.inn_max_flash = 2.0  # flash "Party full" for 2 seconds
                 return
 
         # Confirm button
@@ -872,7 +876,7 @@ class Game:
             if btn.collidepoint(mx, my):
                 for i in sorted(self.inn_selected):
                     self.party.append(self.inn_recruits[i])
-                    self.char_index += 1
+                self.char_index = PARTY_SIZE  # set directly — don't increment per-recruit
                 self.party_scroll = 0
                 from core.story_flags import has
                 if not has("intro_seen"):
@@ -980,9 +984,15 @@ class Game:
                         hover=btn.collidepoint(mx, my), size=17)
         else:
             rem = NEED - n_sel
-            draw_text(self.screen,
-                      f"Choose {rem} more companion{'s' if rem != 1 else ''}.",
-                      SCREEN_W//2 - 100, SCREEN_H - 42, CREAM, 15)
+            flash = getattr(self, "inn_max_flash", 0.0)
+            if flash > 0:
+                self.inn_max_flash = max(0.0, flash - (1 / 60))
+                draw_text(self.screen, "Party full! Deselect someone first.",
+                          SCREEN_W//2 - 145, SCREEN_H - 42, RED, 14, bold=True)
+            else:
+                draw_text(self.screen,
+                          f"Choose {rem} more companion{'s' if rem != 1 else ''}.",
+                          SCREEN_W//2 - 100, SCREEN_H - 42, CREAM, 15)
 
 
     def draw_state(self, mx, my):
@@ -2709,8 +2719,49 @@ class Game:
                 }
 
         elif event["type"] == "chest_open":
-            # Party chose to open the chest (no trap, or trap disarmed)
+            # Party chose to open the chest
             chest_ev = event["chest_ev"]
+            # Bug 2 fix: if chest has an undiscovered/undisarmed trap, fire it now
+            trap = chest_ev.get("trap")
+            if trap and not trap.get("disarmed"):
+                # Trap fires — redirect to trap handler
+                sfx.play("trap_trigger")
+                from data.dungeon import resolve_trap_saving_throw
+                from core.status_effects import add_poison, add_curse
+                trap_name   = trap.get("name", "Trap")
+                dmg_base    = trap.get("damage", 10)
+                trap_target = trap.get("target", "single")
+                targets = list(self.party) if trap_target == "area" else [self.party[0]]
+                msgs = []
+                for ch in targets:
+                    result = resolve_trap_saving_throw(ch, trap)
+                    if result == "avoid":
+                        msgs.append(f"{ch.name} dives clear of the {trap_name}!")
+                    elif result == "half":
+                        dmg = max(1, dmg_base // 2)
+                        ch.hp = max(0, ch.hp - dmg)
+                        msgs.append(f"{ch.name} partly evades {trap_name} — {dmg} damage!")
+                    elif result == "crit_fail":
+                        dmg = dmg_base
+                        ch.hp = max(0, ch.hp - dmg)
+                        msgs.append(f"{ch.name} CRITICALLY FAILS — {trap_name} hits for {dmg} damage!")
+                    else:
+                        dmg = dmg_base
+                        ch.hp = max(0, ch.hp - dmg)
+                        msgs.append(f"{ch.name} hit by {trap_name} for {dmg} damage!")
+                    is_hit = result != "avoid"
+                    if trap.get("poison") and is_hit:
+                        add_poison(ch, trap["poison"])
+                        msgs.append(f"{ch.name} is poisoned!")
+                    if trap.get("curse") and is_hit:
+                        add_curse(ch, trap["curse"])
+                    if ch.hp <= 0:
+                        ch.hp = 0
+                        msgs.append(f"{ch.name} has fallen!")
+                if self.dungeon_ui:
+                    for msg in msgs:
+                        self.dungeon_ui.show_event(msg, (220, 80, 60))
+                trap["disarmed"] = True  # mark as fired so it doesn't re-trigger
             self.dungeon.open_chest(chest_ev)
             sfx.play("treasure_open")
             is_secret = chest_ev.get("secret_chest", False)
@@ -2753,16 +2804,32 @@ class Game:
 
             msgs = []
             for ch in targets:
-                dmg, saved = resolve_trap_saving_throw(ch, trap)
-                if saved:
-                    msgs.append(f"{ch.name} evaded the {trap_name}!")
-                else:
+                # resolve_trap_saving_throw returns a string: "avoid","half","full","crit_fail"
+                result = resolve_trap_saving_throw(ch, trap)
+                if result == "avoid":
+                    msgs.append(f"{ch.name} dives clear of the {trap_name}!")
+                elif result == "half":
+                    dmg = max(1, dmg_base // 2)
+                    ch.hp = max(0, ch.hp - dmg)
+                    msgs.append(f"{ch.name} partly evades {trap_name} — {dmg} damage!")
+                elif result == "crit_fail":
+                    dmg = dmg_base
+                    ch.hp = max(0, ch.hp - dmg)
+                    msgs.append(f"{ch.name} CRITICALLY FAILS — {trap_name} hits for {dmg} damage!")
+                else:  # "full"
+                    dmg = dmg_base
                     ch.hp = max(0, ch.hp - dmg)
                     msgs.append(f"{ch.name} hit by {trap_name} for {dmg} damage!")
-                if trap.get("poison") and not saved:
+                is_hit = result != "avoid"
+                if trap.get("poison") and is_hit:
                     add_poison(ch, trap["poison"])
-                if trap.get("curse") and not saved:
+                    msgs.append(f"{ch.name} is poisoned!")
+                if trap.get("curse") and is_hit:
                     add_curse(ch, trap["curse"])
+                    msgs.append(f"{ch.name} is cursed!")
+                if ch.hp <= 0:
+                    ch.hp = 0
+                    msgs.append(f"{ch.name} has fallen!")
 
             if self.dungeon_ui:
                 for msg in msgs:
