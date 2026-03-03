@@ -45,6 +45,8 @@ ACCURACY_STATUS_PENALTIES = {
     "Frostbitten":  -5,
     "Shocked":      -10,
     "Blinded":      -30,
+    "Slowed":       -15,   # Slowed reduces accuracy (sluggish attacks)
+    "Feared":       -20,   # Fear makes attacks wild
 }
 
 
@@ -267,7 +269,7 @@ STATUS_TICK_DAMAGE = {
 
 # Status effects that prevent action (Speed = 0 handles skipping,
 # these are listed for the tick system to decrement duration only)
-STATUS_INCAPACITATE = {"Stunned", "Frozen", "Petrified", "Sleep"}
+STATUS_INCAPACITATE = {"Stunned", "Frozen", "Petrified", "Sleep", "Feared"}
 
 # All statuses that should tick down each round
 STATUS_DURATION_TICK = (
@@ -277,7 +279,15 @@ STATUS_DURATION_TICK = (
        "Taunted", "war_cry", "WarCry", "defense_up", "evasion",
        "smoke_screen", "iron_skin", "magic_shield", "bulwark",
        "last_stand", "hawk_eye", "ki_deflect", "empty_mind",
-       "courage_aura", "tracking"}
+       "courage_aura", "tracking",
+       # Hybrid/advanced class buffs
+       "rally", "unbreakable", "conqueror", "divine_shield",
+       "shield_of_faith", "runic_armor", "blade_barrier", "shadow_step",
+       "spirit_bond", "fading_ward", "ward_anchor", "battle_prayer",
+       "divine_intervention", "time_stop", "death_mark", "Taunted",
+       "morale_break", "ward_isolation", "cyclone_ward", "last_ward",
+       "Weakened", "Silenced", "Feared",
+       }
 )
 
 

@@ -35,7 +35,7 @@ CLASS_ABILITIES = {
     ],
     "Mage": [
         {"name": "Magic Missile",    "cost": 8,  "resource": "INT-MP", "type": "spell",
-         "level": 1, "power": 1.0, "element": "arcane", "auto_hit": True, "desc": "Arcane bolt that never misses."},
+         "level": 1, "power": 1.0, "element": "arcane", "bonus_accuracy": 30, "desc": "Unerring arcane bolt. Very high hit chance."},
         {"name": "Arcane Shield",    "cost": 10, "resource": "INT-MP", "type": "buff",
          "level": 1, "buff": "magic_shield", "duration": 3, "self_only": True,
          "desc": "Erect a personal arcane barrier. Reduces all damage taken for 3 turns."},

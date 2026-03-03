@@ -115,6 +115,51 @@ def calc_combatant_speed(combatant):
     return max(0, int(base * multiplier))
 
 
+def get_active_buff_mods(combatant):
+    """
+    Module-level buff resolver. Returns (dmg_mult, def_reduction, evasion_chance, absorb_next).
+
+    dmg_mult      — multiply outgoing damage by this
+    def_reduction — subtract this from incoming damage (flat)
+    evasion_chance— 0-1 chance to fully dodge an incoming hit
+    absorb_next   — True if the next hit is completely blocked
+    """
+    dmg_mult    = 1.0
+    def_reduce  = 0
+    evade_chance = 0.0
+    absorb_next = False
+
+    hp_pct = combatant["hp"] / max(1, combatant["max_hp"])
+
+    for st in combatant.get("status_effects", []):
+        n = st["name"]
+        # ── Damage boosts (outgoing) ──────────────────────────
+        if n in ("war_cry", "WarCry"):  dmg_mult *= 1.25
+        if n == "hawk_eye":             dmg_mult *= 1.20
+        if n == "rally":                dmg_mult *= 1.25
+        if n == "conqueror":            dmg_mult *= 2.0
+        if n == "last_stand" and hp_pct <= 0.25:
+            dmg_mult *= 1.50
+        # ── Defense (incoming reduction, flat) ────────────────
+        if n == "defense_up":           def_reduce += 5
+        if n == "iron_skin":            def_reduce += 8
+        if n == "magic_shield":         def_reduce += 6   # physical AND magic
+        if n == "runic_armor":          def_reduce += 7   # melee + arcane
+        if n == "divine_shield":        def_reduce += 8
+        if n == "shield_of_faith":      def_reduce += 10
+        # ── Evasion (full dodge chance) ────────────────────────
+        if n in ("evasion", "smoke_screen"):
+            evade_chance = max(evade_chance, 0.45)
+        # ── Absorb (block one hit entirely) ───────────────────
+        if n in ("bulwark", "ki_deflect", "unbreakable"):
+            absorb_next = True
+        # ── Weakened: reduce outgoing damage ──────────────────
+        if n == "Weakened":
+            dmg_mult *= 0.70
+
+    return dmg_mult, def_reduce, evade_chance, absorb_next
+
+
 def build_turn_order(all_combatants):
     """Sort combatants by speed (highest first). Ties broken by DEX, then random."""
     living = [c for c in all_combatants if c["alive"] and c["hp"] > 0]
@@ -524,13 +569,24 @@ def resolve_basic_attack(attacker, defender, enemies=None):
         if dodge > 0 and random.random() < dodge:
             hit = False  # dodged!
 
-    # Evasion/smoke_screen status dodge
-    if hit and defender.get("type") == "player":
-        for st in defender.get("status_effects", []):
-            if st["name"] in ("evasion", "smoke_screen"):
-                if random.random() < 0.45:
-                    hit = False
-                    break
+    # Check defender buff status: evasion, absorb (bulwark/ki_deflect)
+    evaded = False
+    absorbed = False
+    if hit:
+        _, def_bonus, evade_chance, absorb_next = get_active_buff_mods(defender)
+        if evade_chance > 0 and random.random() < evade_chance:
+            hit = False
+            evaded = True
+        elif absorb_next:
+            hit = False
+            absorbed = True
+            # Consume the absorb buff
+            defender["status_effects"] = [
+                s for s in defender.get("status_effects", [])
+                if s["name"] not in ("bulwark", "ki_deflect", "unbreakable")
+            ]
+    else:
+        def_bonus = 0
 
     result = {
         "action": "attack",
@@ -545,6 +601,12 @@ def resolve_basic_attack(attacker, defender, enemies=None):
         "messages": [],
     }
 
+    if evaded:
+        result["messages"].append(f"{defender['name']} EVADES {attacker['name']}'s attack!")
+        return result
+    if absorbed:
+        result["messages"].append(f"{defender['name']} BLOCKS {attacker['name']}'s attack!")
+        return result
     if not hit:
         result["messages"].append(f"{attacker['name']} attacks {defender['name']} — MISS!")
         return result
@@ -554,13 +616,14 @@ def resolve_basic_attack(attacker, defender, enemies=None):
     result["is_crit"] = is_crit
     result["crit_data"] = crit_data
 
-    # Calculate damage
+    # Calculate damage then subtract active defense buffs
     damage = calc_physical_damage(
         attacker, defender, weapon,
         position_dmg_mod=pos_dmg,
         is_crit=is_crit,
         crit_data=crit_data,
     )
+    damage = max(MINIMUM_DAMAGE, int(damage - def_bonus))
 
     result["damage"] = damage
 
@@ -636,6 +699,23 @@ def resolve_enemy_attack(attacker, defender):
     acc = max(ACCURACY_MIN, min(ACCURACY_MAX, acc))
     hit = roll_hit(acc)
 
+    # Check defender buff mods (evasion, absorb, defense buffs)
+    _, def_bonus, evade_chance, absorb_next = get_active_buff_mods(defender)
+
+    evaded = False
+    absorbed = False
+    if hit:
+        if evade_chance > 0 and random.random() < evade_chance:
+            hit = False
+            evaded = True
+        elif absorb_next:
+            hit = False
+            absorbed = True
+            defender["status_effects"] = [
+                s for s in defender.get("status_effects", [])
+                if s["name"] not in ("bulwark", "ki_deflect", "unbreakable")
+            ]
+
     result = {
         "action": "enemy_attack",
         "attacker": attacker,
@@ -647,6 +727,12 @@ def resolve_enemy_attack(attacker, defender):
         "messages": [],
     }
 
+    if evaded:
+        result["messages"].append(f"{defender['name']} EVADES {attacker['name']}'s attack!")
+        return result
+    if absorbed:
+        result["messages"].append(f"{defender['name']} BLOCKS {attacker['name']}'s attack!")
+        return result
     if not hit:
         result["messages"].append(f"{attacker['name']} attacks {defender['name']} — MISS!")
         return result
@@ -670,17 +756,25 @@ def resolve_enemy_attack(attacker, defender):
     type_mod = defender.get("resistances", {}).get(phys_type, NEUTRAL)
     raw *= type_mod
 
-    # Defense
+    # Defense (static armor) + active defense buff bonus
     defense = defender.get("defense", 0)
     if defender.get("is_defending"):
         defense *= DEFEND_PHYS_MULT
 
-    damage = max(MINIMUM_DAMAGE, int(raw - defense))
+    damage = max(MINIMUM_DAMAGE, int(raw - defense - def_bonus))
     result["damage"] = damage
 
     defender["hp"] = max(0, defender["hp"] - damage)
     if defender["hp"] <= 0:
         defender["alive"] = False
+
+    # divine_intervention: survive at 1 HP
+    for st in defender.get("status_effects", []):
+        if st["name"] == "divine_intervention" and not defender["alive"]:
+            defender["hp"] = 1
+            defender["alive"] = True
+            result["messages"].append(f"Divine intervention saves {defender['name']}!")
+            break
 
     msg = f"{attacker['name']} attacks {defender['name']} for {damage} damage!"
     result["messages"].append(msg)
@@ -869,29 +963,19 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                 "duration": ability["mark_duration"],
             })
             msgs.append(f"{msg_prefix}{tgt['name']} is marked!")
+        if ability.get("silences"):
+            dur = ability.get("silence_duration", 2)
+            if apply_status_effect(tgt, "Silenced", dur, 1.0):
+                msgs.append(f"{msg_prefix}{tgt['name']} is SILENCED for {dur} turn(s)!")
+        if ability.get("weaken_duration"):
+            dur = ability["weaken_duration"]
+            if apply_status_effect(tgt, "Weakened", dur, 1.0):
+                msgs.append(f"{msg_prefix}{tgt['name']} is Weakened for {dur} turn(s)!")
         return msgs
 
     def _active_buff_mods(combatant):
-        """Return (dmg_mult, def_reduction, evasion_chance, absorb_next)."""
-        dmg_mult = 1.0
-        def_reduce = 0
-        evade_chance = 0.0
-        absorb_next = False
-        for st in combatant.get("status_effects", []):
-            n = st["name"]
-            if n == "war_cry":       dmg_mult *= 1.25
-            if n == "WarCry":        dmg_mult *= 1.25
-            if n == "hawk_eye":      dmg_mult *= 1.20
-            if n == "last_stand" and combatant["hp"] / max(1, combatant["max_hp"]) <= 0.25:
-                dmg_mult *= 1.50
-            if n == "defense_up":    def_reduce += 5
-            if n == "iron_skin":     def_reduce += 8
-            if n == "magic_shield":  def_reduce += 6
-            if n == "bulwark":       absorb_next = True
-            if n in ("evasion", "smoke_screen"):
-                evade_chance = max(evade_chance, 0.45)
-            if n == "ki_deflect":    absorb_next = True
-        return dmg_mult, def_reduce, evade_chance, absorb_next
+        """Delegate to module-level get_active_buff_mods."""
+        return get_active_buff_mods(combatant)
 
     def _apply_physical_hit(tgt, power_mult=1.0):
         """Apply one physical ability hit. Returns (damage, is_crit, msgs)."""
@@ -975,7 +1059,7 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         _, def_bonus, _, _ = _active_buff_mods(tgt)
 
         dmg = calc_magic_damage(attacker, tgt, spell, is_crit)
-        dmg = max(MINIMUM_DAMAGE, int(dmg * atk_mult))
+        dmg = max(MINIMUM_DAMAGE, int(dmg * atk_mult - def_bonus))
 
         tgt["hp"] = max(0, tgt["hp"] - dmg)
         if tgt["hp"] <= 0:
@@ -1134,6 +1218,46 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             )
             return result
 
+        # ── fear_duration: apply Feared (incapacitate) ────────
+        if ability.get("fear_duration"):
+            dur = ability["fear_duration"]
+            # Fear only works on undead if targets="undead"
+            tgt_spec = ability.get("targets", "")
+            if tgt_spec == "undead" and target.get("enemy_type") not in ("undead", "skeleton", "ghost", "zombie", "spirit"):
+                result["messages"].append(
+                    f"{target['name']} is not undead — {ability['name']} fails!"
+                )
+                return result
+            apply_status_effect(target, "Feared", dur, 1.0)
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']}! "
+                f"{target['name']} is FEARED and will flee for {dur} turn(s)!"
+            )
+            result["messages"] += _inflict_special_effects(target)
+            return result
+
+        # ── weaken_duration: apply Weakened (−30% damage dealt) ─
+        if ability.get("weaken_duration"):
+            dur = ability["weaken_duration"]
+            apply_status_effect(target, "Weakened", dur, 1.0)
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']}! "
+                f"{target['name']} is Weakened — deals 30% less damage for {dur} turn(s)."
+            )
+            result["messages"] += _inflict_special_effects(target)
+            return result
+
+        # ── silences: apply Silenced (no abilities) ────────────
+        if ability.get("silences"):
+            dur = ability.get("silence_duration", 2)
+            apply_status_effect(target, "Silenced", dur, 1.0)
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']}! "
+                f"{target['name']} is Silenced for {dur} turn(s)!"
+            )
+            result["messages"] += _inflict_special_effects(target)
+            return result
+
         debuff_name = ability.get("debuff", ability["name"])
         duration    = ability.get("slow_duration", ability.get("duration", 2))
         apply_status_effect(target, debuff_name, duration, 1.0)
@@ -1173,6 +1297,49 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                 result["messages"].append(f"{attacker['name']} uses {ability['name']} on {ht['name']} — heals {actual} HP.{crit_str}")
         result["healing"] = total_healed
         result["is_crit"] = is_crit
+        return result
+
+    # ── SPECIAL (Wish / Miracle) ────────────────────────────────
+    if ab_type == "special":
+        ab_name_lower = ability["name"].lower()
+        if "miracle" in ab_name_lower:
+            # Fully restore all party HP and MP/SP/Ki
+            targets = [p for p in (all_players or [attacker]) if p["alive"]]
+            for p in targets:
+                p["hp"] = p["max_hp"]
+                for res_key in list(p["resources"].keys()):
+                    if res_key != "HP":
+                        p["resources"][res_key] = p.get("max_resources", {}).get(res_key, p["resources"][res_key])
+            result["messages"].append(
+                f"MIRACLE! {attacker['name']} calls upon divine power — "
+                f"the entire party is fully restored!"
+            )
+        elif "wish" in ab_name_lower:
+            # Random: either full-heal party or nuke all enemies for massive damage
+            if random.random() < 0.5:
+                targets = [p for p in (all_players or [attacker]) if p["alive"]]
+                for p in targets:
+                    p["hp"] = p["max_hp"]
+                result["messages"].append(
+                    f"WISH! Reality bends — the party is fully healed!"
+                )
+            else:
+                nuke_targets = [e for e in (all_enemies or []) if e["alive"]]
+                total_dmg = 0
+                for e in nuke_targets:
+                    dmg = e["max_hp"] // 2  # deal 50% max HP as arcane damage
+                    e["hp"] = max(0, e["hp"] - dmg)
+                    if e["hp"] <= 0:
+                        e["alive"] = False
+                    total_dmg += dmg
+                result["damage"] = total_dmg
+                result["messages"].append(
+                    f"WISH! Reality shatters — massive arcane devastation strikes all enemies!"
+                )
+        else:
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']}! (special effect)"
+            )
         return result
 
     # ── OFFENSIVE ──────────────────────────────────────────────
@@ -1234,10 +1401,15 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         result["is_crit"] = any_crit
         result["hit"]     = total_damage > 0 or any_crit
 
-        # Splitting Arrow: pierce through front row and hit mid/back enemies
+        # Splitting Arrow: pierce through target's row and hit another enemy
         if ability.get("pierce_rows") and total_damage > 0 and all_enemies:
+            # First try MID/BACK row enemies (arrow piercing through front row)
             pierced = [e for e in all_enemies
                        if e["alive"] and e["row"] in (MID, BACK) and e not in aoe_targets]
+            # Fallback: if all enemies are front row, pierce hits a second front-row enemy
+            if not pierced:
+                pierced = [e for e in all_enemies
+                           if e["alive"] and e not in aoe_targets]
             if pierced:
                 result["messages"].append(f"The arrow pierces through!")
                 for ptgt in pierced[:2]:
@@ -1246,8 +1418,6 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                     result["damage"] += pdmg
                     if not ptgt["alive"]:
                         _log_death(ptgt)
-            else:
-                result["messages"].append(f"No enemies in back rows to pierce.")
 
         # Self-damage recoil (Reckless Charge)
         if ability.get("self_damage_pct") and total_damage > 0:
@@ -1932,6 +2102,22 @@ class CombatState:
         actor = self.get_current_combatant()
         if not actor or actor["type"] != "player":
             return
+
+        # ── Stun / incapacitate check (same as enemies) ───────
+        for status in actor.get("status_effects", []):
+            if status["name"] in STATUS_INCAPACITATE:
+                self.log(f"{actor['name']} is {status['name']} and cannot act!")
+                self.advance_turn()
+                return {}
+
+        # ── Silence check: can't use abilities ────────────────
+        if action_type == "ability":
+            is_silenced = any(s["name"] == "Silenced"
+                              for s in actor.get("status_effects", []))
+            if is_silenced:
+                self.log(f"{actor['name']} is Silenced and cannot use abilities!")
+                self.advance_turn()
+                return {}
 
         if action_type == "attack":
             result = resolve_basic_attack(actor, target, enemies=self.enemies)
