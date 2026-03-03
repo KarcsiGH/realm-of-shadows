@@ -1325,22 +1325,25 @@ GOBLIN_KING = [
     "................",
 ]
 
-# ── CAVE_BAT: small flying creature, wide wings, tiny body ──
+# ── CAVE_BAT: wings sweep from outer corners inward to a tiny body.
+#    Silhouette reads immediately as a bat — mostly wing, barely body.
+#    N/n = dark wing membrane (palette overrides to deep purple)
+#    E = red glowing eyes (palette override), C/H/D = tiny body
 CAVE_BAT = [
+    "N..............N",   # wing tips at outer top corners
+    ".N............N.",   # wings angle inward
+    "..N..........N..",   # wings continue
+    "..NN........NN..",   # wings thicken
+    "..NNNn....nNNN..",   # ears appear (n = darker)
+    "..NNNNnNNnNNNN..",   # head between ear peaks
+    "...NNNNENNNNn...",   # single glowing eye (E = red for bat)
+    "...NNNCHCnNNN...",   # tiny body
+    "....NNnDnNN.....",   # lower body / belly
+    ".....NnnnN......",   # feet/claws
+    "......NNN.......",   # claws
     "................",
-    "..N.........N...",
-    ".NN.........NN..",
-    "NNN....n....NNN.",
-    "NNN...NNN...NNN.",
-    ".NN..NNNNN..NN..",
-    "..N.NNNsNNN.N...",
-    "...NNNSENNNN....",
-    "..NNNNNNNNNNn...",
-    ".NNNNNNNNNNNNn..",
-    "NNNNNNCHCNNNNNn.",
-    "..NNNnDCDnNNN...",
-    "...NNnn.nnNN....",
-    "....Nn...nN.....",
+    "................",
+    "................",
     "................",
     "................",
     "................",
@@ -1467,6 +1470,91 @@ DUNGEON_SHRINE_USED = [
     "................",
 ]
 
+
+# ── BEETLE: hard rounded carapace, antennae, segmented abdomen, leg stubs.
+#    Reads as insect/arthropod — oval dome, NOT humanoid.
+#    N/n = chitin/legs, C/H/D = carapace body
+BEETLE = [
+    "................",
+    ".....n....n.....",   # antennae tips
+    "......n..n......",   # antennae stalks
+    "...nCCCCCCCCn...",   # carapace top
+    "..nCCHCCCCCCCn..",   # carapace highlight
+    "..nCCCCCCCCCCn..",   # carapace widest
+    "n.nCCCCCCCCCCn.n",   # front legs
+    "n.nCDCCCCCDCn..n",   # wing-case seam
+    "n.nCCCCCCCCCn..n",   # mid legs
+    ".nnCCCCCCCCCnn..",   # rear legs
+    "..nDCCCCCCCDn...",   # abdomen
+    "...nDDDDDDDn....",   # abdomen tip
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+# ── GIANT_RAT: wide oval body, huge round ears, pointed snout.
+#    Silhouette is low and wide — completely unlike any humanoid.
+#    N/n = fur, S/s = face fur, E = beady eye
+GIANT_RAT = [
+    "................",
+    "..nN.......Nn...",   # big round ears
+    "..NNNNNNNNNNNn..",   # wide head
+    "..NNNsENNNNNNn..",   # eye + face
+    "..NNNNsNNNNNNn..",   # snout/muzzle
+    "..NNNCnCNNNNNn..",   # chin
+    ".nNNCCCCCCNNNn..",   # body top
+    ".nNNCCHCCCNNNn..",   # body highlight
+    ".nNNCCCCCCNNNn..",   # body
+    ".nNNDCCCCDNNNn..",   # body lower
+    "..nNNDCCDNNnn...",   # haunches
+    "...nNnDDnNn.....",   # back feet
+    "....nnn.........",   # tail base
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+# ── HATCHLING: small dragon/lizard — crest, long neck, four limbs.
+#    Clearly a creature, not a humanoid. Crest frill + scale accents.
+#    R = scale/fire accent, N/n = scales, C/H/D = body mass
+HATCHLING = [
+    "................",
+    ".....RNRRRNR....",   # head crest/frill
+    "....NNNNNNNNn...",   # head top
+    "....NNsENNNNn...",   # eye
+    "....NNNNNNNnn...",   # snout/jaw
+    "...RNNCCCNNRn...",   # neck
+    "..RNNCCCCCNNRn..",   # chest
+    ".RNNCCHCCCCNNRn.",   # chest highlight
+    ".RNNCCCCCCCNNRn.",   # body
+    "RNNNDCCCCCDNNNn.",   # body + limb attachment
+    ".NN..nCCCn..NN..",   # legs
+    "..N..nDCDn..Nn..",   # lower body
+    "..n..nDDn...n...",   # feet/claws
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
 _DUNGEON_OBJECT_GRIDS = {
     "chest":         DUNGEON_CHEST,
     "stairs_down":   DUNGEON_STAIRS_DOWN,
@@ -1568,8 +1656,18 @@ _ENEMY_GRIDS = {
     "Grak the Goblin King": GOBLIN_KING,
     "Goblin War Boss":      GOBLIN_KING,
     "Cave Bat":             CAVE_BAT,
-    "Cave-in Beetle":       CAVE_BAT,
-    "Lava Beetle":          CAVE_BAT,
+    "Lava Bat":             CAVE_BAT,
+    "Cave-in Beetle":       BEETLE,
+    "Lava Beetle":          BEETLE,
+    "Tunnel Beetle":        BEETLE,
+    "Corrupted Hatchling":  HATCHLING,
+    "Dragon Hatchling":     HATCHLING,
+    "Fire Lizard":          HATCHLING,
+    "Cinder Drake":         HATCHLING,
+    "Cave Drake":           HATCHLING,
+    "Giant Rat":            GIANT_RAT,
+    "Dungeon Rat":          GIANT_RAT,
+    "Sewer Rat":            GIANT_RAT,
     "Giant Spider Queen":   GIANT_SPIDER,
     "Spider Queen":         GIANT_SPIDER,
     "Broodmother Guard":    GIANT_SPIDER,
@@ -1664,6 +1762,29 @@ _ENEMY_PALETTE_OVERRIDES = {
                          'G':(215,172,30,255),'g':(138,108,18,255)},
     "Cave Bat":         {'C':(52,38,68,255),'D':(30,20,42,255),'H':(82,62,105,255),'K':(15,8,25,255),
                          'N':(65,48,85,255),'n':(38,25,52,255),'E':(240,80,80,255)},
+    "Lava Bat":         {'C':(52,38,68,255),'D':(30,20,42,255),'H':(82,62,105,255),'K':(15,8,25,255),
+                         'N':(65,48,85,255),'n':(38,25,52,255),'E':(240,80,80,255)},
+    # ── Beetles: dark chitinous carapace, glowing spots ──
+    "Lava Beetle":      {'C':(55,35,18,255),'D':(32,18,8,255),'H':(90,55,28,255),'K':(18,8,2,255),
+                         'N':(42,28,12,255),'n':(22,12,4,255),'E':(255,130,20,255)},
+    "Cave-in Beetle":   {'C':(38,38,38,255),'D':(20,20,20,255),'H':(65,62,58,255),'K':(8,8,8,255),
+                         'N':(30,28,25,255),'n':(15,12,10,255),'E':(180,210,255,255)},
+    "Tunnel Beetle":    {'C':(42,35,22,255),'D':(25,18,10,255),'H':(70,58,38,255),'K':(12,8,3,255),
+                         'N':(32,25,14,255),'n':(16,12,5,255),'E':(200,200,100,255)},
+    # ── Giant Rats / Rodents ──
+    "Giant Rat":        {'C':(105,88,72,255),'D':(65,52,38,255),'H':(148,128,105,255),'K':(32,22,12,255),
+                         'N':(118,98,78,255),'n':(70,55,38,255),'E':(220,80,80,255)},
+    "Dungeon Rat":      {'C':(82,75,65,255),'D':(48,42,32,255),'H':(118,108,92,255),'K':(22,18,12,255),
+                         'N':(95,85,70,255),'n':(55,48,35,255),'E':(200,80,80,255)},
+    "Sewer Rat":        {'C':(78,80,72,255),'D':(45,48,38,255),'H':(112,115,102,255),'K':(20,22,15,255),
+                         'N':(88,92,78,255),'n':(48,52,38,255),'E':(200,200,80,255)},
+    # ── Hatchlings / Small Drakes ──
+    "Corrupted Hatchling": {'C':(55,85,48,255),'D':(32,52,25,255),'H':(80,122,68,255),'K':(15,28,10,255),
+                         'N':(62,92,52,255),'n':(35,55,28,255),'R':(200,80,40,255),'E':(255,210,80,255)},
+    "Cinder Drake":     {'C':(130,48,22,255),'D':(80,25,10,255),'H':(180,75,38,255),'K':(42,10,3,255),
+                         'N':(148,55,25,255),'n':(88,30,12,255),'R':(255,165,30,255),'E':(255,220,50,255)},
+    "Fire Lizard":      {'C':(120,55,20,255),'D':(72,30,8,255),'H':(168,82,32,255),'K':(38,12,2,255),
+                         'N':(135,62,22,255),'n':(80,35,10,255),'R':(255,140,20,255),'E':(255,200,40,255)},
 }
 
 _ENEMY_BASE_COLORS = {
@@ -1687,6 +1808,16 @@ _ENEMY_BASE_COLORS = {
     "Orc Chieftain":    (88,112,55,255),
     "Goblin King":      (72,112,58,255),
     "Cave Bat":         (52,38,68,255),
+    "Lava Bat":         (52,38,68,255),
+    "Lava Beetle":      (55,35,18,255),
+    "Cave-in Beetle":   (38,38,38,255),
+    "Tunnel Beetle":    (42,35,22,255),
+    "Giant Rat":        (105,88,72,255),
+    "Dungeon Rat":      (82,75,65,255),
+    "Sewer Rat":        (78,80,72,255),
+    "Corrupted Hatchling": (55,85,48,255),
+    "Cinder Drake":     (130,48,22,255),
+    "Fire Lizard":      (120,55,20,255),
     # ── Bandits: rough leathers, browns and tawny rusts ──
     "Bandit Fighter":   (115, 82, 52, 255),
     "Bandit Archer":    (88, 102, 58, 255),
