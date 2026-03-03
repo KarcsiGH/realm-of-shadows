@@ -2693,7 +2693,98 @@ class Game:
             else:
                 self.go(S_PARTY)
 
+        elif event["type"] == "chest_approach":
+            # Party stepped onto a chest — open the interaction modal
+            chest_ev = event["data"]
+            if self.dungeon_ui:
+                self.dungeon_ui.chest_modal = {
+                    "step":     "approach",
+                    "chest_ev": chest_ev,
+                    "chest_x":  event.get("x"),
+                    "chest_y":  event.get("y"),
+                }
+
+        elif event["type"] == "chest_open":
+            # Party chose to open the chest (no trap, or trap disarmed)
+            chest_ev = event["chest_ev"]
+            self.dungeon.open_chest(chest_ev)
+            sfx.play("treasure_open")
+            is_secret = chest_ev.get("secret_chest", False)
+            gold  = chest_ev.get("gold", 0)
+            items = chest_ev.get("items", [])
+            if gold > 0:
+                share = gold // len(self.party)
+                remainder = gold % len(self.party)
+                for i, c in enumerate(self.party):
+                    c.gold += share + (1 if i < remainder else 0)
+            from core.party_knowledge import auto_identify_if_known, mark_item_identified
+            processed = []
+            for item in items:
+                item_copy = dict(item)
+                if is_secret:
+                    item_copy["identified"] = True
+                auto_identify_if_known(item_copy)
+                if item_copy.get("identified"):
+                    mark_item_identified(item_copy.get("name", ""))
+                processed.append(item_copy)
+            self.start_chest(gold, processed, is_secret=is_secret, return_state=S_DUNGEON)
+
+        elif event["type"] == "chest_trap_fire":
+            # Party triggered a chest trap (force opened or failed disarm)
+            sfx.play("trap_trigger")
+            trap     = event["trap_data"]
+            chest_ev = event["chest_ev"]
+            import random as rmod
+            from data.dungeon import resolve_trap_saving_throw
+            from core.status_effects import add_poison, add_curse
+
+            trap_name   = trap.get("name", "Trap")
+            dmg_base    = trap.get("damage", 10)
+            trap_target = trap.get("target", "single")
+
+            if trap_target == "area":
+                targets = list(self.party)
+            else:
+                targets = [self.party[0]]  # front character
+
+            msgs = []
+            for ch in targets:
+                dmg, saved = resolve_trap_saving_throw(ch, trap)
+                if saved:
+                    msgs.append(f"{ch.name} evaded the {trap_name}!")
+                else:
+                    ch.hp = max(0, ch.hp - dmg)
+                    msgs.append(f"{ch.name} hit by {trap_name} for {dmg} damage!")
+                if trap.get("poison") and not saved:
+                    add_poison(ch, trap["poison"])
+                if trap.get("curse") and not saved:
+                    add_curse(ch, trap["curse"])
+
+            if self.dungeon_ui:
+                for msg in msgs:
+                    self.dungeon_ui.show_event(msg, (220, 80, 60))
+
+            # Chest still opens after the trap fires — contents aren't destroyed
+            self.dungeon.open_chest(chest_ev)
+            gold  = chest_ev.get("gold", 0)
+            items = chest_ev.get("items", [])
+            if gold > 0:
+                share = gold // len(self.party)
+                remainder = gold % len(self.party)
+                for i, c in enumerate(self.party):
+                    c.gold += share + (1 if i < remainder else 0)
+            from core.party_knowledge import auto_identify_if_known, mark_item_identified
+            processed = []
+            for item in items:
+                item_copy = dict(item)
+                auto_identify_if_known(item_copy)
+                if item_copy.get("identified"):
+                    mark_item_identified(item_copy.get("name", ""))
+                processed.append(item_copy)
+            self.start_chest(gold, processed, return_state=S_DUNGEON)
+
         elif event["type"] == "treasure":
+
             sfx.play("treasure_open")
             data = event["data"]
             is_secret = data.get("secret_chest", False)

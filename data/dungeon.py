@@ -816,7 +816,31 @@ def _make_treasure_event(floor_num, rng):
             {"name": "Mana Crystal", "type": "consumable", "subtype": "crystal",
              "restore_mp": 30, "identified": True, "estimated_value": 35},
         ]))
-    return {"type": "treasure", "gold": gold, "items": items, "opened": False}
+
+    # ~30% of chests are trapped (scales slightly with floor depth)
+    trap_chance = 0.28 + floor_num * 0.04   # 32% floor1 → 48% floor5
+    trap_data = None
+    if rng.random() < trap_chance:
+        tier = max(1, min(5, floor_num))
+        trap_def = rng.choice(TRAP_TIERS[tier]["traps"])
+        dmg = rng.randint(trap_def["damage"][0], trap_def["damage"][1])
+        trap_data = {
+            "name":         trap_def["name"],
+            "tier":         tier,
+            "damage":       dmg,
+            "target":       trap_def["target"],
+            "save_stat":    trap_def["save_stat"],
+            "detect_base":  trap_def["detect_base"],
+            "disarm_base":  trap_def["disarm_base"],
+            "disarmed":     False,
+        }
+        if "poison" in trap_def:
+            trap_data["poison"] = trap_def["poison"]
+
+    return {
+        "type": "treasure", "gold": gold, "items": items, "opened": False,
+        "trap": trap_data,   # None if no trap
+    }
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -1060,8 +1084,9 @@ class DungeonState:
         elif tile["type"] == DT_TREASURE and tile.get("event"):
             ev = tile["event"]
             if not ev.get("opened"):
-                ev["opened"] = True
-                return {"type": "treasure", "data": ev}
+                # Don't auto-open — let the player search for traps first
+                return {"type": "chest_approach", "data": ev,
+                        "x": nx, "y": ny}
         elif tile["type"] == DT_TRAP and tile.get("event"):
             ev = tile["event"]
             if not ev.get("disarmed", False):
@@ -1261,7 +1286,67 @@ class DungeonState:
                         return True
         return False
 
-    def get_visible_tiles(self, view_w=22, view_h=18):
+    # ── Chest interaction ─────────────────────────────────────────
+
+    def search_chest_for_traps(self, chest_ev, character):
+        """Roll to detect a trap on a chest using a specific character.
+        Returns (found: bool, roll: int, needed: int).
+        Sets chest_ev['trap']['detected'] = True on success."""
+        trap = chest_ev.get("trap")
+        if not trap or trap.get("disarmed"):
+            return False, 0, 0   # no trap or already dealt with
+
+        base = trap.get("detect_base", 50)
+        bonus = 0
+        if character.class_name == "Thief":
+            bonus += 30 + character.level * 4
+        elif character.class_name == "Ranger":
+            bonus += 15 + character.level * 2
+        bonus += character.stats.get("DEX", 0)
+        bonus += character.stats.get("WIS", 0) // 2
+        from core.races import get_passive
+        bonus += get_passive(getattr(character, "race_name", "Human"), "trap_detect_bonus", 0)
+
+        needed = max(5, min(95, base + bonus // 2))
+        roll   = random.randint(1, 100)
+        if roll <= needed:
+            trap["detected"] = True
+            return True, roll, needed
+        return False, roll, needed
+
+    def disarm_chest_trap(self, chest_ev, character):
+        """Attempt to disarm a detected chest trap using a specific character.
+        Returns (success: bool, roll: int, needed: int).
+        On failure fires the trap — returns success=False and the trap must be
+        resolved by the caller."""
+        trap = chest_ev.get("trap")
+        if not trap or not trap.get("detected") or trap.get("disarmed"):
+            return False, 0, 0
+
+        base = trap.get("disarm_base", 40)
+        bonus = 0
+        if character.class_name == "Thief":
+            bonus += 35 + character.level * 4
+        elif character.class_name == "Ranger":
+            bonus += 10 + character.level * 2
+        bonus += character.stats.get("DEX", 0)
+        from core.races import get_passive
+        bonus += get_passive(getattr(character, "race_name", "Human"), "trap_detect_bonus", 0)
+
+        needed = max(5, min(95, base + bonus // 2))
+        roll   = random.randint(1, 100)
+        if roll <= needed:
+            trap["disarmed"] = True
+            return True, roll, needed
+        # Failed — trap fires
+        return False, roll, needed
+
+    def open_chest(self, chest_ev):
+        """Mark chest as opened and return treasure data ready for ChestUI."""
+        chest_ev["opened"] = True
+        return chest_ev
+
+
         """Get tiles visible in viewport, centered on party."""
         floor = self.floors[self.current_floor]
         half_w = view_w // 2

@@ -182,6 +182,9 @@ class DungeonUI:
         self.show_stairs_confirm = False
         self.stairs_direction    = None
 
+        # Chest interaction modal
+        self.chest_modal         = None   # None or dict with modal state
+
         self.fading_intensity = 0.0
         self._update_fading()
 
@@ -366,6 +369,9 @@ class DungeonUI:
             else:
                 t, m = "Leave Dungeon?", "Return to the surface."
             self._draw_confirm_dialog(surface, mx, my, t, m, "Yes", "No", "stairs")
+        if self.chest_modal:
+            self._draw_chest_modal(surface, mx, my)
+
 
         if (self.event_message and self.event_timer > 0) or self.event_queue:
             self._draw_events(surface)
@@ -821,7 +827,233 @@ class DungeonUI:
     #  DIALOGS
     # ─────────────────────────────────────────────────────────
 
+    def _draw_chest_modal(self, surface, mx, my):
+        """Render the multi-step chest interaction modal."""
+        m = self.chest_modal
+        if not m:
+            return
+
+        # ── Layout ────────────────────────────────────────────
+        dw, dh = 520, 300
+        dx = SCREEN_W // 2 - dw // 2
+        dy = SCREEN_H // 2 - dh // 2
+
+        # Backdrop
+        overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 160))
+        surface.blit(overlay, (0, 0))
+
+        pygame.draw.rect(surface, (20, 14, 8), (dx, dy, dw, dh), border_radius=6)
+        pygame.draw.rect(surface, GOLD, (dx, dy, dw, dh), 2, border_radius=6)
+
+        ft  = pygame.font.SysFont("courier,monospace", 18, bold=True)
+        fm  = pygame.font.SysFont("courier,monospace", 14)
+        fsm = pygame.font.SysFont("courier,monospace", 12)
+
+        def btn_rect(col, row, n_cols=2):
+            bw = (dw - 60) // n_cols - 8
+            bh = 36
+            bx = dx + 30 + col * (bw + 8)
+            by = dy + dh - 56 + row * 44
+            return pygame.Rect(bx, by, bw, bh)
+
+        def draw_btn(rect, label, enabled=True, danger=False):
+            if not enabled:
+                col_bg, col_bd, col_tx = (22, 18, 14), (40, 32, 20), GREY
+            elif rect.collidepoint(mx, my):
+                col_bg = (100, 30, 20) if danger else (70, 50, 18)
+                col_bd, col_tx = (220, 60, 40) if danger else GOLD, GOLD
+            else:
+                col_bg = (55, 18, 12) if danger else (38, 28, 14)
+                col_bd = (180, 50, 30) if danger else (70, 55, 32)
+                col_tx = (220, 80, 60) if danger else GOLD
+            pygame.draw.rect(surface, col_bg, rect, border_radius=3)
+            pygame.draw.rect(surface, col_bd, rect, 1, border_radius=3)
+            t = fm.render(label, True, col_tx)
+            surface.blit(t, (rect.x + rect.w // 2 - t.get_width() // 2,
+                             rect.y + rect.h // 2 - t.get_height() // 2))
+
+        step = m["step"]
+        trap = m["chest_ev"].get("trap")
+        has_trap = bool(trap and not trap.get("disarmed"))
+
+        # ── Step: APPROACH ─────────────────────────────────────
+        if step == "approach":
+            title = "A Chest!" if not has_trap else "A Chest!"
+            t = ft.render(title, True, GOLD)
+            surface.blit(t, (dx + dw // 2 - t.get_width() // 2, dy + 14))
+
+            # Chest description line
+            trap_hint = ""
+            if trap and trap.get("detected"):
+                trap_hint = f"  ⚠  Trapped: {trap['name']}"
+            elif trap:
+                trap_hint = "  (trap status unknown)"
+
+            lines = [
+                "You approach the chest.",
+                trap_hint,
+                "What does the party do?",
+            ]
+            for i, ln in enumerate(lines):
+                if not ln:
+                    continue
+                col = (220, 80, 60) if "Trapped" in ln else CREAM
+                s = fm.render(ln, True, col)
+                surface.blit(s, (dx + 20, dy + 52 + i * 22))
+
+            # Buttons: Search | Open | Leave
+            b_search = btn_rect(0, 0, 3)
+            b_open   = btn_rect(1, 0, 3)
+            b_leave  = btn_rect(2, 0, 3)
+            draw_btn(b_search, "Search")
+            open_label = "Force Open" if (trap and trap.get("detected") and not trap.get("disarmed")) else "Open"
+            draw_btn(b_open, open_label, danger=(trap and trap.get("detected") and not trap.get("disarmed")))
+            draw_btn(b_leave, "Leave")
+            m["_btns"] = {"search": b_search, "open": b_open, "leave": b_leave}
+
+        # ── Step: PICK SEARCHER ────────────────────────────────
+        elif step == "pick_searcher":
+            t = ft.render("Who searches for traps?", True, GOLD)
+            surface.blit(t, (dx + dw // 2 - t.get_width() // 2, dy + 14))
+            hint = fm.render("Thieves & Rangers have higher detection skill.", True, CREAM)
+            surface.blit(hint, (dx + dw // 2 - hint.get_width() // 2, dy + 44))
+
+            party = self.dungeon.party
+            btn_rects = {}
+            for i, ch in enumerate(party):
+                col_i = i % 2
+                row_i = i // 2
+                bw, bh = (dw - 60) // 2 - 6, 46
+                bx = dx + 28 + col_i * (bw + 8)
+                by = dy + 80 + row_i * (bh + 6)
+                br = pygame.Rect(bx, by, bw, bh)
+                hov = br.collidepoint(mx, my)
+                bg = (55, 40, 18) if hov else (28, 22, 12)
+                bd = GOLD if hov else (60, 48, 24)
+                pygame.draw.rect(surface, bg, br, border_radius=3)
+                pygame.draw.rect(surface, bd, br, 1, border_radius=3)
+                # Name + class
+                name_t = fm.render(ch.name, True, GOLD)
+                cls_t  = fsm.render(f"{ch.class_name}  DEX:{ch.stats.get('DEX',0)}  WIS:{ch.stats.get('WIS',0)}", True, CREAM)
+                surface.blit(name_t, (bx + 8, by + 4))
+                surface.blit(cls_t, (bx + 8, by + 22))
+                btn_rects[i] = br
+
+            # Back button
+            b_back = pygame.Rect(dx + dw // 2 - 60, dy + dh - 52, 120, 34)
+            draw_btn(b_back, "Back")
+            btn_rects["back"] = b_back
+            m["_btns"] = btn_rects
+
+        # ── Step: SEARCH RESULT ────────────────────────────────
+        elif step == "search_result":
+            found   = m.get("search_found", False)
+            roll    = m.get("search_roll", 0)
+            needed  = m.get("search_needed", 0)
+            searcher = m.get("searcher_name", "")
+            t_title = "Trap Found!" if found else "Nothing Found"
+            col_title = (220, 80, 60) if found else (100, 220, 100)
+            t = ft.render(t_title, True, col_title)
+            surface.blit(t, (dx + dw // 2 - t.get_width() // 2, dy + 14))
+
+            result_line = f"{searcher} rolled {roll} (needed ≤{needed})"
+            lines = [result_line]
+            if found:
+                lines.append(f"Trap: {trap['name']}  —  Tier {trap.get('tier',1)}")
+                lines.append("What does the party do?")
+            else:
+                lines.append("No trap detected. The chest looks safe.")
+                lines.append("(There may still be one — they're not always visible.)")
+                lines.append("What does the party do?")
+            for i, ln in enumerate(lines):
+                col = (220, 80, 60) if "Trap:" in ln else CREAM
+                s = fm.render(ln, True, col)
+                surface.blit(s, (dx + 20, dy + 52 + i * 22))
+
+            if found:
+                b_disarm = btn_rect(0, 0, 3)
+                b_force  = btn_rect(1, 0, 3)
+                b_leave  = btn_rect(2, 0, 3)
+                draw_btn(b_disarm, "Disarm")
+                draw_btn(b_force, "Force Open", danger=True)
+                draw_btn(b_leave, "Leave")
+                m["_btns"] = {"disarm": b_disarm, "force": b_force, "leave": b_leave}
+            else:
+                b_open  = btn_rect(0, 0, 2)
+                b_leave = btn_rect(1, 0, 2)
+                draw_btn(b_open, "Open")
+                draw_btn(b_leave, "Leave")
+                m["_btns"] = {"open": b_open, "leave": b_leave}
+
+        # ── Step: PICK DISARMER ────────────────────────────────
+        elif step == "pick_disarmer":
+            t = ft.render("Who attempts to disarm?", True, GOLD)
+            surface.blit(t, (dx + dw // 2 - t.get_width() // 2, dy + 14))
+            trap_line = fm.render(f"Trap: {trap['name']}", True, (220, 80, 60))
+            surface.blit(trap_line, (dx + dw // 2 - trap_line.get_width() // 2, dy + 44))
+
+            party = self.dungeon.party
+            btn_rects = {}
+            for i, ch in enumerate(party):
+                col_i = i % 2
+                row_i = i // 2
+                bw, bh = (dw - 60) // 2 - 6, 46
+                bx = dx + 28 + col_i * (bw + 8)
+                by = dy + 80 + row_i * (bh + 6)
+                br = pygame.Rect(bx, by, bw, bh)
+                hov = br.collidepoint(mx, my)
+                bg = (55, 40, 18) if hov else (28, 22, 12)
+                bd = GOLD if hov else (60, 48, 24)
+                pygame.draw.rect(surface, bg, br, border_radius=3)
+                pygame.draw.rect(surface, bd, br, 1, border_radius=3)
+                name_t = fm.render(ch.name, True, GOLD)
+                cls_t  = fsm.render(f"{ch.class_name}  DEX:{ch.stats.get('DEX',0)}", True, CREAM)
+                surface.blit(name_t, (bx + 8, by + 4))
+                surface.blit(cls_t, (bx + 8, by + 22))
+                btn_rects[i] = br
+
+            b_back = pygame.Rect(dx + dw // 2 - 60, dy + dh - 52, 120, 34)
+            draw_btn(b_back, "Back")
+            btn_rects["back"] = b_back
+            m["_btns"] = btn_rects
+
+        # ── Step: DISARM RESULT ────────────────────────────────
+        elif step == "disarm_result":
+            success  = m.get("disarm_success", False)
+            roll     = m.get("disarm_roll", 0)
+            needed   = m.get("disarm_needed", 0)
+            disarmer = m.get("disarmer_name", "")
+            t_title  = "Trap Disarmed!" if success else "Disarm Failed!"
+            col_title = (100, 220, 100) if success else (220, 80, 60)
+            t = ft.render(t_title, True, col_title)
+            surface.blit(t, (dx + dw // 2 - t.get_width() // 2, dy + 14))
+
+            result_line = f"{disarmer} rolled {roll} (needed ≤{needed})"
+            lines = [result_line]
+            if success:
+                lines.append("The trap is safely disarmed.")
+                lines.append("You may now open the chest.")
+            else:
+                lines.append("The trap fires!")
+            for i, ln in enumerate(lines):
+                s = fm.render(ln, True, CREAM)
+                surface.blit(s, (dx + 20, dy + 52 + i * 22))
+
+            if success:
+                b_open = btn_rect(0, 0, 2)
+                b_leave = btn_rect(1, 0, 2)
+                draw_btn(b_open, "Open Chest")
+                draw_btn(b_leave, "Leave")
+                m["_btns"] = {"open": b_open, "leave": b_leave}
+            else:
+                # Trap fires — only a dismiss button, main.py handles damage
+                b_ok = btn_rect(0, 0, 1)
+                draw_btn(b_ok, "Continue", danger=True)
+                m["_btns"] = {"continue_trap": b_ok}
+
     def _draw_confirm_dialog(self, surface, mx, my, title, msg, yes_lbl, no_lbl, tag):
+
         dw, dh = 400, 160
         dx = SCREEN_W//2 - dw//2
         dy = SCREEN_H//2 - dh//2
@@ -865,7 +1097,7 @@ class DungeonUI:
 
     def _process_held_keys(self, ds):
         """Animate in-progress move/turn. Called every frame."""
-        if self.show_camp_confirm or self.show_stairs_confirm:
+        if self.show_camp_confirm or self.show_stairs_confirm or self.chest_modal:
             return
 
         MOVE_DUR = 0.12   # seconds to slide one tile
@@ -896,7 +1128,7 @@ class DungeonUI:
 
     def _grid_step(self, key):
         """Handle a single discrete movement or turn keypress."""
-        if self.show_camp_confirm or self.show_stairs_confirm:
+        if self.show_camp_confirm or self.show_stairs_confirm or self.chest_modal:
             return
         if self._step_cooldown > 0:
             return
@@ -971,7 +1203,7 @@ class DungeonUI:
             self._pending_event = None
             return ev
 
-        if self.show_camp_confirm or self.show_stairs_confirm:
+        if self.show_camp_confirm or self.show_stairs_confirm or self.chest_modal:
             return None
 
         if key == pygame.K_RETURN:
@@ -1020,6 +1252,9 @@ class DungeonUI:
                 self.show_camp_confirm = False
             return None
 
+        if self.chest_modal:
+            return self._handle_chest_modal_click(mx, my)
+
         by = SCREEN_H - HUD_H
         if pygame.Rect(8, by+HUD_H-34, 108, 26).collidepoint(mx,my):
             self.show_camp_confirm = True; return None
@@ -1028,6 +1263,94 @@ class DungeonUI:
         if pygame.Rect(244, by+HUD_H-34, 118, 26).collidepoint(mx,my):
             return self._try_disarm()
         return None
+
+    def _handle_chest_modal_click(self, mx, my):
+        """Process clicks inside the chest modal. Returns event dict or None."""
+        m = self.chest_modal
+        btns = m.get("_btns", {})
+        step = m["step"]
+        chest_ev = m["chest_ev"]
+
+        # ── APPROACH ──────────────────────────────────────────
+        if step == "approach":
+            if btns.get("leave") and btns["leave"].collidepoint(mx, my):
+                self.chest_modal = None
+                return None
+            if btns.get("search") and btns["search"].collidepoint(mx, my):
+                m["step"] = "pick_searcher"
+                return None
+            if btns.get("open") and btns["open"].collidepoint(mx, my):
+                # Force open — fires trap if present and not disarmed
+                trap = chest_ev.get("trap")
+                if trap and not trap.get("disarmed"):
+                    self.chest_modal = None
+                    # Fire the trap immediately
+                    return {"type": "chest_trap_fire", "trap_data": trap, "chest_ev": chest_ev}
+                # Safe open
+                self.chest_modal = None
+                return {"type": "chest_open", "chest_ev": chest_ev}
+
+        # ── PICK SEARCHER ──────────────────────────────────────
+        elif step == "pick_searcher":
+            if btns.get("back") and btns["back"].collidepoint(mx, my):
+                m["step"] = "approach"
+                return None
+            for i, ch in enumerate(self.dungeon.party):
+                if i in btns and btns[i].collidepoint(mx, my):
+                    found, roll, needed = self.dungeon.search_chest_for_traps(chest_ev, ch)
+                    m["step"]          = "search_result"
+                    m["search_found"]  = found
+                    m["search_roll"]   = roll
+                    m["search_needed"] = needed
+                    m["searcher_name"] = ch.name
+                    return None
+
+        # ── SEARCH RESULT ──────────────────────────────────────
+        elif step == "search_result":
+            if btns.get("leave") and btns["leave"].collidepoint(mx, my):
+                self.chest_modal = None
+                return None
+            if btns.get("open") and btns["open"].collidepoint(mx, my):
+                self.chest_modal = None
+                return {"type": "chest_open", "chest_ev": chest_ev}
+            if btns.get("disarm") and btns["disarm"].collidepoint(mx, my):
+                m["step"] = "pick_disarmer"
+                return None
+            if btns.get("force") and btns["force"].collidepoint(mx, my):
+                trap = chest_ev.get("trap")
+                self.chest_modal = None
+                return {"type": "chest_trap_fire", "trap_data": trap, "chest_ev": chest_ev}
+
+        # ── PICK DISARMER ──────────────────────────────────────
+        elif step == "pick_disarmer":
+            if btns.get("back") and btns["back"].collidepoint(mx, my):
+                m["step"] = "search_result"
+                return None
+            for i, ch in enumerate(self.dungeon.party):
+                if i in btns and btns[i].collidepoint(mx, my):
+                    success, roll, needed = self.dungeon.disarm_chest_trap(chest_ev, ch)
+                    m["step"]           = "disarm_result"
+                    m["disarm_success"] = success
+                    m["disarm_roll"]    = roll
+                    m["disarm_needed"]  = needed
+                    m["disarmer_name"]  = ch.name
+                    return None
+
+        # ── DISARM RESULT ──────────────────────────────────────
+        elif step == "disarm_result":
+            if btns.get("leave") and btns["leave"].collidepoint(mx, my):
+                self.chest_modal = None
+                return None
+            if btns.get("open") and btns["open"].collidepoint(mx, my):
+                self.chest_modal = None
+                return {"type": "chest_open", "chest_ev": chest_ev}
+            if btns.get("continue_trap") and btns["continue_trap"].collidepoint(mx, my):
+                trap = chest_ev.get("trap")
+                self.chest_modal = None
+                return {"type": "chest_trap_fire", "trap_data": trap, "chest_ev": chest_ev}
+
+        return None
+
 
     def _try_disarm(self):
         px, py = self.dungeon.party_x, self.dungeon.party_y
