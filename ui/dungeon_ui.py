@@ -16,6 +16,7 @@ Public interface (unchanged from v2):
 
 import pygame, math, random
 from ui.renderer import SCREEN_W, SCREEN_H, CREAM, GOLD
+from ui.pixel_art import draw_dungeon_object
 from data.dungeon import (
     DungeonState, PASSABLE_TILES,
     DT_WALL, DT_FLOOR, DT_CORRIDOR,
@@ -535,33 +536,15 @@ class DungeonUI:
                     pygame.draw.rect(spr, (0,0,0,200), ((surf_w-iw)//2, surf_h-ih, iw, ih))
 
                 elif icon_key == DT_STAIRS_DOWN:
-                    # Downward stairs: wide at top, narrow at bottom (descending)
-                    steps = 5
-                    sw = max(6, surf_w * 4 // 5)
-                    ox = (surf_w - sw) // 2
-                    for si in range(steps):
-                        frac = (steps - si) / steps
-                        iw_ = max(2, int(sw * frac))
-                        sy_ = surf_h - (si + 1) * surf_h // (steps + 1)
-                        sh_ = max(2, surf_h // (steps + 2))
-                        pygame.draw.rect(spr, dim, (ox + (sw - iw_)//2, sy_, iw_, sh_))
-                        pygame.draw.rect(spr, c_a, (ox + (sw - iw_)//2, sy_, iw_, sh_), 1)
+                    obj_r = pygame.Rect(0, 0, surf_w, surf_h)
+                    draw_dungeon_object(spr, obj_r, "stairs_down")
 
                 elif icon_key == DT_STAIRS_UP:
-                    # Upward stairs: narrow at top, wide at bottom (ascending)
-                    steps = 5
-                    sw = max(6, surf_w * 4 // 5)
-                    ox = (surf_w - sw) // 2
-                    for si in range(steps):
-                        frac = (si + 1) / steps
-                        iw_ = max(2, int(sw * frac))
-                        sy_ = si * surf_h // (steps + 1)
-                        sh_ = max(2, surf_h // (steps + 2))
-                        pygame.draw.rect(spr, dim, (ox + (sw - iw_)//2, sy_, iw_, sh_))
-                        pygame.draw.rect(spr, c_a, (ox + (sw - iw_)//2, sy_, iw_, sh_), 1)
+                    obj_r = pygame.Rect(0, 0, surf_w, surf_h)
+                    draw_dungeon_object(spr, obj_r, "stairs_up")
 
                 elif icon_key == DT_INTERACTABLE:
-                    # Shrine/fountain — check if already used
+                    # Check if shrine/fountain is already used
                     fl_d2 = self.dungeon.get_current_floor_data()
                     _ity, _itx = int(ty), int(tx)
                     if 0<=_ity<fl_d2["height"] and 0<=_itx<fl_d2["width"]:
@@ -569,45 +552,12 @@ class DungeonUI:
                         i_used = i_ev.get("used", False)
                     else:
                         i_used = False
-                    bw = max(6, surf_w * 3 // 4)
-                    bh = max(3, surf_h // 5)
-                    ox = (surf_w - bw) // 2
-                    if i_used:
-                        # Dry, spent shrine — dim grey, no glow
-                        dry = (70, 65, 60, alpha // 2)
-                        dry_b = (90, 85, 80, alpha // 2)
-                        pygame.draw.ellipse(spr, dry, (ox, surf_h - bh - 2, bw, bh))
-                        pygame.draw.ellipse(spr, dry_b, (ox, surf_h - bh - 2, bw, bh), 1)
-                        pw2 = max(2, surf_w // 6)
-                        pygame.draw.rect(spr, dry, ((surf_w - pw2)//2, surf_h//4, pw2, surf_h//2))
-                        # Crack mark instead of glow
-                        pygame.draw.line(spr, dry_b, (surf_w//2-2, surf_h//6), (surf_w//2+2, surf_h//4), 1)
-                    else:
-                        # Active shrine — glowing basin + pillar
-                        pygame.draw.ellipse(spr, dim, (ox, surf_h - bh - 2, bw, bh))
-                        pygame.draw.ellipse(spr, c_a, (ox, surf_h - bh - 2, bw, bh), 2)
-                        pw2 = max(2, surf_w // 6)
-                        pygame.draw.rect(spr, dim, ((surf_w - pw2)//2, surf_h//4, pw2, surf_h//2))
-                        pygame.draw.rect(spr, c_a, ((surf_w - pw2)//2, surf_h//4, pw2, surf_h//2), 1)
-                        pygame.draw.circle(spr, c_a, (surf_w//2, surf_h//5), max(2, surf_w//8))
+                    obj_r = pygame.Rect(0, 0, surf_w, surf_h)
+                    draw_dungeon_object(spr, obj_r, "shrine_used" if i_used else "shrine_active")
 
                 elif icon_key == DT_TREASURE:
-                    # Chest: sits on floor (bottom 2/3 of sprite), wood+metal
-                    cw = max(6, surf_w * 3 // 4)
-                    ch_ = max(4, surf_h * 2 // 5)   # shorter = less floating
-                    ox = (surf_w - cw) // 2
-                    oy = surf_h - ch_ - 2            # grounded at bottom
-                    # Body
-                    pygame.draw.rect(spr, dim, (ox, oy + ch_//3, cw, ch_ * 2//3))
-                    pygame.draw.rect(spr, c_a, (ox, oy + ch_//3, cw, ch_ * 2//3), 2)
-                    # Lid (slightly wider)
-                    pygame.draw.rect(spr, (int(color[0]*0.7), int(color[1]*0.7), int(color[2]*0.7), alpha),
-                                     (ox - 1, oy, cw + 2, ch_//3 + 2), border_radius=1)
-                    pygame.draw.rect(spr, c_a, (ox - 1, oy, cw + 2, ch_//3 + 2), 1, border_radius=1)
-                    # Lock
-                    pygame.draw.circle(spr, c_a, (surf_w//2, oy + ch_//2), max(2, cw//8))
-                    # Metal bands
-                    pygame.draw.line(spr, c_a, (ox, oy + ch_//3 + ch_//4), (ox+cw, oy + ch_//3 + ch_//4), 1)
+                    obj_r = pygame.Rect(0, 0, surf_w, surf_h)
+                    draw_dungeon_object(spr, obj_r, "chest")
 
                 elif icon_key in ("enemy", "boss"):
                     # Menacing skull shape

@@ -1352,6 +1352,142 @@ CAVE_BAT = [
 ]
 
 # ═══════════════════════════════════════════════════════════════
+#  DUNGEON OBJECT GRIDS
+#  16 wide, variable height. Use only _FIXED palette chars.
+#  S s M m G g W w E N n R B b P p .
+# ═══════════════════════════════════════════════════════════════
+
+# TREASURE CHEST: arched lid, wood body, gold lock, metal bands
+DUNGEON_CHEST = [
+    "................",
+    "................",
+    "..mmmmmmmmmmmm..",   # lid outline top
+    ".mBBBBBBBBBBBBm.",   # lid highlight face
+    ".mBBBBBBBBBBBBm.",   # lid face
+    ".mMMMMMMMMMMMMMm",   # lid bottom / metal trim
+    "..mmmmmmmmmmmmm.",   # metal band (lid-body divider)
+    "..mWWWWWWWWWWWm.",   # body top
+    "..mWWWWGgGWWWWm.",   # lock row
+    "..mWWWGgGgGWWWm.",   # lock center
+    "..mWWWWGgGWWWWm.",   # lock row bottom
+    "..mWWWWWWWWWWWm.",   # body lower
+    "..mwwwwwwwwwwwm.",   # base dark band
+    "...mmmmmmmmmmm..",   # base trim
+    "................",
+    "................",
+]
+
+# STAIRS DOWN: wide nearest step at top, each narrows descending
+# Stone palette: B=lit face, b=shadow, m=deep edge
+DUNGEON_STAIRS_DOWN = [
+    "................",
+    "mmmmmmmmmmmmmmmm",   # near step edge (widest)
+    "BBBBBBBBBBBBBBBB",   # near step face
+    "bbbbbbbbbbbbbbbb",   # near step underside
+    ".mmmmmmmmmmmmm..",   # step 2 edge
+    ".BBBBBBBBBBBBB..",   # step 2 face
+    ".bbbbbbbbbbbbb..",   # step 2 underside
+    "..mmmmmmmmmm....",   # step 3 edge
+    "..BBBBBBBBBB....",   # step 3 face
+    "..bbbbbbbbbb....",   # step 3 underside
+    "...mmmmmmmmm....",   # step 4 edge
+    "...BBBBBBBBB....",   # step 4 face
+    "...bbbbbbbbb....",   # step 4 underside
+    "....mmmmmm......",   # step 5 (deepest)
+    "....BBBBBB......",   # step 5 face
+    "................",
+]
+
+# STAIRS UP: narrow top, widens toward viewer at bottom
+DUNGEON_STAIRS_UP = [
+    "................",
+    "....mmmmmm......",   # step 5 top (furthest, narrowest)
+    "....BBBBBB......",   # step 5 face
+    "....bbbbbb......",   # step 5 underside
+    "...mmmmmmmmm....",   # step 4
+    "...BBBBBBBBB....",
+    "...bbbbbbbbb....",
+    "..mmmmmmmmmm....",   # step 3
+    "..BBBBBBBBBB....",
+    "..bbbbbbbbbb....",
+    ".mmmmmmmmmmmmm..",   # step 2
+    ".BBBBBBBBBBBBB..",
+    ".bbbbbbbbbbbbb..",
+    "mmmmmmmmmmmmmmmm",   # step 1 (nearest, widest)
+    "BBBBBBBBBBBBBBBB",
+    "bbbbbbbbbbbbbbbb",
+]
+
+# SHRINE ACTIVE: stone pedestal with glowing arcane basin
+# E=arcane glow, B=stone face, b=stone shadow, M=pillar bright, m=pillar shadow
+DUNGEON_SHRINE_ACTIVE = [
+    "................",
+    "......EEEEEE....",   # glow halo top
+    ".....EEEEEEEEb..",   # glow wide
+    "....EEbbbbbbEEb.",   # basin rim glow
+    "....EbBBBBBBbEb.",   # basin rim stone face
+    "....EbBEEEEBbEb.",   # basin interior (glowing water)
+    "....EbBEEEEBbEb.",   # basin interior
+    "....EbBBBBBBbEb.",   # basin lower rim
+    "....EEbbbbbbEE..",   # basin base glow
+    ".....MMMMMMMM...",   # pedestal cap
+    "......mMMMMm....",   # shaft top
+    "......mMMMMm....",   # shaft
+    "......mMMMMm....",   # shaft
+    ".....mmMMMMmm...",   # base flare
+    "....mmMMMMMMMm..",   # base wide
+    "...mMMMMMMMMMMm.",   # base widest
+    "..mmmmmmmmmmmmm.",   # base trim
+    "................",
+    "................",
+    "................",
+]
+
+# SHRINE USED: same shape, no glow, dry and cracked
+DUNGEON_SHRINE_USED = [
+    "................",
+    "................",
+    "................",
+    "....bbbbbbbbbb..",   # dry basin rim
+    "....bBBBBBBBbb..",   # basin face
+    "....bBbbbbbbBb..",   # dry dark interior
+    "....bBbbbbbbBb..",   # dry dark interior
+    "....bBBBBBBBbb..",   # basin lower
+    "....bbbbbbbbbb..",   # basin base dry
+    ".....MMMMMMMM...",   # pedestal cap
+    "......mMMMMm....",   # shaft
+    "......mMMMMm....",   # shaft
+    "......mMbMbm....",   # cracked shaft
+    ".....mmMMMMmm...",   # base flare
+    "....mmMMMMMMMm..",   # base wide
+    "...mMMMMMMMMMMm.",   # base widest
+    "..mmmmmmmmmmmmm.",   # base trim
+    "................",
+    "................",
+    "................",
+]
+
+_DUNGEON_OBJECT_GRIDS = {
+    "chest":         DUNGEON_CHEST,
+    "stairs_down":   DUNGEON_STAIRS_DOWN,
+    "stairs_up":     DUNGEON_STAIRS_UP,
+    "shrine_active": DUNGEON_SHRINE_ACTIVE,
+    "shrine_used":   DUNGEON_SHRINE_USED,
+}
+
+
+def draw_dungeon_object(surface, rect, obj_type):
+    """
+    Render a dungeon object (chest, stairs, shrine) using the pixel art grid system.
+    obj_type: 'chest' | 'stairs_down' | 'stairs_up' | 'shrine_active' | 'shrine_used'
+    """
+    grid = _DUNGEON_OBJECT_GRIDS.get(obj_type, DUNGEON_CHEST)
+    pal  = dict(_FIXED)
+    sprite = _render(grid, pal, rect.w, rect.h)
+    surface.blit(sprite, rect.topleft)
+
+
+# ═══════════════════════════════════════════════════════════════
 #  REGISTRIES
 # ═══════════════════════════════════════════════════════════════
 _CHAR_GRIDS = {
