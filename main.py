@@ -1921,9 +1921,9 @@ class Game:
         if self.camp_ui:
             self.camp_ui.draw(self.screen, mx, my)
 
-    def start_combat(self, encounter_key):
+    def start_combat(self, encounter_key, surprise=None):
         """Initialize combat with an encounter."""
-        self.combat_state = CombatState(self.party, encounter_key)
+        self.combat_state = CombatState(self.party, encounter_key, surprise=surprise)
         self.combat_ui = CombatUI(self.combat_state)
         self.enemy_turn_delay = 0
         # Tutorial hints — queue first-combat hints with a short delay
@@ -2428,6 +2428,8 @@ class Game:
                 # but thornhaven visit starts main_thornhaven objective)
                 if town_id == "thornhaven":
                     start_quest("main_thornhaven")  # safe: no-op if already started
+                if town_id == "briarhollow":
+                    start_quest("main_meet_maren")  # auto-start intro quest (Elder Thom not in TOWN_NPCS)
 
                 # ── Act 1 Climax: Shadow attack on Briarhollow ──
                 # Fires once, after Hearthstone 1 is collected, on next visit to Briarhollow
@@ -2541,8 +2543,7 @@ class Game:
                             self.start_combat(boss_enc)
                         else:
                             # Peaceful resolution (e.g., Grak spared)
-                            # Give hearthstone fragment to party leader
-                            from core.story_flags import get_flag
+                            from core.story_flags import get_flag, collect_hearthstone, set_flag, defeat_boss
                             if get_flag("choice.grak_spared"):
                                 hearthstone = {
                                     "name": "Hearthstone Fragment (Warren)",
@@ -2556,11 +2557,26 @@ class Game:
                                 self.party[0].add_item(hearthstone)
                                 self.dungeon_ui.show_event(
                                     "Received: Hearthstone Fragment!", GOLD)
+                                # Sync hearthstone count — same flags the combat kill path sets
+                                collect_hearthstone(1)
+                                set_flag("hearthstone.goblin_warren", True)
+                                set_flag("boss_defeated.goblin_warren", True)
+                                defeat_boss("grak")
+                                # Unlock Spider's Nest (same key grant as kill path)
+                                if self.world_state and not self.world_state.has_key("thornwood_map"):
+                                    self.world_state.add_key("thornwood_map")
+                                    from data.world_map import LOCATIONS
+                                    for lid, loc in LOCATIONS.items():
+                                        if loc.get("required_key") == "thornwood_map":
+                                            loc["visible"] = True
+                                            self.world_state.discovered_locations.add(lid)
+                                from core.story_flags import auto_advance_quests
+                                auto_advance_quests(self.party)
                             self.go_fade(S_DUNGEON)
                     self.start_dialogue(boss_npc, return_state=S_DUNGEON,
                                         callback=after_boss_dialogue)
                     return
-            self.start_combat(enc_key)
+            self.start_combat(enc_key, surprise=event.get("surprise"))
 
         elif event["type"] == "fixed_encounter":
             enc_key = self.dungeon_state.get_encounter_key()

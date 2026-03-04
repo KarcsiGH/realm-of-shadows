@@ -1977,7 +1977,12 @@ class CombatState:
     Tracks turn order, round number, combat log, victory/defeat.
     """
 
-    def __init__(self, party_chars, encounter_key):
+    def __init__(self, party_chars, encounter_key, surprise=None):
+        """
+        surprise: None | "enemy" | "party"
+          "enemy"  — enemies ambush party; players skip round 1
+          "party"  — party surprises enemies; enemies skip round 1
+        """
         from data.enemies import build_encounter
 
         self.round_num = 1
@@ -2066,6 +2071,17 @@ class CombatState:
         self.all_combatants = self.players + self.enemies
         self.turn_order = build_turn_order(self.all_combatants)
 
+        # Apply surprise — surprised side skips their first turn
+        self.surprise = surprise
+        if surprise == "enemy":
+            for p in self.players:
+                p["surprise_skip"] = True
+            self.log("⚡ AMBUSH! The enemy attacks before you can react!")
+        elif surprise == "party":
+            for e in self.enemies:
+                e["surprise_skip"] = True
+            self.log("⚡ SURPRISE! You catch the enemy off guard!")
+
         # XP tracking: count rounds each player was alive (conscious)
         self.rounds_alive = {p["uid"]: 0 for p in self.players}
 
@@ -2104,10 +2120,18 @@ class CombatState:
         """Move to the next combatant's turn. Handle end-of-round."""
         self.current_turn_index += 1
 
-        # Skip dead combatants
-        while (self.current_turn_index < len(self.turn_order) and
-               not self.turn_order[self.current_turn_index]["alive"]):
-            self.current_turn_index += 1
+        # Skip dead combatants and round-1 surprised combatants
+        while self.current_turn_index < len(self.turn_order):
+            c = self.turn_order[self.current_turn_index]
+            if not c["alive"]:
+                self.current_turn_index += 1
+                continue
+            if c.get("surprise_skip") and self.round_num == 1:
+                self.log(f"{c['name']} is caught off guard and cannot act!")
+                c["surprise_skip"] = False
+                self.current_turn_index += 1
+                continue
+            break
 
         # Check victory/defeat
         if not any(p["alive"] for p in self.players):
