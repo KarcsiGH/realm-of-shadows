@@ -1067,8 +1067,12 @@ class TownUI:
         self._draw_party_bar(surface, mx, my)
 
     def _return_to_town(self):
-        """Return to the main town hub menu."""
-        self.view = self.VIEW_HUB
+        """Return to the main town view — walkable if the town has a map, hub menu otherwise."""
+        from data.town_maps import get_town_data
+        if get_town_data(self.town_id):
+            self.view = self.VIEW_WALK
+        else:
+            self.view = self.VIEW_HUB
 
     # ─────────────────────────────────────────────────────────
     #  GENERAL STORE — Menu
