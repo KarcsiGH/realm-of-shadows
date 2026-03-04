@@ -700,7 +700,7 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             ty = room[1] + rng.randint(1, room[3] - 2)
             if tiles[ty][tx]["type"] == DT_FLOOR:
                 tiles[ty][tx]["type"] = DT_TREASURE
-                tiles[ty][tx]["event"] = _make_treasure_event(floor_num, rng)
+                tiles[ty][tx]["event"] = _make_treasure_event(floor_num, rng, total_floors)
                 placed_treasure += 1
 
         # ── Place traps (floor 1: 3 traps, scales up) ──
@@ -795,29 +795,71 @@ def _carve_v_corridor(tiles, y1, y2, x, max_h):
                 tiles[y][x]["type"] = DT_CORRIDOR
 
 
-def _make_treasure_event(floor_num, rng):
+def _make_treasure_event(floor_num, rng, total_floors=5):
+    """Generate chest loot scaled to dungeon depth.
+
+    Floor 1-2 : mostly consumables, rare chance of a common magic item
+    Floor 3-4 : consumables + uncommon magic items (~20%)
+    Floor 5+  : good consumables + rare magic items (~30%), small legendary chance
+    """
     gold = rng.randint(15, 35) * floor_num
     items = []
-    # Higher chance of consumables on deeper floors
-    if rng.random() < 0.35 + floor_num * 0.1:
-        items.append(rng.choice([
-            {"name": "Minor Healing Potion", "type": "consumable", "subtype": "potion",
-             "heal_amount": 25, "identified": True, "estimated_value": 15},
-            {"name": "Healing Potion", "type": "consumable", "subtype": "potion",
-             "heal_amount": 50, "identified": True, "estimated_value": 30},
-            {"name": "Antidote", "type": "consumable", "subtype": "potion",
-             "cures": ["Poison"], "identified": True, "estimated_value": 20},
-        ]))
-    # Small chance of a bonus item on floor 2+
-    if floor_num >= 2 and rng.random() < 0.2:
-        items.append(rng.choice([
-            {"name": "Scroll of Protection", "type": "consumable", "subtype": "scroll",
-             "effect": "defense_buff", "identified": True, "estimated_value": 40},
-            {"name": "Mana Crystal", "type": "consumable", "subtype": "crystal",
-             "restore_mp": 30, "identified": True, "estimated_value": 35},
-        ]))
+    depth = floor_num / max(total_floors, 1)
 
-    # ~30% of chests are trapped (scales slightly with floor depth)
+    # ── Consumables ──────────────────────────────────────────
+    POTIONS_T1 = [
+        {"name": "Minor Healing Potion", "type": "consumable", "subtype": "potion",
+         "heal_amount": 25, "identified": True, "estimated_value": 15},
+        {"name": "Antidote", "type": "consumable", "subtype": "potion",
+         "cures": ["Poison"], "identified": True, "estimated_value": 20},
+    ]
+    POTIONS_T2 = [
+        {"name": "Healing Potion", "type": "consumable", "subtype": "potion",
+         "heal_amount": 50, "identified": True, "estimated_value": 30},
+        {"name": "Mana Crystal", "type": "consumable", "subtype": "crystal",
+         "restore_mp": 30, "identified": True, "estimated_value": 35},
+        {"name": "Scroll of Protection", "type": "consumable", "subtype": "scroll",
+         "effect": "defense_buff", "identified": True, "estimated_value": 40},
+    ]
+    POTIONS_T3 = [
+        {"name": "Greater Healing Potion", "type": "consumable", "subtype": "potion",
+         "heal_amount": 100, "identified": True, "estimated_value": 60},
+        {"name": "Elixir of Focus", "type": "consumable", "subtype": "potion",
+         "restore_mp": 60, "effect": "focus_buff",
+         "identified": True, "estimated_value": 65},
+        {"name": "Scroll of Fireball", "type": "consumable", "subtype": "scroll",
+         "effect": "fireball", "identified": True, "estimated_value": 55},
+        {"name": "Scroll of Recall", "type": "consumable", "subtype": "scroll",
+         "effect": "recall", "identified": True, "estimated_value": 80},
+    ]
+
+    consumable_chance = 0.50 + depth * 0.25   # 50% → 75%
+    if rng.random() < consumable_chance:
+        if depth >= 0.7:
+            pool = POTIONS_T2 + POTIONS_T3
+        elif depth >= 0.4:
+            pool = POTIONS_T1 + POTIONS_T2
+        else:
+            pool = POTIONS_T1
+        items.append(dict(rng.choice(pool)))
+
+    # ── Magic item drop ───────────────────────────────────────
+    # Probability ramp: ~5% floor 1 → ~35% floor 5+
+    magic_chance = 0.05 + depth * 0.30
+    if rng.random() < magic_chance:
+        try:
+            from data.magic_items import get_secret_item, get_cursed_item
+            # Deep floors: 6% chance of cursed item for tension
+            if depth >= 0.6 and rng.random() < 0.06:
+                magic = get_cursed_item(floor_num, total_floors, rng)
+            else:
+                magic = get_secret_item(floor_num, total_floors, rng)
+            if magic:
+                items.append(magic)
+        except Exception:
+            pass
+
+    # ── Trap ─────────────────────────────────────────────────
     trap_chance = 0.28 + floor_num * 0.04   # 32% floor1 → 48% floor5
     trap_data = None
     if rng.random() < trap_chance:
@@ -825,22 +867,23 @@ def _make_treasure_event(floor_num, rng):
         trap_def = rng.choice(TRAP_TIERS[tier]["traps"])
         dmg = rng.randint(trap_def["damage"][0], trap_def["damage"][1])
         trap_data = {
-            "name":         trap_def["name"],
-            "tier":         tier,
-            "damage":       dmg,
-            "target":       trap_def["target"],
-            "save_stat":    trap_def["save_stat"],
-            "detect_base":  trap_def["detect_base"],
-            "disarm_base":  trap_def["disarm_base"],
-            "disarmed":     False,
+            "name":        trap_def["name"],
+            "tier":        tier,
+            "damage":      dmg,
+            "target":      trap_def["target"],
+            "save_stat":   trap_def["save_stat"],
+            "detect_base": trap_def["detect_base"],
+            "disarm_base": trap_def["disarm_base"],
+            "disarmed":    False,
         }
         if "poison" in trap_def:
             trap_data["poison"] = trap_def["poison"]
 
     return {
         "type": "treasure", "gold": gold, "items": items, "opened": False,
-        "trap": trap_data,   # None if no trap
+        "trap": trap_data,
     }
+
 
 
 # ═══════════════════════════════════════════════════════════════
