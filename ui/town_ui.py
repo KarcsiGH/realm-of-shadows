@@ -332,7 +332,7 @@ class TownUI:
 
     def _draw_walk(self, surface, mx, my):
         from data.town_maps import (
-            TILE_COLORS, TILE_TOP_COLORS, TT_WALL, TT_TREE, TT_DOOR,
+            TILE_COLORS, TILE_TOP_COLORS, TT_GRASS, TT_WALL, TT_TREE, TT_DOOR,
             TT_FENCE, TT_PATH, TT_EXIT, TT_SIGN, TT_WATER, TT_BRIDGE,
             get_tile, get_building_at, get_npc_at, get_sign_at,
         )
@@ -348,139 +348,309 @@ class TownUI:
         cam_x = max(0, min(tw - SCREEN_W // ts, cam_x))
         cam_y = max(0, min(th - map_area_h // ts, cam_y))
 
-        # Draw tiles
+        # ══════════════════════════════════════════════════════════
+        # TILE PASS — ground, paths, trees, water, special tiles
+        # ══════════════════════════════════════════════════════════
+        from data.town_maps import (
+            TILE_COLORS, TILE_TOP_COLORS, TT_GRASS, TT_WALL, TT_DOOR,
+            TT_TREE, TT_FENCE, TT_PATH, TT_EXIT, TT_SIGN, TT_WATER,
+            TT_BRIDGE, get_tile, get_building_at, get_npc_at,
+            get_sign_at,
+        )
+
+        td = self.town_data
+        ts = self.walk_tile_size
+        tw, th = td["width"], td["height"]
+
+        map_area_h = SCREEN_H - 110
+        cam_x = self.walk_x - (SCREEN_W // ts) // 2
+        cam_y = self.walk_y - (map_area_h // ts) // 2
+        cam_x = max(0, min(tw - SCREEN_W // ts, cam_x))
+        cam_y = max(0, min(th - map_area_h // ts, cam_y))
+
+        # pre-build building-to-wall-tile map for fast facade lookup
+        bld_col_map = {}
+        for bld in td["buildings"].values():
+            c0, c1 = bld.get("wall_cols", (0, 0))
+            r0, r1 = bld.get("wall_rows", (0, 0))
+            for wr in range(r0, r1 + 1):
+                for wc in range(c0, c1 + 1):
+                    bld_col_map[(wc, wr)] = bld
+
         for sy in range(map_area_h // ts + 2):
             for sx in range(SCREEN_W // ts + 2):
                 tx = cam_x + sx
                 ty = cam_y + sy
-                tile = get_tile(td, tx, ty)
-                px = sx * ts - (cam_x * ts - int(cam_x) * ts)
-                py = sy * ts - (cam_y * ts - int(cam_y) * ts)
+                if not (0 <= ty < th and 0 <= tx < tw):
+                    continue
+                tile = td["map"][ty][tx] if tx < len(td["map"][ty]) else TT_WALL
+                px = sx * ts
+                py = sy * ts
 
-                # Base tile
-                color = TILE_COLORS.get(tile, (40, 40, 40))
-                pygame.draw.rect(surface, color, (px, py, ts, ts))
-
-                # Top face for walls/trees/fences (3D effect)
-                top_color = TILE_TOP_COLORS.get(tile)
-                if top_color:
-                    pygame.draw.rect(surface, top_color, (px, py, ts, ts // 3))
-                    # Dark edge
-                    pygame.draw.line(surface, (color[0]//2, color[1]//2, color[2]//2),
-                                     (px, py + ts//3), (px + ts, py + ts//3))
-
-                # Wall tile — draw building roof colour as top stripe
-                if tile == TT_WALL:
-                    # Find nearest building to tint the roof
-                    bld_color = None
-                    for bld in td["buildings"].values():
-                        bx, by = bld["door"]
-                        if abs(tx - bx) <= 8 and abs(ty - by) <= 8:
-                            bld_color = bld.get("color")
-                            break
-                    if bld_color:
-                        rc = tuple(min(255, int(c * 0.75)) for c in bld_color)
-                        pygame.draw.rect(surface, rc, (px, py, ts, ts // 3))
-                        pygame.draw.line(surface, (color[0]//2, color[1]//2, color[2]//2),
-                                         (px, py + ts//3), (px + ts, py + ts//3))
-
-                # Interior floor — warm stone colour inside buildings
                 if tile == TT_GRASS:
-                    # Check if surrounded by walls (= interior)
-                    neighbors = [get_tile(td, tx+ddx, ty+ddy) for ddx,ddy in [(-1,0),(1,0),(0,-1),(0,1)]]
-                    if TT_WALL in neighbors or TT_DOOR in neighbors:
-                        ic = (110, 95, 72)   # warm stone floor
-                        pygame.draw.rect(surface, ic, (px, py, ts, ts))
-                        # Subtle plank lines
-                        for pi in range(0, ts, max(4, ts//4)):
-                            pygame.draw.line(surface, (95, 82, 60), (px, py+pi), (px+ts, py+pi))
-                        pygame.draw.rect(surface, (80, 68, 50), (px, py, ts, ts), 1)
+                    shade = 3 if (tx + ty) % 2 == 0 else 0
+                    pygame.draw.rect(surface, (52 + shade, 78 + shade, 42 + shade), (px, py, ts, ts))
+                    if (tx * 7 + ty * 13) % 11 == 0:
+                        pygame.draw.line(surface, (38, 62, 30),
+                            (px + ts//3, py + ts//2), (px + ts//3 - 2, py + ts//4), 1)
+                        pygame.draw.line(surface, (38, 62, 30),
+                            (px + ts*2//3, py + ts//2), (px + ts*2//3 + 2, py + ts//4), 1)
 
-                # Door highlight
-                if tile == TT_DOOR:
-                    pygame.draw.rect(surface, (130, 90, 45), (px, py, ts, ts))
-                    pygame.draw.rect(surface, (170, 125, 60), (px + ts//5, py + ts//8, ts*3//5, ts*3//4), border_radius=2)
-                    pygame.draw.rect(surface, (220, 180, 100), (px + ts//5, py + ts//8, ts*3//5, ts*3//4), 1, border_radius=2)
-                    # Door handle dot
-                    pygame.draw.circle(surface, (220, 180, 80), (px + ts*3//4, py + ts//2), max(2, ts//8))
+                elif tile == TT_PATH:
+                    pygame.draw.rect(surface, (95, 82, 62), (px, py, ts, ts))
+                    stone_sz = max(4, ts // 3 - 1)
+                    for ox, oy in [(1, 1), (ts//2, 1), (1, ts//2), (ts//2, ts//2)]:
+                        sc2 = (105, 90, 68) if (ox + oy) % 2 == 0 else (88, 76, 56)
+                        pygame.draw.rect(surface, sc2, (px+ox, py+oy, stone_sz, stone_sz), border_radius=1)
+                        pygame.draw.rect(surface, (70, 60, 44), (px+ox, py+oy, stone_sz, stone_sz), 1, border_radius=1)
 
-                # Exit tiles — subtle glow
-                if tile == TT_EXIT:
-                    pulse = abs((self.walk_anim_t % 2000) - 1000) / 1000.0
-                    glow = int(40 + 30 * pulse)
-                    s = pygame.Surface((ts, ts), pygame.SRCALPHA)
-                    s.fill((80, 200, 80, glow))
-                    surface.blit(s, (px, py))
+                elif tile == TT_TREE:
+                    pygame.draw.rect(surface, (28, 48, 22), (px, py, ts, ts))
 
-                # Sign icon
-                if tile == TT_SIGN:
-                    pygame.draw.rect(surface, (140, 120, 70), (px + ts//3, py + ts//4, ts//3, ts//2))
-                    pygame.draw.line(surface, (100, 80, 40), (px + ts//2, py + ts//4 + ts//2), (px + ts//2, py + ts - 2), 2)
-
-                # Water shimmer
-                if tile == TT_WATER:
+                elif tile == TT_WATER:
                     shimmer = abs(((self.walk_anim_t + tx * 200) % 1500) - 750) / 750.0
-                    s = pygame.Surface((ts, ts), pygame.SRCALPHA)
-                    s.fill((60, 90, 140, int(30 + 25 * shimmer)))
-                    surface.blit(s, (px, py))
+                    wc2 = (35 + int(12 * shimmer), 55 + int(10 * shimmer), 125 + int(20 * shimmer))
+                    pygame.draw.rect(surface, wc2, (px, py, ts, ts))
+                    ry2 = py + ts // 3
+                    rx2 = int(px + ts * 0.15 + shimmer * ts * 0.3)
+                    pygame.draw.line(surface, (55, 80, 160), (rx2, ry2), (rx2 + ts//2, ry2), 1)
 
-                # Bridge — draw wooden planks over base color
-                if tile == TT_BRIDGE:
-                    plank_color = (140, 110, 65)
-                    gap_color = (110, 85, 45)
-                    plank_h = max(2, ts // 4)
+                elif tile == TT_BRIDGE:
+                    pygame.draw.rect(surface, (100, 78, 50), (px, py, ts, ts))
                     for pi in range(3):
-                        ply = py + pi * (ts // 3) + ts // 8
-                        pygame.draw.rect(surface, plank_color, (px + 2, ply, ts - 4, plank_h))
-                    pygame.draw.rect(surface, gap_color, (px, py, ts, ts), 1)
+                        ply2 = py + pi * (ts//3) + ts//8
+                        pygame.draw.rect(surface, (125, 98, 62), (px+2, ply2, ts-4, max(2, ts//4)))
 
-                # Grid lines (subtle)
-                pygame.draw.rect(surface, (color[0]-10, color[1]-10, color[2]-10),
-                                 (px, py, ts, ts), 1)
+                elif tile == TT_EXIT:
+                    pygame.draw.rect(surface, (60, 110, 55), (px, py, ts, ts))
+                    pulse = abs((self.walk_anim_t % 2000) - 1000) / 1000.0
+                    s2 = pygame.Surface((ts, ts), pygame.SRCALPHA)
+                    s2.fill((100, 220, 90, int(20 + 30 * pulse)))
+                    surface.blit(s2, (px, py))
 
-        # Draw NPCs
+                elif tile == TT_SIGN:
+                    pygame.draw.rect(surface, (90, 78, 55), (px, py, ts, ts))
+                    pygame.draw.rect(surface, (80, 64, 40), (px + ts//2 - 1, py + ts//3, 2, ts*2//3))
+                    pygame.draw.rect(surface, (140, 112, 68),
+                        (px + ts//5, py + ts//6, ts*3//5, ts//3), border_radius=2)
+                    pygame.draw.rect(surface, (100, 80, 46),
+                        (px + ts//5, py + ts//6, ts*3//5, ts//3), 1, border_radius=2)
+
+                elif tile == TT_WALL:
+                    bld = bld_col_map.get((tx, ty))
+                    if bld:
+                        bc = bld["color"]
+                        r0_b, r1_b = bld.get("wall_rows", (ty, ty))
+                        c0_b, c1_b = bld.get("wall_cols", (tx, tx))
+                        door_x = bld["door"][0]
+                        is_top_row    = (ty == r0_b)
+                        is_left_col   = (tx == c0_b)
+                        is_right_col  = (tx == c1_b)
+
+                        wall_c = tuple(min(255, int(c * 0.85)) for c in bc)
+                        pygame.draw.rect(surface, wall_c, (px, py, ts, ts))
+
+                        if is_top_row:
+                            roof_c = tuple(max(0, int(c * 0.55)) for c in bc)
+                            pygame.draw.rect(surface, roof_c, (px, py, ts, ts//3))
+                            pygame.draw.line(surface, tuple(max(0, c-30) for c in roof_c),
+                                             (px, py + ts//3), (px+ts, py+ts//3), 1)
+
+                        mortar_c = tuple(max(0, int(c * 0.6)) for c in bc)
+                        for ml in range(1, 3):
+                            pygame.draw.line(surface, mortar_c,
+                                (px, py + ml * ts//3), (px+ts, py + ml * ts//3), 1)
+
+                        if is_left_col or is_right_col:
+                            pillar_c = tuple(min(255, int(c * 1.15)) for c in bc)
+                            pygame.draw.rect(surface, pillar_c, (px, py, max(3, ts//4), ts))
+
+                        if (r0_b + 1 <= ty <= r1_b - 1 and not is_left_col
+                                and not is_right_col and tx != door_x
+                                and (tx - c0_b) % 3 == 1):
+                            win_m = max(3, ts//4)
+                            wx, wy = px + win_m, py + win_m
+                            ww, wh = ts - win_m*2, ts - win_m*2
+                            pygame.draw.rect(surface, tuple(max(0, c-40) for c in bc), (wx, wy, ww, wh))
+                            glass_c = (180, 210, 230) if bld.get("type") != "forge" else (220, 160, 80)
+                            pygame.draw.rect(surface, glass_c, (wx+2, wy+2, ww-4, wh-4))
+                            pygame.draw.line(surface, tuple(max(0, c-40) for c in bc),
+                                (wx+ww//2, wy), (wx+ww//2, wy+wh), 1)
+                            pygame.draw.line(surface, tuple(max(0, c-40) for c in bc),
+                                (wx, wy+wh//2), (wx+ww, wy+wh//2), 1)
+
+                        if bld.get("type") == "forge" and is_top_row and tx == c1_b - 1:
+                            for si in range(3):
+                                drift = int(((self.walk_anim_t // 300 + si) % 6) - 3)
+                                sa = max(0, 80 - si * 20)
+                                sc3 = pygame.Surface((ts//2, ts//3), pygame.SRCALPHA)
+                                sc3.fill((80, 80, 80, sa))
+                                surface.blit(sc3, (px + ts//4 + drift, py - ts//3 - si * ts//3))
+                    else:
+                        pygame.draw.rect(surface, (62, 50, 38), (px, py, ts, ts))
+                        pygame.draw.rect(surface, (75, 62, 48), (px, py, ts, ts//3))
+
+                elif tile == TT_DOOR:
+                    bld2 = get_building_at(td, tx, ty)
+                    bc2 = bld2[1]["color"] if bld2 else (140, 110, 60)
+                    pygame.draw.rect(surface, tuple(max(0, int(c*0.6)) for c in bc2), (px, py, ts, ts))
+                    pygame.draw.rect(surface, tuple(max(0, int(c*0.5)) for c in bc2), (px+2, py+1, ts-4, ts-2))
+                    pygame.draw.rect(surface, tuple(min(255, int(c*1.1)) for c in bc2),
+                        (px + ts//5, py + ts//10, ts*3//5, ts*4//5), border_radius=2)
+                    pygame.draw.rect(surface, tuple(max(0, int(c*0.5)) for c in bc2),
+                        (px + ts//5, py + ts//10, ts*3//5, ts*4//5), 1, border_radius=2)
+                    pygame.draw.circle(surface, (220, 185, 90),
+                        (px + ts*3//4, py + ts//2), max(2, ts//7))
+                    pygame.draw.rect(surface, tuple(max(0, int(c*0.7)) for c in bc2), (px, py, ts, ts//5))
+
+                else:
+                    pygame.draw.rect(surface, (40, 35, 28), (px, py, ts, ts))
+
+                if tile not in (TT_WALL, TT_TREE):
+                    ec = TILE_COLORS.get(tile, (40,40,40))
+                    pygame.draw.rect(surface, tuple(max(0, ec[i]-12) for i in range(3)), (px, py, ts, ts), 1)
+
+        # ══ TREE CANOPY PASS ══
+        for sy in range(map_area_h // ts + 2):
+            for sx in range(SCREEN_W // ts + 2):
+                tx = cam_x + sx
+                ty = cam_y + sy
+                if not (0 <= ty < th and 0 <= tx < tw):
+                    continue
+                tile = td["map"][ty][tx] if tx < len(td["map"][ty]) else TT_WALL
+                if tile != TT_TREE:
+                    continue
+                px = sx * ts
+                py = sy * ts
+                pygame.draw.rect(surface, (62, 42, 24), (px + ts*3//8, py + ts//2, ts//4, ts//2))
+                canopy_c  = (38 + (tx*5+ty*7)%18, 72 + (tx*3+ty*11)%20, 28)
+                canopy_hi = tuple(min(255, c+22) for c in canopy_c)
+                r_can = max(6, ts*5//8)
+                pygame.draw.circle(surface, canopy_c,  (px+ts//2, py+ts*2//5), r_can)
+                pygame.draw.circle(surface, canopy_hi, (px+ts//2, py+ts*2//5), r_can, 2)
+                shd = pygame.Surface((ts, ts//3), pygame.SRCALPHA)
+                shd.fill((0, 0, 0, 40))
+                surface.blit(shd, (px, py + ts//2))
+
+        # ══ NPC PASS ══
         for npc in td.get("npcs", []):
-            # Skip NPCs whose hide_if flag is set
             hide_flag = npc.get("hide_if")
             if hide_flag:
                 from core.story_flags import get_flag
                 if get_flag(hide_flag):
                     continue
             nx, ny = npc["x"], npc["y"]
-            npx = (nx - cam_x) * ts
-            npy = (ny - cam_y) * ts
-            if 0 <= npx < SCREEN_W and 0 <= npy < map_area_h:
-                nc = npc.get("color", (180, 180, 180))
-                # Body
-                pygame.draw.rect(surface, nc,
-                                 (npx + ts//4, npy + ts//4, ts//2, ts//2), border_radius=3)
-                # Head
-                pygame.draw.circle(surface, (min(255, nc[0]+40), min(255, nc[1]+40), min(255, nc[2]+40)),
-                                   (npx + ts//2, npy + ts//5), ts//5)
-                # Name above
-                nw = get_font(9).size(npc["name"])[0]
-                draw_text(surface, npc["name"], npx + ts//2 - nw//2, npy - 12, nc, 11)
+            npx2 = (nx - cam_x) * ts
+            npy2 = (ny - cam_y) * ts
+            if not (0 <= npx2 < SCREEN_W and -ts <= npy2 < map_area_h):
+                continue
 
-        # Draw building labels
-        for bld_id, bld in td["buildings"].items():
-            lx, ly = bld.get("label_pos", bld["door"])
-            lpx = (lx - cam_x) * ts
-            lpy = (ly - cam_y) * ts - 8
-            if 0 <= lpx < SCREEN_W and 0 <= lpy < map_area_h:
-                draw_text(surface, bld["name"], lpx, lpy,
-                          bld.get("color", CREAM), 9)
+            nc2   = npc.get("color", (180, 180, 180))
+            ntype = npc.get("npc_type", "default")
+            dark2 = tuple(max(0, int(c*0.5)) for c in nc2)
+            light2= tuple(min(255, int(c*1.25)) for c in nc2)
+            ncx   = npx2 + ts//2
+            ncy   = npy2 + ts//2
 
-        # Draw player
+            shd2 = pygame.Surface((ts, ts//4), pygame.SRCALPHA)
+            shd2.fill((0, 0, 0, 50))
+            surface.blit(shd2, (npx2, npy2 + ts*3//4))
+
+            body_w2 = max(6, ts*5//12)
+            body_h2 = max(8, ts*5//12)
+            bx2 = ncx - body_w2//2
+            by2 = ncy - body_h2//8
+            pygame.draw.rect(surface, nc2, (bx2, by2, body_w2, body_h2), border_radius=2)
+            pygame.draw.line(surface, dark2, (ncx, by2+2), (ncx, by2+body_h2-2), 1)
+            pygame.draw.rect(surface, nc2, (bx2-2, by2+2, 3, body_h2//2), border_radius=1)
+            pygame.draw.rect(surface, nc2, (bx2+body_w2-1, by2+2, 3, body_h2//2), border_radius=1)
+
+            head_r2 = max(4, ts*3//14)
+            hcx = ncx
+            hcy = by2 - head_r2 + 2
+            pygame.draw.circle(surface, (220, 185, 155), (hcx, hcy), head_r2)
+            pygame.draw.circle(surface, dark2, (hcx, hcy), head_r2, 1)
+
+            if ntype == "guard":
+                pygame.draw.ellipse(surface, (130, 145, 175),
+                    (hcx-head_r2, hcy-head_r2, head_r2*2, head_r2+2))
+                pygame.draw.rect(surface, (110, 125, 155),
+                    (hcx-head_r2-2, hcy, head_r2*2+4, 3))
+            elif ntype == "elder":
+                pygame.draw.arc(surface, (180, 175, 170),
+                    pygame.Rect(hcx-head_r2, hcy-head_r2, head_r2*2, head_r2*2),
+                    0, 3.14, max(1, head_r2//2))
+            elif ntype == "priestess":
+                vl = pygame.Surface((head_r2*2+4, head_r2*2+4), pygame.SRCALPHA)
+                pygame.draw.ellipse(vl, (240, 235, 200, 170),
+                    (0, 0, head_r2*2+4, head_r2*2+4))
+                surface.blit(vl, (hcx-head_r2-2, hcy-head_r2-2))
+            elif ntype == "merchant":
+                pygame.draw.ellipse(surface, dark2,
+                    (hcx-head_r2-3, hcy-1, head_r2*2+6, 4))
+                pygame.draw.ellipse(surface, nc2,
+                    (hcx-head_r2+1, hcy-head_r2-2, head_r2*2-2, head_r2+2))
+            elif ntype == "innkeeper":
+                pygame.draw.rect(surface, (235, 230, 215),
+                    (bx2+2, by2+body_h2//3, body_w2-4, body_h2*2//3), border_radius=1)
+            elif ntype == "forger":
+                pygame.draw.rect(surface, (90, 64, 30),
+                    (bx2, by2+body_h2//4, body_w2, body_h2*3//4))
+            elif ntype == "mage":
+                hat_pts = [(ncx, hcy-head_r2*2), (ncx-head_r2, hcy), (ncx+head_r2, hcy)]
+                pygame.draw.polygon(surface, nc2, hat_pts)
+                pygame.draw.polygon(surface, dark2, hat_pts, 1)
+            elif ntype == "barkeep":
+                pygame.draw.ellipse(surface, (155, 105, 50),
+                    (hcx-head_r2+1, hcy+head_r2//2, head_r2*2-2, head_r2))
+
+            if npc.get("service"):
+                badge_txt = {"inn":"INN","shop":"SHOP","forge":"FORGE",
+                             "temple":"SHRINE","tavern":"TAVERN"}.get(npc["service"],"")
+                if badge_txt:
+                    iw2 = get_font(8).size(badge_txt)[0]
+                    bdg = pygame.Rect(ncx - iw2//2 - 3, npy2 - 14, iw2+6, 10)
+                    pygame.draw.rect(surface, (20, 16, 10), bdg, border_radius=2)
+                    pygame.draw.rect(surface, nc2, bdg, 1, border_radius=2)
+                    draw_text(surface, badge_txt, ncx - iw2//2, npy2 - 13, nc2, 8)
+
+            dist2 = abs(nx - self.walk_x) + abs(ny - self.walk_y)
+            if dist2 <= 3:
+                nw2 = get_font(10).size(npc["name"])[0]
+                draw_text(surface, npc["name"], ncx - nw2//2, npy2 - 24, light2, 10)
+
+        # ══ PLAYER PASS ══
         ppx = (self.walk_x - cam_x) * ts
         ppy = (self.walk_y - cam_y) * ts
-        # Yellow dot with outline
-        pygame.draw.circle(surface, (60, 50, 20), (ppx + ts//2, ppy + ts//2), ts//3 + 1)
-        pygame.draw.circle(surface, (255, 240, 80), (ppx + ts//2, ppy + ts//2), ts//3)
-        # Direction indicator
-        dx_map = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
-        fdx, fdy = dx_map.get(self.walk_facing, (0, 1))
-        pygame.draw.circle(surface, (255, 255, 200),
-                           (ppx + ts//2 + fdx * ts//4, ppy + ts//2 + fdy * ts//4), ts//8)
+        pcx, pcy = ppx + ts//2, ppy + ts//2
+
+        pshd = pygame.Surface((ts, ts//4), pygame.SRCALPHA)
+        pshd.fill((0, 0, 0, 60))
+        surface.blit(pshd, (ppx, ppy + ts*3//4))
+        pygame.draw.rect(surface, (80, 65, 30),
+            (pcx-ts//4, pcy, ts//2, ts*5//12), border_radius=2)
+        pygame.draw.rect(surface, (200, 175, 80),
+            (pcx-ts//5, pcy+2, ts*2//5, ts*5//12-4), border_radius=2)
+        pygame.draw.circle(surface, (225, 190, 155), (pcx, pcy-ts//5), max(5, ts*3//14))
+        pygame.draw.circle(surface, (180, 150, 80), (pcx, pcy-ts//5), max(5, ts*3//14), 1)
+        dx_map2 = {"up":(0,-1),"down":(0,1),"left":(-1,0),"right":(1,0)}
+        fdx2, fdy2 = dx_map2.get(self.walk_facing, (0,1))
+        pygame.draw.circle(surface, (255, 240, 120),
+            (pcx + fdx2*ts//4, pcy - ts//5 + fdy2*ts//4), max(2, ts//8))
+
+        # Building name labels over facades
+        for bld_id, bld in td["buildings"].items():
+            lx2, ly2 = bld.get("label_pos", bld["door"])
+            lpx3 = (lx2 - cam_x) * ts
+            lpy3 = (ly2 - cam_y) * ts + ts//3
+            if 0 <= lpx3 < SCREEN_W and 0 <= lpy3 < map_area_h:
+                bname2 = bld["name"]
+                bw2 = get_font(11).size(bname2)[0]
+                lbg2 = pygame.Surface((bw2+8, 14), pygame.SRCALPHA)
+                lbg2.fill((10, 8, 5, 160))
+                surface.blit(lbg2, (lpx3 - bw2//2 - 4, lpy3 - 1))
+                draw_text(surface, bname2, lpx3 - bw2//2, lpy3, bld["color"], 11, bold=True)
+
 
         # ── UI bar at bottom ──
         bar_y = map_area_h
@@ -1903,6 +2073,9 @@ class TownUI:
                     elif loc == "temple":
                         self.view = self.VIEW_TEMPLE
                     elif loc == "tavern":
+                        # Refresh rumor based on current story act
+                        from data.story_data import get_rumor
+                        self.current_rumor = get_rumor()
                         self.view = self.VIEW_TAVERN
                     elif loc == "inn":
                         self.view = self.VIEW_INN
