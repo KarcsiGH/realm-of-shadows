@@ -52,7 +52,11 @@ TOWER_ENEMIES = {
         xp=28, gold=(4, 12),
         res={"piercing": 0.3, "slashing": 0.5, "blunt": 1.5, "lightning": 2.0,
              "fire": 0.8, "ice": 0.8},
-        imm=["Poisoned", "Fear", "Sleep"],
+        imm=["Poisoned", "Fear", "Sleep"],        loot=[
+            {"drop_chance": 0.25, "item": {"name": 'Enchanted Stone Fragment', "type": 'material', "subtype": 'crafting_part', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Glowing Stone Shard', "unidentified_desc": 'A shard of stone pulsing with construct-magic.', "appraised_name": 'Stone Guardian Fragment', "material_desc": 'Shard of a construct. Tier 2 material.', "magic_desc": 'Construct-animation magic.', "estimated_value": 30, "description": 'A shard of animated stone.', "identified": False}},
+            {"drop_chance": 0.12, "item": {"name": 'Rough Stone Block', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Dense Stone', "unidentified_desc": 'A piece of unnaturally hard stone.', "appraised_name": 'Construct-Grade Stone', "material_desc": 'Stone shaped by construct magic. Tier 1 material.', "magic_desc": 'Faint animation residue.', "estimated_value": 8, "description": 'Stone from a guardian.', "identified": False}},
+        ],
+
         desc={0: "A stone statue that grinds to life.", 1: "Stone Guardian",
               2: "Stone Guardian — very high armor. Weak to blunt/lightning."}),
 
@@ -62,13 +66,20 @@ TOWER_ENEMIES = {
         res={"arcane": 0.0, "shadow": 1.5},
         imm=["Poisoned", "Sleep"],
         ab=[{"name": "Arcane Bolt", "type": "damage", "target": "single_enemy",
-             "power": 14, "element": "arcane", "description": "Fires a bolt of arcane energy."}],
+             "power": 14, "element": "arcane", "description": "Fires a bolt of arcane energy."}],             loot=[
+                 {"drop_chance": 0.22, "item": {"name": 'Arcane Crystal Shard', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Glowing Crystal', "unidentified_desc": 'A prismatic shard humming with energy.', "appraised_name": 'Arcane Sentry Crystal', "material_desc": 'Crystal core of a sentry. Tier 2 arcane reagent.', "magic_desc": 'Strong arcane resonance.', "estimated_value": 35, "description": 'A crystal from an arcane sentry.', "identified": False}},
+             ],
+
         desc={0: "A floating crystal orbiting a metal frame.", 1: "Arcane Sentry",
               2: "Arcane Sentry — ranged arcane damage. Immune to arcane."}),
 
     "Tower Rat": _e("Tower Rat", 30, 3, 1,
         _S(3, 14, 3, 1, 3, 0), 20, 5, "melee", "piercing",
-        acc=3, xp=5, gold=(0, 2),
+        acc=3, xp=5, gold=(0, 2),        loot=[
+            {"drop_chance": 0.12, "item": {"name": 'Rat Tail', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Rat Tail', "unidentified_desc": 'A scaly hairless tail.', "appraised_name": 'Tower Rat Tail', "material_desc": 'Proof of a rat kill.', "magic_desc": 'No magical properties.', "estimated_value": 1, "description": 'A rat tail from the tower.', "identified": False}},
+            {"drop_chance": 0.08, "item": {"name": 'Nibbled Scroll Fragment', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Chewed Paper', "unidentified_desc": 'A scrap of paper with bite marks.', "appraised_name": 'Damaged Scroll Fragment', "material_desc": 'Partially-destroyed scroll.', "magic_desc": 'Faint arcane residue.', "estimated_value": 3, "description": 'A scrap of paper chewed by rats.', "identified": False}},
+        ],
+
         desc={0: "An oversized rat.", 1: "Tower Rat", 2: "Tower Rat — fast, weak."}),
 
     "Animated Armor": _e("Animated Armor", 162, 40, 4,
@@ -107,7 +118,11 @@ TOWER_ENEMIES = {
         res={"lightning": 2.0, "fire": 1.5, "nature": 0.5, "shadow": 0.5},
         imm=["Poisoned", "Fear", "Sleep"],
         ab=[{"name": "Slam", "type": "damage", "target": "single_enemy",
-             "power": 22, "element": "blunt", "description": "A devastating slam."}],
+             "power": 22, "element": "blunt", "description": "A devastating slam."}],             loot=[
+                 {"drop_chance": 0.3, "item": {"name": 'Golem Binding Cord', "type": 'material', "subtype": 'crafting_part', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Dark Rope', "unidentified_desc": 'A rope of woven sinew that moves slightly.', "appraised_name": 'Flesh Golem Binding Cord', "material_desc": 'Magically animated sinew. Tier 2 construct material.', "magic_desc": 'Animation binding magic.', "estimated_value": 40, "description": 'Binding cord from a flesh golem.', "identified": False}},
+                 {"drop_chance": 0.18, "item": {"name": 'Alchemical Flesh', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Grey Flesh', "unidentified_desc": 'A piece of grey treated flesh.', "appraised_name": 'Alchemical Flesh', "material_desc": "Flesh preserved by Valdris's experiments. Tier 1 reagent.", "magic_desc": 'Alchemical preservation.', "estimated_value": 12, "description": 'Flesh preserved by experimental alchemy.', "identified": False}},
+             ],
+
         desc={0: "A hulking mass of stitched flesh.", 1: "Flesh Golem",
               2: "Flesh Golem — very tough. Weak to lightning/fire."}),
 
@@ -115,7 +130,10 @@ TOWER_ENEMIES = {
         _S(1, 16, 4, 12, 10, 2), 22, 10, "ranged", "arcane",
         acc=6, row="back", xp=18, gold=(3, 8),
         res={"piercing": 0.0, "slashing": 0.0, "blunt": 0.0, "arcane": 0.0, "shadow": 1.5, "divine": 1.5},
-        imm=["Poisoned", "Fear"],
+        imm=["Poisoned", "Fear"],        loot=[
+            {"drop_chance": 0.2, "item": {"name": 'Wisp Essence', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Floating Orb', "unidentified_desc": 'A small globe of light floating in mid-air.', "appraised_name": 'Arcane Wisp Essence', "material_desc": 'Condensed arcane energy. Tier 2 reagent.', "magic_desc": 'Pure arcane resonance.', "estimated_value": 30, "description": 'A floating ball of arcane energy.', "identified": False}},
+        ],
+
         desc={0: "A flickering mote of arcane light.", 1: "Arcane Wisp",
               2: "Arcane Wisp — immune to physical and arcane. Use shadow or divine."}),
 
@@ -125,7 +143,11 @@ TOWER_ENEMIES = {
         res={"fire": 3.0, "arcane": 0.0},
         ab=[{"name": "Spell Page", "type": "damage", "target": "single_enemy",
              "power": 16, "element": "arcane",
-             "description": "A page tears free and detonates."}],
+             "description": "A page tears free and detonates."}],             loot=[
+                 {"drop_chance": 0.25, "item": {"name": 'Animated Page Bundle', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Moving Pages', "unidentified_desc": 'A sheaf of pages that flutter without wind.', "appraised_name": 'Animated Page Bundle', "material_desc": 'Pages from a living tome. Tier 2 reagent.', "magic_desc": 'Script-animation magic.', "estimated_value": 35, "description": 'Pages from a living book.', "identified": False}},
+                 {"drop_chance": 0.15, "item": {"name": 'Arcane Ink Vial', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Dark Ink Vial', "unidentified_desc": 'A vial of ink that shimmers.', "appraised_name": 'Arcane Ink', "material_desc": 'Ink charged with arcane energy. Tier 1 reagent.', "magic_desc": 'Arcane charge.', "estimated_value": 15, "description": 'Ink from a living tome.', "identified": False}},
+             ],
+
         desc={0: "A book flapping through the air on its own.", 1: "Living Tome",
               2: "Living Tome — casts arcane. Extremely weak to fire."}),
 
@@ -139,7 +161,10 @@ TOWER_ENEMIES = {
         ab=[{"name": "Fading Touch", "type": "damage", "target": "single_enemy",
              "power": 20, "element": "shadow",
              "status": "Weakened", "status_chance": 0.3, "status_duration": 3,
-             "description": "Drains vitality with the Fading."}],
+             "description": "Drains vitality with the Fading."}],             loot=[
+                 {"drop_chance": 0.22, "item": {"name": 'Fading Essence', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Cold Dark Mist', "unidentified_desc": 'A sealed vial of black mist pulsing irregularly.', "appraised_name": 'Fading Wraith Essence', "material_desc": 'Condensed Fading energy. Tier 2 void reagent.', "magic_desc": 'Intense void resonance.', "estimated_value": 42, "description": 'Essence from a fading wraith.', "identified": False}},
+             ],
+
         desc={0: "A shape of emptiness in the air.", 1: "Fading Wraith",
               2: "Fading Wraith — immune to phys/shadow. Use divine."}),
 
@@ -162,7 +187,11 @@ TOWER_ENEMIES = {
         ab=[{"name": "Warp Pulse", "type": "damage", "target": "aoe_enemy",
              "power": 12, "element": "arcane", "description": "A pulse of distorted reality."},
             {"name": "Rift Heal", "type": "heal", "target": "ally_lowest",
-             "power": 30, "description": "Pulls energy from the Fading to heal."}],
+             "power": 30, "description": "Pulls energy from the Fading to heal."}],             loot=[
+                 {"drop_chance": 0.2, "item": {"name": 'Void Shard', "type": 'material', "subtype": 'reagent', "rarity": 'rare', "tier": 3, "identify_difficulty": 1, "unidentified_name": 'Impossible Shard', "unidentified_desc": 'A shard that seems to fold space around it.', "appraised_name": 'Void Shard', "material_desc": 'A fragment of pure void matter. Tier 3 reagent.', "magic_desc": 'Intense planar disruption.', "estimated_value": 65, "description": 'A shard of void matter. Space folds around it.', "identified": False}},
+                 {"drop_chance": 0.12, "item": {"name": 'Planar Dust', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Shimmering Dust', "unidentified_desc": "Dust that sparkles with colours that don't exist.", "appraised_name": 'Planar Dust', "material_desc": 'Residue from a reality fracture. Tier 2 reagent.', "magic_desc": 'Planar resonance.', "estimated_value": 25, "description": 'Dust from where reality broke.', "identified": False}},
+             ],
+
         desc={0: "A tear in reality itself, shimmering.", 1: "Reality Fracture",
               2: "Reality Fracture — heals allies, AoE arcane. Immune to phys. Kill fast."}),
 

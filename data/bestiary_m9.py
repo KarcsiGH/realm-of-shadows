@@ -31,74 +31,123 @@ S = lambda s,d,c,i,w,p: {"STR":s,"DEX":d,"CON":c,"INT":i,"WIS":w,"PIE":p}
 NEW_ENEMIES = {
     # ── Cave / Goblin Warren ──
     "Goblin Scout": _e("Goblin Scout",50,4,1,S(4,14,3,3,6,1),20,16,"melee","piercing",
-        acc=3,xp=10,gold=(2,6),
+        acc=3,xp=10,gold=(2,6),        loot=[
+            {"drop_chance": 0.14, "item": {"name": 'Crude Knife', "type": 'material', "subtype": 'blade_scrap', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Rusty Blade', "unidentified_desc": 'A short rusty knife.', "appraised_name": "Scout's Crude Knife", "material_desc": 'Poor-grade iron.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": "A goblin scout's knife.", "identified": False}},
+            {"drop_chance": 0.1, "item": {"name": 'Goblin Ear', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Severed Ear', "unidentified_desc": 'A small pointed ear.', "appraised_name": 'Goblin Ear', "material_desc": 'A goblin trophy.', "magic_desc": 'No magical properties.', "estimated_value": 2, "description": 'A goblin ear.', "identified": False}},
+        ],
+
         desc={0:"A scrawny goblin with a rusty knife.",1:"Goblin Scout",
               2:"Goblin Scout — fast, weak. Often in groups."}),
     "Goblin Brute": _e("Goblin Brute",120,10,2,S(14,6,12,2,3,1),10,36,"melee","blunt",
-        xp=28,gold=(8,16),
+        xp=28,gold=(8,16),        loot=[
+            {"drop_chance": 0.12, "item": {"name": 'Crude Club', "type": 'weapon', "slot": 'weapon', "subtype": 'Club', "rarity": 'common', "damage": 6, "phys_type": 'blunt', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Heavy Club', "unidentified_desc": 'A rough wooden club.', "appraised_name": 'Goblin War Club', "material_desc": 'Scavenged wood and iron nails.', "magic_desc": 'No magical properties.', "estimated_value": 8, "description": 'A heavy club from a goblin brute.', "identified": False}},
+            {"drop_chance": 0.16, "item": {"name": 'Goblin Hide Scraps', "type": 'material', "subtype": 'leather', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Thick Scraps', "unidentified_desc": 'Pieces of rough hide.', "appraised_name": 'Goblin Hide', "material_desc": 'Thick goblin skin. Tier 1 leather.', "magic_desc": 'No magical properties.', "estimated_value": 5, "description": 'Rough goblin hide.', "identified": False}},
+        ],
+
         desc={0:"A hulking goblin with a wooden club.",1:"Goblin Brute",
               2:"Goblin Brute — slow but hits hard."}),
     "Goblin Trapper": _e("Goblin Trapper",65,5,4,S(5,12,5,7,8,2),15,20,"ranged","piercing",
         acc=4,row="mid",ai="supportive",xp=22,gold=(5,10),
         ab=[{"name":"Caltrops","type":"debuff","target":"single_enemy",
-             "effect":{"speed_penalty":0.5,"duration":2},"description":"Slows an enemy."}],
+             "effect":{"speed_penalty":0.5,"duration":2},"description":"Slows an enemy."}],             loot=[
+                 {"drop_chance": 0.15, "item": {"name": 'Crude Snare Wire', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Twisted Wire', "unidentified_desc": 'A coil of badly twisted wire.', "appraised_name": 'Goblin Snare Wire', "material_desc": 'Low-grade wire from goblin traps.', "magic_desc": 'No magical properties.', "estimated_value": 4, "description": 'Wire from a goblin trap.', "identified": False}},
+                 {"drop_chance": 0.1, "item": {"name": 'Goblin Ear', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Severed Ear', "unidentified_desc": 'A small pointed ear.', "appraised_name": 'Goblin Ear', "material_desc": 'A goblin trophy.', "magic_desc": 'No magical properties.', "estimated_value": 2, "description": 'A goblin ear.', "identified": False}},
+             ],
+
         desc={0:"A goblin fiddling with strange devices.",1:"Goblin Trapper",
               2:"Goblin Trapper — throws caltrops to slow you."}),
     "Cave Bat": _e("Cave Bat",35,4,1,S(3,16,2,1,8,1),24,12,"melee","piercing",
-        acc=6,xp=6,gold=(0,2),res={"lightning":1.5,"nature":0.5},
+        acc=6,xp=6,gold=(0,2),res={"lightning":1.5,"nature":0.5},        loot=[
+            {"drop_chance": 0.18, "item": {"name": 'Bat Wing', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Leathery Wing', "unidentified_desc": 'A thin veiny wing.', "appraised_name": 'Cave Bat Wing', "material_desc": 'Thin membrane wing. Tier 1 reagent.', "magic_desc": 'Faint echo-sense.', "estimated_value": 4, "description": 'A cave bat wing.', "identified": False}},
+        ],
+
         desc={0:"A screeching bat.",1:"Cave Bat",2:"Cave Bat — fast, fragile."}),
     "Fungal Crawler": _e("Fungal Crawler",75,7,8,S(6,4,10,1,2,1),8,20,"melee","blunt",
         ai="defensive",xp=16,gold=(1,4),res={"nature":0.0,"fire":2.0,"ice":0.5},
         ab=[{"name":"Spore Cloud","type":"damage","target":"aoe_enemy","power":5,
              "element":"nature","status":"Poisoned","status_chance":0.35,
-             "status_duration":3,"description":"Toxic spore cloud."}],
+             "status_duration":3,"description":"Toxic spore cloud."}],             loot=[
+                 {"drop_chance": 0.2, "item": {"name": 'Glowing Spore Sac', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Pulsing Sac', "unidentified_desc": 'A sac glowing faintly blue.', "appraised_name": 'Fungal Spore Sac', "material_desc": 'Bioluminescent spores. Tier 1 reagent.', "magic_desc": 'Faint luminescence.', "estimated_value": 7, "description": 'A glowing sac from a fungal crawler.', "identified": False}},
+                 {"drop_chance": 0.1, "item": {"name": 'Crawler Chitin', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Hard Shell Piece', "unidentified_desc": 'A curved piece of dark shell.', "appraised_name": 'Fungal Crawler Chitin', "material_desc": 'Dense chitin. Tier 1 armor crafting.', "magic_desc": 'No magical properties.', "estimated_value": 5, "description": 'Hard shell from a crawler.', "identified": False}},
+             ],
+
         desc={0:"A mushroom creature oozing slime.",1:"Fungal Crawler",
               2:"Fungal Crawler — poison spores. Weak to fire."}),
 
     # ── Spider's Nest ──
     "Spiderling": _e("Spiderling",30,4,2,S(4,14,3,1,4,1),22,10,"melee","piercing",
-        acc=5,xp=6,gold=(0,2),res={"fire":1.5},
+        acc=5,xp=6,gold=(0,2),res={"fire":1.5},        loot=[
+            {"drop_chance": 0.15, "item": {"name": 'Spider Silk Thread', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Fine Thread', "unidentified_desc": 'A wisp of iridescent silk.', "appraised_name": 'Phase-Spider Silk Thread', "material_desc": 'Silk from a Fading-touched spider. Tier 1 reagent.', "magic_desc": 'Faint planar shimmer.', "estimated_value": 5, "description": 'A thread of spider silk.', "identified": False}},
+        ],
+
         desc={0:"A cat-sized spider.",1:"Spiderling",2:"Spiderling — tiny but numerous."}),
     "Web Spinner": _e("Web Spinner",70,7,10,S(6,12,6,6,8,2),14,16,"ranged","nature",
         acc=4,row="mid",ai="supportive",xp=24,gold=(3,8),res={"fire":2.0,"nature":0.0},
         ab=[{"name":"Web Shot","type":"debuff","target":"single_enemy",
-             "effect":{"speed_penalty":0.3,"duration":3},"description":"Sticky web."}],
+             "effect":{"speed_penalty":0.3,"duration":3},"description":"Sticky web."}],             loot=[
+                 {"drop_chance": 0.18, "item": {"name": 'Web Spinner Silk', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Viscous Silk Bundle', "unidentified_desc": 'A clump of sticky glowing web.', "appraised_name": 'Fading Web Silk', "material_desc": 'Dense silk infused with Fading energy. Tier 2 reagent.', "magic_desc": 'Charged with planar energy.', "estimated_value": 18, "description": 'A bundle of glowing web silk.', "identified": False}},
+                 {"drop_chance": 0.08, "item": {"name": 'Spider Mandible', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Curved Fang', "unidentified_desc": 'A curved black fang.', "appraised_name": 'Web Spinner Mandible', "material_desc": 'The cutting tool of a web spinner.', "magic_desc": 'No magical properties.', "estimated_value": 6, "description": 'A spider mandible.', "identified": False}},
+             ],
+
         desc={0:"A spider dangling silk.",1:"Web Spinner",
               2:"Web Spinner — webs slow your party."}),
     "Venomfang Spider": _e("Venomfang Spider",105,12,8,S(12,14,10,2,8,1),18,32,"melee","piercing",
         acc=8,xp=35,gold=(4,10),res={"fire":1.5,"nature":0.0},imm=["Poisoned"],
         ab=[{"name":"Venom Bite","type":"damage","target":"single_enemy","power":12,
              "element":"nature","status":"Poisoned","status_chance":0.5,
-             "status_duration":4,"description":"Venomous bite."}],
+             "status_duration":4,"description":"Venomous bite."}],             loot=[
+                 {"drop_chance": 0.2, "item": {"name": 'Venomfang Sac', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Dripping Sac', "unidentified_desc": 'A sac of green-tinted fluid.', "appraised_name": 'Potent Venom Sac', "material_desc": 'Concentrated spider venom. Tier 2 poison reagent.', "magic_desc": 'Magically potent.', "estimated_value": 22, "description": 'A sac full of potent venom.', "identified": False}},
+                 {"drop_chance": 0.1, "item": {"name": 'Chitin Plate', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Curved Shell', "unidentified_desc": 'A dark curved plate.', "appraised_name": 'Venomfang Chitin Plate', "material_desc": 'Dense chitin. Tier 1 armor part.', "magic_desc": 'No magical properties.', "estimated_value": 8, "description": 'Chitin plate from a venomfang spider.', "identified": False}},
+             ],
+
         desc={0:"A spider with dripping green fangs.",1:"Venomfang Spider",
               2:"Venomfang Spider — potent venom. Priority target."}),
 
     # ── Abandoned Mine ──
     "Kobold Miner": _e("Kobold Miner",70,7,2,S(8,10,6,5,5,2),14,24,"melee","blunt",
-        xp=18,gold=(6,14),
+        xp=18,gold=(6,14),        loot=[
+            {"drop_chance": 0.15, "item": {"name": 'Iron Pick', "type": 'weapon', "slot": 'weapon', "subtype": 'Pick', "rarity": 'common', "damage": 6, "phys_type": 'piercing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Heavy Pick', "unidentified_desc": 'A well-worn pickaxe.', "appraised_name": "Kobold Miner's Pick", "material_desc": 'Common iron mine-forged.', "magic_desc": 'No magical properties.', "estimated_value": 9, "description": "A kobold miner's pick.", "identified": False}},
+            {"drop_chance": 0.14, "item": {"name": 'Iron Ore Chunk', "type": 'material', "subtype": 'ore', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Heavy Rock', "unidentified_desc": 'A heavy dark chunk.', "appraised_name": 'Iron Ore Chunk', "material_desc": 'Raw iron ore. Tier 1 smithing.', "magic_desc": 'No magical properties.', "estimated_value": 6, "description": 'A chunk of iron ore.', "identified": False}},
+        ],
+
         desc={0:"A scaly humanoid with a pick.",1:"Kobold Miner",
               2:"Kobold Miner — moderate, often in groups."}),
     "Kobold Firebrand": _e("Kobold Firebrand",55,5,10,S(4,10,4,12,8,3),13,16,"ranged","fire",
         acc=3,row="mid",xp=24,gold=(6,14),res={"fire":0.0,"ice":2.0},
         ab=[{"name":"Fire Bolt","type":"damage","target":"single_enemy","power":14,
-             "element":"fire","description":"Hurls fire."}],
+             "element":"fire","description":"Hurls fire."}],             loot=[
+                 {"drop_chance": 0.12, "item": {"name": 'Ember Stone', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Hot Pebble', "unidentified_desc": 'A stone warm to the touch.', "appraised_name": 'Ember Stone', "material_desc": 'A stone holding fire magic. Tier 1 fire reagent.', "magic_desc": 'Faint heat signature.', "estimated_value": 12, "description": 'A small stone that radiates warmth.', "identified": False}},
+                 {"drop_chance": 0.08, "item": {"name": 'Kobold Scale', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Reptile Scale', "unidentified_desc": 'A small rough scale.', "appraised_name": 'Kobold Scale', "material_desc": 'Small reptilian scale. Tier 1 crafting.', "magic_desc": 'No magical properties.', "estimated_value": 4, "description": 'A kobold scale.', "identified": False}},
+             ],
+
         desc={0:"A kobold clutching a glowing ember.",1:"Kobold Firebrand",
               2:"Kobold Firebrand — fire magic. Weak to ice."}),
     "Mine Golem": _e("Mine Golem",162,30,12,S(18,4,20,1,2,0),6,44,"melee","blunt",
         ai="defensive",xp=45,gold=(8,20),
         res={"piercing":0.5,"slashing":0.5,"blunt":1.5,"fire":0.5,"lightning":2.0,"nature":0.0},
-        imm=["Poisoned","Fear","Sleep"],
+        imm=["Poisoned","Fear","Sleep"],        loot=[
+            {"drop_chance": 0.3, "item": {"name": 'Golem Stone Core', "type": 'material', "subtype": 'crafting_part', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Glowing Core', "unidentified_desc": 'A fist-sized stone pulsing faintly.', "appraised_name": 'Mine Golem Core', "material_desc": 'Animating core of a stone golem. Tier 2 material.', "magic_desc": 'Strong earth-magic resonance.', "estimated_value": 40, "description": 'The core stone of a mine golem.', "identified": False}},
+            {"drop_chance": 0.2, "item": {"name": 'Quarried Stone Block', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Dense Stone Block', "unidentified_desc": 'A perfectly smooth grey block.', "appraised_name": 'Golem-Grade Stone', "material_desc": 'Stone refined by golem-magic. Tier 1 material.', "magic_desc": 'Faint earth-magic residue.', "estimated_value": 10, "description": 'Unusually dense stone from a golem.', "identified": False}},
+        ],
+
         desc={0:"Animated stone and iron.",1:"Mine Golem",
               2:"Mine Golem — very tough, slow. Weak to lightning."}),
     "Dust Wraith": _e("Dust Wraith",87,5,20,S(4,14,6,14,10,2),16,28,"ranged","shadow",
         acc=6,row="mid",xp=38,gold=(5,12),
         res={"piercing":0.3,"slashing":0.3,"blunt":0.5,"shadow":0.0,"divine":2.0,"fire":1.5},
         ab=[{"name":"Life Drain","type":"damage","target":"single_enemy","power":10,
-             "element":"shadow","heal_percent":50,"description":"Drains life."}],
+             "element":"shadow","heal_percent":50,"description":"Drains life."}],             loot=[
+                 {"drop_chance": 0.18, "item": {"name": 'Grave Dust', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Fine Grey Dust', "unidentified_desc": "A pinch of grey dust that doesn't settle.", "appraised_name": 'Grave Dust', "material_desc": 'Dust from animated undead. Tier 1 reagent.', "magic_desc": 'Mild death-magic saturation.', "estimated_value": 8, "description": 'Dust left by a wraith.', "identified": False}},
+                 {"drop_chance": 0.1, "item": {"name": 'Shadow Wisp Fragment', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Dark Shard', "unidentified_desc": 'A dark cold crystal shard.', "appraised_name": 'Shadow Wisp Fragment', "material_desc": 'Crystallized shadow energy. Tier 2 reagent.', "magic_desc": 'Active shadow resonance.', "estimated_value": 22, "description": 'A shard of crystallized shadow.', "identified": False}},
+             ],
+
         desc={0:"A swirling dust cloud with glowing eyes.",1:"Dust Wraith",
               2:"Dust Wraith — drains life. Use divine/fire."}),
     "Cave-in Beetle": _e("Cave-in Beetle",100,25,4,S(14,6,14,1,3,0),8,28,"melee","blunt",
-        ai="defensive",xp=25,gold=(2,6),res={"piercing":0.5,"fire":1.5},
+        ai="defensive",xp=25,gold=(2,6),res={"piercing":0.5,"fire":1.5},        loot=[
+            {"drop_chance": 0.2, "item": {"name": 'Beetle Carapace', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Curved Shell', "unidentified_desc": 'A heavy curved shell segment.', "appraised_name": 'Cave Beetle Carapace', "material_desc": 'Tough insect shell. Tier 1 heavy armor component.', "magic_desc": 'No magical properties.', "estimated_value": 7, "description": 'Shell from a cave beetle.', "identified": False}},
+        ],
+
         desc={0:"An armored insect.",1:"Cave-in Beetle",
               2:"Cave-in Beetle — heavy armor. Use blunt or magic."}),
 
@@ -106,13 +155,21 @@ NEW_ENEMIES = {
     "Zombie": _e("Zombie",125,7,2,S(12,4,14,1,2,0),6,28,"melee","blunt",
         xp=20,gold=(2,8),
         res={"piercing":0.5,"shadow":0.0,"divine":2.0,"fire":1.5,"nature":1.5},
-        imm=["Poisoned","Fear","Sleep"],
+        imm=["Poisoned","Fear","Sleep"],        loot=[
+            {"drop_chance": 0.15, "item": {"name": 'Grave Dirt Clump', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Damp Earth', "unidentified_desc": 'A lump of graveyard earth.', "appraised_name": 'Grave Dirt', "material_desc": 'Earth from an active crypt. Tier 1 reagent.', "magic_desc": 'Mild death-magic saturation.', "estimated_value": 5, "description": 'Clumped earth from a crypt floor.', "identified": False}},
+            {"drop_chance": 0.1, "item": {"name": 'Zombie Flesh', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Putrid Flesh', "unidentified_desc": 'A piece of grey cold flesh.', "appraised_name": 'Zombie Flesh', "material_desc": 'Flesh animated by death-magic. Tier 1 undead reagent.', "magic_desc": 'Residual animation energy.', "estimated_value": 4, "description": 'A piece of zombie flesh.', "identified": False}},
+        ],
+
         desc={0:"A shambling corpse.",1:"Zombie",
               2:"Zombie — slow, tough. Weak to divine and fire."}),
     "Skeletal Archer": _e("Skeletal Archer",80,7,6,S(6,12,0,3,4,0),14,28,"ranged","piercing",
         acc=5,row="mid",xp=28,gold=(4,12),
         res={"piercing":0.5,"slashing":0.5,"blunt":1.5,"shadow":0.0,"divine":2.0},
-        imm=["Poisoned","Fear","Sleep"],
+        imm=["Poisoned","Fear","Sleep"],        loot=[
+            {"drop_chance": 0.16, "item": {"name": 'Skeleton Bone Shard', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Old Bone', "unidentified_desc": 'A long yellowed bone.', "appraised_name": 'Undead Bone Shard', "material_desc": 'Bone from an animated skeleton. Tier 1 reagent.', "magic_desc": 'Residual death-magic.', "estimated_value": 5, "description": 'A bone shard from a skeleton.', "identified": False}},
+            {"drop_chance": 0.1, "item": {"name": 'Corroded Arrowhead', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Bent Arrow Point', "unidentified_desc": 'A warped metal arrowhead.', "appraised_name": 'Corroded Arrowhead', "material_desc": 'Old iron arrowhead, corroded.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": 'A corroded arrowhead.', "identified": False}},
+        ],
+
         desc={0:"A skeleton with a bow.",1:"Skeletal Archer",
               2:"Skeletal Archer — ranged undead. Weak to blunt/divine."}),
     "Crypt Shade": _e("Crypt Shade",75,4,24,S(2,16,4,12,12,2),20,20,"ranged","shadow",
@@ -120,14 +177,21 @@ NEW_ENEMIES = {
         res={"piercing":0.0,"slashing":0.0,"blunt":0.0,"shadow":0.0,"divine":2.5,"fire":1.5,"arcane":1.5},
         imm=["Poisoned","Fear"],
         ab=[{"name":"Shadow Bolt","type":"damage","target":"single_enemy","power":16,
-             "element":"shadow","description":"Dark energy bolt."}],
+             "element":"shadow","description":"Dark energy bolt."}],             loot=[
+                 {"drop_chance": 0.2, "item": {"name": 'Shadow Essence', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Cold Dark Shard', "unidentified_desc": 'A shard that absorbs light.', "appraised_name": 'Crypt Shade Essence', "material_desc": 'Concentrated shadow energy. Tier 2 reagent.', "magic_desc": 'Strong shadow resonance.', "estimated_value": 28, "description": 'A sliver of pure shadow.', "identified": False}},
+             ],
+
         desc={0:"A translucent dark figure.",1:"Crypt Shade",
               2:"Crypt Shade — immune to physical. Use divine/fire."}),
     "Ghoul": _e("Ghoul",137,12,8,S(14,12,12,3,6,1),14,36,"melee","slashing",
         acc=4,xp=40,gold=(5,15),
         res={"shadow":0.0,"divine":2.0,"fire":1.5},imm=["Poisoned"],
         ab=[{"name":"Paralyzing Touch","type":"debuff","target":"single_enemy",
-             "effect":{"stun_chance":0.3,"duration":1},"description":"Can paralyze."}],
+             "effect":{"stun_chance":0.3,"duration":1},"description":"Can paralyze."}],             loot=[
+                 {"drop_chance": 0.14, "item": {"name": 'Ghoul Claw', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Long Dark Claw', "unidentified_desc": 'A black curved claw, still sharp.', "appraised_name": 'Ghoul Claw', "material_desc": 'Claw from a paralysis-capable undead.', "magic_desc": 'Trace paralytic.', "estimated_value": 12, "description": 'A ghoul claw.', "identified": False}},
+                 {"drop_chance": 0.1, "item": {"name": 'Grave Dust', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Fine Grey Dust', "unidentified_desc": 'A pinch of grey dust.', "appraised_name": 'Grave Dust', "material_desc": 'Dust from animated undead.', "magic_desc": 'Death-magic residue.', "estimated_value": 8, "description": 'Dust left by an undead.', "identified": False}},
+             ],
+
         desc={0:"A hunched cadaverous creature.",1:"Ghoul",
               2:"Ghoul — can paralyze. Dangerous in groups."}),
     "Bone Colossus": _e("Bone Colossus",225,25,12,S(20,6,18,2,4,0),8,52,"melee","blunt",
@@ -135,25 +199,41 @@ NEW_ENEMIES = {
         res={"piercing":0.3,"slashing":0.5,"blunt":1.5,"shadow":0.0,"divine":2.5},
         imm=["Poisoned","Fear","Sleep","Stun"],
         ab=[{"name":"Bone Storm","type":"damage","target":"aoe_enemy","power":14,
-             "element":"piercing","description":"Bone fragments hit all enemies."}],
+             "element":"piercing","description":"Bone fragments hit all enemies."}],             loot=[
+                 {"drop_chance": 0.25, "item": {"name": 'Colossus Rib Shard', "type": 'material', "subtype": 'crafting_part', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Massive Bone Fragment', "unidentified_desc": 'A shard of enormous bone dense as iron.', "appraised_name": 'Bone Colossus Rib Fragment', "material_desc": 'Bone fused by death-magic. Tier 2 material.', "magic_desc": 'Structural death-magic.', "estimated_value": 35, "description": 'A rib shard from a bone colossus.', "identified": False}},
+                 {"drop_chance": 0.15, "item": {"name": 'Fused Bone Dust', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Dense Powder', "unidentified_desc": 'A dark grey powder.', "appraised_name": 'Fused Bone Dust', "material_desc": 'Powdered colossus bone. Tier 1 reagent.', "magic_desc": 'Death-magic concentration.', "estimated_value": 12, "description": 'Powder from a colossus.', "identified": False}},
+             ],
+
         desc={0:"A towering mass of fused bones.",1:"Bone Colossus",
               2:"Bone Colossus — elite. AoE bone storm. Use divine/blunt."}),
     "Warden Revenant": _e("Warden Revenant",1000,35,24,S(18,12,20,14,16,8),12,48,"melee","shadow",
         acc=8,ai="boss",xp=350,gold=(100,200),
         res={"piercing":0.5,"slashing":0.5,"shadow":0.0,"divine":2.0,"fire":1.5},
-        imm=["Poisoned","Fear","Sleep"],ab=["Shadow Strike","Dark Ritual"],
+        imm=["Poisoned","Fear","Sleep"],ab=["Shadow Strike","Dark Ritual"],        loot=[
+            {"drop_chance": 0.6, "item": {"name": "Warden's Remnant Badge", "type": 'material', "subtype": 'reagent', "rarity": 'rare', "tier": 3, "identify_difficulty": 1, "unidentified_name": 'Tarnished Badge', "unidentified_desc": 'A badge bearing a broken crest.', "appraised_name": 'Warden Remnant Badge', "material_desc": 'Badge of a fallen Warden. Tier 3 reagent.', "magic_desc": 'Strong warden-oath and shadow corruption.', "estimated_value": 80, "description": 'The badge of a Warden who fell to shadow.', "identified": False}},
+            {"drop_chance": 0.3, "item": {"name": 'Corrupted Ward-Stone', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Dark Pulsing Stone', "unidentified_desc": 'A stone that pulses with dark light.', "appraised_name": 'Corrupted Ward-Stone', "material_desc": "A warden's ward-stone, corrupted. Tier 2 reagent.", "magic_desc": 'Dual warden and shadow resonance.', "estimated_value": 45, "description": "A warden's ward-stone turned dark.", "identified": False}},
+        ],
+
         desc={0:"A spectral knight in Warden armor.",1:"Warden Revenant",
               2:"Warden Revenant — Boss. Corrupted Warden of the Fading."}),
 
     # ── Ruins of Ashenmoor ──
     "Ashenmoor Bandit": _e("Ashenmoor Bandit",137,15,6,S(14,12,10,6,6,3),15,32,"melee","slashing",
-        acc=3,xp=35,gold=(12,28),
+        acc=3,xp=35,gold=(12,28),        loot=[
+            {"drop_chance": 0.14, "item": {"name": 'Worn Longsword', "type": 'weapon', "slot": 'weapon', "subtype": 'Longsword', "rarity": 'common', "damage": 9, "phys_type": 'slashing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Notched Blade', "unidentified_desc": 'A sword with deep notches.', "appraised_name": 'Worn Iron Longsword', "material_desc": 'Common iron, poorly maintained.', "magic_desc": 'No magical properties.', "estimated_value": 15, "description": "A bandit's longsword.", "identified": False}},
+            {"drop_chance": 0.12, "item": {"name": 'Bandit Mail Patch', "type": 'armor', "slot": 'body', "subtype": 'body_armor', "rarity": 'common', "armor_tier": 'light', "defense": 3, "identify_difficulty": 1, "unidentified_name": 'Scrap Mail', "unidentified_desc": 'A patch of chain links sewn to leather.', "appraised_name": 'Scrap Chainmail Vest', "material_desc": 'Mixed scrap metal and leather.', "magic_desc": 'No magical properties.', "estimated_value": 12, "description": 'Patched mail from a bandit.', "identified": False}},
+        ],
+
         desc={0:"A scarred bandit in mismatched armor.",1:"Ashenmoor Bandit",
               2:"Ashenmoor Bandit — tougher than common bandits."}),
     "Ruin Sentinel": _e("Ruin Sentinel",175,30,16,S(16,8,16,8,10,4),10,40,"melee","slashing",
         acc=4,ai="defensive",xp=50,gold=(10,25),res={"arcane":0.5,"nature":1.5},imm=["Fear"],
         ab=[{"name":"Shield Wall","type":"buff","target":"self",
-             "effect":{"defense_boost":1.5,"duration":2},"description":"Raises a barrier."}],
+             "effect":{"defense_boost":1.5,"duration":2},"description":"Raises a barrier."}],             loot=[
+                 {"drop_chance": 0.22, "item": {"name": 'Animated Armor Fragment', "type": 'material', "subtype": 'crafting_part', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Glowing Metal Shard', "unidentified_desc": 'A shard of metal that faintly pulses.', "appraised_name": 'Sentinel Armor Fragment', "material_desc": 'Animated armor shard. Tier 2 construct material.', "magic_desc": 'Construct-binding magic.', "estimated_value": 30, "description": 'A shard of sentinel armor.', "identified": False}},
+                 {"drop_chance": 0.12, "item": {"name": 'Old Iron Plate', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Heavy Metal Plate', "unidentified_desc": 'A battered iron plate.', "appraised_name": 'Ruin Iron Plate', "material_desc": 'Pre-Imperial iron. Tier 1 armor material.', "magic_desc": 'No magical properties.', "estimated_value": 10, "description": 'An iron plate from the ruins.', "identified": False}},
+             ],
+
         desc={0:"An animated suit of ancient armor.",1:"Ruin Sentinel",
               2:"Ruin Sentinel — high defense, shield wall. Use magic."}),
     "Fading Cultist": _e("Fading Cultist",95,7,16,S(6,10,6,14,12,8),14,20,"ranged","shadow",
@@ -161,44 +241,72 @@ NEW_ENEMIES = {
         ab=[{"name":"Shadow Heal","type":"heal","target":"single_ally","power":20,
              "description":"Heals an ally with shadow magic."},
             {"name":"Curse","type":"debuff","target":"single_enemy",
-             "effect":{"damage_taken_boost":1.3,"duration":3},"description":"Curses target."}],
+             "effect":{"damage_taken_boost":1.3,"duration":3},"description":"Curses target."}],             loot=[
+                 {"drop_chance": 0.18, "item": {"name": 'Cultist Grimoire Page', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Dark Scroll Page', "unidentified_desc": 'A torn page in backwards script.', "appraised_name": 'Fading Cultist Grimoire Page', "material_desc": "Page from a cultist's spell-notes. Tier 2 reagent.", "magic_desc": 'Fading-magic resonance.', "estimated_value": 28, "description": 'A page of cultist notes on the Fading.', "identified": False}},
+                 {"drop_chance": 0.1, "item": {"name": 'Shadow Talisman', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Dark Amulet', "unidentified_desc": 'A small amulet of black stone.', "appraised_name": 'Shadow Talisman', "material_desc": 'Crude cultist shadow-focus. Tier 1 reagent.', "magic_desc": 'Faint shadow attunement.', "estimated_value": 10, "description": 'A cultist shadow talisman.', "identified": False}},
+             ],
+
         desc={0:"A robed figure chanting.",1:"Fading Cultist",
               2:"Fading Cultist — heals allies, curses you. Kill first."}),
     "Corrupted Treant": _e("Corrupted Treant",200,20,8,S(18,4,18,4,8,2),6,44,"melee","blunt",
         ai="defensive",xp=50,gold=(5,15),res={"fire":2.5,"nature":0.0,"slashing":0.5,"ice":0.5},
         ab=[{"name":"Root Slam","type":"damage","target":"aoe_enemy","power":12,
-             "element":"nature","description":"Roots slam all enemies."}],
+             "element":"nature","description":"Roots slam all enemies."}],             loot=[
+                 {"drop_chance": 0.25, "item": {"name": 'Fading-Touched Heartwood', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Dark Wood Core', "unidentified_desc": 'A chunk of wood pulsing with void-light.', "appraised_name": 'Fading-Touched Heartwood', "material_desc": 'Core wood from a corrupted treant. Tier 2 reagent.', "magic_desc": 'Dual nature and void energy.', "estimated_value": 40, "description": 'Heartwood from a corrupted treant.', "identified": False}},
+                 {"drop_chance": 0.15, "item": {"name": 'Twisted Bark Strip', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Dark Bark', "unidentified_desc": 'A strip of unnaturally dark bark.', "appraised_name": 'Corrupted Bark Strip', "material_desc": 'Bark from a corrupted treant. Tier 1 material.', "magic_desc": 'Faint corruption.', "estimated_value": 8, "description": 'A strip of corrupted bark.', "identified": False}},
+             ],
+
         desc={0:"A twisted tree animated by dark magic.",1:"Corrupted Treant",
               2:"Corrupted Treant — AoE roots. Very weak to fire."}),
     "Shadow Valdris": _e("Shadow Valdris",1125,30,32,S(14,14,16,22,18,10),14,40,"ranged","shadow",
         acc=10,row="back",ai="boss",xp=450,gold=(150,300),
         res={"shadow":0.0,"divine":2.0,"arcane":0.5},
-        imm=["Poisoned","Fear","Sleep","Stun"],ab=["Shadow Nova","Dark Ritual","Fading Pulse"],
+        imm=["Poisoned","Fear","Sleep","Stun"],ab=["Shadow Nova","Dark Ritual","Fading Pulse"],        loot=[],
+
         desc={0:"A dark mirror-image crackling with shadow.",1:"Shadow of Valdris",
               2:"Shadow Valdris — Boss. Echo of the Traitor Warden."}),
 
     # ── World map general ──
     "Dire Wolf": _e("Dire Wolf",130,10,4,S(14,14,12,3,10,2),20,36,"melee","piercing",
-        acc=6,xp=30,gold=(3,8),res={"fire":1.5,"ice":0.5},
+        acc=6,xp=30,gold=(3,8),res={"fire":1.5,"ice":0.5},        loot=[
+            {"drop_chance": 0.2, "item": {"name": 'Dire Wolf Pelt', "type": 'material', "subtype": 'leather', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Thick Grey Pelt', "unidentified_desc": 'An exceptionally thick grey pelt.', "appraised_name": 'Dire Wolf Pelt', "material_desc": 'High-quality pelt. Tier 2 leather material.', "magic_desc": 'No magical properties.', "estimated_value": 28, "description": 'A thick dire wolf pelt.', "identified": False}},
+            {"drop_chance": 0.14, "item": {"name": 'Dire Wolf Fang', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Large Curved Fang', "unidentified_desc": "A fang twice the size of a normal wolf's.", "appraised_name": 'Dire Wolf Fang', "material_desc": 'Large predator tooth. Tier 2 reagent.', "magic_desc": 'Strong predator essence.', "estimated_value": 20, "description": 'A large fang. Used in ferocity enchanting.', "identified": False}},
+        ],
+
         desc={0:"A wolf twice normal size.",1:"Dire Wolf",2:"Dire Wolf — tough pack leader."}),
     "Highway Bandit": _e("Highway Bandit",105,12,4,S(12,12,8,6,6,3),16,28,"melee","slashing",
         acc=3,xp=25,gold=(10,22),
         ab=[{"name":"Cheap Shot","type":"damage","target":"single_enemy","power":18,
-             "element":"piercing","description":"Dirty fighting."}],
+             "element":"piercing","description":"Dirty fighting."}],             loot=[
+                 {"drop_chance": 0.14, "item": {"name": 'Worn Short Sword', "type": 'weapon', "slot": 'weapon', "subtype": 'Short Sword', "rarity": 'common', "damage": 6, "phys_type": 'slashing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Road-Worn Blade', "unidentified_desc": 'A short sword with a worn grip.', "appraised_name": "Highway Bandit's Blade", "material_desc": 'Common steel, road-worn.', "magic_desc": 'No magical properties.', "estimated_value": 10, "description": "A highway bandit's blade.", "identified": False}},
+                 {"drop_chance": 0.1, "item": {"name": 'Leather Scraps', "type": 'material', "subtype": 'leather', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Leather Scraps', "unidentified_desc": 'Rough leather.', "appraised_name": 'Boiled Leather Scraps', "material_desc": 'Tier 1 leather material.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": 'Leather scraps from a bandit.', "identified": False}},
+             ],
+
         desc={0:"A masked figure.",1:"Highway Bandit",2:"Highway Bandit — fights dirty."}),
     "Bandit Crossbowman": _e("Bandit Crossbowman",85,7,4,S(8,14,6,6,8,3),14,32,"ranged","piercing",
-        acc=6,row="mid",xp=25,gold=(8,18),
+        acc=6,row="mid",xp=25,gold=(8,18),        loot=[
+            {"drop_chance": 0.14, "item": {"name": 'Crossbow Bolt Bundle', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Bundle of Bolts', "unidentified_desc": 'A dozen iron-tipped bolts.', "appraised_name": 'Iron Crossbow Bolts', "material_desc": 'Standard crossbow ammunition.', "magic_desc": 'No magical properties.', "estimated_value": 8, "description": 'A bundle of crossbow bolts.', "identified": False}},
+            {"drop_chance": 0.08, "item": {"name": 'Leather Scraps', "type": 'material', "subtype": 'leather', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Leather Scraps', "unidentified_desc": 'Rough leather.', "appraised_name": 'Boiled Leather Scraps', "material_desc": 'Tier 1 leather.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": 'Leather from a bandit.', "identified": False}},
+        ],
+
         desc={0:"A bandit with a crossbow.",1:"Bandit Crossbowman",
               2:"Bandit Crossbowman — ranged mid row."}),
     "Swamp Leech": _e("Swamp Leech",62,5,4,S(8,8,10,1,4,0),10,16,"melee","piercing",
         xp=12,gold=(0,3),res={"fire":2.0,"ice":0.5,"nature":0.0},
         ab=[{"name":"Blood Drain","type":"damage","target":"single_enemy","power":6,
-             "element":"nature","heal_percent":100,"description":"Drains blood."}],
+             "element":"nature","heal_percent":100,"description":"Drains blood."}],             loot=[
+                 {"drop_chance": 0.22, "item": {"name": 'Leech Extract', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Dark Fluid Vial', "unidentified_desc": 'A vial of murky dark fluid.', "appraised_name": 'Swamp Leech Extract', "material_desc": 'Anticoagulant from a blood-draining leech. Tier 1 reagent.', "magic_desc": 'Anticoagulant properties.', "estimated_value": 10, "description": 'Extract from a swamp leech.', "identified": False}},
+             ],
+
         desc={0:"A bloated worm.",1:"Swamp Leech",2:"Swamp Leech — heals by draining."}),
     "Marsh Troll": _e("Marsh Troll",187,15,6,S(18,6,16,3,6,2),8,44,"melee","blunt",
         xp=50,gold=(10,25),res={"fire":2.0,"nature":0.5},
         ab=[{"name":"Regenerate","type":"heal","target":"self","power":15,
-             "description":"Regenerates HP."}],
+             "description":"Regenerates HP."}],             loot=[
+                 {"drop_chance": 0.25, "item": {"name": 'Troll Blood Flask', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Viscous Green Flask', "unidentified_desc": 'A flask of foul-smelling green blood.', "appraised_name": 'Marsh Troll Blood', "material_desc": 'Blood from a regenerating troll. Tier 2 reagent.', "magic_desc": 'Strong regenerative factor.', "estimated_value": 38, "description": 'Troll blood. The regenerative factor makes it valuable.', "identified": False}},
+                 {"drop_chance": 0.15, "item": {"name": 'Troll Hide Slab', "type": 'material', "subtype": 'leather', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Green Rubbery Hide', "unidentified_desc": 'A slab of tough rubbery green hide.', "appraised_name": 'Marsh Troll Hide', "material_desc": 'Hide from a regenerating troll. Tier 2 leather.', "magic_desc": 'Faint regenerative essence.', "estimated_value": 25, "description": 'Troll hide.', "identified": False}},
+             ],
+
         desc={0:"A massive green brute.",1:"Marsh Troll",
               2:"Marsh Troll — regenerates! Use fire."}),
 
@@ -210,14 +318,21 @@ NEW_ENEMIES = {
     "Goblin Drummer": _e("Goblin Drummer",55,4,2,S(4,8,4,4,6,4),12,12,"melee","blunt",
         row="back",ai="supportive",xp=18,gold=(3,8),
         ab=[{"name":"War Drums","type":"buff","target":"all_allies",
-             "effect":{"speed_boost":1.2,"duration":2},"description":"Drums speed allies up."}],
+             "effect":{"speed_boost":1.2,"duration":2},"description":"Drums speed allies up."}],             loot=[
+                 {"drop_chance": 0.12, "item": {"name": 'Drum Membrane', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Stretched Hide', "unidentified_desc": 'A rough circle of dried skin.', "appraised_name": 'Goblin War-Drum Membrane', "material_desc": 'Stretched hide from goblin drums.', "magic_desc": 'Faint resonant quality.', "estimated_value": 6, "description": 'A drum membrane that vibrates oddly.', "identified": False}},
+                 {"drop_chance": 0.08, "item": {"name": 'Goblin Ear', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Severed Ear', "unidentified_desc": 'A small pointed ear.', "appraised_name": 'Goblin Ear', "material_desc": 'Bounty material.', "magic_desc": 'No magical properties.', "estimated_value": 2, "description": 'A goblin ear.', "identified": False}},
+             ],
+
         desc={0:"A goblin beating a crude drum.",1:"Goblin Drummer",
               2:"Goblin Drummer — buffs ally speed. Low threat alone."}),
     "Rabid Rat": _e("Rabid Rat",25,3,1,S(3,14,3,1,4,0),22,10,"melee","piercing",
         acc=4,xp=4,gold=(0,1),
         ab=[{"name":"Rabid Bite","type":"damage","target":"single_enemy","power":4,
              "element":"nature","status":"Poisoned","status_chance":0.2,
-             "status_duration":2,"description":"Diseased bite."}],
+             "status_duration":2,"description":"Diseased bite."}],             loot=[
+                 {"drop_chance": 0.12, "item": {"name": 'Rat Tail', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Rat Tail', "unidentified_desc": 'A scaly worm-like tail.', "appraised_name": 'Rabid Rat Tail', "material_desc": 'Proof of a rat kill.', "magic_desc": 'No magical properties.', "estimated_value": 1, "description": 'A rat tail.', "identified": False}},
+             ],
+
         desc={0:"A mangy, snarling rat.",1:"Rabid Rat",2:"Rabid Rat — weak but can poison."}),
     "Tunnel Lurker": _e("Tunnel Lurker",95,12,6,S(12,10,10,3,6,1),12,32,"melee","piercing",
         acc=5,xp=26,gold=(4,10),
@@ -233,7 +348,10 @@ NEW_ENEMIES = {
     "Egg Sac": _e("Egg Sac",50,5,1,S(0,0,8,0,0,0),1,0,"melee","blunt",
         ai="defensive",xp=5,gold=(0,0),res={"fire":3.0},
         ab=[{"name":"Hatch","type":"summon","target":"self",
-             "effect":{"spawn":"Spiderling","count":2},"description":"Hatches spiderlings."}],
+             "effect":{"spawn":"Spiderling","count":2},"description":"Hatches spiderlings."}],             loot=[
+                 {"drop_chance": 0.25, "item": {"name": 'Spider Silk Bundle', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Silk Bundle', "unidentified_desc": 'A mass of wound silk threads.', "appraised_name": 'Spider Egg Silk', "material_desc": 'Protective silk from an egg sac. Tier 1 material.', "magic_desc": 'No magical properties.', "estimated_value": 5, "description": 'Silk from a spider egg sac.', "identified": False}},
+             ],
+
         desc={0:"A pulsing silk egg sac.",1:"Egg Sac",2:"Egg Sac — destroy before it hatches!"}),
     "Broodmother Guard": _e("Broodmother Guard",137,17,10,S(16,10,14,2,8,1),14,40,"melee","piercing",
         acc=6,xp=42,gold=(5,14),res={"fire":1.5,"nature":0.0},imm=["Poisoned"],
@@ -245,7 +363,11 @@ NEW_ENEMIES = {
     "Phase Spider": _e("Phase Spider",80,5,16,S(8,18,6,10,10,2),22,28,"melee","piercing",
         acc=10,xp=38,gold=(6,14),res={"arcane":0.0,"fire":1.5},
         ab=[{"name":"Phase Shift","type":"buff","target":"self",
-             "effect":{"evasion_boost":1.5,"duration":1},"description":"Phases partially out of reality."}],
+             "effect":{"evasion_boost":1.5,"duration":1},"description":"Phases partially out of reality."}],             loot=[
+                 {"drop_chance": 0.22, "item": {"name": 'Phase Spider Silk', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Shimmering Thread', "unidentified_desc": 'A thread that flickers in and out of existence.', "appraised_name": 'Phase-Silk', "material_desc": 'Silk from a spider between planes. Tier 2 reagent.', "magic_desc": 'Strong planar resonance.', "estimated_value": 35, "description": 'Silk that shifts between worlds.', "identified": False}},
+                 {"drop_chance": 0.08, "item": {"name": 'Phase Spider Eye', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Multifaceted Eye', "unidentified_desc": 'A compound eye reflecting things not there.', "appraised_name": 'Phase Spider Eye', "material_desc": 'Eye of a planar spider. Tier 2 scrying reagent.', "magic_desc": 'Planar attunement.', "estimated_value": 28, "description": 'A compound eye that sees between planes.', "identified": False}},
+             ],
+
         desc={0:"A spider that flickers in and out of sight.",1:"Phase Spider",
               2:"Phase Spider — very fast, phases to dodge. Use magic."}),
 
@@ -253,7 +375,11 @@ NEW_ENEMIES = {
     "Kobold Trapsmith": _e("Kobold Trapsmith",60,5,6,S(5,12,4,10,8,3),14,16,"ranged","piercing",
         acc=4,row="mid",ai="supportive",xp=22,gold=(5,12),
         ab=[{"name":"Blinding Bomb","type":"debuff","target":"single_enemy",
-             "effect":{"accuracy_penalty":0.5,"duration":2},"description":"Blinds with flash powder."}],
+             "effect":{"accuracy_penalty":0.5,"duration":2},"description":"Blinds with flash powder."}],             loot=[
+                 {"drop_chance": 0.18, "item": {"name": 'Trap Components', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Metal Parts', "unidentified_desc": 'Springs, wires, and small pins.', "appraised_name": 'Trap Component Set', "material_desc": 'Parts from a kobold trap. Tier 1 craft material.', "magic_desc": 'Slight tension-magic.', "estimated_value": 10, "description": 'Springs and pins from a kobold trap.', "identified": False}},
+                 {"drop_chance": 0.1, "item": {"name": 'Kobold Scale', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Reptile Scale', "unidentified_desc": 'A small rough scale.', "appraised_name": 'Kobold Scale', "material_desc": 'Tier 1 light armor material.', "magic_desc": 'No magical properties.', "estimated_value": 4, "description": 'A kobold scale.', "identified": False}},
+             ],
+
         desc={0:"A kobold with pouches of strange powder.",1:"Kobold Trapsmith",
               2:"Kobold Trapsmith — blinds with flash bombs."}),
     "Crystal Elemental": _e("Crystal Elemental",125,35,20,S(14,4,16,8,6,0),6,36,"melee","piercing",
@@ -266,7 +392,10 @@ NEW_ENEMIES = {
         desc={0:"A living cluster of crystals.",1:"Crystal Elemental",
               2:"Crystal Elemental — very high armor. Weak to blunt."}),
     "Mine Rat Swarm": _e("Mine Rat Swarm",45,3,1,S(4,12,4,1,3,0),18,14,"melee","piercing",
-        acc=3,xp=8,gold=(0,2),
+        acc=3,xp=8,gold=(0,2),        loot=[
+            {"drop_chance": 0.2, "item": {"name": 'Rat Pelts', "type": 'material', "subtype": 'leather', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Scrappy Pelts', "unidentified_desc": 'A bunch of small matted pelts.', "appraised_name": 'Mine Rat Pelts', "material_desc": 'Low-grade small mammal pelts. Tier 1 leather scrap.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": 'A handful of rat pelts.', "identified": False}},
+        ],
+
         desc={0:"A chittering mass of rats.",1:"Rat Swarm",2:"Rat Swarm — annoying in numbers."}),
 
     # ── More crypt ──
@@ -275,7 +404,10 @@ NEW_ENEMIES = {
         res={"piercing":0.0,"slashing":0.0,"blunt":0.0,"shadow":0.0,"divine":2.5},
         imm=["Poisoned","Fear","Sleep","Stun"],
         ab=[{"name":"Wail","type":"debuff","target":"aoe_enemy",
-             "effect":{"damage_penalty":0.8,"duration":2},"description":"Demoralizing wail."}],
+             "effect":{"damage_penalty":0.8,"duration":2},"description":"Demoralizing wail."}],             loot=[
+                 {"drop_chance": 0.2, "item": {"name": 'Grief Shard', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Shivering Crystal', "unidentified_desc": 'A crystal that hums with a faint moan.', "appraised_name": 'Grief Shard', "material_desc": 'Crystallized grief. Tier 2 reagent.', "magic_desc": 'Psychic resonance.', "estimated_value": 25, "description": 'A shard of crystallized grief.', "identified": False}},
+             ],
+
         desc={0:"A translucent weeping figure.",1:"Wailing Spirit",
               2:"Wailing Spirit — AoE debuff wail. Immune to physical."}),
     "Plague Bearer": _e("Plague Bearer",150,10,4,S(14,6,16,2,4,0),8,24,"melee","blunt",
@@ -283,7 +415,10 @@ NEW_ENEMIES = {
         imm=["Poisoned"],
         ab=[{"name":"Plague Touch","type":"damage","target":"single_enemy","power":8,
              "element":"nature","status":"Poisoned","status_chance":0.6,
-             "status_duration":4,"description":"Spreads disease."}],
+             "status_duration":4,"description":"Spreads disease."}],             loot=[
+                 {"drop_chance": 0.18, "item": {"name": 'Plague Ichor', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Oozing Vial', "unidentified_desc": 'A small vessel oozing dark fluid.', "appraised_name": 'Plague Ichor', "material_desc": 'Concentrated undead disease fluid. Tier 2 reagent.', "magic_desc": 'Potent undead disease.', "estimated_value": 30, "description": 'Ichor from a plague bearer.', "identified": False}},
+             ],
+
         desc={0:"A bloated undead oozing foul liquid.",1:"Plague Bearer",
               2:"Plague Bearer — high poison chance. Prioritize."}),
     "Death Knight": _e("Death Knight",187,30,16,S(18,8,16,6,8,2),10,48,"melee","slashing",
@@ -299,18 +434,30 @@ NEW_ENEMIES = {
 
     # ── More ruins ──
     "Ashenmoor Crossbowman": _e("Ashenmoor Crossbowman",100,10,4,S(8,14,8,5,6,3),14,36,"ranged","piercing",
-        acc=6,row="mid",xp=32,gold=(10,22),
+        acc=6,row="mid",xp=32,gold=(10,22),        loot=[
+            {"drop_chance": 0.12, "item": {"name": 'Crossbow Bolt Bundle', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Bundle of Bolts', "unidentified_desc": 'A dozen well-kept bolts.', "appraised_name": 'Ashenmoor Bolts', "material_desc": 'Standard iron crossbow bolts.', "magic_desc": 'No magical properties.', "estimated_value": 8, "description": 'A bundle of crossbow bolts.', "identified": False}},
+            {"drop_chance": 0.1, "item": {"name": 'Leather Scraps', "type": 'material', "subtype": 'leather', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Leather Scraps', "unidentified_desc": 'Rough pieces of leather.', "appraised_name": 'Boiled Leather Scraps', "material_desc": 'Low-grade boiled leather. Tier 1 material.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": 'Rough leather from a bandit.', "identified": False}},
+        ],
+
         desc={0:"A bandit with a heavy crossbow.",1:"Ashenmoor Crossbowman",
               2:"Ashenmoor Crossbowman — ranged threat."}),
     "Fading Abomination": _e("Fading Abomination",212,15,20,S(20,6,18,4,6,2),8,52,"melee","shadow",
         acc=4,xp=60,gold=(10,25),res={"shadow":0.0,"divine":2.5,"fire":1.5},
         imm=["Poisoned","Fear","Stun"],
         ab=[{"name":"Corruption Slam","type":"damage","target":"aoe_enemy","power":16,
-             "element":"shadow","description":"Slams with corrupted force."}],
+             "element":"shadow","description":"Slams with corrupted force."}],             loot=[
+                 {"drop_chance": 0.3, "item": {"name": 'Void Residue', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Dark Ooze', "unidentified_desc": 'A viscous black liquid.', "appraised_name": 'Void Residue', "material_desc": 'Condensed Fading-energy. Tier 2 void reagent.', "magic_desc": 'Intense void resonance.', "estimated_value": 45, "description": 'Black ooze from a fading abomination.', "identified": False}},
+                 {"drop_chance": 0.15, "item": {"name": 'Corrupted Flesh', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Dark Flesh', "unidentified_desc": 'Flesh that pulses faintly.', "appraised_name": 'Fading-Touched Flesh', "material_desc": 'Flesh transformed by the Fading. Tier 1 reagent.', "magic_desc": 'Fading energy residue.', "estimated_value": 10, "description": 'Corrupted flesh from an abomination.', "identified": False}},
+             ],
+
         desc={0:"A twisted mass of flesh and shadow.",1:"Fading Abomination",
               2:"Fading Abomination — elite. AoE shadow. Use divine."}),
     "Ruin Archer": _e("Ruin Archer",87,7,8,S(6,14,6,6,8,4),16,28,"ranged","piercing",
-        acc=6,row="mid",xp=28,gold=(6,16),res={"arcane":0.5},
+        acc=6,row="mid",xp=28,gold=(6,16),res={"arcane":0.5},        loot=[
+            {"drop_chance": 0.12, "item": {"name": 'Corroded Arrowhead', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Bent Arrow Point', "unidentified_desc": 'A warped metal arrowhead.', "appraised_name": 'Corroded Arrowhead', "material_desc": 'Old corroded arrowhead.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": 'An arrowhead from the ruins.', "identified": False}},
+            {"drop_chance": 0.08, "item": {"name": 'Leather Scraps', "type": 'material', "subtype": 'leather', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Leather Scraps', "unidentified_desc": 'Rough leather.', "appraised_name": 'Boiled Leather Scraps', "material_desc": 'Tier 1 leather material.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": 'Leather from a ruin archer.', "identified": False}},
+        ],
+
         desc={0:"An animated skeleton drawing an ancient bow.",1:"Ruin Archer",
               2:"Ruin Archer — ranged, moderate threat."}),
     "Gargoyle": _e("Gargoyle",162,35,12,S(16,8,14,4,6,2),10,40,"melee","blunt",
