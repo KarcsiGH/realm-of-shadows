@@ -157,6 +157,12 @@ class TownUI:
         self.walk_interact_msg = ""
         self.walk_interact_timer = 0
         self.walk_tile_size = 24
+        # Load walkable map data if this town has one
+        from data.town_maps import get_town_data
+        self.town_data = get_town_data(self.town_id)
+        if self.town_data:
+            spawn = self.town_data.get("spawn", (2, 2))
+            self.walk_x, self.walk_y = spawn
         self._return_to_town()
 
     # ─────────────────────────────────────────────────────────
