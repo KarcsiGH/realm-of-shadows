@@ -132,10 +132,15 @@ def _gen_cave_textures(light, dark):
         while sy < TEX_H:
             pygame.draw.line(s, streak_c, (sx, sy), (sx + rng1.randint(-1,1), sy+3), 1)
             sy += rng1.randint(2, 5)
-    # wet sheen at bottom third
+    # wet sheen at bottom third — blend over pixels so texture stays visible
     for y in range(TEX_H*2//3, TEX_H):
-        sheen = tuple(min(255, int(v*0.6 + 30)) for v in dark)
-        pygame.draw.line(s, sheen, (0, y), (TEX_W-1, y))
+        fade = (y - TEX_H*2//3) / max(1, TEX_H//3)
+        for x in range(TEX_W):
+            r2, g2, b2 = s.get_at((x, y))[:3]
+            nr = int(r2 * (0.85 - 0.15 * fade))
+            ng = int(g2 * (0.82 - 0.12 * fade))
+            nb = int(min(255, b2 * (0.88 - 0.08 * fade) + 8 * fade))
+            s.set_at((x, y), (max(0, nr), max(0, ng), max(0, nb)))
     out.append(s)
 
     # Variant 2 — crumbling: patches of exposed earth/rubble
@@ -615,13 +620,17 @@ class DungeonUI:
                 return max(0.01, dist), wx, ns, False, map_x, map_y
 
             if is_d:
-                # Advance ray half a tile to door's midpoint
+                # Advance ray half a tile to door's midpoint (Wolfenstein style).
+                # Only attempt if the ray faces the door roughly head-on —
+                # a shallow angle causes a huge advance that renders wrong.
                 if not ns:
+                    ray_comp  = abs(ray_dx)
                     dist_face = (map_x - self.px + (1 - step_x)/2) / ray_dx
-                    dist_mid  = dist_face + 0.5 / abs(ray_dx) if ray_dx != 0 else dist_face
+                    dist_mid  = dist_face + 0.5 / ray_comp if ray_comp > 0.4 else dist_face + 2.0
                 else:
+                    ray_comp  = abs(ray_dy)
                     dist_face = (map_y - self.py + (1 - step_y)/2) / ray_dy
-                    dist_mid  = dist_face + 0.5 / abs(ray_dy) if ray_dy != 0 else dist_face
+                    dist_mid  = dist_face + 0.5 / ray_comp if ray_comp > 0.4 else dist_face + 2.0
 
                 # Where does the ray cross the door midplane?
                 if not ns:

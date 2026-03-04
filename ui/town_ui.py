@@ -132,8 +132,11 @@ class TownUI:
         self.classtree_char_idx = 0  # which party member to show
 
         # Tavern state
-        from data.story_data import get_rumor
-        self.current_rumor = get_rumor()
+        self.tavern_drinks = {}      # patron_name -> drinks bought (int)
+        self.tavern_selected = 0     # index of selected patron/tab
+        self.tavern_tab = "patrons"  # "patrons" | "recruit" | "party"
+        self.tavern_recruit_sel = 0
+        self.tavern_party_sel = 0
 
         # NPC dialogue state
         self.active_dialogue = None  # DialogueUI when talking to an NPC
@@ -890,36 +893,20 @@ class TownUI:
         if npc:
             sfx.play("npc_talk")
 
-            # Service NPC — opens building menu directly
+            # Service NPC — gives a greeting but does NOT open menu.
+            # Enter the building door to access services.
             service = npc.get("service")
-            if service:
-                npc_name = npc["name"]
-                if service == "inn":
-                    self._show_walk_msg(f"{npc_name}: \"Welcome to the inn! Rest a while.\"",
-                                        npc.get("color", CREAM))
-                    self.view = self.VIEW_INN
-                    return None
-                elif service == "shop":
-                    self._show_walk_msg(f"{npc_name}: \"Browse my wares, friend.\"",
-                                        npc.get("color", CREAM))
-                    self.view = self.VIEW_SHOP
-                    return None
-                elif service == "temple":
-                    self._show_walk_msg(f"{npc_name}: \"The Light guides and heals.\"",
-                                        npc.get("color", CREAM))
-                    self.view = self.VIEW_TEMPLE
-                    return None
-                elif service == "tavern":
-                    self._show_walk_msg(f"{npc_name}: \"Pull up a chair! What'll it be?\"",
-                                        npc.get("color", CREAM))
-                    self.view = self.VIEW_TAVERN
-                    return None
-                elif service == "forge":
-                    self._show_walk_msg(f"{npc_name}: \"Fine steel, fair prices.\"",
-                                        npc.get("color", CREAM))
-                    self.view = self.VIEW_FORGE
-                    self.forge_scroll = 0
-                    return None
+            greetings = {
+                "inn":    lambda n: f"{n}: \"Rooms available inside — go on in!\"",
+                "shop":   lambda n: f"{n}: \"Come inside, I'll get you a good price.\"",
+                "temple": lambda n: f"{n}: \"The shrine is open. Enter freely.\"",
+                "tavern": lambda n: f"{n}: \"Step inside — it's warmer in there!\"",
+                "forge":  lambda n: f"{n}: \"Workshop's through the door if you need work done.\"",
+            }
+            if service and service in greetings:
+                self._show_walk_msg(greetings[service](npc["name"]),
+                                    npc.get("color", CREAM))
+                return None
 
             # Regular dialogue NPC
             did = npc.get("dialogue_id")
@@ -1924,29 +1911,196 @@ class TownUI:
     # ─────────────────────────────────────────────────────────
 
     def _draw_tavern(self, surface, mx, my):
-        draw_text(surface, "The Shadowed Flagon", SCREEN_W // 2 - 130, 30, GOLD, 24, bold=True)
-        draw_text(surface, TAVERN["welcome"], SCREEN_W // 2 - 120, 70, GREY, 15)
+        from data.shop_inventory import TAVERN
+        from core.story_flags import get_flag
 
-        back = pygame.Rect(SCREEN_W - 140, 30, 120, 34)
-        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+        W, H = SCREEN_W, SCREEN_H
+        draw_text(surface, TAVERN["name"], W//2 - 130, 28, GOLD, 22, bold=True)
 
-        # Rumor panel
-        rumor_panel = pygame.Rect(SCREEN_W // 2 - 300, 130, 600, 150)
-        draw_panel(surface, rumor_panel, bg_color=(25, 18, 40))
-        draw_text(surface, "A patron leans over and whispers:",
-                  rumor_panel.x + 20, rumor_panel.y + 15, DIM_GOLD, 14)
-        draw_text(surface, f'"{self.current_rumor}"',
-                  rumor_panel.x + 20, rumor_panel.y + 45, RUMOR_COL, 16,
-                  max_width=rumor_panel.width - 40)
+        # ── Tab bar ───────────────────────────────────────────────────────────
+        tabs = [("patrons", "Patrons"), ("recruit", "Adventurers"), ("party", "My Party")]
+        tx = 30
+        self._tavern_tab_rects = []
+        for key, label in tabs:
+            tw2 = get_font(13).size(label)[0] + 24
+            tr = pygame.Rect(tx, 62, tw2, 28)
+            active = (self.tavern_tab == key)
+            bg = (50, 40, 20) if active else (25, 18, 10)
+            border = GOLD if active else PANEL_BORDER
+            pygame.draw.rect(surface, bg, tr, border_radius=4)
+            pygame.draw.rect(surface, border, tr, 1, border_radius=4)
+            draw_text(surface, label, tr.x + 12, tr.y + 6,
+                      GOLD if active else GREY, 13)
+            self._tavern_tab_rects.append((key, tr))
+            tx += tw2 + 8
 
-        # Another round button
-        another = pygame.Rect(SCREEN_W // 2 - 100, 310, 200, 45)
-        draw_button(surface, another, "Buy a Round (1g)",
-                    hover=another.collidepoint(mx, my), size=14)
+        back = pygame.Rect(W - 140, 28, 120, 34)
+        draw_button(surface, back, "Leave", hover=back.collidepoint(mx, my), size=13)
 
+        # ── PATRONS tab ───────────────────────────────────────────────────────
+        if self.tavern_tab == "patrons":
+            patrons = [p for p in TAVERN["patrons"]
+                       if not (p.get("hide_if") and get_flag(p["hide_if"]))]
+            drink_cost = TAVERN.get("drink_cost", 2)
+
+            # Left panel — patron list
+            list_panel = pygame.Rect(20, 100, 280, H - 200)
+            draw_panel(surface, list_panel, bg_color=(18, 12, 8))
+            draw_text(surface, "At the bar:", list_panel.x + 10, list_panel.y + 8, DIM_GOLD, 11)
+
+            self._patron_rects = []
+            for i, p in enumerate(patrons):
+                py2 = list_panel.y + 28 + i * 54
+                row = pygame.Rect(list_panel.x + 6, py2, list_panel.width - 12, 48)
+                sel = (self.tavern_selected == i)
+                bg2 = (40, 30, 12) if sel else (25, 18, 8)
+                pygame.draw.rect(surface, bg2, row, border_radius=3)
+                if sel:
+                    pygame.draw.rect(surface, GOLD, row, 1, border_radius=3)
+
+                # NPC color dot
+                pygame.draw.circle(surface, p["color"],
+                                   (row.x + 16, row.y + 18), 10)
+                pygame.draw.circle(surface, tuple(max(0,c-40) for c in p["color"]),
+                                   (row.x + 16, row.y + 18), 10, 1)
+
+                drinks = self.tavern_drinks.get(p["name"], 0)
+                name_col = p["color"] if drinks > 0 else CREAM
+                draw_text(surface, p["name"], row.x + 32, row.y + 6, name_col, 12, bold=True)
+                tier_txt = f"{'🍺'*min(drinks,3)} loosened up" if drinks > 0 else "Sober"
+                draw_text(surface, tier_txt, row.x + 32, row.y + 24, DIM_GOLD if drinks else GREY, 10)
+                self._patron_rects.append((i, row))
+
+            # Right panel — dialogue
+            dlg_panel = pygame.Rect(316, 100, W - 336, H - 200)
+            draw_panel(surface, dlg_panel, bg_color=(20, 14, 8))
+
+            if 0 <= self.tavern_selected < len(patrons):
+                p = patrons[self.tavern_selected]
+                drinks = self.tavern_drinks.get(p["name"], 0)
+                nc = p["color"]
+
+                # Portrait circle
+                pygame.draw.circle(surface, nc,
+                                   (dlg_panel.x + 36, dlg_panel.y + 40), 26)
+                pygame.draw.circle(surface, tuple(max(0,c-50) for c in nc),
+                                   (dlg_panel.x + 36, dlg_panel.y + 40), 26, 2)
+                draw_text(surface, p["name"], dlg_panel.x + 72, dlg_panel.y + 18,
+                          nc, 16, bold=True)
+                draw_text(surface, p.get("role","patron").capitalize(),
+                          dlg_panel.x + 72, dlg_panel.y + 38, GREY, 11)
+
+                # Quote
+                lines2 = p["drunk"] if drinks > 0 else p["sober"]
+                import random
+                rng_key = (p["name"], drinks)
+                q_idx = hash(rng_key) % len(lines2)
+                quote = lines2[q_idx]
+                draw_text(surface, f'"{quote}"',
+                          dlg_panel.x + 16, dlg_panel.y + 80, CREAM, 13,
+                          max_width=dlg_panel.width - 32)
+
+                # Buy drink button
+                total_gold = sum(c.gold for c in self.party)
+                can_afford = total_gold >= drink_cost
+                btn_label = f"Buy a drink ({drink_cost}g)"
+                btn_col = CREAM if can_afford else GREY
+                drink_btn = pygame.Rect(dlg_panel.x + 16, H - 190, 220, 38)
+                draw_button(surface, drink_btn, btn_label,
+                            hover=drink_btn.collidepoint(mx, my) and can_afford,
+                            size=13)
+                self._tavern_drink_btn = drink_btn
+                self._tavern_drink_patron = p["name"]
+
+                if drinks == 0:
+                    draw_text(surface, "Buy them a drink to loosen their tongue.",
+                              dlg_panel.x + 16, H - 142, DIM_GOLD, 11)
+                else:
+                    draw_text(surface, "Another drink might reveal more...",
+                              dlg_panel.x + 16, H - 142, DIM_GOLD, 11)
+            else:
+                self._tavern_drink_btn = None
+
+        # ── ADVENTURERS tab ───────────────────────────────────────────────────
+        elif self.tavern_tab == "recruit":
+            recruits = TAVERN.get("recruits", [])
+            draw_text(surface, "Adventurers seeking work:", 30, 105, DIM_GOLD, 13)
+
+            self._recruit_rects = []
+            col_x = [30, W//2 + 10]
+            for i, rec in enumerate(recruits):
+                cx2 = col_x[i % 2]
+                ry = 130 + (i // 2) * 180
+                panel = pygame.Rect(cx2, ry, W//2 - 50, 165)
+                sel = (self.tavern_recruit_sel == i)
+                bg3 = (35, 28, 12) if sel else (22, 16, 8)
+                draw_panel(surface, panel, bg_color=bg3)
+                if sel:
+                    pygame.draw.rect(surface, GOLD, panel, 1, border_radius=4)
+
+                rc = rec["color"]
+                pygame.draw.circle(surface, rc, (panel.x + 22, panel.y + 22), 16)
+                draw_text(surface, rec["name"], panel.x + 44, panel.y + 8, rc, 15, bold=True)
+                draw_text(surface, f"{rec['race_name']} {rec['class_name']} — Lv.{rec['level']}",
+                          panel.x + 44, panel.y + 28, GREY, 11)
+                draw_text(surface, f'"{rec["pitch"]}"',
+                          panel.x + 12, panel.y + 52, CREAM, 11,
+                          max_width=panel.width - 24)
+
+                # Stats
+                stat_y = panel.y + 88
+                for si, (sn, sv) in enumerate(rec["stats"].items()):
+                    sx2 = panel.x + 12 + si * 54
+                    draw_text(surface, sn, sx2, stat_y, GREY, 9)
+                    draw_text(surface, str(sv), sx2, stat_y + 12, CREAM, 11, bold=True)
+
+                # Recruit button
+                party_full = len(self.party) >= 6
+                already_in = any(c.name == rec["name"] for c in self.party)
+                if already_in:
+                    draw_text(surface, "In party", panel.x + 12, panel.y + 138, DIM_GOLD, 11)
+                elif party_full:
+                    draw_text(surface, "Party full (6 max)", panel.x + 12, panel.y + 138, GREY, 11)
+                else:
+                    rbtn = pygame.Rect(panel.x + 12, panel.y + 132, 130, 26)
+                    draw_button(surface, rbtn, "Recruit", hover=rbtn.collidepoint(mx, my), size=11)
+                    self._recruit_rects.append((i, rbtn, rec))
+
+        # ── MY PARTY tab ──────────────────────────────────────────────────────
+        elif self.tavern_tab == "party":
+            draw_text(surface, "Leave a party member here (they wait safely):",
+                      30, 108, DIM_GOLD, 13)
+            draw_text(surface, "You must keep at least 1 member.",
+                      30, 126, GREY, 11)
+
+            self._leave_rects = []
+            for i, char in enumerate(self.party):
+                px3 = 30 + (i % 3) * (W // 3 - 10)
+                py3 = 150 + (i // 3) * 160
+                panel = pygame.Rect(px3, py3, W//3 - 20, 145)
+                draw_panel(surface, panel, bg_color=(22, 16, 8))
+
+                cc = getattr(char, "_walk_color", (180, 160, 120))
+                pygame.draw.circle(surface, cc, (panel.x + 22, panel.y + 22), 14)
+                draw_text(surface, char.name, panel.x + 42, panel.y + 8, CREAM, 14, bold=True)
+                draw_text(surface, f"Lv.{char.level} {getattr(char,'class_name','?')}",
+                          panel.x + 42, panel.y + 26, GREY, 11)
+                draw_text(surface, f"HP: {char.resources.get('HP',0)}/{char.resources.get('MAX_HP',0)}",
+                          panel.x + 12, panel.y + 50, CREAM, 11)
+                draw_text(surface, f"Gold: {char.gold}g",
+                          panel.x + 12, panel.y + 66, DIM_GOLD, 11)
+
+                if len(self.party) > 1:
+                    lbtn = pygame.Rect(panel.x + 12, panel.y + 110, 120, 26)
+                    draw_button(surface, lbtn, "Leave here",
+                                hover=lbtn.collidepoint(mx, my), size=11)
+                    self._leave_rects.append((i, lbtn))
+
+        self._tavern_back_btn = back
         self._draw_party_bar(surface, mx, my)
 
-    # ─────────────────────────────────────────────────────────
+
+        # ─────────────────────────────────────────────────────────
     #  JOB BOARD
     # ─────────────────────────────────────────────────────────
 
@@ -2411,25 +2565,88 @@ class TownUI:
 
         # ── Tavern ──
         elif self.view == self.VIEW_TAVERN:
-            back = pygame.Rect(SCREEN_W - 140, 30, 120, 34)
-            if back.collidepoint(mx, my):
+            from data.shop_inventory import TAVERN
+            from core.story_flags import get_flag
+
+            # Tab switches
+            for key, tr in getattr(self, '_tavern_tab_rects', []):
+                if tr.collidepoint(mx, my):
+                    self.tavern_tab = key
+                    return None
+
+            # Back
+            if getattr(self, '_tavern_back_btn', None) and self._tavern_back_btn.collidepoint(mx, my):
                 self._return_to_town()
                 return None
 
-            another = pygame.Rect(SCREEN_W // 2 - 100, 310, 200, 45)
-            if another.collidepoint(mx, my):
-                total_gold = sum(c.gold for c in self.party)
-                if total_gold >= 1:
-                    # Deduct 1g from whoever has it
-                    for c in self.party:
-                        if c.gold >= 1:
-                            c.gold -= 1
-                            break
-                    self.current_rumor = random.choice(TAVERN["rumors"])
-                    self._msg("You buy a round and hear a new rumor.", RUMOR_COL)
-                else:
-                    self._msg("You can't afford a drink!", RED)
-                return None
+            # ── PATRONS tab ───────────────────────────────────────────────────
+            if self.tavern_tab == "patrons":
+                for i, row in getattr(self, '_patron_rects', []):
+                    if row.collidepoint(mx, my):
+                        self.tavern_selected = i
+                        return None
+
+                drink_btn = getattr(self, '_tavern_drink_btn', None)
+                patron_name = getattr(self, '_tavern_drink_patron', None)
+                if drink_btn and patron_name and drink_btn.collidepoint(mx, my):
+                    drink_cost = TAVERN.get("drink_cost", 2)
+                    total_gold = sum(c.gold for c in self.party)
+                    if total_gold >= drink_cost:
+                        # Deduct gold
+                        remaining = drink_cost
+                        for c in self.party:
+                            if c.gold >= remaining:
+                                c.gold -= remaining
+                                remaining = 0
+                                break
+                            elif c.gold > 0:
+                                remaining -= c.gold
+                                c.gold = 0
+                        self.tavern_drinks[patron_name] = self.tavern_drinks.get(patron_name, 0) + 1
+                        sfx.play("ui_confirm")
+                        self._msg(f"You buy {patron_name} a drink. They seem more talkative.", RUMOR_COL)
+                    else:
+                        self._msg(f"You can't afford a drink! (need {drink_cost}g)", RED)
+
+            # ── RECRUIT tab ───────────────────────────────────────────────────
+            elif self.tavern_tab == "recruit":
+                for i, rbtn, rec in getattr(self, '_recruit_rects', []):
+                    if rbtn.collidepoint(mx, my):
+                        if len(self.party) >= 6:
+                            self._msg("Party is full! Leave someone at the tavern first.", RED)
+                        else:
+                            # Build a new character from rec data
+                            from core.character import Character
+                            new_char = Character(name=rec["name"],
+                                                 class_name=rec["class_name"],
+                                                 race_name=rec["race_name"])
+                            new_char.level = rec["level"]
+                            for stat, val in rec["stats"].items():
+                                new_char.stats[stat] = val
+                            # Initialize HP
+                            from core.progression import recalculate_max_hp
+                            try:
+                                recalculate_max_hp(new_char)
+                            except Exception:
+                                new_char.resources["MAX_HP"] = 20 + new_char.stats.get("CON", 5) * 2
+                            new_char.resources["HP"] = new_char.resources.get("MAX_HP", 20)
+                            new_char.gold = 0
+                            self.party.append(new_char)
+                            sfx.play("ui_confirm")
+                            self._msg(f"{rec['name']} joins your party!", GOLD)
+                        return None
+
+            # ── PARTY tab ─────────────────────────────────────────────────────
+            elif self.tavern_tab == "party":
+                for i, lbtn in getattr(self, '_leave_rects', []):
+                    if lbtn.collidepoint(mx, my):
+                        if len(self.party) <= 1:
+                            self._msg("You can't leave your last party member behind.", RED)
+                        else:
+                            left = self.party.pop(i)
+                            sfx.play("ui_click")
+                            self._msg(f"{left.name} waits at the tavern.", DIM_GOLD)
+                        return None
 
         # ── Forge ──
         elif self.view in (self.VIEW_FORGE, self.VIEW_FORGE_CRAFT,

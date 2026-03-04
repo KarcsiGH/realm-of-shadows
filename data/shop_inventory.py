@@ -150,21 +150,127 @@ TEMPLE = {
 # ═══════════════════════════════════════════════════════════════
 
 TAVERN = {
-    "name": "The Shadowed Flagon",
-    "welcome": "Pull up a chair! What'll it be?",
+    "name": "The Wanderer's Rest",
+    "welcome": "The smell of ale and woodsmoke greets you. A few patrons look up.",
 
-    "rumors": [
-        "I heard goblins have been massing in the eastern woods. More than usual.",
-        "A merchant was robbed on the north road last week. Bandits are getting bolder.",
-        "They say the old mine is haunted. Strange lights at night.",
-        "The orc chieftain in the hills has been gathering warriors. Trouble's coming.",
-        "A traveling mage passed through here. Said something about shadow magic growing stronger.",
-        "The wolves have been unusually aggressive this season. Something's driving them.",
-        "The temple priests seem worried. They won't say about what.",
-        "An old adventurer told me there's a forgotten dungeon beneath the ruins to the south.",
-        "The blacksmith says ore quality has dropped. Something's wrong with the mines.",
-        "I've seen strange folk in dark robes passing through at night. Gives me the chills.",
+    "patrons": [
+        {
+            "name": "Barkeep Thom",
+            "role": "barkeep",
+            "color": (185, 135, 80),
+            "sober": [
+                "Best ale in three counties. Two copper a mug.",
+                "I don't ask where adventurers come from. Or where they're going.",
+                "Keep it civil in here and we'll get along fine.",
+            ],
+            "drunk": [
+                "Between you and me? The Governor's men were here last month. Asking questions about travelers.",
+                "Old Petra out front? She used to be an adventurer herself. Lost her whole party in the eastern ruins.",
+                "There's a second well in this town. Sealed up thirty years ago. Nobody talks about why.",
+            ],
+        },
+        {
+            "name": "Maren",
+            "role": "patron",
+            "color": (180, 140, 220),
+            "hide_if": "maren.left",
+            "sober": [
+                "I've been watching the road. Something's wrong in the east.",
+                "Buy me a drink and I'll tell you what I know.",
+            ],
+            "drunk": [
+                "The Hearthstone wasn't stolen. It was hidden — by someone who knew what it could do.",
+                "I've traced the trail to the Goblin Warren. But I can't go in alone.",
+                "If you find it... bring it back here first. Don't take it to the Governor.",
+            ],
+        },
+        {
+            "name": "Gruff Traveler",
+            "role": "patron",
+            "color": (150, 130, 110),
+            "sober": [
+                "Don't bother me.",
+                "Roads are dangerous right now. Not the time to be wandering.",
+            ],
+            "drunk": [
+                "I was a city guard once. Before the purge. Lost everything.",
+                "The shadow mages — they're not just rumors. I've seen what they leave behind.",
+                "Heading into the Warren? Watch the third level. There's something down there that's not goblin.",
+            ],
+        },
+        {
+            "name": "Young Farmer",
+            "role": "patron",
+            "color": (160, 195, 140),
+            "sober": [
+                "Never been this far from the farm before.",
+                "You're really adventurers? What's it like?",
+            ],
+            "drunk": [
+                "My uncle saw something in the north field three nights ago. He won't say what.",
+                "There's a cave system under Thornhaven Hill. Kids dare each other to go in. Most come back.",
+            ],
+        },
+        {
+            "name": "Cloaked Figure",
+            "role": "patron",
+            "color": (110, 110, 140),
+            "sober": [
+                "...",
+                "The figure doesn't look up from their drink.",
+            ],
+            "drunk": [
+                "You didn't see me here.",
+                "The Valdris Compact still has members in Briarhollow. That's all I'm saying.",
+                "There's a mark on the east gate post. Means this town is being watched.",
+            ],
+        },
     ],
+
+    "recruits": [
+        {
+            "name": "Korvin",
+            "class_name": "Fighter",
+            "race_name": "Human",
+            "level": 1,
+            "color": (200, 160, 100),
+            "pitch": "Looking for a party. Good in a fight, don't complain.",
+            "hire_cost": 0,
+            "stats": {"STR": 8, "DEX": 5, "CON": 7, "INT": 4, "WIS": 4, "PIE": 4},
+        },
+        {
+            "name": "Siela",
+            "class_name": "Mage",
+            "race_name": "Elf",
+            "level": 1,
+            "color": (140, 180, 220),
+            "pitch": "My last party didn't make it back from the crypt. I did.",
+            "hire_cost": 0,
+            "stats": {"STR": 3, "DEX": 6, "CON": 4, "INT": 9, "WIS": 7, "PIE": 5},
+        },
+        {
+            "name": "Brother Aldous",
+            "class_name": "Cleric",
+            "race_name": "Human",
+            "level": 1,
+            "color": (220, 210, 160),
+            "pitch": "The Light calls me to travel. Might as well travel with company.",
+            "hire_cost": 0,
+            "stats": {"STR": 5, "DEX": 4, "CON": 6, "INT": 5, "WIS": 7, "PIE": 9},
+        },
+        {
+            "name": "Dex",
+            "class_name": "Thief",
+            "race_name": "Halfling",
+            "level": 1,
+            "color": (160, 200, 140),
+            "pitch": "I'm not a thief. I'm a... procurement specialist.",
+            "hire_cost": 0,
+            "stats": {"STR": 4, "DEX": 9, "CON": 5, "INT": 6, "WIS": 5, "PIE": 3},
+        },
+    ],
+
+    "drink_cost": 2,
 }
 
 
