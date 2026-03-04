@@ -70,52 +70,355 @@ THEMES = {
 # ═══════════════════════════════════════════════════════════════
 
 TEX_W, TEX_H = 64, 64
+NUM_WALL_VARIANTS = 3   # variants per theme — assigned per tile coordinate hash
+
+# ── Variant generators ───────────────────────────────────────────
+
+def _gen_door_texture():
+    """Warm wood door — unchanged, shared by all themes."""
+    surf = pygame.Surface((TEX_W, TEX_H))
+    rng  = random.Random(0xD00D)
+    WOOD_BASE  = (120, 75, 35)
+    WOOD_DARK  = (80,  50, 20)
+    WOOD_LIGHT = (160, 105, 55)
+    surf.fill(WOOD_BASE)
+    for px in range(0, TEX_W, 6):
+        tone = rng.uniform(0.85, 1.15)
+        c = tuple(min(255, int(v * tone)) for v in WOOD_BASE)
+        pygame.draw.line(surf, c, (px, 0), (px, TEX_H))
+    for py in [TEX_H//6, TEX_H//2, TEX_H*5//6]:
+        pygame.draw.rect(surf, WOOD_DARK,  (0, py-2, TEX_W, 4))
+        pygame.draw.rect(surf, WOOD_LIGHT, (0, py-3, TEX_W, 1))
+    pygame.draw.circle(surf, (200, 160, 40), (TEX_W*3//4, TEX_H//2), 4)
+    pygame.draw.circle(surf, (240, 200, 80), (TEX_W*3//4, TEX_H//2), 3)
+    return surf
+
+
+def _gen_cave_textures(light, dark):
+    """Cave: rough rock face / water-streaked / crumbling."""
+    rng0 = random.Random(hash(("cave0", light)))
+    rng1 = random.Random(hash(("cave1", light)))
+    rng2 = random.Random(hash(("cave2", light)))
+    out  = []
+
+    # Variant 0 — rough jagged rock face
+    s = pygame.Surface((TEX_W, TEX_H)); mortar = tuple(int(v*0.45) for v in dark); s.fill(mortar)
+    for _ in range(220):
+        x = rng0.randint(0, TEX_W-1); y = rng0.randint(0, TEX_H-1)
+        w = rng0.randint(2, 8);  h = rng0.randint(1, 5)
+        tone = rng0.uniform(0.55, 1.1)
+        c = tuple(min(255, int(v*tone)) for v in light)
+        pygame.draw.rect(s, c, (x, y, min(w, TEX_W-x), min(h, TEX_H-y)))
+    # crack lines
+    for _ in range(4):
+        cx = rng0.randint(4, TEX_W-4); cy = rng0.randint(0, TEX_H//3)
+        for _ in range(rng0.randint(8, 18)):
+            ex = cx + rng0.randint(-2, 2); ey = cy + rng0.randint(2, 5)
+            pygame.draw.line(s, mortar, (cx, cy), (ex, ey), 1)
+            cx, cy = ex, ey
+    out.append(s)
+
+    # Variant 1 — water-stained: dark vertical streaks + wet sheen at base
+    s = pygame.Surface((TEX_W, TEX_H)); s.fill(tuple(int(v*0.4) for v in dark))
+    for _ in range(180):
+        x = rng1.randint(0, TEX_W-1); y = rng1.randint(0, TEX_H-1)
+        tone = rng1.uniform(0.5, 1.0)
+        c = tuple(min(255, int(v*tone)) for v in light)
+        pygame.draw.rect(s, c, (x, y, rng1.randint(2,7), rng1.randint(1,4)))
+    # vertical water streaks
+    for _ in range(6):
+        sx = rng1.randint(0, TEX_W-1); sy = rng1.randint(0, TEX_H//4)
+        streak_c = tuple(max(0, int(v*0.3)) for v in light)
+        while sy < TEX_H:
+            pygame.draw.line(s, streak_c, (sx, sy), (sx + rng1.randint(-1,1), sy+3), 1)
+            sy += rng1.randint(2, 5)
+    # wet sheen at bottom third
+    for y in range(TEX_H*2//3, TEX_H):
+        sheen = tuple(min(255, int(v*0.6 + 30)) for v in dark)
+        pygame.draw.line(s, sheen, (0, y), (TEX_W-1, y))
+    out.append(s)
+
+    # Variant 2 — crumbling: patches of exposed earth/rubble
+    s = pygame.Surface((TEX_W, TEX_H)); s.fill(tuple(int(v*0.5) for v in dark))
+    for _ in range(150):
+        x = rng2.randint(0, TEX_W-1); y = rng2.randint(0, TEX_H-1)
+        tone = rng2.uniform(0.6, 1.05)
+        c = tuple(min(255, int(v*tone)) for v in light)
+        pygame.draw.rect(s, c, (x, y, rng2.randint(3,10), rng2.randint(2,6)))
+    # dirt/rubble patches (earth tones)
+    for _ in range(5):
+        px = rng2.randint(0, TEX_W-8); py = rng2.randint(0, TEX_H-8)
+        pw = rng2.randint(6, 14); ph = rng2.randint(4, 10)
+        ec = (max(0,int(light[0]*0.4+20)), max(0,int(light[1]*0.25+10)), max(0,int(light[2]*0.15)))
+        pygame.draw.ellipse(s, ec, (px, py, pw, ph))
+    out.append(s)
+    return out
+
+
+def _gen_mine_textures(light, dark):
+    """Mine: hewn rock + ore veins / timber-supported / muddy damp."""
+    rng0 = random.Random(hash(("mine0", light)))
+    rng1 = random.Random(hash(("mine1", light)))
+    rng2 = random.Random(hash(("mine2", light)))
+    out  = []
+
+    # Variant 0 — rough hewn with glinting ore veins
+    s = pygame.Surface((TEX_W, TEX_H)); mortar = tuple(int(v*0.5) for v in dark); s.fill(mortar)
+    for _ in range(200):
+        x = rng0.randint(0,TEX_W-1); y = rng0.randint(0,TEX_H-1)
+        tone = rng0.uniform(0.6, 1.1)
+        c = tuple(min(255, int(v*tone)) for v in light)
+        pygame.draw.rect(s, c, (x,y,rng0.randint(3,9),rng0.randint(2,5)))
+    # gold ore veins
+    for _ in range(3):
+        vx = rng0.randint(4,TEX_W-4); vy = rng0.randint(4,TEX_H-20)
+        for _ in range(rng0.randint(6,14)):
+            ex = vx+rng0.randint(-3,3); ey = vy+rng0.randint(1,4)
+            pygame.draw.line(s, (200,170,60), (vx,vy),(ex,ey), 1)
+            vx,vy = ex,ey
+    out.append(s)
+
+    # Variant 1 — timber-supported: beams every ~20px
+    s = pygame.Surface((TEX_W, TEX_H)); s.fill(mortar)
+    for _ in range(180):
+        x = rng1.randint(0,TEX_W-1); y = rng1.randint(0,TEX_H-1)
+        tone = rng1.uniform(0.55, 1.0)
+        c = tuple(min(255, int(v*tone)) for v in light)
+        pygame.draw.rect(s, c, (x,y,rng1.randint(2,8),rng1.randint(1,4)))
+    BEAM = (90, 60, 28)
+    for beam_y in [TEX_H//5, TEX_H*2//5, TEX_H*3//5, TEX_H*4//5]:
+        pygame.draw.rect(s, BEAM, (0, beam_y-3, TEX_W, 6))
+        pygame.draw.rect(s, (120,80,38),(0,beam_y-4,TEX_W,1))
+    # vertical supports at edges
+    for bx in [2, TEX_W-7]:
+        pygame.draw.rect(s, BEAM, (bx, 0, 5, TEX_H))
+    out.append(s)
+
+    # Variant 2 — muddy/damp: dark base, horizontal moisture lines
+    s = pygame.Surface((TEX_W, TEX_H)); s.fill(tuple(int(v*0.38) for v in dark))
+    for _ in range(160):
+        x = rng2.randint(0,TEX_W-1); y = rng2.randint(0,TEX_H-1)
+        tone = rng2.uniform(0.45, 0.9)
+        c = tuple(min(255, int(v*tone)) for v in light)
+        pygame.draw.rect(s, c, (x,y,rng2.randint(2,7),rng2.randint(1,4)))
+    for _ in range(8):
+        my = rng2.randint(0, TEX_H-1)
+        mc = tuple(max(0,int(v*0.25)) for v in light)
+        pygame.draw.line(s, mc, (0, my), (TEX_W-1, my), 1)
+    out.append(s)
+    return out
+
+
+def _gen_crypt_textures(light, dark):
+    """Crypt: carved smooth stone / moss-covered / cracked exposed earth."""
+    rng0 = random.Random(hash(("crypt0", light)))
+    rng1 = random.Random(hash(("crypt1", light)))
+    rng2 = random.Random(hash(("crypt2", light)))
+    out  = []
+
+    # Variant 0 — smooth carved stone blocks (large, precise)
+    BLOCK_H = 12; BLOCK_W = 24
+    mortar = tuple(int(v*0.38) for v in dark)
+    s = pygame.Surface((TEX_W, TEX_H)); s.fill(mortar)
+    for row in range(TEX_H//BLOCK_H + 1):
+        oy = row*BLOCK_H; offset = (BLOCK_W//2) if row%2 else 0
+        for col in range(-1, TEX_W//BLOCK_W+2):
+            ox = col*BLOCK_W+offset
+            tone = 0.8 + rng0.random()*0.25
+            c = tuple(min(255,int(v*tone)) for v in light)
+            r = pygame.Rect(ox+1,oy+1,BLOCK_W-2,BLOCK_H-2)
+            r.clamp_ip(pygame.Rect(0,0,TEX_W,TEX_H))
+            pygame.draw.rect(s, c, r)
+            # chisel marks on top edge of each block
+            pygame.draw.line(s, tuple(min(255,int(v*1.1)) for v in light),
+                             (max(0,ox+2),max(0,oy+1)), (min(TEX_W-1,ox+BLOCK_W-3),max(0,oy+1)), 1)
+    out.append(s)
+
+    # Variant 1 — moss-covered: stone base + green patches on lower half
+    s = pygame.Surface((TEX_W, TEX_H)); s.fill(mortar)
+    for row in range(TEX_H//BLOCK_H + 1):
+        oy = row*BLOCK_H; offset = (BLOCK_W//2) if row%2 else 0
+        for col in range(-1, TEX_W//BLOCK_W+2):
+            ox = col*BLOCK_W+offset
+            tone = 0.75 + rng1.random()*0.3
+            c = tuple(min(255,int(v*tone)) for v in light)
+            r = pygame.Rect(ox+1,oy+1,BLOCK_W-2,BLOCK_H-2)
+            r.clamp_ip(pygame.Rect(0,0,TEX_W,TEX_H))
+            pygame.draw.rect(s, c, r)
+    # moss patches on lower 60%
+    for _ in range(18):
+        mx = rng1.randint(0, TEX_W-6); my = rng1.randint(TEX_H//4, TEX_H-4)
+        mw = rng1.randint(3,10); mh = rng1.randint(2,5)
+        mc = (max(0,int(light[0]*0.2+10)), min(255,int(light[1]*0.4+40)), max(0,int(light[2]*0.25+10)))
+        pygame.draw.ellipse(s, mc, (mx,my,mw,mh))
+    out.append(s)
+
+    # Variant 2 — cracked stone with earth showing
+    s = pygame.Surface((TEX_W, TEX_H)); s.fill(mortar)
+    for row in range(TEX_H//BLOCK_H + 1):
+        oy = row*BLOCK_H; offset = (BLOCK_W//2) if row%2 else 0
+        for col in range(-1, TEX_W//BLOCK_W+2):
+            ox = col*BLOCK_W+offset
+            tone = 0.7 + rng2.random()*0.35
+            c = tuple(min(255,int(v*tone)) for v in light)
+            r = pygame.Rect(ox+1,oy+1,BLOCK_W-2,BLOCK_H-2)
+            r.clamp_ip(pygame.Rect(0,0,TEX_W,TEX_H))
+            pygame.draw.rect(s, c, r)
+    # crack lines
+    for _ in range(5):
+        cx = rng2.randint(2,TEX_W-2); cy = rng2.randint(0,TEX_H//2)
+        for _ in range(rng2.randint(10,22)):
+            ex=cx+rng2.randint(-2,2); ey=cy+rng2.randint(2,6)
+            pygame.draw.line(s, mortar, (cx,cy),(ex,ey), 1)
+            cx,cy = ex,ey
+    # exposed earth patches at cracks
+    for _ in range(4):
+        px = rng2.randint(0,TEX_W-6); py = rng2.randint(0,TEX_H-6)
+        ec = (50+rng2.randint(0,20), 35+rng2.randint(0,15), 20+rng2.randint(0,10))
+        pygame.draw.ellipse(s, ec, (px,py,rng2.randint(4,8),rng2.randint(3,6)))
+    out.append(s)
+    return out
+
+
+def _gen_ruins_textures(light, dark):
+    """Ruins: dressed masonry / overgrown vines / collapsed rubble."""
+    rng0 = random.Random(hash(("ruins0", light)))
+    rng1 = random.Random(hash(("ruins1", light)))
+    rng2 = random.Random(hash(("ruins2", light)))
+    out  = []
+    mortar = tuple(int(v*0.48) for v in dark)
+
+    # Variant 0 — dressed masonry (varied block sizes)
+    s = pygame.Surface((TEX_W, TEX_H)); s.fill(mortar)
+    y = 0
+    while y < TEX_H:
+        bh = rng0.choice([8, 10, 12]); x = 0
+        while x < TEX_W:
+            bw = rng0.choice([12, 16, 20])
+            tone = 0.72 + rng0.random()*0.35
+            c = tuple(min(255,int(v*tone)) for v in light)
+            r = pygame.Rect(x+1,y+1,min(bw-2,TEX_W-x-1),min(bh-2,TEX_H-y-1))
+            if r.w > 0 and r.h > 0: pygame.draw.rect(s, c, r)
+            x += bw
+        y += bh
+    out.append(s)
+
+    # Variant 1 — overgrown: masonry + vine patterns
+    s = pygame.Surface((TEX_W, TEX_H)); s.fill(mortar)
+    y = 0
+    while y < TEX_H:
+        bh = rng1.choice([8,10,12]); x = 0
+        while x < TEX_W:
+            bw = rng1.choice([12,16,20])
+            tone = 0.68 + rng1.random()*0.3
+            c = tuple(min(255,int(v*tone)) for v in light)
+            r = pygame.Rect(x+1,y+1,min(bw-2,TEX_W-x-1),min(bh-2,TEX_H-y-1))
+            if r.w > 0 and r.h > 0: pygame.draw.rect(s, c, r)
+            x += bw
+        y += bh
+    # vine tendrils
+    VINE = (30, 90, 28)
+    for _ in range(5):
+        vx = rng1.randint(0,TEX_W-1); vy = 0
+        while vy < TEX_H:
+            ex=vx+rng1.randint(-2,2); ey=vy+rng1.randint(3,6)
+            pygame.draw.line(s, VINE, (vx,vy),(ex,min(TEX_H-1,ey)),1)
+            if rng1.random() < 0.3:  # leaf
+                pygame.draw.ellipse(s, VINE, (ex-2,ey-2,4,3))
+            vx,vy = ex,ey
+    out.append(s)
+
+    # Variant 2 — partial collapse/rubble
+    s = pygame.Surface((TEX_W, TEX_H)); s.fill(tuple(int(v*0.35) for v in dark))
+    for _ in range(250):
+        x=rng2.randint(0,TEX_W-1); y=rng2.randint(0,TEX_H-1)
+        tone=rng2.uniform(0.5,1.15)
+        c=tuple(min(255,int(v*tone)) for v in light)
+        pygame.draw.rect(s,c,(x,y,rng2.randint(2,12),rng2.randint(1,6)))
+    out.append(s)
+    return out
+
+
+def _gen_tower_textures(light, dark):
+    """Tower: fitted stone / arcane-etched / weathered/stained."""
+    rng0 = random.Random(hash(("tower0", light)))
+    rng1 = random.Random(hash(("tower1", light)))
+    rng2 = random.Random(hash(("tower2", light)))
+    out  = []
+    mortar = tuple(int(v*0.42) for v in dark)
+    BRICK_H = 10; BRICK_W = 18
+
+    # Variant 0 — precise fitted stone
+    s = pygame.Surface((TEX_W, TEX_H)); s.fill(mortar)
+    for row in range(TEX_H//BRICK_H + 1):
+        oy = row*BRICK_H; offset = (BRICK_W//2) if row%2 else 0
+        for col in range(-1, TEX_W//BRICK_W+2):
+            ox = col*BRICK_W+offset
+            tone = 0.78 + rng0.random()*0.28
+            c = tuple(min(255,int(v*tone)) for v in light)
+            r = pygame.Rect(ox+1,oy+1,BRICK_W-2,BRICK_H-2)
+            r.clamp_ip(pygame.Rect(0,0,TEX_W,TEX_H))
+            pygame.draw.rect(s,c,r)
+    out.append(s)
+
+    # Variant 1 — arcane-etched: fitted stone + faint glowing rune lines
+    s = pygame.Surface((TEX_W, TEX_H)); s.fill(mortar)
+    for row in range(TEX_H//BRICK_H + 1):
+        oy = row*BRICK_H; offset = (BRICK_W//2) if row%2 else 0
+        for col in range(-1, TEX_W//BRICK_W+2):
+            ox = col*BRICK_W+offset
+            tone = 0.76 + rng1.random()*0.28
+            c = tuple(min(255,int(v*tone)) for v in light)
+            r = pygame.Rect(ox+1,oy+1,BRICK_W-2,BRICK_H-2)
+            r.clamp_ip(pygame.Rect(0,0,TEX_W,TEX_H))
+            pygame.draw.rect(s,c,r)
+    # faint rune marks
+    RUNE = tuple(min(255,int(v*1.4)) for v in dark)
+    for _ in range(6):
+        rx = rng1.randint(4,TEX_W-12); ry = rng1.randint(4,TEX_H-12)
+        pts = [(rx+rng1.randint(-3,3),ry+rng1.randint(-3,3)) for _ in range(4)]
+        if len(pts) >= 2:
+            pygame.draw.lines(s, RUNE, False, pts, 1)
+    out.append(s)
+
+    # Variant 2 — weathered/stained: darker tones, moisture gradients
+    s = pygame.Surface((TEX_W, TEX_H)); s.fill(tuple(int(v*0.36) for v in dark))
+    for row in range(TEX_H//BRICK_H + 1):
+        oy = row*BRICK_H; offset = (BRICK_W//2) if row%2 else 0
+        for col in range(-1, TEX_W//BRICK_W+2):
+            ox = col*BRICK_W+offset
+            tone = 0.5 + rng2.random()*0.45
+            c = tuple(min(255,int(v*tone)) for v in light)
+            r = pygame.Rect(ox+1,oy+1,BRICK_W-2,BRICK_H-2)
+            r.clamp_ip(pygame.Rect(0,0,TEX_W,TEX_H))
+            pygame.draw.rect(s,c,r)
+    # stain bands
+    for _ in range(4):
+        sy = rng2.randint(0,TEX_H-1)
+        sc = tuple(max(0,int(v*0.3)) for v in light)
+        pygame.draw.line(s, sc, (0,sy),(TEX_W-1,sy),rng2.randint(1,3))
+    out.append(s)
+    return out
+
+
+def _gen_theme_textures(theme_id, wall_light, wall_dark):
+    """Return list of NUM_WALL_VARIANTS texture surfaces for this theme."""
+    fn = {
+        "cave":  _gen_cave_textures,
+        "mine":  _gen_mine_textures,
+        "crypt": _gen_crypt_textures,
+        "ruins": _gen_ruins_textures,
+        "tower": _gen_tower_textures,
+    }.get(theme_id, _gen_cave_textures)
+    return fn(wall_light, wall_dark)
+
 
 def _gen_texture(wall_light, wall_dark, is_door=False):
-    surf = pygame.Surface((TEX_W, TEX_H))
-    rng  = random.Random(hash((wall_light, is_door)))
-
+    """Backward-compat wrapper — returns a single cave-style texture."""
     if is_door:
-        # Warm brown wood door — clearly distinct from stone walls
-        WOOD_BASE  = (120, 75, 35)
-        WOOD_DARK  = (80,  50, 20)
-        WOOD_LIGHT = (160, 105, 55)
-        surf.fill(WOOD_BASE)
-        # Vertical planks
-        for px in range(0, TEX_W, 6):
-            tone = rng.uniform(0.85, 1.15)
-            c = tuple(min(255, int(v * tone)) for v in WOOD_BASE)
-            pygame.draw.line(surf, c, (px, 0), (px, TEX_H))
-        # Horizontal cross-beams at top/middle/bottom
-        for py in [TEX_H//6, TEX_H//2, TEX_H*5//6]:
-            pygame.draw.rect(surf, WOOD_DARK, (0, py-2, TEX_W, 4))
-            pygame.draw.rect(surf, WOOD_LIGHT, (0, py-3, TEX_W, 1))
-        # Door handle
-        pygame.draw.circle(surf, (200, 160, 40), (TEX_W*3//4, TEX_H//2), 4)
-        pygame.draw.circle(surf, (240, 200, 80), (TEX_W*3//4, TEX_H//2), 3)
-        return surf
+        return _gen_door_texture()
+    return _gen_cave_textures(wall_light, wall_dark)[0]
 
-    brick_h = 8
-    brick_w = 16
-    mortar  = tuple(int(v*0.55) for v in wall_dark)
-    surf.fill(mortar)
-    for row in range(TEX_H // brick_h + 1):
-        oy = row * brick_h
-        offset = (brick_w//2) if (row%2) else 0
-        for col in range(-1, TEX_W // brick_w + 2):
-            ox = col * brick_w + offset
-            tone = 0.75 + rng.random()*0.35
-            base = tuple(min(255,int(v*tone)) for v in wall_light)
-            r = pygame.Rect(ox+1, oy+1, brick_w-2, brick_h-2)
-            r.clamp_ip(pygame.Rect(0,0,TEX_W,TEX_H))
-            pygame.draw.rect(surf, base, r)
-    for _ in range(80):
-        nx = rng.randint(0,TEX_W-1)
-        ny = rng.randint(0,TEX_H-1)
-        ex = surf.get_at((nx,ny))
-        dim = tuple(max(0,v-rng.randint(0,30)) for v in ex[:3])
-        surf.set_at((nx,ny), dim)
-    return surf
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -158,13 +461,17 @@ class DungeonUI:
 
         self._keys: set = set()
 
-        # Pre-generate textures
-        self._tex_wall  = _gen_texture(self.wall_light, self.wall_dark)
-        self._tex_door  = _gen_texture(self.wall_light, self.wall_dark, is_door=True)
-
-        # Pre-bake column arrays from textures for speed
-        self._wall_cols = self._bake_tex_cols(self._tex_wall)
-        self._door_cols = self._bake_tex_cols(self._tex_door)
+        # Pre-generate textures — NUM_WALL_VARIANTS per theme
+        self._tex_door   = _gen_door_texture()
+        self._door_cols  = self._bake_tex_cols(self._tex_door)
+        _variant_surfs   = _gen_theme_textures(
+            self.theme_id, self.wall_light, self.wall_dark)
+        self._wall_cols_variants = [
+            self._bake_tex_cols(s) for s in _variant_surfs
+        ]
+        # Fallback if theme returned fewer than NUM_WALL_VARIANTS
+        while len(self._wall_cols_variants) < NUM_WALL_VARIANTS:
+            self._wall_cols_variants.append(self._wall_cols_variants[0])
 
         # Z-buffer
         self._zbuf = [0.0] * VP_W
@@ -248,11 +555,13 @@ class DungeonUI:
     # ─────────────────────────────────────────────────────────
 
     def _cast_ray(self, ray_dx, ray_dy):
-        """DDA ray → (dist, wall_x_frac, is_ns, is_door).
-        
+        """DDA ray → (dist, wall_x_frac, is_ns, is_door, hit_mx, hit_my).
+
         Doors use Wolfenstein-style half-tile offset: the door surface sits at
         the tile's midpoint, framed by wall texture on both sides. Rays that
         don't reach the midpoint hit the wall frame instead.
+        hit_mx, hit_my are the tile coords of the wall that was hit (for
+        texture variant selection).
         """
         if ray_dx == 0: ray_dx = 1e-10
         if ray_dy == 0: ray_dy = 1e-10
@@ -286,7 +595,7 @@ class DungeonUI:
                 ns    = True
 
             if map_x < 0 or map_y < 0 or map_x >= fw or map_y >= fh:
-                return 20.0, 0.0, ns, False
+                return 20.0, 0.0, ns, False, 0, 0
             tile = tiles[map_y][map_x]
             tt   = tile["type"]
             is_s = tt == DT_SECRET_DOOR and not tile.get("secret_found")
@@ -303,7 +612,7 @@ class DungeonUI:
                 else:
                     wx = self.px + dist * ray_dx
                 wx -= math.floor(wx)
-                return max(0.01, dist), wx, ns, False
+                return max(0.01, dist), wx, ns, False, map_x, map_y
 
             if is_d:
                 # Advance ray half a tile to door's midpoint
@@ -332,12 +641,12 @@ class DungeonUI:
                         dist = (map_y - self.py + (1 - step_y)/2) / ray_dy
                         wx = self.px + dist * ray_dx
                     wx -= math.floor(wx)
-                    return max(0.01, dist), wx, ns, False
+                    return max(0.01, dist), wx, ns, False, map_x, map_y
                 else:
                     # Ray hits the door face at tile midpoint
-                    return max(0.01, dist_mid), wx_mid, ns, True
+                    return max(0.01, dist_mid), wx_mid, ns, True, map_x, map_y
 
-        return 20.0, 0.0, False, False
+        return 20.0, 0.0, False, False, 0, 0
 
     # ─────────────────────────────────────────────────────────
     #  MAIN DRAW
@@ -412,22 +721,27 @@ class DungeonUI:
                 pygame.draw.line(view, (4, 3, 5), (0, band_y), (VW-1, band_y))
 
         # ── Wall columns ──
-        wall_cols = self._wall_cols
-        door_cols = self._door_cols
+        wall_variants = self._wall_cols_variants
+        door_cols     = self._door_cols
+        num_v         = len(wall_variants)
 
         for col in range(VW):
             cam_x    = (2.0 * col / VW) - 1.0
             ray_dx   = self.dx + self.cx * cam_x
             ray_dy   = self.dy + self.cy * cam_x
-            dist, wx, ns, is_door = self._cast_ray(ray_dx, ray_dy)
+            dist, wx, ns, is_door, hit_mx, hit_my = self._cast_ray(ray_dx, ray_dy)
             zbuf[col] = dist
 
             wall_h = min(VH, int(PROJ_DIST / max(0.01, dist)))
             top    = HH - wall_h // 2
-            # bot  = HH + wall_h // 2
 
             tex_x = int(wx * TEX_W) % TEX_W
-            cols_src = door_cols[tex_x] if is_door else wall_cols[tex_x]
+            if is_door:
+                cols_src = door_cols[tex_x]
+            else:
+                # Pick variant deterministically from tile coords — stable, no flicker
+                v_idx    = (hit_mx * 2654435761 ^ hit_my * 2246822519) % num_v
+                cols_src = wall_variants[v_idx][tex_x]
 
             # Lighting
             fog_t = min(1.0, dist / FOG)
@@ -470,6 +784,7 @@ class DungeonUI:
                     continue
                 tt = tile["type"]
                 icon_key = None
+                enc_key  = None
                 if tt == DT_TRAP:
                     # Only show trap sprite if the party knows about it
                     ev = tile.get("event", {})
@@ -485,6 +800,7 @@ class DungeonUI:
                 enc = tile.get("encounter")
                 if enc and not enc.get("cleared"):
                     icon_key = "boss" if enc.get("is_boss") else "enemy"
+                    enc_key  = enc.get("enc_key")
                 if tile.get("has_journal") and not tile.get("journal_read"):
                     icon_key = "journal"
                 if icon_key is None:
@@ -494,12 +810,26 @@ class DungeonUI:
                 d  = math.sqrt(sx*sx + sy*sy)
                 if d < 0.3 or d > TORCH_DIST + 1:
                     continue
-                sprites.append((d, sx, sy, icon_key))
+                sprites.append((d, sx, sy, icon_key, enc_key))
+
+        # Add visible patrol enemies from the floor enemy list
+        for enemy in fl.get("enemies", []):
+            if enemy.get("state") == "dead":
+                continue
+            ex, ey = enemy["x"], enemy["y"]
+            if not tiles[ey][ex].get("discovered"):
+                continue
+            esx = ex + 0.5 - self.px
+            esy = ey + 0.5 - self.py
+            d   = math.sqrt(esx*esx + esy*esy)
+            if d < 0.3 or d > TORCH_DIST + 1:
+                continue
+            sprites.append((d, esx, esy, "enemy", enemy.get("enc_key")))
 
         sprites.sort(key=lambda s: -s[0])
 
         font = pygame.font.SysFont("segoeuisymbol,symbola,unifont,dejavusans", 32)
-        for dist, sx, sy, icon_key in sprites:
+        for dist, sx, sy, icon_key, enc_key in sprites:
             inv = 1.0 / (self.cx * self.dy - self.dx * self.cy)
             tx_ = inv * (self.dy * sx - self.dx * sy)
             ty_ = inv * (-self.cy * sx + self.cx * sy)
@@ -525,7 +855,15 @@ class DungeonUI:
                 "enemy":         0.85,
                 "boss":          1.00,
             }
-            scale = _OBJ_SCALE.get(icon_key, 0.60)
+            type_scale = _OBJ_SCALE.get(icon_key, 0.60)
+
+            # Distance-based scale: full size at ≤1 tile, minimum at SIGHT_RADIUS tiles
+            SIGHT_RADIUS = 3.0
+            MIN_DIST_SCALE = 0.25
+            dist_scale = MIN_DIST_SCALE + (1.0 - MIN_DIST_SCALE) * max(0.0, (SIGHT_RADIUS - dist) / (SIGHT_RADIUS - 0.5))
+            dist_scale = max(MIN_DIST_SCALE, min(1.0, dist_scale))
+
+            scale = type_scale * dist_scale
             sp_h = max(1, int(sp_h * scale))
             sp_w = sp_h
 
@@ -607,13 +945,21 @@ class DungeonUI:
                     draw_dungeon_object(spr, obj_r, "chest")
 
                 elif icon_key in ("enemy", "boss"):
-                    # Menacing skull shape
-                    er = max(3, r * 3 // 4)
-                    pygame.draw.circle(spr, dim, (surf_w//2, surf_h//2 - er//4), er)
-                    pygame.draw.circle(spr, c_a, (surf_w//2, surf_h//2 - er//4), er, 2)
-                    ew = max(1, er//3)
-                    pygame.draw.circle(spr, c_a, (surf_w//2 - er//3, surf_h//2 - er//3), ew)
-                    pygame.draw.circle(spr, c_a, (surf_w//2 + er//3, surf_h//2 - er//3), ew)
+                    # Draw faction-specific enemy silhouette from pixel_art
+                    from ui.pixel_art import draw_enemy_silhouette
+                    obj_r = pygame.Rect(0, 0, surf_w, surf_h)
+                    # Resolve enc_key → template name via ENCOUNTERS if needed
+                    template_key = enc_key or "Goblin Warrior"
+                    try:
+                        from data.enemies import ENCOUNTERS
+                        if enc_key and enc_key in ENCOUNTERS:
+                            grps = ENCOUNTERS[enc_key].get("groups", [])
+                            if grps:
+                                template_key = grps[0]["enemy"]
+                    except Exception:
+                        pass
+                    draw_enemy_silhouette(spr, obj_r, template_key,
+                                         knowledge_tier=1)  # always visible in 3D
 
                 elif icon_key == DT_TRAP:
                     # Armed detected trap — red spike plate
@@ -738,6 +1084,19 @@ class DungeonUI:
                 sy = (ty-y0)*ts
                 pygame.draw.rect(bg, c, (sx,sy,ts-1,ts-1))
 
+        # Enemy dots — red for patrol/chase/linger
+        for enemy in fl.get("enemies", []):
+            if enemy.get("state") == "dead":
+                continue
+            ex, ey = enemy["x"], enemy["y"]
+            if not tiles[ey][ex].get("discovered"):
+                continue
+            edx = ex - x0; edy = ey - y0
+            if 0 <= edx < cols and 0 <= edy < rows:
+                esx = edx * ts + ts // 2; esy = edy * ts + ts // 2
+                ecol = (255, 60, 60, 255) if enemy.get("state") == "chase" else (200, 80, 80, 220)
+                pygame.draw.circle(bg, ecol, (esx, esy), max(2, ts // 2 - 1))
+
         # Party dot + facing arrow
         ppx = (px_i-x0)*ts + ts//2
         ppy = (py_i-y0)*ts + ts//2
@@ -766,11 +1125,24 @@ class DungeonUI:
 
         party = self.dungeon.party
         if party:
+            PORTRAIT_W = 48
             col_w = min(195, VP_W // max(1, len(party)))
             for i, ch in enumerate(party):
                 cx_h = 8 + i*col_w
-                cy_h = by + 5
-                surface.blit(fb.render(ch.name[:12], True, GOLD), (cx_h, cy_h))
+                cy_h = by + 4
+
+                # Class portrait — small silhouette to the left of the text block
+                try:
+                    from ui.pixel_art import draw_character_silhouette
+                    port_rect = pygame.Rect(cx_h, cy_h, PORTRAIT_W, HUD_H - 12)
+                    pygame.draw.rect(surface, (22, 18, 12), port_rect)
+                    pygame.draw.rect(surface, (55, 44, 30), port_rect, 1)
+                    draw_character_silhouette(surface, port_rect, ch.class_name)
+                except Exception:
+                    pass
+                text_x = cx_h + PORTRAIT_W + 4
+
+                surface.blit(fb.render(ch.name[:10], True, GOLD), (text_x, cy_h))
                 cy_h += 16
                 # Get resources
                 try:
@@ -778,12 +1150,13 @@ class DungeonUI:
                     max_res = get_all_resources(ch.class_name, ch.stats, ch.level)
                 except Exception:
                     max_res = {}
+                bar_w   = max(10, col_w - PORTRAIT_W - 20)
                 cur_hp  = ch.resources.get("HP", 0)
                 max_hp  = max(1, max_res.get("HP", cur_hp) or cur_hp)
-                hw = max(0, int((cur_hp/max_hp)*(col_w-12)))
-                pygame.draw.rect(surface, (55,12,12), (cx_h, cy_h, col_w-12, 7))
-                pygame.draw.rect(surface, (185,38,38), (cx_h, cy_h, hw, 7))
-                surface.blit(fs.render(f"{cur_hp}/{max_hp}", True, (190,150,145)), (cx_h, cy_h+8))
+                hw = max(0, int((cur_hp/max_hp)*bar_w))
+                pygame.draw.rect(surface, (55,12,12),  (text_x, cy_h, bar_w, 7))
+                pygame.draw.rect(surface, (185,38,38), (text_x, cy_h, hw, 7))
+                surface.blit(fs.render(f"{cur_hp}/{max_hp}", True, (190,150,145)), (text_x, cy_h+8))
                 # All secondary resources (MP, SP, Ki, etc.) — each with bar + cur/max
                 res_keys = [k for k in ch.resources if k != "HP"]
                 RES_COLORS = {
@@ -796,11 +1169,11 @@ class DungeonUI:
                     cy_h += 20
                     cur_r  = ch.resources.get(rk, 0)
                     max_r  = max(1, max_res.get(rk, cur_r) or cur_r)
-                    mw     = max(0, int((cur_r/max_r)*(col_w-12)))
+                    mw     = max(0, int((cur_r/max_r)*bar_w))
                     bg_c, fill_c, text_c = RES_COLORS.get(rk, ((20,20,20),(100,100,200),(160,160,220)))
-                    pygame.draw.rect(surface, bg_c,   (cx_h, cy_h, col_w-12, 7))
-                    pygame.draw.rect(surface, fill_c, (cx_h, cy_h, mw, 7))
-                    surface.blit(fs.render(f"{rk}: {cur_r}/{max_r}", True, text_c), (cx_h, cy_h+8))
+                    pygame.draw.rect(surface, bg_c,   (text_x, cy_h, bar_w, 7))
+                    pygame.draw.rect(surface, fill_c, (text_x, cy_h, mw, 7))
+                    surface.blit(fs.render(f"{rk}: {cur_r}/{max_r}", True, text_c), (text_x, cy_h+8))
 
         # Buttons
         bx = 8
@@ -815,8 +1188,15 @@ class DungeonUI:
             pygame.draw.rect(surface, GOLD if hov else (75,60,38), r, 1, border_radius=3)
             surface.blit(fb.render(lbl, True, GOLD if hov else CREAM), (r.x+6, r.y+5))
 
-        info = fb.render(
-            f"{self.dungeon.dungeon_id.replace('_',' ').title()}  ·  Floor {self.dungeon.current_floor}/{self.dungeon.total_floors}",
+        info_text = f"{self.dungeon.dungeon_id.replace('_',' ').title()}  ·  Floor {self.dungeon.current_floor}/{self.dungeon.total_floors}"
+        # Add tier badge if party has advanced beyond Bronze
+        if self.dungeon.party:
+            from core.progression import PLANAR_TIERS
+            tier_idx = max((getattr(c, "planar_tier", 0) for c in self.dungeon.party), default=0)
+            if tier_idx > 0:
+                t = PLANAR_TIERS[tier_idx]
+                info_text += f"  {t['symbol']} {t['name']}"
+        info = fb.render(info_text,
             True, (150,138,110))
         surface.blit(info, (SCREEN_W - info.get_width() - 10, by + HUD_H - 28))
 

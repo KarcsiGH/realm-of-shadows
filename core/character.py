@@ -37,6 +37,7 @@ class Character:
         self.abilities = []
         self.quick_rolled = False
         self.human_bonus_stat = None  # which stat the Human player boosted
+        self.planar_tier = 0          # Bronze(0) → Iron(1) → Steel(2) → Mithril(3) → Adamantine(4)
 
     def apply_stat_bonus(self, bonuses: dict):
         """Apply stat bonuses from a life path event."""
@@ -140,10 +141,14 @@ class Character:
         return self.xp, self.xp_to_next_level()
 
     def add_xp(self, amount):
-        """Add XP (with racial multiplier). Leveling happens at the inn.
+        """Add XP (with racial multiplier + planar tier bonus). Leveling happens at the inn.
         Returns True if character is now eligible to level up."""
         from core.races import get_racial_xp_multiplier
-        adjusted = int(amount * get_racial_xp_multiplier(self.race_name))
+        from core.progression import get_tier_xp_mult
+        tier_mult = get_tier_xp_mult(getattr(self, "planar_tier", 0))
+        adjusted = int(amount * get_racial_xp_multiplier(self.race_name) * tier_mult)
+        self.xp += adjusted
+        return self.xp >= self.xp_to_next_level() and self.level < 30
         self.xp += adjusted
         return self.xp >= self.xp_to_next_level() and self.level < 30
 

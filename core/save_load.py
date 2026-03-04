@@ -38,6 +38,7 @@ def serialize_character(char):
         "backstory_parts": list(char.backstory_parts),
         "quick_rolled": char.quick_rolled,
         "human_bonus_stat": getattr(char, "human_bonus_stat", None),
+        "planar_tier": getattr(char, "planar_tier", 0),
     }
 
 
@@ -49,7 +50,16 @@ def deserialize_character(data):
     char.xp = data.get("xp", 0)
     char.gold = data.get("gold", 0)
     char.stats = data.get("stats", {})
+    # Safety: if stats is empty or missing keys, fill with defaults
+    for stat in ("STR", "DEX", "CON", "INT", "WIS", "PIE"):
+        if stat not in char.stats:
+            char.stats[stat] = 5
     char.resources = data.get("resources", {})
+    # Safety: if HP is missing from resources, recalculate it
+    if "HP" not in char.resources:
+        from core.classes import CLASSES, calc_hp
+        cls = CLASSES.get(char.class_name, {})
+        char.resources["HP"] = calc_hp(cls.get("base_hp", 20), char.stats.get("CON", 5), char.level)
     char.abilities = data.get("abilities", [])
     char.inventory = data.get("inventory", [])
     char.equipment = data.get("equipment", empty_equipment())
@@ -61,6 +71,7 @@ def deserialize_character(data):
     char.backstory_parts = data.get("backstory_parts", [])
     char.quick_rolled = data.get("quick_rolled", False)
     char.human_bonus_stat = data.get("human_bonus_stat", None)
+    char.planar_tier = data.get("planar_tier", 0)
     return char
 
 

@@ -245,17 +245,21 @@ class Game:
         if state == S_TOWN:
             sfx.stop_music()
             sfx.stop_ambient()
+            sfx.play_ambient("town_ambient")
         elif state == S_WORLD_MAP:
             sfx.stop_music()
-            pass  # ambient disabled
+            sfx.stop_ambient()
+            sfx.play_ambient("world_ambient")
             self._sync_flag_keys()
         elif state == S_DUNGEON:
             sfx.stop_music()
-            pass  # ambient disabled
+            sfx.stop_ambient()
+            sfx.play_ambient("dungeon_ambient")
         elif state == S_COMBAT:
             sfx.stop_ambient()
             sfx.stop_music()
             sfx.play("combat_start")
+            sfx.play_music("combat_music")
         elif state in (S_PARTY, S_POST_COMBAT):
             sfx.stop_music()
             sfx.stop_ambient()
@@ -280,6 +284,15 @@ class Game:
     # ══════════════════════════════════════════════════════════
 
     def on_event(self, e, mx, my):
+        # ── Global UI sounds ─────────────────────────────────────────
+        if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+            sfx.play("ui_click")
+        elif e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_ESCAPE:
+                sfx.play("ui_cancel")
+            elif e.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
+                sfx.play("ui_confirm")
+        # ─────────────────────────────────────────────────────────────
         if self.state == S_TITLE:
             if e.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
                 self.go(S_MODE)
@@ -437,6 +450,7 @@ class Game:
                             self.inventory_return_state = S_DUNGEON
                         else:
                             self.inventory_return_state = S_PARTY
+                        sfx.play("ui_open")
                         self.go(S_INVENTORY)
                         return
                     # Journal button
@@ -491,6 +505,7 @@ class Game:
                         from ui.settings_ui import SettingsUI
                         self.settings_ui = SettingsUI()
                         self._settings_return_state = S_PARTY
+                        sfx.play("ui_open")
                         self.go(S_SETTINGS)
                         return
                     if self.debug_mode:
@@ -515,11 +530,13 @@ class Game:
             if e.type == pygame.KEYDOWN:
                 result = self.inventory_ui.handle_event(e)
                 if result == "back":
+                    sfx.play("ui_close")
                     self.go(self.inventory_return_state)
             elif e.type == pygame.MOUSEBUTTONDOWN:
                 if e.button in (1, 2, 3):  # left, middle, or right click
                     result = self.inventory_ui.handle_click(mx, my, button=e.button)
                     if result == "back":
+                        sfx.play("ui_close")
                         self.go(self.inventory_return_state)
                 elif e.button == 4:
                     self.inventory_ui.handle_scroll(-1)
@@ -603,6 +620,7 @@ class Game:
                     if inv_btn.collidepoint(mx, my) and self.party:
                         self.inventory_ui = InventoryUI(self.party)
                         self.inventory_return_state = S_POST_COMBAT
+                        sfx.play("ui_open")
                         self.go(S_INVENTORY)
                         return
                     result = self.post_combat_ui.handle_click(mx, my)
@@ -662,6 +680,7 @@ class Game:
                 result = self.settings_ui.handle_event(e)
                 if result == "close" or self.settings_ui.finished:
                     self.settings_ui = None
+                    sfx.play("ui_close")
                     self.go(self._settings_return_state)
 
         elif self.state == S_CAMP:
@@ -1541,8 +1560,13 @@ class Game:
             race_str = getattr(c, "race_name", "Human")
             draw_text(self.screen, f"{race_str} {c.class_name}", cx + 44, cy + 28, CREAM, 15)
 
-            # Stats in compact form (only left of portrait)
-            sy = cy + 50
+            # Tier badge + level (right of class label)
+            from core.progression import PLANAR_TIERS
+            tier_idx = getattr(c, "planar_tier", 0)
+            tier_info = PLANAR_TIERS[tier_idx]
+            tier_label = f"Lv.{c.level}  {tier_info['symbol']} {tier_info['name']}"
+            draw_text(self.screen, tier_label, cx + 44, cy + 44, tier_info["color"], 12)
+            sy = cy + 64
             stat_w = card_w - por_w - 20
             for i, stat in enumerate(STAT_NAMES):
                 val = c.stats[stat]
@@ -2780,6 +2804,7 @@ class Game:
                     is_hit = result != "avoid"
                     if trap.get("poison") and is_hit:
                         add_poison(ch, trap["poison"])
+                        sfx.play("poison")
                         msgs.append(f"{ch.name} is poisoned!")
                     if trap.get("curse") and is_hit:
                         add_curse(ch, trap["curse"])
@@ -2851,6 +2876,7 @@ class Game:
                 is_hit = result != "avoid"
                 if trap.get("poison") and is_hit:
                     add_poison(ch, trap["poison"])
+                    sfx.play("poison")
                     msgs.append(f"{ch.name} is poisoned!")
                 if trap.get("curse") and is_hit:
                     add_curse(ch, trap["curse"])
@@ -2947,6 +2973,7 @@ class Game:
                     # Apply status effects on crit fail
                     if data.get("poison"):
                         add_poison(target, data["poison"])
+                        sfx.play("poison")
                         results.append(f"{target.name} poisoned!")
                     if data.get("curse"):
                         add_curse(target, data["curse"])
@@ -2958,6 +2985,7 @@ class Game:
                     # Poison traps also apply poison on full hit (50% chance)
                     if data.get("poison") and rmod.random() < 0.5:
                         add_poison(target, data["poison"])
+                        sfx.play("poison")
                         results.append(f"{target.name} poisoned!")
 
             # Build display message
@@ -3037,6 +3065,7 @@ class Game:
                         for cs in combat_statuses:
                             if cs.get("name") == "Poison" and cs.get("duration", 0) > 0:
                                 add_poison(char, "poison_weak")
+                                sfx.play("poison")
 
                 # ── Grant dungeon keys on boss victory ──
                 if self.dungeon_state:
@@ -3059,7 +3088,7 @@ class Game:
                             increment("wolf_pelts_quest.count")
 
                 # ── Auto-advance any quests whose objectives are now met ──
-                from core.story_flags import auto_advance_quests
+                from core.story_flags import auto_advance_quests, get_all_flags
                 newly_done = auto_advance_quests(self.party)
                 for qid in newly_done:
                     from data.story_data import QUESTS
@@ -3067,6 +3096,16 @@ class Game:
                     self.save_msg = f"Quest complete: {qname}"
                     self.save_msg_color = (80, 220, 120)
                     self.save_msg_timer = 4000
+
+                # ── Auto-advance planar tier if story flags warrant it ──
+                from core.progression import auto_advance_party_tier, PLANAR_TIERS
+                tier_advances = auto_advance_party_tier(self.party, get_all_flags())
+                if tier_advances:
+                    _, old_t, new_t = tier_advances[0]
+                    tier_info = PLANAR_TIERS[new_t]
+                    self.save_msg = f"Planar Tier: {tier_info['name']}! {tier_info['description']}"
+                    self.save_msg_color = tier_info["color"]
+                    self.save_msg_timer = 6000
 
                 self.start_post_combat()
             else:

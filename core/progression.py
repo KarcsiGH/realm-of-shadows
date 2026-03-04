@@ -311,6 +311,122 @@ def apply_level_up(character, free_stat=None):
 
 
 # ═══════════════════════════════════════════════════════════════
+#  PLANAR ASCENSION TIERS  (Bronze → Iron → Steel → Mithril → Adamantine)
+# ═══════════════════════════════════════════════════════════════
+# A separate prestige track unlocked by story milestones.
+# Each tier grants a passive bonus applied in combat and shown in the party screen.
+# Characters advance together — tier is checked from story flags, not stored per-char.
+
+PLANAR_TIERS = {
+    0: {
+        "name":   "Bronze",
+        "color":  (180, 120, 60),     # warm brown-gold
+        "symbol": "◆",
+        "bonus":  {},                  # no bonus at starting tier
+        "description": "The first rank of a Warden. You have answered the call.",
+        "unlock_flag": None,           # everyone starts here
+    },
+    1: {
+        "name":   "Iron",
+        "color":  (160, 175, 190),    # steel-grey
+        "symbol": "◆",
+        "bonus":  {"all_stats": 1, "xp_mult": 1.05},
+        "description": "Hardened by the first trials. +1 all stats, +5% XP.",
+        "unlock_flag": "hearthstone_1_recovered",   # first Hearthstone (Abandoned Mine)
+        "min_level": 5,
+    },
+    2: {
+        "name":   "Steel",
+        "color":  (200, 210, 225),    # bright silver
+        "symbol": "◆",
+        "bonus":  {"all_stats": 2, "max_hp_pct": 0.05, "xp_mult": 1.10},
+        "description": "A proven Warden. +2 all stats, +5% max HP, +10% XP.",
+        "unlock_flag": "hearthstone_3_recovered",   # third Hearthstone (Dragon's Tooth)
+        "min_level": 10,
+    },
+    3: {
+        "name":   "Mithril",
+        "color":  (140, 200, 230),    # cool blue-silver
+        "symbol": "◆",
+        "bonus":  {"all_stats": 4, "max_hp_pct": 0.10, "damage_mult": 1.05, "xp_mult": 1.15},
+        "description": "Near-legendary. +4 all stats, +10% HP, +5% damage, +15% XP.",
+        "unlock_flag": "hearthstone_5_recovered",   # fifth (final) Hearthstone
+        "min_level": 13,
+    },
+    4: {
+        "name":   "Adamantine",
+        "color":  (180, 140, 255),    # deep purple-silver
+        "symbol": "◆",
+        "bonus":  {"all_stats": 6, "max_hp_pct": 0.15, "damage_mult": 1.10, "xp_mult": 1.25},
+        "description": "The pinnacle of the Warden order. +6 all stats, +15% HP, +10% damage.",
+        "unlock_flag": "valdris_defeated",          # endgame
+        "min_level": 15,
+    },
+}
+
+TIER_ORDER = [0, 1, 2, 3, 4]
+
+
+def get_party_tier(story_flags: dict, min_level: int = 1) -> int:
+    """Return the highest tier index the party has earned based on story flags and level."""
+    best = 0
+    for tier_idx in TIER_ORDER:
+        t = PLANAR_TIERS[tier_idx]
+        flag = t.get("unlock_flag")
+        req_level = t.get("min_level", 1)
+        if flag is None:
+            continue  # tier 0 is always available
+        if story_flags.get(flag) and min_level >= req_level:
+            best = tier_idx
+    return best
+
+
+def get_tier_bonus(tier_idx: int) -> dict:
+    """Return the bonus dict for the given tier."""
+    return PLANAR_TIERS.get(tier_idx, PLANAR_TIERS[0])["bonus"]
+
+
+def apply_tier_stat_bonus(character, tier_idx: int):
+    """Apply a tier's all_stats bonus to a character's stat dict (additive, no double-apply).
+    Call this only during resource recalculation, not persistently on the stored stats."""
+    bonus = get_tier_bonus(tier_idx)
+    flat = bonus.get("all_stats", 0)
+    if flat:
+        return {s: character.stats.get(s, 0) + flat for s in character.stats}
+    return dict(character.stats)
+
+
+def get_tier_max_hp_mult(tier_idx: int) -> float:
+    """Return the max-HP multiplier for the given tier (1.0 = no bonus)."""
+    return 1.0 + PLANAR_TIERS.get(tier_idx, {}).get("bonus", {}).get("max_hp_pct", 0.0)
+
+
+def get_tier_damage_mult(tier_idx: int) -> float:
+    """Return the damage multiplier for the given tier (1.0 = no bonus)."""
+    return PLANAR_TIERS.get(tier_idx, {}).get("bonus", {}).get("damage_mult", 1.0)
+
+
+def get_tier_xp_mult(tier_idx: int) -> float:
+    """Return the XP gain multiplier for the given tier."""
+    return PLANAR_TIERS.get(tier_idx, {}).get("bonus", {}).get("xp_mult", 1.0)
+
+
+def auto_advance_party_tier(party: list, story_flags: dict) -> list:
+    """Check if any character's tier should advance. Returns list of (char, old_tier, new_tier) tuples."""
+    if not party:
+        return []
+    min_level = min(c.level for c in party)
+    new_tier = get_party_tier(story_flags, min_level)
+    advanced = []
+    for char in party:
+        old = getattr(char, "planar_tier", 0)
+        if new_tier > old:
+            char.planar_tier = new_tier
+            advanced.append((char, old, new_tier))
+    return advanced
+
+
+# ═══════════════════════════════════════════════════════════════
 #  INN TIERS
 # ═══════════════════════════════════════════════════════════════
 

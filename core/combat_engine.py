@@ -64,6 +64,14 @@ def make_player_combatant(character, row=FRONT):
     actual_max = get_all_resources(character.class_name, stats, character.level)
     max_hp = actual_max.get("HP", character.resources["HP"])
 
+    # Planar tier: HP bonus and stat bonuses
+    from core.progression import get_tier_max_hp_mult, get_tier_damage_mult, apply_tier_stat_bonus
+    tier_idx = getattr(character, "planar_tier", 0)
+    max_hp = int(max_hp * get_tier_max_hp_mult(tier_idx))
+    actual_max["HP"] = max_hp
+    if tier_idx > 0:
+        stats = apply_tier_stat_bonus(character, tier_idx)
+
     return {
         "type": "player",
         "uid": id(character),
@@ -71,6 +79,7 @@ def make_player_combatant(character, row=FRONT):
         "class_name": character.class_name,
         "race_name": getattr(character, "race_name", "Human"),
         "level": character.level,
+        "planar_tier": tier_idx,
         "stats": stats,
         "hp": character.resources["HP"],
         "max_hp": max_hp,
@@ -156,6 +165,10 @@ def get_active_buff_mods(combatant):
         # ── Weakened: reduce outgoing damage ──────────────────
         if n == "Weakened":
             dmg_mult *= 0.70
+        # ── fading_ward: flat shadow/dark resistance
+        if n == "fading_ward":
+            def_reduce += 10
+
 
     return dmg_mult, def_reduce, evade_chance, absorb_next
 
@@ -404,6 +417,11 @@ def calc_physical_damage(attacker, defender, weapon, position_dmg_mod=1.0,
         elem_resist = defender.get("resistances", {}).get(enchant_elem, NEUTRAL)
         enchant_dmg = enchant_bonus * elem_resist
         final += enchant_dmg
+
+    # Planar tier damage bonus (players only)
+    if attacker.get("type") == "player":
+        from core.progression import get_tier_damage_mult
+        final *= get_tier_damage_mult(attacker.get("planar_tier", 0))
 
     return max(MINIMUM_DAMAGE, int(final))
 
@@ -754,6 +772,18 @@ def resolve_enemy_attack(attacker, defender):
             result["messages"].append(f"Divine intervention saves {defender['name']}!")
             break
 
+    # blade_barrier: reflect 25% of incoming damage back to attacker
+    for st in defender.get("status_effects", []):
+        if st["name"] == "blade_barrier" and damage > 0:
+            reflect = max(1, int(damage * 0.25))
+            attacker["hp"] = max(0, attacker.get("hp", 0) - reflect)
+            if attacker.get("hp", 1) <= 0:
+                attacker["alive"] = False
+            result["messages"].append(
+                f"{defender['name']}'s Blade Barrier reflects {reflect} damage to {attacker['name']}!"
+            )
+            break
+
     msg = f"{attacker['name']} attacks {defender['name']} for {damage} damage!"
     result["messages"].append(msg)
 
@@ -975,6 +1005,13 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             return 0, False, [f"{tgt['name']} absorbs {ability['name']}!"]
 
         is_crit, crit_data = _check_crit_with_bonus("physical", weapon)
+
+        # shadow_step: next attack is a guaranteed backstab crit — consume the buff
+        if has_status(attacker, "shadow_step"):
+            is_crit = True
+            crit_data = {"multiplier": 2.0}
+            _remove_status(attacker, ("shadow_step",))
+
         ab_power = ability.get("power", 1.0) * power_mult
         ability_bonus = cost * ab_power * 0.5
 
@@ -983,13 +1020,18 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         # Defender buff (defense bonus)
         _, def_bonus, _, _ = _active_buff_mods(tgt)
 
+        # bonus_vs_undead: physical divine abilities deal extra vs undead
+        undead_mult = 1.0
+        if ability.get("element") == "divine" and "undead" in tgt.get("tags", []):
+            undead_mult = 1.0 + ability.get("bonus_vs_undead", 0.5)
+
         dmg = calc_physical_damage(
             attacker, tgt, weapon,
             position_dmg_mod=pos_dmg,
             ability_bonus=ability_bonus,
             is_crit=is_crit, crit_data=crit_data,
         )
-        dmg = max(MINIMUM_DAMAGE, int(dmg * atk_mult - def_bonus))
+        dmg = max(MINIMUM_DAMAGE, int(dmg * atk_mult * undead_mult - def_bonus))
 
         # Mark bonus damage
         for mark in tgt.get("marks", []):
@@ -1000,7 +1042,8 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         if tgt["hp"] <= 0:
             tgt["alive"] = False
         crit_str = " CRITICAL!" if is_crit else ""
-        return dmg, is_crit, [f"{attacker['name']} uses {ability['name']} on {tgt['name']} for {dmg} damage!{crit_str}"]
+        undead_str = " [HOLY BONUS]" if undead_mult > 1.0 else ""
+        return dmg, is_crit, [f"{attacker['name']} uses {ability['name']} on {tgt['name']} for {dmg} damage!{crit_str}{undead_str}"]
 
     def _apply_magic_hit(tgt, power_mult=1.0):
         """Apply one magic ability hit. Returns (damage, is_crit, msgs)."""
@@ -1031,19 +1074,25 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                     element = elem
                     break
 
+        # bonus_vs_undead: divine/nature abilities deal bonus damage to undead
+        undead_mult = 1.0
+        if element in ("divine", "nature") and "undead" in tgt.get("tags", []):
+            undead_mult = 1.0 + ability.get("bonus_vs_undead", 0.5)
+
         spell = {"power": cost * ab_power, "element": element}
 
         atk_mult, _, _, _ = _active_buff_mods(attacker)
         _, def_bonus, _, _ = _active_buff_mods(tgt)
 
         dmg = calc_magic_damage(attacker, tgt, spell, is_crit)
-        dmg = max(MINIMUM_DAMAGE, int(dmg * atk_mult - def_bonus))
+        dmg = max(MINIMUM_DAMAGE, int(dmg * atk_mult * undead_mult - def_bonus))
 
         tgt["hp"] = max(0, tgt["hp"] - dmg)
         if tgt["hp"] <= 0:
             tgt["alive"] = False
         crit_str = " CRITICAL!" if is_crit else ""
-        return dmg, is_crit, [f"{attacker['name']} casts {ability['name']} on {tgt['name']} for {dmg} damage!{crit_str}"]
+        undead_str = " [HOLY BONUS]" if undead_mult > 1.0 else ""
+        return dmg, is_crit, [f"{attacker['name']} casts {ability['name']} on {tgt['name']} for {dmg} damage!{crit_str}{undead_str}"]
 
     def _remove_status(combatant, names):
         combatant["status_effects"] = [
@@ -1060,12 +1109,37 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
 
     # ── REVIVE ─────────────────────────────────────────────────
     if is_revive:
+        revive_pct = ability.get("revive_hp_pct", 0.5)
+
+        # revive_all: Mass Resurrection — revive all fallen allies
+        if ability.get("revive_all") and all_players:
+            fallen = [p for p in all_players if not p["alive"]]
+            if fallen:
+                total_healed = 0
+                for p in fallen:
+                    p["alive"] = True
+                    hp = int(p["max_hp"] * revive_pct)
+                    p["hp"] = hp
+                    total_healed += hp
+                result["healing"] = total_healed
+                names = ", ".join(p["name"] for p in fallen)
+                result["messages"].append(
+                    f"{attacker['name']} casts {ability['name']} — "
+                    f"{names} rise from the dead!"
+                )
+            else:
+                result["messages"].append(
+                    f"{attacker['name']} casts {ability['name']} — no fallen allies to revive."
+                )
+            return result
+
+        # Single-target revive
         revive_tgt = target if (target and not target["alive"]) else None
         if not revive_tgt and all_players:
             revive_tgt = next((p for p in all_players if not p["alive"]), None)
         if revive_tgt:
             revive_tgt["alive"] = True
-            revive_hp = int(revive_tgt["max_hp"] * ability.get("revive_hp_pct", 0.5))
+            revive_hp = int(revive_tgt["max_hp"] * revive_pct)
             revive_tgt["hp"] = revive_hp
             result["healing"] = revive_hp
             result["messages"].append(
@@ -1157,6 +1231,19 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         duration  = ability.get("duration", 3)
         tgt_spec  = ability.get("targets", "self")
         self_only = ability.get("self_only", False)
+
+        # time_stop: apply Stunned to all living enemies
+        if buff_name == "time_stop" or ability["name"].lower() == "time stop":
+            enemy_targets = [e for e in (all_enemies or []) if e["alive"]]
+            if enemy_targets:
+                for e in enemy_targets:
+                    apply_status_effect(e, "Stunned", duration, 1.0)
+                result["messages"].append(
+                    f"{attacker['name']} casts Time Stop — all enemies are frozen for {duration} turn(s)!"
+                )
+            else:
+                result["messages"].append(f"{attacker['name']} casts Time Stop — no enemies to freeze!")
+            return result
 
         if self_only or tgt_spec == "self":
             buff_targets = [attacker]
@@ -1273,6 +1360,18 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                 result["messages"].append(f"{attacker['name']} uses {ability['name']} — {ht['name']} revived for {actual} HP!{crit_str}")
             else:
                 result["messages"].append(f"{attacker['name']} uses {ability['name']} on {ht['name']} — heals {actual} HP.{crit_str}")
+
+            # spirit_bond: 50% of healing overflows to all other living allies
+            if has_status(attacker, "spirit_bond") and all_players and actual > 0:
+                overflow = max(1, actual // 2)
+                bond_allies = [p for p in all_players if p["alive"] and p is not ht]
+                for ally in bond_allies:
+                    old_ally = ally["hp"]
+                    ally["hp"] = min(ally["max_hp"], ally["hp"] + overflow)
+                    gained = ally["hp"] - old_ally
+                    if gained > 0:
+                        result["messages"].append(f"  Spirit Bond: {ally['name']} also heals {gained} HP.")
+
         result["healing"] = total_healed
         result["is_crit"] = is_crit
         return result
@@ -1361,6 +1460,26 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                     result["messages"] += _inflict_special_effects(aoe_tgt)
                 if not aoe_tgt["alive"]:
                     _log_death(aoe_tgt)
+                    # aoe_on_kill: Holy Avenger — trigger AoE burst when target dies
+                    if ability.get("aoe_on_kill") and all_enemies:
+                        survivors = [e for e in all_enemies if e["alive"] and e is not aoe_tgt]
+                        if survivors:
+                            aoe_power = ability.get("aoe_on_kill_power", 0.5)
+                            burst_spell = {"power": cost * aoe_power, "element": "divine"}
+                            result["messages"].append(
+                                f"Holy energy explodes from {aoe_tgt['name']}!"
+                            )
+                            for se in survivors:
+                                bdmg = calc_magic_damage(attacker, se, burst_spell, False)
+                                bdmg = max(MINIMUM_DAMAGE, int(bdmg))
+                                se["hp"] = max(0, se["hp"] - bdmg)
+                                if se["hp"] <= 0:
+                                    se["alive"] = False
+                                result["messages"].append(
+                                    f"  {se['name']} takes {bdmg} divine burst damage!"
+                                )
+                                if not se["alive"]:
+                                    _log_death(se)
                     break  # no more hits on dead target
 
             # Execute threshold (single-target only, not AOE)
@@ -1418,9 +1537,27 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
 def apply_status_effect(target, status_name, duration, chance=1.0):
     """Try to apply a status effect to a target. Respects immunities.
     Returns True if applied, False if resisted/immune."""
-    # Immunity check
+    # Static immunity check (from enemy template)
     if status_name in target.get("status_immunities", []):
         return False
+
+    # courage_aura: immunity to Fear and Confusion
+    if status_name in ("Feared", "Fear", "Confused") and has_status(target, "courage_aura"):
+        return False
+
+    # ward_anchor: complete immunity to all negative statuses
+    if has_status(target, "ward_anchor"):
+        # Only block negative/debuff statuses
+        POSITIVE_STATUSES = {
+            "war_cry", "WarCry", "hawk_eye", "last_stand", "defense_up", "iron_skin",
+            "magic_shield", "bulwark", "evasion", "smoke_screen", "ki_deflect",
+            "rally", "unbreakable", "conqueror", "divine_shield", "shield_of_faith",
+            "runic_armor", "blade_barrier", "shadow_step", "spirit_bond", "fading_ward",
+            "ward_anchor", "battle_prayer", "divine_intervention", "courage_aura",
+            "empty_mind", "time_stop", "tracking",
+        }
+        if status_name not in POSITIVE_STATUSES:
+            return False
 
     # Chance check
     if chance < 1.0 and random.random() > chance:
@@ -1826,6 +1963,18 @@ def end_of_round_regen(combatant):
                 old = combatant["resources"][pool]
                 combatant["resources"][pool] = min(max_val, old + regen)
 
+    # battle_prayer: HP regen per turn (Templar buff)
+    for st in combatant.get("status_effects", []):
+        if st["name"] == "battle_prayer":
+            piety = combatant["stats"].get("PIE", combatant["stats"].get("WIS", 10))
+            regen_hp = max(3, piety // 3)
+            old_hp = combatant["hp"]
+            combatant["hp"] = min(combatant["max_hp"], combatant["hp"] + regen_hp)
+            gained = combatant["hp"] - old_hp
+            if gained > 0:
+                messages.append(f"{combatant['name']} recovers {gained} HP from Battle Prayer.")
+            break
+
     # Clear defending stance
     combatant["is_defending"] = False
 
@@ -1842,7 +1991,12 @@ class CombatState:
     Tracks turn order, round number, combat log, victory/defeat.
     """
 
-    def __init__(self, party_chars, encounter_key):
+    def __init__(self, party_chars, encounter_key, surprise=None):
+        """
+        surprise: None | "enemy" | "party"
+          "enemy"  — enemies ambush party; players skip round 1
+          "party"  — party surprises enemies; enemies skip round 1
+        """
         from data.enemies import build_encounter
 
         self.round_num = 1
@@ -1931,6 +2085,17 @@ class CombatState:
         self.all_combatants = self.players + self.enemies
         self.turn_order = build_turn_order(self.all_combatants)
 
+        # Apply surprise — surprised side skips their first turn
+        self.surprise = surprise
+        if surprise == "enemy":
+            for p in self.players:
+                p["surprise_skip"] = True
+            self.log("⚡ AMBUSH! The enemy attacks before you can react!")
+        elif surprise == "party":
+            for e in self.enemies:
+                e["surprise_skip"] = True
+            self.log("⚡ SURPRISE! You catch the enemy off guard!")
+
         # XP tracking: count rounds each player was alive (conscious)
         self.rounds_alive = {p["uid"]: 0 for p in self.players}
 
@@ -1969,10 +2134,18 @@ class CombatState:
         """Move to the next combatant's turn. Handle end-of-round."""
         self.current_turn_index += 1
 
-        # Skip dead combatants
-        while (self.current_turn_index < len(self.turn_order) and
-               not self.turn_order[self.current_turn_index]["alive"]):
-            self.current_turn_index += 1
+        # Skip dead combatants and round-1 surprised combatants
+        while self.current_turn_index < len(self.turn_order):
+            c = self.turn_order[self.current_turn_index]
+            if not c["alive"]:
+                self.current_turn_index += 1
+                continue
+            if c.get("surprise_skip") and self.round_num == 1:
+                self.log(f"{c['name']} is caught off guard and cannot act!")
+                c["surprise_skip"] = False
+                self.current_turn_index += 1
+                continue
+            break
 
         # Check victory/defeat
         if not any(p["alive"] for p in self.players):

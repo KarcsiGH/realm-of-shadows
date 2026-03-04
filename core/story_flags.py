@@ -47,6 +47,11 @@ def set_flag(key, value):
     _flags[key] = value
 
 
+def get_all_flags() -> dict:
+    """Return a copy of all current flags (for tier/quest checks)."""
+    return dict(_flags)
+
+
 def has(key):
     """Check if a flag exists and is truthy."""
     return bool(_flags.get(key))
