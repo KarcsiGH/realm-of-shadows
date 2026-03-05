@@ -152,8 +152,9 @@ BRIARHOLLOW_BUILDINGS = {
         "color": (180, 140, 80),        # warm amber
         "label_pos": (7, 2),
         "npc_name": "Innkeeper Bess",
-        "wall_cols": (2, 13),           # x range of this building's wall tiles
-        "wall_rows": (2, 7),            # y range
+        "wall_cols": (2, 13),
+        "wall_rows": (2, 7),
+        "indoor_npc": {"name": "Innkeeper Bess", "npc_type": "innkeeper", "title": "Innkeeper", "description": "A warm, bustling woman drying her hands on her apron.", "color": (210, 175, 120), "dialogue_id": "bess"}
     },
     "shop": {
         "name": "General Store",
@@ -164,6 +165,7 @@ BRIARHOLLOW_BUILDINGS = {
         "npc_name": "Merchant Kira",
         "wall_cols": (14, 27),
         "wall_rows": (2, 7),
+        "indoor_npc": {"name": "Merchant Kira", "npc_type": "merchant", "title": "Merchant", "description": "A shrewd traveler arranging goods on a small table.", "color": (120, 190, 140), "dialogue_id": "merchant_kira"},
     },
     "elder": {
         "name": "Elder's House",
@@ -174,6 +176,7 @@ BRIARHOLLOW_BUILDINGS = {
         "npc_name": "Elder Thom",
         "wall_cols": (28, 43),
         "wall_rows": (2, 7),
+        "indoor_npc": {"name": "Elder Thom", "npc_type": "elder", "title": "Village Elder", "description": "The village elder with sharp eyes.", "color": (185, 175, 140), "dialogue_id": "elder_thom"},
     },
     "tavern": {
         "name": "The Rusty Flagon",
@@ -184,6 +187,7 @@ BRIARHOLLOW_BUILDINGS = {
         "npc_name": "Barkeep Thom",
         "wall_cols": (2, 13),
         "wall_rows": (15, 21),
+        "indoor_npc": {"name": "Barkeep Thom", "npc_type": "barkeep", "title": "Barkeep", "description": "A grizzled barkeep who knows every rumour in town.", "color": (185, 135, 80), "dialogue_id": None},
     },
     "temple": {
         "name": "Shrine of Light",
@@ -194,6 +198,7 @@ BRIARHOLLOW_BUILDINGS = {
         "npc_name": "Priestess Alia",
         "wall_cols": (14, 27),
         "wall_rows": (15, 21),
+        "indoor_npc": {"name": "Priestess Alia", "npc_type": "priestess", "title": "Priestess", "description": "A serene priestess tending the shrine.", "color": (225, 225, 165), "dialogue_id": None},
     },
     "forge": {
         "name": "Dunn's Forge",
@@ -204,6 +209,7 @@ BRIARHOLLOW_BUILDINGS = {
         "npc_name": "Forgemaster Dunn",
         "wall_cols": (28, 43),
         "wall_rows": (15, 21),
+        "indoor_npc": {"name": "Forgemaster Dunn", "npc_type": "forger", "title": "Forgemaster", "description": "A stocky dwarf beside his forge.", "color": (225, 145, 60), "dialogue_id": "forgemaster_dunn"},
     },
 }
 
@@ -215,57 +221,12 @@ BRIARHOLLOW_BUILDINGS = {
 BRIARHOLLOW_NPCS = [
     # ── Service NPCs — standing at their building doors ───────────────
     {
-        "name": "Innkeeper Bess",
-        "x": 7, "y": 8,          # one step south of inn door
-        "service": "inn",
-        "dialogue_id": "bess",
-        "description": "A warm, bustling woman drying her hands on her apron.",
-        "color": (210, 175, 120),
-        "npc_type": "innkeeper",
-    },
-    {
-        "name": "Merchant Kira",
-        "x": 20, "y": 8,         # south of shop door
-        "service": "shop",
-        "dialogue_id": "merchant_kira",
-        "description": "A shrewd traveler arranging goods on a small table.",
-        "color": (120, 190, 140),
-        "npc_type": "merchant",
-    },
-    {
         "name": "Elder Thom",
-        "x": 32, "y": 8,         # south of elder's door, surveying the square
+        "x": 29, "y": 8,         # south of elder's door, surveying the square
         "dialogue_id": "elder_thom",
         "description": "The village elder, watching the square with sharp eyes.",
         "color": (185, 175, 140),
         "npc_type": "elder",
-    },
-    {
-        "name": "Barkeep Thom",
-        "x": 7, "y": 14,         # north of tavern door
-        "service": "tavern",
-        "dialogue_id": None,
-        "description": "A grizzled barkeep stepping out for air.",
-        "color": (185, 135, 80),
-        "npc_type": "barkeep",
-    },
-    {
-        "name": "Priestess Alia",
-        "x": 20, "y": 14,        # north of temple door
-        "service": "temple",
-        "dialogue_id": None,
-        "description": "A serene priestess tending a small outdoor shrine.",
-        "color": (225, 225, 165),
-        "npc_type": "priestess",
-    },
-    {
-        "name": "Forgemaster Dunn",
-        "x": 32, "y": 14,        # north of forge door
-        "service": "forge",
-        "dialogue_id": "forgemaster_dunn",
-        "description": "A stocky dwarf cooling off outside his forge.",
-        "color": (225, 145, 60),
-        "npc_type": "forger",
     },
     # ── Square NPCs — give the town life ─────────────────────────────
     {
@@ -372,6 +333,7 @@ WOODHAVEN_BUILDINGS = {
         "color": (120, 100, 70),
         "label_pos": (3, 2),
         "npc_name": "Innkeeper Jessa",
+        "indoor_npc": {"name": "Innkeeper Jessa", "npc_type": "innkeeper", "title": "Innkeeper", "description": "A quiet woman who keeps the inn spotless.", "color": (180, 160, 120), "dialogue_id": None},
     },
     "shop": {
         "name": "Woodhaven Trading Post",
@@ -380,6 +342,7 @@ WOODHAVEN_BUILDINGS = {
         "color": (100, 130, 80),
         "label_pos": (7, 2),
         "npc_name": "Trader Finn",
+        "indoor_npc": {"name": "Trader Finn", "npc_type": "merchant", "title": "Merchant", "description": "A well-traveled merchant with ranger supplies.", "color": (120, 180, 100), "dialogue_id": None},
     },
     "temple": {
         "name": "Grove Shrine",
@@ -388,6 +351,7 @@ WOODHAVEN_BUILDINGS = {
         "color": (80, 150, 80),
         "label_pos": (5, 10),
         "npc_name": "Druid Rowan",
+        "indoor_npc": {"name": "Druid Rowan", "npc_type": "priestess", "title": "Druid", "description": "A druid who tends the forest shrine.", "color": (80, 200, 100), "dialogue_id": None},
     },
     "tavern": {
         "name": "The Hunter's Horn",
@@ -396,6 +360,7 @@ WOODHAVEN_BUILDINGS = {
         "color": (130, 100, 60),
         "label_pos": (12, 8),
         "npc_name": "Barkeep Holt",
+        "indoor_npc": {"name": "Barkeep Holt", "npc_type": "barkeep", "title": "Barkeep", "description": "A burly hunter who runs the tavern between seasons.", "color": (180, 140, 80), "dialogue_id": None},
     },
     "forge": {
         "name": "Ranger's Forge",
@@ -404,6 +369,7 @@ WOODHAVEN_BUILDINGS = {
         "color": (160, 100, 50),
         "label_pos": (17, 14),
         "npc_name": "Smith Wren",
+        "indoor_npc": {"name": "Smith Wren", "npc_type": "forger", "title": "Smith", "description": "A wiry woman who crafts bows and arrowheads.", "color": (200, 130, 60), "dialogue_id": None},
     },
     "guild": {
         "name": "Ranger's Guild",
@@ -412,6 +378,7 @@ WOODHAVEN_BUILDINGS = {
         "color": (80, 120, 70),
         "label_pos": (22, 3),
         "npc_name": "Guildmaster Oren",
+        "indoor_npc": {"name": "Guildmaster Oren", "npc_type": "guildmaster", "title": "Guildmaster", "description": "A grizzled ranger who runs the guild.", "color": (100, 140, 80), "dialogue_id": "guildmaster_oren"},
     },
     "ranger_hall": {
         "name": "Scout Hall",
@@ -446,46 +413,6 @@ WOODHAVEN_NPCS = [
         "color": (90, 150, 70),
     },
     # Service NPCs
-    {
-        "name": "Innkeeper Jessa",
-        "x": 7, "y": 4,
-        "service": "inn",
-        "dialogue_id": None,
-        "description": "A quiet woman who keeps the inn spotless.",
-        "color": (180, 160, 120),
-    },
-    {
-        "name": "Trader Finn",
-        "x": 10, "y": 4,
-        "service": "shop",
-        "dialogue_id": None,
-        "description": "A well-traveled merchant with ranger supplies.",
-        "color": (120, 180, 100),
-    },
-    {
-        "name": "Druid Rowan",
-        "x": 10, "y": 12,
-        "service": "temple",
-        "dialogue_id": None,
-        "description": "A druid who tends the forest shrine.",
-        "color": (80, 200, 100),
-    },
-    {
-        "name": "Barkeep Holt",
-        "x": 14, "y": 10,
-        "service": "tavern",
-        "dialogue_id": None,
-        "description": "A burly hunter who runs the tavern between seasons.",
-        "color": (180, 140, 80),
-    },
-    {
-        "name": "Smith Wren",
-        "x": 19, "y": 16,
-        "service": "forge",
-        "dialogue_id": None,
-        "description": "A wiry woman who crafts bows and arrowheads.",
-        "color": (200, 130, 60),
-    },
     {
         "name": "Guildmaster Oren",
         "x": 24, "y": 5,
@@ -546,6 +473,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (100, 90, 80),
         "label_pos": (3, 2),
         "npc_name": "Innkeeper Bron",
+        "indoor_npc": {"name": "Innkeeper Bron", "npc_type": "innkeeper", "title": "Innkeeper", "description": "A stout dwarf who pours strong ale.", "color": (160, 130, 90), "dialogue_id": None},
     },
     "shop": {
         "name": "Ironhearth Forge & Armory",
@@ -554,6 +482,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (130, 110, 80),
         "label_pos": (7, 2),
         "npc_name": "Merchant Gilda",
+        "indoor_npc": {"name": "Merchant Gilda", "npc_type": "merchant", "title": "Merchant", "description": "A sharp-tongued merchant with the finest goods.", "color": (180, 160, 100), "dialogue_id": None},
     },
     "temple": {
         "name": "Shrine of the Deep",
@@ -562,6 +491,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (120, 120, 160),
         "label_pos": (15, 2),
         "npc_name": "Priest Korvan",
+        "indoor_npc": {"name": "Priest Korvan", "npc_type": "priestess", "title": "Priest", "description": "A solemn priest of the deep stone.", "color": (140, 140, 200), "dialogue_id": None},
     },
     "tavern": {
         "name": "The Molten Cup",
@@ -570,6 +500,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (160, 100, 50),
         "label_pos": (19, 2),
         "npc_name": "Barkeep Magda",
+        "indoor_npc": {"name": "Barkeep Magda", "npc_type": "barkeep", "title": "Barkeep", "description": "A boisterous dwarven woman who loves a good story.", "color": (200, 140, 80), "dialogue_id": None},
     },
     "forge_main": {
         "name": "The Grand Forge",
@@ -578,6 +509,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (200, 120, 40),
         "label_pos": (7, 9),
         "npc_name": "Master Smith Thardin",
+        "indoor_npc": {"name": "Master Smith Thardin", "npc_type": "forger", "title": "Master Smith", "description": "The finest weaponsmith in the region.", "color": (220, 140, 40), "dialogue_id": None},
     },
     "armory": {
         "name": "City Armory",
@@ -586,6 +518,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (140, 140, 150),
         "label_pos": (15, 9),
         "npc_name": "Quartermaster Helga",
+        "indoor_npc": {"name": "Quartermaster Helga", "npc_type": "merchant", "title": "Quartermaster", "description": "A no-nonsense quartermaster.", "color": (160, 150, 120), "dialogue_id": None},
     },
     "guild": {
         "name": "Miners' Guild",
@@ -594,6 +527,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (110, 100, 80),
         "label_pos": (5, 17),
         "npc_name": "Guildmaster Dorric",
+        "indoor_npc": {"name": "Guildmaster Dorric", "npc_type": "guildmaster", "title": "Guildmaster", "description": "A weathered veteran who runs the guild with iron discipline.", "color": (140, 160, 180), "dialogue_id": None},
     },
     "mines_office": {
         "name": "Mines Office",
@@ -643,46 +577,6 @@ IRONHEARTH_NPCS = [
         "color": (200, 160, 80),
     },
     # Service NPCs
-    {
-        "name": "Innkeeper Bron",
-        "x": 7, "y": 4,
-        "service": "inn",
-        "dialogue_id": None,
-        "description": "A stout dwarf who pours strong ale.",
-        "color": (160, 130, 90),
-    },
-    {
-        "name": "Merchant Gilda",
-        "x": 10, "y": 4,
-        "service": "shop",
-        "dialogue_id": None,
-        "description": "A sharp-tongued merchant with the finest goods.",
-        "color": (180, 160, 100),
-    },
-    {
-        "name": "Priest Korvan",
-        "x": 19, "y": 4,
-        "service": "temple",
-        "dialogue_id": None,
-        "description": "A solemn priest of the deep stone.",
-        "color": (140, 140, 200),
-    },
-    {
-        "name": "Barkeep Magda",
-        "x": 22, "y": 4,
-        "service": "tavern",
-        "dialogue_id": None,
-        "description": "A boisterous dwarven woman who loves a good story.",
-        "color": (200, 140, 80),
-    },
-    {
-        "name": "Master Smith Thardin",
-        "x": 12, "y": 11,
-        "service": "forge",
-        "dialogue_id": None,
-        "description": "The finest weaponsmith in the region. His work is legendary.",
-        "color": (220, 140, 40),
-    },
 ]
 
 IRONHEARTH_SIGNS = {
@@ -772,38 +666,6 @@ GREENWOOD_NPCS = [
         "dialogue_id": "trapper_holt",
         "description": "A sun-weathered trapper sorting pelts on a wooden rack.",
         "color": (160, 130, 90),
-    },
-    {
-        "name": "Innkeeper Petra",
-        "x": 13, "y": 4,       # open grass right of inn door
-        "service": "inn",
-        "dialogue_id": None,
-        "description": "A sturdy woman who runs the only inn for fifty miles.",
-        "color": (180, 150, 110),
-    },
-    {
-        "name": "Barkeep Oswin",
-        "x": 11, "y": 10,      # open grass right of tavern door
-        "service": "tavern",
-        "dialogue_id": None,
-        "description": "A quiet man who says little and hears everything.",
-        "color": (150, 120, 80),
-    },
-    {
-        "name": "Trader Fen",
-        "x": 13, "y": 15,      # open grass right of shop door
-        "service": "shop",
-        "dialogue_id": None,
-        "description": "A wiry merchant who travels the forest routes alone.",
-        "color": (110, 160, 90),
-    },
-    {
-        "name": "Warden Sylk",
-        "x": 14, "y": 15,      # open grass beside temple
-        "service": "temple",
-        "dialogue_id": None,
-        "description": "A nature warden who tends the forest shrine with quiet devotion.",
-        "color": (80, 180, 100),
     },
 ]
 
@@ -921,54 +783,6 @@ SALTMERE_NPCS = [
         "dialogue_id": "shady_figure",
         "description": "A cloaked figure who meets your gaze and looks away too quickly.",
         "color": (80, 70, 100),
-    },
-    {
-        "name": "Innkeeper Cressa",
-        "x": 6, "y": 4,
-        "service": "inn",
-        "dialogue_id": None,
-        "description": "A sharp-eyed woman who remembers every face she's ever seen.",
-        "color": (160, 140, 110),
-    },
-    {
-        "name": "Merchant Dova",
-        "x": 9, "y": 4,
-        "service": "shop",
-        "dialogue_id": None,
-        "description": "A quick-talking trader who sells what falls off ships.",
-        "color": (120, 160, 100),
-    },
-    {
-        "name": "Fence Rael",
-        "x": 21, "y": 5,       # just inside the black market door at col 20
-        "service": "shop",
-        "dialogue_id": None,
-        "description": "A pale, careful man with a lockbox under the counter.",
-        "color": (140, 120, 170),
-    },
-    {
-        "name": "Barkeep Mick",
-        "x": 21, "y": 11,
-        "service": "tavern",
-        "dialogue_id": None,
-        "description": "A barrel-chested man who throws out troublemakers personally.",
-        "color": (180, 140, 90),
-    },
-    {
-        "name": "Tide Priest Oran",
-        "x": 8, "y": 18,
-        "service": "temple",
-        "dialogue_id": "tide_priest_oran",
-        "description": "A weathered priest who prays for those the sea takes.",
-        "color": (100, 140, 200),
-    },
-    {
-        "name": "Smith Crag",
-        "x": 21, "y": 16,
-        "service": "forge",
-        "dialogue_id": None,
-        "description": "A scarred smith who makes anchors, chains, and weapons.",
-        "color": (200, 140, 60),
     },
 ]
 
@@ -1097,46 +911,6 @@ SANCTUM_NPCS = [
         "description": "A young priest walking the cloister path in quiet prayer.",
         "color": (180, 180, 220),
     },
-    {
-        "name": "High Priest Aldara",
-        "x": 13, "y": 5,
-        "service": "temple",
-        "dialogue_id": "high_priest_aldara",
-        "description": "The High Priest of Sanctum. Her healing abilities are legendary.",
-        "color": (240, 230, 180),
-    },
-    {
-        "name": "Innkeeper Mala",
-        "x": 10, "y": 11,
-        "service": "inn",
-        "dialogue_id": None,
-        "description": "A gentle innkeeper who offers reduced rates to pilgrims.",
-        "color": (190, 170, 140),
-    },
-    {
-        "name": "Merchant Brin",
-        "x": 19, "y": 11,
-        "service": "shop",
-        "dialogue_id": None,
-        "description": "A devout merchant who sells holy water, salves, and scrolls.",
-        "color": (160, 190, 150),
-    },
-    {
-        "name": "Healer Thessa",
-        "x": 10, "y": 18,
-        "service": "temple",
-        "dialogue_id": None,
-        "description": "A healer who works tirelessly from dawn to dusk.",
-        "color": (200, 220, 200),
-    },
-    {
-        "name": "Barkeep Pell",
-        "x": 19, "y": 18,
-        "service": "tavern",
-        "dialogue_id": None,
-        "description": "A quiet barkeep who serves only water and warm tea after dark.",
-        "color": (170, 160, 130),
-    },
 ]
 
 SANCTUM_SIGNS = {
@@ -1263,46 +1037,6 @@ CRYSTALSPIRE_NPCS = [
         "dialogue_id": "archmage_solen",
         "description": "The Archmage of Crystalspire. Ancient, precise, and watching everything.",
         "color": (180, 200, 255),
-    },
-    {
-        "name": "Librarian Vex",
-        "x": 16, "y": 5,
-        "service": "shop",
-        "dialogue_id": None,
-        "description": "A meticulous librarian who sells spell tomes and components.",
-        "color": (140, 160, 220),
-    },
-    {
-        "name": "Innkeeper Zara",
-        "x": 13, "y": 12,
-        "service": "inn",
-        "dialogue_id": None,
-        "description": "A cheerful mage-turned-innkeeper who enchants the beds for comfort.",
-        "color": (180, 160, 220),
-    },
-    {
-        "name": "Merchant Pell",
-        "x": 22, "y": 12,
-        "service": "shop",
-        "dialogue_id": None,
-        "description": "A specialist merchant selling rare magical components.",
-        "color": (160, 180, 200),
-    },
-    {
-        "name": "Barkeep Nim",
-        "x": 11, "y": 19,
-        "service": "tavern",
-        "dialogue_id": None,
-        "description": "A thin mage who brews potions and calls them cocktails.",
-        "color": (180, 140, 200),
-    },
-    {
-        "name": "Priest Sael",
-        "x": 18, "y": 19,
-        "service": "temple",
-        "dialogue_id": None,
-        "description": "A scholar-priest who studies the intersection of magic and divinity.",
-        "color": (200, 180, 240),
     },
 ]
 
@@ -1497,46 +1231,6 @@ THORNHAVEN_NPCS = [
         "color": (160, 140, 220),
     },
     # Service NPCs
-    {
-        "name": "Innkeeper Vance",
-        "x": 6, "y": 4,
-        "service": "inn",
-        "dialogue_id": None,
-        "description": "A formal innkeeper who greets every guest with a small bow.",
-        "color": (180, 160, 130),
-    },
-    {
-        "name": "Chief Merchant Ora",
-        "x": 9, "y": 4,
-        "service": "shop",
-        "dialogue_id": None,
-        "description": "The chief merchant of the capital. She has the best inventory in the realm.",
-        "color": (180, 200, 160),
-    },
-    {
-        "name": "Archpriest Davan",
-        "x": 10, "y": 11,
-        "service": "temple",
-        "dialogue_id": None,
-        "description": "The Archpriest of the Grand Temple. Calm, ancient, and knowing.",
-        "color": (220, 220, 190),
-    },
-    {
-        "name": "Barkeep Lissa",
-        "x": 13, "y": 11,
-        "service": "tavern",
-        "dialogue_id": None,
-        "description": "A barkeep who knows every rumor in the capital before morning.",
-        "color": (200, 160, 110),
-    },
-    {
-        "name": "Royal Smith Hadra",
-        "x": 18, "y": 19,
-        "service": "forge",
-        "dialogue_id": None,
-        "description": "The royal smith. Her work carries the imperial seal.",
-        "color": (220, 150, 60),
-    },
 ]
 
 THORNHAVEN_SIGNS = {

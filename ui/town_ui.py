@@ -159,8 +159,7 @@ class TownUI:
         self.walk_anim_t = 0
         self.walk_interact_msg = ""
         self.walk_interact_timer = 0
-        self.current_bld_npc_name  = ""
-        self.current_bld_npc_title = ""
+        self.current_bld_indoor_npc = None
         self.current_bld_name      = ""
         self.walk_tile_size = 24
         # Load walkable map data if this town has one
@@ -828,21 +827,7 @@ class TownUI:
             npc_ahead = get_npc_at(td, nx, ny)
             is_service_npc = npc_ahead is not None and npc_ahead.get("service") is not None
 
-            if is_service_npc:
-                # Walking into a service NPC → place player on their door and enter
-                self.walk_facing = {(0,-1):"up",(0,1):"down",(-1,0):"left",(1,0):"right"}.get((dx,dy), self.walk_facing)
-                svc = npc_ahead["service"]
-                _svc_map = {"inn": "inn", "shop": "shop", "tavern": "tavern",
-                            "temple": "temple", "forge": "forge", "guild": "guild"}
-                for bld_id, bld in td.get("buildings", {}).items():
-                    if bld.get("type") == _svc_map.get(svc):
-                        self.walk_x, self.walk_y = bld["door"]
-                        sfx.play("door_open")
-                        return self._walk_interact()
-                # Fallback — face them and show greeting via normal interact
-                return self._walk_interact()
-
-            # Non-service NPCs and walls block normally
+            # All NPCs block movement; interact with ENTER when facing them
             npc_blocking = npc_ahead is not None
             if is_walkable(td, nx, ny) and not npc_blocking:
                 self.walk_x = nx
@@ -874,10 +859,9 @@ class TownUI:
                 btype = bld["type"]
                 sfx.play("door_open")
 
-                # Store NPC info for service views to display
-                self.current_bld_npc_name  = bld.get("npc_name", "")
-                self.current_bld_npc_title = bld.get("npc_title", "")
-                self.current_bld_name      = bld.get("name", "building")
+                # Store indoor NPC and building name for service views
+                self.current_bld_indoor_npc = bld.get("indoor_npc")
+                self.current_bld_name       = bld.get("name", "building")
 
                 if btype == BLD_INN:
                     self.view = self.VIEW_INN
@@ -962,44 +946,67 @@ class TownUI:
         self.walk_interact_timer = 3000
         self.msg_color = color
 
-    def _draw_bld_npc_header(self, surface, bld_name, subtitle=""):
-        """Draw building title + NPC greeter portrait row at top of service views."""
+    def _draw_bld_npc_header(self, surface, bld_name, subtitle="", mx=0, my=0):
+        """Draw building title + indoor NPC portrait card at top of service views.
+        Returns True if the Talk button was clicked (caller should open dialogue)."""
         draw_text(surface, bld_name, SCREEN_W // 2 - 200, 18, GOLD, 22, bold=True)
         if subtitle:
             draw_text(surface, subtitle, SCREEN_W // 2 - 220, 48, GREY, 13)
-        npc_name = self.current_bld_npc_name
-        if npc_name:
-            # Small NPC portrait card top-right
-            pr = pygame.Rect(SCREEN_W - 200, 14, 180, 48)
-            pygame.draw.rect(surface, (28, 20, 38), pr, border_radius=4)
-            pygame.draw.rect(surface, PANEL_BORDER, pr, 1, border_radius=4)
-            from ui.pixel_art import draw_character_silhouette
-            sil_r = pygame.Rect(pr.x + 4, pr.y + 4, 32, 40)
-            # Determine class from npc_type for silhouette
-            _npc_class = {
-                "innkeeper": "Cleric", "merchant": "Thief", "barkeep": "Fighter",
-                "priestess": "High Priest", "priest": "High Priest",
-                "forger": "Champion", "guildmaster": "Archmage",
-                "ranger": "Ranger", "elder": "Mage", "guard": "Fighter",
-            }
-            npc_type = ""
-            for npc in self.town_data.get("npcs", []):
-                if npc.get("name") == npc_name:
-                    npc_type = npc.get("npc_type", "")
-                    break
-            cls = _npc_class.get(npc_type, "Fighter")
-            draw_character_silhouette(surface, sil_r, cls)
-            draw_text(surface, npc_name, pr.x + 40, pr.y + 6, CREAM, 12, bold=True)
-            npc_title = self.current_bld_npc_title or ""
-            if not npc_title:
-                for npc in self.town_data.get("npcs", []):
-                    if npc.get("name") == npc_name:
-                        npc_title = npc.get("title", "")
-                        break
-            if npc_title:
-                draw_text(surface, npc_title, pr.x + 40, pr.y + 22, GREY, 11)
-            draw_text(surface, "\"Welcome, travellers.\"", pr.x + 40, pr.y + 34, DIM_GOLD, 10)
 
+        npc = self.current_bld_indoor_npc
+        if not npc:
+            return False
+
+        _npc_class = {
+            "innkeeper": "Cleric",     "merchant": "Thief",       "barkeep":    "Fighter",
+            "priestess": "High Priest","priest":   "High Priest",  "forger":     "Champion",
+            "guildmaster": "Archmage", "ranger":   "Ranger",       "elder":      "Mage",
+            "guard":     "Fighter",
+        }
+        cls = _npc_class.get(npc.get("npc_type", ""), "Fighter")
+        col = npc.get("color", CREAM)
+        did = npc.get("dialogue_id")
+
+        pr = pygame.Rect(SCREEN_W - 220, 10, 210, 60)
+        hover_card = pr.collidepoint(mx, my)
+        bg_col = (38, 28, 50) if (hover_card and did) else (22, 16, 32)
+        pygame.draw.rect(surface, bg_col, pr, border_radius=5)
+        pygame.draw.rect(surface, col if (hover_card and did) else PANEL_BORDER, pr, 1, border_radius=5)
+
+        from ui.pixel_art import draw_character_silhouette
+        sil_r = pygame.Rect(pr.x + 5, pr.y + 5, 38, 50)
+        draw_character_silhouette(surface, sil_r, cls, highlight=hover_card and bool(did))
+
+        draw_text(surface, npc["name"],          pr.x + 48, pr.y + 7,  CREAM,   12, bold=True)
+        draw_text(surface, npc.get("title", ""), pr.x + 48, pr.y + 21, GREY,    11)
+        if did:
+            talk_lbl = "[ Talk \u2192 ]" if hover_card else "[ Talk ]"
+            draw_text(surface, talk_lbl, pr.x + 48, pr.y + 35, col if hover_card else DIM_GOLD, 11)
+        else:
+            draw_text(surface, "\"Welcome, travellers.\"", pr.x + 48, pr.y + 35, DIM_GOLD, 10)
+
+        return hover_card and bool(did)
+
+
+    def _open_indoor_npc_dialogue(self):
+        """Open dialogue for the current building's indoor NPC (if they have one)."""
+        npc = self.current_bld_indoor_npc
+        if not npc:
+            return
+        did = npc.get("dialogue_id")
+        if not did:
+            self._show_walk_msg(npc.get("description", f"{npc['name']} has nothing to say."), npc.get("color", CREAM))
+            return
+        from data.story_data import NPC_DIALOGUES
+        from core.dialogue import select_dialogue
+        from ui.dialogue_ui import DialogueUI
+        dialogues = NPC_DIALOGUES.get(did, [])
+        if dialogues:
+            ds = select_dialogue(did, dialogues)
+            if ds:
+                self.active_dialogue = DialogueUI(ds)
+                return
+        self._show_walk_msg(npc.get("description", f"{npc['name']} has nothing to say."), npc.get("color", CREAM))
 
     def _enter_guild(self, bld):
         """Enter a guild building.
@@ -1131,7 +1138,8 @@ class TownUI:
 
     def _draw_shop_menu(self, surface, mx, my):
         bld_name = self.current_bld_name or self.shop.get("name", "General Store")
-        self._draw_bld_npc_header(surface, bld_name, self.shop.get("welcome", ""))
+        if self._draw_bld_npc_header(surface, bld_name, self.shop.get("welcome", ""), mx, my):
+            self._open_indoor_npc_dialogue()
 
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 60, 85, DIM_GOLD, 16)
@@ -1337,7 +1345,8 @@ class TownUI:
 
     def _draw_temple(self, surface, mx, my):
         bld_name = self.current_bld_name or "Temple of Light"
-        self._draw_bld_npc_header(surface, bld_name, TEMPLE.get("welcome", ""))
+        if self._draw_bld_npc_header(surface, bld_name, TEMPLE.get("welcome", ""), mx, my):
+            self._open_indoor_npc_dialogue()
 
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 60, 85, DIM_GOLD, 16)
@@ -1409,7 +1418,8 @@ class TownUI:
     def _draw_inn(self, surface, mx, my):
         from core.progression import INN_TIERS, INN_TIER_ORDER, can_level_up, training_cost
         bld_name = self.current_bld_name or "The Inn"
-        self._draw_bld_npc_header(surface, bld_name, "Rest your bones, train your skills, save your progress.")
+        if self._draw_bld_npc_header(surface, bld_name, "Rest your bones, train your skills, save your progress.", mx, my):
+            self._open_indoor_npc_dialogue()
 
         back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
         draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
@@ -3066,7 +3076,8 @@ class TownUI:
         FORGE_DIM = (160, 100, 40)
 
         bld_name = self.current_bld_name or "The Forge"
-        self._draw_bld_npc_header(surface, bld_name, "")
+        if self._draw_bld_npc_header(surface, bld_name, "", mx, my):
+            self._open_indoor_npc_dialogue()
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Gold: {total_gold}", SCREEN_W - 150, 20, DIM_GOLD, 14)
 
