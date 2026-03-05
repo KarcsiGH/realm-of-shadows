@@ -1065,6 +1065,34 @@ WOLF = [
     "................",
 ]
 
+
+# ── HOUND: stocky dog, lower-slung than wolf, floppy ears ──
+HOUND = [
+    "................",
+    "....ww..........",
+    "...wWWWw........",
+    "..wWNNNWw.......",
+    "..wWNsENWw......",
+    "..KwWNNNWwK.....",
+    "..KwWCCCWwKk....",
+    ".KKwWCHCCWwKk...",
+    ".KKwWCCCCWwKk...",
+    "..KwWDCCDWwK....",
+    "...wWNw.wWN.....",
+    "...wW...wWNw....",
+    "..KwWK.KwWNwk...",
+    "...wK...KwNw....",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+
 # ── BANDIT: hooded rogue, no pointy ears, short cloak ──
 BANDIT = [
     ".....nNNNNn.....",
@@ -1606,6 +1634,12 @@ _ENEMY_GRIDS = {
     # ── New enemies ──
     "Wolf":                 WOLF,
     "Dire Wolf":            WOLF,
+    "Hound":                HOUND,
+    "War Hound":            HOUND,
+    "Guard Hound":          HOUND,
+    "Hunting Hound":        HOUND,
+    "Rabid Hound":          HOUND,
+    "Corrupted Hound":      HOUND,
     "Bandit":               BANDIT,
     "Highway Bandit":       BANDIT,
     "Ashenmoor Bandit":     BANDIT,
@@ -1920,22 +1954,12 @@ def _find_enemy_grid(key):
 
 def draw_character_silhouette(surface, rect, class_name,
                                equipped_weapon=None, armor_tier=None, highlight=False):
-    grid = _CHAR_GRIDS.get(class_name, FIGHTER)
-    pal  = _build_char_palette(class_name)
-    if highlight:
-        pal = {k:(min(255,v[0]+45),min(255,v[1]+45),min(255,v[2]+45),v[3]) if v else None
-               for k,v in pal.items()}
-    sprite = _render(grid, pal, rect.w, rect.h)
-    surface.blit(sprite, rect.topleft)
+    from ui.wiz_sprites import draw_wiz_character
+    draw_wiz_character(surface, rect, class_name, highlight=highlight)
 
 def draw_enemy_silhouette(surface, rect, enemy_template_key,
                            knowledge_tier=0, hover=False, dead=False):
-    grid = _find_enemy_grid(enemy_template_key)
+    from ui.wiz_sprites import draw_wiz_enemy
     tier = max(-1, min(2, knowledge_tier))
-    pal  = _build_enemy_palette(enemy_template_key, tier, hover=hover, dead=dead)
-    sprite = _render(grid, pal, rect.w, rect.h)
-    surface.blit(sprite, rect.topleft)
-    if tier == -1 and not dead:
-        ov = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
-        ov.fill((6,4,14,155))
-        surface.blit(ov, rect.topleft)
+    draw_wiz_enemy(surface, rect, enemy_template_key,
+                   knowledge_tier=tier, hover=hover, dead=dead)
