@@ -555,7 +555,7 @@ class DungeonUI:
         tt   = tile["type"]
         if tt == DT_SECRET_DOOR and not tile.get("secret_found"):
             return True
-        return tt == DT_WALL
+        return tt in (DT_WALL, DT_STAIRS_DOWN, DT_STAIRS_UP)
 
     # ─────────────────────────────────────────────────────────
 
@@ -603,9 +603,10 @@ class DungeonUI:
                 return 20.0, 0.0, ns, False, 0, 0
             tile = tiles[map_y][map_x]
             tt   = tile["type"]
-            is_s = tt == DT_SECRET_DOOR and not tile.get("secret_found")
-            is_w = tt == DT_WALL or is_s
-            is_d = tt == DT_DOOR
+            is_s     = tt == DT_SECRET_DOOR and not tile.get("secret_found")
+            is_stair = tt in (DT_STAIRS_DOWN, DT_STAIRS_UP)
+            is_w     = tt == DT_WALL or is_s or is_stair
+            is_d     = tt == DT_DOOR
 
             if is_w:
                 if not ns:
@@ -617,7 +618,7 @@ class DungeonUI:
                 else:
                     wx = self.px + dist * ray_dx
                 wx -= math.floor(wx)
-                return max(0.01, dist), wx, ns, False, map_x, map_y
+                return max(0.01, dist), wx, ns, False, map_x, map_y, is_stair, tt
 
             if is_d:
                 # Advance ray half a tile to door's midpoint (Wolfenstein style).
@@ -650,12 +651,12 @@ class DungeonUI:
                         dist = (map_y - self.py + (1 - step_y)/2) / ray_dy
                         wx = self.px + dist * ray_dx
                     wx -= math.floor(wx)
-                    return max(0.01, dist), wx, ns, False, map_x, map_y
+                    return max(0.01, dist), wx, ns, False, map_x, map_y, False, tt
                 else:
                     # Ray hits the door face at tile midpoint
-                    return max(0.01, dist_mid), wx_mid, ns, True, map_x, map_y
+                    return max(0.01, dist_mid), wx_mid, ns, True, map_x, map_y, False, tt
 
-        return 20.0, 0.0, False, False, 0, 0
+        return 20.0, 0.0, False, False, 0, 0, False, DT_WALL
 
     # ─────────────────────────────────────────────────────────
     #  MAIN DRAW
@@ -738,7 +739,7 @@ class DungeonUI:
             cam_x    = (2.0 * col / VW) - 1.0
             ray_dx   = self.dx + self.cx * cam_x
             ray_dy   = self.dy + self.cy * cam_x
-            dist, wx, ns, is_door, hit_mx, hit_my = self._cast_ray(ray_dx, ray_dy)
+            dist, wx, ns, is_door, hit_mx, hit_my, is_stair, hit_tt = self._cast_ray(ray_dx, ray_dy)
             zbuf[col] = dist
 
             wall_h = min(VH, int(PROJ_DIST / max(0.01, dist)))
@@ -752,6 +753,14 @@ class DungeonUI:
                 v_idx    = (hit_mx * 2654435761 ^ hit_my * 2246822519) % num_v
                 cols_src = wall_variants[v_idx][tex_x]
 
+            # Stair tint: blend a colour over the wall texture
+            stair_tint = None
+            if is_stair:
+                if hit_tt == DT_STAIRS_DOWN:
+                    stair_tint = (0.55, 0.22, 0.75)   # deep purple
+                else:
+                    stair_tint = (0.85, 0.70, 0.15)   # warm gold
+
             # Lighting
             fog_t = min(1.0, dist / FOG)
             ns_f  = 0.52 if ns else 1.0
@@ -763,6 +772,12 @@ class DungeonUI:
             for screen_y in range(max(0, top), min(VH, top + wall_h)):
                 tex_y = int((screen_y - top) / wall_h * TEX_H) % TEX_H
                 r, g, b = cols_src[tex_y]
+                if stair_tint:
+                    # Blend 50% toward the stair colour
+                    sr, sg, sb = stair_tint
+                    r = int(r * 0.5 + sr * 255 * 0.5)
+                    g = int(g * 0.5 + sg * 255 * 0.5)
+                    b = int(b * 0.5 + sb * 255 * 0.5)
                 rc = int(r * bright + fog_c[0] * fb)
                 gc = int(g * bright + fog_c[1] * fb)
                 bc = int(b * bright + fog_c[2] * fb)
@@ -794,7 +809,10 @@ class DungeonUI:
                 tt = tile["type"]
                 icon_key = None
                 enc_key  = None
-                if tt == DT_TRAP:
+                # Stairs are now solid walls in the raycaster — skip as sprites
+                if tt in (DT_STAIRS_DOWN, DT_STAIRS_UP):
+                    pass
+                elif tt == DT_TRAP:
                     # Only show trap sprite if the party knows about it
                     ev = tile.get("event", {})
                     if ev.get("disarmed"):

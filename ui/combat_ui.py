@@ -300,6 +300,16 @@ class CombatUI:
             draw_text(surface, f"Lv.{p.get('level', 1)} {cls[:10]}", ix, iy + 14,
                       GREY, 13)
 
+            # Row badge — coloured pill showing FRONT / MID / BACK
+            p_row = p.get("row", FRONT)
+            row_abbr = {"front": "FRONT", "mid": "MID", "back": "BACK"}.get(p_row, p_row.upper())
+            row_col  = ROW_COLORS.get(p_row, GREY)
+            badge_w  = get_font(9).size(row_abbr)[0] + 8
+            badge_r  = pygame.Rect(r.right - badge_w - 4, iy + 2, badge_w, 13)
+            pygame.draw.rect(surface, tuple(c//4 for c in row_col), badge_r, border_radius=3)
+            pygame.draw.rect(surface, row_col, badge_r, 1, border_radius=3)
+            draw_text(surface, row_abbr, badge_r.x + 4, badge_r.y + 1, row_col, 9)
+
             if is_dead:
                 draw_text(surface, "FALLEN", ix, iy + 30, DEAD_COLOR, 13, bold=True)
                 continue
@@ -466,9 +476,13 @@ class CombatUI:
 
                 _draw_panel(surface, card_r, bg, border, radius=5)
 
-                # Silhouette
+                # Silhouette — constrain to native 48:80 aspect ratio, centred
                 sil_h = card_h - 50
-                sil_r = pygame.Rect(cx + 4, cy + 4, card_w - 8, max(30, sil_h))
+                sil_w = max(20, int(sil_h * 48 / 80))   # 48:80 = 0.6
+                sil_w = min(sil_w, card_w - 8)           # never wider than card
+                sil_h = int(sil_w * 80 / 48)             # recalc height from constrained width
+                sil_x = cx + (card_w - sil_w) // 2       # horizontally centred
+                sil_r = pygame.Rect(sil_x, cy + 4, sil_w, sil_h)
                 tier = rep.get("knowledge_tier", -1)
                 tkey = rep.get("template_key") or rep.get("name", "")
                 draw_enemy_silhouette(surface, sil_r, tkey,
