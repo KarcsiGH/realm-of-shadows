@@ -257,127 +257,138 @@ class CombatUI:
         pygame.draw.line(surface, PANEL_BORDER, (LEFT_W, LEFT_Y), (LEFT_W, ACTION_Y))
 
         cur = self.combat.get_current_combatant()
-        n   = max(1, len(self.combat.players))
-        card_h = min(LEFT_H // n, 140)
         self.hover_player = None
 
-        for i, p in enumerate(self.combat.players):
-            cy = LEFT_Y + i * card_h
-            r  = pygame.Rect(LEFT_X + 3, cy + 2, LEFT_W - 6, card_h - 4)
-            is_cur = (p is cur)
-            is_dead = not p.get("alive", True)
-            is_target = (self.action_mode == "target_heal") and not is_dead
+        # ── Group players by row, display BACK→MID→FRONT (mirrors enemy side) ──
+        row_order = [BACK, MID, FRONT]
+        players_by_row = {r: [] for r in row_order}
+        for p in self.combat.players:
+            players_by_row.setdefault(p.get("row", FRONT), []).append(p)
 
-            bg = PLAYER_ACTIVE_BG if is_cur else PLAYER_BG
-            border = GOLD if is_cur else ((200, 200, 80) if (is_target and r.collidepoint(mx, my))
-                                          else PANEL_BORDER)
-            if r.collidepoint(mx, my):
-                self.hover_player = p
-                if not is_cur:
-                    bg = (22, 18, 40)
+        ROW_HDR_H = 16          # height of each row section header
+        n_players = max(1, len(self.combat.players))
+        non_empty_rows = [r for r in row_order if players_by_row[r]]
+        n_hdrs = len(non_empty_rows)
+        avail_h = LEFT_H - n_hdrs * ROW_HDR_H
+        card_h  = min(avail_h // n_players, 130)
 
-            _draw_panel(surface, r, bg, border)
-
-            # Silhouette (left side of card)
-            sil_w, sil_h = 52, card_h - 10
-            sil_r = pygame.Rect(r.x + 3, r.y + 3, sil_w, sil_h)
-            cls = p.get("class_name", "Fighter")
-            equip = p.get("equipment", {})
-            armor_tier = None
-            if equip.get("armor"): armor_tier = equip["armor"].get("armor_tier")
-            draw_character_silhouette(surface, sil_r, cls,
-                                       equipped_weapon=equip.get("weapon"),
-                                       armor_tier=armor_tier,
-                                       highlight=is_cur and not is_dead)
-
-            # Info right of silhouette
-            ix = r.x + sil_w + 8
-            iy = r.y + 3
-            iw = r.w - sil_w - 12
-
-            name_col = DEAD_COLOR if is_dead else (GOLD if is_cur else CREAM)
-            draw_text(surface, p["name"][:14], ix, iy, name_col, 14, bold=is_cur)
-            draw_text(surface, f"Lv.{p.get('level', 1)} {cls[:10]}", ix, iy + 14,
-                      GREY, 13)
-
-            # Row badge — coloured pill showing FRONT / MID / BACK
-            p_row = p.get("row", FRONT)
-            row_abbr = {"front": "FRONT", "mid": "MID", "back": "BACK"}.get(p_row, p_row.upper())
-            row_col  = ROW_COLORS.get(p_row, GREY)
-            badge_w  = get_font(9).size(row_abbr)[0] + 8
-            badge_r  = pygame.Rect(r.right - badge_w - 4, iy + 2, badge_w, 13)
-            pygame.draw.rect(surface, tuple(c//4 for c in row_col), badge_r, border_radius=3)
-            pygame.draw.rect(surface, row_col, badge_r, 1, border_radius=3)
-            draw_text(surface, row_abbr, badge_r.x + 4, badge_r.y + 1, row_col, 9)
-
-            if is_dead:
-                draw_text(surface, "FALLEN", ix, iy + 30, DEAD_COLOR, 13, bold=True)
+        cy = LEFT_Y
+        for row_key in row_order:
+            row_players = players_by_row[row_key]
+            if not row_players:
                 continue
 
-            # Resource bars
-            bar_y = iy + 28
-            bar_h_each = 7
-            bar_gap = 12
+            # ── Row section header ──
+            rc = ROW_COLORS[row_key]
+            hdr_r = pygame.Rect(LEFT_X, cy, LEFT_W, ROW_HDR_H)
+            pygame.draw.rect(surface, (rc[0]//5, rc[1]//5, rc[2]//5), hdr_r)
+            pygame.draw.line(surface, rc, (LEFT_X, cy), (LEFT_W, cy), 1)
+            row_label = {BACK: "BACK ROW", MID: "MID ROW", FRONT: "FRONT ROW"}[row_key]
+            draw_text(surface, row_label, LEFT_X + 6, cy + 2, rc, 9, bold=True)
+            cy += ROW_HDR_H
 
-            # HP always first
-            hp  = p.get("hp", 0)
-            mhp = p.get("max_hp", 1)
-            _draw_resource_bar(surface, ix, bar_y, iw, bar_h_each, hp, mhp,
-                                RES_COLORS["HP"])
-            draw_text(surface, f"HP {hp}/{mhp}", ix, bar_y + bar_h_each + 1,
-                      (190, 150, 145), 9)
-            bar_y += bar_gap + bar_h_each
+            for p in row_players:
+                r = pygame.Rect(LEFT_X + 3, cy + 2, LEFT_W - 6, card_h - 4)
+                is_cur  = (p is cur)
+                is_dead = not p.get("alive", True)
+                is_target = (self.action_mode == "target_heal") and not is_dead
 
-            # Other resources
-            res = p.get("resources", {})
-            stats = p.get("stats", {})
-            try:
-                from core.classes import get_all_resources
-                max_res = get_all_resources(cls, stats, p.get("level", 1))
-            except Exception:
-                max_res = {}
+                bg     = PLAYER_ACTIVE_BG if is_cur else PLAYER_BG
+                border = GOLD if is_cur else ((200, 200, 80) if (is_target and r.collidepoint(mx, my))
+                                              else PANEL_BORDER)
+                if r.collidepoint(mx, my):
+                    self.hover_player = p
+                    if not is_cur:
+                        bg = (22, 18, 40)
 
-            for rk in [k for k in res if k != "HP"][:2]:
-                cur_r = res.get(rk, 0)
-                max_r = max(1, max_res.get(rk, cur_r) or cur_r)
-                rc = RES_COLORS.get(rk, RES_COLORS["MP"])
-                _draw_resource_bar(surface, ix, bar_y, iw, bar_h_each, cur_r, max_r, rc)
-                draw_text(surface, f"{rk} {cur_r}/{max_r}", ix, bar_y + bar_h_each + 1,
-                          rc[2], 9)
+                _draw_panel(surface, r, bg, border)
+
+                # Silhouette (left side of card)
+                sil_w = 44
+                sil_h = card_h - 10
+                sil_r = pygame.Rect(r.x + 3, r.y + 3, sil_w, sil_h)
+                cls   = p.get("class_name", "Fighter")
+                equip = p.get("equipment", {})
+                armor_tier = None
+                if equip.get("armor"): armor_tier = equip["armor"].get("armor_tier")
+                draw_character_silhouette(surface, sil_r, cls,
+                                           equipped_weapon=equip.get("weapon"),
+                                           armor_tier=armor_tier,
+                                           highlight=is_cur and not is_dead)
+
+                # Info right of silhouette
+                ix = r.x + sil_w + 8
+                iy = r.y + 3
+                iw = r.w - sil_w - 12
+
+                name_col = DEAD_COLOR if is_dead else (GOLD if is_cur else CREAM)
+                draw_text(surface, p["name"][:14], ix, iy, name_col, 13, bold=is_cur)
+                draw_text(surface, f"Lv.{p.get('level', 1)} {cls[:10]}", ix, iy + 13, GREY, 11)
+
+                if is_dead:
+                    draw_text(surface, "FALLEN", ix, iy + 28, DEAD_COLOR, 12, bold=True)
+                    cy += card_h
+                    continue
+
+                # Resource bars
+                bar_y     = iy + 26
+                bar_h_each = 6
+                bar_gap    = 11
+
+                hp  = p.get("hp", 0)
+                mhp = p.get("max_hp", 1)
+                _draw_resource_bar(surface, ix, bar_y, iw, bar_h_each, hp, mhp,
+                                    RES_COLORS["HP"])
+                draw_text(surface, f"HP {hp}/{mhp}", ix, bar_y + bar_h_each + 1,
+                          (190, 150, 145), 9)
                 bar_y += bar_gap + bar_h_each
-                if bar_y > r.bottom - 10:
-                    break
 
-            # Status effects — colored badges
-            se = p.get("status_effects", [])
-            if se:
-                BUFF_NAMES  = {"defense_up","iron_skin","magic_shield","bulwark","war_cry",
-                                "hawk_eye","ki_deflect","last_stand","evasion","smoke_screen",
-                                "courage_aura","empty_mind","WarCry","Defending","Blessed"}
-                DEBUFF_NAMES = {"Poisoned","Burning","Stunned","Slowed","Blinded","Confused",
-                                "Cursed","death_mark","Weakened"}
-                sx = ix
-                for effect in list(se)[:4]:
-                    sname = effect["name"] if isinstance(effect, dict) else effect
-                    dur   = effect.get("duration","") if isinstance(effect, dict) else ""
-                    dur_s = f"{dur}" if dur else ""
-                    if sname in BUFF_NAMES:
-                        col = (100, 230, 130)   # green — buff
-                        abbr = sname[:3].upper()
-                    elif sname in DEBUFF_NAMES:
-                        col = (230, 80, 60)    # red — debuff
-                        abbr = sname[:3].upper()
-                    else:
-                        col = ORANGE
-                        abbr = sname[:3].upper()
-                    bw = 28
-                    badge = pygame.Rect(sx, r.bottom - 16, bw, 13)
-                    pygame.draw.rect(surface, (int(col[0]*0.25),int(col[1]*0.25),int(col[2]*0.25)), badge)
-                    pygame.draw.rect(surface, col, badge, 1)
-                    draw_text(surface, abbr, sx + 2, r.bottom - 14, col, 10)
-                    if dur_s:
-                        draw_text(surface, dur_s, sx + bw - 8, r.bottom - 14, col, 9)
-                    sx += bw + 2
+                res   = p.get("resources", {})
+                stats = p.get("stats", {})
+                try:
+                    from core.classes import get_all_resources
+                    max_res = get_all_resources(cls, stats, p.get("level", 1))
+                except Exception:
+                    max_res = {}
+
+                for rk in [k for k in res if k != "HP"][:2]:
+                    cur_r = res.get(rk, 0)
+                    max_r = max(1, max_res.get(rk, cur_r) or cur_r)
+                    rc2   = RES_COLORS.get(rk, RES_COLORS["MP"])
+                    _draw_resource_bar(surface, ix, bar_y, iw, bar_h_each, cur_r, max_r, rc2)
+                    draw_text(surface, f"{rk} {cur_r}/{max_r}", ix, bar_y + bar_h_each + 1,
+                              rc2[2], 9)
+                    bar_y += bar_gap + bar_h_each
+                    if bar_y > r.bottom - 10:
+                        break
+
+                # Status effect badges
+                se = p.get("status_effects", [])
+                if se:
+                    BUFF_NAMES   = {"defense_up","iron_skin","magic_shield","bulwark","war_cry",
+                                    "hawk_eye","ki_deflect","last_stand","evasion","smoke_screen",
+                                    "courage_aura","empty_mind","WarCry","Defending","Blessed"}
+                    DEBUFF_NAMES = {"Poisoned","Burning","Stunned","Slowed","Blinded","Confused",
+                                    "Cursed","death_mark","Weakened"}
+                    sx = ix
+                    for effect in list(se)[:4]:
+                        sname = effect["name"] if isinstance(effect, dict) else effect
+                        dur   = effect.get("duration","") if isinstance(effect, dict) else ""
+                        dur_s = f"{dur}" if dur else ""
+                        if sname in BUFF_NAMES:      col = (100, 230, 130)
+                        elif sname in DEBUFF_NAMES:  col = (230, 80, 60)
+                        else:                        col = ORANGE
+                        abbr  = sname[:3].upper()
+                        bw    = 28
+                        badge = pygame.Rect(sx, r.bottom - 15, bw, 12)
+                        pygame.draw.rect(surface, (int(col[0]*0.25),int(col[1]*0.25),int(col[2]*0.25)), badge)
+                        pygame.draw.rect(surface, col, badge, 1)
+                        draw_text(surface, abbr, sx + 2, r.bottom - 13, col, 9)
+                        if dur_s:
+                            draw_text(surface, dur_s, sx + bw - 8, r.bottom - 13, col, 9)
+                        sx += bw + 2
+
+                cy += card_h
 
     # ─────────────────────────────────────────────────────────
     #  ENEMY ZONE
