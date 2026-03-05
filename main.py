@@ -138,6 +138,7 @@ class Game:
         self.camp_return_state = None
         # Quest log
         self.quest_log_ui = None
+        self._toasts = []   # [(message, color, timer_ms, max_timer_ms)]
         # Track current/last town for shortcuts
         self.current_town_id = "briarhollow"
         # Debug
@@ -186,6 +187,13 @@ class Game:
             except Exception as _exc:
                 self._show_crash(_exc)
                 return
+            # Journal overlay (drawn over everything, under fade)
+            if self.quest_log_ui:
+                try:
+                    self.quest_log_ui.draw(self.screen, mx, my)
+                except Exception:
+                    pass
+            self._draw_toasts(self.screen)
             # Fade
             if self.fade > 0:
                 s = pygame.Surface((SCREEN_W, SCREEN_H)); s.fill(BLACK)
@@ -293,6 +301,13 @@ class Game:
             elif e.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
                 sfx.play("ui_confirm")
         # ─────────────────────────────────────────────────────────────
+        # ── Global journal overlay (J key, any state with a party) ───
+        if e.type == pygame.KEYDOWN and e.key == pygame.K_j and self.party:
+            self._open_journal()
+            return
+        if self._handle_journal_event(e, mx, my):
+            return
+
         if self.state == S_TITLE:
             if e.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
                 self.go(S_MODE)
@@ -697,6 +712,71 @@ class Game:
     # ══════════════════════════════════════════════════════════
     #  LOGIC
     # ══════════════════════════════════════════════════════════
+
+
+    # ══════════════════════════════════════════════════════════
+    #  JOURNAL / TOAST HELPERS
+    # ══════════════════════════════════════════════════════════
+
+    def _open_journal(self):
+        """Open the quest log overlay (from any game state)."""
+        if not self.party:
+            return
+        if self.quest_log_ui:
+            self.quest_log_ui = None   # toggle off
+        else:
+            from ui.quest_log_ui import QuestLogUI
+            self.quest_log_ui = QuestLogUI()
+            sfx.play("ui_open")
+
+    def _handle_journal_event(self, e, mx, my):
+        """Handle all input for the quest-log overlay. Returns True if consumed."""
+        if not self.quest_log_ui:
+            return False
+        if e.type == pygame.MOUSEBUTTONDOWN:
+            if e.button == 1:
+                result = self.quest_log_ui.handle_click(mx, my)
+                if result == "close" or self.quest_log_ui.finished:
+                    self.quest_log_ui = None
+            elif e.button == 4:
+                self.quest_log_ui.handle_scroll(-1, mx, my)
+            elif e.button == 5:
+                self.quest_log_ui.handle_scroll(1, mx, my)
+            return True
+        if e.type == pygame.KEYDOWN and e.key in (pygame.K_ESCAPE, pygame.K_j):
+            self.quest_log_ui = None
+            return True
+        return True   # swallow all input while overlay is open
+
+    def add_toast(self, message, color=None):
+        """Queue a toast notification (e.g. 'New Quest: …')."""
+        from ui.renderer import GOLD
+        self._toasts.append([message, color or GOLD, 3500, 3500])
+
+    def _draw_toasts(self, surface):
+        """Draw all active toasts; called at the very end of every draw."""
+        import pygame
+        from ui.renderer import draw_text, get_font, SCREEN_W
+        y = 8
+        for toast in self._toasts[:]:
+            msg, col, timer, max_t = toast
+            alpha = min(255, int(255 * min(timer, max_t - timer * 0.3) / (max_t * 0.3)))
+            alpha = max(60, min(255, alpha))
+            font = get_font(13)
+            tw = font.size(msg)[0]
+            bg = pygame.Surface((tw + 24, 28), pygame.SRCALPHA)
+            bg.fill((8, 6, 18, min(220, alpha)))
+            bx = SCREEN_W // 2 - (tw + 24) // 2
+            surface.blit(bg, (bx, y))
+            pygame.draw.rect(surface, col, (bx, y, tw + 24, 28), 1, border_radius=3)
+            draw_text(surface, msg, bx + 12, y + 6, col, 13)
+            y += 32
+
+    def _tick_toasts(self, dt):
+        """Advance toast timers each frame."""
+        self._toasts = [t for t in self._toasts if t[2] > 0]
+        for t in self._toasts:
+            t[2] -= dt
 
     def new_char(self):
         self.current_char = Character()
