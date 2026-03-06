@@ -2570,16 +2570,48 @@ class Game:
                     can, reason = self.world_state.can_enter_dungeon(loc_id)
                     print(f"[DEBUG] Can enter: {can}, reason: {reason}")
                     if can:
+                        # ── Fading entry warning (Act 2+) ──────────────────
+                        from core.story_flags import hearthstone_count, get_flag
+                        _hs = hearthstone_count()
+                        _act = get_flag("act", 1)
+                        _fading_dungeons = {
+                            # dungeons that are narratively deep in Fading territory
+                            "ruins_ashenmoor": 2, "sunken_crypt": 2,
+                            "dragons_tooth": 2,   "valdris_spire": 3,
+                            "pale_coast": 3,      "windswept_isle": 3,
+                            "shadow_throne": 3,
+                        }
+                        _fading_threshold = _fading_dungeons.get(dungeon_id, 0)
+                        if _fading_threshold and _act >= _fading_threshold:
+                            # Show a brief red-tinted Fading warning in the event strip
+                            _intensity = min(3, _hs)
+                            _warnings = [
+                                "A faint grey veil hangs over the entrance. The air tastes wrong.",
+                                "Shadow energy seeps from the entrance. Your senses feel dulled.",
+                                "The Fading is strong here. Enemies will be more aggressive.",
+                            ]
+                            _w = _warnings[_intensity - 1] if _intensity >= 1 else None
+                            if _w:
+                                self.world_map_ui._show_event(
+                                    f"⚠ Fading Zone — {_w}", (180, 80, 80))
+                            # Store fading intensity on the dungeon session for encounter modifier
+                            self._pending_fading_level = _intensity
+                        else:
+                            self._pending_fading_level = 0
+                        # ── End Fading warning ─────────────────────────────
                         # Use cached dungeon if revisiting, otherwise create new
                         if dungeon_id in self.dungeon_cache:
                             self.dungeon_state = self.dungeon_cache[dungeon_id]
                             self.dungeon_state.party = self.party  # update party ref
+                            # Update fading level in case story has progressed since last visit
+                            self.dungeon_state.fading_level = getattr(self, "_pending_fading_level", 0)
                             # Reset to entrance of floor 1
                             floor = self.dungeon_state.floors[1]
                             self.dungeon_state.party_x, self.dungeon_state.party_y = floor["entrance"]
                             self.dungeon_state.current_floor = 1
                         else:
-                            self.dungeon_state = DungeonState(dungeon_id, self.party)
+                            self.dungeon_state = DungeonState(dungeon_id, self.party,
+                                                                fading_level=getattr(self, "_pending_fading_level", 0))
                             self.dungeon_cache[dungeon_id] = self.dungeon_state
                         self.dungeon_ui = DungeonUI(self.dungeon_state)
                         self.pre_dungeon_state = S_WORLD_MAP

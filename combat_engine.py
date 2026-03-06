@@ -64,6 +64,14 @@ def make_player_combatant(character, row=FRONT):
     actual_max = get_all_resources(character.class_name, stats, character.level)
     max_hp = actual_max.get("HP", character.resources["HP"])
 
+    # Planar tier: HP bonus and stat bonuses
+    from core.progression import get_tier_max_hp_mult, get_tier_damage_mult, apply_tier_stat_bonus
+    tier_idx = getattr(character, "planar_tier", 0)
+    max_hp = int(max_hp * get_tier_max_hp_mult(tier_idx))
+    actual_max["HP"] = max_hp
+    if tier_idx > 0:
+        stats = apply_tier_stat_bonus(character, tier_idx)
+
     return {
         "type": "player",
         "uid": id(character),
@@ -71,6 +79,7 @@ def make_player_combatant(character, row=FRONT):
         "class_name": character.class_name,
         "race_name": getattr(character, "race_name", "Human"),
         "level": character.level,
+        "planar_tier": tier_idx,
         "stats": stats,
         "hp": character.resources["HP"],
         "max_hp": max_hp,
@@ -330,10 +339,16 @@ def calc_physical_damage(attacker, defender, weapon, position_dmg_mod=1.0,
     Raw Damage  = Stat Damage + Weapon Base + Enhancement + Ability Bonus
     Final       = (Raw × Position × Variance × PhysTypeMod) - Defense
     """
-    # Stat damage from weapon scaling
+    # Stat damage from weapon scaling.
+    # Uses (stat - 5) * weight so stats modify from a neutral baseline.
+    # A stat of 5 contributes 0; higher stats add, lower stats subtract.
+    # This keeps weapon base damage as the primary damage source (~75-85%).
+    STAT_BASELINE = 5
     stat_damage = 0
     for stat_key, weight in weapon.get("damage_stat", {}).items():
-        stat_damage += attacker["stats"].get(stat_key, 0) * weight
+        stat_val = attacker["stats"].get(stat_key, STAT_BASELINE)
+        stat_damage += (stat_val - STAT_BASELINE) * weight
+    stat_damage = max(stat_damage, -3)   # floor: very low stats cap penalty at -3
 
     # Raw damage
     weapon_base = weapon.get("damage", 0)
@@ -408,6 +423,11 @@ def calc_physical_damage(attacker, defender, weapon, position_dmg_mod=1.0,
         elem_resist = defender.get("resistances", {}).get(enchant_elem, NEUTRAL)
         enchant_dmg = enchant_bonus * elem_resist
         final += enchant_dmg
+
+    # Planar tier damage bonus (players only)
+    if attacker.get("type") == "player":
+        from core.progression import get_tier_damage_mult
+        final *= get_tier_damage_mult(attacker.get("planar_tier", 0))
 
     return max(MINIMUM_DAMAGE, int(final))
 
@@ -2401,6 +2421,92 @@ class CombatState:
 
         return {"messages": msgs}
 
+def _check_boss_phase(enemy, battle):
+    """Check if a boss enemy has crossed a phase threshold this turn.
+    Modifies enemy in-place and returns a result dict with messages, or None."""
+    from data.enemies import BOSS_PHASES
+    enemy_name = enemy.get("name", "")
+    phases = BOSS_PHASES.get(enemy_name)
+    if not phases:
+        return None
+
+    hp_pct = enemy["hp"] / max(1, enemy.get("max_hp", enemy["hp"]))
+    triggered_phases = enemy.setdefault("_triggered_phases", set())
+
+    for i, phase in enumerate(phases):
+        threshold = phase["threshold"]
+        phase_key = f"phase_{i}"
+        if hp_pct <= threshold and phase_key not in triggered_phases:
+            triggered_phases.add(phase_key)
+            messages = []
+
+            # Dramatic announcement
+            announce = phase.get("announce", "")
+            if announce:
+                messages.append(f"[PHASE] {announce}")
+
+            # Damage multiplier
+            dmg_mult = phase.get("dmg_mult", 1.0)
+            if dmg_mult != 1.0:
+                enemy["attack_damage"] = int(enemy.get("attack_damage", 20) * dmg_mult)
+
+            # New abilities added to pool
+            for ab in phase.get("new_abilities", []):
+                existing = enemy.setdefault("abilities", [])
+                # Only add if not already present (by name)
+                names = {a["name"] if isinstance(a, dict) else a for a in existing}
+                if ab["name"] not in names:
+                    existing.append(ab)
+
+            # New status immunities
+            for imm in phase.get("status_immunity", []):
+                imms = enemy.setdefault("status_immunities", [])
+                if imm not in imms:
+                    imms.append(imm)
+
+            # Optional heal on phase transition
+            heal_pct = phase.get("heal_pct", 0)
+            if heal_pct > 0:
+                heal_amt = int(enemy.get("max_hp", enemy["hp"]) * heal_pct)
+                enemy["hp"] = min(enemy.get("max_hp", enemy["hp"]), enemy["hp"] + heal_amt)
+                messages.append(f"{enemy['name']} surges — restores {heal_amt} HP!")
+
+            # Post-announce (shown after heal/buff text)
+            post = phase.get("announce_post", "")
+            if post:
+                messages.append(f"[PHASE] {post}")
+
+            # Check for transform signal (handled by caller)
+            transform = phase.get("transform")
+
+            return {"messages": messages, "transform": transform}
+
+    return None
+
+
+def _apply_boss_transform(enemy, transform_name, battle):
+    """Swap a boss enemy for its transformed form in the battle's enemy list."""
+    from data.enemies import ENEMY_STATS
+    new_stats = ENEMY_STATS.get(transform_name)
+    if not new_stats:
+        return  # unknown transform target — silently skip
+
+    # Carry over current HP percentage
+    hp_pct = enemy["hp"] / max(1, enemy.get("max_hp", enemy["hp"]))
+
+    # Update fields in-place so references remain valid
+    enemy["name"] = new_stats["name"]
+    enemy["max_hp"] = new_stats["hp"]
+    enemy["hp"] = max(1, int(new_stats["hp"] * hp_pct))
+    enemy["attack_damage"] = new_stats.get("attack_damage", enemy["attack_damage"])
+    enemy["defense"] = new_stats.get("defense", enemy["defense"])
+    enemy["magic_resist"] = new_stats.get("magic_resist", enemy["magic_resist"])
+    enemy["resistances"] = new_stats.get("resistances", enemy.get("resistances", {}))
+    enemy["status_immunities"] = new_stats.get("status_immunities", [])
+    enemy["abilities"] = list(new_stats.get("abilities", []))
+    enemy["_triggered_phases"] = set()  # reset so transform's own phases can fire
+
+
     def execute_enemy_turn(self):
         """Let the current enemy take its AI-controlled action."""
         actor = self.get_current_combatant()
@@ -2413,6 +2519,19 @@ class CombatState:
                 self.log(f"{actor['name']} is {status['name']} and cannot act!")
                 self.advance_turn()
                 return {}
+
+        # ── Boss phase check ──────────────────────────────────────
+        phase_result = _check_boss_phase(actor, self)
+        if phase_result:
+            # Phase transition happened this turn — return the announcement
+            # so the UI can display it; the enemy still acts afterward
+            for msg in phase_result.get("messages", []):
+                self.log(msg)
+            # If the phase triggers a full transform, swap the enemy out
+            if phase_result.get("transform"):
+                _apply_boss_transform(actor, phase_result["transform"], self)
+                # Re-fetch actor after transform
+                actor = self.get_current_combatant()
 
         action, target, ability = enemy_choose_action(actor, self.players, self.enemies)
         result = {}  # will be overwritten by attack branch

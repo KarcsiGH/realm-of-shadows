@@ -893,7 +893,7 @@ def _make_treasure_event(floor_num, rng, total_floors=5):
 class DungeonState:
     """Manages dungeon exploration state."""
 
-    def __init__(self, dungeon_id, party):
+    def __init__(self, dungeon_id, party, fading_level=0):
         self.dungeon_id = dungeon_id
         self.party = party
         self.definition = DUNGEONS[dungeon_id]
@@ -901,6 +901,7 @@ class DungeonState:
         self.total_floors = self.definition["floors"]
         self.theme = self.definition["theme"]
         self.encounter_rate = self.definition["encounter_rate"]
+        self.fading_level = fading_level   # 0-3; raises encounter difficulty in Fading zones
 
         self.current_floor = 1
         self.floors = {}
@@ -1066,17 +1067,17 @@ class DungeonState:
             if enemy["state"] == "dead":
                 continue
 
+            ex, ey = enemy["x"], enemy["y"]
+            edist  = math.sqrt((ex - px) ** 2 + (ey - py) ** 2)
+
+            # Contact check BEFORE cooldown — player walking onto enemy must trigger combat
+            if abs(ex - px) <= 1 and abs(ey - py) <= 1 and edist <= 1.5:
+                return enemy
+
             # Cooldown
             if enemy["move_cooldown"] > 0:
                 enemy["move_cooldown"] -= 1
                 continue
-
-            ex, ey = enemy["x"], enemy["y"]
-            edist  = math.sqrt((ex - px) ** 2 + (ey - py) ** 2)
-
-            # Adjacent: trigger combat
-            if abs(ex - px) <= 1 and abs(ey - py) <= 1 and edist <= 1.5:
-                return enemy
 
             # LOS check — walls and closed doors block enemy sight
             can_see = (
@@ -1129,6 +1130,9 @@ class DungeonState:
                 if mdx == 0 and mdy == 0:
                     continue
                 nx, ny = ex + mdx, ey + mdy
+                # If the target tile is the party's tile, that's contact — trigger combat
+                if nx == px and ny == py:
+                    return enemy
                 if (0 <= nx < fw and 0 <= ny < fh
                         and tiles[ny][nx]["type"] in passable
                         and (nx, ny) not in occupied):
@@ -1235,6 +1239,22 @@ class DungeonState:
         # Secret doors block movement until found
         if tile["type"] == DT_SECRET_DOOR and not tile.get("secret_found"):
             return None
+
+        # Block movement if an enemy occupies the target tile — trigger encounter instead
+        for _e in floor.get("enemies", []):
+            if _e.get("state") == "dead":
+                continue
+            if _e["x"] == nx and _e["y"] == ny:
+                # Don't move; start combat with this enemy immediately
+                enc_event = {
+                    "type": "random_encounter",
+                    "dungeon_id": self.dungeon_id,
+                    "floor": self.current_floor,
+                    "total_floors": self.total_floors,
+                    "is_boss": False,
+                    "_enc_key": _e.get("enc_key"),
+                }
+                return enc_event
 
         self.party_x = nx
         self.party_y = ny
@@ -1366,7 +1386,8 @@ class DungeonState:
         return False
 
     def get_encounter_key(self):
-        """Get random encounter key for current floor."""
+        """Get random encounter key for current floor.
+        When fading_level > 0, bias toward harder encounters on higher floors."""
         from data.enemies import DUNGEON_ENCOUNTER_TABLES
         table = DUNGEON_ENCOUNTER_TABLES.get(self.dungeon_id)
         if table:
@@ -1375,6 +1396,10 @@ class DungeonState:
             keys = table.get(self.current_floor, table.get(1, ["tutorial"]))
             if isinstance(keys, str):
                 return keys
+            # Fading bias: with fading_level >= 2, skip the first (easiest) entry
+            # roughly 50% of the time so encounters skew harder
+            if self.fading_level >= 2 and len(keys) > 1 and random.random() < 0.5:
+                keys = keys[1:]   # drop the easiest option
             return random.choice(keys)
         # Fallback to old embedded table
         table = self.definition["encounter_table"]
