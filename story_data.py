@@ -2310,6 +2310,8 @@ NPC_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "oran_default",
+                "loop": True,
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Tide Priest Oran",
@@ -2496,6 +2498,8 @@ NPC_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "aldara_default",
+                "loop": True,
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "High Priest Aldara",
@@ -2775,6 +2779,8 @@ NPC_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "solen_default",
+                "loop": True,
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Archmage Solen",
@@ -3000,6 +3006,8 @@ NPC_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "varek_default",
+                "loop": True,
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Commander Varek",
@@ -3245,6 +3253,8 @@ NPC_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "sira_default",
+                "loop": True,
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Court Mage Sira",
@@ -4611,6 +4621,7 @@ _NEW_DIALOGUES = {
             ],
             "tree": {
                 "id": "aldric_patrol_turnin",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Captain Aldric",
@@ -4658,6 +4669,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
             "tree": {
                 "id": "aldric_post_mine",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Captain Aldric",
@@ -4684,6 +4696,8 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "aldric_default",
+                "loop": True,
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Captain Aldric",
@@ -4727,6 +4741,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "lore.fading_basics", "op": "==", "value": True}],
             "tree": {
                 "id": "elder_thom_knows",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Elder Thom",
@@ -4753,6 +4768,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "elder_thom_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Elder Thom",
@@ -4785,6 +4801,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "quest.main_spiders_nest.state", "op": ">", "value": 0}],
             "tree": {
                 "id": "lyric_spider_quest",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Ranger Lyric",
@@ -4811,6 +4828,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "lyric_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Ranger Lyric",
@@ -4841,6 +4859,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "old_moss_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Old Moss",
@@ -4915,6 +4934,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "oren_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Guildmaster Oren",
@@ -4954,6 +4974,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
             "tree": {
                 "id": "brak_post_mine",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Foreman Brak",
@@ -4985,6 +5006,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "brak_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Foreman Brak",
@@ -5021,6 +5043,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "petra_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Scholar Petra",
@@ -5069,6 +5092,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "durk_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Miner Durk",
@@ -5093,6 +5117,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "tova_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Apprentice Tova",
@@ -5124,6 +5149,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "quest.main_spiders_nest.state", "op": ">", "value": 0}],
             "tree": {
                 "id": "feryn_spider",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Scout Feryn",
@@ -5150,6 +5176,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "feryn_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Scout Feryn",
@@ -5185,6 +5212,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "holt_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Trapper Holt",
@@ -5216,6 +5244,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "shady_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Shady Figure",
@@ -5264,6 +5293,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "item.hearthstone.2", "op": "==", "value": True}],
             "tree": {
                 "id": "oran_hs3",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Tide Priest Oran",
@@ -5290,7 +5320,8 @@ _NEW_DIALOGUES = {
         {
             "conditions": [],
             "tree": {
-                "id": "oran_default",             "nodes": {
+                "id": "oran_default",
+                "loop": True,             "nodes": {
                     "start": {
                         "speaker": "Tide Priest Oran",
                         "text": "The tides have been wrong for months. Coming in at the wrong hour. Going out too fast. The sea knows something is out of balance — she always does, long before the land catches on.",
@@ -5346,6 +5377,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "pilgrim_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Pilgrim Elder",
@@ -5380,6 +5412,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "knight_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Holy Knight",
@@ -5404,6 +5437,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "novice_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Novice Priest",
@@ -5433,6 +5467,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "lore.fading_basics", "op": "==", "value": True}],
             "tree": {
                 "id": "aldara_knows",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "High Priest Aldara",
@@ -5460,6 +5495,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "aldara_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "High Priest Aldara",
@@ -5496,6 +5532,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "app_mage_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Apprentice Mage",
@@ -5530,6 +5567,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "scholar_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Crystal Scholar",
@@ -5570,6 +5608,7 @@ _NEW_DIALOGUES = {
             ],
             "tree": {
                 "id": "solen_research_done",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Archmage Solen",
@@ -5592,6 +5631,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "main_hearthstone_1.found", "op": "==", "value": True}],
             "tree": {
                 "id": "solen_knows",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Archmage Solen",
@@ -5623,6 +5663,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "solen_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Archmage Solen",
@@ -5675,6 +5716,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "npc.solen.met", "op": "==", "value": True}],
             "tree": {
                 "id": "teleport_ready",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Teleport Master",
@@ -5708,6 +5750,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "teleport_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Teleport Master",
@@ -5734,6 +5777,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "guard_thornhaven",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "City Guard",
@@ -5758,6 +5802,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "crier_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Imperial Crier",
@@ -5782,6 +5827,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "noble_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Merchant Noble",
@@ -5811,6 +5857,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "refugee_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Refugee",
@@ -5845,6 +5892,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
             "tree": {
                 "id": "aldric_post_valdris",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Governor Aldric",
@@ -5871,6 +5919,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "aldric_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Governor Aldric",
@@ -5912,6 +5961,7 @@ _NEW_DIALOGUES = {
             ],
             "tree": {
                 "id": "varek_act3_stones",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Guild Commander Varek",
@@ -5947,6 +5997,7 @@ _NEW_DIALOGUES = {
             ],
             "tree": {
                 "id": "varek_send_north",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Guild Commander Varek",
@@ -5969,6 +6020,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "varek_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Guild Commander Varek",
@@ -6010,6 +6062,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "sira_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Court Mage Sira",
