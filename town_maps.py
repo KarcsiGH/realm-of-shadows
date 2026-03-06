@@ -670,7 +670,7 @@ GREENWOOD_NPCS = [
     },
     {
         "name": "Old Moss",
-        "x": 5, "y": 3,        # near the treeline, north-west
+        "x": 4, "y": 3,        # near the treeline, north-west open ground
         "dialogue_id": "old_moss",
         "description": "An ancient figure draped in moss and bark, watching the trees with patient eyes.",
         "color": (60, 110, 50),

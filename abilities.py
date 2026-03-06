@@ -413,6 +413,99 @@ ENEMY_ABILITIES = {
         "effect": {"morale_break": True, "duration": 2},
         "cost": 0, "resource": "", "desc": "Sorrow radiates outward, reducing party attack by 20% for 2 turns",
     },
+
+    # ── Korrath (Mine Boss) ───────────────────────────────────────
+    "Stone Slam": {
+        "name": "Stone Slam", "type": "attack", "power": 2.2,
+        "stun_chance": 0.25, "phys_type": "blunt",
+        "cost": 0, "resource": "", "desc": "A crushing two-handed blow that may stun",
+    },
+    "Ward Pulse": {
+        "name": "Ward Pulse", "type": "aoe", "power": 0.7, "element": "divine",
+        "cost": 0, "resource": "", "desc": "A burst of warden energy hits all enemies",
+    },
+
+    # ── Commander Ashvar (Ashenmoor Boss) ─────────────────────────
+    "Ashen Wave": {
+        "name": "Ashen Wave", "type": "aoe", "power": 0.9, "element": "fire",
+        "cost": 0, "resource": "", "desc": "A wave of superheated ash engulfs the party",
+    },
+    "Shadow Bind": {
+        "name": "Shadow Bind", "type": "debuff", "power": 0,
+        "apply_status": "Immobilized", "status_duration": 2, "status_chance": 0.55,
+        "cost": 0, "resource": "", "desc": "Shadow tendrils root a target in place",
+    },
+    "Commander's Wrath": {
+        "name": "Commander's Wrath", "type": "attack", "power": 2.5,
+        "phys_type": "slashing",
+        "cost": 0, "resource": "", "desc": "An overwhelming strike that bypasses some defense",
+    },
+
+    # ── Ash Revenant ──────────────────────────────────────────────
+    "Cinder Touch": {
+        "name": "Cinder Touch", "type": "attack", "power": 1.4, "element": "fire",
+        "apply_status": "Burning", "status_duration": 2, "status_chance": 0.45,
+        "cost": 0, "resource": "", "desc": "A burning strike that may ignite the target",
+    },
+
+    # ── Bandits / Mercenaries / Cultists / Crypt ──────────────────
+    "enemy_crippling_strike": {
+        "name": "Crippling Strike", "type": "attack", "power": 1.5,
+        "apply_status": "Slowed", "status_duration": 2, "status_chance": 0.50,
+        "cost": 0, "resource": "", "desc": "A precise strike that slows the target",
+    },
+    "enemy_fireball": {
+        "name": "Fireball", "type": "aoe", "power": 1.1, "element": "fire",
+        "cost": 0, "resource": "", "desc": "An explosive ball of fire hits all party members",
+    },
+    "enemy_war_cry": {
+        "name": "War Cry", "type": "buff", "buff": "war_cry",
+        "duration": 3, "targets": "all_allies",
+        "cost": 0, "resource": "", "desc": "Rally allies, boosting all attack damage",
+    },
+    "enemy_cleave": {
+        "name": "Cleave", "type": "aoe", "power": 0.85, "phys_type": "slashing",
+        "targets": "front_row",
+        "cost": 0, "resource": "", "desc": "A wide swing hitting all front-row targets",
+    },
+    "enemy_pinning_shot": {
+        "name": "Pinning Shot", "type": "attack", "power": 1.2, "element": "piercing",
+        "apply_status": "Slowed", "status_duration": 2, "status_chance": 0.60,
+        "cost": 0, "resource": "", "desc": "An arrow that pins the target, slowing movement",
+    },
+    "enemy_stunning_blow": {
+        "name": "Stunning Blow", "type": "attack", "power": 1.6,
+        "stun_chance": 0.35, "phys_type": "blunt",
+        "cost": 0, "resource": "", "desc": "A calculated strike aimed at stunning the target",
+    },
+    "enemy_minor_heal": {
+        "name": "Minor Heal", "type": "heal", "power": 30,
+        "targets": "lowest_hp_ally",
+        "cost": 0, "resource": "", "desc": "A quick healing prayer restoring moderate HP",
+    },
+    "enemy_smite": {
+        "name": "Smite", "type": "attack", "power": 1.7, "element": "divine",
+        "cost": 0, "resource": "", "desc": "A divinely-charged strike",
+    },
+    "enemy_arcane_slash": {
+        "name": "Arcane Slash", "type": "attack", "power": 1.5, "element": "arcane",
+        "cost": 0, "resource": "", "desc": "A blade strike channeling arcane energy",
+    },
+    "enemy_shadow_bolt": {
+        "name": "Shadow Bolt", "type": "spell", "power": 1.2, "element": "shadow",
+        "cost": 0, "resource": "", "desc": "A bolt of condensed shadow energy",
+    },
+    "enemy_weaken": {
+        "name": "Weaken", "type": "debuff", "power": 0,
+        "apply_status": "Weakened", "status_duration": 3, "status_chance": 0.65,
+        "cost": 0, "resource": "", "desc": "A hex that reduces the target's attack power",
+    },
+    "enemy_mass_weaken": {
+        "name": "Mass Weaken", "type": "aoe", "power": 0,
+        "apply_status": "Weakened", "status_duration": 2, "status_chance": 0.55,
+        "targets": "all_enemies",
+        "cost": 0, "resource": "", "desc": "A ritual curse weakening the entire party",
+    },
 }
 
 

@@ -1115,7 +1115,7 @@ BOSS_PHASES = {
     # Phase 1 (start): Normal chieftain. Can be reasoned with before fight.
     # Phase 2 (60% HP): Witnesses a warrior fall — crowd chants drive him.
     # Phase 3 (25% HP): Cornered animal. Rage overcomes him entirely.
-    "Goblin King": [
+    "Grak the Goblin King": [
         {
             "threshold": 0.60,
             "announce": "Grak ROARS as a warrior falls. The goblins drum their weapons "
