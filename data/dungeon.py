@@ -893,7 +893,7 @@ def _make_treasure_event(floor_num, rng, total_floors=5):
 class DungeonState:
     """Manages dungeon exploration state."""
 
-    def __init__(self, dungeon_id, party):
+    def __init__(self, dungeon_id, party, fading_level=0):
         self.dungeon_id = dungeon_id
         self.party = party
         self.definition = DUNGEONS[dungeon_id]
@@ -901,6 +901,7 @@ class DungeonState:
         self.total_floors = self.definition["floors"]
         self.theme = self.definition["theme"]
         self.encounter_rate = self.definition["encounter_rate"]
+        self.fading_level = fading_level   # 0-3; raises encounter difficulty in Fading zones
 
         self.current_floor = 1
         self.floors = {}
@@ -1385,7 +1386,8 @@ class DungeonState:
         return False
 
     def get_encounter_key(self):
-        """Get random encounter key for current floor."""
+        """Get random encounter key for current floor.
+        When fading_level > 0, bias toward harder encounters on higher floors."""
         from data.enemies import DUNGEON_ENCOUNTER_TABLES
         table = DUNGEON_ENCOUNTER_TABLES.get(self.dungeon_id)
         if table:
@@ -1394,6 +1396,10 @@ class DungeonState:
             keys = table.get(self.current_floor, table.get(1, ["tutorial"]))
             if isinstance(keys, str):
                 return keys
+            # Fading bias: with fading_level >= 2, skip the first (easiest) entry
+            # roughly 50% of the time so encounters skew harder
+            if self.fading_level >= 2 and len(keys) > 1 and random.random() < 0.5:
+                keys = keys[1:]   # drop the easiest option
             return random.choice(keys)
         # Fallback to old embedded table
         table = self.definition["encounter_table"]
