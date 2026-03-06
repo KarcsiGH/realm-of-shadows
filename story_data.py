@@ -3414,6 +3414,9 @@ NPC_DIALOGUES = {
                             {"text": "We need what you're protecting. Stand aside.",   "next": "fight_direct"},
                             {"text": "We know what you are. What you were.",           "next": "lore_path",
                              "condition": {"flag": "lore.dragon_karreth", "op": "==", "value": True}},
+                            {"text": "Karreth-sol-Amendar. Guardian whose fire remembers warmth.",
+                             "next": "true_name_path",
+                             "condition": {"flag": "lore.karreth_true_name", "op": "==", "value": True}},
                             {"text": "We're not here to fight you.",                   "next": "plea"},
                         ],
                     },
@@ -3472,6 +3475,48 @@ NPC_DIALOGUES = {
                                 "Then it charges.",
                         "on_enter": [
                             {"action": "set_flag", "flag": "lore.karreth_freed", "value": True},
+                        ],
+                        "end": True,
+                    },
+                    "true_name_path": {
+                        "speaker": "Karreth",
+                        "text": "The grey-green eye goes dark.\n"
+                                "The silence that follows is so total the volcanic vents seem to hold their breath.\n"
+                                "Then, slowly, both eyes open — and for the first time, both are the same colour: "
+                                "deep amber, old and clear.\n"
+                                "The voice that comes out is different. Lower. Older. Without the corruption's echo.\n"
+                                "You found it. The name.\n"
+                                "I... had forgotten it. What I was called when I chose this.\n"
+                                "Before the Fading found me.",
+                        "choices": [
+                            {"text": "You can rest now. We'll carry the stone.", "next": "peaceful_release"},
+                            {"text": "Do you remember who asked you to guard it?",  "next": "memory"},
+                        ],
+                    },
+                    "memory": {
+                        "speaker": "Karreth",
+                        "text": "A woman. Old. She smelled of cold stone and burned sage.\n"
+                                "She said: the world will break. When it does, keep the light warm until "
+                                "someone comes to carry it again.\n"
+                                "I asked how I would know the right someone.\n"
+                                "She said: they will know your name.\n"
+                                "The amber eyes hold yours for a long moment.\n"
+                                "She was right.",
+                        "next": "peaceful_release",
+                    },
+                    "peaceful_release": {
+                        "speaker": "Karreth",
+                        "text": "Take it. It was always meant to move on.\n"
+                                "I was only ever meant to be the bridge between its last keeper and its next.\n"
+                                "The vast body lowers, slowly, until the Hearthstone is within reach. "
+                                "Karreth does not move as you take it. The amber light in both eyes "
+                                "dims — not like death, but like a lantern being set down after a long walk.\n"
+                                "You have the stone. And something else — a single scale, shed willingly, "
+                                "still warm.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "choice.karreth_spared",  "value": True},
+                            {"action": "set_flag", "flag": "boss.karreth.defeated",  "value": True},
+                            {"action": "set_flag", "flag": "lore.karreth_freed",     "value": True},
                         ],
                         "end": True,
                     },
@@ -4250,6 +4295,25 @@ DUNGEON_STORY_EVENTS = {
                         "It does not know what it has become. "
                         "It only knows it must protect the warm thing at its center.'",
                 "lore_id": "dragon_karreth",
+            },
+            {
+                "floor": 2,
+                "title": "Warden Field Notes — Expedition 7",
+                "text": "Scrawled in the margin of an official expedition report, in a "
+                        "different hand from the main text: "
+                        "'The old texts call it by a different name — not Karreth, which "
+                        "is just what the sailors called the island. "
+                        "The binding inscription in the vault below gives its true name: "
+                        "Karreth-sol-Amendar. "
+                        "In Old Draconic: the guardian whose fire remembers warmth. "
+                        "The ward scholars believed that speaking a bound guardian's true name "
+                        "in the old tongue could reach the creature beneath the corruption — "
+                        "not override its oath, but remind it who it was before. "
+                        "This was never tested. The order collapsed before we could return. "
+                        "If someone finds this: the name is the key. Speak it clearly. "
+                        "Do not flinch.'",
+                "lore_id": "karreth_true_name",
+                "on_find": [{"action": "set_flag", "flag": "lore.karreth_true_name", "value": True}],
             },
             {
                 "floor": 3,
@@ -6266,3 +6330,260 @@ _NEW_DIALOGUES = {
 
 # Merge into main NPC_DIALOGUES
 NPC_DIALOGUES.update(_NEW_DIALOGUES)
+
+
+# ══════════════════════════════════════════════════════════════
+#  POST-BOSS DIALOGUES
+#  These fire after the boss combat victory, before loot screen.
+#  Two variants per boss: "fight" (killed) and "peaceful" (spared).
+#  Only bosses with something worth saying get entries.
+# ══════════════════════════════════════════════════════════════
+
+BOSS_POST_DIALOGUES = {
+
+    "goblin_warren": {
+        "fight": {
+            "id": "grak_aftermath",
+            "speaker": "",
+            "lines": [
+                "Grak falls. The goblins do not rush you. They stand in silence, "
+                "watching their king die with the quiet resignation of people "
+                "who have lost everything before and know exactly what losing looks like.",
+                "In his clenched fist: the Hearthstone Fragment.\n"
+                "It comes free easily. As if it was always meant to.",
+                "Behind you, someone — one of the younger goblins — begins to keen. "
+                "Low, rhythmic, grief-shaped.",
+                "You leave with the stone.\nThe crying follows you up the tunnel for a long time.",
+            ],
+        },
+    },
+
+    "spiders_nest": {
+        "fight": {
+            "id": "spider_queen_aftermath",
+            "speaker": "",
+            "lines": [
+                "The Spider Queen collapses inward — not quite like a creature dying, "
+                "but like a knot being untied. The iridescent shimmer bleeds out of "
+                "the webs around her.",
+                "The light that was wrong about this place — the colours that shifted "
+                "between frames — fades. The Fading energy that mutated the nest "
+                "dissipates slowly, like mist burning off in morning sun.",
+                "The remaining spiders scatter. They are small, natural, confused. "
+                "Without the Queen's fading-warped will driving them, they are just "
+                "animals again. They want nothing from you.",
+                "Whatever the Fading made her into, it is over.\nThe nest goes quiet.",
+            ],
+        },
+    },
+
+    "abandoned_mine": {
+        "fight": {
+            "id": "korrath_aftermath",
+            "speaker": "Korrath the Stone Warden",
+            "lines": [
+                "Korrath falls to one knee. The stone form cracks — not breaking, "
+                "but releasing. Like a fist finally unclenching after four hundred years.",
+                "\"You are... as strong as I hoped.\"\nHe looks down at his hands "
+                "as the stone crumbles away from them, revealing something underneath. "
+                "Not flesh. Just the shape of a man, briefly, in the dark.",
+                "\"The stone is yours. The oath is... satisfied.\"\nHis voice is "
+                "already fading. Not death — something more like relief.\n"
+                "\"Tell them I held it. To the end.\"",
+                "He dissolves.\nNot violently. Not painfully.\n"
+                "The way a watch-fire goes out when morning comes and it is no longer needed.",
+                "The Hearthstone Fragment glows warmly in the chamber where it has "
+                "rested for four centuries.\nKorrath is gone. His duty is not.",
+            ],
+        },
+    },
+
+    "ruins_ashenmoor": {
+        "fight": {
+            "id": "ashvar_aftermath",
+            "speaker": "Commander Ashvar",
+            "lines": [
+                "Ashvar staggers. The ash that formed him scatters, briefly, "
+                "then coheres again — but weaker. He looks at his own hands "
+                "as if he can't remember how long they've been made of smoke and sorrow.",
+                "\"You fight like Wardens.\"\nA pause.\n\"That is not an insult. "
+                "That is the only compliment I know how to give.\"",
+                "\"Valdris... what he did here. It must not be forgotten. "
+                "There are records in the lower vault. Sealed. "
+                "I have been keeping them. In case someone came who could act on them.\"\n"
+                "\"You can act on them. I could not.\"",
+                "He doesn't fall so much as disperse — the ash releasing upward, "
+                "slowly, like incense. The long-held tension of two hundred years "
+                "going out of the room.",
+                "He is gone.\nThe ruins feel, for the first time, like ruins — "
+                "sad and old, instead of angry.",
+            ],
+        },
+    },
+
+    "dragons_tooth": {
+        "fight": {
+            "id": "karreth_aftermath_fight",
+            "speaker": "",
+            "lines": [
+                "Karreth falls.\nThe grey-green eye goes dark first, then the amber. "
+                "The enormous body settles into the volcanic rock as if the island "
+                "itself is accepting it back.",
+                "The Hearthstone Fragment pulses once — as if acknowledging the passing "
+                "of its oldest guardian — and then rests.",
+                "You take the stone. It is warm in a way that has nothing to do with "
+                "the volcano beneath you.",
+                "On the way out, you pass the carvings on the hoard room doorframe — "
+                "the scratched note about a figure curled around a glowing light. "
+                "Like it remembered what warm meant.",
+                "You understand that better now.",
+            ],
+        },
+        "peaceful": {
+            "id": "karreth_aftermath_peaceful",
+            "speaker": "",
+            "lines": [
+                "Karreth does not move as you carry the stone out of the chamber. "
+                "The amber light in both enormous eyes watches you go — calm, clear, "
+                "no longer fractured by grey-green.",
+                "At the tunnel entrance, you look back.\n"
+                "Karreth has lowered its head to the volcanic floor. "
+                "Eyes still open. Still watching.",
+                "It does not follow you.\nIt does not need to.\nIts purpose is finished.",
+                "The island feels different on the way out. "
+                "The sulfur smell is still there. The black glass is still underfoot. "
+                "But the weight that sat over the caldera — the wrong-feeling pressure "
+                "that had been building since you arrived — is gone.",
+                "You also carry a single dragon scale, shed freely. "
+                "It is still warm.\nIt will not stop being warm for a very long time.",
+            ],
+        },
+    },
+
+    "sunken_crypt": {
+        "fight": {
+            "id": "sunken_warden_aftermath",
+            "speaker": "The Sunken Warden",
+            "lines": [
+                "The Sunken Warden dissolves into the water that fills the lower chamber — "
+                "not destroyed, but released. The binding that held Deren here for two "
+                "centuries finally unravels.",
+                "As he goes, something like a voice comes from everywhere and nowhere:\n"
+                "\"Thank you.\"\nTwo words. Very quietly.",
+                "\"Tell the order — if there is still an order — that the stone was "
+                "protected. That Deren held.\"\n"
+                "\"That someone finally came.\"",
+                "The water stills.\nThe crypt is just a crypt now.\n"
+                "And the Hearthstone Fragment floats, gently, to the surface.",
+            ],
+        },
+    },
+
+    "pale_coast": {
+        "fight": {
+            "id": "sentinel_aftermath_fight",
+            "speaker": "The Pale Sentinel",
+            "lines": [
+                "The Sentinel goes down slowly — not like defeat, but like a vigil ending. "
+                "She never stops facing you, never turns away. Even in falling, she is "
+                "exactly what she was: present, resolved, done.",
+                "\"I... did not expect you to be worthy.\"\nHer voice is already "
+                "fading at the edges. \"I expected to hold forever. "
+                "The order never said anyone would come.\"",
+                "\"The stone is yours.\"\nA pause. Something shifts in her face. "
+                "\"I am... glad. That this ended.\"",
+                "The armor stays. The woman inside it goes somewhere quieter.",
+            ],
+        },
+        "peaceful": {
+            "id": "sentinel_aftermath_peaceful",
+            "speaker": "",
+            "lines": [
+                "Warden Sirenne of the Pale Coast steps back from the Hearthstone "
+                "pedestal and does not look back at it. After forty-three years, "
+                "she faces outward for the first time.",
+                "She walks to the cave entrance with you.\nAt the threshold, "
+                "she stops. Looks at the sea. The real sea, not the stone ceiling "
+                "above the catacombs.",
+                "She stands there for a long time.",
+                "You don't ask what she's going to do next. It doesn't feel like "
+                "the right question. People who have been the lock for four decades "
+                "need to find out for themselves what they are when the door is gone.",
+                "She lets you leave first.\nWhen you look back from the path, "
+                "she is still standing at the entrance, face turned toward the horizon, "
+                "hands open at her sides.",
+            ],
+        },
+    },
+
+    "windswept_isle": {
+        "fight": {
+            "id": "isle_keeper_aftermath",
+            "speaker": "",
+            "lines": [
+                "The Keeper disperses. Not like a defeat — more like a door opening "
+                "and the wind finally passing through. The storm inside the ruins "
+                "quiets. The arcane instruments on the walls go still.",
+                "On the pedestal where the Hearthstone rests, you find something "
+                "the Keeper left behind — placed deliberately, not dropped. "
+                "A seal with no name on it.",
+                "It chose not to be remembered by name. But it left this. "
+                "Perhaps that was the only kind of name it wanted.",
+                "The fifth stone.\nAll of them, now, in your hands.\n"
+                "The weight of what you're carrying has not changed. "
+                "But the shape of it has.",
+            ],
+        },
+    },
+}
+
+
+# ══════════════════════════════════════════════════════════════
+#  PEACEFUL RESOLUTION DEFINITIONS
+#  Specifies what flags signal a peaceful outcome and what the
+#  party receives in lieu of fighting the boss.
+#  hearthstone_num: int or None (which hearthstone to collect)
+#  bonus_loot: list of unique_keys from UNIQUE_ITEMS to grant
+# ══════════════════════════════════════════════════════════════
+
+BOSS_PEACEFUL_RESOLUTIONS = {
+    "goblin_warren": {
+        "flag":          "choice.grak_spared",
+        "hearthstone":   1,
+        "hearthstone_name": "Hearthstone Fragment (Warren)",
+        "bonus_loot":    [],           # Grak has no unique equip worth granting on peace
+        "boss_npc":      "grak",
+        "world_key":     "thornwood_map",
+    },
+    "dragons_tooth": {
+        "flag":          "choice.karreth_spared",
+        "hearthstone":   3,
+        "hearthstone_name": "Hearthstone Fragment (Dragon's Tooth)",
+        "bonus_loot":    ["karreth_scale"],
+        "boss_npc":      "karreth",
+        "world_key":     "dragon_scale",
+    },
+    "pale_coast": {
+        "flag":          "sentinel.yielded",
+        "hearthstone":   4,
+        "hearthstone_name": "Hearthstone Fragment (Pale Coast)",
+        "bonus_loot":    ["sirenne_buckler"],
+        "boss_npc":      "pale_sentinel",
+        "world_key":     "pale_coast_cleared",
+    },
+}
+
+
+def get_boss_post_dialogue(dungeon_id, peaceful=False):
+    """Return post-boss dialogue dict for a dungeon, or None if none defined."""
+    entry = BOSS_POST_DIALOGUES.get(dungeon_id)
+    if not entry:
+        return None
+    if peaceful and "peaceful" in entry:
+        return entry["peaceful"]
+    return entry.get("fight")
+
+
+def get_peaceful_resolution(dungeon_id):
+    """Return peaceful resolution spec for a dungeon, or None."""
+    return BOSS_PEACEFUL_RESOLUTIONS.get(dungeon_id)

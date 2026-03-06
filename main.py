@@ -1965,6 +1965,118 @@ class Game:
         if self.dialogue_ui:
             self.dialogue_ui.draw(self.screen, mx, my)
 
+    # ──────────────────────────────────────────────────────────
+    #  PEACEFUL RESOLUTION  (boss spared / yielded without combat)
+    # ──────────────────────────────────────────────────────────
+
+    def _handle_peaceful_resolution(self, dungeon_id, res):
+        """Grant hearthstone + bonus items for a peaceful boss outcome, then
+        run the post-boss flavour dialogue and return to the dungeon."""
+        from core.story_flags import collect_hearthstone, set_flag, defeat_boss, auto_advance_quests
+        from data.magic_items import get_unique_item, get_boss_bonus_drops
+        import random
+
+        # 1. Grant hearthstone
+        hs_num = res.get("hearthstone")
+        if hs_num:
+            hs_item = {
+                "name":        res.get("hearthstone_name", f"Hearthstone Fragment ({dungeon_id})"),
+                "type":        "quest_item",
+                "description": "A warm, faintly glowing stone fragment. "
+                               "Part of the Hearthstone of Aldenmere.",
+                "identified":  True,
+                "quest_item":  True,
+                "rarity":      "legendary",
+            }
+            self.party[0].add_item(hs_item)
+            collect_hearthstone(hs_num)
+            set_flag(f"hearthstone.{dungeon_id}", True)
+
+        # 2. Grant guaranteed unique bonus items
+        granted_items = []
+        rng = random.Random()
+        for ukey in res.get("bonus_loot", []):
+            item = get_unique_item(ukey, self.party)
+            if item:
+                self.party[0].add_item(item)
+                granted_items.append(item["name"])
+
+        # 3. Set story flags
+        set_flag(f"boss_defeated.{dungeon_id}", True)
+        boss_npc = res.get("boss_npc")
+        if boss_npc:
+            defeat_boss(boss_npc)
+
+        # 4. Unlock next dungeon key
+        world_key = res.get("world_key")
+        if world_key and self.world_state and not self.world_state.has_key(world_key):
+            self.world_state.add_key(world_key)
+            from data.world_map import LOCATIONS
+            for lid, loc in LOCATIONS.items():
+                if loc.get("required_key") == world_key:
+                    loc["visible"] = True
+                    self.world_state.discovered_locations.add(lid)
+
+        # 5. Advance quests
+        auto_advance_quests(self.party)
+
+        # 6. Show brief item-received notifications
+        if hs_num:
+            self.dungeon_ui.show_event("Received: Hearthstone Fragment!", GOLD)
+        for iname in granted_items:
+            self.dungeon_ui.show_event(f"Received: {iname}!", (180, 220, 255))
+
+        # 7. Run post-boss flavour dialogue (peaceful variant), then return to dungeon
+        self._show_post_boss_dialogue(dungeon_id, peaceful=True,
+                                      callback=lambda _: self.go_fade(S_DUNGEON))
+
+    # ──────────────────────────────────────────────────────────
+    #  POST-BOSS DIALOGUE  (cutscene after boss killed/spared)
+    # ──────────────────────────────────────────────────────────
+
+    def _show_post_boss_dialogue(self, dungeon_id, peaceful=False, callback=None):
+        """Show multi-line post-boss cutscene text using the dungeon event overlay,
+        then call callback (or return to dungeon) when done."""
+        from data.story_data import get_boss_post_dialogue
+        post = get_boss_post_dialogue(dungeon_id, peaceful=peaceful)
+        if not post:
+            if callback:
+                callback(None)
+            return
+
+        lines = post.get("lines", [])
+        speaker = post.get("speaker", "")
+        if not lines:
+            if callback:
+                callback(None)
+            return
+
+        # Build a synthetic dialogue tree from the lines so we get the
+        # cinematic dialogue UI with "Continue" advances rather than a wall of text.
+        nodes = {}
+        for i, line in enumerate(lines):
+            nid   = f"p{i}"
+            nxt   = f"p{i+1}" if i + 1 < len(lines) else None
+            nodes[nid] = {
+                "speaker": speaker if i == 0 else ("" if not speaker else speaker),
+                "text":    line,
+                "choices": [{"text": "Continue", "next": nxt}] if nxt else [],
+                "end":     nxt is None,
+            }
+
+        synth_tree = {
+            "id":    post["id"],
+            "nodes": nodes,
+            "start": "p0",
+        }
+
+        # Reuse the standalone dialogue system with a synthetic NPC id
+        _synth_npc = f"__post_boss_{dungeon_id}"
+        from data.story_data import NPC_DIALOGUES
+        NPC_DIALOGUES[_synth_npc] = [{"conditions": [], "tree": synth_tree}]
+
+        self.start_dialogue(_synth_npc, return_state=S_DUNGEON, callback=callback)
+
     def start_chest(self, gold, items, is_secret=False, return_state=None):
         """Open the chest loot assignment screen."""
         self.chest_ui = ChestUI(self.party, gold, items, is_secret=is_secret)
@@ -2685,45 +2797,19 @@ class Game:
                 from data.story_data import get_dungeon_boss_dialogue
                 boss_npc = get_dungeon_boss_dialogue(self.dungeon_state.dungeon_id)
                 if boss_npc:
-                    # Show dialogue first, then start combat after
-                    def after_boss_dialogue(result):
-                        if result == "fight" or result is None:
-                            # Grak killed path, or any "fight" outcome
-                            boss_enc = DUNGEONS[self.dungeon_state.dungeon_id].get(
-                                "boss_encounter", enc_key)
-                            self.start_combat(boss_enc)
+                    dungeon_id = self.dungeon_state.dungeon_id
+                    # Show dialogue first, then start combat or handle peaceful resolution
+                    def after_boss_dialogue(result, _dungeon_id=dungeon_id, _enc_key=enc_key):
+                        from data.story_data import get_peaceful_resolution
+                        from core.story_flags import get_flag
+                        res = get_peaceful_resolution(_dungeon_id)
+                        if res and get_flag(res["flag"]):
+                            # Peaceful path — grant items, then show post-boss dialogue
+                            self._handle_peaceful_resolution(_dungeon_id, res)
                         else:
-                            # Peaceful resolution (e.g., Grak spared)
-                            from core.story_flags import get_flag, collect_hearthstone, set_flag, defeat_boss
-                            if get_flag("choice.grak_spared"):
-                                hearthstone = {
-                                    "name": "Hearthstone Fragment (Warren)",
-                                    "type": "quest_item",
-                                    "description": "A warm, faintly glowing stone fragment. "
-                                                   "Part of the Hearthstone of Aldenmere.",
-                                    "identified": True,
-                                    "quest_item": True,
-                                    "rarity": "legendary",
-                                }
-                                self.party[0].add_item(hearthstone)
-                                self.dungeon_ui.show_event(
-                                    "Received: Hearthstone Fragment!", GOLD)
-                                # Sync hearthstone count — same flags the combat kill path sets
-                                collect_hearthstone(1)
-                                set_flag("hearthstone.goblin_warren", True)
-                                set_flag("boss_defeated.goblin_warren", True)
-                                defeat_boss("grak")
-                                # Unlock Spider's Nest (same key grant as kill path)
-                                if self.world_state and not self.world_state.has_key("thornwood_map"):
-                                    self.world_state.add_key("thornwood_map")
-                                    from data.world_map import LOCATIONS
-                                    for lid, loc in LOCATIONS.items():
-                                        if loc.get("required_key") == "thornwood_map":
-                                            loc["visible"] = True
-                                            self.world_state.discovered_locations.add(lid)
-                                from core.story_flags import auto_advance_quests
-                                auto_advance_quests(self.party)
-                            self.go_fade(S_DUNGEON)
+                            # Fight path
+                            boss_enc = DUNGEONS[_dungeon_id].get("boss_encounter", _enc_key)
+                            self.start_combat(boss_enc)
                     self.start_dialogue(boss_npc, return_state=S_DUNGEON,
                                         callback=after_boss_dialogue)
                     return
@@ -3234,7 +3320,17 @@ class Game:
                     self.save_msg_color = tier_info["color"]
                     self.save_msg_timer = 6000
 
-                self.start_post_combat()
+                # ── Post-boss cutscene dialogue (fight path) ──
+                # Fires for boss encounters only; regular enemies skip straight to loot.
+                _dungeon_id = getattr(self.dungeon_state, "dungeon_id", None) if self.dungeon_state else None
+                _is_boss_enc = getattr(self.combat_state, "is_boss", False)
+                if _dungeon_id and _is_boss_enc:
+                    self._show_post_boss_dialogue(
+                        _dungeon_id, peaceful=False,
+                        callback=lambda _: self.start_post_combat()
+                    )
+                else:
+                    self.start_post_combat()
             else:
                 # DEFEAT — TPK: show game over screen, then restore at inn
                 sfx.stop_music()

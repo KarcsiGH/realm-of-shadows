@@ -1786,6 +1786,13 @@ class CombatState:
         # XP tracking: count rounds each player was alive (conscious)
         self.rounds_alive = {p["uid"]: 0 for p in self.players}
 
+        # Flag for post-combat boss dialogue trigger
+        self.is_boss = any(
+            "boss" in e.get("template_key", "").lower() or
+            e.get("ai_type") == "boss"
+            for e in self.enemies
+        )
+
         self.log(f"═══ {self.encounter_name} ═══")
         self.log(f"Round {self.round_num}")
 
