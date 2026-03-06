@@ -621,17 +621,55 @@ class DungeonUI:
                 return max(0.01, dist), wx, ns, False, map_x, map_y, is_stair, tt
 
             if is_d:
+                # Determine door orientation from neighbors.
+                # Doors in an E-W wall (wall above/below) must be hit from ns=True (N/S ray).
+                # Doors in a N-S wall (wall left/right) must be hit from ns=False (E/W ray).
+                wall_above = (map_y > 0 and tiles[map_y-1][map_x]["type"] == DT_WALL)
+                wall_below = (map_y < fh-1 and tiles[map_y+1][map_x]["type"] == DT_WALL)
+                wall_left  = (map_x > 0 and tiles[map_y][map_x-1]["type"] == DT_WALL)
+                wall_right = (map_x < fw-1 and tiles[map_y][map_x+1]["type"] == DT_WALL)
+
+                # Infer orientation: walls N/S → horizontal door (opens E-W, hit ns=False)
+                #                    walls E/W → vertical door (opens N-S, hit ns=True)
+                if (wall_above or wall_below) and not (wall_left or wall_right):
+                    door_hit_ns = False   # horizontal door in N-S corridor
+                elif (wall_left or wall_right) and not (wall_above or wall_below):
+                    door_hit_ns = True    # vertical door in E-W corridor
+                else:
+                    door_hit_ns = ns      # ambiguous — accept any axis
+
+                # If ray hits from the side (wrong axis), render as plain wall
+                if ns != door_hit_ns:
+                    if not ns:
+                        dist = (map_x - self.px + (1 - step_x)/2) / ray_dx
+                        wx = self.py + dist * ray_dy
+                    else:
+                        dist = (map_y - self.py + (1 - step_y)/2) / ray_dy
+                        wx = self.px + dist * ray_dx
+                    wx -= math.floor(wx)
+                    return max(0.01, dist), wx, ns, False, map_x, map_y, False, tt
+
                 # Advance ray half a tile to door's midpoint (Wolfenstein style).
-                # Only attempt if the ray faces the door roughly head-on —
-                # a shallow angle causes a huge advance that renders wrong.
                 if not ns:
                     ray_comp  = abs(ray_dx)
                     dist_face = (map_x - self.px + (1 - step_x)/2) / ray_dx
-                    dist_mid  = dist_face + 0.5 / ray_comp if ray_comp > 0.4 else dist_face + 2.0
                 else:
                     ray_comp  = abs(ray_dy)
                     dist_face = (map_y - self.py + (1 - step_y)/2) / ray_dy
-                    dist_mid  = dist_face + 0.5 / ray_comp if ray_comp > 0.4 else dist_face + 2.0
+
+                # If ray is too shallow to reliably sample the door midpoint,
+                # render it as a plain wall frame instead of corrupted door texture.
+                if ray_comp <= 0.65:
+                    if not ns:
+                        dist = dist_face
+                        wx = self.py + dist * ray_dy
+                    else:
+                        dist = dist_face
+                        wx = self.px + dist * ray_dx
+                    wx -= math.floor(wx)
+                    return max(0.01, dist), wx, ns, False, map_x, map_y, False, tt
+
+                dist_mid = dist_face + 0.5 / ray_comp
 
                 # Where does the ray cross the door midplane?
                 if not ns:
@@ -640,10 +678,8 @@ class DungeonUI:
                     wx_mid = self.px + dist_mid * ray_dx
                 wx_mid -= math.floor(wx_mid)
 
-                # If ray doesn't reach the door opening (0.25–0.75 range), it hits frame
-                # The door spans the middle 60% of the tile; edges are wall frame
+                # Edge frame (0.2/0.8 threshold) → wall texture
                 if wx_mid < 0.2 or wx_mid > 0.8:
-                    # Hit the wall frame — render as wall texture
                     if not ns:
                         dist = (map_x - self.px + (1 - step_x)/2) / ray_dx
                         wx = self.py + dist * ray_dy
@@ -653,7 +689,6 @@ class DungeonUI:
                     wx -= math.floor(wx)
                     return max(0.01, dist), wx, ns, False, map_x, map_y, False, tt
                 else:
-                    # Ray hits the door face at tile midpoint
                     return max(0.01, dist_mid), wx_mid, ns, True, map_x, map_y, False, tt
 
         return 20.0, 0.0, False, False, 0, 0, False, DT_WALL
@@ -974,6 +1009,7 @@ class DungeonUI:
                 elif icon_key in ("enemy", "boss"):
                     # Draw faction-specific enemy silhouette from pixel_art
                     from ui.pixel_art import draw_enemy_silhouette
+                    from ui.wiz_sprites import BG as _WIZ_BG
                     obj_r = pygame.Rect(0, 0, surf_w, surf_h)
                     # Resolve enc_key → template name via ENCOUNTERS if needed
                     template_key = enc_key or "Goblin Warrior"
@@ -985,8 +1021,20 @@ class DungeonUI:
                                 template_key = grps[0]["enemy"]
                     except Exception:
                         pass
-                    draw_enemy_silhouette(spr, obj_r, template_key,
-                                         knowledge_tier=1)  # always visible in 3D
+                    # Draw onto an SRCALPHA surface so the BG becomes truly transparent.
+                    # _apply_effect shifts near-black pixels slightly, so colorkey alone
+                    # is unreliable — use per-pixel alpha instead.
+                    enemy_surf = pygame.Surface((surf_w, surf_h), pygame.SRCALPHA)
+                    enemy_surf.fill((0, 0, 0, 0))          # fully transparent base
+                    # Draw sprite onto a scratch surface first (wiz_sprites needs opaque)
+                    scratch = pygame.Surface((surf_w, surf_h))
+                    scratch.fill(_WIZ_BG)
+                    draw_enemy_silhouette(scratch, obj_r, template_key, knowledge_tier=1)
+                    scratch.set_colorkey(_WIZ_BG)
+                    # Blit colorkeyed scratch onto SRCALPHA surface for clean transparency
+                    enemy_surf.blit(scratch, (0, 0))
+                    view.blit(enemy_surf, (cx_s - surf_w//2, blit_y))
+                    continue  # skip the generic spr blit below
 
                 elif icon_key == DT_TRAP:
                     # Armed detected trap — red spike plate
@@ -1111,12 +1159,23 @@ class DungeonUI:
                 sy = (ty-y0)*ts
                 pygame.draw.rect(bg, c, (sx,sy,ts-1,ts-1))
 
-        # Enemy dots — red for patrol/chase/linger
+        # Enemy dots — only when tile is discovered AND currently in LOS
         for enemy in fl.get("enemies", []):
             if enemy.get("state") == "dead":
                 continue
             ex, ey = enemy["x"], enemy["y"]
             if not tiles[ey][ex].get("discovered"):
+                continue
+            # Distance pre-filter (cheap) before the LOS ray cast
+            edist_mm = math.sqrt((ex - px_i)**2 + (ey - py_i)**2)
+            if edist_mm > TORCH_DIST:
+                continue
+            # LOS check — must NOT be behind a wall/door; on failure, skip
+            try:
+                visible = self.dungeon._has_los(fl, px_i, py_i, ex, ey)
+            except Exception:
+                visible = False
+            if not visible:
                 continue
             edx = ex - x0; edy = ey - y0
             if 0 <= edx < cols and 0 <= edy < rows:
@@ -1359,15 +1418,23 @@ class DungeonUI:
             roll    = m.get("search_roll", 0)
             needed  = m.get("search_needed", 0)
             searcher = m.get("searcher_name", "")
-            t_title = "Trap Found!" if found else "Nothing Found"
+            no_trap_on_chest = (needed == 0)   # search_chest_for_traps returns (False,0,0) if no trap exists
+
+            t_title = "Trap Found!" if found else ("No Trap Exists" if no_trap_on_chest else "Nothing Found")
             col_title = (220, 80, 60) if found else (100, 220, 100)
             t = ft.render(t_title, True, col_title)
             surface.blit(t, (dx + dw // 2 - t.get_width() // 2, dy + 14))
 
-            result_line = f"{searcher} rolled {roll} (needed ≤{needed})"
+            if no_trap_on_chest:
+                result_line = f"{searcher} found no trap mechanism on this chest."
+            else:
+                result_line = f"{searcher} rolled {roll} (needed ≤{needed})"
             lines = [result_line]
             if found:
                 lines.append(f"Trap: {trap['name']}  —  Tier {trap.get('tier',1)}")
+                lines.append("What does the party do?")
+            elif no_trap_on_chest:
+                lines.append("This chest carries no trap. Safe to open.")
                 lines.append("What does the party do?")
             else:
                 lines.append("No trap detected. The chest looks safe.")

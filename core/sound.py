@@ -299,9 +299,9 @@ def _silence(duration):
 #  SOUND DEFINITIONS
 # ═══════════════════════════════════════════════════════════════
 
-def _generate_all_sounds():
-    global _sounds
 
+
+def _generate_all_sounds():
     # ── UI ──────────────────────────────────────────────────────
     _sounds["ui_click"]   = _make_sound(_sine(800, 0.10, 0.22))
     _sounds["ui_confirm"] = _make_sound(_concat(_sine(600, 0.10, 0.28), _sine(900, 0.14, 0.28)))
@@ -391,11 +391,218 @@ def _generate_all_sounds():
         _mix(_noise(0.08, 0.12, seed=17), _sine(90, 0.08, 0.10)))
 
     # ── Ambient loops (kept short; play() on loop channel) ──────
-    # Town: gentle warm hum suggesting hearth and crowd
-    _sounds["town_ambient"]  = _make_sound(_concat(
-        _sine(220, 1.2, 0.06, fade_out=False),
-        _sine(330, 0.8, 0.04, fade_out=False),
-        _sine(220, 1.0, 0.06, fade_out=False)))
+    # Town music: ~32-bar looping folk piece in G major (3/4 waltz, 100 BPM)
+    # Four phrases (A/B/C/B), four layers: melody, counter-melody, bass, pad.
+    # Softer harmonics, gentle vibrato, smoother loop seam than old version.
+    def _flute(freq, dur, vol=0.16):
+        """Soft flute with gentle vibrato and smooth attack/release."""
+        n = int(SR * dur)
+        out = []
+        for i in range(n):
+            t   = i / SR
+            env = math.sin(math.pi * t / dur) ** 0.6
+            vib = 1.0 + 0.012 * math.sin(2 * math.pi * 5.5 * t)   # 5.5 Hz vibrato
+            v   = (math.sin(2*math.pi*freq*vib*t)
+                   + math.sin(2*math.pi*freq*2*t) * 0.14   # softer 2nd harmonic
+                   + math.sin(2*math.pi*freq*3*t) * 0.04)
+            out.append(max(-32767, min(32767, int(32000 * vol * env * v))))
+        return out
+
+    def _flute2(freq, dur, vol=0.10):
+        """Slightly breathy counter-melody flute — weaker, higher register."""
+        n = int(SR * dur)
+        out = []
+        rng2 = random.Random(freq)
+        for i in range(n):
+            t   = i / SR
+            env = math.sin(math.pi * t / dur) ** 0.5
+            breath = rng2.gauss(0, 0.04)   # subtle breathiness
+            v = math.sin(2*math.pi*freq*t) + math.sin(2*math.pi*freq*2*t)*0.08 + breath
+            out.append(max(-32767, min(32767, int(32000 * vol * env * v))))
+        return out
+
+    def _plk(freq, dur, vol=0.11):
+        """Plucked lute — warmer decay, gentle 2nd harmonic."""
+        n   = int(SR * dur)
+        tau = SR * 0.22    # slower decay → warmer
+        out = []
+        for i in range(n):
+            env = math.exp(-i / tau)
+            v   = (math.sin(2*math.pi*freq*i/SR)
+                   + math.sin(2*math.pi*freq*2*i/SR)*0.28
+                   + math.sin(2*math.pi*freq*3*i/SR)*0.08)
+            out.append(max(-32767, min(32767, int(32000 * vol * env * v))))
+        return out
+
+    def _chd(freqs, dur, vol=0.055):
+        """Warm pad chord with slow attack and fade."""
+        n   = int(SR * dur)
+        out = [0.0] * n
+        for freq in freqs:
+            for i in range(n):
+                t   = i / SR
+                env = min(1.0, t * 4.0) * math.sin(math.pi * t / dur) ** 0.35
+                v   = math.sin(2*math.pi*freq*t) + math.sin(2*math.pi*freq*2*t)*0.10
+                out[i] += vol * env * v / len(freqs)
+        return [max(-32767, min(32767, int(32000 * v))) for v in out]
+
+    def _sil(d): return [0] * int(SR * d)
+
+    # Note frequencies (Hz) — G major pentatonic core
+    G3,D3,C3,E3 = 196.0, 146.8, 130.8, 164.8
+    G4,A4,B4    = 392.0, 440.0, 493.9
+    C5,D5,E5,F5 = 523.3, 587.3, 659.3, 698.5
+
+    BPM  = 100
+    beat = 60.0 / BPM       # 3/4 waltz
+    bar  = beat * 3
+
+    # ── Melody: 4 phrases × 8 bars = 32 bars ──────────────────
+    #  Phrase A — rises and settles (bars 1-8)
+    phA = (
+        _flute(G4,beat)+_flute(A4,beat)+_flute(B4,beat) +          # bar 1
+        _flute(C5,beat)+_flute(C5,beat)+_flute(B4,beat) +          # bar 2
+        _flute(G4,beat*0.5)+_flute(E5,beat*0.5)+_flute(D5,beat)+_flute(B4,beat) +  # bar 3
+        _flute(G4,bar) +                                            # bar 4 (held)
+        _flute(D5,beat)+_flute(C5,beat)+_flute(B4,beat) +          # bar 5
+        _flute(A4,beat)+_flute(G4,beat)+_flute(A4,beat) +          # bar 6
+        _flute(B4,beat)+_flute(D5,beat)+_flute(G4,beat*2) +        # bar 7
+        _flute(G4,bar)                                              # bar 8
+    )
+    #  Phrase B — wandering middle (bars 9-16)
+    phB = (
+        _flute(C5,beat)+_flute(D5,beat)+_flute(E5,beat) +          # bar 9
+        _flute(E5,beat)+_flute(D5,beat)+_flute(C5,beat) +          # bar 10
+        _flute(B4,beat*0.5)+_flute(G4,beat*0.5)+_flute(B4,beat)+_flute(D5,beat)+  # bar 11
+        _flute(G4,bar) +                                            # bar 12
+        _flute(E5,beat)+_flute(D5,beat)+_flute(C5,beat) +          # bar 13
+        _flute(B4,beat)+_flute(A4,beat)+_flute(G4,beat) +          # bar 14
+        _flute(A4,beat)+_flute(C5,beat)+_flute(B4,beat) +          # bar 15
+        _flute(G4,bar)                                              # bar 16
+    )
+    #  Phrase C — higher register excursion (bars 17-24)
+    phC = (
+        _flute(E5,beat)+_flute(F5,beat*0.5)+_flute(E5,beat*0.5)+_flute(D5,beat) +  # bar 17
+        _flute(C5,beat)+_flute(D5,beat)+_flute(E5,beat) +          # bar 18
+        _flute(D5,bar) +                                            # bar 19
+        _flute(C5,beat)+_flute(B4,beat)+_flute(A4,beat) +          # bar 20
+        _flute(G4,beat)+_flute(A4,beat)+_flute(B4,beat) +          # bar 21
+        _flute(C5,beat)+_flute(B4,beat)+_flute(A4,beat) +          # bar 22
+        _flute(B4,beat)+_flute(G4,beat*2) +                        # bar 23
+        _flute(G4,bar)                                              # bar 24
+    )
+    #  Phrase B (reprise, bars 25-32) — resolves loop back to A
+    phB2 = (
+        _flute(C5,beat)+_flute(D5,beat)+_flute(E5,beat) +          # bar 25
+        _flute(D5,beat)+_flute(C5,beat)+_flute(B4,beat) +          # bar 26
+        _flute(A4,beat*0.5)+_flute(G4,beat*0.5)+_flute(A4,beat)+_flute(B4,beat) +  # bar 27
+        _flute(G4,bar) +                                            # bar 28
+        _flute(B4,beat)+_flute(A4,beat)+_flute(G4,beat) +          # bar 29
+        _flute(G4,beat)+_flute(A4,beat)+_flute(B4,beat) +          # bar 30
+        _flute(D5,beat)+_flute(B4,beat)+_flute(G4,beat) +          # bar 31
+        _flute(G4,bar)                                              # bar 32 → loops to bar 1
+    )
+    mel = phA + phB + phC + phB2
+
+    # ── Counter-melody: simple harmony above melody ────────────
+    #  Only active on even bars (alternating), adds texture without clutter
+    def _rest(d): return _sil(d)
+    ctr = (
+        # Phrase A harmony
+        _rest(bar)+_flute2(E5,beat)+_flute2(D5,beat)+_flute2(C5,beat) +    # bars 1-2
+        _rest(bar)+_flute2(B4,bar) +                                         # bars 3-4
+        _flute2(G4,beat)+_flute2(A4,beat)+_flute2(B4,beat) +                # bar 5
+        _rest(bar)+_flute2(C5,bar)+_rest(bar) +                              # bars 6-8
+        # Phrase B harmony
+        _flute2(E5,bar)+_rest(bar)+_flute2(D5,bar)+_rest(bar) +             # bars 9-12
+        _flute2(C5,beat)+_flute2(D5,beat)+_flute2(C5,beat) +                # bar 13
+        _rest(bar)+_flute2(B4,bar)+_rest(bar) +                              # bars 14-16
+        # Phrase C harmony
+        _flute2(G5 := G4*2,bar)+_rest(bar)+_flute2(E5,bar)+_rest(bar) +    # bars 17-20
+        _flute2(D5,bar)+_rest(bar)+_flute2(C5,bar)+_rest(bar) +             # bars 21-24
+        # Phrase B2 harmony
+        _flute2(E5,bar)+_rest(bar)+_flute2(D5,bar)+_rest(bar) +             # bars 25-28
+        _flute2(C5,bar)+_rest(bar)+_flute2(B4,bar)+_rest(bar)               # bars 29-32
+    )
+
+    # ── Bass: root on 1, fifth on 3 of each bar × 32 bars ─────
+    bass_prog = [
+        G3,G3,G3,G3, C3,C3,G3,G3,  # A (bars 1-8)
+        C3,C3,G3,G3, C3,G3,G3,G3,  # B (bars 9-16)
+        C3,C3,G3,G3, G3,G3,C3,G3,  # C (bars 17-24)
+        C3,C3,G3,G3, G3,G3,G3,G3,  # B2 (bars 25-32)
+    ]
+    B3 = 246.9
+    fifth_map = {G3:D3, C3:G3, E3:B3}
+    bas = []
+    for rt in bass_prog:
+        fi = fifth_map.get(rt, D3)
+        bas += (_plk(rt, beat*0.85)+_sil(beat*0.15) +
+                _sil(beat) +
+                _plk(fi, beat*0.85)+_sil(beat*0.15))
+
+    # ── Chord pad × 32 bars ────────────────────────────────────
+    chord_prog = [
+        [G3*2,392.0,493.9],[G3*2,392.0,493.9],[G3*2,392.0,493.9],[G3*2,392.0,493.9],  # A
+        [C3*2,329.6,392.0],[C3*2,329.6,392.0],[G3*2,392.0,493.9],[G3*2,392.0,493.9],
+        [C3*2,329.6,392.0],[C3*2,329.6,392.0],[G3*2,392.0,493.9],[G3*2,392.0,493.9],  # B
+        [C3*2,329.6,392.0],[G3*2,392.0,493.9],[G3*2,392.0,493.9],[G3*2,392.0,493.9],
+        [C3*2,329.6,392.0],[C3*2,329.6,392.0],[G3*2,392.0,493.9],[G3*2,392.0,493.9],  # C
+        [G3*2,392.0,493.9],[G3*2,392.0,493.9],[C3*2,329.6,392.0],[G3*2,392.0,493.9],
+        [C3*2,329.6,392.0],[C3*2,329.6,392.0],[G3*2,392.0,493.9],[G3*2,392.0,493.9],  # B2
+        [G3*2,392.0,493.9],[G3*2,392.0,493.9],[G3*2,392.0,493.9],[G3*2,392.0,493.9],
+    ]
+    pad = []
+    for ch in chord_prog:
+        pad += _chd(ch, bar)
+
+    # Mix all layers to shortest length
+    total = min(len(mel), len(ctr), len(bas), len(pad))
+    town_music_samples = []
+    for i in range(total):
+        v = mel[i] + ctr[i] + bas[i] + pad[i]
+        town_music_samples.append(max(-32767, min(32767, v)))
+
+    # Longer fade-in/out (150 ms) to hide the loop seam more cleanly
+    fade = int(SR * 0.15)
+    for i in range(min(fade, total)):
+        frac = i / fade
+        town_music_samples[i]         = int(town_music_samples[i]         * frac)
+        town_music_samples[total-1-i] = int(town_music_samples[total-1-i] * frac)
+
+    _sounds["town_ambient"] = _make_sound(town_music_samples)
+
+    # Town environment ambience: soft crowd hum + distant bell dings
+    # Layered onto the ambient channel (separate from music channel).
+    # ~8-second loop: low bandpass murmur + occasional light bell tones.
+    env_dur = 8.0
+    env_n   = int(SR * env_dur)
+    # Low crowd murmur: narrow bandpass around 250 Hz
+    crowd   = _bandpass_noise(env_dur, 250, 60, volume=0.025, seed=71)
+    # Distant wind sweep (very soft)
+    wind    = _bandpass_noise(env_dur, 380, 120, volume=0.018, seed=99)
+    # Occasional bell dings at 2 s and 5 s marks
+    bell_rng = random.Random(42)
+    bell = [0] * env_n
+    for t_hit in (1.8, 4.6, 7.1):
+        pos   = int(t_hit * SR)
+        freq  = 880.0     # high bell tone
+        bdur  = int(SR * 0.8)
+        for j in range(min(bdur, env_n - pos)):
+            env_bell = math.exp(-j / (SR * 0.25))
+            bell[pos + j] += int(3500 * env_bell * math.sin(2*math.pi*freq*j/SR))
+    town_env_samples = [
+        max(-32767, min(32767, crowd[i] + wind[i] + bell[i]))
+        for i in range(env_n)
+    ]
+    # Fade edges
+    fade_e = int(SR * 0.12)
+    for i in range(min(fade_e, env_n)):
+        frac = i / fade_e
+        town_env_samples[i]          = int(town_env_samples[i]          * frac)
+        town_env_samples[env_n-1-i]  = int(town_env_samples[env_n-1-i]  * frac)
+    _sounds["town_env"] = _make_sound(town_env_samples)
+
     # World map: open wind-like sweep
     _sounds["world_ambient"] = _make_sound(
         _bandpass_noise(3.0, 180, 80, volume=0.08, seed=88))

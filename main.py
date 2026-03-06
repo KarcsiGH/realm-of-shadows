@@ -187,8 +187,8 @@ class Game:
             except Exception as _exc:
                 self._show_crash(_exc)
                 return
-            # Journal overlay (drawn over everything, under fade)
-            if self.quest_log_ui:
+            # Journal overlay — never draw on top of active dialogue
+            if self.quest_log_ui and not self._is_dialogue_active():
                 try:
                     self.quest_log_ui.draw(self.screen, mx, my)
                 except Exception:
@@ -253,7 +253,8 @@ class Game:
         if state == S_TOWN:
             sfx.stop_music()
             sfx.stop_ambient()
-            sfx.play_ambient("town_ambient")
+            sfx.play_music("town_ambient")   # town music on main music channel
+            sfx.play_ambient("town_env")     # soft crowd/bell ambience layer
         elif state == S_WORLD_MAP:
             sfx.stop_music()
             sfx.stop_ambient()
@@ -302,11 +303,12 @@ class Game:
                 sfx.play("ui_confirm")
         # ─────────────────────────────────────────────────────────────
         # ── Global journal overlay (J key, any state with a party) ───
-        if e.type == pygame.KEYDOWN and e.key == pygame.K_j and self.party:
-            self._open_journal()
-            return
-        if self._handle_journal_event(e, mx, my):
-            return
+        if not self._is_dialogue_active():
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_j and self.party:
+                self._open_journal()
+                return
+            if self._handle_journal_event(e, mx, my):
+                return
 
         if self.state == S_TITLE:
             if e.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
@@ -718,10 +720,23 @@ class Game:
     #  JOURNAL / TOAST HELPERS
     # ══════════════════════════════════════════════════════════
 
+    def _is_dialogue_active(self):
+        """Return True if an NPC dialogue or dedicated dialogue state is on screen."""
+        if self.state == S_DIALOGUE:
+            return True
+        if (self.state == S_TOWN and hasattr(self, "town_ui") and
+                self.town_ui is not None and
+                getattr(self.town_ui, "active_dialogue", None) is not None and
+                not self.town_ui.active_dialogue.finished):
+            return True
+        return False
+
     def _open_journal(self):
         """Open the quest log overlay (from any game state)."""
         if not self.party:
             return
+        if self._is_dialogue_active():
+            return   # never open journal over dialogue
         if self.quest_log_ui:
             self.quest_log_ui = None   # toggle off
         else:

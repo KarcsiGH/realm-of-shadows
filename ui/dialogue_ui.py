@@ -49,6 +49,7 @@ class DialogueUI:
         self.text_scroll = 0
 
     def draw(self, surface, mx, my, dt=16):
+        surface.set_clip(None)   # clear any clip rect from prior draw passes
         surface.fill(DIALOGUE_BG)
 
         if self.state.finished:
@@ -109,21 +110,30 @@ class DialogueUI:
         self.full_text_shown = self.displayed_chars >= len(text)
 
         max_w = SCREEN_W - text_x - DIALOGUE_MARGIN
-        lines = self._wrap_text(shown_text, max_w, 15)
+        lines = self._wrap_text(shown_text, max_w, 17)  # wrap at render size
 
         # Determine how much space choices need
         choices = self.state.get_choices() if self.full_text_shown else []
         choice_count = len(choices)
-        choice_height = choice_count * 44 + 20 if choice_count > 0 else 50
-        available_text_height = SCREEN_H - text_y - choice_height - CHOICES_BOTTOM_MARGIN - 10
+        choice_height = choice_count * 46 + 20 if choice_count > 0 else 50
+        available_text_height = SCREEN_H - text_y - choice_height - CHOICES_BOTTOM_MARGIN - 16
 
         # Calculate visible text lines
-        line_h = 20
+        line_h = 22
         max_visible = max(3, available_text_height // line_h)
 
-        # Auto-scroll to show latest text
-        if len(lines) > max_visible:
-            self.text_scroll = len(lines) - max_visible
+        # During typing: follow the cursor so the latest typed line is always visible.
+        # After typing finishes: lock scroll at top so full text is readable from start.
+        if not self.full_text_shown:
+            # Push scroll forward to keep the newest typed line in view
+            self.text_scroll = max(0, len(lines) - max_visible)
+        else:
+            # Text fully shown — reset to top so player reads from the beginning
+            if not getattr(self, "_scroll_unlocked", False):
+                self.text_scroll = 0
+                self._scroll_unlocked = True
+        # Clamp to valid range
+        self.text_scroll = max(0, min(self.text_scroll, max(0, len(lines) - max_visible)))
 
         visible_lines = lines[self.text_scroll:self.text_scroll + max_visible]
         for i, line in enumerate(visible_lines):
@@ -166,8 +176,8 @@ class DialogueUI:
 
         for i, choice in enumerate(visible):
             real_i = i + self.choice_scroll
-            rect = pygame.Rect(DIALOGUE_MARGIN + 20, top_y + i * 44,
-                               SCREEN_W - DIALOGUE_MARGIN * 2 - 40, 38)
+            rect = pygame.Rect(DIALOGUE_MARGIN + 20, top_y + i * 46,
+                               SCREEN_W - DIALOGUE_MARGIN * 2 - 40, 40)
             hover = rect.collidepoint(mx, my)
             if hover:
                 self.hover_choice = real_i
@@ -210,6 +220,7 @@ class DialogueUI:
                 self.state.select_choice(self.hover_choice)
                 self.displayed_chars = 0
                 self.text_scroll = 0
+                self._scroll_unlocked = False
 
                 # Check if the new node is the "fight" node
                 if self.state.finished:
@@ -226,6 +237,8 @@ class DialogueUI:
         elif self.state.should_auto_advance():
             self.state.advance()
             self.displayed_chars = 0
+            self.text_scroll = 0   # reset scroll so new node starts from top
+            self._scroll_unlocked = False
             if self.state.finished:
                 # Check final node for result
                 node = self.state.current_node
@@ -269,6 +282,7 @@ class DialogueUI:
                     self.state.select_choice(num)
                     self.displayed_chars = 0
                     self.text_scroll = 0
+                    self._scroll_unlocked = False
                     if self.state.finished:
                         node = self.state.current_node
                         if node.get("on_enter"):

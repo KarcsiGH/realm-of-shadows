@@ -700,7 +700,7 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             ty = room[1] + rng.randint(1, room[3] - 2)
             if tiles[ty][tx]["type"] == DT_FLOOR:
                 tiles[ty][tx]["type"] = DT_TREASURE
-                tiles[ty][tx]["event"] = _make_treasure_event(floor_num, rng)
+                tiles[ty][tx]["event"] = _make_treasure_event(floor_num, rng, total_floors)
                 placed_treasure += 1
 
         # ── Place traps (floor 1: 3 traps, scales up) ──
@@ -795,29 +795,71 @@ def _carve_v_corridor(tiles, y1, y2, x, max_h):
                 tiles[y][x]["type"] = DT_CORRIDOR
 
 
-def _make_treasure_event(floor_num, rng):
+def _make_treasure_event(floor_num, rng, total_floors=5):
+    """Generate chest loot scaled to dungeon depth.
+
+    Floor 1-2 : mostly consumables, rare chance of a common magic item
+    Floor 3-4 : consumables + uncommon magic items (~20%)
+    Floor 5+  : good consumables + rare magic items (~30%), small legendary chance
+    """
     gold = rng.randint(15, 35) * floor_num
     items = []
-    # Higher chance of consumables on deeper floors
-    if rng.random() < 0.35 + floor_num * 0.1:
-        items.append(rng.choice([
-            {"name": "Minor Healing Potion", "type": "consumable", "subtype": "potion",
-             "heal_amount": 25, "identified": True, "estimated_value": 15},
-            {"name": "Healing Potion", "type": "consumable", "subtype": "potion",
-             "heal_amount": 50, "identified": True, "estimated_value": 30},
-            {"name": "Antidote", "type": "consumable", "subtype": "potion",
-             "cures": ["Poison"], "identified": True, "estimated_value": 20},
-        ]))
-    # Small chance of a bonus item on floor 2+
-    if floor_num >= 2 and rng.random() < 0.2:
-        items.append(rng.choice([
-            {"name": "Scroll of Protection", "type": "consumable", "subtype": "scroll",
-             "effect": "defense_buff", "identified": True, "estimated_value": 40},
-            {"name": "Mana Crystal", "type": "consumable", "subtype": "crystal",
-             "restore_mp": 30, "identified": True, "estimated_value": 35},
-        ]))
+    depth = floor_num / max(total_floors, 1)
 
-    # ~30% of chests are trapped (scales slightly with floor depth)
+    # ── Consumables ──────────────────────────────────────────
+    POTIONS_T1 = [
+        {"name": "Minor Healing Potion", "type": "consumable", "subtype": "potion",
+         "heal_amount": 25, "identified": True, "estimated_value": 15},
+        {"name": "Antidote", "type": "consumable", "subtype": "potion",
+         "cures": ["Poison"], "identified": True, "estimated_value": 20},
+    ]
+    POTIONS_T2 = [
+        {"name": "Healing Potion", "type": "consumable", "subtype": "potion",
+         "heal_amount": 50, "identified": True, "estimated_value": 30},
+        {"name": "Mana Crystal", "type": "consumable", "subtype": "crystal",
+         "restore_mp": 30, "identified": True, "estimated_value": 35},
+        {"name": "Scroll of Protection", "type": "consumable", "subtype": "scroll",
+         "effect": "defense_buff", "identified": True, "estimated_value": 40},
+    ]
+    POTIONS_T3 = [
+        {"name": "Greater Healing Potion", "type": "consumable", "subtype": "potion",
+         "heal_amount": 100, "identified": True, "estimated_value": 60},
+        {"name": "Elixir of Focus", "type": "consumable", "subtype": "potion",
+         "restore_mp": 60, "effect": "focus_buff",
+         "identified": True, "estimated_value": 65},
+        {"name": "Scroll of Fireball", "type": "consumable", "subtype": "scroll",
+         "effect": "fireball", "identified": True, "estimated_value": 55},
+        {"name": "Scroll of Recall", "type": "consumable", "subtype": "scroll",
+         "effect": "recall", "identified": True, "estimated_value": 80},
+    ]
+
+    consumable_chance = 0.50 + depth * 0.25   # 50% → 75%
+    if rng.random() < consumable_chance:
+        if depth >= 0.7:
+            pool = POTIONS_T2 + POTIONS_T3
+        elif depth >= 0.4:
+            pool = POTIONS_T1 + POTIONS_T2
+        else:
+            pool = POTIONS_T1
+        items.append(dict(rng.choice(pool)))
+
+    # ── Magic item drop ───────────────────────────────────────
+    # Probability ramp: ~5% floor 1 → ~35% floor 5+
+    magic_chance = 0.05 + depth * 0.30
+    if rng.random() < magic_chance:
+        try:
+            from data.magic_items import get_secret_item, get_cursed_item
+            # Deep floors: 6% chance of cursed item for tension
+            if depth >= 0.6 and rng.random() < 0.06:
+                magic = get_cursed_item(floor_num, total_floors, rng)
+            else:
+                magic = get_secret_item(floor_num, total_floors, rng)
+            if magic:
+                items.append(magic)
+        except Exception:
+            pass
+
+    # ── Trap ─────────────────────────────────────────────────
     trap_chance = 0.28 + floor_num * 0.04   # 32% floor1 → 48% floor5
     trap_data = None
     if rng.random() < trap_chance:
@@ -825,22 +867,23 @@ def _make_treasure_event(floor_num, rng):
         trap_def = rng.choice(TRAP_TIERS[tier]["traps"])
         dmg = rng.randint(trap_def["damage"][0], trap_def["damage"][1])
         trap_data = {
-            "name":         trap_def["name"],
-            "tier":         tier,
-            "damage":       dmg,
-            "target":       trap_def["target"],
-            "save_stat":    trap_def["save_stat"],
-            "detect_base":  trap_def["detect_base"],
-            "disarm_base":  trap_def["disarm_base"],
-            "disarmed":     False,
+            "name":        trap_def["name"],
+            "tier":        tier,
+            "damage":      dmg,
+            "target":      trap_def["target"],
+            "save_stat":   trap_def["save_stat"],
+            "detect_base": trap_def["detect_base"],
+            "disarm_base": trap_def["disarm_base"],
+            "disarmed":    False,
         }
         if "poison" in trap_def:
             trap_data["poison"] = trap_def["poison"]
 
     return {
         "type": "treasure", "gold": gold, "items": items, "opened": False,
-        "trap": trap_data,   # None if no trap
+        "trap": trap_data,
     }
+
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -883,6 +926,57 @@ class DungeonState:
             )
             # Spawn visible enemies on the floor
             self._spawn_floor_enemies(floor_num, rng)
+            # Place story journals from DUNGEON_STORY_EVENTS
+            self._place_story_journals(floor_num, rng)
+
+    def _place_story_journals(self, floor_num, rng):
+        """Place journal tiles from DUNGEON_STORY_EVENTS onto the floor."""
+        try:
+            from data.story_data import get_dungeon_journals
+        except ImportError:
+            return
+        journals = get_dungeon_journals(self.dungeon_id, floor_num)
+        if not journals:
+            return
+        floor = self.floors[floor_num]
+        tiles = floor["tiles"]
+        fw, fh = floor["width"], floor["height"]
+        entrance = floor.get("entrance", (0, 0))
+        stairs_dn = floor.get("stairs_down")
+        stairs_up = floor.get("stairs_up")
+        # Build exclusion zone around entrance / stairs
+        avoid = set()
+        for pt in [entrance] + ([stairs_dn] if stairs_dn else []) + ([stairs_up] if stairs_up else []):
+            if pt:
+                for ddx in range(-3, 4):
+                    for ddy in range(-3, 4):
+                        avoid.add((pt[0] + ddx, pt[1] + ddy))
+        # Collect eligible DT_FLOOR tiles with no existing event
+        eligible = [
+            (x, y)
+            for y in range(fh)
+            for x in range(fw)
+            if tiles[y][x]["type"] == DT_FLOOR
+            and not tiles[y][x].get("event")
+            and (x, y) not in avoid
+        ]
+        if not eligible:
+            return
+        rng.shuffle(eligible)
+        for j_idx, jdata in enumerate(journals):
+            if j_idx >= len(eligible):
+                break
+            px, py = eligible[j_idx]
+            tiles[py][px]["has_journal"] = True
+            tiles[py][px]["journal_read"] = False
+            tiles[py][px]["event"] = {
+                "type":     "journal",
+                "title":    jdata.get("title", "Journal Entry"),
+                "text":     jdata.get("text", ""),
+                "lore_id":  jdata.get("lore_id"),
+                "on_find":  jdata.get("on_find", []),
+                "triggered": False,
+            }
 
     def _spawn_floor_enemies(self, floor_num, rng):
         """Place visible enemy entities on floor tiles."""
@@ -949,12 +1043,21 @@ class DungeonState:
         floor["enemies"] = enemies
 
     def _move_enemies(self):
-        """Move all enemies on current floor. Returns enemy if one touches party."""
-        floor = self.floors[self.current_floor]
+        """Move all enemies on current floor. Returns enemy if one touches party.
+
+        Chase:   enemy has LOS to party within alert_range → pursue.
+        Linger:  enemy loses LOS → stays near last known position for
+                 LINGER_STEPS steps before returning to patrol.
+        Patrol:  wander randomly.
+        Enemies can pass through doors while chasing or lingering.
+        """
+        LINGER_STEPS = 8
+
+        floor   = self.floors[self.current_floor]
         enemies = floor.get("enemies", [])
-        tiles = floor["tiles"]
-        fw, fh = floor["width"], floor["height"]
-        px, py = self.party_x, self.party_y
+        tiles   = floor["tiles"]
+        fw, fh  = floor["width"], floor["height"]
+        px, py  = self.party_x, self.party_y
 
         # Build occupied set for enemy-enemy collision avoidance
         occupied = {(e["x"], e["y"]) for e in enemies if e["state"] != "dead"}
@@ -963,37 +1066,62 @@ class DungeonState:
             if enemy["state"] == "dead":
                 continue
 
+            ex, ey = enemy["x"], enemy["y"]
+            edist  = math.sqrt((ex - px) ** 2 + (ey - py) ** 2)
+
+            # Contact check BEFORE cooldown — player walking onto enemy must trigger combat
+            if abs(ex - px) <= 1 and abs(ey - py) <= 1 and edist <= 1.5:
+                return enemy
+
             # Cooldown
             if enemy["move_cooldown"] > 0:
                 enemy["move_cooldown"] -= 1
                 continue
 
-            ex, ey = enemy["x"], enemy["y"]
-            dist = abs(ex - px) + abs(ey - py)  # Manhattan distance
+            # LOS check — walls and closed doors block enemy sight
+            can_see = (
+                edist <= enemy["alert_range"]
+                and self._has_los(floor, ex, ey, px, py)
+            )
 
-            if dist <= 1:
-                # Adjacent or same tile — trigger combat
-                return enemy
+            # Determine state and move target
+            if can_see:
+                enemy["state"]         = "chase"
+                enemy["linger_timer"]  = LINGER_STEPS
+                enemy["last_known_px"] = px
+                enemy["last_known_py"] = py
+                tx, ty = px, py
 
-            if dist <= enemy["alert_range"]:
-                # Chase — move toward player
-                enemy["state"] = "chase"
-                dx = 0 if px == ex else (1 if px > ex else -1)
-                dy = 0 if py == ey else (1 if py > ey else -1)
-                # Prefer axis with larger gap
-                if abs(px - ex) >= abs(py - ey):
-                    moves = [(dx, 0), (0, dy), (dx, dy)]
-                else:
-                    moves = [(0, dy), (dx, 0), (dx, dy)]
+            elif enemy.get("linger_timer", 0) > 0:
+                enemy["state"]        = "linger"
+                enemy["linger_timer"] -= 1
+                tx = enemy.get("last_known_px", ex)
+                ty = enemy.get("last_known_py", ey)
+                if ex == tx and ey == ty:
+                    enemy["linger_timer"] = 0   # reached last known — give up sooner
+
             else:
-                # Patrol — wander
                 enemy["state"] = "patrol"
+                tx, ty = None, None   # patrol uses patrol_dir
+
+            # Build candidate moves
+            chase_passable = PASSABLE_TILES | {DT_DOOR}
+
+            if tx is not None:
+                ddx = 0 if tx == ex else (1 if tx > ex else -1)
+                ddy = 0 if ty == ey else (1 if ty > ey else -1)
+                if abs(tx - ex) >= abs(ty - ey):
+                    moves = [(ddx, 0), (0, ddy), (ddx, ddy)]
+                else:
+                    moves = [(0, ddy), (ddx, 0), (ddx, ddy)]
+                passable = chase_passable
+            else:
                 pdx, pdy = enemy["patrol_dir"]
                 moves = [(pdx, pdy)]
-                # Random direction change
                 if random.random() < 0.2:
                     enemy["patrol_dir"] = random.choice(
                         [(0, 1), (0, -1), (1, 0), (-1, 0)])
+                passable = PASSABLE_TILES
 
             # Try each move
             moved = False
@@ -1001,9 +1129,12 @@ class DungeonState:
                 if mdx == 0 and mdy == 0:
                     continue
                 nx, ny = ex + mdx, ey + mdy
-                if (0 <= nx < fw and 0 <= ny < fh and
-                        tiles[ny][nx]["type"] in PASSABLE_TILES and
-                        (nx, ny) not in occupied):
+                # If the target tile is the party's tile, that's contact — trigger combat
+                if nx == px and ny == py:
+                    return enemy
+                if (0 <= nx < fw and 0 <= ny < fh
+                        and tiles[ny][nx]["type"] in passable
+                        and (nx, ny) not in occupied):
                     occupied.discard((ex, ey))
                     enemy["x"] = nx
                     enemy["y"] = ny
@@ -1012,16 +1143,73 @@ class DungeonState:
                     break
 
             if not moved and enemy["state"] == "patrol":
-                # Reverse direction if blocked
                 pdx, pdy = enemy["patrol_dir"]
                 enemy["patrol_dir"] = (-pdx, -pdy)
 
-            # Set cooldown (patrol is slower, chase is faster)
+            # Cooldown
             enemy["move_cooldown"] = 1 if enemy["state"] == "chase" else 2
 
         return None  # no contact
 
-    def get_floor_enemies(self):
+    def _check_door_surprise(self, floor, door_x, door_y, dx, dy):
+        """Check for ambush when party steps through a door.
+
+        Returns "enemy" if enemies ambush the party, "party" if party
+        surprises enemies, or None for no surprise.
+
+        Surprise roll (enemy ambushes party):
+          base_chance = 40%
+          Thief in party:   -25 - level*3  per Thief
+          Ranger in party:  -15 - level*2  per Ranger
+          DEX/2 + WIS from each member further reduces chance
+          Racial stealth bonus: get_passive(race, 'stealth_bonus', 0)
+        """
+        # Check for enemies within SIGHT_RADIUS on the other side of the door
+        sight = self.SIGHT_RADIUS
+        beyond_x = door_x + dx
+        beyond_y = door_y + dy
+        tiles = floor["tiles"]
+        fw, fh = floor["width"], floor["height"]
+
+        enemies_nearby = []
+        for enemy in floor.get("enemies", []):
+            if enemy["state"] == "dead":
+                continue
+            ex, ey = enemy["x"], enemy["y"]
+            dist = math.sqrt((ex - beyond_x) ** 2 + (ey - beyond_y) ** 2)
+            if dist <= sight:
+                enemies_nearby.append(enemy)
+
+        if not enemies_nearby:
+            return None
+
+        # Build surprise reduction from party skills
+        surprise_reduction = 0
+        for c in self.party:
+            cn = getattr(c, "class_name", "")
+            lvl = getattr(c, "level", 1)
+            if cn == "Thief":
+                surprise_reduction += 25 + lvl * 3
+            elif cn == "Ranger":
+                surprise_reduction += 15 + lvl * 2
+            stats = getattr(c, "stats", {})
+            surprise_reduction += stats.get("DEX", 0) // 2
+            surprise_reduction += stats.get("WIS", 0)
+            from core.races import get_passive
+            surprise_reduction += get_passive(
+                getattr(c, "race_name", "Human"), "stealth_bonus", 0)
+
+        # Base 40% enemy ambush chance, reduced by party skills
+        ambush_chance = max(5, 40 - surprise_reduction)
+        roll = random.randint(1, 100)
+
+        if roll <= ambush_chance:
+            return "enemy"   # enemies get free round
+        elif roll >= 90:     # top 10%: party surprises them
+            return "party"
+        return None
+
+
         """Get list of living enemies on current floor."""
         floor = self.floors[self.current_floor]
         return [e for e in floor.get("enemies", []) if e["state"] != "dead"]
@@ -1051,10 +1239,35 @@ class DungeonState:
         if tile["type"] == DT_SECRET_DOOR and not tile.get("secret_found"):
             return None
 
+        # Block movement if an enemy occupies the target tile — trigger encounter instead
+        for _e in floor.get("enemies", []):
+            if _e.get("state") == "dead":
+                continue
+            if _e["x"] == nx and _e["y"] == ny:
+                # Don't move; start combat with this enemy immediately
+                enc_event = {
+                    "type": "random_encounter",
+                    "dungeon_id": self.dungeon_id,
+                    "floor": self.current_floor,
+                    "total_floors": self.total_floors,
+                    "is_boss": False,
+                    "_enc_key": _e.get("enc_key"),
+                }
+                return enc_event
+
         self.party_x = nx
         self.party_y = ny
         self._update_fog()
         self._check_trap_detection(nx, ny)
+
+        # Surprise check when stepping through a door
+        if tile["type"] == DT_DOOR:
+            surprise_event = self._check_door_surprise(floor, nx, ny, dx, dy)
+            if surprise_event:
+                # Still process the move normally but attach surprise to
+                # the encounter event that _move_enemies will return shortly.
+                # Store on dungeon state so _process_dungeon_event can pick it up.
+                self._pending_surprise = surprise_event
 
         # Per-step resource trickle
         from core.progression import apply_step_regen
@@ -1132,7 +1345,7 @@ class DungeonState:
 
             # Store contacted enemy position for post-combat cleanup
             self._last_contact_enemy = (contact["x"], contact["y"])
-            return {
+            enc_event = {
                 "type": "random_encounter",
                 "dungeon_id": self.dungeon_id,
                 "floor": self.current_floor,
@@ -1140,6 +1353,11 @@ class DungeonState:
                 "is_boss": False,
                 "_enc_key": contact["enc_key"],
             }
+            # Attach any pending door surprise
+            if getattr(self, "_pending_surprise", None):
+                enc_event["surprise"] = self._pending_surprise
+                self._pending_surprise = None
+            return enc_event
 
         return None
 
@@ -1191,17 +1409,56 @@ class DungeonState:
             return floor["tiles"][y][x]
         return None
 
+    # ── Line-of-sight constants ──────────────────────────────
+    SIGHT_RADIUS = 3      # tiles
+
+    def _has_los(self, floor, x0, y0, x1, y1):
+        """DDA ray from (x0,y0) to (x1,y1). Returns True if unobstructed.
+        Walls and closed doors block LOS. The target tile itself is visible
+        (so the party can *see* the wall/door that blocks them)."""
+        tiles  = floor["tiles"]
+        fw, fh = floor["width"], floor["height"]
+        dx = x1 - x0
+        dy = y1 - y0
+        steps = max(abs(dx), abs(dy))
+        if steps == 0:
+            return True
+        sx = dx / steps
+        sy = dy / steps
+        cx, cy = float(x0) + 0.5, float(y0) + 0.5
+        for _ in range(steps):
+            cx += sx
+            cy += sy
+            tx, ty = int(cx), int(cy)
+            if tx == x1 and ty == y1:
+                return True          # reached target — it's visible
+            if tx < 0 or ty < 0 or tx >= fw or ty >= fh:
+                return False
+            tt = tiles[ty][tx]["type"]
+            if tt == DT_WALL:
+                return False
+            if tt == DT_SECRET_DOOR and not tiles[ty][tx].get("secret_found"):
+                return False
+            if tt == DT_DOOR:
+                return False         # closed doors block LOS
+        return True
+
     def _update_fog(self):
-        """Reveal tiles within sight range (3 tiles in dungeons)."""
-        floor = self.floors[self.current_floor]
-        sight = 3
+        """Reveal tiles within LOS sight range (3 tiles, walls/doors block)."""
+        floor  = self.floors[self.current_floor]
+        sight  = self.SIGHT_RADIUS
+        px, py = self.party_x, self.party_y
+        # Always reveal the tile the party stands on
+        floor["tiles"][py][px]["discovered"] = True
         for dy in range(-sight, sight + 1):
             for dx in range(-sight, sight + 1):
-                nx = self.party_x + dx
-                ny = self.party_y + dy
-                if 0 <= nx < floor["width"] and 0 <= ny < floor["height"]:
-                    if math.sqrt(dx * dx + dy * dy) <= sight:
-                        floor["tiles"][ny][nx]["discovered"] = True
+                nx, ny = px + dx, py + dy
+                if nx < 0 or ny < 0 or nx >= floor["width"] or ny >= floor["height"]:
+                    continue
+                if math.sqrt(dx * dx + dy * dy) > sight:
+                    continue
+                if self._has_los(floor, px, py, nx, ny):
+                    floor["tiles"][ny][nx]["discovered"] = True
 
     def _check_trap_detection(self, px, py):
         """Roll detection for traps on current and adjacent tiles.
@@ -1345,30 +1602,3 @@ class DungeonState:
         """Mark chest as opened and return treasure data ready for ChestUI."""
         chest_ev["opened"] = True
         return chest_ev
-
-
-        """Get tiles visible in viewport, centered on party."""
-        floor = self.floors[self.current_floor]
-        half_w = view_w // 2
-        half_h = view_h // 2
-        result = []
-        for vy in range(view_h):
-            row = []
-            for vx in range(view_w):
-                wx = self.party_x - half_w + vx
-                wy = self.party_y - half_h + vy
-                if 0 <= wx < floor["width"] and 0 <= wy < floor["height"]:
-                    tile = floor["tiles"][wy][wx]
-                    row.append({
-                        "wx": wx, "wy": wy,
-                        "type": tile["type"],
-                        "discovered": tile["discovered"],
-                        "event": tile.get("event"),
-                        "is_party": (wx == self.party_x and wy == self.party_y),
-                        "secret_found": tile.get("secret_found", False),
-                        "secret_room": tile.get("secret_room", False),
-                    })
-                else:
-                    row.append(None)
-            result.append(row)
-        return result

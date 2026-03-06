@@ -115,13 +115,13 @@ BRIARHOLLOW_MAP_RAW = [
     "TT###########.###########.#############...TT",  #  5
     "TT###########.###########.#############...TT",  #  6
     "TT#####D#####.######D####.######D######...TT",  #  7  doors at 7,19,32
-    "TT.....P.....P......P....P.......P........TT",  #  8  front paths
+    "TT.....P.....P......P....P......PP........TT",  #  8  front paths
     "TTPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPTT",  #  9  main cobblestone street
-    "TT..T........T...S....W.....T.......T.....TT",  # 10  square (S=signpost W=well)
+    "TT..T........T...S....W.....T..S....T.....TT",  # 10  square (S=signpost W=well)
     "TT.....T..........B.....B.......T.........TT",  # 11  benches
     "TT..T........T.......T........T.......T...TT",  # 12  square lower
     "TTPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPTT",  # 13  south cobblestone street
-    "TT.....P.....P......P....P.......P........TT",  # 14  south front paths
+    "TT.....P.....P......P....P......PP........TT",  # 14  south front paths
     "TT#####D#####.######D####.######D######...TT",  # 15  south doors at 7,20,33
     "TT###########.###########.#############...TT",  # 16  south facades
     "TT###########.###########.#############...TT",  # 17
@@ -282,6 +282,7 @@ BRIARHOLLOW_NPCS = [
 
 BRIARHOLLOW_SIGNS = {
     (17, 10): "Briarhollow — Founded in the Third Age. Population: 312.",
+    (31, 10): "Job Board — Adventurers wanted. Post your contracts here.",
 }
 
 BRIARHOLLOW_SPAWN = (21, 23)   # arriving from the south gate
@@ -304,16 +305,16 @@ WOODHAVEN_MAP_RAW = [
     "T..####..####..........TTTT",  # 2
     "T..#..#..#..#..........####",  # 3
     "T..#..D..D..#..........#..#",  # 4  inn(5,4) shop(8,4)      guild(25,4)
-    "T..####..####..........D..#",  # 5                           guild(25,5)
-    "T....P.P.......PPPPPPPP####",  # 6  stubs up to inn/shop, east path
+    "T..###.P..###..........D..#",  # 5  stubs to inn(6) and shop(9)
+    "T....PPP.P.....PPPPPPPP####",  # 6  stubs up to inn/shop, east path
     "T..PPPPPPPPPPPPPPPPPPPPPPPT",  # 7  main E-W street
     "T..P.........####.........T",  # 8
     "T..P.........#..#.........T",  # 9
-    "T..P..####...D..#.........T",  # 10 temple(8,12)  tavern(13,10)
+    "T..P..##.#...D..#.........T",  # 10 temple(8,12)  tavern(13,10)
     "T..P..#..#...####.........T",  # 11
     "T..P..#..D...P............T",  # 12
     "T..P..####...P..S.........T",  # 13
-    "T..P.........P....####....T",  # 14                forge(18,16)
+    "T..P.........P.....###....T",  # 14                forge(18,16)
     "WWWBWWWWWWWWWBWWWW#..#..WWW",  # 15 bridges at (3,15) and (13,15)
     "T..P.........P....D..#....T",  # 16
     "T..P.........P....####....T",  # 17
@@ -580,7 +581,7 @@ IRONHEARTH_NPCS = [
 ]
 
 IRONHEARTH_SIGNS = {
-    (6, 15): "Job Board — Miners and fighters needed.",
+    (5, 15): "Job Board — Miners and fighters needed.",
 }
 
 IRONHEARTH_SPAWN = (10, 22)
@@ -601,9 +602,9 @@ GREENWOOD_MAP_RAW = [
     "TT...TT..####..TT..TTTT",  # 5
     "TT....PPPPP..TTTT..TTTT",  # 6
     "TT....P.....TT.....TTTT",  # 7
-    "TT....P.####.......TTTT",  # 8
+    "TT....PS####.......TTTT",  # 8
     "TT....P.#..#...S...TTTT",  # 9
-    "TT....P.#..D.......TTTT",  # 10 tavern(10,10)
+    "TT....P....D.......TTTT",  # 10 tavern(10,10)
     "TT....P.####.......TTTT",  # 11
     "TT....P............TTTT",  # 12
     "TT....P..####......TTTT",  # 13
@@ -671,6 +672,7 @@ GREENWOOD_NPCS = [
 
 GREENWOOD_SIGNS = {
     (12, 9): "Notice Board — Bounties posted within.",
+    (7, 8): "Job Board — Seek work or post contracts.",
 }
 
 GREENWOOD_SPAWN = (8, 18)
@@ -692,7 +694,7 @@ SALTMERE_MAP_RAW = [
     "T..####..####....#..D......T",   # 5           black_market(17,5)
     "T.....PP.........####......T",   # 6
     "T.....PP.......PPPPPPPPPPPT",    # 7
-    "T.....PP.......P...........T",   # 8
+    "T.....PP.......P.S.........T",   # 8
     "T.PPPPPP.......P...####....T",   # 9
     "T.P............P...#..#....T",   # 10
     "T.P..####......P...#..D....T",   # 11 thieves_den(11,11)  tavern(20,11)
@@ -788,6 +790,7 @@ SALTMERE_NPCS = [
 
 SALTMERE_SIGNS = {
     (14, 9): "Harbor Master — All ships must register.",
+    (17, 8): "Job Board — Mercenaries and merchants post work here.",
 }
 
 SALTMERE_SPAWN = (10, 19)
@@ -808,7 +811,7 @@ SANCTUM_MAP_RAW = [
     "#..#......#..#......#........#",  # 3
     "#..#......#..#......#........#",  # 4
     "#..#......D..D......#........#",  # 5  cathedral_l(11,5)  cathedral_r(14,5)
-    "#..########..########........#",  # 6
+    "#..########P.########........#",  # 6  stub connecting cathedral_l(11) to path
     "#....PPPPPPPPPPPPPPPPPP......#",  # 7  main nave path
     "#....P..................P....#",  # 8
     "#....P..####......####..P...#",  # 9
@@ -915,6 +918,7 @@ SANCTUM_NPCS = [
 
 SANCTUM_SIGNS = {
     (6, 14): "Notice: All weapons must be peace-bound within Sanctum's walls.",
+    (3, 14): "Job Board — The Church posts charitable and protective work here.",
 }
 
 SANCTUM_SPAWN = (14, 22)
@@ -938,20 +942,20 @@ CRYSTALSPIRE_MAP_RAW = [
     "T..#........#..####............T",  # 6
     "T..##########..................T",  # 7
     "T......PPPPPPPPPPPPPPPPPPP.....T",  # 8  main street
-    "T......P...................P....T",  # 9
-    "T......P...####........####.P..T",  # 10
-    "T......P...#..#........#..#.P..T",  # 11
+    "T......P............P.....P....T",  # 9
+    "T......P...####......P.####.P..T",  # 10
+    "T......P...#..#......P.#..#.P..T",  # 11
     "T......P...#..D........D..#.P..T",  # 12 inn(12,12)      shop(21,12)
-    "T......P...####........####.P..T",  # 13
-    "T......P.....P.........P...P...T",  # 14
-    "T......PPPPPP.P.P.P.PPPPPP.....T",  # 15 teleport circle at (16,15) — marked by Teleport Master NPC
-    "T......P......P.....P..........T",  # 16
-    "T......P..####.....####........T",  # 17
-    "T......P..#..#.....#..#........T",  # 18
+    "T......P...####......P.####.P..T",  # 13
+    "T......P.....P.......P.P...P...T",  # 14
+    "T......PPPPPP.P.PPP.PPPPPP.....T",  # 15 teleport circle at (16,15)
+    "T......P......P..P..P..........T",  # 16
+    "T......P..####...P.####........T",  # 17
+    "T......P..#..#...P.#..#........T",  # 18
     "T......P..#..D.....D..#........T",  # 19 tavern(10,19)   temple(17,19)
-    "T......P..####.....####........T",  # 20
-    "T......P...................P....T",  # 21
-    "T......P..S................P....T", # 22
+    "T......P..####...P.####........T",  # 20
+    "T......P........P..........P...T",  # 21
+    "T......P..S.....P..........P...T",  # 22
     "TPPPPPPPPEEPPPPPPPPPPPPPPPPPPPPPT",  # 23 exits(9,23)(10,23)
 ]
 
@@ -1042,6 +1046,7 @@ CRYSTALSPIRE_NPCS = [
 
 CRYSTALSPIRE_SIGNS = {
     (10, 22): "Teleport Circle — Guild members only. 50g per jump.",
+    (10, 22): "Job Board — Arcane contracts and scholarly missions.",
 }
 
 CRYSTALSPIRE_SPAWN = (14, 22)
@@ -1061,8 +1066,8 @@ THORNHAVEN_MAP_RAW = [
     "#..####..####..####..............####",  # 2
     "#..#..#..#..#..#..#..............#..#",  # 3
     "#..#..D..D..#..#..D..............D..#",  # 4  inn(5,4) shop(8,4) guild(14,4)  castle_gate(33,4)
-    "#..####..####..####..............####",  # 5
-    "#....................................#",  # 6
+    "#..####.P####.P####..............####",  # 5  stubs for shop(8) guild(14)
+    "#.......P.....P......................#",  # 6  stubs down to main road
     "#..PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP.#",  # 7  main imperial road
     "#..P................................#",  # 8
     "#..P..####..####....................#",  # 9
@@ -1076,13 +1081,13 @@ THORNHAVEN_MAP_RAW = [
     "#..P..#........#..#..#..............#",  # 17
     "#..P..#........#..#..#..............#",  # 18
     "#..P..#........D..D..#..............#",  # 19  marketplace(13,19) forge(17,19)
-    "#..P..##########..####..............#",  # 20
-    "#..P................................#",  # 21
-    "#..P..####..####....................#",  # 22
-    "#..P..#..#..#..#....................#",  # 23
-    "#..P..#..D..D..#....................#",  # 24  barracks(9,24)  mages_hall(12,24)
-    "#..P..####..####....................#",  # 25
-    "#..P................................#",  # 26
+    "#..P..##########.P####..............##",  # 20
+    "#..P.............P..................##",  # 21
+    "#..P..####..####.P..................##",  # 22
+    "#..P..#..#..#..#.P..................##",  # 23
+    "#..P..#..D..D..#.P..................##",  # 24  barracks(9,24)  mages_hall(12,24)
+    "#..P..####..####.P..................##",  # 25
+    "#..P.............P..................##",  # 26
     "#PPPPPPPPPEEPPPPPPPPPPPPPPPPPPPPPPP#",  # 27  exits(10,27)(11,27)
 ]
 
@@ -1235,6 +1240,7 @@ THORNHAVEN_NPCS = [
 
 THORNHAVEN_SIGNS = {
     (7, 14): "Imperial Notice Board — By order of the Governor.",
+    (6, 14): "Job Board — Military contracts and civic duties posted daily.",
 }
 
 THORNHAVEN_SPAWN = (14, 26)
