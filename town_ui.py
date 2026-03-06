@@ -2302,7 +2302,8 @@ class TownUI:
     def handle_click(self, mx, my):
         """Returns 'exit' to leave town, or None."""
 
-        # Dialogue takes priority
+        # Dialogue takes priority — handle and return immediately so other
+        # click targets don't process on the same mouse event.
         if self.active_dialogue and not self.active_dialogue.finished:
             result = self.active_dialogue.handle_click(mx, my)
             if self.active_dialogue.finished:
@@ -2312,6 +2313,7 @@ class TownUI:
                     auto_advance_quests(self.party)
                 except Exception:
                     pass
+            return None  # consume the click regardless
 
         # ── Indoor NPC portrait click (any service view) ──
         if (self._bld_npc_portrait_rect and

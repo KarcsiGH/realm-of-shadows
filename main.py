@@ -268,7 +268,6 @@ class Game:
             sfx.stop_ambient()
             sfx.stop_music()
             sfx.play("combat_start")
-            sfx.play_music("combat_music")
         elif state in (S_PARTY, S_POST_COMBAT):
             sfx.stop_music()
             sfx.stop_ambient()
@@ -1699,10 +1698,12 @@ class Game:
             rect = pygame.Rect(cx, cy, card_w, card_h)
             draw_panel(self.screen, rect, border_color=cls["color"])
 
-            # Portrait silhouette (right side of card)
+            # Portrait silhouette (right side of card) — preserve sprite aspect ratio
             from ui.pixel_art import draw_character_silhouette as _dcs
-            por_w, por_h = 62, card_h - 10
-            por_r = pygame.Rect(cx + card_w - por_w - 4, cy + 4, por_w, por_h)
+            from ui.wiz_sprites import W as SPR_W, H as SPR_H
+            por_w = 62
+            por_h = int(por_w * SPR_H / SPR_W)   # ~103px, matches 48:80 ratio
+            por_r = pygame.Rect(cx + card_w - por_w - 4, cy + (card_h - por_h) // 2, por_w, por_h)
             equip = getattr(c, "equipment", {})
             armor_t = equip.get("armor", {}).get("armor_tier") if equip.get("armor") else None
             _dcs(self.screen, por_r, c.class_name,
