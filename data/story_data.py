@@ -11,18 +11,28 @@ lore entries, dungeon story events, and tavern rumors by act.
 # ═══════════════════════════════════════════════════════════════
 
 OPENING_SEQUENCE = [
-    ("", "The world of Aldenmere is dying."),
-    ("", "They call it the Fading — a creeping emptiness that swallows villages whole. "
-     "People vanish. Memories dissolve. The sun itself seems dimmer each season."),
+    ("", "Aldenmere is dying."),
+    ("", "Not from war. Not from plague. From forgetting. "
+         "Villages vanish overnight — not burned, not fled. "
+         "Simply gone, as if they had never existed. "
+         "People wake with no memory of their children's faces."),
+    ("", "They call it the Fading."),
     ("", "The ancient wards that held the darkness at bay for a thousand years "
-     "are failing, one by one."),
-    ("", "You arrived in Briarhollow three days ago — strangers, drawn together "
-     "by rumor and desperation. Each of you carries the old blood, the mark of the "
-     "Wardens — an order thought extinct for centuries."),
-    ("", "A woman named Maren found you. She says the Fading can be stopped. "
-     "She says you're the only ones who can do it."),
-    ("", "She's waiting at the tavern. Whatever happens next, the world will never "
-     "be the same."),
+         "are failing. The Wardens who built them have been dead for generations. "
+         "Their order is a myth. Their bloodlines, supposedly, extinct."),
+    ("", "You know that last part isn't true."),
+    ("", "You've always been different. Drawn to old places. "
+         "Resistant to things that should hurt you. "
+         "Haunted by a sense that something enormous is waiting just outside your sight."),
+    ("", "Three days ago a woman named Maren found you in Briarhollow. "
+         "She had a list of names — yours among them. "
+         "She said: 'I have been looking for you for seven years. "
+         "I am sorry it took this long. And I am sorry for what I am about to ask.'"),
+    ("", "She's waiting at the tavern. "
+         "Outside, the eastern sky is the wrong shade of grey. "
+         "It's been that way for a week, and getting worse."),
+    ("", "Whatever she asks — the answer is probably yes. "
+         "You know that. You've known it since she said your name."),
 ]
 
 
@@ -643,6 +653,12 @@ NPCS = {
         "location": "greenwood",
         "portrait_color": (90, 150, 70),
     },
+    "old_moss": {
+        "name": "Old Moss",
+        "title": "Forest Hermit",
+        "location": "greenwood",
+        "portrait_color": (60, 110, 50),
+    },
 
     # ─── Saltmere ───
     "guildmaster_sable": {
@@ -1183,6 +1199,56 @@ NPC_DIALOGUES = {
                 },
             },
         },
+        # After Spider's Nest cleared — turn-in for main_spiders_nest
+        {
+            "conditions": [
+                {"flag": "boss_defeated.spiders_nest", "op": "==", "value": True},
+                {"flag": "quest.main_spiders_nest.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "maren_post_spiders",
+                "nodes": {
+                    "start": {
+                        "speaker": "Maren",
+                        "text": "The Spider's Nest. I could feel the corruption easing "
+                                "when you killed the queen — the Fading had taken root in her, "
+                                "accelerated the whole colony's growth. "
+                                "It's spreading through anything living near the ley lines. "
+                                "You stopped one thread. There are more.",
+                        "choices": [
+                            {"text": "The queen was enormous. Unnatural.", "next": "unnatural"},
+                            {"text": "The corruption is in the animals too?", "next": "animals"},
+                        ],
+                    },
+                    "unnatural": {
+                        "speaker": "Maren",
+                        "text": "Yes. The Fading doesn't kill — not at first. "
+                                "It warps. Makes things grow beyond their nature, "
+                                "feeds on the energy they produce, then collapses them. "
+                                "Like a fire that burns its own fuel. "
+                                "The mine will be the same if we don't act.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "main_spiders_nest"},
+                            {"action": "set_flag", "flag": "maren.spiders_spoken", "value": True},
+                        ],
+                        "end": True,
+                    },
+                    "animals": {
+                        "speaker": "Maren",
+                        "text": "Everything near a ley disruption. The goblins, the spiders, "
+                                "the wolves Captain Aldric mentioned. They're not rabid — "
+                                "they're corrupted. Driven by something they can't understand "
+                                "or escape. That's what makes this worse than a plague. "
+                                "A plague you can quarantine.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "main_spiders_nest"},
+                            {"action": "set_flag", "flag": "maren.spiders_spoken", "value": True},
+                        ],
+                        "end": True,
+                    },
+                },
+            },
+        },
         # After Dragon's Tooth cleared
         {
             "conditions": [
@@ -1447,8 +1513,10 @@ NPC_DIALOGUES = {
                     },
                     "bounties": {
                         "speaker": "Captain Rowan",
-                        "text": "Clear the roads and I'll see you're compensated. "
-                                "Every bandit and beast you put down helps this town survive.",
+                        "text": "The wolves are worse than usual this season — driving them off would help. "
+                                "Bring me five pelts as proof and I'll see you compensated. "
+                                "Beyond that, clear the roads and every beast you put down helps.",
+                        "on_enter": [{"action": "start_quest", "quest": "side_wolf_pelts"}],
                         "end": True,
                     },
                     "bye": {
@@ -1465,20 +1533,113 @@ NPC_DIALOGUES = {
     #  BESS — Innkeeper
     # ─────────────────────────────────────────────────────────
     "bess": [
+        # ── After Maren leaves (Act 2+) ──────────────────────────────
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "bess_post_maren",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Bess",
+                        "text": "She left before dawn. Paid her tab in full — in advance, "
+                                "actually, which surprised me. Maren didn't seem like someone "
+                                "who planned to leave. Something must have pushed her.",
+                        "choices": [
+                            {"text": "Did she say anything before she went?", "next": "last_words"},
+                            {"text": "Was she alone?", "next": "alone"},
+                            {"text": "Any word from the road since?", "next": "road_word"},
+                            {"text": "Thanks, Bess.", "next": "bye"},
+                        ],
+                    },
+                    "last_words": {
+                        "speaker": "Bess",
+                        "text": "She came down before first light and left a note on the bar. "
+                                "Just said: 'Tell them I'm sorry. Tell them I know what I'm doing.' "
+                                "I don't know who 'them' was. I figure it was you.",
+                        "next": "start",
+                    },
+                    "alone": {
+                        "speaker": "Bess",
+                        "text": "As far as I could tell. One bedroll, one satchel. "
+                                "She took all her maps and journals — left nothing behind "
+                                "except that note and a lot of unanswered questions.",
+                        "next": "start",
+                    },
+                    "road_word": {
+                        "speaker": "Bess",
+                        "text": "Nothing reliable. A carter said he passed a woman matching "
+                                "her description on the north road, moving fast. "
+                                "That's all I have. She didn't want to be followed.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Bess",
+                        "text": "Find her before she does something she can't undo. "
+                                "That's my only request.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # ── After meeting Maren but before she leaves (Act 1) ────────
+        {
+            "conditions": [{"flag": "npc.maren.met", "op": "==", "value": True}],
+            "tree": {
+                "id": "bess_knows_maren",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Bess",
+                        "text": "Your scholar friend is still at it — maps spread across "
+                                "the whole table, candles burning past midnight. "
+                                "Whatever she's looking for, she won't stop until she finds it. "
+                                "Can I get you anything?",
+                        "on_enter": [{"action": "meet_npc", "npc": "bess"}],
+                        "choices": [
+                            {"text": "What's the talk in town these days?", "next": "rumors"},
+                            {"text": "Has Maren said anything useful?", "next": "maren_talk"},
+                            {"text": "Just a drink and a moment's quiet.", "next": "bye"},
+                        ],
+                    },
+                    "rumors": {
+                        "speaker": "Bess",
+                        "text": "Old Petra's been complaining about giant spider silk on the "
+                                "eastern path. Not normal size — thick as rope, she says. "
+                                "Half the village thinks she's losing her mind. "
+                                "The other half won't go near that road after dark.",
+                        "next": "start",
+                    },
+                    "maren_talk": {
+                        "speaker": "Bess",
+                        "text": "She keeps to herself mostly. Once she said something about "
+                                "'the land remembering what people forget.' I didn't press her. "
+                                "Some guests you let talk, some you let think. She's the second kind.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Bess",
+                        "text": "Coming right up. Rest while you can.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # ── Default (first arrival, no Maren met yet) ─────────────────
         {
             "conditions": [],
             "tree": {
                 "id": "bess_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Bess",
-                        "text": "Welcome to the Flagon. You look like you could use a drink "
-                                "and a warm bed. Or are you here for the gossip?",
+                        "text": "Welcome to the Rusty Flagon. You look like you could use "
+                                "a drink and a warm bed. Or are you here for the gossip?",
                         "on_enter": [{"action": "meet_npc", "npc": "bess"}],
                         "choices": [
                             {"text": "What's the word around town?", "next": "rumors"},
-                            {"text": "Tell me about Maren.", "next": "about_maren",
-                             "conditions": [{"flag": "npc.maren.met", "op": "==", "value": True}]},
+                            {"text": "Is there a scholar staying here?", "next": "about_maren"},
                             {"text": "Just passing through.", "next": "bye"},
                         ],
                     },
@@ -1488,19 +1649,165 @@ NPC_DIALOGUES = {
                                 "with rain. Old Tam swears he saw his barn fade like a mirage "
                                 "and come back an hour later. And those goblins — they look "
                                 "scared, not angry. Whatever's out there, it frightens them too.",
-                        "end": True,
+                        "next": "start",
                     },
                     "about_maren": {
                         "speaker": "Bess",
-                        "text": "Maren? She arrived a fortnight ago. Quiet, pays on time, "
+                        "text": "Maren? Arrived a fortnight ago. Quiet, pays on time, "
                                 "spends all day with her books and maps. She asked about you lot "
-                                "before you even got here. Knew you were coming somehow. "
-                                "Gives me the chills, honestly.",
-                        "end": True,
+                                "before you even got here — knew you were coming somehow. "
+                                "Gives me the chills, if I'm honest. She's in the corner if you want to speak with her.",
+                        "next": "start",
                     },
                     "bye": {
                         "speaker": "Bess",
                         "text": "Rest well. The world'll still need saving tomorrow.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  OLD PETRA — Briarhollow townsfolk, Spider's Nest hook
+    # ─────────────────────────────────────────────────────────
+    "old_petra": [
+        # After spiders cleared — grateful
+        {
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "tree": {
+                "id": "old_petra_post_spiders",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Old Petra",
+                        "text": "The eastern path is clear again. I walked it myself this morning — "
+                                "first time in weeks I didn't feel watched. "
+                                "Whatever you did in that cave, it worked. "
+                                "Don't let anyone tell you otherwise.",
+                        "on_enter": [{"action": "meet_npc", "npc": "old_petra"}],
+                        "choices": [
+                            {"text": "What was it like when the webs appeared?", "next": "webs_start"},
+                            {"text": "Glad to help.", "next": "bye"},
+                        ],
+                    },
+                    "webs_start": {
+                        "speaker": "Old Petra",
+                        "text": "Overnight, almost. First one morning there was a strand or two — "
+                                "I thought a big garden spider. Next morning the whole east hedge "
+                                "was wrapped. Silk thick as my wrist. Something in that cave "
+                                "was growing. Whatever the Fading touches, it doesn't grow natural.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Old Petra",
+                        "text": "Safe travels. And thank you.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Default — worried, gives the hook
+        {
+            "conditions": [],
+            "tree": {
+                "id": "old_petra_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Old Petra",
+                        "text": "I've lived on this square for sixty years. I know every face "
+                                "and every fence post. And I know something's wrong with the "
+                                "eastern path. Go see for yourself if you don't believe an old woman.",
+                        "on_enter": [{"action": "meet_npc", "npc": "old_petra"}],
+                        "choices": [
+                            {"text": "What's wrong with the eastern path?", "next": "spiders"},
+                            {"text": "How long has it been like this?", "next": "how_long"},
+                            {"text": "We'll look into it.", "next": "look_into"},
+                            {"text": "I'll keep that in mind.", "next": "bye"},
+                        ],
+                    },
+                    "spiders": {
+                        "speaker": "Old Petra",
+                        "text": "Spider silk. Everywhere. And not small spiders — I found a web "
+                                "yesterday that could catch a horse. The cave east of town, "
+                                "the one the children dare each other to enter. Something inside "
+                                "it has grown very large, and very hungry. "
+                                "Nobody will listen because I'm old. Maybe you will.",
+                        "on_enter": [{"action": "start_quest", "quest": "main_spiders_nest"}],
+                        "next": "start",
+                    },
+                    "how_long": {
+                        "speaker": "Old Petra",
+                        "text": "Three weeks, maybe four. It started slow. One morning a strand, "
+                                "the next morning a sheet of it across the hedge. "
+                                "It's the Fading, that's what they're calling it. "
+                                "Whatever it touches doesn't grow the way God intended.",
+                        "next": "start",
+                    },
+                    "look_into": {
+                        "speaker": "Old Petra",
+                        "text": "The cave is east, past the old mill. You'll smell it before "
+                                "you see it — like damp earth and something sweet gone wrong. "
+                                "Be careful. Those webs aren't decoration.",
+                        "on_enter": [{"action": "start_quest", "quest": "main_spiders_nest"}],
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Old Petra",
+                        "text": "Mark my words. That cave will swallow someone if you leave it.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  YOUNG TOMAS — Briarhollow townsfolk, world-building
+    # ─────────────────────────────────────────────────────────
+    "young_tomas": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "young_tomas_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Young Tomas",
+                        "text": "I'm not supposed to talk to adventurers. My mother says "
+                                "it gives me ideas. She's right, but I don't care.",
+                        "on_enter": [{"action": "meet_npc", "npc": "young_tomas"}],
+                        "choices": [
+                            {"text": "What kind of ideas?", "next": "ideas"},
+                            {"text": "Smart mother.", "next": "smart_mum"},
+                            {"text": "Good luck with that.", "next": "bye"},
+                        ],
+                    },
+                    "ideas": {
+                        "speaker": "Young Tomas",
+                        "text": "Leaving. Seeing something beyond this square. "
+                                "Everyone here's been here their whole life. "
+                                "I want to be somewhere different before I'm too old to enjoy it. "
+                                "Is it as dangerous out there as they say?",
+                        "next": "dangerous",
+                    },
+                    "dangerous": {
+                        "speaker": "Young Tomas",
+                        "text": "Never mind. The way you paused before answering tells me everything.",
+                        "next": "start",
+                    },
+                    "smart_mum": {
+                        "speaker": "Young Tomas",
+                        "text": "She is. She also said the mine was safe, two months before "
+                                "it stopped being safe. Sometimes being smart and being right "
+                                "aren't the same thing.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Young Tomas",
+                        "text": "Take me with you sometime. Whenever you're ready.",
                         "end": True,
                     },
                 },
@@ -2115,6 +2422,69 @@ NPC_DIALOGUES = {
     # ─────────────────────────────────────────────────────────
     #  SCOUT FERYN — Greenwood, forest warden
     # ─────────────────────────────────────────────────────────
+    "priestess_alia": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "alia_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Priestess Alia",
+                        "text": "Blessings upon your path, wanderers. The flame of Aldenmere burns "
+                                "for all who seek its light. How may I serve you today?",
+                        "on_enter": [{"action": "meet_npc", "npc": "priestess_alia"}],
+                        "choices": [
+                            {"text": "What do you know about the Fading?", "next": "fading"},
+                            {"text": "Can you heal us?", "next": "healing"},
+                            {"text": "Tell me about this temple.", "next": "temple"},
+                            {"text": "We seek guidance.", "next": "guidance"},
+                            {"text": "Farewell, Priestess.", "next": "bye"},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "Priestess Alia",
+                        "text": "The Fading... yes. I have felt it in my prayers for months now — "
+                                "a silence where the divine once answered. Something unravels the "
+                                "very fabric of the world. Old texts speak of a Dissolution, a time "
+                                "when the boundary between what is and what is not grows thin. "
+                                "Whatever causes it, I fear it is beyond any one person's power to stop. "
+                                "Find others who understand it. Trust the flame.",
+                        "next": "start",
+                    },
+                    "healing": {
+                        "speaker": "Priestess Alia",
+                        "text": "The temple offers restoration to those who need it — that is what "
+                                "the services at my altar are for. Speak to the altar and the flame "
+                                "will do the rest. I can ease suffering, though I cannot stop what "
+                                "hunts you. Be careful out there.",
+                        "next": "start",
+                    },
+                    "temple": {
+                        "speaker": "Priestess Alia",
+                        "text": "This temple has stood in Woodhaven for three hundred years. It was "
+                                "built by the first settlers as a promise — that even in the wildest "
+                                "frontier, they would tend the light. We serve the flame, which is "
+                                "older than any god's name. It does not demand worship. Only attention.",
+                        "next": "start",
+                    },
+                    "guidance": {
+                        "speaker": "Priestess Alia",
+                        "text": "Guidance I can offer, though it is simple: follow what is true, "
+                                "protect what cannot protect itself, and when the darkness comes — "
+                                "and it will — do not mistake endurance for weakness. The flame "
+                                "does not burn brightly by burning quickly. Steady. Steady.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Priestess Alia",
+                        "text": "Walk in the light. And if you cannot find it — be it.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
     "scout_feryn": [
         {
             "conditions": [],
@@ -2292,6 +2662,8 @@ NPC_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "oran_default",
+                "loop": True,
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Tide Priest Oran",
@@ -2335,6 +2707,57 @@ NPC_DIALOGUES = {
     #  HIGH PRIEST ALDARA — Sanctum, grand cathedral
     # ─────────────────────────────────────────────────────────
     "high_priest_aldara": [
+        # Act 3 — Sanctum under pressure, Aldara near breaking
+        {
+            "conditions": [
+                {"flag": "quest.main_act3_spire.state", "op": ">=", "value": 1},
+            ],
+            "tree": {
+                "id": "aldara_act3",
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "We have seen a thousand pilgrims a day since the eastern sky went dark. "
+                                "People want somewhere to pray. I cannot tell them their prayers will be enough. "
+                                "I can only tell them they are not alone in the dark.",
+                        "choices": [
+                            {"text": "Are you afraid?", "next": "afraid"},
+                            {"text": "We're going to the Spire.", "next": "spire"},
+                            {"text": "We need absolution before we go.", "next": "absolution"},
+                        ],
+                    },
+                    "afraid": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Every day for forty years I have stood in front of people in pain "
+                                "and told them the light holds. Today I believe it more than I ever have. "
+                                "Not because the evidence is good — it isn't. "
+                                "Because you are still standing.",
+                        "end": True,
+                    },
+                    "spire": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Then go. The Cathedral's blessing goes with you, "
+                                "for whatever weight that carries in a place of shadow. "
+                                "Come back. If you can, come back.",
+                        "on_enter": [{"action": "set_flag", "flag": "blessing.cathedral", "value": True}],
+                        "end": True,
+                    },
+                    "absolution": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Kneel, then. All of you. "
+                                "Whatever you have done, whatever choices you made to survive this far — "
+                                "you made them trying to save a world that doesn't deserve saving half as much "
+                                "as it deserves people like you trying to save it. "
+                                "Go. Be absolved.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "blessing.absolution", "value": True},
+                            {"action": "discover_lore", "lore": "aldara_absolution"},
+                        ],
+                        "end": True,
+                    },
+                },
+            },
+        },
         # After party learns about the Fading
         {
             "conditions": [
@@ -2427,6 +2850,8 @@ NPC_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "aldara_default",
+                "loop": True,
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "High Priest Aldara",
@@ -2454,55 +2879,52 @@ NPC_DIALOGUES = {
     ],
 
     # ─────────────────────────────────────────────────────────
-    #  ARCHMAGE SOLEN — Crystalspire
+    #  OLD MOSS — Greenwood's ancient hermit druid
+    #  Knows the forest and the Fading better than anyone.
+    #  Doesn't give quest text — gives lore, observation, weight.
     # ─────────────────────────────────────────────────────────
-    "archmage_solen": [
-        # After hearthstone 1 found
+    "old_moss": [
+        # Act 2+ — has felt the Fading spread
         {
             "conditions": [
-                {"flag": "quest.main_hearthstone_1.state", "op": "==", "value": -2},
-                {"flag": "npc.archmage_solen.met", "op": "==", "value": True},
+                {"flag": "quest.main_ashenmoor.state", "op": ">=", "value": 1},
             ],
             "tree": {
-                "id": "solen_hearthstone",
+                "id": "moss_act2",
                 "nodes": {
                     "start": {
-                        "speaker": "Archmage Solen",
-                        "text": "You found the first stone. Remarkable. I have spent forty years "
-                                "studying these artifacts and never held one. The resonance signature "
-                                "is extraordinary — pure ward-magic, undiluted. The Academy's instruments "
-                                "can help you locate the others.",
+                        "speaker": "Old Moss",
+                        "text": "Three hundred years I've tended this forest. "
+                                "Watched it breathe. Watched it dream. "
+                                "Now it's forgetting itself. The old trees — the ones that remember "
+                                "before the kingdoms — they're the first to go quiet.",
                         "choices": [
-                            {"text": "Can you track the other stones?", "next": "track"},
-                            {"text": "What do you know about Valdris?", "next": "valdris"},
-                            {"text": "Thank you.", "next": "bye"},
+                            {"text": "Can you feel where the Fading is worst?", "next": "worst"},
+                            {"text": "Is there anything the forest can do?", "next": "forest"},
+                            {"text": "I'm sorry.", "next": "sorry"},
                         ],
                     },
-                    "track": {
-                        "speaker": "Archmage Solen",
-                        "text": "With the first stone as a reference, yes. The others emit a "
-                                "harmonic echo. I'm detecting two strong signals — one from the "
-                                "Sunken Crypt to the south, another from somewhere in the eastern "
-                                "sea. The Dragon's Tooth archipelago, I believe.",
-                        "on_enter": [
-                            {"action": "set_flag", "flag": "lore.hearthstone_locations", "value": True},
-                            {"action": "discover_lore", "lore": "hearthstone_locations"},
-                        ],
+                    "worst": {
+                        "speaker": "Old Moss",
+                        "text": "East. Always east now. There's a silence there that shouldn't exist — "
+                                "no wind, no insects, no sense of time. "
+                                "Whatever broke the wards broke them hardest in that direction. "
+                                "Something is being held there. Or was.",
+                        "on_enter": [{"action": "discover_lore", "lore": "fading_east_origin"}],
                         "end": True,
                     },
-                    "valdris": {
-                        "speaker": "Archmage Solen",
-                        "text": "Valdris was the greatest mage this Academy ever produced. "
-                                "That is not pride — it is a warning. He believed the Shadow "
-                                "Realm was not a threat but a resource. His experiments are what "
-                                "weakened the wards. I was his student. I watched him cross the line. "
-                                "I should have stopped him.",
-                        "on_enter": [{"action": "discover_lore", "lore": "valdris_betrayal"}],
+                    "forest": {
+                        "speaker": "Old Moss",
+                        "text": "The forest doesn't fight the way soldiers fight. "
+                                "It endures. It waits. It remembers. "
+                                "If you restore the wards, it will come back. "
+                                "The trees have forgiven worse than this.",
                         "end": True,
                     },
-                    "bye": {
-                        "speaker": "Archmage Solen",
-                        "text": "The Academy's resources are at your disposal.",
+                    "sorry": {
+                        "speaker": "Old Moss",
+                        "text": "Mm. Don't be sorry. Be effective. "
+                                "The forest doesn't need your grief. It needs the wards back.",
                         "end": True,
                     },
                 },
@@ -2511,42 +2933,52 @@ NPC_DIALOGUES = {
         # First meeting
         {
             "conditions": [
-                {"flag": "npc.archmage_solen.met", "op": "not_exists"},
+                {"flag": "npc.old_moss.met", "op": "not_exists"},
             ],
             "tree": {
-                "id": "solen_intro",
+                "id": "moss_intro",
                 "nodes": {
                     "start": {
-                        "speaker": "Archmage Solen",
-                        "text": "Visitors to the Academy. Unusual. I am Solen — Archmage, "
-                                "and currently the only person in this city taking the Fading "
-                                "seriously enough to actually study it. What brings you here?",
-                        "on_enter": [{"action": "meet_npc", "npc": "archmage_solen"}],
+                        "speaker": "Old Moss",
+                        "text": "You smell like the road. And something older. "
+                                "Blood from before the kingdoms, if I'm reading you right. "
+                                "Warden blood. Haven't smelled that in a long time.",
+                        "on_enter": [{"action": "meet_npc", "npc": "old_moss"}],
                         "choices": [
-                            {"text": "We're looking into the Fading.", "next": "fading"},
-                            {"text": "We need access to the teleport network.", "next": "teleport"},
-                            {"text": "Just exploring.", "next": "exploring"},
+                            {"text": "You know about the Wardens?", "next": "wardens"},
+                            {"text": "What are you?", "next": "what"},
+                            {"text": "Just passing through.", "next": "bye"},
                         ],
                     },
-                    "fading": {
-                        "speaker": "Archmage Solen",
-                        "text": "Then we have something in common. The Academy's official position "
-                                "is that the Fading is a 'temporary magical weather event.' "
-                                "My position is that that is catastrophically wrong. "
-                                "Come back when you have proof I can put in front of the Council.",
+                    "wardens": {
+                        "speaker": "Old Moss",
+                        "text": "I knew the last generation of them. They came through here, "
+                                "long ago, carrying something important. One of them planted a tree "
+                                "in the southern grove that still grows. "
+                                "I watered it every year, hoping they'd come back for it.",
+                        "on_enter": [{"action": "discover_lore", "lore": "wardens_greenwood_tree"}],
+                        "next": "wardens2",
+                    },
+                    "wardens2": {
+                        "speaker": "Old Moss",
+                        "text": "The tree is still there. It's the only one in the forest "
+                                "that the Fading hasn't touched. "
+                                "I think it's waiting for someone.",
+                        "on_enter": [{"action": "set_flag", "flag": "lore.greenwood_warden_tree", "value": True}],
                         "end": True,
                     },
-                    "teleport": {
-                        "speaker": "Archmage Solen",
-                        "text": "Guild membership required. Alternatively, significant contribution "
-                                "to Academy research. The circle is not free — the ley lines that "
-                                "power it are weakening with the Fading. Every jump costs real energy.",
+                    "what": {
+                        "speaker": "Old Moss",
+                        "text": "Old. That's the simplest answer. "
+                                "I've been called a druid, a hermit, a forest spirit. "
+                                "I've been called other things that weren't polite. "
+                                "The trees know me. That's enough.",
                         "end": True,
                     },
-                    "exploring": {
-                        "speaker": "Archmage Solen",
-                        "text": "Crystalspire is worth exploring. Try not to touch anything "
-                                "that's glowing without asking first.",
+                    "bye": {
+                        "speaker": "Old Moss",
+                        "text": "Watch the eastern tree line. Something's moving out there "
+                                "that wasn't moving yesterday.",
                         "end": True,
                     },
                 },
@@ -2556,27 +2988,38 @@ NPC_DIALOGUES = {
         {
             "conditions": [],
             "tree": {
-                "id": "solen_default",
+                "id": "moss_default",
                 "nodes": {
                     "start": {
-                        "speaker": "Archmage Solen",
-                        "text": "The ley line readings are worse today than yesterday. "
-                                "They have been for months. What can I do for you?",
+                        "speaker": "Old Moss",
+                        "text": "The forest is listening. It always is. "
+                                "What do you want to know?",
                         "choices": [
-                            {"text": "What's the latest from the Academy?", "next": "research"},
-                            {"text": "Goodbye.", "next": "bye"},
+                            {"text": "What's happening to the animals?", "next": "animals"},
+                            {"text": "Can you read the Fading somehow?", "next": "fading"},
+                            {"text": "Nothing. Just wanted to say hello.", "next": "bye"},
                         ],
                     },
-                    "research": {
-                        "speaker": "Archmage Solen",
-                        "text": "We've confirmed that the Fading accelerates near Hearthstone "
-                                "anchor points that are undefended. Whatever is driving it is "
-                                "intelligent. It targets weakness. Find those stones.",
+                    "animals": {
+                        "speaker": "Old Moss",
+                        "text": "Shadow energy gets into them. The ones close to Fading zones "
+                                "start hearing something the rest of us can't — a kind of pulling. "
+                                "It doesn't hurt them at first. Then it changes them. "
+                                "I've been watching it for months. It's getting faster.",
+                        "end": True,
+                    },
+                    "fading": {
+                        "speaker": "Old Moss",
+                        "text": "Not read, exactly. But I can feel where the quiet is wrong. "
+                                "There are places in this forest where even the wind goes still "
+                                "without cause. Those are the edges. Stay away from them. "
+                                "Or don't, if you're the type who moves toward trouble.",
                         "end": True,
                     },
                     "bye": {
-                        "speaker": "Archmage Solen",
-                        "text": "Measure twice. The shadow doesn't give second chances.",
+                        "speaker": "Old Moss",
+                        "text": "Hello. "
+                                "The trees say hello too.",
                         "end": True,
                     },
                 },
@@ -2584,9 +3027,6 @@ NPC_DIALOGUES = {
         },
     ],
 
-    # ─────────────────────────────────────────────────────────
-    #  TELEPORT MASTER VAEN — Crystalspire circle
-    # ─────────────────────────────────────────────────────────
     "teleport_master": [
         {
             "conditions": [],
@@ -2782,6 +3222,8 @@ NPC_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "varek_default",
+                "loop": True,
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Commander Varek",
@@ -2825,6 +3267,116 @@ NPC_DIALOGUES = {
     #  COURT MAGE SIRA — Thornhaven, Maren's Act II reveal
     # ─────────────────────────────────────────────────────────
     "court_mage_sira": [
+        # Act 3 — the Fading is critical, Sira is doing final calculations
+        {
+            "conditions": [
+                {"flag": "quest.main_act3_spire.state", "op": ">=", "value": 1},
+            ],
+            "tree": {
+                "id": "sira_act3",
+                "nodes": {
+                    "start": {
+                        "speaker": "Court Mage Sira",
+                        "text": "I have eight days of barrier integrity left on my projections. "
+                                "Maybe ten if you're lucky. After that the outer wards collapse entirely "
+                                "and the Fading accelerates beyond any ability to reverse it. "
+                                "Whatever Maren is attempting in that Spire — she's running the same "
+                                "numbers I am. She knows this too.",
+                        "choices": [
+                            {"text": "Is there anything you can do from here?", "next": "here"},
+                            {"text": "What happens if she fails?", "next": "fail"},
+                            {"text": "We're heading to the Spire now.", "next": "godspeed"},
+                        ],
+                    },
+                    "here": {
+                        "speaker": "Court Mage Sira",
+                        "text": "I've been feeding power into the ley lines for three days without sleep. "
+                                "It's like patching a crumbling dam with your hands. "
+                                "I can buy you hours, not days. "
+                                "Go. Be faster than the math.",
+                        "end": True,
+                    },
+                    "fail": {
+                        "speaker": "Court Mage Sira",
+                        "text": "If she fails and all five stones are spent? "
+                                "I think the Fading completes. Everything fades — "
+                                "not destroyed, not dead. Unmade. As if it never was. "
+                                "The records suggest it happened to three other worlds before this one.",
+                        "on_enter": [{"action": "discover_lore", "lore": "fading_other_worlds"}],
+                        "next": "godspeed",
+                    },
+                    "godspeed": {
+                        "speaker": "Court Mage Sira",
+                        "text": "For what it's worth — I've been running every calculation, "
+                                "every model, every simulation I know. "
+                                "Every version where the world survives has you at the center of it. "
+                                "That's not prophecy. It's just the only variable that keeps changing. "
+                                "Don't waste it.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # After Maren reveal — Sira knows more and can be pressed
+        {
+            "conditions": [
+                {"flag": "lore.maren_origin", "op": "==", "value": True},
+                {"flag": "npc.court_mage_sira.debriefed", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "sira_post_reveal",
+                "nodes": {
+                    "start": {
+                        "speaker": "Court Mage Sira",
+                        "text": "You know now. Good. I wasn't sure how long I could hold that. "
+                                "Ask what you need to.",
+                        "choices": [
+                            {"text": "What do you know about Valdris's ritual?", "next": "ritual"},
+                            {"text": "Can we trust Maren at all?", "next": "trust"},
+                            {"text": "Why didn't you tell us sooner?", "next": "sooner"},
+                        ],
+                    },
+                    "ritual": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Valdris believed the Hearthstones could be used not just to restore "
+                                "the wards — but to permanently seal the Shadow realm itself. "
+                                "Not just hold it back. End the threat forever. "
+                                "He was right. The mathematics work. "
+                                "What he miscalculated was the cost.",
+                        "next": "ritual2",
+                    },
+                    "ritual2": {
+                        "speaker": "Court Mage Sira",
+                        "text": "The ritual consumes whoever performs it. Not just magically — "
+                                "erased. The stones use the performer's existence as fuel. "
+                                "Valdris lost his nerve at the last moment and broke the ritual. "
+                                "That breaking is what started the Fading.",
+                        "on_enter": [{"action": "discover_lore", "lore": "valdris_ritual_cost"}],
+                        "end": True,
+                    },
+                    "trust": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Maren has spent her entire life trying to fix what her father broke. "
+                                "She genuinely wants to save the world. "
+                                "The question is whether she's decided to sacrifice you to do it, "
+                                "or whether she hasn't made that choice yet. "
+                                "Those are very different problems.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.court_mage_sira.debriefed", "value": True}],
+                        "end": True,
+                    },
+                    "sooner": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Because I wasn't certain. And because Maren has done more to stop "
+                                "the Fading than anyone else living. I didn't want to burn that "
+                                "before I had to. "
+                                "I'm telling you now because you're close enough to the end that "
+                                "you need every piece of this.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.court_mage_sira.debriefed", "value": True}],
+                        "end": True,
+                    },
+                },
+            },
+        },
         # The Maren reveal — she is Valdris's daughter
         {
             "conditions": [
@@ -2917,6 +3469,8 @@ NPC_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "sira_default",
+                "loop": True,
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Court Mage Sira",
@@ -2924,6 +3478,7 @@ NPC_DIALOGUES = {
                                 "and every day it's true.",
                         "choices": [
                             {"text": "What are you tracking?", "next": "tracking"},
+                            {"text": "What does the Governor make of all this?", "next": "governor"},
                             {"text": "Goodbye.", "next": "bye"},
                         ],
                     },
@@ -2933,6 +3488,14 @@ NPC_DIALOGUES = {
                                 "roughly forty percent of its original strength, down from seventy "
                                 "when I started measuring three years ago. At this rate, full "
                                 "collapse in eighteen months. Maybe less.",
+                        "end": True,
+                    },
+                    "governor": {
+                        "speaker": "Court Mage Sira",
+                        "text": "He understands the numbers. That's more than most. "
+                                "What he can't accept is that there is no military solution to this. "
+                                "You cannot march soldiers against entropy. "
+                                "He's still looking for something to fight.",
                         "end": True,
                     },
                     "bye": {
@@ -3077,6 +3640,9 @@ NPC_DIALOGUES = {
                             {"text": "We need what you're protecting. Stand aside.",   "next": "fight_direct"},
                             {"text": "We know what you are. What you were.",           "next": "lore_path",
                              "condition": {"flag": "lore.dragon_karreth", "op": "==", "value": True}},
+                            {"text": "Karreth-sol-Amendar. Guardian whose fire remembers warmth.",
+                             "next": "true_name_path",
+                             "condition": {"flag": "lore.karreth_true_name", "op": "==", "value": True}},
                             {"text": "We're not here to fight you.",                   "next": "plea"},
                         ],
                     },
@@ -3135,6 +3701,48 @@ NPC_DIALOGUES = {
                                 "Then it charges.",
                         "on_enter": [
                             {"action": "set_flag", "flag": "lore.karreth_freed", "value": True},
+                        ],
+                        "end": True,
+                    },
+                    "true_name_path": {
+                        "speaker": "Karreth",
+                        "text": "The grey-green eye goes dark.\n"
+                                "The silence that follows is so total the volcanic vents seem to hold their breath.\n"
+                                "Then, slowly, both eyes open — and for the first time, both are the same colour: "
+                                "deep amber, old and clear.\n"
+                                "The voice that comes out is different. Lower. Older. Without the corruption's echo.\n"
+                                "You found it. The name.\n"
+                                "I... had forgotten it. What I was called when I chose this.\n"
+                                "Before the Fading found me.",
+                        "choices": [
+                            {"text": "You can rest now. We'll carry the stone.", "next": "peaceful_release"},
+                            {"text": "Do you remember who asked you to guard it?",  "next": "memory"},
+                        ],
+                    },
+                    "memory": {
+                        "speaker": "Karreth",
+                        "text": "A woman. Old. She smelled of cold stone and burned sage.\n"
+                                "She said: the world will break. When it does, keep the light warm until "
+                                "someone comes to carry it again.\n"
+                                "I asked how I would know the right someone.\n"
+                                "She said: they will know your name.\n"
+                                "The amber eyes hold yours for a long moment.\n"
+                                "She was right.",
+                        "next": "peaceful_release",
+                    },
+                    "peaceful_release": {
+                        "speaker": "Karreth",
+                        "text": "Take it. It was always meant to move on.\n"
+                                "I was only ever meant to be the bridge between its last keeper and its next.\n"
+                                "The vast body lowers, slowly, until the Hearthstone is within reach. "
+                                "Karreth does not move as you take it. The amber light in both eyes "
+                                "dims — not like death, but like a lantern being set down after a long walk.\n"
+                                "You have the stone. And something else — a single scale, shed willingly, "
+                                "still warm.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "choice.karreth_spared",  "value": True},
+                            {"action": "set_flag", "flag": "boss.karreth.defeated",  "value": True},
+                            {"action": "set_flag", "flag": "lore.karreth_freed",     "value": True},
                         ],
                         "end": True,
                     },
@@ -3471,7 +4079,7 @@ TOWN_NPCS = {
     "briarhollow": ["maren", "captain_rowan", "bess"],
     "woodhaven":   ["elder_theron", "sylla"],
     "ironhearth":  ["forgemaster_dunn", "merchant_kira"],
-    "greenwood":   ["scout_feryn"],
+    "greenwood":   ["scout_feryn", "old_moss"],
     "saltmere":    ["guildmaster_sable", "tide_priest_oran", "dockhand_riv"],
     "sanctum":     ["high_priest_aldara"],
     "crystalspire": ["archmage_solen", "teleport_master"],
@@ -3915,6 +4523,25 @@ DUNGEON_STORY_EVENTS = {
                 "lore_id": "dragon_karreth",
             },
             {
+                "floor": 2,
+                "title": "Warden Field Notes — Expedition 7",
+                "text": "Scrawled in the margin of an official expedition report, in a "
+                        "different hand from the main text: "
+                        "'The old texts call it by a different name — not Karreth, which "
+                        "is just what the sailors called the island. "
+                        "The binding inscription in the vault below gives its true name: "
+                        "Karreth-sol-Amendar. "
+                        "In Old Draconic: the guardian whose fire remembers warmth. "
+                        "The ward scholars believed that speaking a bound guardian's true name "
+                        "in the old tongue could reach the creature beneath the corruption — "
+                        "not override its oath, but remind it who it was before. "
+                        "This was never tested. The order collapsed before we could return. "
+                        "If someone finds this: the name is the key. Speak it clearly. "
+                        "Do not flinch.'",
+                "lore_id": "karreth_true_name",
+                "on_find": [{"action": "set_flag", "flag": "lore.karreth_true_name", "value": True}],
+            },
+            {
                 "floor": 3,
                 "title": "Scratched on the Hoard Room Doorframe",
                 "text": "Cut into the volcanic rock at shoulder height — "
@@ -4165,17 +4792,66 @@ def get_town_npcs(town_id):
 
 
 def get_rumor(act=None):
-    """Get a random rumor for the current act."""
+    """Get a random rumor for the current act, weighted toward story-relevant ones."""
     import random
-    from core.story_flags import get
+    from core.story_flags import get, get_flag, check_conditions
+
     if act is None:
         act = get("act", 1)
-    rumors = TAVERN_RUMORS.get(act, TAVERN_RUMORS[1])
-    return random.choice(rumors)
+    base_pool = list(TAVERN_RUMORS.get(act, TAVERN_RUMORS[1]))
+
+    # Story-conditional bonus rumors — appear 3× more likely when conditions are met.
+    # Each entry: (conditions_list, rumor_text)
+    STORY_RUMORS = [
+        # Act 1 reactivity
+        ([{"flag": "boss_defeated.goblin_warren", "op": "==", "value": True}],
+         "They say those adventurers cleared the goblin warren. Captain Aldric looked almost relieved."),
+        ([{"flag": "boss_defeated.goblin_warren", "op": "==", "value": True}],
+         "The road east is safer now. Still won't go at night, but safer."),
+        ([{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+         "Old Petra's crowing about the spider cave. Says she told everyone and nobody listened. She's right."),
+        ([{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+         "The eastern path is clear. Whatever was in that cave is gone. Petra says it was the Fading."),
+        ([{"flag": "item.hearthstone.1", "op": "==", "value": True}],
+         "Word is they found one of those old ward-stones in the mine. Living magic, they say. Warm to the touch."),
+        ([{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+         "The abandoned mine's clear. Whatever Valdris put in there is gone. The tanner's already talking about reopening."),
+        # Act 2 reactivity
+        ([{"flag": "boss_defeated.ruins_ashenmoor", "op": "==", "value": True}],
+         "Ashenmoor's been quiet. No more lights, no more sounds. Whatever woke up in there has been put back to sleep."),
+        ([{"flag": "item.hearthstone.2", "op": "==", "value": True}],
+         "Two ward-stones found. The mages in Crystalspire are apparently measuring something in the ley lines. Numbers going up."),
+        ([{"flag": "item.hearthstone.3", "op": "==", "value": True}],
+         "Three stones. Half the set. Someone in the Guild is keeping count on a chalkboard. People stop and look."),
+        ([{"flag": "boss_defeated.dragons_tooth", "op": "==", "value": True}],
+         "They made peace with the dragon. Or killed it. Accounts differ. Either way — the volcano's quiet."),
+        ([{"flag": "maren.left", "op": "==", "value": True}],
+         "Maren left town. Didn't say goodbye. Bess says she left a note but won't show it to anyone."),
+        ([{"flag": "maren.left", "op": "==", "value": True}],
+         "I heard the scholar went to the Spire herself. Alone. Either very brave or very desperate."),
+        # Act 3 reactivity
+        ([{"flag": "item.hearthstone.4", "op": "==", "value": True}],
+         "Four stones. The Pale Sentinel yielded hers. Sixty years guarding a stone for people who finally came."),
+        ([{"flag": "item.hearthstone.5", "op": "==", "value": True}],
+         "All five. I didn't think I'd live to hear that. Whatever happens next, at least someone tried."),
+        ([{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+         "The Fading's stopped. Just... stopped. I woke up this morning and the sky looked right again."),
+        ([{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+         "They came back from the Spire. All of them. That's not supposed to happen."),
+    ]
+
+    # Build weighted pool: base rumors × 1, matching story rumors × 3
+    pool = list(base_pool)
+    for conds, text in STORY_RUMORS:
+        if check_conditions(conds):
+            pool.extend([text, text, text])  # weight 3×
+
+    return random.choice(pool)
 
 
 def get_dungeon_floor_message(dungeon_id, floor):
     """Get story message for entering a dungeon floor."""
+
     events = DUNGEON_STORY_EVENTS.get(dungeon_id, {})
     return events.get("floor_messages", {}).get(floor)
 
@@ -4210,6 +4886,7 @@ _NEW_DIALOGUES = {
             ],
             "tree": {
                 "id": "aldric_patrol_turnin",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Captain Aldric",
@@ -4257,6 +4934,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
             "tree": {
                 "id": "aldric_post_mine",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Captain Aldric",
@@ -4283,6 +4961,8 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "aldric_default",
+                "loop": True,
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Captain Aldric",
@@ -4291,6 +4971,9 @@ _NEW_DIALOGUES = {
                             {"text": "What kind of trouble?", "next": "trouble"},
                             {"text": "Any missing patrols?", "next": "patrol"},
                             {"text": "The mine — what do you know about it?", "next": "mine"},
+                            {"text": "Old Petra mentioned spiders on the eastern path.", "next": "spiders",
+                             "conditions": [{"flag": "npc.old_petra.met", "op": "==", "value": True},
+                                            {"flag": "boss_defeated.spiders_nest", "op": "not_exists"}]},
                             {"text": "We can handle ourselves.", "next": "confident"},
                         ],
                     },
@@ -4316,6 +4999,15 @@ _NEW_DIALOGUES = {
                         "text": "Good. Because I can't spare anyone.",
                         "choices": [{"text": "Fair enough.", "next": None}],
                     },
+                    "spiders": {
+                        "speaker": "Captain Aldric",
+                        "text": "Petra's been saying that for weeks. I thought it was her eyes. "
+                                "But two of my guards won't take the eastern watch anymore — "
+                                "won't say why, just won't. Cave east of town, past the old mill. "
+                                "I'd consider it a personal favour if you looked in.",
+                        "on_enter": [{"action": "start_quest", "quest": "main_spiders_nest"}],
+                        "choices": [{"text": "We'll check it out.", "next": None}],
+                    },
                 },
             },
         },
@@ -4326,6 +5018,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "lore.fading_basics", "op": "==", "value": True}],
             "tree": {
                 "id": "elder_thom_knows",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Elder Thom",
@@ -4352,6 +5045,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "elder_thom_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Elder Thom",
@@ -4384,6 +5078,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "quest.main_spiders_nest.state", "op": ">", "value": 0}],
             "tree": {
                 "id": "lyric_spider_quest",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Ranger Lyric",
@@ -4410,6 +5105,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "lyric_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Ranger Lyric",
@@ -4440,6 +5136,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "old_moss_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Old Moss",
@@ -4514,6 +5211,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "oren_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Guildmaster Oren",
@@ -4553,6 +5251,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
             "tree": {
                 "id": "brak_post_mine",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Foreman Brak",
@@ -4584,6 +5283,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "brak_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Foreman Brak",
@@ -4620,6 +5320,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "petra_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Scholar Petra",
@@ -4668,6 +5369,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "durk_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Miner Durk",
@@ -4692,6 +5394,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "tova_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Apprentice Tova",
@@ -4723,6 +5426,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "quest.main_spiders_nest.state", "op": ">", "value": 0}],
             "tree": {
                 "id": "feryn_spider",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Scout Feryn",
@@ -4749,6 +5453,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "feryn_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Scout Feryn",
@@ -4784,6 +5489,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "holt_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Trapper Holt",
@@ -4815,6 +5521,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "shady_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Shady Figure",
@@ -4863,6 +5570,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "item.hearthstone.2", "op": "==", "value": True}],
             "tree": {
                 "id": "oran_hs3",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Tide Priest Oran",
@@ -4889,7 +5597,8 @@ _NEW_DIALOGUES = {
         {
             "conditions": [],
             "tree": {
-                "id": "oran_default",             "nodes": {
+                "id": "oran_default",
+                "loop": True,             "nodes": {
                     "start": {
                         "speaker": "Tide Priest Oran",
                         "text": "The tides have been wrong for months. Coming in at the wrong hour. Going out too fast. The sea knows something is out of balance — she always does, long before the land catches on.",
@@ -4945,6 +5654,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "pilgrim_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Pilgrim Elder",
@@ -4976,9 +5686,37 @@ _NEW_DIALOGUES = {
 
     "holy_knight": [
         {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "knight_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Holy Knight",
+                        "text": "The Order received word from the Spire. The High Priest has declared a day of silence in your honour. We do not do that for the living. Consider it unusual.",
+                        "choices": [
+                            {"text": "What happens to the Order now?", "next": "order"},
+                            {"text": "We didn't do it for recognition.", "next": "recognition"},
+                        ],
+                    },
+                    "order": {
+                        "speaker": "Holy Knight",
+                        "text": "We rebuild. The cathedral has stood for four centuries — it will stand four more. But the threat we were founded to watch for has arrived and passed. We need to decide what we are when the vigil is over.",
+                        "choices": [{"text": "A harder question than fighting.", "next": None}],
+                    },
+                    "recognition": {
+                        "speaker": "Holy Knight",
+                        "text": "No. I know that. That's why the silence is for you and not the other kind of ceremony. We honour what was done, not the names attached to it. The Light doesn't need names. Neither do you, apparently.",
+                        "choices": [{"text": "Thank you.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
             "conditions": [],
             "tree": {
                 "id": "knight_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Holy Knight",
@@ -5003,6 +5741,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "novice_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Novice Priest",
@@ -5032,6 +5771,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "lore.fading_basics", "op": "==", "value": True}],
             "tree": {
                 "id": "aldara_knows",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "High Priest Aldara",
@@ -5059,6 +5799,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "aldara_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "High Priest Aldara",
@@ -5092,9 +5833,64 @@ _NEW_DIALOGUES = {
 
     "apprentice_mage": [
         {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "app_mage_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Apprentice Mage",
+                        "text": "The ley line readings normalized last night. I've been logging them every six hours for eight months. Last night they just — came back. Not fully. But the decay curve reversed. The Archmage cried. I've never seen him cry.",
+                        "choices": [
+                            {"text": "The Hearthstone network is holding.", "next": "holding"},
+                            {"text": "What does this mean for your research?", "next": "research"},
+                        ],
+                    },
+                    "holding": {
+                        "speaker": "Apprentice Mage",
+                        "text": "We know. Solen explained it. Five stones, five anchors, the ward-grid reconstructed from scratch. The theory was right — the extraction was killing it. You proved the extraction was killing it. My thesis thanks you.",
+                        "choices": [{"text": "Don't let them bury it this time.", "next": None}],
+                    },
+                    "research": {
+                        "speaker": "Apprentice Mage",
+                        "text": "It means I can publish. It means the administration can't bury it anymore because the evidence just became visible to anyone with a measuring rod. It means I graduate. Eventually.",
+                        "choices": [{"text": "Good luck.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "item.hearthstone.5", "op": "==", "value": True}],
+            "tree": {
+                "id": "app_mage_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Apprentice Mage",
+                        "text": "Five stones. I ran the numbers three times. The resonance coming off the network right now is — it's loud. Beautifully loud. The crystals in the city have been humming for the last hour. Most people don't notice. I notice.",
+                        "choices": [
+                            {"text": "What happens when the network is complete?", "next": "complete"},
+                            {"text": "We have one more thing to do.", "next": "spire"},
+                        ],
+                    },
+                    "complete": {
+                        "speaker": "Apprentice Mage",
+                        "text": "In theory? The Fading loses its hold. The extracted energy is returned to the ley lines. The decay reverses. In practice — I've never seen a complete network. Nobody alive has. We're about to find out.",
+                        "choices": [{"text": "We're going to find out.", "next": None}],
+                    },
+                    "spire": {
+                        "speaker": "Apprentice Mage",
+                        "text": "I know. Solen told us. Go. Whatever's waiting up there — the math is on your side now. The network is ready. You just have to finish it.",
+                        "choices": [{"text": "That's the plan.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
             "conditions": [],
             "tree": {
                 "id": "app_mage_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Apprentice Mage",
@@ -5126,9 +5922,59 @@ _NEW_DIALOGUES = {
 
     "crystal_scholar": [
         {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "scholar_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Crystal Scholar",
+                        "text": "The resonator is singing. I mean that literally — there's a frequency coming off the crystals right now that's audible if you stand in the central plaza at dawn. People keep thinking it's the bells. It isn't the bells.",
+                        "choices": [
+                            {"text": "The ward-grid is restored.", "next": "restored"},
+                            {"text": "Is the city safe now?", "next": "safe"},
+                        ],
+                    },
+                    "restored": {
+                        "speaker": "Crystal Scholar",
+                        "text": "Restored and self-sustaining, if the models hold. The Hearthstones aren't drawing from the ley lines anymore — they're feeding back into them. The network is generating its own resonance. The founders built something that could outlast its makers. It almost did.",
+                        "choices": [{"text": "Almost.", "next": None}],
+                    },
+                    "safe": {
+                        "speaker": "Crystal Scholar",
+                        "text": "From the Fading? Yes. From everything else — still working on that. But the specific extinction-level collapse I've been modelling for two years is no longer on the projection chart. I slept for eleven hours last night. First time in months.",
+                        "choices": [{"text": "You've earned it.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "item.hearthstone.5", "op": "==", "value": True}],
+            "tree": {
+                "id": "scholar_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Crystal Scholar",
+                        "text": "Five Hearthstones in the network simultaneously. I didn't think I'd ever see this data. The resonator is amplifying the combined signal — the whole city is acting as a single antenna pointed at the Spire. Whatever is anchoring the Fading up there is about to have a very bad time.",
+                        "choices": [
+                            {"text": "That's the idea.", "next": None},
+                            {"text": "We're going there now.", "next": "going"},
+                        ],
+                    },
+                    "going": {
+                        "speaker": "Crystal Scholar",
+                        "text": "Then go quickly. The signal is at peak resonance now — and it won't hold forever. The network is ready. It's been ready and waiting for someone to use it for a thousand years.",
+                        "choices": [{"text": "We won't waste it.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
             "conditions": [],
             "tree": {
                 "id": "scholar_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Crystal Scholar",
@@ -5160,15 +6006,126 @@ _NEW_DIALOGUES = {
     ],
 
     "archmage_solen": [
+        # Act 3 — All 5 stones, Maren left: send-off
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.5", "op": "==",    "value": True},
+                {"flag": "maren.left",         "op": "==",    "value": True},
+            ],
+            "tree": {
+                "id": "solen_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Archmage Solen",
+                        "text": "Five stones. The full network. I confess I did not think "
+                                "you would assemble them in time. The resonance from here is "
+                                "extraordinary — the ward-grid is almost whole. "
+                                "Now go. The Spire is north of Thornhaven. "
+                                "Whatever Valdris is doing at the summit, "
+                                "you need to reach him before the network seals.",
+                        "choices": [
+                            {"text": "What will we find at the top?",    "next": "top"},
+                            {"text": "What about Maren?",                "next": "maren"},
+                            {"text": "We're going now.",                 "next": "bye"},
+                        ],
+                    },
+                    "top": {
+                        "speaker": "Archmage Solen",
+                        "text": "A man who spent thirty years studying the ward-network "
+                                "and then decided he understood it well enough to tear it apart. "
+                                "Whether what remains of him is still human is a question "
+                                "I cannot answer from here.",
+                        "next": "start",
+                    },
+                    "maren": {
+                        "speaker": "Archmage Solen",
+                        "text": "She has been inside the Spire for days. "
+                                "I have watched the resonance patterns shift — she is working "
+                                "the stones somehow, trying to stabilise something from within. "
+                                "Whether she can be reached, I do not know. "
+                                "But she has not collapsed the network. Not yet.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Archmage Solen",
+                        "text": "Then go. I will watch the instruments. "
+                                "If the network holds, I will know you succeeded.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Act 3 — Fewer than 5 stones, Maren left: urgent warning + guidance
+        {
+            "conditions": [
+                {"flag": "maren.left",         "op": "==",        "value": True},
+                {"flag": "item.hearthstone.5", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "solen_act3_warning",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Archmage Solen",
+                        "text": "She is gone. I know. And I know you are thinking about "
+                                "going after her directly. I am telling you: do not. "
+                                "Not yet. If you enter the Spire with fewer than five stones, "
+                                "Valdris has more power than you. You will not come back.",
+                        "choices": [
+                            {"text": "We don't have time to collect more stones.",  "next": "no_time"},
+                            {"text": "Where are the remaining stones?",             "next": "where"},
+                            {"text": "What exactly is at the Spire?",               "next": "spire_info"},
+                            {"text": "We'll be careful.",                           "next": "bye"},
+                        ],
+                    },
+                    "no_time": {
+                        "speaker": "Archmage Solen",
+                        "text": "You have more time than you think. Maren entering the Spire "
+                                "is not the end — she is trying to negotiate something, or "
+                                "she would not have gone alone. She is buying time for you. "
+                                "Use it. Two more stones. Pale Coast, then the Windswept Isle.",
+                        "next": "where",
+                    },
+                    "where": {
+                        "speaker": "Archmage Solen",
+                        "text": "The fourth stone is held by the Pale Sentinel — "
+                                "a Warden who sealed herself at the Pale Coast Catacombs "
+                                "rather than risk corruption. She may yield it peacefully "
+                                "if you can demonstrate you are worthy of the ward-network's trust. "
+                                "The fifth is on the Windswept Isle — bound to a pre-order "
+                                "elemental that will not reason with you. That one you fight.",
+                        "next": "start",
+                    },
+                    "spire_info": {
+                        "speaker": "Archmage Solen",
+                        "text": "Valdris was the last Warden before the order dissolved. "
+                                "He did not break the ward-network out of malice. "
+                                "He broke it because he believed the Fading was a natural process — "
+                                "that the world needed to forget and begin again. "
+                                "He may still believe that. Or the Fading may have changed him. "
+                                "I do not know which Valdris you will find.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Archmage Solen",
+                        "text": "Careful does not save you from a collapsed ley network. "
+                                "Five stones. Pale Coast, then the Isle. Then the Spire.",
+                        "end": True,
+                    },
+                },
+            },
+        },
         {
             "conditions": [
                 {"flag": "explored.abandoned_mine.floor3", "op": "==", "value": True},
-                {"flag": "explored.sunken_crypt.floor2", "op": "==", "value": True},
-                {"flag": "explored.ruins_ashenmoor.floor2", "op": "==", "value": True},
+                {"flag": "explored.sunken_crypt.floor2",   "op": "==", "value": True},
+                {"flag": "explored.ruins_ashenmoor.floor2","op": "==", "value": True},
                 {"flag": "quest.side_academy_research.state", "op": "!=", "value": -2},
             ],
             "tree": {
                 "id": "solen_research_done",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Archmage Solen",
@@ -5191,6 +6148,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "main_hearthstone_1.found", "op": "==", "value": True}],
             "tree": {
                 "id": "solen_knows",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Archmage Solen",
@@ -5222,6 +6180,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "solen_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Archmage Solen",
@@ -5274,6 +6233,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "npc.solen.met", "op": "==", "value": True}],
             "tree": {
                 "id": "teleport_ready",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Teleport Master",
@@ -5307,6 +6267,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "teleport_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Teleport Master",
@@ -5333,6 +6294,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "guard_thornhaven",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "City Guard",
@@ -5354,9 +6316,59 @@ _NEW_DIALOGUES = {
 
     "imperial_crier": [
         {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "crier_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Imperial Crier",
+                        "text": "HEAR YE! By order of the Governor, the state of civic emergency in the eastern territories has been formally lifted. Citizens displaced by the Fading are invited to register for resettlement assistance at the Guild Hall. That's the official announcement. Off the record — well done.",
+                        "choices": [
+                            {"text": "What does 'resettlement assistance' mean?", "next": "resettle"},
+                            {"text": "How are people taking the news?", "next": "news"},
+                        ],
+                    },
+                    "resettle": {
+                        "speaker": "Imperial Crier",
+                        "text": "Food, tools, temporary shelter, and a land grant if there's anything left to grant. For most of them there isn't. The land came back but the villages didn't. They're rebuilding from nothing.",
+                        "choices": [{"text": "It's a start.", "next": None}],
+                    },
+                    "news": {
+                        "speaker": "Imperial Crier",
+                        "text": "Quietly. People who've been through something like this don't celebrate loudly. They just... breathe differently. You can hear it in the market. It sounds less like people waiting for more bad news.",
+                        "choices": [{"text": "That's enough.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "crier_maren_left",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Imperial Crier",
+                        "text": "HEAR YE! The Governor's office is offering a reward for information regarding — actually, I've been asked to stop reading that one. Sensitive operation. Carry on.",
+                        "choices": [
+                            {"text": "What was the full announcement?", "next": "full"},
+                            {"text": "Understood.", "next": None},
+                        ],
+                    },
+                    "full": {
+                        "speaker": "Imperial Crier",
+                        "text": "A missing scholar, headed north. Warden-affiliated. The Governor's office wants her found. I get the impression they want her found before whatever she's walking into finds her first.",
+                        "choices": [{"text": "We're on it.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
             "conditions": [],
             "tree": {
                 "id": "crier_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Imperial Crier",
@@ -5378,9 +6390,37 @@ _NEW_DIALOGUES = {
 
     "merchant_noble": [
         {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "noble_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Merchant Noble",
+                        "text": "The eastern routes are open again. I've had three supply caravans move through Ashford Road without incident — first time in two years. I'm not sentimental about it. I am extremely pleased about it.",
+                        "choices": [
+                            {"text": "Commerce as usual, then.", "next": "commerce"},
+                            {"text": "The people rebuilding those roads matter too.", "next": "people"},
+                        ],
+                    },
+                    "commerce": {
+                        "speaker": "Merchant Noble",
+                        "text": "Commerce as usual is civilization as usual. Don't underestimate it. When the markets move, it means people believe tomorrow exists. That's not a small thing after two years of everyone acting like it might not.",
+                        "choices": [{"text": "Fair point.", "next": None}],
+                    },
+                    "people": {
+                        "speaker": "Merchant Noble",
+                        "text": "Yes. I know. I'm funding three of the resettlement cooperatives, though I'd prefer you didn't spread that around — it complicates negotiations. I have a reputation for being difficult to maintain.",
+                        "choices": [{"text": "Your secret is safe.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
             "conditions": [],
             "tree": {
                 "id": "noble_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Merchant Noble",
@@ -5407,9 +6447,42 @@ _NEW_DIALOGUES = {
 
     "refugee": [
         {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "refugee_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Refugee",
+                        "text": "The sky looks different. You notice? The grey at the edges — it's pulling back. I've watched it every morning for two years. I know what it looked like. It looks different now.",
+                        "choices": [
+                            {"text": "The Fading has been stopped.", "next": "stopped"},
+                            {"text": "We hope it holds.", "next": "hope"},
+                        ],
+                    },
+                    "stopped": {
+                        "speaker": "Refugee",
+                        "text": "Stopped. Not fixed. Not undone. Ashford is still gone. My neighbours are still gone. But stopped — I'll take stopped. Stopped is something I didn't think I'd live to see.",
+                        "choices": [{"text": "It won't be forgotten.", "next": "forget"}],
+                    },
+                    "hope": {
+                        "speaker": "Refugee",
+                        "text": "Mm. Good answer. Honest. I've had enough of people who say 'it's over' about things that aren't over. You did something real. What comes after is just — what comes after.",
+                        "choices": [{"text": "That's the most we can promise.", "next": "forget"}],
+                    },
+                    "forget": {
+                        "speaker": "Refugee",
+                        "text": "I'm going back. To where Ashford was. I don't know if there's anything left. I'm going to find out.",
+                        "choices": [{"text": "Safe travels.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
             "conditions": [],
             "tree": {
                 "id": "refugee_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Refugee",
@@ -5444,6 +6517,7 @@ _NEW_DIALOGUES = {
             "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
             "tree": {
                 "id": "aldric_post_valdris",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Governor Aldric",
@@ -5467,9 +6541,42 @@ _NEW_DIALOGUES = {
             },
         },
         {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "aldric_maren_left",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Governor Aldric",
+                        "text": "I heard the scholar left. Alone, at night, headed north. My people tried to follow — she was gone before they reached the gate. She knows something she hasn't shared with you, doesn't she.",
+                        "choices": [
+                            {"text": "She's trying to end this herself.", "next": "herself"},
+                            {"text": "We're not sure what she knows.", "next": "unsure"},
+                        ],
+                    },
+                    "herself": {
+                        "speaker": "Governor Aldric",
+                        "text": "Brave. Possibly foolish. Possibly both. If she has a plan, I hope it's better than mine was — which was 'wait and see.' I've been waiting for three years. The seeing hasn't improved.",
+                        "choices": [{"text": "We're going after her.", "next": "going"}],
+                    },
+                    "unsure": {
+                        "speaker": "Governor Aldric",
+                        "text": "In my experience, when someone knows something and doesn't share it, one of two things is true: they don't trust you, or the knowledge would break you. Given what she's walked into — probably both.",
+                        "choices": [{"text": "We're still going after her.", "next": "going"}],
+                    },
+                    "going": {
+                        "speaker": "Governor Aldric",
+                        "text": "Then go. Varek can give you Guild support to the border. After that you're on your own — I have no authority in the Ashlands. I'll hold the city. I'll be here when you come back.",
+                        "choices": [{"text": "We'll be back.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
             "conditions": [],
             "tree": {
                 "id": "aldric_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Governor Aldric",
@@ -5511,6 +6618,7 @@ _NEW_DIALOGUES = {
             ],
             "tree": {
                 "id": "varek_act3_stones",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Guild Commander Varek",
@@ -5546,6 +6654,7 @@ _NEW_DIALOGUES = {
             ],
             "tree": {
                 "id": "varek_send_north",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Guild Commander Varek",
@@ -5568,6 +6677,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "varek_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Guild Commander Varek",
@@ -5609,6 +6719,7 @@ _NEW_DIALOGUES = {
             "conditions": [],
             "tree": {
                 "id": "sira_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Court Mage Sira",
@@ -5929,3 +7040,260 @@ _NEW_DIALOGUES = {
 
 # Merge into main NPC_DIALOGUES
 NPC_DIALOGUES.update(_NEW_DIALOGUES)
+
+
+# ══════════════════════════════════════════════════════════════
+#  POST-BOSS DIALOGUES
+#  These fire after the boss combat victory, before loot screen.
+#  Two variants per boss: "fight" (killed) and "peaceful" (spared).
+#  Only bosses with something worth saying get entries.
+# ══════════════════════════════════════════════════════════════
+
+BOSS_POST_DIALOGUES = {
+
+    "goblin_warren": {
+        "fight": {
+            "id": "grak_aftermath",
+            "speaker": "",
+            "lines": [
+                "Grak falls. The goblins do not rush you. They stand in silence, "
+                "watching their king die with the quiet resignation of people "
+                "who have lost everything before and know exactly what losing looks like.",
+                "In his clenched fist: the Hearthstone Fragment.\n"
+                "It comes free easily. As if it was always meant to.",
+                "Behind you, someone — one of the younger goblins — begins to keen. "
+                "Low, rhythmic, grief-shaped.",
+                "You leave with the stone.\nThe crying follows you up the tunnel for a long time.",
+            ],
+        },
+    },
+
+    "spiders_nest": {
+        "fight": {
+            "id": "spider_queen_aftermath",
+            "speaker": "",
+            "lines": [
+                "The Spider Queen collapses inward — not quite like a creature dying, "
+                "but like a knot being untied. The iridescent shimmer bleeds out of "
+                "the webs around her.",
+                "The light that was wrong about this place — the colours that shifted "
+                "between frames — fades. The Fading energy that mutated the nest "
+                "dissipates slowly, like mist burning off in morning sun.",
+                "The remaining spiders scatter. They are small, natural, confused. "
+                "Without the Queen's fading-warped will driving them, they are just "
+                "animals again. They want nothing from you.",
+                "Whatever the Fading made her into, it is over.\nThe nest goes quiet.",
+            ],
+        },
+    },
+
+    "abandoned_mine": {
+        "fight": {
+            "id": "korrath_aftermath",
+            "speaker": "Korrath the Stone Warden",
+            "lines": [
+                "Korrath falls to one knee. The stone form cracks — not breaking, "
+                "but releasing. Like a fist finally unclenching after four hundred years.",
+                "\"You are... as strong as I hoped.\"\nHe looks down at his hands "
+                "as the stone crumbles away from them, revealing something underneath. "
+                "Not flesh. Just the shape of a man, briefly, in the dark.",
+                "\"The stone is yours. The oath is... satisfied.\"\nHis voice is "
+                "already fading. Not death — something more like relief.\n"
+                "\"Tell them I held it. To the end.\"",
+                "He dissolves.\nNot violently. Not painfully.\n"
+                "The way a watch-fire goes out when morning comes and it is no longer needed.",
+                "The Hearthstone Fragment glows warmly in the chamber where it has "
+                "rested for four centuries.\nKorrath is gone. His duty is not.",
+            ],
+        },
+    },
+
+    "ruins_ashenmoor": {
+        "fight": {
+            "id": "ashvar_aftermath",
+            "speaker": "Commander Ashvar",
+            "lines": [
+                "Ashvar staggers. The ash that formed him scatters, briefly, "
+                "then coheres again — but weaker. He looks at his own hands "
+                "as if he can't remember how long they've been made of smoke and sorrow.",
+                "\"You fight like Wardens.\"\nA pause.\n\"That is not an insult. "
+                "That is the only compliment I know how to give.\"",
+                "\"Valdris... what he did here. It must not be forgotten. "
+                "There are records in the lower vault. Sealed. "
+                "I have been keeping them. In case someone came who could act on them.\"\n"
+                "\"You can act on them. I could not.\"",
+                "He doesn't fall so much as disperse — the ash releasing upward, "
+                "slowly, like incense. The long-held tension of two hundred years "
+                "going out of the room.",
+                "He is gone.\nThe ruins feel, for the first time, like ruins — "
+                "sad and old, instead of angry.",
+            ],
+        },
+    },
+
+    "dragons_tooth": {
+        "fight": {
+            "id": "karreth_aftermath_fight",
+            "speaker": "",
+            "lines": [
+                "Karreth falls.\nThe grey-green eye goes dark first, then the amber. "
+                "The enormous body settles into the volcanic rock as if the island "
+                "itself is accepting it back.",
+                "The Hearthstone Fragment pulses once — as if acknowledging the passing "
+                "of its oldest guardian — and then rests.",
+                "You take the stone. It is warm in a way that has nothing to do with "
+                "the volcano beneath you.",
+                "On the way out, you pass the carvings on the hoard room doorframe — "
+                "the scratched note about a figure curled around a glowing light. "
+                "Like it remembered what warm meant.",
+                "You understand that better now.",
+            ],
+        },
+        "peaceful": {
+            "id": "karreth_aftermath_peaceful",
+            "speaker": "",
+            "lines": [
+                "Karreth does not move as you carry the stone out of the chamber. "
+                "The amber light in both enormous eyes watches you go — calm, clear, "
+                "no longer fractured by grey-green.",
+                "At the tunnel entrance, you look back.\n"
+                "Karreth has lowered its head to the volcanic floor. "
+                "Eyes still open. Still watching.",
+                "It does not follow you.\nIt does not need to.\nIts purpose is finished.",
+                "The island feels different on the way out. "
+                "The sulfur smell is still there. The black glass is still underfoot. "
+                "But the weight that sat over the caldera — the wrong-feeling pressure "
+                "that had been building since you arrived — is gone.",
+                "You also carry a single dragon scale, shed freely. "
+                "It is still warm.\nIt will not stop being warm for a very long time.",
+            ],
+        },
+    },
+
+    "sunken_crypt": {
+        "fight": {
+            "id": "sunken_warden_aftermath",
+            "speaker": "The Sunken Warden",
+            "lines": [
+                "The Sunken Warden dissolves into the water that fills the lower chamber — "
+                "not destroyed, but released. The binding that held Deren here for two "
+                "centuries finally unravels.",
+                "As he goes, something like a voice comes from everywhere and nowhere:\n"
+                "\"Thank you.\"\nTwo words. Very quietly.",
+                "\"Tell the order — if there is still an order — that the stone was "
+                "protected. That Deren held.\"\n"
+                "\"That someone finally came.\"",
+                "The water stills.\nThe crypt is just a crypt now.\n"
+                "And the Hearthstone Fragment floats, gently, to the surface.",
+            ],
+        },
+    },
+
+    "pale_coast": {
+        "fight": {
+            "id": "sentinel_aftermath_fight",
+            "speaker": "The Pale Sentinel",
+            "lines": [
+                "The Sentinel goes down slowly — not like defeat, but like a vigil ending. "
+                "She never stops facing you, never turns away. Even in falling, she is "
+                "exactly what she was: present, resolved, done.",
+                "\"I... did not expect you to be worthy.\"\nHer voice is already "
+                "fading at the edges. \"I expected to hold forever. "
+                "The order never said anyone would come.\"",
+                "\"The stone is yours.\"\nA pause. Something shifts in her face. "
+                "\"I am... glad. That this ended.\"",
+                "The armor stays. The woman inside it goes somewhere quieter.",
+            ],
+        },
+        "peaceful": {
+            "id": "sentinel_aftermath_peaceful",
+            "speaker": "",
+            "lines": [
+                "Warden Sirenne of the Pale Coast steps back from the Hearthstone "
+                "pedestal and does not look back at it. After forty-three years, "
+                "she faces outward for the first time.",
+                "She walks to the cave entrance with you.\nAt the threshold, "
+                "she stops. Looks at the sea. The real sea, not the stone ceiling "
+                "above the catacombs.",
+                "She stands there for a long time.",
+                "You don't ask what she's going to do next. It doesn't feel like "
+                "the right question. People who have been the lock for four decades "
+                "need to find out for themselves what they are when the door is gone.",
+                "She lets you leave first.\nWhen you look back from the path, "
+                "she is still standing at the entrance, face turned toward the horizon, "
+                "hands open at her sides.",
+            ],
+        },
+    },
+
+    "windswept_isle": {
+        "fight": {
+            "id": "isle_keeper_aftermath",
+            "speaker": "",
+            "lines": [
+                "The Keeper disperses. Not like a defeat — more like a door opening "
+                "and the wind finally passing through. The storm inside the ruins "
+                "quiets. The arcane instruments on the walls go still.",
+                "On the pedestal where the Hearthstone rests, you find something "
+                "the Keeper left behind — placed deliberately, not dropped. "
+                "A seal with no name on it.",
+                "It chose not to be remembered by name. But it left this. "
+                "Perhaps that was the only kind of name it wanted.",
+                "The fifth stone.\nAll of them, now, in your hands.\n"
+                "The weight of what you're carrying has not changed. "
+                "But the shape of it has.",
+            ],
+        },
+    },
+}
+
+
+# ══════════════════════════════════════════════════════════════
+#  PEACEFUL RESOLUTION DEFINITIONS
+#  Specifies what flags signal a peaceful outcome and what the
+#  party receives in lieu of fighting the boss.
+#  hearthstone_num: int or None (which hearthstone to collect)
+#  bonus_loot: list of unique_keys from UNIQUE_ITEMS to grant
+# ══════════════════════════════════════════════════════════════
+
+BOSS_PEACEFUL_RESOLUTIONS = {
+    "goblin_warren": {
+        "flag":          "choice.grak_spared",
+        "hearthstone":   1,
+        "hearthstone_name": "Hearthstone Fragment (Warren)",
+        "bonus_loot":    [],           # Grak has no unique equip worth granting on peace
+        "boss_npc":      "grak",
+        "world_key":     "thornwood_map",
+    },
+    "dragons_tooth": {
+        "flag":          "choice.karreth_spared",
+        "hearthstone":   3,
+        "hearthstone_name": "Hearthstone Fragment (Dragon's Tooth)",
+        "bonus_loot":    ["karreth_scale"],
+        "boss_npc":      "karreth",
+        "world_key":     "dragon_scale",
+    },
+    "pale_coast": {
+        "flag":          "sentinel.yielded",
+        "hearthstone":   4,
+        "hearthstone_name": "Hearthstone Fragment (Pale Coast)",
+        "bonus_loot":    ["sirenne_buckler"],
+        "boss_npc":      "pale_sentinel",
+        "world_key":     "pale_coast_cleared",
+    },
+}
+
+
+def get_boss_post_dialogue(dungeon_id, peaceful=False):
+    """Return post-boss dialogue dict for a dungeon, or None if none defined."""
+    entry = BOSS_POST_DIALOGUES.get(dungeon_id)
+    if not entry:
+        return None
+    if peaceful and "peaceful" in entry:
+        return entry["peaceful"]
+    return entry.get("fight")
+
+
+def get_peaceful_resolution(dungeon_id):
+    """Return peaceful resolution spec for a dungeon, or None."""
+    return BOSS_PEACEFUL_RESOLUTIONS.get(dungeon_id)

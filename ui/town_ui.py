@@ -107,6 +107,7 @@ class TownUI:
         self.msg_timer = 0
         self.msg_color = CREAM
         self.finished = False
+        self.pending_quest_completions = []  # drained by Game._notify_quests_done each draw
 
         # Shop state
         self.shop_tab = "weapons"  # weapons, armor, consumables
@@ -177,6 +178,8 @@ class TownUI:
 
     def draw(self, surface, mx, my, dt):
         self.msg_timer = max(0, self.msg_timer - dt)
+        if getattr(self, "_inn_save_timer", 0) > 0:
+            self._inn_save_timer = max(0, self._inn_save_timer - dt)
 
         # If dialogue is active, render it instead
         if self.active_dialogue and not self.active_dialogue.finished:
@@ -188,7 +191,8 @@ class TownUI:
             self.active_dialogue = None
             try:
                 from core.story_flags import auto_advance_quests
-                auto_advance_quests(self.party)
+                done = auto_advance_quests(self.party)
+                self.pending_quest_completions.extend(done)
             except Exception:
                 pass
 
@@ -401,12 +405,25 @@ class TownUI:
 
                 if tile == TT_GRASS:
                     shade = 3 if (tx + ty) % 2 == 0 else 0
-                    pygame.draw.rect(surface, (52 + shade, 78 + shade, 42 + shade), (px, py, ts, ts))
-                    if (tx * 7 + ty * 13) % 11 == 0:
-                        pygame.draw.line(surface, (38, 62, 30),
-                            (px + ts//3, py + ts//2), (px + ts//3 - 2, py + ts//4), 1)
-                        pygame.draw.line(surface, (38, 62, 30),
-                            (px + ts*2//3, py + ts//2), (px + ts*2//3 + 2, py + ts//4), 1)
+                    # If this grass tile is directly adjacent to a door, render as a path stub
+                    # so there is a visual walkway connection to every building entrance.
+                    adj_door = any(
+                        get_tile(td, tx+_dx, ty+_dy) == TT_DOOR
+                        for _dx, _dy in ((-1,0),(1,0),(0,-1),(0,1))
+                    )
+                    if adj_door:
+                        pygame.draw.rect(surface, (88, 75, 56), (px, py, ts, ts))
+                        stone_sz = max(3, ts // 3 - 1)
+                        for ox, oy in [(1, 1), (ts//2, 1), (1, ts//2), (ts//2, ts//2)]:
+                            sc2 = (98, 84, 62) if (ox+oy)%2==0 else (80,68,50)
+                            pygame.draw.rect(surface, sc2, (px+ox, py+oy, stone_sz, stone_sz), border_radius=1)
+                    else:
+                        pygame.draw.rect(surface, (52 + shade, 78 + shade, 42 + shade), (px, py, ts, ts))
+                        if (tx * 7 + ty * 13) % 11 == 0:
+                            pygame.draw.line(surface, (38, 62, 30),
+                                (px + ts//3, py + ts//2), (px + ts//3 - 2, py + ts//4), 1)
+                            pygame.draw.line(surface, (38, 62, 30),
+                                (px + ts*2//3, py + ts//2), (px + ts*2//3 + 2, py + ts//4), 1)
 
                 elif tile == TT_PATH:
                     pygame.draw.rect(surface, (95, 82, 62), (px, py, ts, ts))
@@ -516,7 +533,19 @@ class TownUI:
                     pygame.draw.rect(surface, tuple(max(0, int(c*0.7)) for c in bc2), (px, py, ts, ts//5))
 
                 else:
-                    pygame.draw.rect(surface, (40, 35, 28), (px, py, ts, ts))
+                    # '.' open tiles adjacent to doors also show a path stub
+                    adj_door2 = any(
+                        get_tile(td, tx+_dx, ty+_dy) == TT_DOOR
+                        for _dx, _dy in ((-1,0),(1,0),(0,-1),(0,1))
+                    )
+                    if adj_door2:
+                        pygame.draw.rect(surface, (88, 75, 56), (px, py, ts, ts))
+                        stone_sz = max(3, ts // 3 - 1)
+                        for ox, oy in [(1, 1), (ts//2, 1), (1, ts//2), (ts//2, ts//2)]:
+                            sc2 = (98, 84, 62) if (ox+oy)%2==0 else (80,68,50)
+                            pygame.draw.rect(surface, sc2, (px+ox, py+oy, stone_sz, stone_sz), border_radius=1)
+                    else:
+                        pygame.draw.rect(surface, (40, 35, 28), (px, py, ts, ts))
 
                 if tile not in (TT_WALL, TT_TREE):
                     ec = TILE_COLORS.get(tile, (40,40,40))
@@ -799,8 +828,19 @@ class TownUI:
         if self.view != self.VIEW_WALK:
             return None
 
-        # Dialogue takes priority
+        # Dialogue takes priority — forward key events to dialogue UI
         if self.active_dialogue and not self.active_dialogue.finished:
+            import pygame
+            event = pygame.event.Event(pygame.KEYDOWN, key=key, mod=0, unicode="")
+            self.active_dialogue.handle_event(event)
+            if self.active_dialogue.finished:
+                self.active_dialogue = None
+                try:
+                    from core.story_flags import auto_advance_quests
+                    done = auto_advance_quests(self.party)
+                    self.pending_quest_completions.extend(done)
+                except Exception:
+                    pass
             return None
 
         from data.town_maps import is_walkable, get_building_at, get_npc_at, get_sign_at, is_exit, get_tile, TT_DOOR
@@ -1425,6 +1465,14 @@ class TownUI:
 
         back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
         draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+
+        # Save button — top right, next to Back
+        save_btn = pygame.Rect(SCREEN_W - 280, 20, 128, 34)
+        draw_button(surface, save_btn, "💾 Save Game", hover=save_btn.collidepoint(mx, my), size=13)
+        # Save feedback label
+        if getattr(self, "_inn_save_msg", "") and getattr(self, "_inn_save_timer", 0) > 0:
+            smsg_col = (120, 220, 120) if self._inn_save_ok else (220, 80, 80)
+            draw_text(surface, self._inn_save_msg, SCREEN_W - 420, 60, smsg_col, 12)
 
         total_gold = sum(c.gold for c in self.party)
         party_size = len(self.party)
@@ -2277,16 +2325,19 @@ class TownUI:
     def handle_click(self, mx, my):
         """Returns 'exit' to leave town, or None."""
 
-        # Dialogue takes priority
+        # Dialogue takes priority — handle and return immediately so other
+        # click targets don't process on the same mouse event.
         if self.active_dialogue and not self.active_dialogue.finished:
             result = self.active_dialogue.handle_click(mx, my)
             if self.active_dialogue.finished:
                 self.active_dialogue = None
                 try:
                     from core.story_flags import auto_advance_quests
-                    auto_advance_quests(self.party)
+                    done = auto_advance_quests(self.party)
+                    self.pending_quest_completions.extend(done)
                 except Exception:
                     pass
+            return None  # consume the click regardless
 
         # ── Indoor NPC portrait click (any service view) ──
         if (self._bld_npc_portrait_rect and
@@ -2463,6 +2514,16 @@ class TownUI:
             if back.collidepoint(mx, my):
                 self._return_to_town()
                 self.inn_result = None
+                return None
+
+            # Save button
+            save_btn = pygame.Rect(SCREEN_W - 280, 20, 128, 34)
+            if save_btn.collidepoint(mx, my):
+                from core.save_load import save_game
+                ok, path, msg = save_game(self.party)
+                self._inn_save_msg = msg
+                self._inn_save_ok  = ok
+                self._inn_save_timer = 3000
                 return None
 
             by = 110
@@ -2691,23 +2752,31 @@ class TownUI:
                         if len(self.party) >= 6:
                             self._msg("Party is full! Leave someone at the tavern first.", RED)
                         else:
-                            # Build a new character from rec data
                             from core.character import Character
-                            new_char = Character(name=rec["name"],
-                                                 class_name=rec["class_name"],
-                                                 race_name=rec["race_name"])
-                            new_char.level = rec["level"]
-                            for stat, val in rec["stats"].items():
-                                new_char.stats[stat] = val
-                            # Initialize HP
-                            from core.progression import recalculate_max_hp
-                            try:
-                                recalculate_max_hp(new_char)
-                            except Exception:
-                                new_char.resources["MAX_HP"] = 20 + new_char.stats.get("CON", 5) * 2
-                            new_char.resources["HP"] = new_char.resources.get("MAX_HP", 20)
-                            new_char.gold = 0
+                            # Use pre-rolled Character if available (dynamic recruits)
+                            if "_char" in rec and rec["_char"] is not None:
+                                new_char = rec["_char"]
+                                # Ensure HP is set
+                                if not new_char.resources.get("HP"):
+                                    new_char.resources["HP"] = new_char.resources.get("MAX_HP", 20)
+                            else:
+                                # Fallback: build from stat dict (legacy static recruits)
+                                new_char = Character(name=rec["name"],
+                                                     class_name=rec["class_name"],
+                                                     race_name=rec["race_name"])
+                                new_char.level = rec["level"]
+                                for stat, val in rec["stats"].items():
+                                    new_char.stats[stat] = val
+                                from core.progression import recalculate_max_hp
+                                try:
+                                    recalculate_max_hp(new_char)
+                                except Exception:
+                                    new_char.resources["MAX_HP"] = 20 + new_char.stats.get("CON", 5) * 2
+                                new_char.resources["HP"] = new_char.resources.get("MAX_HP", 20)
+                                new_char.gold = 0
                             self.party.append(new_char)
+                            # Remove this recruit from the pool so they can't be hired twice
+                            rec["_char"] = None
                             sfx.play("ui_confirm")
                             self._msg(f"{rec['name']} joins your party!", GOLD)
                         return None

@@ -199,6 +199,52 @@ class DialogueUI:
             draw_text(surface, "▼ scroll down (mouse wheel)", DIALOGUE_MARGIN + 20,
                       top_y + max_visible * 44 + 2, GREY, 13)
 
+    def _select_and_advance(self, idx):
+        """Select choice at idx and handle state transition. Returns action string or None."""
+        self.state.select_choice(idx)
+        self.displayed_chars = 0
+        self.text_scroll = 0
+        self._scroll_unlocked = False
+        self.hover_choice = -1
+        if self.state.finished:
+            node = self.state.current_node
+            if node.get("on_enter"):
+                for act in node["on_enter"]:
+                    if act.get("flag", "").endswith(".killed"):
+                        self.result = "fight"
+                    elif act.get("flag", "").endswith("_spared") or                          act.get("flag", "") == "goblin_peace":
+                        self.result = "peace"
+            from core.story_flags import get_flag
+            if get_flag("choice.grak_spared"):
+                self.result = "peace"
+            self.finished = True
+            return "done"
+        return None
+
+    def _get_choice_idx_at(self, mx, my):
+        """Return the choice index under (mx, my), or -1 if none.
+        Mirrors the layout in _draw_choices so clicks are always detected
+        independently of whether draw() has already run this frame.
+        """
+        if not self.full_text_shown or not self.state.has_choices():
+            return -1
+        choices = self.state.get_choices()
+        if not hasattr(self, "choice_scroll"):
+            self.choice_scroll = 0
+        choice_count = len(choices)
+        choice_height = choice_count * 46 + 20 if choice_count > 0 else 50
+        choices_y = SCREEN_H - choice_height - CHOICES_BOTTOM_MARGIN
+        available_h = SCREEN_H - choices_y - CHOICES_BOTTOM_MARGIN
+        max_visible = max(3, available_h // 44)
+        self.choice_scroll = min(self.choice_scroll, max(0, choice_count - max_visible))
+        for i in range(min(max_visible, choice_count - self.choice_scroll)):
+            real_i = i + self.choice_scroll
+            rect = pygame.Rect(DIALOGUE_MARGIN + 20, choices_y + i * 46,
+                               SCREEN_W - DIALOGUE_MARGIN * 2 - 40, 40)
+            if rect.collidepoint(mx, my):
+                return real_i
+        return -1
+
     def handle_click(self, mx, my):
         """Handle mouse click. Returns action string or None."""
         if self.state.finished:
@@ -210,37 +256,17 @@ class DialogueUI:
             self.displayed_chars = 999999
             return None
 
-        # If choices available, check click
+        # If choices available, check click — compute hit independently of draw()
         if self.state.has_choices():
-            if self.hover_choice >= 0:
-                choice = self.state.get_choices()[self.hover_choice]
-                # Check if this choice leads to a fight
-                next_id = choice.get("next", "")
-
-                self.state.select_choice(self.hover_choice)
-                self.displayed_chars = 0
-                self.text_scroll = 0
-                self._scroll_unlocked = False
-
-                # Check if the new node is the "fight" node
-                if self.state.finished:
-                    node = self.state.current_node
-                    if node.get("on_enter"):
-                        for act in node["on_enter"]:
-                            if act.get("flag", "").endswith(".killed"):
-                                self.result = "fight"
-                            elif act.get("flag", "").endswith("_spared") or \
-                                 act.get("flag", "") == "goblin_peace":
-                                self.result = "peace"
-                    return "done"
-                return None
+            clicked_idx = self._get_choice_idx_at(mx, my)
+            if clicked_idx >= 0:
+                return self._select_and_advance(clicked_idx)
         elif self.state.should_auto_advance():
             self.state.advance()
             self.displayed_chars = 0
-            self.text_scroll = 0   # reset scroll so new node starts from top
+            self.text_scroll = 0
             self._scroll_unlocked = False
             if self.state.finished:
-                # Check final node for result
                 node = self.state.current_node
                 if node.get("on_enter"):
                     for act in node["on_enter"]:
@@ -249,17 +275,20 @@ class DialogueUI:
                         elif act.get("flag", "").endswith("_spared") or \
                              act.get("flag", "") == "goblin_peace":
                             self.result = "peace"
-                # Also check if peace was already set in earlier nodes
                 from core.story_flags import get_flag
                 if get_flag("choice.grak_spared"):
                     self.result = "peace"
                 return "done"
             return None
         else:
-            # Check if peace was reached before finishing
+            # Either an end=True node (pending close) or a true dead-end node
             from core.story_flags import get_flag
             if get_flag("choice.grak_spared"):
                 self.result = "peace"
+            # Clear _end_pending so state knows the player acknowledged the node
+            if hasattr(self.state, "_end_pending"):
+                self.state._end_pending = False
+            self.state.finished = True
             self.finished = True
             return "done"
 
@@ -269,6 +298,18 @@ class DialogueUI:
         """Handle keyboard events."""
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
+                # If text still typing, show all first
+                if not self.full_text_shown:
+                    self.displayed_chars = 999999
+                    return None
+                # If choices available, select the hovered one or first one
+                if self.state.has_choices():
+                    idx = self.hover_choice if self.hover_choice >= 0 else 0
+                    choices = self.state.get_choices()
+                    if idx < len(choices):
+                        return self._select_and_advance(idx)
+                    return None
+                # Auto-advance (no choices)
                 return self.handle_click(0, 0)
             elif event.key == pygame.K_ESCAPE:
                 self.finished = True
@@ -278,25 +319,7 @@ class DialogueUI:
                 choices = self.state.get_choices()
                 num = event.key - pygame.K_1  # K_1 = 0, K_2 = 1, etc.
                 if 0 <= num < len(choices):
-                    choice = choices[num]
-                    self.state.select_choice(num)
-                    self.displayed_chars = 0
-                    self.text_scroll = 0
-                    self._scroll_unlocked = False
-                    if self.state.finished:
-                        node = self.state.current_node
-                        if node.get("on_enter"):
-                            for act in node["on_enter"]:
-                                if act.get("flag", "").endswith(".killed"):
-                                    self.result = "fight"
-                                elif act.get("flag", "").endswith("_spared") or \
-                                     act.get("flag", "") == "goblin_peace":
-                                    self.result = "peace"
-                        from core.story_flags import get_flag
-                        if get_flag("choice.grak_spared"):
-                            self.result = "peace"
-                        return "done"
-                    return None
+                    return self._select_and_advance(num)
         return None
 
     def _get_portrait_color(self, speaker):

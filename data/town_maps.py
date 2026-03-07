@@ -85,162 +85,176 @@ def _pad_map(lines, w):
 
 
 # ══════════════════════════════════════════════════════════
-#  BRIARHOLLOW — Starter Village  (44x32)
+#  BRIARHOLLOW — Starter Village  (60x34)
 # ══════════════════════════════════════════════════════════
 #
-#  Large buildings with walkable interiors — NPCs are INSIDE.
-#  Walk through a door (D) to enter.  Face an NPC and press ENTER.
+#  Buildings are scattered and vary in size — players explore to find them.
+#  Tile key: T=tree  #=wall  .=grass  P=path  D=door
+#            S=sign  W=well  B=bench  E=exit
 #
-#  North row:  Inn (2-13), Shop (15-26), Elder's House (28-41)
-#  Main street: row 10
-#  Town square: rows 11-12  (sign @13,11 / well @21,11)
-#  South row:  Tavern (2-15), Temple (17-29), Forge (31-41)
-#  Path network: rows 24-28
-#  Exit gate:  row 30, cols 20-22
+#  NW  — Inn (14×7, large): cols 2-15, rows 2-8       door @ (8,8)
+#  N   — General Store (9×5, medium): cols 20-28, r 2-6  door @ (24,6)
+#  NE  — Elder's House (7×5, small): cols 46-52, r 3-7   door @ (48,7)
+#  SE  — Temple of Light (15×8, grand): cols 37-51, r 17-24  door @ (43,17)
+#  SW  — Dunn's Forge (10×8, industrial): cols 2-11, r 19-26 door @ (6,19)
+#  SC  — The Rusty Flagon/Tavern (12×7): cols 17-28, r 20-26  door @ (22,20)
+#
+#  Main E-W street: row 10   Secondary path: row 15   South road: row 28
+#  Town square: rows 11-14 with well, benches, trees
+#  Exit gate: row 29, cols 28-30
 
 BRIARHOLLOW_MAP_RAW = [
-    # ── Option 2: Solid facades, all NPCs outdoors ──────────────────
-    # Tile key: T=tree  #=wall  .=grass  P=path  D=door
-    #           S=sign  W=well  B=bench  E=exit
-    #
-    # North buildings (cols 2-12 inn, 14-26 shop, 28-42 elder)
-    # South buildings (cols 2-12 tavern, 14-26 temple, 28-42 forge)
-    # Town square rows 10-12 with well, sign-post, trees, benches
-    # All NPCs stand on street/path tiles outside their buildings
-    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",  #  0
-    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",  #  1
-    "TT###########.###########.#############...TT",  #  2  north facades
-    "TT###########.###########.#############...TT",  #  3
-    "TT###########.###########.#############...TT",  #  4
-    "TT###########.###########.#############...TT",  #  5
-    "TT###########.###########.#############...TT",  #  6
-    "TT#####D#####.######D####.######D######...TT",  #  7  doors at 7,19,32
-    "TT.....P.....P......P....P......PP........TT",  #  8  front paths
-    "TTPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPTT",  #  9  main cobblestone street
-    "TT..T........T...S....W.....T..S....T.....TT",  # 10  square (S=signpost W=well)
-    "TT.....T..........B.....B.......T.........TT",  # 11  benches
-    "TT..T........T.......T........T.......T...TT",  # 12  square lower
-    "TTPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPTT",  # 13  south cobblestone street
-    "TT.....P.....P......P....P......PP........TT",  # 14  south front paths
-    "TT#####D#####.######D####.######D######...TT",  # 15  south doors at 7,20,33
-    "TT###########.###########.#############...TT",  # 16  south facades
-    "TT###########.###########.#############...TT",  # 17
-    "TT###########.###########.#############...TT",  # 18
-    "TT###########.###########.#############...TT",  # 19
-    "TT###########.###########.#############...TT",  # 20
-    "TTPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPTT",  # 21  lower road
-    "TT...T.....T.......T.........T......T.....TT",  # 22  south common
-    "TT...T.....T.......T.........T......T.....TT",  # 23
-    "TT................EEE.....................TT",   # 24  exit (cols 18-20)
-    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",  # 25
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",  #  0
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",  #  1
+    "TT##############....#########.............................TT",  #  2  Inn NW | Shop N
+    "TT##############....#########.................#######.....TT",  #  3         | Elder NE starts
+    "TT##############....#########.................#######.....TT",  #  4
+    "TT##############....#########.................#######.....TT",  #  5
+    "TT##############....####D####.................#######.....TT",  #  6  Shop door col 24
+    "TT##############........P.....................##D####.....TT",  #  7  Elder door col 48
+    "TT######D#######........P.......................P.........TT",  #  8  Inn door col 8
+    "TT......P...............P.......................P.........TT",  #  9  paths → main street
+    "TTPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPTT",  # 10  main cobblestone street
+    "TT............T...T.S......W..........T.S.................TT",  # 11  square: sign(20,11) well(27,11) sign(40,11)
+    "TT......T...............B.....T.....B...............T.....TT",  # 12  benches col 24 & 36
+    "TT...............................T............T...........TT",  # 13
+    "TT........................................................TT",  # 14
+    "TTPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPTT",  # 15  secondary path
+    "TT..T.P.....T.........P.........T..........P......T....T..TT",  # 16  scattered trees + door paths
+    "TT....P...............P..............######D########......TT",  # 17  Temple door col 43
+    "TT....P...............P..............###############......TT",  # 18
+    "TT####D#####..........P..............###############......TT",  # 19  Forge door col 6
+    "TT##########.....#####D######........###############......TT",  # 20  Tavern door col 22
+    "TT##########.....############........###############......TT",  # 21
+    "TT##########.....############........###############......TT",  # 22
+    "TT##########.....############........###############......TT",  # 23
+    "TT##########.....############........###############......TT",  # 24
+    "TT##########.....############.............................TT",  # 25
+    "TT##########.....############.............................TT",  # 26
+    "TT...T.........T...................T............T.........TT",  # 27  south common with trees
+    "TTPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPTT",  # 28  south road
+    "TT..........................EEE...........................TT",  # 29  exit gate cols 28-30
+    "TT........................................................TT",  # 30
+    "TT........................................................TT",  # 31
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",  # 32
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",  # 33
 ]
 
-BRIARHOLLOW_MAP = _pad_map(BRIARHOLLOW_MAP_RAW, 44)
+BRIARHOLLOW_MAP = _pad_map(BRIARHOLLOW_MAP_RAW, 60)
 
-
-# ── Building facades: door positions match map row 7 & 15 ─────────────────
-#   All buildings are solid (no interior floor tiles).
-#   Entering a door triggers the service menu directly.
-#   label_pos  → tile coords where the sign/name floats above the facade
-#   sign_row   → row of wall tiles that gets the building name painted on it
 
 BRIARHOLLOW_BUILDINGS = {
+    # Inn — largest building, NW corner. Warm, welcoming amber colour.
     "inn": {
         "name": "The Wanderer's Rest",
         "type": BLD_INN,
-        "door": (7, 7),
-        "color": (180, 140, 80),        # warm amber
-        "label_pos": (7, 2),
+        "door": (8, 8),
+        "color": (180, 140, 80),
+        "label_pos": (8, 2),
         "npc_name": "Innkeeper Bess",
-        "wall_cols": (2, 13),
-        "wall_rows": (2, 7),
-        "indoor_npc": {"name": "Innkeeper Bess", "npc_type": "innkeeper", "title": "Innkeeper", "description": "A warm, bustling woman drying her hands on her apron.", "color": (210, 175, 120), "dialogue_id": "bess"}
+        "wall_cols": (2, 15),
+        "wall_rows": (2, 8),
+        "indoor_npc": {"name": "Innkeeper Bess", "npc_type": "innkeeper", "title": "Innkeeper",
+                       "description": "A warm, bustling woman drying her hands on her apron.",
+                       "color": (210, 175, 120), "dialogue_id": "bess"},
     },
+    # General Store — medium, north-centre.
     "shop": {
         "name": "General Store",
         "type": BLD_SHOP,
-        "door": (20, 7),
-        "color": (80, 155, 100),        # forest green
-        "label_pos": (20, 2),
+        "door": (24, 6),
+        "color": (80, 155, 100),
+        "label_pos": (24, 2),
         "npc_name": "Merchant Kira",
-        "wall_cols": (14, 27),
-        "wall_rows": (2, 7),
-        "indoor_npc": {"name": "Merchant Kira", "npc_type": "merchant", "title": "Merchant", "description": "A shrewd traveler arranging goods on a small table.", "color": (120, 190, 140), "dialogue_id": "merchant_kira"},
+        "wall_cols": (20, 28),
+        "wall_rows": (2, 6),
+        "indoor_npc": {"name": "Merchant Kira", "npc_type": "merchant", "title": "Merchant",
+                       "description": "A shrewd traveler arranging goods on a small table.",
+                       "color": (120, 190, 140), "dialogue_id": "merchant_kira"},
     },
+    # Elder's House — smallest building, tucked in NE corner. Players must explore to find it.
     "elder": {
         "name": "Elder's House",
         "type": BLD_HOUSE,
-        "door": (32, 7),
-        "color": (140, 125, 160),       # muted violet
-        "label_pos": (32, 2),
+        "door": (48, 7),
+        "color": (140, 125, 160),
+        "label_pos": (48, 3),
         "npc_name": "Elder Thom",
-        "wall_cols": (28, 43),
-        "wall_rows": (2, 7),
-        "indoor_npc": {"name": "Elder Thom", "npc_type": "elder", "title": "Village Elder", "description": "The village elder with sharp eyes.", "color": (185, 175, 140), "dialogue_id": "elder_thom"},
+        "wall_cols": (46, 52),
+        "wall_rows": (3, 7),
+        "indoor_npc": {"name": "Elder Thom", "npc_type": "elder", "title": "Village Elder",
+                       "description": "The village elder with sharp, watchful eyes.",
+                       "color": (185, 175, 140), "dialogue_id": "elder_thom"},
     },
-    "tavern": {
-        "name": "The Rusty Flagon",
-        "type": BLD_TAVERN,
-        "door": (7, 15),
-        "color": (195, 110, 50),        # burnt orange
-        "label_pos": (7, 20),
-        "npc_name": "Barkeep Thom",
-        "wall_cols": (2, 13),
-        "wall_rows": (15, 21),
-        "indoor_npc": {"name": "Barkeep Thom", "npc_type": "barkeep", "title": "Barkeep", "description": "A grizzled barkeep who knows every rumour in town.", "color": (185, 135, 80), "dialogue_id": None},
-    },
+    # Temple — grandest building, SE. Requires crossing town to reach.
     "temple": {
-        "name": "Shrine of Light",
+        "name": "Temple of Light",
         "type": BLD_TEMPLE,
-        "door": (20, 15),
-        "color": (210, 200, 120),       # golden white
-        "label_pos": (20, 20),
+        "door": (43, 17),
+        "color": (210, 200, 120),
+        "label_pos": (43, 17),
         "npc_name": "Priestess Alia",
-        "wall_cols": (14, 27),
-        "wall_rows": (15, 21),
-        "indoor_npc": {"name": "Priestess Alia", "npc_type": "priestess", "title": "Priestess", "description": "A serene priestess tending the shrine.", "color": (225, 225, 165), "dialogue_id": None},
+        "wall_cols": (37, 51),
+        "wall_rows": (17, 24),
+        "indoor_npc": {"name": "Priestess Alia", "npc_type": "priestess", "title": "Priestess",
+                       "description": "A serene priestess tending the altar flame.",
+                       "color": (225, 225, 165), "dialogue_id": "priestess_alia"},
     },
+    # Forge — industrial, SW. Wide low building.
     "forge": {
         "name": "Dunn's Forge",
         "type": BLD_FORGE,
-        "door": (32, 15),
-        "color": (210, 95, 35),         # hot iron orange
-        "label_pos": (33, 20),
+        "door": (6, 19),
+        "color": (210, 95, 35),
+        "label_pos": (6, 19),
         "npc_name": "Forgemaster Dunn",
-        "wall_cols": (28, 43),
-        "wall_rows": (15, 21),
-        "indoor_npc": {"name": "Forgemaster Dunn", "npc_type": "forger", "title": "Forgemaster", "description": "A stocky dwarf beside his forge.", "color": (225, 145, 60), "dialogue_id": "forgemaster_dunn"},
+        "wall_cols": (2, 11),
+        "wall_rows": (19, 26),
+        "indoor_npc": {"name": "Forgemaster Dunn", "npc_type": "forger", "title": "Forgemaster",
+                       "description": "A stocky dwarf, arms thick from years at the anvil.",
+                       "color": (225, 145, 60), "dialogue_id": "forgemaster_dunn"},
+    },
+    # Tavern — south-centre. Medium, lively.
+    "tavern": {
+        "name": "The Rusty Flagon",
+        "type": BLD_TAVERN,
+        "door": (22, 20),
+        "color": (195, 110, 50),
+        "label_pos": (22, 20),
+        "npc_name": "Barkeep Sylla",
+        "wall_cols": (17, 28),
+        "wall_rows": (20, 26),
+        "indoor_npc": {"name": "Barkeep Sylla", "npc_type": "barkeep", "title": "Barkeep",
+                       "description": "A sharp-eyed woman who misses nothing.",
+                       "color": (185, 135, 80), "dialogue_id": "sylla"},
     },
 }
 
 
-# ── NPCs all positioned OUTSIDE on paths and in the town square ───────────
-#   Each stands just in front of their building's door.
-#   A few "townspeople" wander the square to make it feel populated.
-
 BRIARHOLLOW_NPCS = [
-    # ── Service NPCs — standing at their building doors ───────────────
+    # Elder Thom stands just outside his house in the NE — worth finding.
     {
         "name": "Elder Thom",
-        "x": 29, "y": 8,         # south of elder's door, surveying the square
+        "x": 48, "y": 8,
         "dialogue_id": "elder_thom",
         "description": "The village elder, watching the square with sharp eyes.",
         "color": (185, 175, 140),
         "npc_type": "elder",
     },
-    # ── Square NPCs — give the town life ─────────────────────────────
+    # Maren near the well in the town square.
     {
         "name": "Maren",
-        "x": 22, "y": 11,        # sitting near the well
+        "x": 27, "y": 12,
         "dialogue_id": "maren",
         "description": "A determined woman with knowing eyes, watching the gate.",
         "color": (180, 140, 220),
         "npc_type": "mage",
         "hide_if": "maren.left",
     },
+    # Captain Aldric patrols the main street.
     {
         "name": "Captain Aldric",
-        "x": 12, "y": 9,         # on the main street near the square
+        "x": 15, "y": 10,
         "dialogue_id": "captain_aldric",
         "description": "The guard captain, keeping a watchful eye on arrivals.",
         "color": (145, 165, 205),
@@ -248,23 +262,23 @@ BRIARHOLLOW_NPCS = [
     },
     {
         "name": "Old Petra",
-        "x": 30, "y": 10,        # sitting on a bench
-        "dialogue_id": None,
-        "description": "An elderly woman feeding pigeons by the well.",
+        "x": 35, "y": 11,
+        "dialogue_id": "old_petra",
+        "description": "An elderly woman feeding pigeons near the well.",
         "color": (190, 180, 160),
         "npc_type": "elder",
     },
     {
         "name": "Young Tomas",
-        "x": 8, "y": 11,         # loitering near the square
-        "dialogue_id": None,
+        "x": 10, "y": 12,
+        "dialogue_id": "young_tomas",
         "description": "A restless young man who eyes your weapons with admiration.",
         "color": (160, 195, 160),
         "npc_type": "youth",
     },
     {
         "name": "Herb Seller",
-        "x": 26, "y": 9,         # on the main street
+        "x": 32, "y": 10,
         "dialogue_id": None,
         "description": "A wiry woman selling dried herbs from a wicker basket.",
         "color": (140, 195, 130),
@@ -272,7 +286,7 @@ BRIARHOLLOW_NPCS = [
     },
     {
         "name": "Town Guard",
-        "x": 19, "y": 21,        # lower road, near exit
+        "x": 29, "y": 28,
         "dialogue_id": None,
         "description": "A bored guard keeping watch on the south road.",
         "color": (140, 155, 185),
@@ -281,12 +295,12 @@ BRIARHOLLOW_NPCS = [
 ]
 
 BRIARHOLLOW_SIGNS = {
-    (17, 10): "Briarhollow — Founded in the Third Age. Population: 312.",
-    (31, 10): "Job Board — Adventurers wanted. Post your contracts here.",
+    (20, 11): "Briarhollow — Founded in the Third Age. Population: 312.",
+    (40, 11): "Job Board — Adventurers wanted. Post your contracts here.",
 }
 
-BRIARHOLLOW_SPAWN = (21, 23)   # arriving from the south gate
-BRIARHOLLOW_EXIT  = [(18, 24), (19, 24), (20, 24)]
+BRIARHOLLOW_SPAWN = (29, 27)   # arriving from south, just north of exit road
+BRIARHOLLOW_EXIT  = [(28, 29), (29, 29), (30, 29)]
 
 
 
@@ -667,6 +681,13 @@ GREENWOOD_NPCS = [
         "dialogue_id": "trapper_holt",
         "description": "A sun-weathered trapper sorting pelts on a wooden rack.",
         "color": (160, 130, 90),
+    },
+    {
+        "name": "Old Moss",
+        "x": 4, "y": 3,        # near the treeline, north-west open ground
+        "dialogue_id": "old_moss",
+        "description": "An ancient figure draped in moss and bark, watching the trees with patient eyes.",
+        "color": (60, 110, 50),
     },
 ]
 

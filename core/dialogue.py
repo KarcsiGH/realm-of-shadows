@@ -63,6 +63,7 @@ class DialogueState:
         self.current_node_id = "start"
         self.current_node = self.nodes["start"]
         self.finished = False
+        self._end_pending = False  # True when on an end=True node, waiting for final click
         self.log = []  # list of (speaker, text) for scroll-back
 
         # Execute on_enter for start node
@@ -79,9 +80,11 @@ class DialogueState:
         for action in node.get("on_enter", []):
             _execute_action(action)
 
-        # Check if this is an end node
+        # Check if this is an end node.
+        # We do NOT set finished=True here — instead we set _end_pending so
+        # the dialogue renders the text first, then closes on the next click.
         if node.get("end"):
-            self.finished = True
+            self._end_pending = True
 
     def get_speaker(self):
         return self.current_node.get("speaker", "")
@@ -97,6 +100,20 @@ class DialogueState:
             conds = choice.get("conditions", [])
             if check_conditions(conds):
                 result.append(choice)
+
+        # For looping Q&A trees: ensure there's always an exit option so the
+        # player isn't trapped. If the start node has no farewell-type choice,
+        # inject one. Only needed when we're displaying the start-menu node.
+        if self.tree.get("loop") and self.current_node_id == "start":
+            FAREWELL_HINTS = {"pass", "leav", "brows", "look", "bye",
+                              "farewel", "nothing", "just"}
+            has_exit = any(
+                any(h in c["text"].lower() for h in FAREWELL_HINTS)
+                for c in result
+            )
+            if not has_exit:
+                result.append({"text": "Farewell.", "next": "__end__"})
+
         return result
 
     def has_choices(self):
@@ -105,6 +122,9 @@ class DialogueState:
     def should_auto_advance(self):
         """True if this node has no choices and a 'next' field."""
         if self.finished:
+            return False
+        # End nodes show text and wait for click; they never auto-advance
+        if getattr(self, "_end_pending", False):
             return False
         return not self.has_choices() and "next" in self.current_node
 
@@ -130,9 +150,22 @@ class DialogueState:
         # Record what the player said
         self.log.append(("You", choice["text"]))
 
+        # Track if this start-level choice was a farewell/exit branch.
+        # Used later to decide whether next:None should loop back or end.
+        if self.current_node_id == "start":
+            FAREWELL = {"pass", "leav", "brows", "look", "bye", "farewel",
+                        "nothing", "just", "that's all"}
+            txt = choice["text"].lower()
+            self._last_exit_branch = any(h in txt for h in FAREWELL)
+
         # Execute on_select actions
         for action in choice.get("on_select", []):
             _execute_action(action)
+
+        # Handle __end__ sentinel (injected farewell choice)
+        if choice.get("next") == "__end__":
+            self.finished = True
+            return False
 
         # Go to next node
         next_id = choice.get("next")
@@ -140,6 +173,25 @@ class DialogueState:
             self.current_node_id = next_id
             self.current_node = self.nodes[next_id]
             self._enter_node(self.current_node)
+            return True
+
+        # next_id is None — decide: loop back to menu, or end?
+        # Loop when: tree is Q&A-style (loop:True), current node isn't
+        # an explicit end, and the player didn't pick an exit branch.
+        if (self.tree.get("loop")
+                and not self.current_node.get("end")
+                and not getattr(self, "_last_exit_branch", False)):
+            # Return to question menu without re-executing on_enter actions
+            # (avoids re-firing quest completions etc. from the start node)
+            start = self.nodes["start"]
+            self.current_node_id = "start"
+            # Synthetic menu node: empty text so choices appear immediately,
+            # same choices as start, no on_enter so actions don't re-fire.
+            self.current_node = {
+                "text": "",
+                "choices": start.get("choices", []),
+            }
+            self._last_exit_branch = False  # reset for next loop
             return True
 
         self.finished = True
