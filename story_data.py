@@ -5623,6 +5623,33 @@ _NEW_DIALOGUES = {
 
     "holy_knight": [
         {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "knight_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Holy Knight",
+                        "text": "The Order received word from the Spire. The High Priest has declared a day of silence in your honour. We do not do that for the living. Consider it unusual.",
+                        "choices": [
+                            {"text": "What happens to the Order now?", "next": "order"},
+                            {"text": "We didn't do it for recognition.", "next": "recognition"},
+                        ],
+                    },
+                    "order": {
+                        "speaker": "Holy Knight",
+                        "text": "We rebuild. The cathedral has stood for four centuries — it will stand four more. But the threat we were founded to watch for has arrived and passed. We need to decide what we are when the vigil is over.",
+                        "choices": [{"text": "A harder question than fighting.", "next": None}],
+                    },
+                    "recognition": {
+                        "speaker": "Holy Knight",
+                        "text": "No. I know that. That's why the silence is for you and not the other kind of ceremony. We honour what was done, not the names attached to it. The Light doesn't need names. Neither do you, apparently.",
+                        "choices": [{"text": "Thank you.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
             "conditions": [],
             "tree": {
                 "id": "knight_default",
@@ -5743,6 +5770,60 @@ _NEW_DIALOGUES = {
 
     "apprentice_mage": [
         {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "app_mage_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Apprentice Mage",
+                        "text": "The ley line readings normalized last night. I've been logging them every six hours for eight months. Last night they just — came back. Not fully. But the decay curve reversed. The Archmage cried. I've never seen him cry.",
+                        "choices": [
+                            {"text": "The Hearthstone network is holding.", "next": "holding"},
+                            {"text": "What does this mean for your research?", "next": "research"},
+                        ],
+                    },
+                    "holding": {
+                        "speaker": "Apprentice Mage",
+                        "text": "We know. Solen explained it. Five stones, five anchors, the ward-grid reconstructed from scratch. The theory was right — the extraction was killing it. You proved the extraction was killing it. My thesis thanks you.",
+                        "choices": [{"text": "Don't let them bury it this time.", "next": None}],
+                    },
+                    "research": {
+                        "speaker": "Apprentice Mage",
+                        "text": "It means I can publish. It means the administration can't bury it anymore because the evidence just became visible to anyone with a measuring rod. It means I graduate. Eventually.",
+                        "choices": [{"text": "Good luck.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "item.hearthstone.5", "op": "==", "value": True}],
+            "tree": {
+                "id": "app_mage_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Apprentice Mage",
+                        "text": "Five stones. I ran the numbers three times. The resonance coming off the network right now is — it's loud. Beautifully loud. The crystals in the city have been humming for the last hour. Most people don't notice. I notice.",
+                        "choices": [
+                            {"text": "What happens when the network is complete?", "next": "complete"},
+                            {"text": "We have one more thing to do.", "next": "spire"},
+                        ],
+                    },
+                    "complete": {
+                        "speaker": "Apprentice Mage",
+                        "text": "In theory? The Fading loses its hold. The extracted energy is returned to the ley lines. The decay reverses. In practice — I've never seen a complete network. Nobody alive has. We're about to find out.",
+                        "choices": [{"text": "We're going to find out.", "next": None}],
+                    },
+                    "spire": {
+                        "speaker": "Apprentice Mage",
+                        "text": "I know. Solen told us. Go. Whatever's waiting up there — the math is on your side now. The network is ready. You just have to finish it.",
+                        "choices": [{"text": "That's the plan.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
             "conditions": [],
             "tree": {
                 "id": "app_mage_default",
@@ -5777,6 +5858,55 @@ _NEW_DIALOGUES = {
     ],
 
     "crystal_scholar": [
+        {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "scholar_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Crystal Scholar",
+                        "text": "The resonator is singing. I mean that literally — there's a frequency coming off the crystals right now that's audible if you stand in the central plaza at dawn. People keep thinking it's the bells. It isn't the bells.",
+                        "choices": [
+                            {"text": "The ward-grid is restored.", "next": "restored"},
+                            {"text": "Is the city safe now?", "next": "safe"},
+                        ],
+                    },
+                    "restored": {
+                        "speaker": "Crystal Scholar",
+                        "text": "Restored and self-sustaining, if the models hold. The Hearthstones aren't drawing from the ley lines anymore — they're feeding back into them. The network is generating its own resonance. The founders built something that could outlast its makers. It almost did.",
+                        "choices": [{"text": "Almost.", "next": None}],
+                    },
+                    "safe": {
+                        "speaker": "Crystal Scholar",
+                        "text": "From the Fading? Yes. From everything else — still working on that. But the specific extinction-level collapse I've been modelling for two years is no longer on the projection chart. I slept for eleven hours last night. First time in months.",
+                        "choices": [{"text": "You've earned it.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "item.hearthstone.5", "op": "==", "value": True}],
+            "tree": {
+                "id": "scholar_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Crystal Scholar",
+                        "text": "Five Hearthstones in the network simultaneously. I didn't think I'd ever see this data. The resonator is amplifying the combined signal — the whole city is acting as a single antenna pointed at the Spire. Whatever is anchoring the Fading up there is about to have a very bad time.",
+                        "choices": [
+                            {"text": "That's the idea.", "next": None},
+                            {"text": "We're going there now.", "next": "going"},
+                        ],
+                    },
+                    "going": {
+                        "speaker": "Crystal Scholar",
+                        "text": "Then go quickly. The signal is at peak resonance now — and it won't hold forever. The network is ready. It's been ready and waiting for someone to use it for a thousand years.",
+                        "choices": [{"text": "We won't waste it.", "next": None}],
+                    },
+                },
+            },
+        },
         {
             "conditions": [],
             "tree": {
@@ -6123,6 +6253,55 @@ _NEW_DIALOGUES = {
 
     "imperial_crier": [
         {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "crier_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Imperial Crier",
+                        "text": "HEAR YE! By order of the Governor, the state of civic emergency in the eastern territories has been formally lifted. Citizens displaced by the Fading are invited to register for resettlement assistance at the Guild Hall. That's the official announcement. Off the record — well done.",
+                        "choices": [
+                            {"text": "What does 'resettlement assistance' mean?", "next": "resettle"},
+                            {"text": "How are people taking the news?", "next": "news"},
+                        ],
+                    },
+                    "resettle": {
+                        "speaker": "Imperial Crier",
+                        "text": "Food, tools, temporary shelter, and a land grant if there's anything left to grant. For most of them there isn't. The land came back but the villages didn't. They're rebuilding from nothing.",
+                        "choices": [{"text": "It's a start.", "next": None}],
+                    },
+                    "news": {
+                        "speaker": "Imperial Crier",
+                        "text": "Quietly. People who've been through something like this don't celebrate loudly. They just... breathe differently. You can hear it in the market. It sounds less like people waiting for more bad news.",
+                        "choices": [{"text": "That's enough.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "crier_maren_left",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Imperial Crier",
+                        "text": "HEAR YE! The Governor's office is offering a reward for information regarding — actually, I've been asked to stop reading that one. Sensitive operation. Carry on.",
+                        "choices": [
+                            {"text": "What was the full announcement?", "next": "full"},
+                            {"text": "Understood.", "next": None},
+                        ],
+                    },
+                    "full": {
+                        "speaker": "Imperial Crier",
+                        "text": "A missing scholar, headed north. Warden-affiliated. The Governor's office wants her found. I get the impression they want her found before whatever she's walking into finds her first.",
+                        "choices": [{"text": "We're on it.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
             "conditions": [],
             "tree": {
                 "id": "crier_default",
@@ -6147,6 +6326,33 @@ _NEW_DIALOGUES = {
     ],
 
     "merchant_noble": [
+        {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "noble_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Merchant Noble",
+                        "text": "The eastern routes are open again. I've had three supply caravans move through Ashford Road without incident — first time in two years. I'm not sentimental about it. I am extremely pleased about it.",
+                        "choices": [
+                            {"text": "Commerce as usual, then.", "next": "commerce"},
+                            {"text": "The people rebuilding those roads matter too.", "next": "people"},
+                        ],
+                    },
+                    "commerce": {
+                        "speaker": "Merchant Noble",
+                        "text": "Commerce as usual is civilization as usual. Don't underestimate it. When the markets move, it means people believe tomorrow exists. That's not a small thing after two years of everyone acting like it might not.",
+                        "choices": [{"text": "Fair point.", "next": None}],
+                    },
+                    "people": {
+                        "speaker": "Merchant Noble",
+                        "text": "Yes. I know. I'm funding three of the resettlement cooperatives, though I'd prefer you didn't spread that around — it complicates negotiations. I have a reputation for being difficult to maintain.",
+                        "choices": [{"text": "Your secret is safe.", "next": None}],
+                    },
+                },
+            },
+        },
         {
             "conditions": [],
             "tree": {
@@ -6177,6 +6383,38 @@ _NEW_DIALOGUES = {
     ],
 
     "refugee": [
+        {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "refugee_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Refugee",
+                        "text": "The sky looks different. You notice? The grey at the edges — it's pulling back. I've watched it every morning for two years. I know what it looked like. It looks different now.",
+                        "choices": [
+                            {"text": "The Fading has been stopped.", "next": "stopped"},
+                            {"text": "We hope it holds.", "next": "hope"},
+                        ],
+                    },
+                    "stopped": {
+                        "speaker": "Refugee",
+                        "text": "Stopped. Not fixed. Not undone. Ashford is still gone. My neighbours are still gone. But stopped — I'll take stopped. Stopped is something I didn't think I'd live to see.",
+                        "choices": [{"text": "It won't be forgotten.", "next": "forget"}],
+                    },
+                    "hope": {
+                        "speaker": "Refugee",
+                        "text": "Mm. Good answer. Honest. I've had enough of people who say 'it's over' about things that aren't over. You did something real. What comes after is just — what comes after.",
+                        "choices": [{"text": "That's the most we can promise.", "next": "forget"}],
+                    },
+                    "forget": {
+                        "speaker": "Refugee",
+                        "text": "I'm going back. To where Ashford was. I don't know if there's anything left. I'm going to find out.",
+                        "choices": [{"text": "Safe travels.", "next": None}],
+                    },
+                },
+            },
+        },
         {
             "conditions": [],
             "tree": {
@@ -6235,6 +6473,38 @@ _NEW_DIALOGUES = {
                         "speaker": "Governor Aldric",
                         "text": "I know. The Council inquiry is already underway. Some of those names will surprise people. Others won't. Let me handle that part — you've earned the rest.",
                         "choices": [{"text": "Don't let them bury it.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "aldric_maren_left",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Governor Aldric",
+                        "text": "I heard the scholar left. Alone, at night, headed north. My people tried to follow — she was gone before they reached the gate. She knows something she hasn't shared with you, doesn't she.",
+                        "choices": [
+                            {"text": "She's trying to end this herself.", "next": "herself"},
+                            {"text": "We're not sure what she knows.", "next": "unsure"},
+                        ],
+                    },
+                    "herself": {
+                        "speaker": "Governor Aldric",
+                        "text": "Brave. Possibly foolish. Possibly both. If she has a plan, I hope it's better than mine was — which was 'wait and see.' I've been waiting for three years. The seeing hasn't improved.",
+                        "choices": [{"text": "We're going after her.", "next": "going"}],
+                    },
+                    "unsure": {
+                        "speaker": "Governor Aldric",
+                        "text": "In my experience, when someone knows something and doesn't share it, one of two things is true: they don't trust you, or the knowledge would break you. Given what she's walked into — probably both.",
+                        "choices": [{"text": "We're still going after her.", "next": "going"}],
+                    },
+                    "going": {
+                        "speaker": "Governor Aldric",
+                        "text": "Then go. Varek can give you Guild support to the border. After that you're on your own — I have no authority in the Ashlands. I'll hold the city. I'll be here when you come back.",
+                        "choices": [{"text": "We'll be back.", "next": None}],
                     },
                 },
             },
