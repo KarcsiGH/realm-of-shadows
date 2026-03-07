@@ -1199,6 +1199,56 @@ NPC_DIALOGUES = {
                 },
             },
         },
+        # After Spider's Nest cleared — turn-in for main_spiders_nest
+        {
+            "conditions": [
+                {"flag": "boss_defeated.spiders_nest", "op": "==", "value": True},
+                {"flag": "quest.main_spiders_nest.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "maren_post_spiders",
+                "nodes": {
+                    "start": {
+                        "speaker": "Maren",
+                        "text": "The Spider's Nest. I could feel the corruption easing "
+                                "when you killed the queen — the Fading had taken root in her, "
+                                "accelerated the whole colony's growth. "
+                                "It's spreading through anything living near the ley lines. "
+                                "You stopped one thread. There are more.",
+                        "choices": [
+                            {"text": "The queen was enormous. Unnatural.", "next": "unnatural"},
+                            {"text": "The corruption is in the animals too?", "next": "animals"},
+                        ],
+                    },
+                    "unnatural": {
+                        "speaker": "Maren",
+                        "text": "Yes. The Fading doesn't kill — not at first. "
+                                "It warps. Makes things grow beyond their nature, "
+                                "feeds on the energy they produce, then collapses them. "
+                                "Like a fire that burns its own fuel. "
+                                "The mine will be the same if we don't act.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "main_spiders_nest"},
+                            {"action": "set_flag", "flag": "maren.spiders_spoken", "value": True},
+                        ],
+                        "end": True,
+                    },
+                    "animals": {
+                        "speaker": "Maren",
+                        "text": "Everything near a ley disruption. The goblins, the spiders, "
+                                "the wolves Captain Aldric mentioned. They're not rabid — "
+                                "they're corrupted. Driven by something they can't understand "
+                                "or escape. That's what makes this worse than a plague. "
+                                "A plague you can quarantine.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "main_spiders_nest"},
+                            {"action": "set_flag", "flag": "maren.spiders_spoken", "value": True},
+                        ],
+                        "end": True,
+                    },
+                },
+            },
+        },
         # After Dragon's Tooth cleared
         {
             "conditions": [
@@ -1483,20 +1533,113 @@ NPC_DIALOGUES = {
     #  BESS — Innkeeper
     # ─────────────────────────────────────────────────────────
     "bess": [
+        # ── After Maren leaves (Act 2+) ──────────────────────────────
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "bess_post_maren",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Bess",
+                        "text": "She left before dawn. Paid her tab in full — in advance, "
+                                "actually, which surprised me. Maren didn't seem like someone "
+                                "who planned to leave. Something must have pushed her.",
+                        "choices": [
+                            {"text": "Did she say anything before she went?", "next": "last_words"},
+                            {"text": "Was she alone?", "next": "alone"},
+                            {"text": "Any word from the road since?", "next": "road_word"},
+                            {"text": "Thanks, Bess.", "next": "bye"},
+                        ],
+                    },
+                    "last_words": {
+                        "speaker": "Bess",
+                        "text": "She came down before first light and left a note on the bar. "
+                                "Just said: 'Tell them I'm sorry. Tell them I know what I'm doing.' "
+                                "I don't know who 'them' was. I figure it was you.",
+                        "next": "start",
+                    },
+                    "alone": {
+                        "speaker": "Bess",
+                        "text": "As far as I could tell. One bedroll, one satchel. "
+                                "She took all her maps and journals — left nothing behind "
+                                "except that note and a lot of unanswered questions.",
+                        "next": "start",
+                    },
+                    "road_word": {
+                        "speaker": "Bess",
+                        "text": "Nothing reliable. A carter said he passed a woman matching "
+                                "her description on the north road, moving fast. "
+                                "That's all I have. She didn't want to be followed.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Bess",
+                        "text": "Find her before she does something she can't undo. "
+                                "That's my only request.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # ── After meeting Maren but before she leaves (Act 1) ────────
+        {
+            "conditions": [{"flag": "npc.maren.met", "op": "==", "value": True}],
+            "tree": {
+                "id": "bess_knows_maren",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Bess",
+                        "text": "Your scholar friend is still at it — maps spread across "
+                                "the whole table, candles burning past midnight. "
+                                "Whatever she's looking for, she won't stop until she finds it. "
+                                "Can I get you anything?",
+                        "on_enter": [{"action": "meet_npc", "npc": "bess"}],
+                        "choices": [
+                            {"text": "What's the talk in town these days?", "next": "rumors"},
+                            {"text": "Has Maren said anything useful?", "next": "maren_talk"},
+                            {"text": "Just a drink and a moment's quiet.", "next": "bye"},
+                        ],
+                    },
+                    "rumors": {
+                        "speaker": "Bess",
+                        "text": "Old Petra's been complaining about giant spider silk on the "
+                                "eastern path. Not normal size — thick as rope, she says. "
+                                "Half the village thinks she's losing her mind. "
+                                "The other half won't go near that road after dark.",
+                        "next": "start",
+                    },
+                    "maren_talk": {
+                        "speaker": "Bess",
+                        "text": "She keeps to herself mostly. Once she said something about "
+                                "'the land remembering what people forget.' I didn't press her. "
+                                "Some guests you let talk, some you let think. She's the second kind.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Bess",
+                        "text": "Coming right up. Rest while you can.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # ── Default (first arrival, no Maren met yet) ─────────────────
         {
             "conditions": [],
             "tree": {
                 "id": "bess_default",
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Bess",
-                        "text": "Welcome to the Flagon. You look like you could use a drink "
-                                "and a warm bed. Or are you here for the gossip?",
+                        "text": "Welcome to the Rusty Flagon. You look like you could use "
+                                "a drink and a warm bed. Or are you here for the gossip?",
                         "on_enter": [{"action": "meet_npc", "npc": "bess"}],
                         "choices": [
                             {"text": "What's the word around town?", "next": "rumors"},
-                            {"text": "Tell me about Maren.", "next": "about_maren",
-                             "conditions": [{"flag": "npc.maren.met", "op": "==", "value": True}]},
+                            {"text": "Is there a scholar staying here?", "next": "about_maren"},
                             {"text": "Just passing through.", "next": "bye"},
                         ],
                     },
@@ -1506,19 +1649,165 @@ NPC_DIALOGUES = {
                                 "with rain. Old Tam swears he saw his barn fade like a mirage "
                                 "and come back an hour later. And those goblins — they look "
                                 "scared, not angry. Whatever's out there, it frightens them too.",
-                        "end": True,
+                        "next": "start",
                     },
                     "about_maren": {
                         "speaker": "Bess",
-                        "text": "Maren? She arrived a fortnight ago. Quiet, pays on time, "
+                        "text": "Maren? Arrived a fortnight ago. Quiet, pays on time, "
                                 "spends all day with her books and maps. She asked about you lot "
-                                "before you even got here. Knew you were coming somehow. "
-                                "Gives me the chills, honestly.",
-                        "end": True,
+                                "before you even got here — knew you were coming somehow. "
+                                "Gives me the chills, if I'm honest. She's in the corner if you want to speak with her.",
+                        "next": "start",
                     },
                     "bye": {
                         "speaker": "Bess",
                         "text": "Rest well. The world'll still need saving tomorrow.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  OLD PETRA — Briarhollow townsfolk, Spider's Nest hook
+    # ─────────────────────────────────────────────────────────
+    "old_petra": [
+        # After spiders cleared — grateful
+        {
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "tree": {
+                "id": "old_petra_post_spiders",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Old Petra",
+                        "text": "The eastern path is clear again. I walked it myself this morning — "
+                                "first time in weeks I didn't feel watched. "
+                                "Whatever you did in that cave, it worked. "
+                                "Don't let anyone tell you otherwise.",
+                        "on_enter": [{"action": "meet_npc", "npc": "old_petra"}],
+                        "choices": [
+                            {"text": "What was it like when the webs appeared?", "next": "webs_start"},
+                            {"text": "Glad to help.", "next": "bye"},
+                        ],
+                    },
+                    "webs_start": {
+                        "speaker": "Old Petra",
+                        "text": "Overnight, almost. First one morning there was a strand or two — "
+                                "I thought a big garden spider. Next morning the whole east hedge "
+                                "was wrapped. Silk thick as my wrist. Something in that cave "
+                                "was growing. Whatever the Fading touches, it doesn't grow natural.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Old Petra",
+                        "text": "Safe travels. And thank you.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Default — worried, gives the hook
+        {
+            "conditions": [],
+            "tree": {
+                "id": "old_petra_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Old Petra",
+                        "text": "I've lived on this square for sixty years. I know every face "
+                                "and every fence post. And I know something's wrong with the "
+                                "eastern path. Go see for yourself if you don't believe an old woman.",
+                        "on_enter": [{"action": "meet_npc", "npc": "old_petra"}],
+                        "choices": [
+                            {"text": "What's wrong with the eastern path?", "next": "spiders"},
+                            {"text": "How long has it been like this?", "next": "how_long"},
+                            {"text": "We'll look into it.", "next": "look_into"},
+                            {"text": "I'll keep that in mind.", "next": "bye"},
+                        ],
+                    },
+                    "spiders": {
+                        "speaker": "Old Petra",
+                        "text": "Spider silk. Everywhere. And not small spiders — I found a web "
+                                "yesterday that could catch a horse. The cave east of town, "
+                                "the one the children dare each other to enter. Something inside "
+                                "it has grown very large, and very hungry. "
+                                "Nobody will listen because I'm old. Maybe you will.",
+                        "on_enter": [{"action": "start_quest", "quest": "main_spiders_nest"}],
+                        "next": "start",
+                    },
+                    "how_long": {
+                        "speaker": "Old Petra",
+                        "text": "Three weeks, maybe four. It started slow. One morning a strand, "
+                                "the next morning a sheet of it across the hedge. "
+                                "It's the Fading, that's what they're calling it. "
+                                "Whatever it touches doesn't grow the way God intended.",
+                        "next": "start",
+                    },
+                    "look_into": {
+                        "speaker": "Old Petra",
+                        "text": "The cave is east, past the old mill. You'll smell it before "
+                                "you see it — like damp earth and something sweet gone wrong. "
+                                "Be careful. Those webs aren't decoration.",
+                        "on_enter": [{"action": "start_quest", "quest": "main_spiders_nest"}],
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Old Petra",
+                        "text": "Mark my words. That cave will swallow someone if you leave it.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  YOUNG TOMAS — Briarhollow townsfolk, world-building
+    # ─────────────────────────────────────────────────────────
+    "young_tomas": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "young_tomas_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Young Tomas",
+                        "text": "I'm not supposed to talk to adventurers. My mother says "
+                                "it gives me ideas. She's right, but I don't care.",
+                        "on_enter": [{"action": "meet_npc", "npc": "young_tomas"}],
+                        "choices": [
+                            {"text": "What kind of ideas?", "next": "ideas"},
+                            {"text": "Smart mother.", "next": "smart_mum"},
+                            {"text": "Good luck with that.", "next": "bye"},
+                        ],
+                    },
+                    "ideas": {
+                        "speaker": "Young Tomas",
+                        "text": "Leaving. Seeing something beyond this square. "
+                                "Everyone here's been here their whole life. "
+                                "I want to be somewhere different before I'm too old to enjoy it. "
+                                "Is it as dangerous out there as they say?",
+                        "next": "dangerous",
+                    },
+                    "dangerous": {
+                        "speaker": "Young Tomas",
+                        "text": "Never mind. The way you paused before answering tells me everything.",
+                        "next": "start",
+                    },
+                    "smart_mum": {
+                        "speaker": "Young Tomas",
+                        "text": "She is. She also said the mine was safe, two months before "
+                                "it stopped being safe. Sometimes being smart and being right "
+                                "aren't the same thing.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Young Tomas",
+                        "text": "Take me with you sometime. Whenever you're ready.",
                         "end": True,
                     },
                 },
@@ -4706,6 +4995,9 @@ _NEW_DIALOGUES = {
                             {"text": "What kind of trouble?", "next": "trouble"},
                             {"text": "Any missing patrols?", "next": "patrol"},
                             {"text": "The mine — what do you know about it?", "next": "mine"},
+                            {"text": "Old Petra mentioned spiders on the eastern path.", "next": "spiders",
+                             "conditions": [{"flag": "npc.old_petra.met", "op": "==", "value": True},
+                                            {"flag": "boss_defeated.spiders_nest", "op": "not_exists"}]},
                             {"text": "We can handle ourselves.", "next": "confident"},
                         ],
                     },
@@ -4730,6 +5022,15 @@ _NEW_DIALOGUES = {
                         "speaker": "Captain Aldric",
                         "text": "Good. Because I can't spare anyone.",
                         "choices": [{"text": "Fair enough.", "next": None}],
+                    },
+                    "spiders": {
+                        "speaker": "Captain Aldric",
+                        "text": "Petra's been saying that for weeks. I thought it was her eyes. "
+                                "But two of my guards won't take the eastern watch anymore — "
+                                "won't say why, just won't. Cave east of town, past the old mill. "
+                                "I'd consider it a personal favour if you looked in.",
+                        "on_enter": [{"action": "start_quest", "quest": "main_spiders_nest"}],
+                        "choices": [{"text": "We'll check it out.", "next": None}],
                     },
                 },
             },

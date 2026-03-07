@@ -263,7 +263,7 @@ BRIARHOLLOW_NPCS = [
     {
         "name": "Old Petra",
         "x": 35, "y": 11,
-        "dialogue_id": None,
+        "dialogue_id": "old_petra",
         "description": "An elderly woman feeding pigeons near the well.",
         "color": (190, 180, 160),
         "npc_type": "elder",
@@ -271,7 +271,7 @@ BRIARHOLLOW_NPCS = [
     {
         "name": "Young Tomas",
         "x": 10, "y": 12,
-        "dialogue_id": None,
+        "dialogue_id": "young_tomas",
         "description": "A restless young man who eyes your weapons with admiration.",
         "color": (160, 195, 160),
         "npc_type": "youth",
