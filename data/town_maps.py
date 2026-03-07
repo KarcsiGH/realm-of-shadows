@@ -1271,8 +1271,8 @@ TOWN_MAPS = {
     "briarhollow": {
         "name": "Briarhollow",
         "map": BRIARHOLLOW_MAP,
-        "width": 44,
-        "height": 26,
+        "width": 60,
+        "height": 34,
         "buildings": BRIARHOLLOW_BUILDINGS,
         "npcs": BRIARHOLLOW_NPCS,
         "signs": BRIARHOLLOW_SIGNS,
