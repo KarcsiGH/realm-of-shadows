@@ -2807,8 +2807,9 @@ class Game:
         dt = self.clock.get_time()
         self.town_ui.draw(self.screen, mx, my, dt)
         # Drain quest completions queued during dialogue → show banners
-        if self.town_ui.pending_quest_completions:
-            self._notify_quests_done(self.town_ui.pending_quest_completions)
+        pending = getattr(self.town_ui, "pending_quest_completions", [])
+        if pending:
+            self._notify_quests_done(pending)
             self.town_ui.pending_quest_completions = []
 
     def draw_world_map(self, mx, my):
