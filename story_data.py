@@ -4729,17 +4729,66 @@ def get_town_npcs(town_id):
 
 
 def get_rumor(act=None):
-    """Get a random rumor for the current act."""
+    """Get a random rumor for the current act, weighted toward story-relevant ones."""
     import random
-    from core.story_flags import get
+    from core.story_flags import get, get_flag, check_conditions
+
     if act is None:
         act = get("act", 1)
-    rumors = TAVERN_RUMORS.get(act, TAVERN_RUMORS[1])
-    return random.choice(rumors)
+    base_pool = list(TAVERN_RUMORS.get(act, TAVERN_RUMORS[1]))
+
+    # Story-conditional bonus rumors — appear 3× more likely when conditions are met.
+    # Each entry: (conditions_list, rumor_text)
+    STORY_RUMORS = [
+        # Act 1 reactivity
+        ([{"flag": "boss_defeated.goblin_warren", "op": "==", "value": True}],
+         "They say those adventurers cleared the goblin warren. Captain Aldric looked almost relieved."),
+        ([{"flag": "boss_defeated.goblin_warren", "op": "==", "value": True}],
+         "The road east is safer now. Still won't go at night, but safer."),
+        ([{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+         "Old Petra's crowing about the spider cave. Says she told everyone and nobody listened. She's right."),
+        ([{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+         "The eastern path is clear. Whatever was in that cave is gone. Petra says it was the Fading."),
+        ([{"flag": "item.hearthstone.1", "op": "==", "value": True}],
+         "Word is they found one of those old ward-stones in the mine. Living magic, they say. Warm to the touch."),
+        ([{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+         "The abandoned mine's clear. Whatever Valdris put in there is gone. The tanner's already talking about reopening."),
+        # Act 2 reactivity
+        ([{"flag": "boss_defeated.ruins_ashenmoor", "op": "==", "value": True}],
+         "Ashenmoor's been quiet. No more lights, no more sounds. Whatever woke up in there has been put back to sleep."),
+        ([{"flag": "item.hearthstone.2", "op": "==", "value": True}],
+         "Two ward-stones found. The mages in Crystalspire are apparently measuring something in the ley lines. Numbers going up."),
+        ([{"flag": "item.hearthstone.3", "op": "==", "value": True}],
+         "Three stones. Half the set. Someone in the Guild is keeping count on a chalkboard. People stop and look."),
+        ([{"flag": "boss_defeated.dragons_tooth", "op": "==", "value": True}],
+         "They made peace with the dragon. Or killed it. Accounts differ. Either way — the volcano's quiet."),
+        ([{"flag": "maren.left", "op": "==", "value": True}],
+         "Maren left town. Didn't say goodbye. Bess says she left a note but won't show it to anyone."),
+        ([{"flag": "maren.left", "op": "==", "value": True}],
+         "I heard the scholar went to the Spire herself. Alone. Either very brave or very desperate."),
+        # Act 3 reactivity
+        ([{"flag": "item.hearthstone.4", "op": "==", "value": True}],
+         "Four stones. The Pale Sentinel yielded hers. Sixty years guarding a stone for people who finally came."),
+        ([{"flag": "item.hearthstone.5", "op": "==", "value": True}],
+         "All five. I didn't think I'd live to hear that. Whatever happens next, at least someone tried."),
+        ([{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+         "The Fading's stopped. Just... stopped. I woke up this morning and the sky looked right again."),
+        ([{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+         "They came back from the Spire. All of them. That's not supposed to happen."),
+    ]
+
+    # Build weighted pool: base rumors × 1, matching story rumors × 3
+    pool = list(base_pool)
+    for conds, text in STORY_RUMORS:
+        if check_conditions(conds):
+            pool.extend([text, text, text])  # weight 3×
+
+    return random.choice(pool)
 
 
 def get_dungeon_floor_message(dungeon_id, floor):
     """Get story message for entering a dungeon floor."""
+
     events = DUNGEON_STORY_EVENTS.get(dungeon_id, {})
     return events.get("floor_messages", {}).get(floor)
 

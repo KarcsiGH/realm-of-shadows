@@ -819,8 +819,24 @@ class Game:
                 "items":     items,
                 "timer":     5000,
                 "max_timer": 5000,
-                "slide":     0.0,   # 0→1 slide-in progress
+                "slide":     0.0,
+                "kind":      "quest",
             })
+
+    def _notify_tier_up(self, tier_info):
+        """Queue a tier advancement banner using the quest notification system."""
+        self._quest_notifications.append({
+            "name":       f"{tier_info['name']} Tier",
+            "gold":       0,
+            "xp":         0,
+            "items":      [],
+            "timer":      6000,
+            "max_timer":  6000,
+            "slide":      0.0,
+            "kind":       "tier",
+            "tier_color": tier_info["color"],
+            "tier_desc":  tier_info["description"],
+        })
 
     def _draw_quest_banner(self, surface, dt):
         """Draw the front-of-queue quest completion banner and tick its timer.
@@ -864,42 +880,51 @@ class Game:
         surface.blit(panel, (px, py))
         # Gold border
         pygame.draw.rect(surface, GOLD, (px, py, PW, PH), 2, border_radius=6)
-        # Bright accent top bar
-        pygame.draw.rect(surface, (60, 200, 100), (px, py, PW, 4), border_radius=6)
+        # Bright accent top bar — green for quest, tier color for tier-up
+        is_tier = n.get("kind") == "tier"
+        accent = n.get("tier_color", (60, 200, 100)) if is_tier else (60, 200, 100)
+        pygame.draw.rect(surface, accent, (px, py, PW, 4), border_radius=6)
 
-        # "QUEST COMPLETE" header
-        draw_text(surface, "✦  QUEST COMPLETE  ✦", px + PW // 2 - 90, py + 10,
-                  (80, 220, 120), 15, bold=True)
+        # Header line
+        if is_tier:
+            draw_text(surface, "✦  TIER ADVANCE  ✦", px + PW // 2 - 80, py + 10,
+                      accent, 15, bold=True)
+        else:
+            draw_text(surface, "✦  QUEST COMPLETE  ✦", px + PW // 2 - 90, py + 10,
+                      (80, 220, 120), 15, bold=True)
 
-        # Quest name
+        # Name
         font_name = get_font(18)
         name_text = n["name"]
         if font_name.size(name_text)[0] > PW - 30:
             name_text = name_text[:36] + "…"
         draw_text(surface, name_text, px + PW // 2 - font_name.size(name_text)[0] // 2,
-                  py + 32, GOLD, 18, bold=True)
+                  py + 32, GOLD if not is_tier else accent, 18, bold=True)
 
-        # Rewards row
-        reward_parts = []
-        if n["xp"]:
-            reward_parts.append((f"+{n['xp']} XP", (120, 200, 255)))
-        if n["gold"]:
-            reward_parts.append((f"+{n['gold']} gold", (220, 190, 80)))
-        for item in n["items"]:
-            iname = item.get("name", "") if isinstance(item, dict) else str(item)
-            if iname:
-                reward_parts.append((iname, (200, 160, 255)))
-
-        rx = px + 20
-        ry = py + 62
-        if reward_parts:
-            draw_text(surface, "Rewards:", rx, ry, GREY, 13)
-            rx += 70
-            for text, col in reward_parts:
-                draw_text(surface, text, rx, ry, col, 14, bold=True)
-                rx += get_font(14).size(text)[0] + 16
+        # Body line — tier description or rewards
+        if is_tier:
+            desc = n.get("tier_desc", "")
+            draw_text(surface, desc, px + 20, py + 62, CREAM, 12, max_width=PW - 40)
         else:
-            draw_text(surface, "Objectives fulfilled.", px + 20, ry, GREY, 13)
+            reward_parts = []
+            if n["xp"]:
+                reward_parts.append((f"+{n['xp']} XP", (120, 200, 255)))
+            if n["gold"]:
+                reward_parts.append((f"+{n['gold']} gold", (220, 190, 80)))
+            for item in n["items"]:
+                iname = item.get("name", "") if isinstance(item, dict) else str(item)
+                if iname:
+                    reward_parts.append((iname, (200, 160, 255)))
+            rx = px + 20
+            ry = py + 62
+            if reward_parts:
+                draw_text(surface, "Rewards:", rx, ry, GREY, 13)
+                rx += 70
+                for text, col in reward_parts:
+                    draw_text(surface, text, rx, ry, col, 14, bold=True)
+                    rx += get_font(14).size(text)[0] + 16
+            else:
+                draw_text(surface, "Objectives fulfilled.", px + 20, ry, GREY, 13)
 
         # Dismiss hint
         draw_text(surface, "[ click or any key to dismiss ]",
@@ -2191,7 +2216,6 @@ class Game:
             from data.world_map import LOCATIONS
             for lid, loc in LOCATIONS.items():
                 if loc.get("required_key") == world_key:
-                    loc["visible"] = True
                     self.world_state.discovered_locations.add(lid)
 
         # 5. Advance quests
@@ -2422,11 +2446,12 @@ class Game:
         if key and self.world_state:
             if not self.world_state.has_key(key):
                 self.world_state.add_key(key)
-                # Also make the target dungeon visible/discoverable
+                # Reveal matching locations — only update discovered_locations,
+                # never mutate the module-level LOCATIONS dict (that persists
+                # across WorldState instances and causes phantom reveals).
                 from data.world_map import LOCATIONS
                 for loc_id, loc in LOCATIONS.items():
                     if loc.get("required_key") == key:
-                        loc["visible"] = True
                         self.world_state.discovered_locations.add(loc_id)
 
         # Set story flags
@@ -2483,7 +2508,6 @@ class Game:
                 self.world_state.add_key(key)
                 for loc_id, loc in LOCATIONS.items():
                     if loc.get("required_key") == key:
-                        loc["visible"] = True
                         self.world_state.discovered_locations.add(loc_id)
 
     def _trigger_ending(self):
@@ -3495,9 +3519,7 @@ class Game:
                 if tier_advances:
                     _, old_t, new_t = tier_advances[0]
                     tier_info = PLANAR_TIERS[new_t]
-                    self.save_msg = f"Planar Tier: {tier_info['name']}! {tier_info['description']}"
-                    self.save_msg_color = tier_info["color"]
-                    self.save_msg_timer = 6000
+                    self._notify_tier_up(tier_info)
 
                 # ── Post-boss cutscene dialogue (fight path) ──
                 # Fires for boss encounters only; regular enemies skip straight to loot.

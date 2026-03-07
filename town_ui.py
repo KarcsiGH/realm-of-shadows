@@ -178,6 +178,8 @@ class TownUI:
 
     def draw(self, surface, mx, my, dt):
         self.msg_timer = max(0, self.msg_timer - dt)
+        if getattr(self, "_inn_save_timer", 0) > 0:
+            self._inn_save_timer = max(0, self._inn_save_timer - dt)
 
         # If dialogue is active, render it instead
         if self.active_dialogue and not self.active_dialogue.finished:
@@ -1453,6 +1455,14 @@ class TownUI:
         back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
         draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
 
+        # Save button — top right, next to Back
+        save_btn = pygame.Rect(SCREEN_W - 280, 20, 128, 34)
+        draw_button(surface, save_btn, "💾 Save Game", hover=save_btn.collidepoint(mx, my), size=13)
+        # Save feedback label
+        if getattr(self, "_inn_save_msg", "") and getattr(self, "_inn_save_timer", 0) > 0:
+            smsg_col = (120, 220, 120) if self._inn_save_ok else (220, 80, 80)
+            draw_text(surface, self._inn_save_msg, SCREEN_W - 420, 60, smsg_col, 12)
+
         total_gold = sum(c.gold for c in self.party)
         party_size = len(self.party)
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 60, 80, DIM_GOLD, 14)
@@ -2493,6 +2503,16 @@ class TownUI:
             if back.collidepoint(mx, my):
                 self._return_to_town()
                 self.inn_result = None
+                return None
+
+            # Save button
+            save_btn = pygame.Rect(SCREEN_W - 280, 20, 128, 34)
+            if save_btn.collidepoint(mx, my):
+                from core.save_load import save_game
+                ok, path, msg = save_game(self.party)
+                self._inn_save_msg = msg
+                self._inn_save_ok  = ok
+                self._inn_save_timer = 3000
                 return None
 
             by = 110
