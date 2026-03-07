@@ -37,7 +37,8 @@ TAB_EQUIP = 2
 TAB_IDENTIFY = 3
 TAB_STATS = 4
 TAB_TRANSFER = 5
-TAB_NAMES = ["Rest", "Inventory", "Equipment", "Identify", "Party", "Transfer"]
+TAB_FORMATION = 6
+TAB_NAMES = ["Rest", "Inventory", "Equipment", "Identify", "Party", "Transfer", "Formation"]
 TAB_COUNT = len(TAB_NAMES)
 
 # ── Slots ──
@@ -75,6 +76,9 @@ class CampUI:
         self.transfer_dst_char = 1 if len(party) > 1 else 0
         self.transfer_selected_item = -1
 
+        # Formation state
+        self.formation_selected = -1   # index of char being dragged/moved
+
     def draw(self, surface, mx, my, dt=16):
         surface.fill(CAMP_BG)
 
@@ -111,6 +115,8 @@ class CampUI:
             self._draw_stats(surface, mx, my, content_y)
         elif self.tab == TAB_TRANSFER:
             self._draw_transfer(surface, mx, my, content_y)
+        elif self.tab == TAB_FORMATION:
+            self._draw_formation(surface, mx, my, content_y)
 
         # Message bar
         if self.msg_timer > 0:
@@ -713,6 +719,8 @@ class CampUI:
             return self._handle_identify_click(mx, my)
         elif self.tab == TAB_TRANSFER:
             return self._handle_transfer_click(mx, my)
+        elif self.tab == TAB_FORMATION:
+            return self._handle_formation_click(mx, my)
 
         return None
 
@@ -985,3 +993,170 @@ class CampUI:
 
         name = item.get("name", "item")
         self._msg(f"{char.name} equipped {name}.", GOLD)
+
+    # ─────────────────────────────────────────────────────────
+    #  FORMATION TAB
+    # ─────────────────────────────────────────────────────────
+
+    def _draw_formation(self, surface, mx, my, top):
+        """Draw the formation editor: 3 rows (FRONT/MID/BACK), 2 player slots each."""
+        from core.combat_config import FRONT, MID, BACK
+
+        ROWS = [("BACK ROW",  BACK,  (80,  130, 200)),
+                ("MID ROW",   MID,   (200, 170, 50)),
+                ("FRONT ROW", FRONT, (200, 80,  80))]
+
+        PAD       = 30
+        ROW_H     = 140
+        ROW_W     = SCREEN_W - PAD * 2
+        SLOT_W    = 200
+        SLOT_H    = 100
+        SLOT_PAD  = 16
+
+        # Store rects for click detection
+        self._form_row_rects  = {}   # row_key → pygame.Rect of the row panel
+        self._form_slot_rects = {}   # (row_key, slot_idx) → pygame.Rect
+
+        y = top + 10
+        draw_text(surface, "Click a character to select, then click a row slot to place them.",
+                  PAD, y, GREY, 12)
+        y += 22
+
+        # Group party members (players only — no summons) by row
+        from core.combat_config import ROWS as ROW_KEYS
+        players = [p for p in self.party if not p.get("is_summon")]
+        summons  = [p for p in self.party if p.get("is_summon")]
+
+        chars_in_row = {FRONT: [], MID: [], BACK: []}
+        for p in players:
+            r = p.get("row", FRONT)
+            if r not in chars_in_row:
+                r = FRONT
+            chars_in_row[r].append(p)
+
+        for row_label, row_key, row_col in ROWS:
+            panel_r = pygame.Rect(PAD, y, ROW_W, ROW_H)
+            self._form_row_rects[row_key] = panel_r
+
+            # Panel background
+            bg = (28, 22, 40)
+            pygame.draw.rect(surface, bg, panel_r, border_radius=6)
+            border_col = row_col if self.formation_selected >= 0 else (60, 50, 80)
+            pygame.draw.rect(surface, border_col, panel_r, 1, border_radius=6)
+
+            draw_text(surface, row_label, PAD + 10, y + 8, row_col, 13, bold=True)
+
+            # Draw 2 slots
+            for slot_i in range(2):
+                sx = PAD + 10 + slot_i * (SLOT_W + SLOT_PAD)
+                sy = y + 28
+                slot_r = pygame.Rect(sx, sy, SLOT_W, SLOT_H)
+                self._form_slot_rects[(row_key, slot_i)] = slot_r
+
+                # Find char in this slot
+                chars = chars_in_row[row_key]
+                char = chars[slot_i] if slot_i < len(chars) else None
+
+                slot_hover = slot_r.collidepoint(mx, my)
+                if char:
+                    # Is this char selected?
+                    char_idx = players.index(char)
+                    is_sel = self.formation_selected == char_idx
+                    slot_bg = (70, 55, 100) if is_sel else ((50, 40, 70) if slot_hover else (38, 30, 55))
+                    pygame.draw.rect(surface, slot_bg, slot_r, border_radius=5)
+                    sel_border = (180, 140, 255) if is_sel else (row_col if slot_hover else (80, 65, 110))
+                    pygame.draw.rect(surface, sel_border, slot_r, 2, border_radius=5)
+
+                    hp_pct = char.hp / max(1, char.max_hp)
+                    hp_col = (80, 200, 100) if hp_pct > 0.5 else (220, 160, 50) if hp_pct > 0.25 else (200, 60, 60)
+
+                    draw_text(surface, char.name[:18],     sx + 8, sy + 8,  CREAM, 13, bold=True)
+                    draw_text(surface, char.char_class,    sx + 8, sy + 26, GREY,  11)
+                    draw_text(surface, f"HP {char.hp}/{char.max_hp}", sx + 8, sy + 44, hp_col, 11)
+                    if is_sel:
+                        draw_text(surface, "SELECTED",     sx + 8, sy + 62, (180, 140, 255), 11, bold=True)
+                    draw_text(surface, "Lv " + str(char.level), sx + SLOT_W - 40, sy + 8, GOLD, 11)
+                else:
+                    # Empty slot — highlight when a char is selected
+                    if self.formation_selected >= 0:
+                        slot_bg = (50, 40, 60) if slot_hover else (35, 28, 48)
+                        pygame.draw.rect(surface, slot_bg, slot_r, border_radius=5)
+                        pygame.draw.rect(surface, (100, 80, 140) if slot_hover else (60, 50, 80),
+                                         slot_r, 1, border_radius=5)
+                        draw_text(surface, "← Place here", sx + 30, sy + 38, GREY, 12)
+                    else:
+                        pygame.draw.rect(surface, (30, 24, 42), slot_r, border_radius=5)
+                        pygame.draw.rect(surface, (55, 45, 70), slot_r, 1, border_radius=5)
+                        draw_text(surface, "Empty", sx + 60, sy + 38, (70, 60, 90), 12)
+
+            # Summons note on right side of row
+            row_summons = [s for s in summons if s.get("row") == row_key]
+            if row_summons:
+                sx2 = PAD + 10 + 2 * (SLOT_W + SLOT_PAD) + 20
+                draw_text(surface, "Summons:", sx2, y + 28, (120, 200, 120), 11, bold=True)
+                for si, s in enumerate(row_summons[:2]):
+                    draw_text(surface, s.get("name", "?")[:16], sx2, y + 46 + si * 18,
+                              (100, 180, 100), 11)
+
+            y += ROW_H + 10
+
+        # Help footer
+        if self.formation_selected >= 0:
+            sel_name = players[self.formation_selected].name if self.formation_selected < len(players) else ""
+            draw_text(surface, f"{sel_name} selected — click an empty slot or a character to swap.",
+                      PAD, y + 4, (180, 140, 255), 12)
+        else:
+            draw_text(surface, "Max 2 characters per row. Summons occupy additional slots (chosen by the summoner).",
+                      PAD, y + 4, GREY, 11)
+
+    def _handle_formation_click(self, mx, my):
+        from core.combat_config import FRONT, MID, BACK
+
+        players = [p for p in self.party if not p.get("is_summon")]
+
+        # Check slot clicks
+        for (row_key, slot_i), slot_r in getattr(self, "_form_slot_rects", {}).items():
+            if not slot_r.collidepoint(mx, my):
+                continue
+
+            chars_in_row = {FRONT: [], MID: [], BACK: []}
+            for p in players:
+                r = p.get("row", FRONT)
+                if r not in chars_in_row:
+                    r = FRONT
+                chars_in_row[r].append(p)
+
+            chars = chars_in_row[row_key]
+            occupant = chars[slot_i] if slot_i < len(chars) else None
+
+            if self.formation_selected < 0:
+                # No selection yet — select whoever is here
+                if occupant:
+                    self.formation_selected = players.index(occupant)
+                    self._msg(f"{occupant.name} selected.", CREAM)
+            else:
+                mover = players[self.formation_selected]
+                if occupant is None:
+                    # Empty slot — just move
+                    mover["row"] = row_key
+                    self.formation_selected = -1
+                    self._msg(f"{mover.name} moved to {row_key} row.", GOLD)
+                elif occupant is mover:
+                    # Clicked self — deselect
+                    self.formation_selected = -1
+                elif len(chars_in_row[row_key]) < 2 or occupant:
+                    # Swap the two characters
+                    mover_row   = mover.get("row", FRONT)
+                    occupant_row = occupant.get("row", FRONT)
+                    mover["row"]   = occupant_row
+                    occupant["row"] = mover_row
+                    self.formation_selected = -1
+                    self._msg(f"Swapped {mover.name} ↔ {occupant.name}.", GOLD)
+                else:
+                    # Row already has 2 — can't place
+                    self._msg(f"{row_key.capitalize()} row is full (max 2).", (200, 80, 80))
+            return None
+
+        # Click outside all slots — deselect
+        self.formation_selected = -1
+        return None

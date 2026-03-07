@@ -765,6 +765,45 @@ class DungeonUI:
             if 0 <= band_y < VH:
                 pygame.draw.line(view, (4, 3, 5), (0, band_y), (VW-1, band_y))
 
+        # ── Floor grid — perspective lines per tile square ──
+        # Horizontal lines at integer tile distances (receding rows)
+        for tile_d in range(1, 9):
+            sy = int(HH + PROJ_DIST / tile_d)
+            if HH < sy < VH:
+                fog_t   = min(1.0, tile_d / FOG)
+                alpha   = max(0, int(55 * (1.0 - fog_t)))
+                base_g  = tuple(int(self.floor_c[i] * 0.55) for i in range(3))
+                gc      = tuple(min(255, base_g[i] + alpha) for i in range(3))
+                pygame.draw.line(view, gc, (0, sy), (VW - 1, sy))
+        # Vertical lines — perspective-correct column dividers (fan out from horizon centre)
+        # Number of tile columns visible at distance 1: roughly FOV / (pi/4) ≈ 1.5 tiles each side
+        N_COLS = 5   # lines each side of centre (covers ~half-tile spacing at near dist)
+        for ci in range(-N_COLS, N_COLS + 1):
+            # Screen x at the horizon for this column boundary
+            cam_frac = ci / N_COLS   # -1..1 across half-FOV
+            hx = int(VW // 2 + cam_frac * (VW // 2))
+            # Fan the line from (hx, HH) down to a spread-out bottom position
+            spread = int((ci / N_COLS) * VW * 0.35)
+            bx = VW // 2 + spread
+            for tile_d in range(1, 8):
+                sy_top = int(HH + PROJ_DIST / (tile_d + 0.5))
+                sy_bot = int(HH + PROJ_DIST / tile_d)
+                if sy_top >= VH:
+                    break
+                sy_bot = min(sy_bot, VH - 1)
+                # Interpolate x position at each y between the two distances
+                if sy_bot <= sy_top:
+                    continue
+                t_top = (tile_d + 0.5)
+                t_bot = tile_d
+                x_top = int(VW // 2 + cam_frac * (VW // 2) * (t_top / (t_top + 0.1)))
+                x_bot = int(VW // 2 + (ci / N_COLS) * VW * 0.35 * min(1.0, tile_d / 3.0))
+                fog_t  = min(1.0, tile_d / FOG)
+                alpha  = max(0, int(40 * (1.0 - fog_t)))
+                base_g = tuple(int(self.floor_c[i] * 0.55) for i in range(3))
+                gc     = tuple(min(255, base_g[i] + alpha) for i in range(3))
+                pygame.draw.line(view, gc, (x_top, sy_top), (x_bot, sy_bot))
+
         # ── Wall columns ──
         wall_variants = self._wall_cols_variants
         door_cols     = self._door_cols

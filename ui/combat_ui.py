@@ -84,7 +84,7 @@ ROW_AREA_W   = RIGHT_W - ROW_LABEL_W - 6
 ROW_H        = ENEMY_H // 3
 
 # Action bar buttons
-_ACT_LABELS  = ["Attack", "Spell", "Skill", "Item", "Defend", "Flee"]
+_ACT_LABELS  = ["Attack", "Spell", "Skill", "Item", "Move", "Defend", "Flee"]
 _ACT_W       = SCREEN_W // len(_ACT_LABELS)
 
 RES_COLORS = {
@@ -673,13 +673,15 @@ class CombatUI:
         shown = log[start:end]
 
         for i, msg in enumerate(shown):
-            col = GOLD if ("Round" in msg or "VICTORY" in msg or "DEFEAT" in msg) else \
+            col = (255, 140, 40) if msg.startswith("[PHASE]") else \
+                  GOLD if ("Round" in msg or "VICTORY" in msg or "DEFEAT" in msg) else \
                   HEAL_COLOR if ("heal" in msg.lower() or "restore" in msg.lower()) else \
                   (255, 80, 80) if ("CRITICAL" in msg or "FATAL" in msg or "falls" in msg) else \
                   CREAM
+            display = msg[7:].strip() if msg.startswith("[PHASE]") else msg
             y = LOG_Y + 16 + i * line_h
             if y < LOG_Y + LOG_H - 4:
-                surface.blit(font.render(msg[:90], True, col), (RIGHT_X + 6, y))
+                surface.blit(font.render(display[:90], True, col), (RIGHT_X + 6, y))
 
         # Scroll indicator
         if self.log_scroll > 0:
