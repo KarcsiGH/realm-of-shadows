@@ -238,6 +238,16 @@ LOCATIONS = {
         "encounter_key": "boss_karreth", "floors": 3, "difficulty": "legendary",
         "required_key": "ship_passage", "discovery_radius": 3,
     },
+
+    # ── Far North ──
+    "valdris_spire": {
+        "name": "Valdris' Spire", "type": LOC_DUNGEON,
+        "x": 98, "y": 32, "region": "ashlands",
+        "visible": False, "icon": "S",
+        "description": "A black tower at the edge of the world. Whatever Valdris became, he is here.",
+        "floors": 6, "difficulty": "legendary",
+        "required_key": "spire_key", "discovery_radius": 5,
+    },
 }
 
 # Port routes (which ports connect)

@@ -2964,142 +2964,6 @@ NPC_DIALOGUES = {
         },
     ],
 
-    # ─────────────────────────────────────────────────────────
-    #  ARCHMAGE SOLEN — Crystalspire
-    # ─────────────────────────────────────────────────────────
-    "archmage_solen": [
-        # After hearthstone 1 found
-        {
-            "conditions": [
-                {"flag": "quest.main_hearthstone_1.state", "op": "==", "value": -2},
-                {"flag": "npc.archmage_solen.met", "op": "==", "value": True},
-            ],
-            "tree": {
-                "id": "solen_hearthstone",
-                "nodes": {
-                    "start": {
-                        "speaker": "Archmage Solen",
-                        "text": "You found the first stone. Remarkable. I have spent forty years "
-                                "studying these artifacts and never held one. The resonance signature "
-                                "is extraordinary — pure ward-magic, undiluted. The Academy's instruments "
-                                "can help you locate the others.",
-                        "choices": [
-                            {"text": "Can you track the other stones?", "next": "track"},
-                            {"text": "What do you know about Valdris?", "next": "valdris"},
-                            {"text": "Thank you.", "next": "bye"},
-                        ],
-                    },
-                    "track": {
-                        "speaker": "Archmage Solen",
-                        "text": "With the first stone as a reference, yes. The others emit a "
-                                "harmonic echo. I'm detecting two strong signals — one from the "
-                                "Sunken Crypt to the south, another from somewhere in the eastern "
-                                "sea. The Dragon's Tooth archipelago, I believe.",
-                        "on_enter": [
-                            {"action": "set_flag", "flag": "lore.hearthstone_locations", "value": True},
-                            {"action": "discover_lore", "lore": "hearthstone_locations"},
-                        ],
-                        "end": True,
-                    },
-                    "valdris": {
-                        "speaker": "Archmage Solen",
-                        "text": "Valdris was the greatest mage this Academy ever produced. "
-                                "That is not pride — it is a warning. He believed the Shadow "
-                                "Realm was not a threat but a resource. His experiments are what "
-                                "weakened the wards. I was his student. I watched him cross the line. "
-                                "I should have stopped him.",
-                        "on_enter": [{"action": "discover_lore", "lore": "valdris_betrayal"}],
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Archmage Solen",
-                        "text": "The Academy's resources are at your disposal.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-        # First meeting
-        {
-            "conditions": [
-                {"flag": "npc.archmage_solen.met", "op": "not_exists"},
-            ],
-            "tree": {
-                "id": "solen_intro",
-                "nodes": {
-                    "start": {
-                        "speaker": "Archmage Solen",
-                        "text": "Visitors to the Academy. Unusual. I am Solen — Archmage, "
-                                "and currently the only person in this city taking the Fading "
-                                "seriously enough to actually study it. What brings you here?",
-                        "on_enter": [{"action": "meet_npc", "npc": "archmage_solen"}],
-                        "choices": [
-                            {"text": "We're looking into the Fading.", "next": "fading"},
-                            {"text": "We need access to the teleport network.", "next": "teleport"},
-                            {"text": "Just exploring.", "next": "exploring"},
-                        ],
-                    },
-                    "fading": {
-                        "speaker": "Archmage Solen",
-                        "text": "Then we have something in common. The Academy's official position "
-                                "is that the Fading is a 'temporary magical weather event.' "
-                                "My position is that that is catastrophically wrong. "
-                                "Come back when you have proof I can put in front of the Council.",
-                        "end": True,
-                    },
-                    "teleport": {
-                        "speaker": "Archmage Solen",
-                        "text": "Guild membership required. Alternatively, significant contribution "
-                                "to Academy research. The circle is not free — the ley lines that "
-                                "power it are weakening with the Fading. Every jump costs real energy.",
-                        "end": True,
-                    },
-                    "exploring": {
-                        "speaker": "Archmage Solen",
-                        "text": "Crystalspire is worth exploring. Try not to touch anything "
-                                "that's glowing without asking first.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-        # Default
-        {
-            "conditions": [],
-            "tree": {
-                "id": "solen_default",
-                "loop": True,
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Archmage Solen",
-                        "text": "The ley line readings are worse today than yesterday. "
-                                "They have been for months. What can I do for you?",
-                        "choices": [
-                            {"text": "What's the latest from the Academy?", "next": "research"},
-                            {"text": "Goodbye.", "next": "bye"},
-                        ],
-                    },
-                    "research": {
-                        "speaker": "Archmage Solen",
-                        "text": "We've confirmed that the Fading accelerates near Hearthstone "
-                                "anchor points that are undefended. Whatever is driving it is "
-                                "intelligent. It targets weakness. Find those stones.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Archmage Solen",
-                        "text": "Measure twice. The shadow doesn't give second chances.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-    ],
-
-    # ─────────────────────────────────────────────────────────
-    #  TELEPORT MASTER VAEN — Crystalspire circle
-    # ─────────────────────────────────────────────────────────
     "teleport_master": [
         {
             "conditions": [],
@@ -5900,11 +5764,121 @@ _NEW_DIALOGUES = {
     ],
 
     "archmage_solen": [
+        # Act 3 — All 5 stones, Maren left: send-off
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.5", "op": "==",    "value": True},
+                {"flag": "maren.left",         "op": "==",    "value": True},
+            ],
+            "tree": {
+                "id": "solen_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Archmage Solen",
+                        "text": "Five stones. The full network. I confess I did not think "
+                                "you would assemble them in time. The resonance from here is "
+                                "extraordinary — the ward-grid is almost whole. "
+                                "Now go. The Spire is north of Thornhaven. "
+                                "Whatever Valdris is doing at the summit, "
+                                "you need to reach him before the network seals.",
+                        "choices": [
+                            {"text": "What will we find at the top?",    "next": "top"},
+                            {"text": "What about Maren?",                "next": "maren"},
+                            {"text": "We're going now.",                 "next": "bye"},
+                        ],
+                    },
+                    "top": {
+                        "speaker": "Archmage Solen",
+                        "text": "A man who spent thirty years studying the ward-network "
+                                "and then decided he understood it well enough to tear it apart. "
+                                "Whether what remains of him is still human is a question "
+                                "I cannot answer from here.",
+                        "next": "start",
+                    },
+                    "maren": {
+                        "speaker": "Archmage Solen",
+                        "text": "She has been inside the Spire for days. "
+                                "I have watched the resonance patterns shift — she is working "
+                                "the stones somehow, trying to stabilise something from within. "
+                                "Whether she can be reached, I do not know. "
+                                "But she has not collapsed the network. Not yet.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Archmage Solen",
+                        "text": "Then go. I will watch the instruments. "
+                                "If the network holds, I will know you succeeded.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Act 3 — Fewer than 5 stones, Maren left: urgent warning + guidance
+        {
+            "conditions": [
+                {"flag": "maren.left",         "op": "==",        "value": True},
+                {"flag": "item.hearthstone.5", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "solen_act3_warning",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Archmage Solen",
+                        "text": "She is gone. I know. And I know you are thinking about "
+                                "going after her directly. I am telling you: do not. "
+                                "Not yet. If you enter the Spire with fewer than five stones, "
+                                "Valdris has more power than you. You will not come back.",
+                        "choices": [
+                            {"text": "We don't have time to collect more stones.",  "next": "no_time"},
+                            {"text": "Where are the remaining stones?",             "next": "where"},
+                            {"text": "What exactly is at the Spire?",               "next": "spire_info"},
+                            {"text": "We'll be careful.",                           "next": "bye"},
+                        ],
+                    },
+                    "no_time": {
+                        "speaker": "Archmage Solen",
+                        "text": "You have more time than you think. Maren entering the Spire "
+                                "is not the end — she is trying to negotiate something, or "
+                                "she would not have gone alone. She is buying time for you. "
+                                "Use it. Two more stones. Pale Coast, then the Windswept Isle.",
+                        "next": "where",
+                    },
+                    "where": {
+                        "speaker": "Archmage Solen",
+                        "text": "The fourth stone is held by the Pale Sentinel — "
+                                "a Warden who sealed herself at the Pale Coast Catacombs "
+                                "rather than risk corruption. She may yield it peacefully "
+                                "if you can demonstrate you are worthy of the ward-network's trust. "
+                                "The fifth is on the Windswept Isle — bound to a pre-order "
+                                "elemental that will not reason with you. That one you fight.",
+                        "next": "start",
+                    },
+                    "spire_info": {
+                        "speaker": "Archmage Solen",
+                        "text": "Valdris was the last Warden before the order dissolved. "
+                                "He did not break the ward-network out of malice. "
+                                "He broke it because he believed the Fading was a natural process — "
+                                "that the world needed to forget and begin again. "
+                                "He may still believe that. Or the Fading may have changed him. "
+                                "I do not know which Valdris you will find.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Archmage Solen",
+                        "text": "Careful does not save you from a collapsed ley network. "
+                                "Five stones. Pale Coast, then the Isle. Then the Spire.",
+                        "end": True,
+                    },
+                },
+            },
+        },
         {
             "conditions": [
                 {"flag": "explored.abandoned_mine.floor3", "op": "==", "value": True},
-                {"flag": "explored.sunken_crypt.floor2", "op": "==", "value": True},
-                {"flag": "explored.ruins_ashenmoor.floor2", "op": "==", "value": True},
+                {"flag": "explored.sunken_crypt.floor2",   "op": "==", "value": True},
+                {"flag": "explored.ruins_ashenmoor.floor2","op": "==", "value": True},
                 {"flag": "quest.side_academy_research.state", "op": "!=", "value": -2},
             ],
             "tree": {
