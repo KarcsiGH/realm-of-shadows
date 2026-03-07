@@ -1931,6 +1931,45 @@ _ENEMY_DRAW = {
     "Crypt Ranger":       _enemy_bandit_archer,
     "Crypt Paladin":      _enemy_crypt_paladin,
     "Crypt Archmage":     _enemy_cult_sorcerer,
+
+    # ── Fading corrupted animals ──
+    "Fading Wolf":           _enemy_wolf,
+    "Fading Hound":          _enemy_hound,
+    "Fading Bear":           _enemy_troll,
+    "Fading Boar":           _enemy_hound,
+    "Fading Stag":           _enemy_wolf,
+    "Fading Abomination":    _enemy_abomination,
+
+    # ── Imperial soldiers ──
+    "Imperial Soldier":      _enemy_bandit_fighter,
+    "Imperial Archer":       _enemy_bandit_archer,
+    "Imperial Commander":    _enemy_death_knight,
+    "Imperial Court Mage":   _enemy_cult_sorcerer,
+    "Imperial Inquisitor":   _enemy_crypt_paladin,
+
+    # ── Pirates ──
+    "Pirate Deckhand":       _enemy_bandit_fighter,
+    "Pirate Markswoman":     _enemy_bandit_archer,
+    "Pirate First Mate":     _enemy_bandit_captain,
+    "Pirate Captain":        _enemy_sellsword,
+    "Pirate Witch Doctor":   _enemy_cult_sorcerer,
+
+    # ── Shadow / Warden variants ──
+    "Shadow Warden":         _enemy_wraith,
+    "Warden Shade":          _enemy_wraith,
+    "Fallen Warden":         _enemy_death_knight,
+    "Oathbreaker Knight":    _enemy_death_knight,
+    "Stone Warden Ghost":    _enemy_wraith,
+    "Iron Ridge Shade":      _enemy_wraith,
+    "Dark Consecrator":      _enemy_high_cultist,
+
+    # ── Arcane / Mechanical ──
+    "Arcane Sentry":         _enemy_stone_sentinel,
+    "Arcane Wisp":           _enemy_cave_bat,
+    "Living Tome":           _enemy_cult_sorcerer,
+    "Vault Automaton":       _enemy_stone_sentinel,
+    "Tower Rat":             _enemy_giant_rat,
+    "Dwarven Forge Guard":   _enemy_stone_sentinel,
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
