@@ -562,10 +562,45 @@ def resolve_basic_attack(attacker, defender, enemies=None):
         crit_data=crit_data,
     )
 
+    # Attacker buff multipliers (war_cry, rally, conqueror, shadow_step, etc.)
+    atk_mult = 1.0
+    for st in attacker.get("status_effects", []):
+        n = st["name"]
+        if n in ("war_cry", "WarCry"):    atk_mult *= 1.25
+        if n == "hawk_eye":               atk_mult *= 1.20
+        if n == "rally":                  atk_mult *= 1.25
+        if n == "conqueror":              atk_mult *= 2.00
+        if n == "shadow_step":            atk_mult *= 1.50
+        if n == "last_stand" and attacker["hp"] / max(1, attacker["max_hp"]) <= 0.25:
+                                          atk_mult *= 1.50
+    if atk_mult != 1.0:
+        damage = max(MINIMUM_DAMAGE, int(damage * atk_mult))
+
+    # Defender buff reductions (defense_up, iron_skin, divine_shield, etc.)
+    def_reduce = 0
+    for st in defender.get("status_effects", []):
+        n = st["name"]
+        if n == "defense_up":            def_reduce += 5
+        if n == "iron_skin":             def_reduce += 8
+        if n == "magic_shield":          def_reduce += 6
+        if n == "runic_armor":           def_reduce += 10
+        if n == "divine_shield":         def_reduce += 12
+        if n == "shield_of_faith":       def_reduce += 14
+        if n == "fading_ward":           def_reduce += 8
+        if n == "ward_anchor":           def_reduce += 6
+        if n == "battle_prayer":         def_reduce += 4
+        if n in ("unbreakable", "divine_intervention"): def_reduce += 20
+    if def_reduce:
+        damage = max(MINIMUM_DAMAGE, damage - def_reduce)
+
     result["damage"] = damage
 
     # Apply damage
     defender["hp"] = max(0, defender["hp"] - damage)
+    if defender["hp"] <= 0 and defender.get("type") == "player":
+        if any(st["name"] in ("unbreakable", "divine_intervention")
+               for st in defender.get("status_effects", [])):
+            defender["hp"] = 1
     if defender["hp"] <= 0:
         defender["alive"] = False
 
@@ -679,6 +714,10 @@ def resolve_enemy_attack(attacker, defender):
     result["damage"] = damage
 
     defender["hp"] = max(0, defender["hp"] - damage)
+    if defender["hp"] <= 0 and defender.get("type") == "player":
+        if any(st["name"] in ("unbreakable", "divine_intervention")
+               for st in defender.get("status_effects", [])):
+            defender["hp"] = 1
     if defender["hp"] <= 0:
         defender["alive"] = False
 
@@ -872,25 +911,41 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         return msgs
 
     def _active_buff_mods(combatant):
-        """Return (dmg_mult, def_reduction, evasion_chance, absorb_next)."""
-        dmg_mult = 1.0
-        def_reduce = 0
+        """Return (dmg_mult, def_reduction, evasion_chance, absorb_next).
+        Handles all buff types defined in CLASS_ABILITIES.
+        """
+        dmg_mult    = 1.0
+        def_reduce  = 0
         evade_chance = 0.0
-        absorb_next = False
+        absorb_next  = False
+        hp_pct = combatant["hp"] / max(1, combatant["max_hp"])
+
         for st in combatant.get("status_effects", []):
             n = st["name"]
-            if n == "war_cry":       dmg_mult *= 1.25
-            if n == "WarCry":        dmg_mult *= 1.25
-            if n == "hawk_eye":      dmg_mult *= 1.20
-            if n == "last_stand" and combatant["hp"] / max(1, combatant["max_hp"]) <= 0.25:
-                dmg_mult *= 1.50
-            if n == "defense_up":    def_reduce += 5
-            if n == "iron_skin":     def_reduce += 8
-            if n == "magic_shield":  def_reduce += 6
-            if n == "bulwark":       absorb_next = True
-            if n in ("evasion", "smoke_screen"):
-                evade_chance = max(evade_chance, 0.45)
-            if n == "ki_deflect":    absorb_next = True
+            # ── Offensive multipliers ──
+            if n in ("war_cry", "WarCry"):   dmg_mult *= 1.25
+            if n == "hawk_eye":              dmg_mult *= 1.20
+            if n == "last_stand" and hp_pct <= 0.25: dmg_mult *= 1.50
+            if n == "rally":                 dmg_mult *= 1.25
+            if n == "conqueror":             dmg_mult *= 2.00
+            if n == "shadow_step":           dmg_mult *= 1.50
+            if n == "spirit_bond":           dmg_mult *= 1.10
+            # ── Flat defense (absorbed from incoming damage) ──
+            if n == "defense_up":            def_reduce += 5
+            if n == "iron_skin":             def_reduce += 8
+            if n == "magic_shield":          def_reduce += 6
+            if n == "runic_armor":           def_reduce += 10
+            if n == "divine_shield":         def_reduce += 12
+            if n == "shield_of_faith":       def_reduce += 14
+            if n == "fading_ward":           def_reduce += 8
+            if n == "ward_anchor":           def_reduce += 6
+            if n == "battle_prayer":         def_reduce += 4
+            if n in ("unbreakable", "divine_intervention"): def_reduce += 20
+            # ── Absorb next hit entirely ──
+            if n in ("bulwark", "ki_deflect", "blade_barrier"): absorb_next = True
+            # ── Evasion ──
+            if n in ("evasion", "smoke_screen"): evade_chance = max(evade_chance, 0.45)
+
         return dmg_mult, def_reduce, evade_chance, absorb_next
 
     def _apply_physical_hit(tgt, power_mult=1.0):
@@ -935,6 +990,11 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                 dmg = int(dmg * 1.3)
 
         tgt["hp"] = max(0, tgt["hp"] - dmg)
+        # unbreakable / divine_intervention: survive any hit at 1 HP
+        if tgt["hp"] <= 0 and tgt.get("type") == "player":
+            if any(st["name"] in ("unbreakable", "divine_intervention")
+                   for st in tgt.get("status_effects", [])):
+                tgt["hp"] = 1
         if tgt["hp"] <= 0:
             tgt["alive"] = False
         crit_str = " CRITICAL!" if is_crit else ""
@@ -978,6 +1038,10 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         dmg = max(MINIMUM_DAMAGE, int(dmg * atk_mult))
 
         tgt["hp"] = max(0, tgt["hp"] - dmg)
+        if tgt["hp"] <= 0 and tgt.get("type") == "player":
+            if any(st["name"] in ("unbreakable", "divine_intervention")
+                   for st in tgt.get("status_effects", [])):
+                tgt["hp"] = 1
         if tgt["hp"] <= 0:
             tgt["alive"] = False
         crit_str = " CRITICAL!" if is_crit else ""
@@ -1678,6 +1742,17 @@ def end_of_round_regen(combatant):
                 old = combatant["resources"][pool]
                 combatant["resources"][pool] = min(max_val, old + regen)
 
+    # battle_prayer: heal ~8% max HP per round
+    for st in combatant.get("status_effects", []):
+        if st["name"] == "battle_prayer":
+            regen_hp = max(1, int(combatant["max_hp"] * 0.08))
+            old_hp = combatant["hp"]
+            combatant["hp"] = min(combatant["max_hp"], combatant["hp"] + regen_hp)
+            gained = combatant["hp"] - old_hp
+            if gained > 0:
+                messages.append(f"{combatant['name']} prays: +{gained} HP")
+            break
+
     # Clear defending stance
     combatant["is_defending"] = False
 
@@ -2089,6 +2164,15 @@ class CombatState:
         """Let the current enemy take its AI-controlled action."""
         actor = self.get_current_combatant()
         if not actor or actor["type"] != "enemy":
+            return {}
+
+        # Skip if time_stop is active on any player (all enemies frozen)
+        if any(
+            any(st["name"] == "time_stop" for st in p.get("status_effects", []))
+            for p in self.players if p["alive"]
+        ):
+            self.log(f"Time is frozen — {actor['name']} cannot act!")
+            self.advance_turn()
             return {}
 
         # Skip stunned/frozen/petrified/sleeping
