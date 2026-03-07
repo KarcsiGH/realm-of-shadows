@@ -139,6 +139,7 @@ class Game:
         # Quest log
         self.quest_log_ui = None
         self._toasts = []   # [(message, color, timer_ms, max_timer_ms)]
+        self._quest_notifications = []  # queue of {name, gold, xp, timer, max_timer}
         # Track current/last town for shortcuts
         self.current_town_id = "briarhollow"
         # Debug
@@ -194,6 +195,8 @@ class Game:
                 except Exception:
                     pass
             self._draw_toasts(self.screen)
+            self._draw_quest_banner(self.screen, dt)
+            self._tick_toasts(dt)
             # Fade
             if self.fade > 0:
                 s = pygame.Surface((SCREEN_W, SCREEN_H)); s.fill(BLACK)
@@ -292,6 +295,11 @@ class Game:
     # ══════════════════════════════════════════════════════════
 
     def on_event(self, e, mx, my):
+        # ── Quest banner dismissal (any click/key dismisses front banner) ──
+        if self._quest_notifications:
+            if e.type in (pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN):
+                self._dismiss_quest_banner()
+                return
         # ── Global UI sounds ─────────────────────────────────────────
         if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
             sfx.play("ui_click")
@@ -792,6 +800,115 @@ class Game:
         self._toasts = [t for t in self._toasts if t[2] > 0]
         for t in self._toasts:
             t[2] -= dt
+
+    def _notify_quests_done(self, quest_ids):
+        """Queue a prominent banner for each newly-completed quest."""
+        if not quest_ids:
+            return
+        from data.story_data import QUESTS
+        for qid in quest_ids:
+            q = QUESTS.get(qid, {})
+            name  = q.get("name", qid)
+            gold  = q.get("reward_gold", 0)
+            xp    = q.get("reward_xp", 0)
+            items = q.get("reward_items", [])
+            self._quest_notifications.append({
+                "name":      name,
+                "gold":      gold,
+                "xp":        xp,
+                "items":     items,
+                "timer":     5000,
+                "max_timer": 5000,
+                "slide":     0.0,   # 0→1 slide-in progress
+            })
+
+    def _draw_quest_banner(self, surface, dt):
+        """Draw the front-of-queue quest completion banner and tick its timer.
+        Shows one at a time; auto-advances to next when dismissed."""
+        import math
+        if not self._quest_notifications:
+            return
+
+        n = self._quest_notifications[0]
+        n["timer"] -= dt
+
+        # Slide in over 200 ms, slide out over 300 ms at end
+        if n["timer"] > n["max_timer"] - 200:
+            t = (n["max_timer"] - n["timer"]) / 200.0
+        elif n["timer"] < 350:
+            t = n["timer"] / 350.0
+        else:
+            t = 1.0
+        t = max(0.0, min(1.0, t))
+        ease = t * t * (3 - 2 * t)  # smoothstep
+
+        if n["timer"] <= 0:
+            self._quest_notifications.pop(0)
+            return
+
+        from ui.renderer import (
+            SCREEN_W, SCREEN_H, draw_text, get_font,
+            GOLD, CREAM, GREY, PANEL_BG,
+        )
+
+        PW, PH = 440, 110
+        px = SCREEN_W // 2 - PW // 2
+        # slide up from bottom
+        py_hidden = SCREEN_H + 10
+        py_shown  = SCREEN_H - PH - 20
+        py = int(py_hidden + (py_shown - py_hidden) * ease)
+
+        # Panel background
+        panel = pygame.Surface((PW, PH), pygame.SRCALPHA)
+        panel.fill((10, 8, 22, 230))
+        surface.blit(panel, (px, py))
+        # Gold border
+        pygame.draw.rect(surface, GOLD, (px, py, PW, PH), 2, border_radius=6)
+        # Bright accent top bar
+        pygame.draw.rect(surface, (60, 200, 100), (px, py, PW, 4), border_radius=6)
+
+        # "QUEST COMPLETE" header
+        draw_text(surface, "✦  QUEST COMPLETE  ✦", px + PW // 2 - 90, py + 10,
+                  (80, 220, 120), 15, bold=True)
+
+        # Quest name
+        font_name = get_font(18)
+        name_text = n["name"]
+        if font_name.size(name_text)[0] > PW - 30:
+            name_text = name_text[:36] + "…"
+        draw_text(surface, name_text, px + PW // 2 - font_name.size(name_text)[0] // 2,
+                  py + 32, GOLD, 18, bold=True)
+
+        # Rewards row
+        reward_parts = []
+        if n["xp"]:
+            reward_parts.append((f"+{n['xp']} XP", (120, 200, 255)))
+        if n["gold"]:
+            reward_parts.append((f"+{n['gold']} gold", (220, 190, 80)))
+        for item in n["items"]:
+            iname = item.get("name", "") if isinstance(item, dict) else str(item)
+            if iname:
+                reward_parts.append((iname, (200, 160, 255)))
+
+        rx = px + 20
+        ry = py + 62
+        if reward_parts:
+            draw_text(surface, "Rewards:", rx, ry, GREY, 13)
+            rx += 70
+            for text, col in reward_parts:
+                draw_text(surface, text, rx, ry, col, 14, bold=True)
+                rx += get_font(14).size(text)[0] + 16
+        else:
+            draw_text(surface, "Objectives fulfilled.", px + 20, ry, GREY, 13)
+
+        # Dismiss hint
+        draw_text(surface, "[ click or any key to dismiss ]",
+                  px + PW // 2 - 100, py + PH - 18, (60, 60, 80), 11)
+
+    def _dismiss_quest_banner(self):
+        """Dismiss the front banner early (on click/keypress)."""
+        if self._quest_notifications:
+            self._quest_notifications.pop(0)
 
     def new_char(self):
         self.current_char = Character()
@@ -2078,7 +2195,8 @@ class Game:
                     self.world_state.discovered_locations.add(lid)
 
         # 5. Advance quests
-        auto_advance_quests(self.party)
+        _done = auto_advance_quests(self.party)
+        self._notify_quests_done(_done)
 
         # 6. Show brief item-received notifications
         if hs_num:
@@ -2664,6 +2782,10 @@ class Game:
         """Draw the town hub screen."""
         dt = self.clock.get_time()
         self.town_ui.draw(self.screen, mx, my, dt)
+        # Drain quest completions queued during dialogue → show banners
+        if self.town_ui.pending_quest_completions:
+            self._notify_quests_done(self.town_ui.pending_quest_completions)
+            self.town_ui.pending_quest_completions = []
 
     def draw_world_map(self, mx, my):
         """Draw the world map."""
@@ -2795,7 +2917,8 @@ class Game:
                         from core.story_flags import set_flag as _sf_fl
                         _sf_fl(f"explored.{dungeon_id}.floor1", True)
                         auto_advance_quests = __import__("core.story_flags", fromlist=["auto_advance_quests"]).auto_advance_quests
-                        auto_advance_quests(self.party)
+                        _done = auto_advance_quests(self.party)
+                        self._notify_quests_done(_done)
                         # Show floor 1 story message
                         from data.story_data import get_dungeon_floor_message
                         msg = get_dungeon_floor_message(dungeon_id, 1)
@@ -2996,7 +3119,8 @@ class Game:
 
                 # Auto-advance quests (explore objectives)
                 from core.story_flags import auto_advance_quests
-                auto_advance_quests(self.party)
+                _done = auto_advance_quests(self.party)
+                self._notify_quests_done(_done)
                 # Show story floor message if available
                 from data.story_data import get_dungeon_floor_message
                 msg = get_dungeon_floor_message(self.dungeon_state.dungeon_id, floor)
@@ -3363,12 +3487,7 @@ class Game:
                 # ── Auto-advance any quests whose objectives are now met ──
                 from core.story_flags import auto_advance_quests, get_all_flags
                 newly_done = auto_advance_quests(self.party)
-                for qid in newly_done:
-                    from data.story_data import QUESTS
-                    qname = QUESTS.get(qid, {}).get("name", qid)
-                    self.save_msg = f"Quest complete: {qname}"
-                    self.save_msg_color = (80, 220, 120)
-                    self.save_msg_timer = 4000
+                self._notify_quests_done(newly_done)
 
                 # ── Auto-advance planar tier if story flags warrant it ──
                 from core.progression import auto_advance_party_tier, PLANAR_TIERS

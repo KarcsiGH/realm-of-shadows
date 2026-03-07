@@ -107,6 +107,7 @@ class TownUI:
         self.msg_timer = 0
         self.msg_color = CREAM
         self.finished = False
+        self.pending_quest_completions = []  # drained by Game._notify_quests_done each draw
 
         # Shop state
         self.shop_tab = "weapons"  # weapons, armor, consumables
@@ -188,7 +189,8 @@ class TownUI:
             self.active_dialogue = None
             try:
                 from core.story_flags import auto_advance_quests
-                auto_advance_quests(self.party)
+                done = auto_advance_quests(self.party)
+                self.pending_quest_completions.extend(done)
             except Exception:
                 pass
 
@@ -2310,7 +2312,8 @@ class TownUI:
                 self.active_dialogue = None
                 try:
                     from core.story_flags import auto_advance_quests
-                    auto_advance_quests(self.party)
+                    done = auto_advance_quests(self.party)
+                    self.pending_quest_completions.extend(done)
                 except Exception:
                     pass
             return None  # consume the click regardless
