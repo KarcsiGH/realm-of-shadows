@@ -830,8 +830,8 @@ class TownUI:
 
         # Dialogue takes priority — forward key events to dialogue UI
         if self.active_dialogue and not self.active_dialogue.finished:
-            import pygame
-            event = pygame.event.Event(pygame.KEYDOWN, key=key, mod=0, unicode="")
+            import pygame as _pg
+            event = _pg.event.Event(_pg.KEYDOWN, key=key, mod=0, unicode="")
             self.active_dialogue.handle_event(event)
             if self.active_dialogue.finished:
                 self.active_dialogue = None
