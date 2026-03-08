@@ -64,6 +64,7 @@ S_ENDING           = 19  # Epilogue / credits after Valdris defeated
 S_GAME_OVER        = 20  # Party wipe screen before returning to title
 S_SETTINGS         = 21  # Volume / settings overlay
 S_INN_RECRUIT      = 23  # Inn: recruit 5 companions after hero creation
+S_SPELL_PICK       = 24  # Choose starting spell for Mage/Cleric/spellcasters
 
 
 class Game:
@@ -412,6 +413,49 @@ class Game:
                         self.current_char.quick_roll(cn)
                     else:
                         self.current_char.finalize_with_class(cn)
+                    # Route spellcasters through the spell-pick screen
+                    spell_pick_classes = {"Mage", "Cleric", "Ranger", "Monk", "Thief", "Fighter"}
+                    l1_pool = [a for a in self.current_char.abilities if a.get("level") == 1]
+                    from core.abilities import CLASS_ABILITIES
+                    all_l1 = [a for a in CLASS_ABILITIES.get(cn, []) if a.get("level") == 1]
+                    if len(all_l1) > len(l1_pool) or len(all_l1) > 2:
+                        # There are more L1 options than the character starts with — let them pick
+                        self.spell_pick_pool = all_l1
+                        self.spell_pick_chosen = [a["name"] for a in self.current_char.abilities
+                                                   if a.get("level") == 1]
+                        self.spell_pick_hover = -1
+                        self.go(S_SPELL_PICK)
+                    else:
+                        self.go(S_SUMMARY)
+
+        elif self.state == S_SPELL_PICK:
+            pool = getattr(self, "spell_pick_pool", [])
+            chosen = getattr(self, "spell_pick_chosen", [])
+            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                start_y = 160
+                for i, ab in enumerate(pool):
+                    btn = pygame.Rect(SCREEN_W//2 - 280, start_y + i * 80, 560, 72)
+                    if btn.collidepoint(mx, my):
+                        name = ab["name"]
+                        if name in chosen:
+                            if len(chosen) > 1:
+                                chosen.remove(name)
+                        else:
+                            if len(chosen) < 2:
+                                chosen.append(name)
+                            else:
+                                chosen.pop(0)
+                                chosen.append(name)
+                        self.spell_pick_chosen = chosen
+                        break
+                r_confirm = pygame.Rect(SCREEN_W//2 - 100, SCREEN_H - 65, 200, 45)
+                if r_confirm.collidepoint(mx, my) and len(chosen) >= 1:
+                    from core.abilities import CLASS_ABILITIES
+                    cn = self.current_char.class_name
+                    all_l1 = [a for a in CLASS_ABILITIES.get(cn, []) if a.get("level") == 1]
+                    non_l1 = [a for a in self.current_char.abilities if a.get("level") != 1]
+                    selected = [a for a in all_l1 if a["name"] in chosen]
+                    self.current_char.abilities = non_l1 + selected
                     self.go(S_SUMMARY)
 
         elif self.state == S_SUMMARY:
@@ -1317,6 +1361,7 @@ class Game:
         elif self.state == S_LIFEPATH: self.draw_lifepath(mx, my)
         elif self.state == S_RANDOM:   self.draw_random()
         elif self.state == S_CLASSSELECT: self.draw_class(mx, my)
+        elif self.state == S_SPELL_PICK:  self.draw_spell_pick(mx, my)
         elif self.state == S_SUMMARY:  self.draw_summary(mx, my)
         elif self.state == S_PARTY:    self.draw_party(mx, my)
         elif self.state == S_COMBAT:   self.draw_combat(mx, my)
@@ -1734,6 +1779,67 @@ class Game:
             ab_text = "Starts with: " + ", ".join(a["name"] for a in cls["starting_abilities"])
             draw_text(self.screen, ab_text, rect.x + 46, rect.y + 55,
                       DIM_GOLD, 11)
+
+    # ── Spell Selection ────────────────────────────────────────
+
+    def draw_spell_pick(self, mx, my):
+        c = self.current_char
+        pool    = getattr(self, "spell_pick_pool", [])
+        chosen  = getattr(self, "spell_pick_chosen", [])
+
+        draw_text(self.screen, f"Choose {c.name}'s Starting Abilities",
+                  40, 22, GOLD, 22, bold=True)
+        draw_text(self.screen,
+                  f"{c.class_name}s begin knowing 2 of the following. Choose wisely — you can learn the rest later.",
+                  40, 55, GREY, 14)
+        draw_text(self.screen, f"Selected: {len(chosen)}/2", 40, 78, HIGHLIGHT, 15, bold=True)
+
+        start_y = 120
+        item_h = 80
+        for i, ab in enumerate(pool):
+            name     = ab["name"]
+            is_sel   = name in chosen
+            rect     = pygame.Rect(SCREEN_W//2 - 280, start_y + i * item_h, 560, item_h - 6)
+            is_hover = rect.collidepoint(mx, my)
+
+            bg  = (40, 55, 35) if is_sel else ((45, 38, 75) if is_hover else PANEL_BG)
+            brd = (100, 200, 80) if is_sel else (GOLD if is_hover else PANEL_BORDER)
+            draw_panel(self.screen, rect, border_color=brd, bg_color=bg)
+
+            # Ability name
+            draw_text(self.screen, name, rect.x + 14, rect.y + 8,
+                      (130, 230, 100) if is_sel else (GOLD if is_hover else CREAM),
+                      18, bold=True)
+
+            # Type badge
+            ab_type = ab.get("type", "")
+            type_cols = {"spell":"arcane","aoe":"fire","buff":"gold","heal":"heal",
+                         "attack":"red","buff":"buff"}
+            TYPE_COL = {"spell":(140,180,255),"aoe":(255,140,80),"buff":(255,220,80),
+                        "heal":(100,220,130),"attack":(255,100,100),"cure":(80,200,200)}
+            tc = TYPE_COL.get(ab_type, GREY)
+            draw_text(self.screen, f"[{ab_type}]", rect.x + 14, rect.y + 32, tc, 12)
+
+            # Description
+            draw_text(self.screen, ab.get("desc",""), rect.x + 90, rect.y + 28,
+                      GREY if not is_hover else CREAM, 13, max_width=rect.width - 110)
+
+            # Cost
+            cost_str = f"{ab.get('cost',0)} {ab.get('resource','MP')}"
+            draw_text(self.screen, cost_str, rect.x + rect.width - 140, rect.y + 8, DIM_GOLD, 13)
+
+            # Selected indicator
+            if is_sel:
+                draw_text(self.screen, "✓ Selected", rect.x + rect.width - 110,
+                          rect.y + 28, (130, 230, 100), 12, bold=True)
+
+        # Confirm button
+        can_confirm = len(chosen) >= 1
+        r_confirm = pygame.Rect(SCREEN_W//2 - 100, SCREEN_H - 65, 200, 45)
+        hover_c = r_confirm.collidepoint(mx, my)
+        draw_button(self.screen, r_confirm, "Confirm",
+                    hover=(hover_c and can_confirm),
+                    disabled=not can_confirm)
 
     # ── Character Summary ─────────────────────────────────────
 
@@ -3257,6 +3363,27 @@ class Game:
                 if item_copy.get("identified"):
                     mark_item_identified(item_copy.get("name", ""))
                 processed.append(item_copy)
+
+            # WIS chest bonus: high-WIS party notices hidden compartments
+            best_wis = max((c.stats.get("WIS", 0) for c in self.party), default=0)
+            if best_wis >= 15:
+                bonus_chance = min(0.40, (best_wis - 14) * 0.04)  # +4% per WIS above 14, cap 40%
+                if random.random() < bonus_chance:
+                    try:
+                        from data.magic_items import get_secret_item
+                        floor_num = self.dungeon.current_floor + 1
+                        total_floors = self.dungeon.total_floors
+                        bonus_item = get_secret_item(floor_num, total_floors, random)
+                        if bonus_item:
+                            bonus_item["identified"] = False
+                            bonus_item["_wis_bonus"] = True
+                            processed.append(bonus_item)
+                            if self.dungeon_ui:
+                                self.dungeon_ui.show_event(
+                                    "Sharp eyes find a hidden compartment!", (180, 220, 255))
+                    except Exception:
+                        pass
+
             self.start_chest(gold, processed, is_secret=is_secret, return_state=S_DUNGEON)
 
         elif event["type"] == "chest_trap_fire":

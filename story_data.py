@@ -2422,6 +2422,69 @@ NPC_DIALOGUES = {
     # ─────────────────────────────────────────────────────────
     #  SCOUT FERYN — Greenwood, forest warden
     # ─────────────────────────────────────────────────────────
+    "priestess_alia": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "alia_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Priestess Alia",
+                        "text": "Blessings upon your path, wanderers. The flame of Aldenmere burns "
+                                "for all who seek its light. How may I serve you today?",
+                        "on_enter": [{"action": "meet_npc", "npc": "priestess_alia"}],
+                        "choices": [
+                            {"text": "What do you know about the Fading?", "next": "fading"},
+                            {"text": "Can you heal us?", "next": "healing"},
+                            {"text": "Tell me about this temple.", "next": "temple"},
+                            {"text": "We seek guidance.", "next": "guidance"},
+                            {"text": "Farewell, Priestess.", "next": "bye"},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "Priestess Alia",
+                        "text": "The Fading... yes. I have felt it in my prayers for months now — "
+                                "a silence where the divine once answered. Something unravels the "
+                                "very fabric of the world. Old texts speak of a Dissolution, a time "
+                                "when the boundary between what is and what is not grows thin. "
+                                "Whatever causes it, I fear it is beyond any one person's power to stop. "
+                                "Find others who understand it. Trust the flame.",
+                        "next": "start",
+                    },
+                    "healing": {
+                        "speaker": "Priestess Alia",
+                        "text": "The temple offers restoration to those who need it — that is what "
+                                "the services at my altar are for. Speak to the altar and the flame "
+                                "will do the rest. I can ease suffering, though I cannot stop what "
+                                "hunts you. Be careful out there.",
+                        "next": "start",
+                    },
+                    "temple": {
+                        "speaker": "Priestess Alia",
+                        "text": "This temple has stood in Woodhaven for three hundred years. It was "
+                                "built by the first settlers as a promise — that even in the wildest "
+                                "frontier, they would tend the light. We serve the flame, which is "
+                                "older than any god's name. It does not demand worship. Only attention.",
+                        "next": "start",
+                    },
+                    "guidance": {
+                        "speaker": "Priestess Alia",
+                        "text": "Guidance I can offer, though it is simple: follow what is true, "
+                                "protect what cannot protect itself, and when the darkness comes — "
+                                "and it will — do not mistake endurance for weakness. The flame "
+                                "does not burn brightly by burning quickly. Steady. Steady.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Priestess Alia",
+                        "text": "Walk in the light. And if you cannot find it — be it.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
     "scout_feryn": [
         {
             "conditions": [],
@@ -7234,3 +7297,46 @@ def get_boss_post_dialogue(dungeon_id, peaceful=False):
 def get_peaceful_resolution(dungeon_id):
     """Return peaceful resolution spec for a dungeon, or None."""
     return BOSS_PEACEFUL_RESOLUTIONS.get(dungeon_id)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  TRAINER NPC DIALOGUES  (class transition guidance)
+# ═══════════════════════════════════════════════════════════════
+
+_TRAINER_DIALOGUES = {
+    "trainer_briarhollow": [
+        {
+            "condition": None,
+            "lines": [
+                {"speaker": "Guildmaster Oren", "text":
+                    "Experience forges new paths, adventurer. When your abilities are seasoned enough — "
+                    "around level 10 — you may find yourself capable of walking between disciplines."},
+                {"speaker": "Guildmaster Oren", "text":
+                    "A Fighter who hones both sword and holy conviction can become a Paladin. "
+                    "A Thief who masters the shadows becomes something far more dangerous. "
+                    "The Guild calls these transitions."},
+                {"speaker": "Guildmaster Oren", "text":
+                    "Visit the class board in any guild hall when your party reaches level 10. "
+                    "Your attributes must meet the demands of the new path — and not all roads are open to all."},
+            ],
+        },
+    ],
+    "trainer_ironhearth": [
+        {
+            "condition": None,
+            "lines": [
+                {"speaker": "Guildmaster Dorric", "text":
+                    "Aye, I've trained a few who went beyond their first calling. "
+                    "It's not about forgetting what you were — it's about becoming more."},
+                {"speaker": "Guildmaster Dorric", "text":
+                    "I've seen Fighters who studied the arcane become Spellblades. Monks who found the divine "
+                    "and became Templar. And Rangers who walked the shadow — best not ask what became of them."},
+                {"speaker": "Guildmaster Dorric", "text":
+                    "Get to level 10, keep your stats sharp, and talk to the class board in the guild. "
+                    "The old masters say there's a path beyond that too — at level 15 — but I've never seen it."},
+            ],
+        },
+    ],
+}
+
+NPC_DIALOGUES.update(_TRAINER_DIALOGUES)

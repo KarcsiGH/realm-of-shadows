@@ -230,6 +230,8 @@ def calc_physical_accuracy(attacker, defender, weapon, position_acc_mod=0):
     for status in attacker.get("status_effects", []):
         if status["name"] in ACCURACY_STATUS_PENALTIES:
             acc += ACCURACY_STATUS_PENALTIES[status["name"]]
+        if status["name"] == "blessed":
+            acc += 10  # Bless grants +10 accuracy
 
     return max(ACCURACY_MIN, min(ACCURACY_MAX, acc))
 

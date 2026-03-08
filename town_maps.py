@@ -198,7 +198,7 @@ BRIARHOLLOW_BUILDINGS = {
         "wall_rows": (17, 24),
         "indoor_npc": {"name": "Priestess Alia", "npc_type": "priestess", "title": "Priestess",
                        "description": "A serene priestess tending the altar flame.",
-                       "color": (225, 225, 165), "dialogue_id": None},
+                       "color": (225, 225, 165), "dialogue_id": "priestess_alia"},
     },
     # Forge — industrial, SW. Wide low building.
     "forge": {
@@ -240,6 +240,15 @@ BRIARHOLLOW_NPCS = [
         "description": "The village elder, watching the square with sharp eyes.",
         "color": (185, 175, 140),
         "npc_type": "elder",
+    },
+    # Guildmaster Oren can also be found near the guild door giving transition advice.
+    {
+        "name": "Guildmaster Oren",
+        "x": 22, "y": 6,
+        "dialogue_id": "trainer_briarhollow",
+        "description": "The guild's veteran master. He speaks of paths beyond the first calling.",
+        "color": (100, 140, 80),
+        "npc_type": "guildmaster",
     },
     # Maren near the well in the town square.
     {
@@ -568,6 +577,15 @@ IRONHEARTH_NPCS = [
         "dialogue_id": "scholar_petra",
         "description": "A human scholar studying dwarven runes.",
         "color": (160, 160, 200),
+    },
+    # Guildmaster Dorric outside guild — offers transition guidance
+    {
+        "name": "Guildmaster Dorric",
+        "x": 9, "y": 18,
+        "dialogue_id": "trainer_ironhearth",
+        "description": "The guild's weathered master. He speaks of warriors who walked two paths.",
+        "color": (140, 160, 180),
+        "npc_type": "guildmaster",
     },
     # Ambient NPCs
     {
@@ -1271,8 +1289,8 @@ TOWN_MAPS = {
     "briarhollow": {
         "name": "Briarhollow",
         "map": BRIARHOLLOW_MAP,
-        "width": 44,
-        "height": 26,
+        "width": 60,
+        "height": 34,
         "buildings": BRIARHOLLOW_BUILDINGS,
         "npcs": BRIARHOLLOW_NPCS,
         "signs": BRIARHOLLOW_SIGNS,
