@@ -130,13 +130,13 @@ Appears early in Briarhollow and is a recurring companion/ally throughout Act 1â
 Her confession dialogue (post Spider's Nest) reveals Valdris' Spire location.
 
 ### Hearthstone Fragments (5)
-| Fragment | Location                 | Dungeon               |
-|----------|--------------------------|-----------------------|
-| 1        | Goblin Warren (Act 1)    | Goblin Warren         |
-| 2        | Spider's Nest (Act 1)    | Spider's Nest         |
-| 3        | Abandoned Mine (Act 2)   | Abandoned Mine        |
-| 4        | Pale Coast (Act 2)       | Pale Coast            |
-| 5        | Dragon's Tooth (Act 2)   | Dragon's Tooth        |
+| Fragment | Dungeon               | Notes                                |
+|----------|-----------------------|--------------------------------------|
+| 1        | Abandoned Mine        | Act 1 culmination                    |
+| 2        | Sunken Crypt          | Revealed after Ruins of Ashenmoor    |
+| 3        | Dragon's Tooth        | Act 2, volcanic island               |
+| 4        | Pale Coast            | Act 2, coastal dungeon               |
+| 5        | Windswept Isle        | Act 2, sea crossing required         |
 Final: Hearthstone restoration at Valdris' Spire (Act 3 climax).
 
 ---

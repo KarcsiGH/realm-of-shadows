@@ -4123,6 +4123,12 @@ TAVERN_RUMORS = {
         "I met a scholar who said the Fading isn't random — it always takes Warden places first.",
         "Saltmere's had three ships vanish. No storms. Just gone. The priests are praying double shifts.",
         "The teleport circles in Crystalspire are flickering. The ley lines are failing.",
+        # Hybrid class hints
+        "There's a fighter in the guild who prays before every battle. They say she can channel holy fire now. Called a Paladin, or something close.",
+        "I knew a thief who studied shadow-walking long enough to become something else. A Phantom, the guild called her. Moves through darkness like it's water.",
+        "The old Warden traditions talked about warriors who crossed paths — soldiers who learned the arcane, or mages who learned the blade. The guild calls it a transition.",
+        "My uncle was a ranger who spent years with a shaman in the hills. Came back changed. Said he could feel the land breathing. Never fought the same way again.",
+        "The Crystalspire Mages say there's a discipline beyond pure magic — something that fuses it with devotion. A Mystic, they call it. Rare. Harder than either alone.",
     ],
     3: [
         "Eastport has gone dark. No ships, no messages. Nothing.",

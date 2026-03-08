@@ -1093,6 +1093,24 @@ class TownUI:
         draw_text(surface, "\"We take the jobs no one else will touch.\"",
                   28, 50, (100, 90, 130), 13)
 
+        # Warden rank badge (top-right, left of back button)
+        try:
+            from core.progression import PLANAR_TIERS, get_party_tier
+            tier_num = get_party_tier(self.party)
+            tier_data = PLANAR_TIERS.get(tier_num, {})
+            rank_name = tier_data.get("name", "Initiate")
+            rank_col  = tier_data.get("color", (140, 130, 160))
+            rank_sym  = tier_data.get("symbol", "◆")
+            rank_label = f"{rank_sym} {rank_name}"
+            draw_text(surface, "WARDEN RANK", W - 300, 14, (90, 80, 110), 10, bold=True)
+            draw_text(surface, rank_label, W - 300, 30, rank_col, 16, bold=True)
+            tier_desc = tier_data.get("description", "")
+            if tier_desc:
+                draw_text(surface, tier_desc[:50], W - 300, 52, (90, 80, 110), 10,
+                          max_width=160)
+        except Exception:
+            pass
+
         # Back button
         back = pygame.Rect(W - 140, 18, 120, 36)
         draw_button(surface, back, "← Leave", hover=back.collidepoint(mx, my), size=13)

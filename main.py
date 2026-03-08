@@ -413,16 +413,15 @@ class Game:
                         self.current_char.quick_roll(cn)
                     else:
                         self.current_char.finalize_with_class(cn)
-                    # Route spellcasters through the spell-pick screen
-                    spell_pick_classes = {"Mage", "Cleric", "Ranger", "Monk", "Thief", "Fighter"}
-                    l1_pool = [a for a in self.current_char.abilities if a.get("level") == 1]
+                    # Route through spell-pick only for full character creation (not quick-roll)
+                    # and only for classes with 3+ L1 spell options
                     from core.abilities import CLASS_ABILITIES
                     all_l1 = [a for a in CLASS_ABILITIES.get(cn, []) if a.get("level") == 1]
-                    if len(all_l1) > len(l1_pool) or len(all_l1) > 2:
-                        # There are more L1 options than the character starts with — let them pick
+                    if not self.quick and len(all_l1) > 2:
+                        from core.classes import CLASSES as _CLS
+                        start_names = [a["name"] for a in _CLS.get(cn, {}).get("starting_abilities", [])]
                         self.spell_pick_pool = all_l1
-                        self.spell_pick_chosen = [a["name"] for a in self.current_char.abilities
-                                                   if a.get("level") == 1]
+                        self.spell_pick_chosen = list(start_names)
                         self.spell_pick_hover = -1
                         self.go(S_SPELL_PICK)
                     else:
@@ -451,11 +450,15 @@ class Game:
                 r_confirm = pygame.Rect(SCREEN_W//2 - 100, SCREEN_H - 65, 200, 45)
                 if r_confirm.collidepoint(mx, my) and len(chosen) >= 1:
                     from core.abilities import CLASS_ABILITIES
+                    from core.classes import CLASSES as _CLS2
                     cn = self.current_char.class_name
                     all_l1 = [a for a in CLASS_ABILITIES.get(cn, []) if a.get("level") == 1]
-                    non_l1 = [a for a in self.current_char.abilities if a.get("level") != 1]
+                    # Remove starting L1 abilities by name, then add chosen ones
+                    all_l1_names = {a["name"] for a in all_l1}
+                    non_starting = [a for a in self.current_char.abilities
+                                    if a["name"] not in all_l1_names]
                     selected = [a for a in all_l1 if a["name"] in chosen]
-                    self.current_char.abilities = non_l1 + selected
+                    self.current_char.abilities = non_starting + selected
                     self.go(S_SUMMARY)
 
         elif self.state == S_SUMMARY:
