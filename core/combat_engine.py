@@ -230,6 +230,8 @@ def calc_physical_accuracy(attacker, defender, weapon, position_acc_mod=0):
     for status in attacker.get("status_effects", []):
         if status["name"] in ACCURACY_STATUS_PENALTIES:
             acc += ACCURACY_STATUS_PENALTIES[status["name"]]
+        if status["name"] == "blessed":
+            acc += 10  # Bless grants +10 accuracy
 
     return max(ACCURACY_MIN, min(ACCURACY_MAX, acc))
 
@@ -1406,6 +1408,16 @@ def apply_status_effect(target, status_name, duration, chance=1.0):
     if chance < 1.0 and random.random() > chance:
         return False
 
+    # WIS reduces incoming debuff duration for player targets (mind effects)
+    MIND_EFFECTS = ("Fear", "Feared", "Terrorized", "Frightened", "Demoralized",
+                    "Slowed", "Stunned", "Silenced", "Confused", "Charmed", "Weakened")
+    if status_name in MIND_EFFECTS and target.get("type") == "player":
+        wis = target["stats"].get("WIS", 0)
+        if wis > 10:
+            # -1 duration per 8 WIS above 10, minimum 1
+            reduction = (wis - 10) // 8
+            duration = max(1, duration - reduction)
+
     # Check if already afflicted — refresh duration if longer
     for existing in target.get("status_effects", []):
         if existing["name"] == status_name:
@@ -1682,6 +1694,13 @@ def enemy_choose_action(enemy, players, enemies):
 
     # ── Aggressive AI ─────────────────────────────────────────
     if ai_type == "aggressive":
+        # Aggressive enemies use offensive abilities ~30% of the time when available
+        if random.random() < 0.30:
+            should_attack, atk_target, atk_ability = _should_use_offensive_ability(
+                enemy, living_players, use_threshold=0.35)
+            if should_attack:
+                return "ability", atk_target, atk_ability
+
         # Pack tactics: pile on the same target an ally is attacking
         if enemy.get("pack_tactics") and random.random() < 0.65:
             living_enemies = [e for e in enemies if e.get("alive", True)]
@@ -1833,7 +1852,7 @@ class CombatState:
     Tracks turn order, round number, combat log, victory/defeat.
     """
 
-    def __init__(self, party_chars, encounter_key):
+    def __init__(self, party_chars, encounter_key, surprise=None):
         from data.enemies import build_encounter
 
         self.round_num = 1
@@ -1932,8 +1951,24 @@ class CombatState:
             for e in self.enemies
         )
 
+        # Surprise round handling
+        # surprise="enemy"  → enemies ambush party: enemy turn goes first, players skip round 1
+        # surprise="player" → party ambushes enemies: players go first (normal), enemies skip round 1
+        self.surprise = surprise
+        if surprise == "enemy":
+            # Push all players to the end of the turn order so enemies strike first
+            players_in_order = [c for c in self.turn_order if c.get("type") == "player"]
+            enemies_in_order = [c for c in self.turn_order if c.get("type") != "player"]
+            self.turn_order = enemies_in_order + players_in_order
+        # surprise=="player": normal order is fine — DEX already puts fast attackers first
+
         self.log(f"═══ {self.encounter_name} ═══")
-        self.log(f"Round {self.round_num}")
+        if surprise == "enemy":
+            self.log("SURPRISE! The enemies strike first!")
+        elif surprise == "player":
+            self.log("Surprise attack! You strike before they react!")
+        else:
+            self.log(f"Round {self.round_num}")
 
     def _assign_party_rows(self, party_chars):
         """Auto-assign party to rows based on class archetypes."""
@@ -2465,7 +2500,16 @@ class CombatState:
             for entry in loot_table:
                 if random.random() <= entry.get("drop_chance", 0):
                     item = dict(entry["item"])
-                    item["identified"] = False  # all drops start unidentified
+                    # Resolve training book placeholder → actual random training book
+                    if item.pop("_training_book", False):
+                        try:
+                            from data.magic_items import get_random_training_book
+                            item = get_random_training_book()
+                            item["identified"] = True
+                        except Exception:
+                            continue  # skip if unavailable
+                    else:
+                        item["identified"] = False  # all drops start unidentified
                     item["source"] = e["name"]
                     loot_drops.append(item)
 
