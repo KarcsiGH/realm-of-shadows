@@ -178,23 +178,80 @@ LEVEL_STAT_GAINS["Necromancer"] = {
 # ═══════════════════════════════════════════════════════════════
 
 CLASS_TRANSITIONS = {
-    # Hybrid classes (level 8+)
-    "Warder":       {"base_classes": ["Fighter"],       "min_level": 8,  "min_stats": {"PIE": 12}},
-    "Paladin":      {"base_classes": ["Knight"],        "min_level": 8,  "min_stats": {"PIE": 14, "WIS": 12}},
-    "Assassin":     {"base_classes": ["Thief"],         "min_level": 8,  "min_stats": {"STR": 12, "DEX": 16}},
-    "Warden":       {"base_classes": ["Ranger"],        "min_level": 8,  "min_stats": {"WIS": 14, "PIE": 10}},
-    "Spellblade":   {"base_classes": ["Mage"],          "min_level": 8,  "min_stats": {"STR": 12, "INT": 16}},
-    "Templar":      {"base_classes": ["Cleric"],        "min_level": 8,  "min_stats": {"STR": 12, "CON": 12}},
-    # Advanced classes (level 15+)
-    "Champion":     {"base_classes": ["Fighter"],       "min_level": 15, "min_stats": {"STR": 20, "CON": 18}},
-    "Crusader":     {"base_classes": ["Knight"],        "min_level": 15, "min_stats": {"STR": 18, "PIE": 16}},
-    "Shadow Master":{"base_classes": ["Thief"],         "min_level": 15, "min_stats": {"DEX": 22}},
-    "Beastlord":    {"base_classes": ["Ranger"],        "min_level": 15, "min_stats": {"WIS": 18, "DEX": 18}},
-    "Archmage":     {"base_classes": ["Mage"],          "min_level": 15, "min_stats": {"INT": 22, "WIS": 16}},
-    "High Priest":  {"base_classes": ["Cleric"],        "min_level": 15, "min_stats": {"PIE": 22, "WIS": 18}},
-    # Special classes (level 10+)
-    "Witch":        {"base_classes": ["Mage", "Cleric"],"min_level": 10, "min_stats": {"WIS": 16, "INT": 14, "PIE": 12}},
-    "Necromancer":  {"base_classes": ["Mage"],          "min_level": 10, "min_stats": {"INT": 18, "PIE": 14, "CON": 12}},
+    # ── HYBRID CLASSES (level 10) ────────────────────────────────────────────
+    # Two base classes merge. A character qualifies if their current class is
+    # EITHER parent class and they meet the stat minimums for both sides.
+    # Fighter hybrids
+    "Paladin":      {"base_classes": ["Fighter", "Cleric"],  "min_level": 10,
+                     "min_stats": {"STR": 14, "PIE": 14},
+                     "description": "Holy warrior combining divine magic and combat prowess."},
+    "Spellblade":   {"base_classes": ["Fighter", "Mage"],    "min_level": 10,
+                     "min_stats": {"STR": 12, "INT": 14},
+                     "description": "Arcane warrior who channels spells through their blade."},
+    "Warder":       {"base_classes": ["Fighter", "Thief"],   "min_level": 10,
+                     "min_stats": {"STR": 12, "DEX": 14},
+                     "description": "Tactical combatant combining heavy strikes and shadow techniques."},
+    "Strider":      {"base_classes": ["Fighter", "Ranger"],  "min_level": 10,
+                     "min_stats": {"STR": 12, "DEX": 14},
+                     "description": "Mobile skirmisher excelling at rapid movement and precise strikes."},
+    "Guardian":     {"base_classes": ["Fighter", "Monk"],    "min_level": 10,
+                     "min_stats": {"STR": 14, "CON": 14},
+                     "description": "Armored protector channeling ki to defend allies."},
+    # Mage hybrids
+    "Witch":        {"base_classes": ["Mage", "Cleric"],     "min_level": 10,
+                     "min_stats": {"INT": 14, "PIE": 12, "WIS": 14},
+                     "description": "Dark spellcaster blending arcane and divine powers."},
+    "Necromancer":  {"base_classes": ["Mage", "Thief"],      "min_level": 10,
+                     "min_stats": {"INT": 16, "WIS": 12},
+                     "description": "Master of death magic, draining life and raising the fallen."},
+    "Druid":        {"base_classes": ["Mage", "Ranger"],     "min_level": 10,
+                     "min_stats": {"INT": 12, "WIS": 16},
+                     "description": "Nature spellcaster harnessing elemental and healing powers."},
+    "Mystic":       {"base_classes": ["Mage", "Monk"],       "min_level": 10,
+                     "min_stats": {"INT": 14, "WIS": 12},
+                     "description": "Arcane ki master fusing magical theory with inner discipline."},
+    # Cleric hybrids
+    "Warden":       {"base_classes": ["Cleric", "Ranger"],   "min_level": 10,
+                     "min_stats": {"PIE": 12, "WIS": 14},
+                     "description": "Ancient guardian combining divine protection and nature's power."},
+    "Inquisitor":   {"base_classes": ["Cleric", "Thief"],    "min_level": 10,
+                     "min_stats": {"PIE": 14, "DEX": 12},
+                     "description": "Shadow-wielding divine agent who hunts the corrupt."},
+    "Templar":      {"base_classes": ["Cleric", "Monk"],     "min_level": 10,
+                     "min_stats": {"PIE": 12, "CON": 14},
+                     "description": "Devoted warrior combining divine faith and physical discipline."},
+    # Thief hybrids
+    "Assassin":     {"base_classes": ["Ranger", "Thief"],    "min_level": 10,
+                     "min_stats": {"DEX": 16, "WIS": 10},
+                     "description": "Lethal hunter combining tracking, poisons, and shadow strikes."},
+    "Phantom":      {"base_classes": ["Thief", "Monk"],      "min_level": 10,
+                     "min_stats": {"DEX": 14, "WIS": 12},
+                     "description": "Ki-powered shadow who phases through defenses."},
+    # Ranger hybrid
+    "Shaman":       {"base_classes": ["Ranger", "Monk"],     "min_level": 10,
+                     "min_stats": {"WIS": 14, "CON": 12},
+                     "description": "Wilderness spiritualist drawing ki from the natural world."},
+
+    # ── APEX CLASSES (level 15, pure-line) ───────────────────────────────────
+    # One base class perfected. Carries over all learned abilities.
+    "Knight":        {"base_classes": ["Fighter"],     "min_level": 15,
+                      "min_stats": {"STR": 20, "CON": 18},
+                      "description": "The pinnacle of martial prowess — legendary defender and warrior."},
+    "Archmage":      {"base_classes": ["Mage"],        "min_level": 15,
+                      "min_stats": {"INT": 22, "WIS": 16},
+                      "description": "Master of all arcane disciplines. Reality bends to their will."},
+    "High Priest":   {"base_classes": ["Cleric"],      "min_level": 15,
+                      "min_stats": {"PIE": 22, "WIS": 18},
+                      "description": "Divine conduit of staggering power. Miracles are within reach."},
+    "Shadow Master": {"base_classes": ["Thief"],       "min_level": 15,
+                      "min_stats": {"DEX": 22, "WIS": 14},
+                      "description": "Absolute master of shadow. Death comes from darkness unseen."},
+    "Beastlord":     {"base_classes": ["Ranger"],      "min_level": 15,
+                      "min_stats": {"DEX": 18, "WIS": 20},
+                      "description": "One with the wild. Commands nature and hunts with primal fury."},
+    "Ascetic":       {"base_classes": ["Monk"],        "min_level": 15,
+                      "min_stats": {"WIS": 18, "CON": 16},
+                      "description": "Enlightened master of ki. Transcends mortal limitations entirely."},
 }
 
 def get_available_transitions(character):
@@ -318,26 +375,30 @@ def apply_level_up(character, free_stat=None):
 # Characters advance together — tier is checked from story flags, not stored per-char.
 
 PLANAR_TIERS = {
+    # ── In-Game 1 Warden Ranks ────────────────────────────────────────────────
+    # These are Warden Order designations tied to Hearthstone recovery.
+    # NOTE: "Bronze / Iron / Steel" are reserved for the cosmological tier system
+    # spanning Games 1-3 (per GAME_BIBLE). These in-world ranks are separate.
     0: {
-        "name":   "Bronze",
-        "color":  (180, 120, 60),     # warm brown-gold
+        "name":   "Initiate",
+        "color":  (160, 140, 100),    # worn leather
         "symbol": "◆",
-        "bonus":  {},                  # no bonus at starting tier
-        "description": "The first rank of a Warden. You have answered the call.",
+        "bonus":  {},                  # no bonus at starting rank
+        "description": "You have answered the Warden call. The first step of many.",
         "unlock_flag": None,           # everyone starts here
     },
     1: {
-        "name":   "Iron",
-        "color":  (160, 175, 190),    # steel-grey
+        "name":   "Scout",
+        "color":  (160, 175, 190),    # field grey
         "symbol": "◆",
         "bonus":  {"all_stats": 1, "xp_mult": 1.05},
-        "description": "Hardened by the first trials. +1 all stats, +5% XP.",
+        "description": "Tested by the first trials. +1 all stats, +5% XP.",
         "unlock_flag": "hearthstone_1_recovered",   # first Hearthstone (Abandoned Mine)
         "min_level": 5,
     },
     2: {
-        "name":   "Steel",
-        "color":  (200, 210, 225),    # bright silver
+        "name":   "Warden",
+        "color":  (100, 160, 120),    # Warden green
         "symbol": "◆",
         "bonus":  {"all_stats": 2, "max_hp_pct": 0.05, "xp_mult": 1.10},
         "description": "A proven Warden. +2 all stats, +5% max HP, +10% XP.",
@@ -345,20 +406,20 @@ PLANAR_TIERS = {
         "min_level": 10,
     },
     3: {
-        "name":   "Mithril",
-        "color":  (140, 200, 230),    # cool blue-silver
+        "name":   "Senior Warden",
+        "color":  (140, 200, 170),    # elder green-silver
         "symbol": "◆",
         "bonus":  {"all_stats": 4, "max_hp_pct": 0.10, "damage_mult": 1.05, "xp_mult": 1.15},
-        "description": "Near-legendary. +4 all stats, +10% HP, +5% damage, +15% XP.",
+        "description": "Keeper of the deeper wards. +4 all stats, +10% HP, +5% damage, +15% XP.",
         "unlock_flag": "hearthstone_5_recovered",   # fifth (final) Hearthstone
         "min_level": 13,
     },
     4: {
-        "name":   "Adamantine",
-        "color":  (180, 140, 255),    # deep purple-silver
+        "name":   "Warden-Commander",
+        "color":  (180, 220, 200),    # bright silver-green
         "symbol": "◆",
         "bonus":  {"all_stats": 6, "max_hp_pct": 0.15, "damage_mult": 1.10, "xp_mult": 1.25},
-        "description": "The pinnacle of the Warden order. +6 all stats, +15% HP, +10% damage.",
+        "description": "The highest rank of the mortal order. +6 all stats, +15% HP, +10% damage.",
         "unlock_flag": "valdris_defeated",          # endgame
         "min_level": 15,
     },
@@ -524,3 +585,101 @@ def is_dead(hp, max_hp):
 
 REVIVAL_STAT_LOSS_CHANCE = 0.01  # 1% chance per revival
 REVIVAL_HP_LOSS_PCT = 0.05       # 5% max HP loss if triggered
+
+
+# ═══════════════════════════════════════════════════════════════
+#  TRAINING BOOK SYSTEM
+# ═══════════════════════════════════════════════════════════════
+
+# Track which books a character has already benefited from
+# (stored as a set on character: character.books_read)
+VALID_TRAINING_STATS = {"STR", "DEX", "CON", "INT", "WIS", "PIE"}
+
+def use_training_book(character, item):
+    """Apply a training book's stat increase to a character.
+    Returns (success, message).
+    - Consumed on use regardless of outcome.
+    - Each unique book title can only benefit a character once.
+    - Stat cap: training books cannot raise a stat above 25.
+    """
+    if item.get("subtype") != "training_book":
+        return False, "This isn't a training book."
+
+    book_name = item.get("name", "Unknown")
+    stat = item.get("trains_stat", "")
+    amount = item.get("trains_amount", 1)
+
+    if stat not in VALID_TRAINING_STATS:
+        return False, f"Unknown stat '{stat}' in training book."
+
+    # Initialize books_read set if needed
+    if not hasattr(character, "books_read"):
+        character.books_read = set()
+
+    if book_name in character.books_read:
+        return False, (f"{character.name} has already absorbed the lessons of "
+                       f"'{book_name}'. There is nothing more to gain from it.")
+
+    # Stat cap
+    current_val = character.base_stats.get(stat, 0)
+    TRAINING_BOOK_CAP = 25
+    if current_val >= TRAINING_BOOK_CAP:
+        return False, (f"{character.name}'s {stat} is already at the limit "
+                       f"that training alone can reach ({TRAINING_BOOK_CAP}).")
+
+    # Apply the increase
+    actual_gain = min(amount, TRAINING_BOOK_CAP - current_val)
+    character.base_stats[stat] = current_val + actual_gain
+    if hasattr(character, "stats"):
+        character.stats[stat] = character.stats.get(stat, current_val) + actual_gain
+
+    character.books_read.add(book_name)
+
+    use_msg = item.get("use_message", f"+{actual_gain} {stat}.")
+    return True, f"{character.name}: {use_msg} ({stat} +{actual_gain})"
+
+
+# ═══════════════════════════════════════════════════════════════
+#  CLASS TRANSITION
+# ═══════════════════════════════════════════════════════════════
+
+def apply_class_transition(character, new_class_name: str) -> tuple:
+    """Apply a class transition to a character.
+    Returns (success: bool, message: str).
+    Preserves all currently known abilities; adds new class starters.
+    Resources are recalculated for the new class."""
+    from core.classes import CLASSES, get_all_resources
+
+    req = CLASS_TRANSITIONS.get(new_class_name)
+    if not req:
+        return False, f"Unknown class: {new_class_name}"
+    if character.class_name not in req["base_classes"]:
+        return False, f"{character.name} is not eligible to become {new_class_name}."
+    if character.level < req["min_level"]:
+        return False, f"Requires level {req['min_level']} (you are level {character.level})."
+    for stat, minimum in req["min_stats"].items():
+        if character.stats.get(stat, 0) < minimum:
+            return False, (f"Requires {stat} {minimum} "
+                           f"(you have {character.stats.get(stat, 0)}).")
+
+    old_class = character.class_name
+    character.class_name = new_class_name
+
+    # Keep all existing abilities; merge in new class starting abilities
+    known_names = {a["name"] for a in character.abilities}
+    new_cls = CLASSES.get(new_class_name, {})
+    added = []
+    for ab in new_cls.get("starting_abilities", []):
+        if ab["name"] not in known_names:
+            character.abilities.append(dict(ab))
+            added.append(ab["name"])
+
+    # Recalculate resources for new class
+    # Hybrid/apex classes may not be in CLASSES yet — fall back to first base class
+    resource_class = new_class_name if new_class_name in CLASSES else req["base_classes"][0]
+    character.resources = get_all_resources(resource_class, character.stats, character.level)
+
+    tier_label = "hybrid" if req["min_level"] == 10 else "apex"
+    gained_str = f" Gained: {', '.join(added)}." if added else ""
+    return True, (f"{character.name} has ascended to {new_class_name} "
+                  f"({tier_label} class, from {old_class}).{gained_str}")

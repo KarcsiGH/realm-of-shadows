@@ -98,11 +98,17 @@ class Character:
             mark_item_identified(weapon_key)
 
     def effective_stats(self):
-        """Base stats + equipment bonuses. Used for combat calculations."""
+        """Base stats + equipment bonuses + Warden rank bonus. Used for combat calculations."""
         bonuses = calc_equipment_stat_bonuses(self)
         result = {}
         for stat in STAT_NAMES:
             result[stat] = self.stats[stat] + bonuses.get(stat, 0)
+        # Warden rank all_stats bonus (Scout +1, Warden +2, Senior Warden +4, Warden-Commander +6)
+        from core.progression import get_tier_bonus
+        flat = get_tier_bonus(getattr(self, "planar_tier", 0)).get("all_stats", 0)
+        if flat:
+            for stat in STAT_NAMES:
+                result[stat] += flat
         return result
 
     def equipment_defense(self):

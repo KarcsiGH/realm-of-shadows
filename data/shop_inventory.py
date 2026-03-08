@@ -117,6 +117,12 @@ TEMPLE = {
             "cost": 30,
             "action": "cure_poison",
         },
+        "cure_disease": {
+            "name": "Cure Disease",
+            "description": "Cleanse all disease from one character.",
+            "cost": 50,
+            "action": "cure_disease",
+        },
         "remove_curse": {
             "name": "Remove Curse",
             "description": "Lift a curse from one character.",

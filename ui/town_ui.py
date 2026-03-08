@@ -1951,6 +1951,7 @@ class TownUI:
         ty = SCREEN_H - 68
         draw_text(surface, "Transitions:", 20, ty, DIM_GOLD, 12)
         tx = 130
+        self._classtree_transition_rects = []   # [(rect, class_name, can_transition)]
         for tn, req in CLASS_TRANSITIONS.items():
             if c.class_name not in req["base_classes"]: continue
             can = tn in get_available_transitions(c)
@@ -1961,6 +1962,9 @@ class TownUI:
             pygame.draw.rect(surface, tc2, tr2, 1, border_radius=3)
             draw_text(surface, tn, tr2.x+8, tr2.y+4, tc2, 11)
             draw_text(surface, f"Lv{req['min_level']}", tr2.x+4, tr2.y-13, (72,66,50), 10)
+            if can:
+                draw_text(surface, "CLICK", tr2.x+4, tr2.y+tr2.height+2, (90,160,120), 9)
+            self._classtree_transition_rects.append((tr2, tn, can))
             tx += tr2.width + 6
 
 
@@ -2699,6 +2703,18 @@ class TownUI:
                     self.classtree_char_idx = i
                     return None
                 tab_x += tw + 6
+            # Transition buttons (only available ones are clickable)
+            for tr2, class_name, can in getattr(self, "_classtree_transition_rects", []):
+                if tr2.collidepoint(mx, my) and can:
+                    c = self.party[self.classtree_char_idx]
+                    from core.progression import apply_class_transition
+                    success, msg = apply_class_transition(c, class_name)
+                    if success:
+                        sfx.play("quest_complete")
+                        self._msg(msg, (160, 220, 180))
+                    else:
+                        self._msg(msg, RED)
+                    return None
 
         # ── Tavern ──
         elif self.view == self.VIEW_TAVERN:
@@ -3010,6 +3026,20 @@ class TownUI:
                     self._msg(f"{c.name}'s poison has been purged! ({cost}g)", HEAL_COL)
                     return
             self._msg("No one in your party is poisoned.", GREY)
+
+        elif service_key == "cure_disease":
+            from core.status_effects import get_status_effects, remove_all_disease
+            for c in self.party:
+                effects = get_status_effects(c)
+                if any(s.get("type") == "disease" for s in effects):
+                    if total_gold < cost:
+                        self._msg(f"Not enough gold! Need {cost}g.", RED)
+                        return
+                    self._deduct_gold(cost)
+                    remove_all_disease(c)
+                    self._msg(f"{c.name}'s disease has been cleansed! ({cost}g)", HEAL_COL)
+                    return
+            self._msg("No one in your party is diseased.", GREY)
 
         elif service_key == "remove_curse":
             from core.status_effects import get_status_effects, remove_all_curses
