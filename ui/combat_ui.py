@@ -705,6 +705,18 @@ class CombatUI:
         # Actor name banner
         draw_text(surface, f"{actor['name']}'s Turn", 8, ACTION_Y + 4, GOLD, 15, bold=True)
 
+        # Targeting instruction — shown instead of normal buttons when in a targeting mode
+        if self.action_mode == "target_heal":
+            prompt = f"← Click an ally to use  {self.selected_ability['name'] if self.selected_ability else 'ability'}  (ESC to cancel)"
+            draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (120, 220, 140), 15, bold=True)
+            draw_text(surface, "▼ Click any ally card on the left", SCREEN_W // 2 - 160, ACTION_Y + 52, (100, 180, 120), 12)
+            return
+        if self.action_mode in ("target_attack", "target_ability"):
+            ab_name = self.selected_ability["name"] if self.selected_ability else "attack"
+            prompt = f"→ Click an enemy to use  {ab_name}  (ESC to cancel)"
+            draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (220, 120, 100), 15, bold=True)
+            return
+
         self.hover_action = -1
         for i, label in enumerate(_ACT_LABELS):
             bx = i * _ACT_W
@@ -1067,37 +1079,49 @@ class CombatUI:
         self._popover_items = self._build_popover_items(label_lower, actor)
 
     def _resolve_popover_item(self, data, actor):
-        """Turn a popover item data dict into a combat action or mode change."""
+        """Route popover item to correct combat action.
+        Routes by TYPE not target field: heal/cure/buff never fall through to enemies.
+        """
         t = data.get("type")
         if t == "attack_select":
             self.action_mode = "target_attack"
             return None
         if t == "ability":
-            ab = data["ability"]
+            ab      = data["ability"]
             ab_type = ab.get("type", "skill")
-            ab_name = ab.get("name", "").lower()
-            target_field = ab.get("target", "")
-
-            # Buff abilities without explicit enemy target → always self/ally
-            if ab_type == "buff" and target_field not in ("single_enemy", "all_enemies"):
-                tgt_spec = ab.get("targets", ab.get("target", "self"))
-                if tgt_spec == "all_allies":
-                    return {"type": "ability", "ability": ab, "target": actor}  # engine handles aoe
-                return {"type": "ability", "ability": ab, "target": actor}
-
-            if ab_type in ("aoe", "aoe_heal") or "aoe" in target_field:
+            # AoE heals: auto-apply to all allies, no targeting click
+            if ab_type == "aoe_heal":
                 return {"type": "ability", "ability": ab, "target": None}
-            if target_field in ("self", "all_allies"):
-                return {"type": "ability", "ability": ab, "target": actor}
-            if ab_type in ("heal", "cure", "revive") or "heal" in ab_name or "revive" in ab_name:
+            # Single-target heals, cures, revives: auto-apply if self_only, else ally-click
+            if ab_type in ("heal", "cure", "revive"):
+                if ab.get("self_only"):
+                    return {"type": "ability", "ability": ab, "target": actor}
                 self.selected_ability = ab
                 self.action_mode = "target_heal"
                 return None
-            # Default: target an enemy
+            # Buffs: route by scope
+            if ab_type == "buff":
+                if ab.get("self_only"):
+                    return {"type": "ability", "ability": ab, "target": actor}
+                tgt = ab.get("targets", ab.get("target", ""))
+                if tgt == "all_enemies":
+                    return {"type": "ability", "ability": ab, "target": None}
+                if tgt in ("all_allies", ""):
+                    return {"type": "ability", "ability": ab, "target": actor}
+                # Single-ally buff (Ward, Divine Barrier etc): click ally
+                self.selected_ability = ab
+                self.action_mode = "target_heal"
+                return None
+            # AoE attacks / special: auto-broadcast
+            if ab_type in ("aoe", "special"):
+                return {"type": "ability", "ability": ab, "target": None}
+            # Passives: no-op guard
+            if ab_type == "passive":
+                return None
+            # Everything else (attack, spell, debuff, taunt...): enemy click
             self.selected_ability = ab
             self.action_mode = "target_ability"
             return None
-
         if t == "use_item":
             return {"type": "use_consumable", "item": data["item"]}
         if t == "switch_weapon":
