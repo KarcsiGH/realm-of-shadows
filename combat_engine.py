@@ -49,15 +49,20 @@ def make_player_combatant(character, row=FRONT):
     equip_def = 0
     equip_mres = 0
     equip_speed = 0
+    relic_healing_bonus = 0.0
+    relic_fear_bonus    = 0.0
     if hasattr(character, "equipment_defense"):
         equip_def = character.equipment_defense()
         equip_mres = character.equipment_magic_resist()
         equip_speed = character.equipment_speed()
-        # Enchant resistance bonuses from armor
+        # Enchant resistance and relic bonuses from all equipped items
         if hasattr(character, "equipment") and character.equipment:
             for slot, item in character.equipment.items():
-                if item and item.get("enchant_resist_bonus"):
-                    equip_mres += item["enchant_resist_bonus"]
+                if item:
+                    if item.get("enchant_resist_bonus"):
+                        equip_mres += item["enchant_resist_bonus"]
+                    relic_healing_bonus += item.get("healing_received_bonus", 0.0)
+                    relic_fear_bonus    += item.get("fear_resist_bonus", 0.0)
 
     # Get actual max resources (not current values)
     from core.classes import get_all_resources
@@ -80,8 +85,11 @@ def make_player_combatant(character, row=FRONT):
         "weapon": weapon,
         "row": row,
         "defense": int(stats["CON"] * DEF_CON_MULT) + equip_def,
-        "magic_resist": int(stats["WIS"] * MRES_WIS_MULT) + equip_mres,
+        "magic_resist": int(stats["WIS"] * MRES_WIS_MULT) + equip_mres
+                        + max(0, (stats.get("INT", 0) - 10) // 5),  # INT>10 adds minor mres
         "equip_speed_bonus": equip_speed,
+        "healing_received_bonus": relic_healing_bonus,  # from relics
+        "fear_resist_bonus": relic_fear_bonus,           # from relics
         "status_effects": [],
         "is_defending": False,
         "alive": True,
@@ -260,16 +268,46 @@ def roll_hit(accuracy):
 # ═══════════════════════════════════════════════════════════════
 
 def get_casting_stat_value(combatant):
-    """Get the relevant casting stat for a spellcaster."""
+    """Get the relevant casting stat for a spellcaster.
+    Base classes: Mage=INT, Cleric=PIE, Ranger/Monk=WIS, Fighter/Thief=STR (rarely cast).
+    Hybrids use the dominant magical stat of their archetype.
+    Apex classes mirror their base but enhanced.
+    """
     if combatant["type"] == "player":
         cn = combatant["class_name"]
-        if cn in ("Mage",):
-            return combatant["stats"].get("INT", 0)
-        elif cn in ("Cleric",):
-            return combatant["stats"].get("PIE", 0)
-        elif cn in ("Ranger", "Monk"):
-            return combatant["stats"].get("WIS", 0)
-    # Enemies with spells use INT
+        # ── Base classes ────────────────────────────────────────
+        if cn == "Mage":     return combatant["stats"].get("INT", 0)
+        if cn == "Cleric":   return combatant["stats"].get("PIE", 0)
+        if cn == "Ranger":   return combatant["stats"].get("WIS", 0)
+        if cn == "Monk":     return combatant["stats"].get("WIS", 0)
+        if cn == "Fighter":  return combatant["stats"].get("STR", 0)
+        if cn == "Thief":    return combatant["stats"].get("DEX", 0)
+        # ── Hybrid classes ─────────────────────────────────────
+        if cn == "Spellblade":  return combatant["stats"].get("INT", 0)   # Mage/Fighter: INT
+        if cn == "Paladin":     return combatant["stats"].get("PIE", 0)   # Cleric/Fighter: PIE
+        if cn == "Warder":      return combatant["stats"].get("STR", 0)   # Fighter/Thief: STR (physical)
+        if cn == "Strider":     return combatant["stats"].get("WIS", 0)   # Fighter/Ranger: WIS
+        if cn == "Guardian":    return combatant["stats"].get("WIS", 0)   # Fighter/Monk: WIS (ki)
+        if cn == "Witch":                                                   # Mage/Cleric: best of INT/PIE
+            return max(combatant["stats"].get("INT", 0),
+                       combatant["stats"].get("PIE", 0))
+        if cn == "Necromancer": return combatant["stats"].get("INT", 0)   # Mage/Thief: INT (death magic)
+        if cn == "Druid":       return combatant["stats"].get("WIS", 0)   # Mage/Ranger: WIS (nature)
+        if cn == "Mystic":      return combatant["stats"].get("INT", 0)   # Mage/Monk: INT (arcane ki)
+        if cn == "Inquisitor":  return combatant["stats"].get("PIE", 0)   # Cleric/Thief: PIE (divine agent)
+        if cn == "Warden":      return combatant["stats"].get("WIS", 0)   # Cleric/Ranger: WIS (natural divine)
+        if cn == "Templar":     return combatant["stats"].get("PIE", 0)   # Cleric/Monk: PIE (divine martial)
+        if cn == "Assassin":    return combatant["stats"].get("WIS", 0)   # Thief/Ranger: WIS (awareness)
+        if cn == "Phantom":     return combatant["stats"].get("WIS", 0)   # Thief/Monk: WIS (shadow ki)
+        if cn == "Shaman":      return combatant["stats"].get("WIS", 0)   # Ranger/Monk: WIS (primal spirit)
+        # ── Apex classes ────────────────────────────────────────
+        if cn == "Knight":       return combatant["stats"].get("PIE", 0)  # Fighter apex: holy oath
+        if cn == "Archmage":     return combatant["stats"].get("INT", 0)  # Mage apex: pure INT
+        if cn == "High Priest":  return combatant["stats"].get("PIE", 0)  # Cleric apex: pure PIE
+        if cn == "Shadow Master":return combatant["stats"].get("INT", 0)  # Thief apex: shadow mastery
+        if cn == "Beastlord":    return combatant["stats"].get("WIS", 0)  # Ranger apex: primal WIS
+        if cn == "Ascetic":      return combatant["stats"].get("WIS", 0)  # Monk apex: pure ki
+    # Enemies with spells use INT by default
     return combatant["stats"].get("INT", 0)
 
 
@@ -1226,6 +1264,14 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             amount = calc_healing(attacker, heal_spell)
             if is_crit:
                 amount = int(amount * CRIT_HEAL_MULT)
+            # Healing received bonuses: PIE + relic items
+            if ht.get("type") == "player":
+                target_pie = ht["stats"].get("PIE", 0)
+                pie_bonus   = (target_pie - 10) * 0.015 if target_pie > 10 else 0.0
+                relic_bonus = ht.get("healing_received_bonus", 0.0)
+                total_recv  = pie_bonus + relic_bonus
+                if total_recv > 0:
+                    amount = int(amount * (1.0 + total_recv))
             old_hp = ht["hp"]
             ht["hp"] = min(ht["max_hp"], ht["hp"] + amount)
             actual = ht["hp"] - old_hp
@@ -1338,9 +1384,37 @@ def apply_status_effect(target, status_name, duration, chance=1.0):
     if status_name in target.get("status_immunities", []):
         return False
 
+    # PIE fear/morale resistance: Fear, Terrorized, Demoralized
+    if status_name in ("Fear", "Feared", "Terrorized", "Frightened", "Demoralized"):
+        if target.get("type") == "player":
+            pie = target["stats"].get("PIE", 0)
+            pie_resist   = (pie - 10) * 0.02 if pie > 10 else 0.0
+            relic_resist = target.get("fear_resist_bonus", 0.0)
+            total_resist = pie_resist + relic_resist
+            if total_resist > 0:
+                chance = max(0.0, chance - total_resist)
+
+    # Disease resistance from CON (applied when disease is inflicted in combat)
+    if status_name in ("Diseased", "Plague", "Infected"):
+        if target.get("type") == "player":
+            con = target["stats"].get("CON", 0)
+            if con > 10:
+                resist_bonus = (con - 10) * 0.02   # +2% resist per CON above 10
+                chance = max(0.0, chance - resist_bonus)
+
     # Chance check
     if chance < 1.0 and random.random() > chance:
         return False
+
+    # WIS reduces incoming debuff duration for player targets (mind effects)
+    MIND_EFFECTS = ("Fear", "Feared", "Terrorized", "Frightened", "Demoralized",
+                    "Slowed", "Stunned", "Silenced", "Confused", "Charmed", "Weakened")
+    if status_name in MIND_EFFECTS and target.get("type") == "player":
+        wis = target["stats"].get("WIS", 0)
+        if wis > 10:
+            # -1 duration per 8 WIS above 10, minimum 1
+            reduction = (wis - 10) // 8
+            duration = max(1, duration - reduction)
 
     # Check if already afflicted — refresh duration if longer
     for existing in target.get("status_effects", []):
@@ -1618,6 +1692,13 @@ def enemy_choose_action(enemy, players, enemies):
 
     # ── Aggressive AI ─────────────────────────────────────────
     if ai_type == "aggressive":
+        # Aggressive enemies use offensive abilities ~30% of the time when available
+        if random.random() < 0.30:
+            should_attack, atk_target, atk_ability = _should_use_offensive_ability(
+                enemy, living_players, use_threshold=0.35)
+            if should_attack:
+                return "ability", atk_target, atk_ability
+
         # Pack tactics: pile on the same target an ally is attacking
         if enemy.get("pack_tactics") and random.random() < 0.65:
             living_enemies = [e for e in enemies if e.get("alive", True)]
@@ -2113,6 +2194,36 @@ class CombatState:
                     used = True
                     break
 
+        # ── Cure Disease ──────────────────────────────────────────
+        elif "Disease" in item.get("cures", []) or item.get("effect") == "cure_disease":
+            if char_ref:
+                from core.status_effects import remove_all_disease, get_status_effects
+                effects = get_status_effects(char_ref)
+                if any(s.get("type") == "disease" for s in effects):
+                    remove_all_disease(char_ref)
+                    msgs.append(f"{actor['name']} uses {name}: disease cured!")
+                else:
+                    msgs.append(f"{actor['name']} uses {name}: no disease to cure.")
+            used = True
+
+        # ── Remove Cure Poison (via cures list or name) ───────────
+        elif "Poison" in item.get("cures", []):
+            if char_ref:
+                from core.status_effects import remove_all_poison, remove_all_disease, get_status_effects
+                effects = get_status_effects(char_ref)
+                cured = []
+                if any(s.get("type") == "poison" for s in effects):
+                    remove_all_poison(char_ref)
+                    cured.append("poison")
+                if "Disease" in item.get("cures", []) and any(s.get("type") == "disease" for s in effects):
+                    remove_all_disease(char_ref)
+                    cured.append("disease")
+                if cured:
+                    msgs.append(f"{actor['name']} uses {name}: {' and '.join(cured)} cured!")
+                else:
+                    msgs.append(f"{actor['name']} uses {name}: nothing to cure.")
+            used = True
+
         # ── Remove Curse ─────────────────────────────────────────
         elif item.get("effect") == "remove_curse" or "Remove Curse" in name:
             if char_ref:
@@ -2192,6 +2303,29 @@ class CombatState:
                 actor = self.get_current_combatant()
 
         action, target, ability = enemy_choose_action(actor, self.players, self.enemies)
+
+        # ── INT: Enemy ability recognition ────────────────────────
+        # If the enemy is about to use a non-basic ability, check if
+        # any player has high enough INT to recognize the wind-up.
+        if action == "ability" and ability:
+            ab_type = ability.get("type", "")
+            is_threatening = ab_type in ("damage", "aoe", "debuff") or ability.get("power", 0) >= 12
+            if is_threatening:
+                best_int = max(
+                    (p["stats"].get("INT", 0) for p in self.players if p["alive"]),
+                    default=0
+                )
+                # Threshold: INT 14 recognizes basic abilities, INT 18 recognizes any
+                if best_int >= 14:
+                    recognizer = next(
+                        (p["name"] for p in self.players
+                         if p["alive"] and p["stats"].get("INT", 0) == best_int),
+                        None
+                    )
+                    if recognizer:
+                        self.log(f"{recognizer} reads {actor['name']}'s movements — "
+                                 f"it's preparing something!")
+        # ──────────────────────────────────────────────────────────
         result = {}  # will be overwritten by attack branch
 
         if action == "flee":
@@ -2348,7 +2482,16 @@ class CombatState:
             for entry in loot_table:
                 if random.random() <= entry.get("drop_chance", 0):
                     item = dict(entry["item"])
-                    item["identified"] = False  # all drops start unidentified
+                    # Resolve training book placeholder → actual random training book
+                    if item.pop("_training_book", False):
+                        try:
+                            from data.magic_items import get_random_training_book
+                            item = get_random_training_book()
+                            item["identified"] = True
+                        except Exception:
+                            continue  # skip if unavailable
+                    else:
+                        item["identified"] = False  # all drops start unidentified
                     item["source"] = e["name"]
                     loot_drops.append(item)
 

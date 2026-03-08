@@ -473,6 +473,12 @@ ENEMIES = {
                 "estimated_value": 50,
                 "description": "A leather pouch stuffed with coins and trinkets worth about 50 gold.",
             }},
+            {"drop_chance": 0.15, "item": {
+                "_training_book": True,
+                "name": "Training Manual", "type": "consumable",
+                "rarity": "uncommon", "identified": True,
+                "description": "A worn training manual. Contains a stat boost.",
+            }},
         ],
         "description_tiers": {
             0: "A massive warrior draped in trophies and scars.",
@@ -580,6 +586,12 @@ ENEMIES = {
                 "stat_bonus": {"LCK": 2},
                 "description": "A battered gold coin Grak carried for luck. +2 LCK.",
             }},
+            {"drop_chance": 0.15, "item": {
+                "_training_book": True,
+                "name": "Training Manual", "type": "consumable",
+                "rarity": "uncommon", "identified": True,
+                "description": "A worn training manual. Contains a stat boost.",
+            }},
         ],
         "description_tiers": {
             0: "A massive goblin in crude armor, wielding an enormous club.",
@@ -612,6 +624,12 @@ ENEMIES = {
                 "rarity": "rare", "tier": 2, "defense": 7, "magic_resist": 8, "identified": True,
                 "estimated_value": 180,
                 "description": "A shimmering cloak woven from spider silk. Light and magically resistant.",
+            }},
+            {"drop_chance": 0.15, "item": {
+                "_training_book": True,
+                "name": "Training Manual", "type": "consumable",
+                "rarity": "uncommon", "identified": True,
+                "description": "A worn training manual. Contains a stat boost.",
             }},
         ],
         "description_tiers": {
@@ -646,6 +664,12 @@ ENEMIES = {
                 "rarity": "rare", "tier": 3, "damage": 22, "identified": True,
                 "estimated_value": 250,
                 "description": "A massive mining pick, still sharp after centuries. +22 base damage.",
+            }},
+            {"drop_chance": 0.15, "item": {
+                "_training_book": True,
+                "name": "Training Manual", "type": "consumable",
+                "rarity": "uncommon", "identified": True,
+                "description": "A worn training manual. Contains a stat boost.",
             }},
         ],
         "description_tiers": {
@@ -690,6 +714,12 @@ ENEMIES = {
                 "description": "A dwarven war-hammer inscribed with ward-runes. "
                                "+26 base damage, +8 magic resist to wielder.",
                 "stat_bonus": {"magic_resist": 8},
+            }},
+            {"drop_chance": 0.15, "item": {
+                "_training_book": True,
+                "name": "Training Manual", "type": "consumable",
+                "rarity": "uncommon", "identified": True,
+                "description": "A worn training manual. Contains a stat boost.",
             }},
         ],
         "description_tiers": {
@@ -736,6 +766,12 @@ ENEMIES = {
                 "description": "A warden's sword, blackened by whatever destroyed Ashenmoor. "
                                "+20 base damage, deals bonus fire damage.",
                 "stat_bonus": {"fire_damage_bonus": 6},
+            }},
+            {"drop_chance": 0.15, "item": {
+                "_training_book": True,
+                "name": "Training Manual", "type": "consumable",
+                "rarity": "uncommon", "identified": True,
+                "description": "A worn training manual. Contains a stat boost.",
             }},
         ],
         "description_tiers": {

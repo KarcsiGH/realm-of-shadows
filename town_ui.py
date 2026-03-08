@@ -828,8 +828,19 @@ class TownUI:
         if self.view != self.VIEW_WALK:
             return None
 
-        # Dialogue takes priority
+        # Dialogue takes priority — forward key events to dialogue UI
         if self.active_dialogue and not self.active_dialogue.finished:
+            import pygame as _pg
+            event = _pg.event.Event(_pg.KEYDOWN, key=key, mod=0, unicode="")
+            self.active_dialogue.handle_event(event)
+            if self.active_dialogue.finished:
+                self.active_dialogue = None
+                try:
+                    from core.story_flags import auto_advance_quests
+                    done = auto_advance_quests(self.party)
+                    self.pending_quest_completions.extend(done)
+                except Exception:
+                    pass
             return None
 
         from data.town_maps import is_walkable, get_building_at, get_npc_at, get_sign_at, is_exit, get_tile, TT_DOOR
@@ -1389,10 +1400,20 @@ class TownUI:
         # Services
         services = list(TEMPLE["services"].values())
         by = 120
+
+        # PIE disposition banner
+        max_pie = max((c.stats.get("PIE", 0) for c in self.party), default=0)
+        if max_pie >= 15:
+            pct_off = min(20, (max_pie - 14) * 2)
+            pie_msg = f"The temple senses the divine in your party. Services discounted {pct_off}%."
+            draw_text(surface, pie_msg, SCREEN_W // 2 - 245, 108, (180, 220, 255), 12)
+            by = 132
+
         for i, svc in enumerate(services):
             btn = pygame.Rect(SCREEN_W // 2 - 250, by + i * 80, 500, 68)
             hover = btn.collidepoint(mx, my)
-            cost = svc["cost"]
+            base_cost = svc["cost"]
+            cost, pct_off = self._pie_disposition_discount(base_cost)
             can_afford = total_gold >= cost
 
             bg = (35, 50, 45) if (hover and can_afford) else (25, 20, 45)
@@ -1405,10 +1426,17 @@ class TownUI:
                       HEAL_COL if hover else CREAM, 18, bold=True)
             draw_text(surface, svc["description"], btn.x + 15, btn.y + 34, GREY, 13)
 
-            price_str = "Free" if cost == 0 else f"{cost}g"
-            price_col = HEAL_COL if cost == 0 else (DIM_GOLD if can_afford else RED)
-            draw_text(surface, price_str, btn.x + btn.width - 70, btn.y + 8,
-                      price_col, 18, bold=True)
+            if cost == 0:
+                price_str = "Free"
+                price_col = HEAL_COL
+            elif pct_off > 0:
+                price_str = f"{base_cost}g → {cost}g"
+                price_col = (180, 220, 255) if can_afford else RED
+            else:
+                price_str = f"{cost}g"
+                price_col = DIM_GOLD if can_afford else RED
+            draw_text(surface, price_str, btn.x + btn.width - 110, btn.y + 8,
+                      price_col, 16, bold=True)
 
         # Identify section: show unidentified items if any
         unid_items = []
@@ -1940,6 +1968,7 @@ class TownUI:
         ty = SCREEN_H - 68
         draw_text(surface, "Transitions:", 20, ty, DIM_GOLD, 12)
         tx = 130
+        self._classtree_transition_rects = []   # [(rect, class_name, can_transition)]
         for tn, req in CLASS_TRANSITIONS.items():
             if c.class_name not in req["base_classes"]: continue
             can = tn in get_available_transitions(c)
@@ -1950,6 +1979,9 @@ class TownUI:
             pygame.draw.rect(surface, tc2, tr2, 1, border_radius=3)
             draw_text(surface, tn, tr2.x+8, tr2.y+4, tc2, 11)
             draw_text(surface, f"Lv{req['min_level']}", tr2.x+4, tr2.y-13, (72,66,50), 10)
+            if can:
+                draw_text(surface, "CLICK", tr2.x+4, tr2.y+tr2.height+2, (90,160,120), 9)
+            self._classtree_transition_rects.append((tr2, tn, can))
             tx += tr2.width + 6
 
 
@@ -2688,6 +2720,18 @@ class TownUI:
                     self.classtree_char_idx = i
                     return None
                 tab_x += tw + 6
+            # Transition buttons (only available ones are clickable)
+            for tr2, class_name, can in getattr(self, "_classtree_transition_rects", []):
+                if tr2.collidepoint(mx, my) and can:
+                    c = self.party[self.classtree_char_idx]
+                    from core.progression import apply_class_transition
+                    success, msg = apply_class_transition(c, class_name)
+                    if success:
+                        sfx.play("quest_complete")
+                        self._msg(msg, (160, 220, 180))
+                    else:
+                        self._msg(msg, RED)
+                    return None
 
         # ── Tavern ──
         elif self.view == self.VIEW_TAVERN:
@@ -2979,10 +3023,23 @@ class TownUI:
         if not found_any:
             draw_text(surface, "All equipment is in good condition.", 20, y, (100, 200, 100), 14)
 
+    def _pie_disposition_discount(self, base_price: int) -> tuple:
+        """Apply PIE-based temple/holy NPC discount.
+        High-PIE parties are shown favour by divine servants.
+        Returns (discounted_price, pct_off) where pct_off is 0 if no discount."""
+        max_pie = max((c.stats.get("PIE", 0) for c in self.party), default=0)
+        if max_pie < 15:
+            return base_price, 0
+        # +2% discount per PIE above 14, capped at 20%
+        pct = min(20, (max_pie - 14) * 2)
+        discounted = max(1, int(base_price * (1.0 - pct / 100)))
+        return discounted, pct
+
     def _use_temple_service(self, service_key):
         """Use a temple service."""
         svc = TEMPLE["services"][service_key]
-        cost = svc["cost"]
+        base_cost = svc["cost"]
+        cost, pct_off = self._pie_disposition_discount(base_cost)
         total_gold = sum(c.gold for c in self.party)
 
         if service_key == "cure_poison":
@@ -2999,6 +3056,20 @@ class TownUI:
                     self._msg(f"{c.name}'s poison has been purged! ({cost}g)", HEAL_COL)
                     return
             self._msg("No one in your party is poisoned.", GREY)
+
+        elif service_key == "cure_disease":
+            from core.status_effects import get_status_effects, remove_all_disease
+            for c in self.party:
+                effects = get_status_effects(c)
+                if any(s.get("type") == "disease" for s in effects):
+                    if total_gold < cost:
+                        self._msg(f"Not enough gold! Need {cost}g.", RED)
+                        return
+                    self._deduct_gold(cost)
+                    remove_all_disease(c)
+                    self._msg(f"{c.name}'s disease has been cleansed! ({cost}g)", HEAL_COL)
+                    return
+            self._msg("No one in your party is diseased.", GREY)
 
         elif service_key == "remove_curse":
             from core.status_effects import get_status_effects, remove_all_curses
