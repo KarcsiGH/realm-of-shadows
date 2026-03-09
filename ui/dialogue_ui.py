@@ -312,6 +312,10 @@ class DialogueUI:
                 # Auto-advance (no choices)
                 return self.handle_click(0, 0)
             elif event.key == pygame.K_ESCAPE:
+                # Locked dialogues (e.g. maren_betrayal) cannot be dismissed
+                # mid-scene — player must reach an end node to close them.
+                if self.state.tree.get("locked"):
+                    return None
                 self.finished = True
                 return "done"
             # Number keys 1-9 for choice selection

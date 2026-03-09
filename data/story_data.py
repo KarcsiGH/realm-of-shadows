@@ -803,6 +803,7 @@ NPC_DIALOGUES = {
             ],
             "tree": {
                 "id": "maren_betrayal",
+                "locked": True,
                 "nodes": {
                     "start": {
                         "speaker": "Maren",
@@ -1557,8 +1558,10 @@ NPC_DIALOGUES = {
                         "text": "She left before dawn. Paid her tab in full — in advance, "
                                 "actually, which surprised me. Maren didn't seem like someone "
                                 "who planned to leave. Something must have pushed her.",
+                        "on_enter": [{"action": "meet_npc", "npc": "bess"}],
                         "choices": [
                             {"text": "Did she say anything before she went?", "next": "last_words"},
+                            {"text": "Do you know where she went?", "next": "where_she_went"},
                             {"text": "Was she alone?", "next": "alone"},
                             {"text": "Any word from the road since?", "next": "road_word"},
                             {"text": "Thanks, Bess.", "next": "bye"},
@@ -1569,6 +1572,16 @@ NPC_DIALOGUES = {
                         "text": "She came down before first light and left a note on the bar. "
                                 "Just said: 'Tell them I'm sorry. Tell them I know what I'm doing.' "
                                 "I don't know who 'them' was. I figure it was you.",
+                        "next": "start",
+                    },
+                    "where_she_went": {
+                        "speaker": "Bess",
+                        "text": "The note she left said one thing clearly: 'Find me at the Spire.' "
+                                "I don't know what that means, but a merchant who passed through "
+                                "yesterday said there's a black tower far out in the Ashlands — "
+                                "Valdris' Spire, they call it. Sounds like where she was headed. "
+                                "You'll need whatever opened the crypt to get there, I'd wager. "
+                                "She had that look — the one that means she's already planned past you.",
                         "next": "start",
                     },
                     "alone": {

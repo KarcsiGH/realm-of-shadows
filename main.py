@@ -2267,6 +2267,13 @@ class Game:
         # Post-betrayal: remove 2 Hearthstone Fragments from party inventory
         if dialogue_id == "maren_betrayal":
             self._maren_takes_hearthstones()
+            # Safety: ensure maren.left is set even if the dialogue was
+            # closed early (e.g. old save, edge case). maren_betrayal is
+            # locked so Escape is suppressed, but we guard here anyway.
+            from core.story_flags import get_flag, set_flag
+            if not get_flag("maren.left"):
+                set_flag("maren.betrayal_done", True)
+                set_flag("maren.left", True)
 
         if callback:
             callback(result)
