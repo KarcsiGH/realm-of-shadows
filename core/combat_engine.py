@@ -887,6 +887,12 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             return result
         attacker["resources"][resource_key] -= cost
 
+    # Passives are always-on — never directly executable
+    if ability.get("type") == "passive":
+        result["hit"] = False
+        result["messages"].append(f"{ability['name']} is a passive ability and is always active.")
+        return result
+
     ab_name  = ability["name"].lower()
     ab_type  = ability.get("type", "spell")
     is_heal  = ab_type in ("heal", "aoe_heal") or "heal" in ab_name

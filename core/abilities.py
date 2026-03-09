@@ -23,7 +23,7 @@ CLASS_ABILITIES = {
         {"name": "Power Strike",     "cost": 10, "resource": "STR-SP", "type": "attack",
          "level": 1, "power": 1.6, "desc": "Heavy melee attack dealing 60% bonus damage."},
         {"name": "Defensive Stance", "cost": 8,  "resource": "STR-SP", "type": "buff",
-         "level": 1, "buff": "defense_up", "duration": 2, "desc": "Reduce incoming damage for 2 turns."},
+         "level": 1, "buff": "defense_up", "duration": 2, "self_only": True, "desc": "Reduce incoming damage for 2 turns."},
         {"name": "Shield Bash",      "cost": 12, "resource": "STR-SP", "type": "attack",
          "level": 3, "power": 1.3, "stun_chance": 0.35, "desc": "Bash with shield. 35% chance to stun."},
         {"name": "Cleave",           "cost": 18, "resource": "STR-SP", "type": "aoe",
@@ -39,6 +39,9 @@ CLASS_ABILITIES = {
         {"name": "Arcane Shield",    "cost": 10, "resource": "INT-MP", "type": "buff",
          "level": 1, "buff": "magic_shield", "duration": 3, "self_only": True,
          "desc": "Erect a personal arcane barrier. Reduces all damage taken for 3 turns."},
+        {"name": "Shock",            "cost": 9,  "resource": "INT-MP", "type": "spell",
+         "level": 1, "power": 1.1, "element": "lightning", "stun_chance": 0.15,
+         "desc": "Lightning strike. 15% chance to stun the target for 1 turn."},
         {"name": "Firebolt",         "cost": 10, "resource": "INT-MP", "type": "spell",
          "level": 2, "power": 1.3, "element": "fire", "dot": "burning", "dot_duration": 2,
          "desc": "Fire bolt that sets the target ablaze for 2 turns."},
@@ -63,6 +66,9 @@ CLASS_ABILITIES = {
          "level": 1, "power": 1.0, "desc": "Restore HP to one ally."},
         {"name": "Smite",            "cost": 12, "resource": "PIE-MP", "type": "spell",
          "level": 1, "power": 1.4, "element": "divine", "desc": "Holy damage. Bonus vs undead."},
+        {"name": "Bless",            "cost": 8,  "resource": "PIE-MP", "type": "buff",
+         "level": 1, "buff": "blessed", "duration": 3, "target": "ally",
+         "desc": "Bless one ally. +10% accuracy and +10% to all saves for 3 turns."},
         {"name": "Cure Poison",      "cost": 8,  "resource": "PIE-MP", "type": "cure",
          "level": 3, "cures": "poison", "desc": "Remove poison from one ally."},
         {"name": "Prayer of Healing","cost": 20, "resource": "PIE-MP", "type": "aoe_heal",
@@ -79,7 +85,7 @@ CLASS_ABILITIES = {
         {"name": "Quick Strike",     "cost": 8,  "resource": "DEX-SP", "type": "attack",
          "level": 1, "power": 1.3, "bonus_crit": 15, "desc": "Fast strike with +15% crit chance."},
         {"name": "Evade",            "cost": 6,  "resource": "DEX-SP", "type": "buff",
-         "level": 1, "buff": "evasion", "duration": 2, "desc": "Greatly increase dodge chance for 2 turns."},
+         "level": 1, "buff": "evasion", "duration": 2, "self_only": True, "desc": "Greatly increase dodge chance for 2 turns."},
         {"name": "Backstab",         "cost": 14, "resource": "DEX-SP", "type": "attack",
          "level": 3, "power": 2.0, "req_stealth": False, "bonus_crit": 25, "desc": "Vicious strike. +25% crit, huge damage on crit."},
         {"name": "Poison Blade",     "cost": 12, "resource": "DEX-SP", "type": "attack",
@@ -125,7 +131,7 @@ CLASS_ABILITIES = {
         {"name": "Heavy Strike",      "cost": 12, "resource": "STR-SP", "type": "attack",
          "level": 1, "power": 1.7, "desc": "Powerful armored blow dealing heavy physical damage."},
         {"name": "Bulwark",           "cost": 10, "resource": "STR-SP", "type": "buff",
-         "level": 1, "buff": "bulwark", "duration": 3, "desc": "Full defensive stance — absorb the next attack for an ally."},
+         "level": 1, "buff": "bulwark", "duration": 3, "self_only": True, "desc": "Full defensive stance — absorb the next attack for an ally."},
         {"name": "Challenge",         "cost": 8,  "resource": "STR-SP", "type": "taunt",
          "level": 3, "taunt_duration": 2, "desc": "Force an enemy to target you for 2 turns."},
         {"name": "Armor Crush",       "cost": 16, "resource": "STR-SP", "type": "attack",
@@ -169,7 +175,7 @@ CLASS_ABILITIES = {
     ],
     "Assassin": [
         {"name": "Shadow Step",       "cost": 12, "resource": "DEX-SP", "type": "buff",
-         "level": 8, "buff": "shadow_step", "desc": "Teleport behind a target — next attack is a guaranteed backstab."},
+         "level": 8, "buff": "shadow_step", "self_only": True, "desc": "Teleport behind a target — next attack is a guaranteed backstab."},
         {"name": "Crippling Strike",  "cost": 15, "resource": "DEX-SP", "type": "attack",
          "level": 8, "power": 1.5, "apply_slow": True, "slow_duration": 3,
          "desc": "Hamstring strike. Target speed reduced for 3 turns."},
@@ -204,13 +210,13 @@ CLASS_ABILITIES = {
          "level": 8, "power": 1.8, "element": "arcane",
          "desc": "Imbue blade with arcane energy — magical melee strike ignores physical defense."},
         {"name": "Runic Armor",       "cost": 12, "resource": "INT-MP", "type": "buff",
-         "level": 8, "buff": "runic_armor", "duration": 4,
+         "level": 8, "buff": "runic_armor", "duration": 4, "self_only": True,
          "desc": "Inscribe runes on armor — reduces both physical and magical damage taken."},
         {"name": "Spellstrike",       "cost": 20, "resource": "INT-MP", "type": "attack",
          "level": 9, "power": 2.0, "element": "arcane", "combo_spell": True,
          "desc": "Deliver a spell through your weapon — melee hit triggers a bonus arcane explosion."},
         {"name": "Blade Barrier",     "cost": 22, "resource": "INT-MP", "type": "buff",
-         "level": 10, "buff": "blade_barrier", "duration": 2, "reflect_pct": 0.25,
+         "level": 10, "buff": "blade_barrier", "duration": 2, "reflect_pct": 0.25, "self_only": True,
          "desc": "Rotating blades of arcane force. Reflect 25% of incoming damage."},
         {"name": "Annihilate",        "cost": 40, "resource": "INT-MP", "type": "attack",
          "level": 12, "power": 3.2, "element": "arcane",
@@ -244,13 +250,13 @@ CLASS_ABILITIES = {
         {"name": "Whirlwind",         "cost": 30, "resource": "STR-SP", "type": "aoe",
          "level": 16, "power": 1.8, "desc": "Spinning blade attack hitting every enemy."},
         {"name": "Blade Storm",       "cost": 45, "resource": "STR-SP", "type": "aoe",
-         "level": 18, "power": 2.2, "desc": "Unstoppable flurry — hits every enemy twice."},
+         "level": 18, "power": 2.2, "hits": 2, "desc": "Unstoppable flurry — hits every enemy twice."},
         {"name": "Conqueror",         "cost": 50, "resource": "STR-SP", "type": "buff",
          "level": 20, "buff": "conqueror", "duration": 5, "self_only": True,
          "desc": "Legendary form — max damage on all attacks for 5 turns."},
     ],
     "Archmage": [
-        {"name": "Spell Mastery",     "cost": 0, "resource": "INT-MP", "type": "passive",
+        {"name": "Spell Mastery",     "cost": 0, "resource": "",        "type": "passive",
          "level": 15, "passive": "spell_mastery", "desc": "All spells cost 25% less and deal 25% more damage."},
         {"name": "Time Stop",         "cost": 50, "resource": "INT-MP", "type": "buff",
          "level": 15, "buff": "time_stop", "duration": 1, "targets": "all_enemies",
@@ -412,6 +418,99 @@ ENEMY_ABILITIES = {
         "name": "Plea of the Fallen", "type": "debuff",
         "effect": {"morale_break": True, "duration": 2},
         "cost": 0, "resource": "", "desc": "Sorrow radiates outward, reducing party attack by 20% for 2 turns",
+    },
+
+    # ── Korrath (Mine Boss) ───────────────────────────────────────
+    "Stone Slam": {
+        "name": "Stone Slam", "type": "attack", "power": 2.2,
+        "stun_chance": 0.25, "phys_type": "blunt",
+        "cost": 0, "resource": "", "desc": "A crushing two-handed blow that may stun",
+    },
+    "Ward Pulse": {
+        "name": "Ward Pulse", "type": "aoe", "power": 0.7, "element": "divine",
+        "cost": 0, "resource": "", "desc": "A burst of warden energy hits all enemies",
+    },
+
+    # ── Commander Ashvar (Ashenmoor Boss) ─────────────────────────
+    "Ashen Wave": {
+        "name": "Ashen Wave", "type": "aoe", "power": 0.9, "element": "fire",
+        "cost": 0, "resource": "", "desc": "A wave of superheated ash engulfs the party",
+    },
+    "Shadow Bind": {
+        "name": "Shadow Bind", "type": "debuff", "power": 0,
+        "apply_status": "Immobilized", "status_duration": 2, "status_chance": 0.55,
+        "cost": 0, "resource": "", "desc": "Shadow tendrils root a target in place",
+    },
+    "Commander's Wrath": {
+        "name": "Commander's Wrath", "type": "attack", "power": 2.5,
+        "phys_type": "slashing",
+        "cost": 0, "resource": "", "desc": "An overwhelming strike that bypasses some defense",
+    },
+
+    # ── Ash Revenant ──────────────────────────────────────────────
+    "Cinder Touch": {
+        "name": "Cinder Touch", "type": "attack", "power": 1.4, "element": "fire",
+        "apply_status": "Burning", "status_duration": 2, "status_chance": 0.45,
+        "cost": 0, "resource": "", "desc": "A burning strike that may ignite the target",
+    },
+
+    # ── Bandits / Mercenaries / Cultists / Crypt ──────────────────
+    "enemy_crippling_strike": {
+        "name": "Crippling Strike", "type": "attack", "power": 1.5,
+        "apply_status": "Slowed", "status_duration": 2, "status_chance": 0.50,
+        "cost": 0, "resource": "", "desc": "A precise strike that slows the target",
+    },
+    "enemy_fireball": {
+        "name": "Fireball", "type": "aoe", "power": 1.1, "element": "fire",
+        "cost": 0, "resource": "", "desc": "An explosive ball of fire hits all party members",
+    },
+    "enemy_war_cry": {
+        "name": "War Cry", "type": "buff", "buff": "war_cry",
+        "duration": 3, "targets": "all_allies",
+        "cost": 0, "resource": "", "desc": "Rally allies, boosting all attack damage",
+    },
+    "enemy_cleave": {
+        "name": "Cleave", "type": "aoe", "power": 0.85, "phys_type": "slashing",
+        "targets": "front_row",
+        "cost": 0, "resource": "", "desc": "A wide swing hitting all front-row targets",
+    },
+    "enemy_pinning_shot": {
+        "name": "Pinning Shot", "type": "attack", "power": 1.2, "element": "piercing",
+        "apply_status": "Slowed", "status_duration": 2, "status_chance": 0.60,
+        "cost": 0, "resource": "", "desc": "An arrow that pins the target, slowing movement",
+    },
+    "enemy_stunning_blow": {
+        "name": "Stunning Blow", "type": "attack", "power": 1.6,
+        "stun_chance": 0.35, "phys_type": "blunt",
+        "cost": 0, "resource": "", "desc": "A calculated strike aimed at stunning the target",
+    },
+    "enemy_minor_heal": {
+        "name": "Minor Heal", "type": "heal", "power": 30,
+        "targets": "lowest_hp_ally",
+        "cost": 0, "resource": "", "desc": "A quick healing prayer restoring moderate HP",
+    },
+    "enemy_smite": {
+        "name": "Smite", "type": "attack", "power": 1.7, "element": "divine",
+        "cost": 0, "resource": "", "desc": "A divinely-charged strike",
+    },
+    "enemy_arcane_slash": {
+        "name": "Arcane Slash", "type": "attack", "power": 1.5, "element": "arcane",
+        "cost": 0, "resource": "", "desc": "A blade strike channeling arcane energy",
+    },
+    "enemy_shadow_bolt": {
+        "name": "Shadow Bolt", "type": "spell", "power": 1.2, "element": "shadow",
+        "cost": 0, "resource": "", "desc": "A bolt of condensed shadow energy",
+    },
+    "enemy_weaken": {
+        "name": "Weaken", "type": "debuff", "power": 0,
+        "apply_status": "Weakened", "status_duration": 3, "status_chance": 0.65,
+        "cost": 0, "resource": "", "desc": "A hex that reduces the target's attack power",
+    },
+    "enemy_mass_weaken": {
+        "name": "Mass Weaken", "type": "aoe", "power": 0,
+        "apply_status": "Weakened", "status_duration": 2, "status_chance": 0.55,
+        "targets": "all_enemies",
+        "cost": 0, "resource": "", "desc": "A ritual curse weakening the entire party",
     },
 }
 
