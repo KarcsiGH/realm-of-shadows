@@ -3346,7 +3346,7 @@ class Game:
                     for msg in msgs:
                         self.dungeon_ui.show_event(msg, (220, 80, 60))
                 trap["disarmed"] = True  # mark as fired so it doesn't re-trigger
-            self.dungeon.open_chest(chest_ev)
+            self.dungeon_state.open_chest(chest_ev)
             sfx.play("treasure_open")
             is_secret = chest_ev.get("secret_chest", False)
             gold  = chest_ev.get("gold", 0)
@@ -3374,8 +3374,8 @@ class Game:
                 if random.random() < bonus_chance:
                     try:
                         from data.magic_items import get_secret_item
-                        floor_num = self.dungeon.current_floor + 1
-                        total_floors = self.dungeon.total_floors
+                        floor_num = self.dungeon_state.current_floor + 1
+                        total_floors = self.dungeon_state.total_floors
                         bonus_item = get_secret_item(floor_num, total_floors, random)
                         if bonus_item:
                             bonus_item["identified"] = False
@@ -3442,7 +3442,7 @@ class Game:
                     self.dungeon_ui.show_event(msg, (220, 80, 60))
 
             # Chest still opens after the trap fires — contents aren't destroyed
-            self.dungeon.open_chest(chest_ev)
+            self.dungeon_state.open_chest(chest_ev)
             gold  = chest_ev.get("gold", 0)
             items = chest_ev.get("items", [])
             if gold > 0:
