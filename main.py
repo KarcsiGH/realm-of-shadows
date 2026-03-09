@@ -864,8 +864,8 @@ class Game:
                 "gold":      gold,
                 "xp":        xp,
                 "items":     items,
-                "timer":     5000,
-                "max_timer": 5000,
+                "timer":     7000,
+                "max_timer": 7000,
                 "slide":     0.0,
                 "kind":      "quest",
             })
@@ -914,68 +914,90 @@ class Game:
             GOLD, CREAM, GREY, PANEL_BG,
         )
 
-        PW, PH = 440, 110
-        px = SCREEN_W // 2 - PW // 2
-        # slide up from bottom
-        py_hidden = SCREEN_H + 10
-        py_shown  = SCREEN_H - PH - 20
-        py = int(py_hidden + (py_shown - py_hidden) * ease)
-
-        # Panel background
-        panel = pygame.Surface((PW, PH), pygame.SRCALPHA)
-        panel.fill((10, 8, 22, 230))
-        surface.blit(panel, (px, py))
-        # Gold border
-        pygame.draw.rect(surface, GOLD, (px, py, PW, PH), 2, border_radius=6)
-        # Bright accent top bar — green for quest, tier color for tier-up
         is_tier = n.get("kind") == "tier"
-        accent = n.get("tier_color", (60, 200, 100)) if is_tier else (60, 200, 100)
-        pygame.draw.rect(surface, accent, (px, py, PW, 4), border_radius=6)
+        accent  = n.get("tier_color", (60, 200, 100)) if is_tier else (60, 220, 120)
 
-        # Header line
-        if is_tier:
-            draw_text(surface, "✦  TIER ADVANCE  ✦", px + PW // 2 - 80, py + 10,
-                      accent, 15, bold=True)
-        else:
-            draw_text(surface, "✦  QUEST COMPLETE  ✦", px + PW // 2 - 90, py + 10,
-                      (80, 220, 120), 15, bold=True)
-
-        # Name
-        font_name = get_font(18)
-        name_text = n["name"]
-        if font_name.size(name_text)[0] > PW - 30:
-            name_text = name_text[:36] + "…"
-        draw_text(surface, name_text, px + PW // 2 - font_name.size(name_text)[0] // 2,
-                  py + 32, GOLD if not is_tier else accent, 18, bold=True)
-
-        # Body line — tier description or rewards
-        if is_tier:
-            desc = n.get("tier_desc", "")
-            draw_text(surface, desc, px + 20, py + 62, CREAM, 12, max_width=PW - 40)
-        else:
-            reward_parts = []
+        # Build reward lines first so we know height
+        reward_lines = []
+        if not is_tier:
             if n["xp"]:
-                reward_parts.append((f"+{n['xp']} XP", (120, 200, 255)))
+                reward_lines.append((f"+{n['xp']} XP", (120, 200, 255)))
             if n["gold"]:
-                reward_parts.append((f"+{n['gold']} gold", (220, 190, 80)))
+                reward_lines.append((f"+{n['gold']} gold", (220, 190, 80)))
             for item in n["items"]:
                 iname = item.get("name", "") if isinstance(item, dict) else str(item)
                 if iname:
-                    reward_parts.append((iname, (200, 160, 255)))
-            rx = px + 20
-            ry = py + 62
-            if reward_parts:
-                draw_text(surface, "Rewards:", rx, ry, GREY, 13)
-                rx += 70
-                for text, col in reward_parts:
-                    draw_text(surface, text, rx, ry, col, 14, bold=True)
-                    rx += get_font(14).size(text)[0] + 16
-            else:
-                draw_text(surface, "Objectives fulfilled.", px + 20, ry, GREY, 13)
+                    reward_lines.append((f"Item: {iname}", (200, 160, 255)))
 
-        # Dismiss hint
-        draw_text(surface, "[ click or any key to dismiss ]",
-                  px + PW // 2 - 100, py + PH - 18, (60, 60, 80), 11)
+        # Panel sizing: taller for quests with rewards
+        PW = 520
+        PH = 80 + max(len(reward_lines), 1) * 26 + 50
+        if is_tier:
+            PH = 160
+
+        px = SCREEN_W // 2 - PW // 2
+        # Slide down from above center
+        py_hidden = -PH - 10
+        py_shown  = SCREEN_H // 2 - PH // 2 - 30
+        py = int(py_hidden + (py_shown - py_hidden) * ease)
+
+        # Dim overlay behind the panel
+        overlay = pygame.Surface((PW + 60, PH + 60), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 110))
+        surface.blit(overlay, (px - 30, py - 30))
+
+        # Panel background
+        panel = pygame.Surface((PW, PH), pygame.SRCALPHA)
+        panel.fill((10, 8, 26, 245))
+        surface.blit(panel, (px, py))
+
+        # Gold border + thick accent top bar
+        pygame.draw.rect(surface, GOLD, (px, py, PW, PH), 2, border_radius=8)
+        pygame.draw.rect(surface, accent, (px, py, PW, 6), border_radius=8)
+
+        # Header label
+        if is_tier:
+            header = "\u2726  TIER ADVANCE  \u2726"
+        else:
+            header = "\u2726  QUEST COMPLETE  \u2726"
+        hw = get_font(15).size(header)[0]
+        draw_text(surface, header, px + (PW - hw) // 2, py + 14, accent, 15, bold=True)
+
+        # Quest / tier name — centered, large
+        font_name = get_font(20)
+        name_text = n["name"]
+        while font_name.size(name_text)[0] > PW - 40:
+            name_text = name_text[:-4] + "\u2026"
+        nw = font_name.size(name_text)[0]
+        draw_text(surface, name_text, px + (PW - nw) // 2, py + 38,
+                  GOLD if not is_tier else accent, 20, bold=True)
+
+        # Separator line
+        sep_y = py + 68
+        pygame.draw.line(surface, (60, 50, 80), (px + 20, sep_y), (px + PW - 20, sep_y))
+
+        # Body — tier desc or reward lines
+        ry = sep_y + 10
+        if is_tier:
+            desc = n.get("tier_desc", "")
+            draw_text(surface, desc, px + 20, ry, CREAM, 13, max_width=PW - 40)
+        elif reward_lines:
+            draw_text(surface, "Rewards:", px + 20, ry, GREY, 13)
+            rx = px + 100
+            for text, col in reward_lines:
+                tw = get_font(14).size(text)[0]
+                if rx + tw > px + PW - 20:
+                    rx = px + 100
+                    ry += 24
+                draw_text(surface, text, rx, ry, col, 14, bold=True)
+                rx += tw + 20
+        else:
+            draw_text(surface, "Objectives fulfilled.", px + 20, ry, GREY, 13)
+
+        # Dismiss hint at bottom
+        hint = "[ click anywhere or press any key to continue ]"
+        hw2 = get_font(11).size(hint)[0]
+        draw_text(surface, hint, px + (PW - hw2) // 2, py + PH - 18, (80, 80, 110), 11)
 
     def _dismiss_quest_banner(self):
         """Dismiss the front banner early (on click/keypress)."""

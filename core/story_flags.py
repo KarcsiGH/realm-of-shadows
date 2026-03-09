@@ -282,6 +282,16 @@ def auto_advance_quests(party=None):
             _distribute_quest_rewards(qid, party)
             _flags[rewarded_key] = True
             completed_now.append(qid)
+
+    # ── Advance act flag based on story milestones ─────────────────────────
+    # Act 1→2: first Hearthstone recovered (Abandoned Mine boss dead)
+    # Act 2→3: Maren takes the stones and leaves
+    current_act = _flags.get("act", 1)
+    if current_act < 2 and _flags.get("hearthstone.abandoned_mine"):
+        _flags["act"] = 2
+    if current_act < 3 and _flags.get("maren.left"):
+        _flags["act"] = 3
+
     return completed_now
 
 
@@ -298,9 +308,16 @@ def _distribute_quest_rewards(qid, party):
     xp_each   = xp   // len(party) if xp   else 0
     for c in party:
         if gold_each:
-            c.gold += gold_each
+            if hasattr(c, "add_gold"):
+                c.add_gold(gold_each)
+            else:
+                c.gold += gold_each
         if xp_each:
-            c.xp   += xp_each
+            # Use add_xp so racial/tier multipliers apply correctly
+            if hasattr(c, "add_xp"):
+                c.add_xp(xp_each)
+            else:
+                c.xp += xp_each
     # Give unique items to the first party member with inventory space
     if items:
         try:
