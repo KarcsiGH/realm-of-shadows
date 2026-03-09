@@ -705,6 +705,18 @@ class CombatUI:
         # Actor name banner
         draw_text(surface, f"{actor['name']}'s Turn", 8, ACTION_Y + 4, GOLD, 15, bold=True)
 
+        # Targeting instruction — shown instead of normal buttons when in a targeting mode
+        if self.action_mode == "target_heal":
+            prompt = f"← Click an ally to use  {self.selected_ability['name'] if self.selected_ability else 'ability'}  (ESC to cancel)"
+            draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (120, 220, 140), 15, bold=True)
+            draw_text(surface, "▼ Click any ally card on the left", SCREEN_W // 2 - 160, ACTION_Y + 52, (100, 180, 120), 12)
+            return
+        if self.action_mode in ("target_attack", "target_ability"):
+            ab_name = self.selected_ability["name"] if self.selected_ability else "attack"
+            prompt = f"→ Click an enemy to use  {ab_name}  (ESC to cancel)"
+            draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (220, 120, 100), 15, bold=True)
+            return
+
         self.hover_action = -1
         for i, label in enumerate(_ACT_LABELS):
             bx = i * _ACT_W
@@ -1050,6 +1062,7 @@ class CombatUI:
             ll = label.lower()
             if ll == "attack":
                 self.action_mode = "target_attack"
+                self.selected_ability = None  # clear so prompt says "attack" not old spell name
                 self.popover = None
             elif ll == "defend":
                 return {"type": "defend"}
@@ -1080,8 +1093,10 @@ class CombatUI:
             # AoE heals: auto-apply to all allies, no targeting click
             if ab_type == "aoe_heal":
                 return {"type": "ability", "ability": ab, "target": None}
-            # Single-target heals, cures, revives: enter ally-click mode
+            # Single-target heals, cures, revives: auto-apply if self_only, else ally-click
             if ab_type in ("heal", "cure", "revive"):
+                if ab.get("self_only"):
+                    return {"type": "ability", "ability": ab, "target": actor}
                 self.selected_ability = ab
                 self.action_mode = "target_heal"
                 return None

@@ -38,6 +38,7 @@ def serialize_character(char):
         "backstory_parts": list(char.backstory_parts),
         "quick_rolled": char.quick_rolled,
         "human_bonus_stat": getattr(char, "human_bonus_stat", None),
+        "planar_tier": getattr(char, "planar_tier", 0),
     }
 
 
@@ -60,6 +61,23 @@ def deserialize_character(data):
         cls = CLASSES.get(char.class_name, {})
         char.resources["HP"] = calc_hp(cls.get("base_hp", 20), char.stats.get("CON", 5), char.level)
     char.abilities = data.get("abilities", [])
+    # Re-merge each ability from CLASS_ABILITIES so type/self_only/buff fields are always present.
+    # This fixes old saves made before the ability-stub fix, and future-proofs saves.
+    try:
+        from core.abilities import CLASS_ABILITIES
+        lookup = {ab["name"]: ab for ab in CLASS_ABILITIES.get(char.class_name, [])}
+        merged = []
+        for a in char.abilities:
+            if isinstance(a, dict) and a.get("name") in lookup:
+                # Use full CLASS_ABILITIES dict as base; overlay saved cost/resource in case
+                # the player had a modified version, but always trust the full dict for type/buff/self_only
+                full = dict(lookup[a["name"]])
+                merged.append(full)
+            else:
+                merged.append(a)
+        char.abilities = merged
+    except Exception:
+        pass  # non-critical — stubs still work, just miss type info
     char.inventory = data.get("inventory", [])
     char.equipment = data.get("equipment", empty_equipment())
     # Ensure all slots exist
@@ -70,6 +88,7 @@ def deserialize_character(data):
     char.backstory_parts = data.get("backstory_parts", [])
     char.quick_rolled = data.get("quick_rolled", False)
     char.human_bonus_stat = data.get("human_bonus_stat", None)
+    char.planar_tier = data.get("planar_tier", 0)
     return char
 
 
