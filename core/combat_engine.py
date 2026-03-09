@@ -2585,7 +2585,10 @@ class CombatState:
 
 def _check_boss_phase(enemy, battle):
     """Check HP thresholds and trigger boss phase transitions. Returns result dict or None."""
-    from data.enemies import BOSS_PHASES
+    try:
+        from data.enemies import BOSS_PHASES
+    except ImportError:
+        return None  # enemies.py pre-dates BOSS_PHASES — skip gracefully
     phases = BOSS_PHASES.get(enemy.get("name", "")) or BOSS_PHASES.get(enemy.get("template_key", ""))
     if not phases:
         return None

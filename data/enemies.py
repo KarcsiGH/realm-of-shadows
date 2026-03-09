@@ -273,6 +273,7 @@ ENEMIES = {
             "arcane": NEUTRAL,
         },
         "status_immunities": ["poison", "burn", "fear"],
+        "tags": ["undead"],
         "abilities": ["Cinder Touch"],
         "loot_table": [
             {"drop_chance": 0.35, "item": {
@@ -308,7 +309,48 @@ ENEMIES = {
             "arcane": NEUTRAL,
         },
         "status_immunities": ["Poisoned", "Frostbitten", "Fear", "Sleep"],
+        "tags": ["undead"],
         "abilities": [],
+        "loot_table": [
+            {"drop_chance": 0.18, "item": {
+                "name": "Rusted Sword", "type": "weapon",
+                "subtype": "Short Sword", "rarity": "common",
+                "damage": 5, "phys_type": "slashing",
+                "identify_difficulty": 1,
+                "unidentified_name": "Corroded Blade",
+                "unidentified_desc": "A blade pitted with rust, still holding an edge.",
+                "appraised_name": "Rusted Grave Sword",
+                "material_desc": "Old iron, badly corroded. Still functional if sharpened.",
+                "magic_desc": "Faint traces of old enchantment — long since faded.",
+                "estimated_value": 6,
+                "description": "A sword reclaimed from a skeleton. Pitted with rust but serviceable.",
+            }},
+            {"drop_chance": 0.20, "item": {
+                "name": "Bone Fragment", "type": "material",
+                "subtype": "reagent", "rarity": "common", "tier": 1,
+                "identify_difficulty": 1,
+                "unidentified_name": "Bone Shard",
+                "unidentified_desc": "A piece of old bone, hollow and light.",
+                "appraised_name": "Undead Bone Fragment",
+                "material_desc": "Bone from an animated skeleton. Tier 1 reagent for necromantic crafting.",
+                "magic_desc": "Faint residual death-magic lingers in the marrow.",
+                "estimated_value": 5,
+                "description": "A hollow bone fragment. Reagent for crafting and alchemical use.",
+            }},
+            {"drop_chance": 0.08, "item": {
+                "name": "Cracked Iron Buckler", "type": "armor",
+                "slot": "off_hand", "subtype": "shield", "rarity": "common",
+                "armor_tier": "light", "defense": 2,
+                "identify_difficulty": 1,
+                "unidentified_name": "Cracked Shield",
+                "unidentified_desc": "A small shield with a stress fracture running across it.",
+                "appraised_name": "Cracked Iron Buckler",
+                "material_desc": "Cracked iron, structurally compromised. Barely worth carrying.",
+                "magic_desc": "No magical properties.",
+                "estimated_value": 8,
+                "description": "A small iron shield, cracked but still deflecting.",
+            }},
+        ],
         "description_tiers": {
             0: "A shambling undead creature in rusted armor.",
             1: "Skeleton Warrior",
@@ -431,6 +473,12 @@ ENEMIES = {
                 "estimated_value": 50,
                 "description": "A leather pouch stuffed with coins and trinkets worth about 50 gold.",
             }},
+            {"drop_chance": 0.15, "item": {
+                "_training_book": True,
+                "name": "Training Manual", "type": "consumable",
+                "rarity": "uncommon", "identified": True,
+                "description": "A worn training manual. Contains a stat boost.",
+            }},
         ],
         "description_tiers": {
             0: "A massive warrior draped in trophies and scars.",
@@ -538,6 +586,12 @@ ENEMIES = {
                 "stat_bonus": {"LCK": 2},
                 "description": "A battered gold coin Grak carried for luck. +2 LCK.",
             }},
+            {"drop_chance": 0.15, "item": {
+                "_training_book": True,
+                "name": "Training Manual", "type": "consumable",
+                "rarity": "uncommon", "identified": True,
+                "description": "A worn training manual. Contains a stat boost.",
+            }},
         ],
         "description_tiers": {
             0: "A massive goblin in crude armor, wielding an enormous club.",
@@ -571,6 +625,12 @@ ENEMIES = {
                 "estimated_value": 180,
                 "description": "A shimmering cloak woven from spider silk. Light and magically resistant.",
             }},
+            {"drop_chance": 0.15, "item": {
+                "_training_book": True,
+                "name": "Training Manual", "type": "consumable",
+                "rarity": "uncommon", "identified": True,
+                "description": "A worn training manual. Contains a stat boost.",
+            }},
         ],
         "description_tiers": {
             0: "A massive arachnid, dripping venom from its fangs.",
@@ -596,6 +656,7 @@ ENEMIES = {
             "arcane": NEUTRAL,
         },
         "status_immunities": ["poison", "stun", "fear"],
+        "tags": ["undead"],
         "abilities": ["Skull Crush", "Enrage"],
         "loot_table": [
             {"drop_chance": 0.80, "item": {
@@ -603,6 +664,12 @@ ENEMIES = {
                 "rarity": "rare", "tier": 3, "damage": 22, "identified": True,
                 "estimated_value": 250,
                 "description": "A massive mining pick, still sharp after centuries. +22 base damage.",
+            }},
+            {"drop_chance": 0.15, "item": {
+                "_training_book": True,
+                "name": "Training Manual", "type": "consumable",
+                "rarity": "uncommon", "identified": True,
+                "description": "A worn training manual. Contains a stat boost.",
             }},
         ],
         "description_tiers": {
@@ -647,6 +714,12 @@ ENEMIES = {
                 "description": "A dwarven war-hammer inscribed with ward-runes. "
                                "+26 base damage, +8 magic resist to wielder.",
                 "stat_bonus": {"magic_resist": 8},
+            }},
+            {"drop_chance": 0.15, "item": {
+                "_training_book": True,
+                "name": "Training Manual", "type": "consumable",
+                "rarity": "uncommon", "identified": True,
+                "description": "A worn training manual. Contains a stat boost.",
             }},
         ],
         "description_tiers": {
@@ -693,6 +766,12 @@ ENEMIES = {
                 "description": "A warden's sword, blackened by whatever destroyed Ashenmoor. "
                                "+20 base damage, deals bonus fire damage.",
                 "stat_bonus": {"fire_damage_bonus": 6},
+            }},
+            {"drop_chance": 0.15, "item": {
+                "_training_book": True,
+                "name": "Training Manual", "type": "consumable",
+                "rarity": "uncommon", "identified": True,
+                "description": "A worn training manual. Contains a stat boost.",
             }},
         ],
         "description_tiers": {
@@ -950,6 +1029,7 @@ def create_enemy_instance(enemy_key, uid):
         "ai_type": template.get("ai_type", "balanced"),
         "resistances": dict(template["resistances"]),
         "status_immunities": list(template.get("status_immunities", [])),
+        "tags": list(template.get("tags", [])),
         "abilities": abilities,
         "status_effects": [],
         "is_defending": False,
@@ -1050,3 +1130,324 @@ for dungeon_id, floors in NEW_FACTION_ENCOUNTER_TABLE_UPDATES.items():
             existing = [existing]
         merged = list(dict.fromkeys(existing + new_keys))
         DUNGEON_ENCOUNTER_TABLES[dungeon_id][floor] = merged
+
+
+# ═══════════════════════════════════════════════════════════════
+#  BOSS PHASE DEFINITIONS
+#  Each boss can have up to 3 phases triggered by HP thresholds.
+#  Phase data is injected into the enemy dict at runtime.
+#
+#  Structure per phase:
+#    threshold   — HP % that triggers this phase (e.g. 0.60 = below 60%)
+#    announce    — dramatic text shown in the combat log
+#    dmg_mult    — damage multiplier applied from this phase forward
+#    new_abilities — list of ability dicts added to the enemy's pool
+#    status_immunity — new statuses the boss becomes immune to
+#    heal_pct    — optional: boss heals this % of max HP on transition
+# ═══════════════════════════════════════════════════════════════
+
+BOSS_PHASES = {
+    # ── Grak the Goblin King ────────────────────────────────────
+    # Phase 1 (start): Normal chieftain. Can be reasoned with before fight.
+    # Phase 2 (60% HP): Witnesses a warrior fall — crowd chants drive him.
+    # Phase 3 (25% HP): Cornered animal. Rage overcomes him entirely.
+    "Grak the Goblin King": [
+        {
+            "threshold": 0.60,
+            "announce": "Grak ROARS as a warrior falls. The goblins drum their weapons "
+                        "on the walls. He swells with fury — this is his TRIBE.",
+            "dmg_mult": 1.25,
+            "new_abilities": [
+                {
+                    "name": "Tribal Fury",
+                    "type": "damage",
+                    "power": 28,
+                    "element": "blunt",
+                    "target": "single",
+                    "description": "A wild overhead swing charged with desperate rage.",
+                },
+            ],
+            "status_immunity": [],
+        },
+        {
+            "threshold": 0.25,
+            "announce": "Grak sways. Blood mats his crown. He screams something in Goblin "
+                        "— not a battle cry. A name. His people go silent. "
+                        "Then he charges.",
+            "dmg_mult": 1.55,
+            "new_abilities": [
+                {
+                    "name": "Last Stand",
+                    "type": "damage",
+                    "power": 44,
+                    "element": "blunt",
+                    "target": "single",
+                    "aoe_chance": 0.35,   # 35% chance hits adjacent target too
+                    "description": "Grak throws everything into one desperate strike.",
+                },
+            ],
+            "status_immunity": ["stun", "fear"],
+        },
+    ],
+
+    # ── Korrath the Stone Warden ─────────────────────────────────
+    # Phase 1: Testing the party with methodical Warden discipline.
+    # Phase 2 (55% HP): Wards activate — he stops pulling his blows.
+    # Phase 3 (20% HP): Centuries of patience break. The full ancient power.
+    "Korrath the Stone Warden": [
+        {
+            "threshold": 0.55,
+            "announce": "The ward-runes carved into Korrath's armor ignite with cold blue light. "
+                        "His voice, when it comes, carries the weight of four centuries: "
+                        "'You have made it past the first gate. There is no mercy beyond this one.'",
+            "dmg_mult": 1.30,
+            "new_abilities": [
+                {
+                    "name": "Warden's Judgment",
+                    "type": "damage",
+                    "power": 38,
+                    "element": "divine",
+                    "target": "single",
+                    "description": "A crushing strike imbued with ancient warden authority.",
+                },
+                {
+                    "name": "Stone Aegis",
+                    "type": "buff",
+                    "power": 0,
+                    "stat": "defense",
+                    "amount": 14,
+                    "duration": 3,
+                    "target": "self",
+                    "description": "The stone plates of his armor fuse tighter.",
+                },
+            ],
+            "status_immunity": [],
+        },
+        {
+            "threshold": 0.20,
+            "announce": "Korrath staggers. For a moment his form flickers — "
+                        "ghost-light bleeding through the stone. "
+                        "Then his eyes focus, and they are burning. "
+                        "'The ward demands a verdict. Let it be NOW.'",
+            "dmg_mult": 1.60,
+            "heal_pct": 0.12,   # heals 12% max HP on phase 3 trigger
+            "new_abilities": [
+                {
+                    "name": "Ancient Reckoning",
+                    "type": "damage",
+                    "power": 55,
+                    "element": "blunt",
+                    "target": "aoe",
+                    "description": "A shockwave of warden power — hits the entire party.",
+                },
+            ],
+            "status_immunity": ["stun", "fear", "charm", "sleep"],
+        },
+    ],
+
+    # ── Warden Revenant (Sunken Crypt — Deren) ───────────────────
+    # Phase 1: Sorrowful and restrained — he wants to be stopped.
+    # Phase 2 (50% HP): The crypt's shadow energy floods in. He loses himself.
+    # Phase 3 (15% HP): A moment of lucidity before the end.
+    "Warden Revenant": [
+        {
+            "threshold": 0.50,
+            "announce": "The water-logged walls pulse with shadow energy. "
+                        "Deren's form darkens — the grief on his face twists into something older, "
+                        "colder. When he speaks again his voice is not entirely his own: "
+                        "'It hurts less... if I stop remembering.'",
+            "dmg_mult": 1.35,
+            "new_abilities": [
+                {
+                    "name": "Crypt Flood",
+                    "type": "debuff",
+                    "power": 0,
+                    "status": "Slowed",
+                    "duration": 2,
+                    "target": "aoe",
+                    "description": "Dark water surges through the chamber, "
+                                   "dragging at the party's feet.",
+                },
+                {
+                    "name": "Shadow Torrent",
+                    "type": "damage",
+                    "power": 34,
+                    "element": "shadow",
+                    "target": "single",
+                    "description": "A focused blast of compressed shadow.",
+                },
+            ],
+            "status_immunity": ["fear"],
+        },
+        {
+            "threshold": 0.15,
+            "announce": "The shadow energy sputters. Deren's form clears — just for a moment — "
+                        "and his eyes are his own again. He looks at his hands. "
+                        "'I remember now. I remember all of it.' "
+                        "Then the darkness floods back. But something in him is *helping* you.",
+            "dmg_mult": 0.75,   # phase 3: he's fighting himself — lower damage
+            "new_abilities": [
+                {
+                    "name": "Final Release",
+                    "type": "damage",
+                    "power": 62,
+                    "element": "shadow",
+                    "target": "single",
+                    "description": "One last surge of crypt energy — and then silence.",
+                },
+            ],
+            "status_immunity": [],
+            "announce_post": "Deren falters between strikes, his form flickering. "
+                             "He is still in there, fighting the shadow from the inside.",
+        },
+    ],
+
+    # ── Karreth — Dragon's Tooth ─────────────────────────────────
+    # Phase 1: Corrupted guardian, still bound by ancient oath.
+    # Phase 2 (55% HP): The corruption surges — fire fills the chamber.
+    # Phase 3 (20% HP): Fading energy spikes as the binding weakens.
+    "Karreth": [
+        {
+            "threshold": 0.55,
+            "announce": "The chamber shudders. Karreth spreads his wings and screams — "
+                        "not a battle cry but something older, something *broken*. "
+                        "The corruption blazes through his scales like veins of black fire. "
+                        "He is still in there. It is getting harder to tell.",
+            "dmg_mult": 1.40,
+            "new_abilities": [
+                {
+                    "name": "Corrupted Breath",
+                    "type": "damage",
+                    "power": 50,
+                    "element": "fire",
+                    "target": "aoe",
+                    "description": "A torrent of black-tainted fire sweeps the chamber.",
+                },
+                {
+                    "name": "Shadow Frenzy",
+                    "type": "debuff",
+                    "power": 0,
+                    "status": "Burning",
+                    "duration": 3,
+                    "target": "aoe",
+                    "description": "The shadow fire sticks — everyone who isn't "
+                                   "fire-resistant is burning.",
+                },
+            ],
+            "status_immunity": ["fire"],
+        },
+        {
+            "threshold": 0.20,
+            "announce": "A deep crack splits the stone beneath Karreth's feet. "
+                        "Fading energy bleeds up through it — his roar becomes a shriek. "
+                        "But his eye — the undamaged one — fixes on you with terrible clarity. "
+                        "He is *trying* to lose. He has been trying this whole time.",
+            "dmg_mult": 1.65,
+            "heal_pct": 0.08,
+            "new_abilities": [
+                {
+                    "name": "Void Ignition",
+                    "type": "damage",
+                    "power": 68,
+                    "element": "shadow",
+                    "target": "aoe",
+                    "description": "The chamber erupts in shadow-fire. "
+                                   "Neither holy nor natural — a mixing of worlds.",
+                },
+            ],
+            "status_immunity": ["stun", "fear", "charm"],
+        },
+    ],
+
+    # ── Valdris the Broken — Final Boss ─────────────────────────
+    # Phase 1: The Traitor Warden, sustained by Shadow. Methodical, tragic.
+    # Phase 2 (65% HP): Activates the Spire's ward network against the party.
+    # Phase 3 (35% HP): Maren's ritual begins interfering — Valdris fights it.
+    # Phase 4 (10% HP): The Shadow consumes him — becomes Valdris, Shadow Avatar.
+    "Valdris the Broken": [
+        {
+            "threshold": 0.65,
+            "announce": "Valdris raises one hand. The Spire *responds* — "
+                        "the ward-runes carved into every wall ignite simultaneously. "
+                        "'I spent forty years building this place. Did you think I would "
+                        "fight you without it?'",
+            "dmg_mult": 1.20,
+            "new_abilities": [
+                {
+                    "name": "Ward Shatter",
+                    "type": "debuff",
+                    "power": 0,
+                    "status": "Exposed",
+                    "duration": 3,
+                    "target": "aoe",
+                    "description": "The Spire's corrupted wards pulse outward, "
+                                   "tearing through magical defenses.",
+                },
+                {
+                    "name": "Fading Pulse",
+                    "type": "damage",
+                    "power": 38,
+                    "element": "shadow",
+                    "target": "aoe",
+                    "description": "A wave of entropy — "
+                                   "everything it touches is briefly less real.",
+                },
+            ],
+            "status_immunity": [],
+        },
+        {
+            "threshold": 0.35,
+            "announce": "Something shifts. Valdris staggers — clutches his chest. "
+                        "For a moment the Shadow retreats from his eyes. "
+                        "'Maren. You came.' Then it floods back. "
+                        "When he straightens, his voice is cold iron: "
+                        "'It doesn't matter. Nothing matters but the sealing.'",
+            "dmg_mult": 1.45,
+            "new_abilities": [
+                {
+                    "name": "Dark Ritual",
+                    "type": "buff",
+                    "power": 0,
+                    "stat": "attack_damage",
+                    "amount": 22,
+                    "duration": 4,
+                    "target": "self",
+                    "description": "Valdris channels the Spire's full power into himself.",
+                },
+                {
+                    "name": "Shadow Nova",
+                    "type": "damage",
+                    "power": 55,
+                    "element": "shadow",
+                    "target": "aoe",
+                    "description": "A burst of compressed shadow energy — "
+                                   "the weight of four centuries of regret.",
+                },
+            ],
+            "status_immunity": ["fear", "charm"],
+        },
+        {
+            "threshold": 0.10,
+            "announce": "The Shadow tears through Valdris entirely. "
+                        "The man disappears — what rises in his place is older, "
+                        "colder, and has no name that can be spoken. "
+                        "The last thing you hear in his voice: 'Finish it.'",
+            "dmg_mult": 2.00,
+            "heal_pct": 0.20,
+            "status_immunity": ["stun", "fear", "charm", "sleep", "freeze"],
+            "transform": "Valdris, Shadow Avatar",   # signals a full enemy swap
+            "new_abilities": [
+                {
+                    "name": "Void Consumption",
+                    "type": "damage",
+                    "power": 75,
+                    "element": "shadow",
+                    "target": "aoe",
+                    "description": "The Shadow Avatar reaches out and unmakes.",
+                },
+            ],
+            "announce_post": "The chamber darkens to nothing. "
+                             "Only the Shadow Avatar remains.",
+        },
+    ],
+}
