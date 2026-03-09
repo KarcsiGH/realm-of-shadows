@@ -1365,35 +1365,39 @@ def _enemy_death_knight(s):
 
 def _enemy_cave_bat(s):
     O=(100,80,130); M=(65,48,95); D=(30,20,55); E=(200,60,60)
-    # body — small, hanging
-    for y in range(28,42):
-        hw=5-abs(y-34)//2; _hl(s,23-hw,24+hw,y,M); _px(s,23-hw,y,O); _px(s,24+hw,y,O)
-    # face — upside-down triangle with big ears
-    for y in range(18,30):
-        hw=4-abs(y-24)//3; _hl(s,23-hw,24+hw,y,M); _px(s,23-hw,y,O); _px(s,24+hw,y,O)
-    # large ears
-    _vl(s,16,12,24,O); _vl(s,15,13,24,O)
-    _vl(s,31,12,24,O); _vl(s,32,13,24,O)
-    _hl(s,15,17,12,O); _hl(s,30,32,12,O)
-    _px(s,16,14,M); _px(s,31,14,M)   # ear inner
-    # red eyes
-    _px(s,21,22,E); _px(s,22,22,E)
-    _px(s,25,22,E); _px(s,26,22,E)
-    # snub nose + fangs
-    _px(s,23,25,D); _px(s,24,25,D)
-    _px(s,22,27,M); _px(s,25,27,M)
-    # wings — spread wide
-    for i in range(16):
-        _px(s,6+i,22+i,D if i%2==0 else M)   # left wing membrane
-        _px(s,5+i,24+i,D)
-        _px(s,41-i,22+i,D if i%2==0 else M)  # right wing membrane
-        _px(s,42-i,24+i,D)
-    _vl(s,7,16,40,O); _vl(s,40,16,40,O)  # wing leading edge
-    for i in range(4): _px(s,5+i*2,40,O); _px(s,43-i*2,40,O)  # wing fingers
-    # feet (clinging)
-    for fx in [20,21,22,25,26,27]:
-        _vl(s,fx,42,46,M if fx%3!=0 else D)
-        _px(s,fx,46,O)
+    # Combined head+body — one wide horizontal oval
+    for y in range(24,46):
+        hw = 8 - abs(y-34)*5//14
+        _hl(s,20,20+hw*2,y,M); _px(s,20,y,O); _px(s,20+hw*2,y,O)
+    # Bat ears — wide triangular on sides of head
+    for i in range(7):
+        _hl(s,18-i,18,24+i-i//2,O); _hl(s,19-i,18,25+i-i//2,M)
+    for i in range(7):
+        _hl(s,30,30+i,24+i-i//2,O); _hl(s,30,29+i,25+i-i//2,M)
+    # Red eyes
+    _px(s,22,28,E); _px(s,23,28,E); _px(s,25,28,E); _px(s,26,28,E)
+    # Nose + fangs
+    _hl(s,23,25,32,D); _px(s,23,35,M); _px(s,25,35,M)
+    # Wings — sweep from shoulders up to wide tips
+    for i in range(19):
+        wx=21-i; wy=30-i
+        if wx>=0: _px(s,wx,wy,O)
+    for x in range(2,22):
+        leading_y = 30-(21-x)
+        for y in range(leading_y, min(44, leading_y+(22-x)//3+14)):
+            _px(s,x,y, D if (x+y)%2==0 else M)
+    for i in range(19):
+        wx=27+i; wy=30-i
+        if wx<48: _px(s,wx,wy,O)
+    for x in range(27,46):
+        leading_y = 30-(x-27)
+        for y in range(leading_y, min(44, leading_y+(x-26)//3+14)):
+            _px(s,x,y, D if (x+y)%2==0 else M)
+    # Wing tip fingers
+    for fx,fy in [(2,14),(6,11),(10,10)]: _px(s,fx,fy,O); _px(s,fx+1,fy,O)
+    for fx,fy in [(46,14),(42,11),(38,10)]: _px(s,fx,fy,O); _px(s,fx-1,fy,O)
+    # Feet/claws
+    for cx in [22,24,26]: _vl(s,cx,46,50,M); _px(s,cx-1,50,O); _px(s,cx,50,O)
 
 def _enemy_beetle(s):
     O=(100,140,60); M=(60,95,32); D=(28,52,12); SH=(130,170,80); Y=(220,195,50)
@@ -1458,30 +1462,41 @@ def _enemy_hatchling(s):
 
 def _enemy_giant_rat(s):
     O=(140,120,90); F=(95,78,52); D=(56,44,26); B=(210,195,165); E=(200,50,50)
-    # rat body — horizontal but smaller than wolf
-    for y in range(28,46):
-        hw=7-abs(y-36)//2; _hl(s,10,10+hw*2,y,F)
+    # Main body — horizontal oval, properly centered
+    for y in range(38,54):
+        hw = 14 - abs(y-44)*2//3
+        _hl(s,10, 10+hw*2, y, F)
         _px(s,10,y,O); _px(s,10+hw*2,y,O)
-    _hl(s,10,38,28,O); _hl(s,10,38,29,D)
-    _hl(s,11,37,42,B); _hl(s,11,37,43,B); _hl(s,11,37,44,O)
-    # rat head — long snout
-    for y in range(22,30): _hl(s,5,15,y,F); _px(s,5,y,O); _px(s,15,y,O)
-    for y in range(24,30): _hl(s,0,6,y,F); _px(s,0,y,O); _px(s,6,y,O)
-    _hl(s,0,3,29,O)  # nose
-    _px(s,0,27,D); _px(s,1,27,D)  # nostrils
-    _px(s,11,24,E); _px(s,12,24,E)  # beady red eyes
-    # whiskers
-    for i in range(4): _px(s,i,26,O); _px(s,3-i,28,O)
-    for i in range(4): _px(s,8+i,26,O); _px(s,8+i,28,O)
-    # ears
-    _vl(s,14,19,24,O); _hl(s,13,16,19,O); _px(s,15,21,F)
-    # four short legs
-    for lx,ly in [(12,44),(18,44),(26,44),(32,44)]:
-        for y in range(ly,ly+10): _hl(s,lx,lx+3,y,F); _px(s,lx,y,O); _px(s,lx+3,y,O)
-        _hl(s,lx-1,lx+4,ly+9,O)
-    # long tail
-    for i,ty in enumerate(range(36,56)): _px(s,38+i//4,ty,F if i%2==0 else D)
-    for i in range(8): _px(s,40+i,54,O)
+    # Hunched back ridge
+    _hl(s,12,36,38,O); _hl(s,11,37,39,D)
+    # Belly highlight
+    _hl(s,13,35,52,B); _hl(s,14,34,53,B)
+    # Head — at left end, y=33-45
+    for y in range(33,45):
+        hw = 6 - abs(y-39)*4//9
+        _hl(s,4,4+hw*2,y,F); _px(s,4,y,O); _px(s,4+hw*2,y,O)
+    # Long pointy snout
+    for y in range(36,42): _hl(s,0,5,y,F); _px(s,0,y,O)
+    _hl(s,0,2,40,O)
+    _px(s,0,38,D); _px(s,1,38,D)  # nostrils
+    # Beady red eyes
+    _px(s,13,34,E); _px(s,14,34,E)
+    # Round ears — bumps on top, not pillars
+    for ex in [13,19]:
+        _hl(s,ex,ex+4,29,O); _hl(s,ex,ex+4,30,F); _hl(s,ex,ex+4,31,F)
+        _hl(s,ex+1,ex+3,32,F); _px(s,ex+1,30,B); _px(s,ex+2,30,B)
+    # Whiskers
+    for i in range(5): _px(s,i,36,O); _px(s,i,40,O)
+    _px(s,3,38,O); _px(s,2,37,O); _px(s,2,39,O)
+    # 4 short legs
+    for lx,ly in [(12,54),(18,54),(28,54),(34,54)]:
+        for y in range(ly, ly+7): _hl(s,lx,lx+3,y,F); _px(s,lx,y,O); _px(s,lx+3,y,O)
+        _hl(s,lx-1,lx+4,ly+6,O)
+    # Long curved tail — sweeps right and up
+    for i in range(16):
+        tx = 37+i; ty = 46 - int(i*i*0.07)
+        _px(s,min(47,tx), max(20,ty), F if i%2==0 else D)
+    for i in range(4): _px(s,min(47,46+i),20,O)
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  UNIQUE CREATURE SPRITES (Act 2 / Act 3 enemies and bosses)
@@ -1791,6 +1806,75 @@ _CHAR_DRAW = {
 }
 
 # Maps template_key → draw function (covers all unique enemy grids)
+
+def _enemy_bear(s):
+    """Large quadruped bear: massive bulk, shoulder hump, round head, thick legs."""
+    O=(100,75,50); F=(65,47,28); D=(38,24,12); B=(160,130,90); E=(220,190,50)
+    # Huge barrel body — main mass
+    for y in range(35,60):
+        hw = 16 - abs(y-47)*3//10
+        _hl(s,8,8+hw*2,y,F); _px(s,8,y,O); _px(s,8+hw*2,y,O)
+    # Shoulder hump (bears are higher at shoulder than hip)
+    for y in range(30,42):
+        hw = 10 - abs(y-35)*3//9
+        _hl(s,8,8+hw*2,y,F); _px(s,8,y,O); _px(s,8+hw*2,y,O)
+    # Belly
+    _hl(s,12,36,58,B); _hl(s,13,35,59,B)
+    # Round heavy head
+    for y in range(20,38):
+        hw = 9 - abs(y-28)*5//16
+        _hl(s,4,4+hw*2,y,F); _px(s,4,y,O); _px(s,4+hw*2,y,O)
+    # Broad muzzle
+    for y in range(28,36): _hl(s,3,13,y,B); _px(s,3,y,O); _px(s,13,y,O)
+    _hl(s,5,11,35,O)
+    _px(s,7,36,D); _px(s,8,36,D)  # nostrils
+    # Small round ears
+    _hl(s,9,13,20,O); _vl(s,10,20,24,O); _vl(s,12,20,24,O); _px(s,11,21,F)
+    _hl(s,15,19,20,O); _vl(s,16,20,24,O); _vl(s,18,20,24,O); _px(s,17,21,F)
+    # Eyes
+    _px(s,10,26,E); _px(s,11,26,E); _px(s,14,26,E); _px(s,15,26,E)
+    # 4 thick short legs
+    for lx,ly in [(10,60),(17,60),(30,60),(37,60)]:
+        for y in range(ly,ly+10): _hl(s,lx,lx+5,y,F); _px(s,lx,y,O); _px(s,lx+5,y,O)
+        _hl(s,lx-1,lx+6,ly+9,O)
+    # Short stub tail
+    _px(s,40,45,F); _px(s,41,44,F); _px(s,41,45,O)
+
+
+def _enemy_stag(s):
+    """Fading-corrupted stag: slender deer body, long legs, prominent antlers, eerie eyes."""
+    O=(110,90,60); F=(75,58,35); D=(44,32,15); B=(185,165,125); E=(140,220,120)
+    # Slender body
+    for y in range(38,58):
+        hw = 8 - abs(y-46)*3//12
+        _hl(s,14,14+hw*2,y,F); _px(s,14,y,O); _px(s,14+hw*2,y,O)
+    # Neck angled up-left
+    for i in range(10): _hl(s,15-i//2,19-i//2,38-i,F)
+    # Small elegant head
+    for y in range(20,34):
+        hw = 4 - abs(y-26)*2//8
+        _hl(s,7,7+hw*2,y,F); _px(s,7,y,O); _px(s,7+hw*2,y,O)
+    # Long snout
+    for y in range(28,34): _hl(s,3,9,y,F); _px(s,3,y,O)
+    _hl(s,3,6,33,O); _px(s,4,33,D); _px(s,5,33,D)
+    # Glowing green eyes (fading corruption)
+    _px(s,10,22,E); _px(s,11,22,E); _px(s,10,23,E)
+    # Tall branching antlers
+    _vl(s,13,6,20,O); _vl(s,14,5,20,O)
+    _hl(s,10,14,10,O); _hl(s,10,14,11,O)
+    _hl(s,13,17,14,O); _hl(s,13,17,15,O)
+    _vl(s,17,6,20,O); _vl(s,18,5,20,O)
+    _hl(s,17,22,9,O); _hl(s,17,22,10,O)
+    _hl(s,14,18,14,O)
+    _px(s,9,10,O); _px(s,22,9,O); _px(s,23,8,O)
+    # 4 slender long legs
+    for lx,ly in [(15,58),(20,58),(27,58),(32,58)]:
+        for y in range(ly,ly+14): _hl(s,lx,lx+2,y,F); _px(s,lx,y,O); _px(s,lx+2,y,O)
+        _hl(s,lx-1,lx+3,ly+13,O)
+    # White tail flash
+    _px(s,38,44,B); _px(s,39,43,B); _px(s,39,44,O)
+
+
 _ENEMY_DRAW = {
     "Goblin Warrior":     _enemy_goblin_warrior,
     "Goblin Archer":      _enemy_goblin_archer,
@@ -1878,6 +1962,8 @@ _ENEMY_DRAW = {
     "Ruin Sentinel":      _enemy_death_knight,
     "Undead Foreman":     _enemy_death_knight,
     "Cave Bat":           _enemy_cave_bat,
+    "Dungeon Bat":        _enemy_cave_bat,
+    "Shadow Bat":         _enemy_cave_bat,
     "Lava Bat":           _enemy_cave_bat,
     "Cave-in Beetle":     _enemy_beetle,
     "Lava Beetle":        _enemy_beetle,
@@ -1935,9 +2021,9 @@ _ENEMY_DRAW = {
     # ── Fading corrupted animals ──
     "Fading Wolf":           _enemy_wolf,
     "Fading Hound":          _enemy_hound,
-    "Fading Bear":           _enemy_troll,
+    "Fading Bear":           _enemy_bear,
     "Fading Boar":           _enemy_hound,
-    "Fading Stag":           _enemy_wolf,
+    "Fading Stag":           _enemy_stag,
     "Fading Abomination":    _enemy_abomination,
 
     # ── Imperial soldiers ──
