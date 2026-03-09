@@ -3227,7 +3227,7 @@ class Game:
                     dmg = data.get("curse_dmg", 15)
                     for c in self.party:
                         c.resources["HP"] = max(1, c.resources.get("HP", 0) - dmg)
-                    sfx.play("trap")
+                    sfx.play("trap_trigger")
                     self.dungeon_ui.show_event(f"💀 {name} — a curse lashes out!", RED)
                     self.dungeon_ui.show_event(f"Party took {dmg} shadow damage!", ORANGE)
             else:
@@ -3274,7 +3274,11 @@ class Game:
                         dlg_list = NPC_DIALOGUES.get("maren_spire", [])
                         ds = select_dialogue("maren_spire", dlg_list)
                         if ds:
-                            self.start_dialogue(ds, return_state=S_DUNGEON)
+                            from ui.dialogue_ui import DialogueUI
+                            self.dialogue_ui = DialogueUI(ds)
+                            self.dialogue_return_state = S_DUNGEON
+                            self.dialogue_callback = None
+                            self.go(S_DIALOGUE)
 
         elif event["type"] == "stairs_up":
             if self.dungeon_state.go_upstairs():
