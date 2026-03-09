@@ -887,6 +887,12 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             return result
         attacker["resources"][resource_key] -= cost
 
+    # Passives are always-on — never directly executable
+    if ability.get("type") == "passive":
+        result["hit"] = False
+        result["messages"].append(f"{ability['name']} is a passive ability and is always active.")
+        return result
+
     ab_name  = ability["name"].lower()
     ab_type  = ability.get("type", "spell")
     is_heal  = ab_type in ("heal", "aoe_heal") or "heal" in ab_name
@@ -1852,7 +1858,7 @@ class CombatState:
     Tracks turn order, round number, combat log, victory/defeat.
     """
 
-    def __init__(self, party_chars, encounter_key):
+    def __init__(self, party_chars, encounter_key, surprise=None):
         from data.enemies import build_encounter
 
         self.round_num = 1
@@ -1951,8 +1957,24 @@ class CombatState:
             for e in self.enemies
         )
 
+        # Surprise round handling
+        # surprise="enemy"  → enemies ambush party: enemy turn goes first, players skip round 1
+        # surprise="player" → party ambushes enemies: players go first (normal), enemies skip round 1
+        self.surprise = surprise
+        if surprise == "enemy":
+            # Push all players to the end of the turn order so enemies strike first
+            players_in_order = [c for c in self.turn_order if c.get("type") == "player"]
+            enemies_in_order = [c for c in self.turn_order if c.get("type") != "player"]
+            self.turn_order = enemies_in_order + players_in_order
+        # surprise=="player": normal order is fine — DEX already puts fast attackers first
+
         self.log(f"═══ {self.encounter_name} ═══")
-        self.log(f"Round {self.round_num}")
+        if surprise == "enemy":
+            self.log("SURPRISE! The enemies strike first!")
+        elif surprise == "player":
+            self.log("Surprise attack! You strike before they react!")
+        else:
+            self.log(f"Round {self.round_num}")
 
     def _assign_party_rows(self, party_chars):
         """Auto-assign party to rows based on class archetypes."""
@@ -2563,7 +2585,10 @@ class CombatState:
 
 def _check_boss_phase(enemy, battle):
     """Check HP thresholds and trigger boss phase transitions. Returns result dict or None."""
-    from data.enemies import BOSS_PHASES
+    try:
+        from data.enemies import BOSS_PHASES
+    except ImportError:
+        return None  # enemies.py pre-dates BOSS_PHASES — skip gracefully
     phases = BOSS_PHASES.get(enemy.get("name", "")) or BOSS_PHASES.get(enemy.get("template_key", ""))
     if not phases:
         return None
