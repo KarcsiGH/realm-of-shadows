@@ -621,7 +621,7 @@ def use_training_book(character, item):
                        f"'{book_name}'. There is nothing more to gain from it.")
 
     # Stat cap
-    current_val = character.base_stats.get(stat, 0)
+    current_val = character.stats.get(stat, 0)
     TRAINING_BOOK_CAP = 25
     if current_val >= TRAINING_BOOK_CAP:
         return False, (f"{character.name}'s {stat} is already at the limit "
@@ -629,9 +629,7 @@ def use_training_book(character, item):
 
     # Apply the increase
     actual_gain = min(amount, TRAINING_BOOK_CAP - current_val)
-    character.base_stats[stat] = current_val + actual_gain
-    if hasattr(character, "stats"):
-        character.stats[stat] = character.stats.get(stat, current_val) + actual_gain
+    character.stats[stat] = current_val + actual_gain
 
     character.books_read.add(book_name)
 
@@ -669,9 +667,12 @@ def apply_class_transition(character, new_class_name: str) -> tuple:
     known_names = {a["name"] for a in character.abilities}
     new_cls = CLASSES.get(new_class_name, {})
     added = []
+    from core.abilities import CLASS_ABILITIES as _CA
+    full_lookup = {a["name"]: a for a in _CA.get(new_class_name, [])}
     for ab in new_cls.get("starting_abilities", []):
         if ab["name"] not in known_names:
-            character.abilities.append(dict(ab))
+            full = full_lookup.get(ab["name"])
+            character.abilities.append(dict(full) if full else dict(ab))
             added.append(ab["name"])
 
     # Recalculate resources for new class

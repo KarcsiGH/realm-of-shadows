@@ -75,7 +75,14 @@ class Character:
         """Calculate resources and assign starting abilities and equipment."""
         cls = CLASSES[self.class_name]
         self.resources = get_all_resources(self.class_name, self.stats, self.level)
-        self.abilities = [a.copy() for a in cls["starting_abilities"]]
+        # Populate abilities from the full CLASS_ABILITIES dicts (not the stubs in CLASSES).
+        # The stubs in classes.py lack type/buff/self_only fields, which breaks combat routing.
+        from core.abilities import CLASS_ABILITIES as _CA
+        full_lookup = {a["name"]: a for a in _CA.get(self.class_name, [])}
+        self.abilities = []
+        for stub in cls["starting_abilities"]:
+            full = full_lookup.get(stub["name"])
+            self.abilities.append(dict(full) if full else dict(stub))
         # Equip starting gear
         self.equipment = empty_equipment()
         from core.party_knowledge import mark_item_identified
