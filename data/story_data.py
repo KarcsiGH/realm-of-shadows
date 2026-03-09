@@ -765,6 +765,18 @@ NPCS = {
         "location": "spiders_nest",
         "portrait_color": (90, 40, 140),
     },
+    "old_petra": {
+        "name": "Old Petra",
+        "title": "Briarhollow Elder",
+        "location": "briarhollow",
+        "portrait_color": (190, 180, 160),
+    },
+    "young_tomas": {
+        "name": "Young Tomas",
+        "title": "Local Youth",
+        "location": "briarhollow",
+        "portrait_color": (160, 195, 160),
+    },
 }
 
 
@@ -4076,7 +4088,7 @@ NPC_DIALOGUES = {
 # ═══════════════════════════════════════════════════════════════
 
 TOWN_NPCS = {
-    "briarhollow": ["maren", "captain_rowan", "bess"],
+    "briarhollow": ["maren", "captain_rowan", "bess", "old_petra", "young_tomas"],
     "woodhaven":   ["elder_theron", "sylla"],
     "ironhearth":  ["forgemaster_dunn", "merchant_kira"],
     "greenwood":   ["scout_feryn", "old_moss"],
@@ -4123,6 +4135,12 @@ TAVERN_RUMORS = {
         "I met a scholar who said the Fading isn't random — it always takes Warden places first.",
         "Saltmere's had three ships vanish. No storms. Just gone. The priests are praying double shifts.",
         "The teleport circles in Crystalspire are flickering. The ley lines are failing.",
+        # Hybrid class hints
+        "There's a fighter in the guild who prays before every battle. They say she can channel holy fire now. Called a Paladin, or something close.",
+        "I knew a thief who studied shadow-walking long enough to become something else. A Phantom, the guild called her. Moves through darkness like it's water.",
+        "The old Warden traditions talked about warriors who crossed paths — soldiers who learned the arcane, or mages who learned the blade. The guild calls it a transition.",
+        "My uncle was a ranger who spent years with a shaman in the hills. Came back changed. Said he could feel the land breathing. Never fought the same way again.",
+        "The Crystalspire Mages say there's a discipline beyond pure magic — something that fuses it with devotion. A Mystic, they call it. Rare. Harder than either alone.",
     ],
     3: [
         "Eastport has gone dark. No ships, no messages. Nothing.",
@@ -7297,3 +7315,46 @@ def get_boss_post_dialogue(dungeon_id, peaceful=False):
 def get_peaceful_resolution(dungeon_id):
     """Return peaceful resolution spec for a dungeon, or None."""
     return BOSS_PEACEFUL_RESOLUTIONS.get(dungeon_id)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  TRAINER NPC DIALOGUES  (class transition guidance)
+# ═══════════════════════════════════════════════════════════════
+
+_TRAINER_DIALOGUES = {
+    "trainer_briarhollow": [
+        {
+            "condition": None,
+            "lines": [
+                {"speaker": "Guildmaster Oren", "text":
+                    "Experience forges new paths, adventurer. When your abilities are seasoned enough — "
+                    "around level 10 — you may find yourself capable of walking between disciplines."},
+                {"speaker": "Guildmaster Oren", "text":
+                    "A Fighter who hones both sword and holy conviction can become a Paladin. "
+                    "A Thief who masters the shadows becomes something far more dangerous. "
+                    "The Guild calls these transitions."},
+                {"speaker": "Guildmaster Oren", "text":
+                    "Visit the class board in any guild hall when your party reaches level 10. "
+                    "Your attributes must meet the demands of the new path — and not all roads are open to all."},
+            ],
+        },
+    ],
+    "trainer_ironhearth": [
+        {
+            "condition": None,
+            "lines": [
+                {"speaker": "Guildmaster Dorric", "text":
+                    "Aye, I've trained a few who went beyond their first calling. "
+                    "It's not about forgetting what you were — it's about becoming more."},
+                {"speaker": "Guildmaster Dorric", "text":
+                    "I've seen Fighters who studied the arcane become Spellblades. Monks who found the divine "
+                    "and became Templar. And Rangers who walked the shadow — best not ask what became of them."},
+                {"speaker": "Guildmaster Dorric", "text":
+                    "Get to level 10, keep your stats sharp, and talk to the class board in the guild. "
+                    "The old masters say there's a path beyond that too — at level 15 — but I've never seen it."},
+            ],
+        },
+    ],
+}
+
+NPC_DIALOGUES.update(_TRAINER_DIALOGUES)
