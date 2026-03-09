@@ -138,6 +138,7 @@ class TownUI:
         self.tavern_tab = "patrons"  # "patrons" | "recruit" | "party"
         self.tavern_recruit_sel = 0
         self.tavern_party_sel = 0
+        self.current_rumor = ""      # story-aware rumor text, set on tavern open
 
         # NPC dialogue state
         self.active_dialogue = None  # DialogueUI when talking to an NPC
@@ -911,6 +912,8 @@ class TownUI:
                 elif btype == BLD_TEMPLE:
                     self.view = self.VIEW_TEMPLE
                 elif btype == BLD_TAVERN:
+                    from data.story_data import get_rumor
+                    self.current_rumor = get_rumor()
                     self.view = self.VIEW_TAVERN
                 elif btype == BLD_FORGE:
                     self.view = self.VIEW_FORGE
@@ -1092,6 +1095,25 @@ class TownUI:
         draw_text(surface, name.upper(), 28, 18, GOLD, 26, bold=True)
         draw_text(surface, "\"We take the jobs no one else will touch.\"",
                   28, 50, (100, 90, 130), 13)
+
+        # Warden rank badge (top-right, left of back button)
+        try:
+            from core.progression import PLANAR_TIERS
+            # Read highest tier from party character attributes directly
+            tier_num = max((getattr(c, "planar_tier", 0) for c in self.party), default=0)
+            tier_data = PLANAR_TIERS.get(tier_num, {})
+            rank_name = tier_data.get("name", "Initiate")
+            rank_col  = tier_data.get("color", (140, 130, 160))
+            rank_sym  = tier_data.get("symbol", "◆")
+            rank_label = f"{rank_sym} {rank_name}"
+            draw_text(surface, "WARDEN RANK", W - 300, 14, (90, 80, 110), 10, bold=True)
+            draw_text(surface, rank_label, W - 300, 30, rank_col, 16, bold=True)
+            tier_desc = tier_data.get("description", "")
+            if tier_desc:
+                draw_text(surface, tier_desc[:50], W - 300, 52, (90, 80, 110), 10,
+                          max_width=160)
+        except Exception:
+            pass
 
         # Back button
         back = pygame.Rect(W - 140, 18, 120, 36)
@@ -1400,10 +1422,20 @@ class TownUI:
         # Services
         services = list(TEMPLE["services"].values())
         by = 120
+
+        # PIE disposition banner
+        max_pie = max((c.stats.get("PIE", 0) for c in self.party), default=0)
+        if max_pie >= 15:
+            pct_off = min(20, (max_pie - 14) * 2)
+            pie_msg = f"The temple senses the divine in your party. Services discounted {pct_off}%."
+            draw_text(surface, pie_msg, SCREEN_W // 2 - 245, 108, (180, 220, 255), 12)
+            by = 132
+
         for i, svc in enumerate(services):
             btn = pygame.Rect(SCREEN_W // 2 - 250, by + i * 80, 500, 68)
             hover = btn.collidepoint(mx, my)
-            cost = svc["cost"]
+            base_cost = svc["cost"]
+            cost, pct_off = self._pie_disposition_discount(base_cost)
             can_afford = total_gold >= cost
 
             bg = (35, 50, 45) if (hover and can_afford) else (25, 20, 45)
@@ -1416,10 +1448,17 @@ class TownUI:
                       HEAL_COL if hover else CREAM, 18, bold=True)
             draw_text(surface, svc["description"], btn.x + 15, btn.y + 34, GREY, 13)
 
-            price_str = "Free" if cost == 0 else f"{cost}g"
-            price_col = HEAL_COL if cost == 0 else (DIM_GOLD if can_afford else RED)
-            draw_text(surface, price_str, btn.x + btn.width - 70, btn.y + 8,
-                      price_col, 18, bold=True)
+            if cost == 0:
+                price_str = "Free"
+                price_col = HEAL_COL
+            elif pct_off > 0:
+                price_str = f"{base_cost}g → {cost}g"
+                price_col = (180, 220, 255) if can_afford else RED
+            else:
+                price_str = f"{cost}g"
+                price_col = DIM_GOLD if can_afford else RED
+            draw_text(surface, price_str, btn.x + btn.width - 110, btn.y + 8,
+                      price_col, 16, bold=True)
 
         # Identify section: show unidentified items if any
         unid_items = []
@@ -2092,6 +2131,25 @@ class TownUI:
                 draw_text(surface, tier_txt, row.x + 32, row.y + 24, DIM_GOLD if drinks else GREY, 10)
                 self._patron_rects.append((i, row))
 
+            # ── Rumor board — below patron list ───────────────────────────────
+            rumor_y = list_panel.y + 28 + len(patrons) * 54 + 10
+            rumor_panel = pygame.Rect(list_panel.x, rumor_y,
+                                      list_panel.width, H - rumor_y - 100)
+            if rumor_panel.height > 30:
+                draw_panel(surface, rumor_panel, bg_color=(14, 10, 18))
+                draw_text(surface, "Overheard:", rumor_panel.x + 10, rumor_panel.y + 8,
+                          RUMOR_COL, 10, bold=True)
+                rumor_text = self.current_rumor or "Ask around — buy someone a drink."
+                draw_text(surface, f'"{rumor_text}"',
+                          rumor_panel.x + 10, rumor_panel.y + 24,
+                          (200, 185, 230), 10, max_width=rumor_panel.width - 20)
+                # "Hear another" button
+                hear_btn = pygame.Rect(rumor_panel.x + 10,
+                                       H - 110, rumor_panel.width - 20, 28)
+                draw_button(surface, hear_btn, "Hear another (1g)",
+                            hover=hear_btn.collidepoint(mx, my), size=10)
+                self._tavern_hear_btn = hear_btn
+
             # Right panel — dialogue
             dlg_panel = pygame.Rect(316, 100, W - 336, H - 200)
             draw_panel(surface, dlg_panel, bg_color=(20, 14, 8))
@@ -2141,6 +2199,7 @@ class TownUI:
                               dlg_panel.x + 16, H - 142, DIM_GOLD, 11)
             else:
                 self._tavern_drink_btn = None
+                self._tavern_hear_btn = None
 
         # ── ADVENTURERS tab ───────────────────────────────────────────────────
         elif self.tavern_tab == "recruit":
@@ -2761,6 +2820,25 @@ class TownUI:
                     else:
                         self._msg(f"You can't afford a drink! (need {drink_cost}g)", RED)
 
+                # "Hear another" rumor button (costs 1g)
+                hear_btn = getattr(self, '_tavern_hear_btn', None)
+                if hear_btn and hear_btn.collidepoint(mx, my):
+                    total_gold = sum(c.gold for c in self.party)
+                    if total_gold >= 1:
+                        remaining = 1
+                        for c in self.party:
+                            if c.gold >= remaining:
+                                c.gold -= remaining; remaining = 0; break
+                            elif c.gold > 0:
+                                remaining -= c.gold; c.gold = 0
+                        from data.story_data import get_rumor
+                        self.current_rumor = get_rumor()
+                        sfx.play("ui_confirm")
+                        self._msg("You lean in and listen...", RUMOR_COL)
+                    else:
+                        self._msg("You need at least 1g to buy into the conversation.", RED)
+                    return None
+
             # ── RECRUIT tab ───────────────────────────────────────────────────
             elif self.tavern_tab == "recruit":
                 for i, rbtn, rec in getattr(self, '_recruit_rects', []):
@@ -3006,10 +3084,23 @@ class TownUI:
         if not found_any:
             draw_text(surface, "All equipment is in good condition.", 20, y, (100, 200, 100), 14)
 
+    def _pie_disposition_discount(self, base_price: int) -> tuple:
+        """Apply PIE-based temple/holy NPC discount.
+        High-PIE parties are shown favour by divine servants.
+        Returns (discounted_price, pct_off) where pct_off is 0 if no discount."""
+        max_pie = max((c.stats.get("PIE", 0) for c in self.party), default=0)
+        if max_pie < 15:
+            return base_price, 0
+        # +2% discount per PIE above 14, capped at 20%
+        pct = min(20, (max_pie - 14) * 2)
+        discounted = max(1, int(base_price * (1.0 - pct / 100)))
+        return discounted, pct
+
     def _use_temple_service(self, service_key):
         """Use a temple service."""
         svc = TEMPLE["services"][service_key]
-        cost = svc["cost"]
+        base_cost = svc["cost"]
+        cost, pct_off = self._pie_disposition_discount(base_cost)
         total_gold = sum(c.gold for c in self.party)
 
         if service_key == "cure_poison":
