@@ -184,6 +184,14 @@ LOCATIONS = {
         "visible": True, "icon": "P",
         "description": "A weathered harbor on the southwestern coast.",
     },
+    "pale_coast": {
+        "name": "Pale Coast Catacombs", "type": LOC_DUNGEON,
+        "x": 33, "y": 84, "region": "pale_coast",
+        "visible": False, "icon": "D",
+        "description": "Ancient catacombs carved into the coastal cliffs. A Warden sealed herself here decades ago.",
+        "encounter_key": "boss_pale_sentinel", "floors": 4, "difficulty": "hard",
+        "required_key": "pale_coast_access", "discovery_radius": 4,
+    },
     "saltmere": {
         "name": "Saltmere", "type": LOC_TOWN,
         "x": 18, "y": 98, "region": "pale_coast",
@@ -224,11 +232,12 @@ LOCATIONS = {
 
     # ── Islands ──
     "windswept_isle": {
-        "name": "Windswept Isle", "type": LOC_POI,
+        "name": "Windswept Isle Ruins", "type": LOC_DUNGEON,
         "x": 45, "y": 108, "region": "ocean",
-        "visible": False, "icon": "?",
-        "description": "A storm-battered island with ancient ruins.",
-        "discovery_radius": 3, "discovery_chance": 20,
+        "visible": False, "icon": "D",
+        "description": "Storm-battered ruins on a remote island. An ancient elemental guardian protects what's buried here.",
+        "encounter_key": "boss_isle_keeper", "floors": 3, "difficulty": "hard",
+        "required_key": None, "discovery_radius": 3,
     },
     "dragons_tooth": {
         "name": "Dragon's Tooth", "type": LOC_DUNGEON,
@@ -237,6 +246,16 @@ LOCATIONS = {
         "description": "A volcanic island shaped like a fang. Something vast circles its caldera.",
         "encounter_key": "boss_karreth", "floors": 3, "difficulty": "legendary",
         "required_key": "ship_passage", "discovery_radius": 3,
+    },
+
+    # ── Far North ──
+    "valdris_spire": {
+        "name": "Valdris' Spire", "type": LOC_DUNGEON,
+        "x": 98, "y": 32, "region": "ashlands",
+        "visible": False, "icon": "S",
+        "description": "A black tower at the edge of the world. Whatever Valdris became, he is here.",
+        "floors": 6, "difficulty": "legendary",
+        "required_key": "spire_key", "discovery_radius": 5,
     },
 }
 
@@ -841,6 +860,8 @@ class WorldState:
         # Move (for now, always 1 tile — speed affects encounter rate)
         self.party_x = nx
         self.party_y = ny
+        self.facing_dx = dx   # track last movement direction for party token
+        self.facing_dy = dy
         self._update_fog()
 
         # Per-step resource trickle

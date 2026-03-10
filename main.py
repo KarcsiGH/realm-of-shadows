@@ -2165,11 +2165,7 @@ class Game:
 
     def _handle_port(self, loc_id, loc):
         """Port location — show fast travel options to other ports."""
-        PORT_ROUTES = {
-            "briarhollow_dock": ["pale_coast_dock", "eastern_dock"],
-            "pale_coast_dock":  ["briarhollow_dock", "eastern_dock"],
-            "eastern_dock":     ["briarhollow_dock", "pale_coast_dock"],
-        }
+        from data.world_map import PORT_ROUTES
         routes = PORT_ROUTES.get(loc_id, [])
 
         # Filter to only discovered destinations
@@ -2555,7 +2551,7 @@ class Game:
             "abandoned_mine":  "ashenmoor_seal",    # unlocks Ruins of Ashenmoor
             "sunken_crypt":    "spire_key",         # unlocks Valdris' Spire
             "ruins_ashenmoor": "crypt_amulet",      # unlocks Sunken Crypt
-            "dragons_tooth":   "dragon_scale",      # story trophy; Karreth's scale
+            "dragons_tooth":   "pale_coast_access", # unlocks Pale Coast Catacombs
             "pale_coast":      "pale_coast_cleared",
             "windswept_isle":  "isle_cleared",
         }
@@ -2633,13 +2629,28 @@ class Game:
             self._trigger_ending()
 
     def _sync_flag_keys(self):
-        """Sync story-flag-based world keys (e.g. ship_passage from NPC dialogue)."""
+        """Sync story-flag-based world keys.
+
+        Ensures world_state.key_items reflects story flags — critical after
+        loading a save where key_items is restored, but also as a safety net
+        if WorldState was re-created without going through _grant_boss_rewards.
+        """
         if not self.world_state:
             return
         from core.story_flags import get_flag
         from data.world_map import LOCATIONS
+
+        # Flag → world key pairs (includes all boss grants + ship passage)
         FLAG_KEYS = {
-            "ship_passage.granted": "ship_passage",
+            "ship_passage.granted":          "ship_passage",
+            "boss_defeated.goblin_warren":   "thornwood_map",
+            "boss_defeated.spiders_nest":    "mine_key",
+            "boss_defeated.abandoned_mine":  "ashenmoor_seal",
+            "boss_defeated.ruins_ashenmoor": "crypt_amulet",
+            "boss_defeated.sunken_crypt":    "spire_key",
+            "boss_defeated.dragons_tooth":   "pale_coast_access",
+            "boss_defeated.pale_coast":      "pale_coast_cleared",
+            "boss_defeated.windswept_isle":  "isle_cleared",
         }
         for flag, key in FLAG_KEYS.items():
             if get_flag(flag) and not self.world_state.has_key(key):
@@ -2647,6 +2658,13 @@ class Game:
                 for loc_id, loc in LOCATIONS.items():
                     if loc.get("required_key") == key:
                         self.world_state.discovered_locations.add(loc_id)
+
+        # windswept_isle has no key gate — discover it when Varek sends you there
+        # (quest main_pale_coast or main_windswept_isle active in Act 3)
+        from core.story_flags import get_flag as gf
+        if gf("maren.left") and "windswept_isle" not in self.world_state.discovered_locations:
+            if gf("quest.main_windswept_isle.state", 0) >= 1 or gf("item.hearthstone.3"):
+                self.world_state.discovered_locations.add("windswept_isle")
 
     def _trigger_ending(self):
         """Fire after Valdris is defeated. Transition to the epilogue sequence."""
