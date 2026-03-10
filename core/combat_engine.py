@@ -67,7 +67,7 @@ def make_player_combatant(character, row=FRONT):
     # Get actual max resources (not current values)
     from core.classes import get_all_resources
     actual_max = get_all_resources(character.class_name, stats, character.level)
-    max_hp = actual_max.get("HP", character.resources["HP"])
+    max_hp = actual_max.get("HP", character.resources.get("HP", 50))
 
     return {
         "type": "player",
@@ -77,7 +77,7 @@ def make_player_combatant(character, row=FRONT):
         "race_name": getattr(character, "race_name", "Human"),
         "level": character.level,
         "stats": stats,
-        "hp": character.resources["HP"],
+        "hp": character.resources.get("HP", max_hp),
         "max_hp": max_hp,
         "resources": dict(character.resources),  # current values
         "max_resources": actual_max,             # TRUE max values
@@ -624,6 +624,8 @@ def resolve_basic_attack(attacker, defender, enemies=None):
         if n == "iron_skin":             def_reduce += 8
         if n == "magic_shield":          def_reduce += 6
         if n == "runic_armor":           def_reduce += 10
+        if n == "blessed":               def_reduce += 5
+        if n == "spirit_bond":           def_reduce += 6
         if n == "divine_shield":         def_reduce += 12
         if n == "shield_of_faith":       def_reduce += 14
         if n == "fading_ward":           def_reduce += 8
@@ -975,8 +977,9 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             if n == "rally":                 dmg_mult *= 1.25
             if n == "conqueror":             dmg_mult *= 2.00
             if n == "shadow_step":           dmg_mult *= 1.50
-            if n == "spirit_bond":           dmg_mult *= 1.10
             # ── Flat defense (absorbed from incoming damage) ──
+            if n == "blessed":               def_reduce += 5   # Cleric Bless: +10% saves → +5 def
+            if n == "spirit_bond":           def_reduce += 6   # Warden Spirit Bond: shared protection
             if n == "defense_up":            def_reduce += 5
             if n == "iron_skin":             def_reduce += 8
             if n == "magic_shield":          def_reduce += 6
@@ -1079,6 +1082,11 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
 
         atk_mult, _, _, _ = _active_buff_mods(attacker)
         _, def_bonus, _, _ = _active_buff_mods(tgt)
+
+        # Spell Mastery passive (Archmage): +25% spell damage
+        if any(a.get("passive") == "spell_mastery" for a in attacker.get("abilities", [])
+               if isinstance(a, dict)):
+            atk_mult *= 1.25
 
         dmg = calc_magic_damage(attacker, tgt, spell, is_crit)
         dmg = max(MINIMUM_DAMAGE, int(dmg * atk_mult))
@@ -1392,6 +1400,15 @@ def apply_status_effect(target, status_name, duration, chance=1.0):
     if status_name in target.get("status_immunities", []):
         return False
 
+    # Ward Anchor: full status immunity while buff is active
+    HARMFUL_STATUSES = ("Fear", "Feared", "Terrorized", "Frightened", "Demoralized",
+                        "Slowed", "Stunned", "Silenced", "Confused", "Charmed", "Weakened",
+                        "Poisoned", "Diseased", "Plague", "Infected", "Bleeding", "Burning")
+    if status_name in HARMFUL_STATUSES:
+        for st in target.get("status_effects", []):
+            if st["name"] == "ward_anchor":
+                return False
+
     # PIE fear/morale resistance: Fear, Terrorized, Demoralized
     if status_name in ("Fear", "Feared", "Terrorized", "Frightened", "Demoralized"):
         if target.get("type") == "player":
@@ -1530,7 +1547,7 @@ def _row_weight(attack_type, attacker_row, target_row):
 
 def _should_use_heal(enemy, enemies):
     """Check if a healing ability should be used. Returns (should_heal, target, ability) or (False, None, None)."""
-    heal_abilities = [a for a in enemy.get("abilities", []) if a.get("type") == "heal"]
+    heal_abilities = [a for a in enemy.get("abilities", []) if isinstance(a, dict) and a.get("type") == "heal"]
     if not heal_abilities:
         return False, None, None
 
@@ -1546,7 +1563,7 @@ def _should_use_heal(enemy, enemies):
 
 def _should_use_buff(enemy, enemies):
     """Check if a buff ability should be used. Returns (should_buff, targets, ability) or (False, None, None)."""
-    buff_abilities = [a for a in enemy.get("abilities", []) if a.get("type") == "buff"]
+    buff_abilities = [a for a in enemy.get("abilities", []) if isinstance(a, dict) and a.get("type") == "buff"]
     if not buff_abilities:
         return False, None, None
 
@@ -1567,7 +1584,7 @@ def _should_use_buff(enemy, enemies):
 def _should_use_offensive_ability(enemy, players, use_threshold=0.55):
     """Check if an offensive ability should be used. Returns (should_use, target, ability) or (False, None, None). use_threshold: probability to skip (lower = more aggressive)."""""
     offense_abilities = [a for a in enemy.get("abilities", [])
-                         if a.get("type") == "damage"]
+                         if isinstance(a, dict) and a.get("type") == "damage"]
     if not offense_abilities:
         return False, None, None
 
@@ -1659,7 +1676,7 @@ def enemy_choose_action(enemy, players, enemies):
 
     # ── Supportive AI (Shamans, Healers) ──────────────────────
     if ai_type == "supportive" or (ai_type == "tactical" and
-            any(a.get("type") == "heal" for a in enemy.get("abilities", []))):
+            any(isinstance(a, dict) and a.get("type") == "heal" for a in enemy.get("abilities", []))):
 
         # Priority 1: Heal wounded allies
         should_heal, heal_target, heal_ability = _should_use_heal(enemy, enemies)
@@ -2437,15 +2454,16 @@ class CombatState:
                             self.log(f"{target['name']} is now {status_name}!")
 
             elif ab_type == "buff":
-                # Buff ability (e.g., War Cry — targets all allies)
+                # Buff ability — use the actual buff name from the ability
+                buff_name = ability.get("buff", "war_cry") if isinstance(ability, dict) else "war_cry"
                 if isinstance(target, list):
                     # Multi-target buff
                     buff_targets = [t for t in target if t["alive"]]
                     for t in buff_targets:
-                        apply_status_effect(t, "WarCry", ENEMY_BUFF_DURATION, 1.0)
+                        apply_status_effect(t, buff_name, ENEMY_BUFF_DURATION, 1.0)
                     self.log(f"{actor['name']} uses {ability['name']}! Allies are empowered!")
                 elif target:
-                    apply_status_effect(target, "WarCry", ENEMY_BUFF_DURATION, 1.0)
+                    apply_status_effect(target, buff_name, ENEMY_BUFF_DURATION, 1.0)
                     self.log(f"{actor['name']} uses {ability['name']} on {target['name']}!")
         else:
             self.log(f"{actor['name']} hesitates...")

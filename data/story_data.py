@@ -1510,6 +1510,97 @@ NPC_DIALOGUES = {
                 },
             },
         },
+        # Turn-in: missing patrol journal found in goblin warren
+        {
+            "conditions": [
+                {"flag": "quest.side_missing_patrol.state", "op": ">=", "value": 2},
+                {"flag": "quest.side_missing_patrol.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "rowan_patrol_turnin",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Captain Rowan",
+                        "text": "You found the journal? So they're gone. All six of them. "
+                                "I'll need a moment. The road just... wasn't there anymore. "
+                                "That's not wolves or goblins — that's something else entirely.\n"
+                                "Thank you for bringing it back. Their families deserved to know.",
+                        "on_enter": [{"action": "complete_quest", "quest": "side_missing_patrol"}],
+                        "choices": [
+                            {"text": "The Fading took the road. It's spreading.", "next": "fading"},
+                            {"text": "We're sorry for your loss.", "next": "sorry"},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "Captain Rowan",
+                        "text": "The Fading. Maren's word for it. I thought it was superstition. "
+                                "Now I don't know what to believe. How do you fight something "
+                                "that erases roads?",
+                        "choices": [{"text": "That's what we're trying to find out.", "next": None}],
+                    },
+                    "sorry": {
+                        "speaker": "Captain Rowan",
+                        "text": "So am I. Good soldiers. Keep moving — I'll handle the paperwork. "
+                                "You have bigger problems to deal with.",
+                        "choices": [{"text": "We will.", "next": None}],
+                    },
+                },
+            },
+        },
+        # Turn-in: wolf pelts collected
+        {
+            "conditions": [
+                {"flag": "wolf_pelts_quest.count", "op": ">=", "value": 5},
+                {"flag": "quest.side_wolf_pelts.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "rowan_wolf_turnin",
+                "nodes": {
+                    "start": {
+                        "speaker": "Captain Rowan",
+                        "text": "You've got the pelts? Good. The tanner's been waiting. "
+                                "Here's your coin — well earned.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "side_wolf_pelts"},
+                        ],
+                        "choices": [{"text": "Happy to help.", "next": None}],
+                    },
+                },
+            },
+        },
+        # Post-mine: abandoned mine cleared
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {
+                "id": "rowan_post_mine",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Captain Rowan",
+                        "text": "You cleared the mine. I won't pretend I thought you'd pull it off. "
+                                "The townsfolk are sleeping better. I suppose I owe you a drink.",
+                        "choices": [
+                            {"text": "What happens to the mine now?", "next": "mine_fate"},
+                            {"text": "Just doing our job.", "next": "modest"},
+                        ],
+                    },
+                    "mine_fate": {
+                        "speaker": "Captain Rowan",
+                        "text": "The Guild wants to reopen it. I say leave it sealed. "
+                                "Whatever Valdris was doing down there — I don't want it under "
+                                "our feet again. But nobody asks guards.",
+                        "choices": [{"text": "Thanks, Captain.", "next": None}],
+                    },
+                    "modest": {
+                        "speaker": "Captain Rowan",
+                        "text": "Don't be modest. Half my garrison wouldn't have gone in. "
+                                "Take the compliment.",
+                        "choices": [{"text": "We'll be moving on soon.", "next": None}],
+                    },
+                },
+            },
+        },
         # Default
         {
             "conditions": [],
@@ -7435,35 +7526,63 @@ def get_peaceful_resolution(dungeon_id):
 _TRAINER_DIALOGUES = {
     "trainer_briarhollow": [
         {
-            "condition": None,
-            "lines": [
-                {"speaker": "Guildmaster Oren", "text":
-                    "Experience forges new paths, adventurer. When your abilities are seasoned enough — "
-                    "around level 10 — you may find yourself capable of walking between disciplines."},
-                {"speaker": "Guildmaster Oren", "text":
-                    "A Fighter who hones both sword and holy conviction can become a Paladin. "
-                    "A Thief who masters the shadows becomes something far more dangerous. "
-                    "The Guild calls these transitions."},
-                {"speaker": "Guildmaster Oren", "text":
-                    "Visit the class board in any guild hall when your party reaches level 10. "
-                    "Your attributes must meet the demands of the new path — and not all roads are open to all."},
-            ],
+            "conditions": [],
+            "tree": {
+                "id": "trainer_briarhollow",
+                "nodes": {
+                    "start": {
+                        "speaker": "Guildmaster Oren",
+                        "text": "Experience forges new paths, adventurer. When your abilities are seasoned "
+                                "enough — around level 10 — you may find yourself capable of walking between "
+                                "disciplines.",
+                        "next": "node2",
+                    },
+                    "node2": {
+                        "speaker": "Guildmaster Oren",
+                        "text": "A Fighter who hones both sword and holy conviction can become a Paladin. "
+                                "A Thief who masters the shadows becomes something far more dangerous. "
+                                "The Guild calls these transitions.",
+                        "next": "node3",
+                    },
+                    "node3": {
+                        "speaker": "Guildmaster Oren",
+                        "text": "Visit the class board in any guild hall when your party reaches level 10. "
+                                "Your attributes must meet the demands of the new path — and not all roads "
+                                "are open to all.",
+                        "end": True,
+                    },
+                },
+            },
         },
     ],
     "trainer_ironhearth": [
         {
-            "condition": None,
-            "lines": [
-                {"speaker": "Guildmaster Dorric", "text":
-                    "Aye, I've trained a few who went beyond their first calling. "
-                    "It's not about forgetting what you were — it's about becoming more."},
-                {"speaker": "Guildmaster Dorric", "text":
-                    "I've seen Fighters who studied the arcane become Spellblades. Monks who found the divine "
-                    "and became Templar. And Rangers who walked the shadow — best not ask what became of them."},
-                {"speaker": "Guildmaster Dorric", "text":
-                    "Get to level 10, keep your stats sharp, and talk to the class board in the guild. "
-                    "The old masters say there's a path beyond that too — at level 15 — but I've never seen it."},
-            ],
+            "conditions": [],
+            "tree": {
+                "id": "trainer_ironhearth",
+                "nodes": {
+                    "start": {
+                        "speaker": "Guildmaster Dorric",
+                        "text": "Aye, I've trained a few who went beyond their first calling. "
+                                "It's not about forgetting what you were — it's about becoming more.",
+                        "next": "node2",
+                    },
+                    "node2": {
+                        "speaker": "Guildmaster Dorric",
+                        "text": "I've seen Fighters who studied the arcane become Spellblades. Monks who "
+                                "found the divine and became Templar. And Rangers who walked the shadow — "
+                                "best not ask what became of them.",
+                        "next": "node3",
+                    },
+                    "node3": {
+                        "speaker": "Guildmaster Dorric",
+                        "text": "Get to level 10, keep your stats sharp, and talk to the class board in "
+                                "the guild. The old masters say there's a path beyond that too — at "
+                                "level 15 — but I've never seen it.",
+                        "end": True,
+                    },
+                },
+            },
         },
     ],
 }
