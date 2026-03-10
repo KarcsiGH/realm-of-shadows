@@ -1096,22 +1096,96 @@ class TownUI:
         draw_text(surface, "\"We take the jobs no one else will touch.\"",
                   28, 50, (100, 90, 130), 13)
 
-        # Warden rank badge (top-right, left of back button)
+        # ── Warden Rank Panel (below option cards) ──────────────────
         try:
             from core.progression import PLANAR_TIERS
-            # Read highest tier from party character attributes directly
-            tier_num = max((getattr(c, "planar_tier", 0) for c in self.party), default=0)
+            from core.story_flags import get_flag
+            tier_num  = max((getattr(c, "planar_tier", 0) for c in self.party), default=0)
             tier_data = PLANAR_TIERS.get(tier_num, {})
             rank_name = tier_data.get("name", "Initiate")
             rank_col  = tier_data.get("color", (140, 130, 160))
             rank_sym  = tier_data.get("symbol", "◆")
-            rank_label = f"{rank_sym} {rank_name}"
-            draw_text(surface, "WARDEN RANK", W - 300, 14, (90, 80, 110), 10, bold=True)
-            draw_text(surface, rank_label, W - 300, 30, rank_col, 16, bold=True)
-            tier_desc = tier_data.get("description", "")
-            if tier_desc:
-                draw_text(surface, tier_desc[:50], W - 300, 52, (90, 80, 110), 10,
-                          max_width=160)
+            bonus     = tier_data.get("bonus", {})
+
+            # Bonus summary
+            bonus_parts = []
+            if bonus.get("all_stats"):
+                bonus_parts.append(f"+{bonus['all_stats']} all stats")
+            if bonus.get("max_hp_pct"):
+                bonus_parts.append(f"+{int(bonus['max_hp_pct']*100)}% HP")
+            if bonus.get("damage_mult") and bonus["damage_mult"] > 1:
+                bonus_parts.append(f"+{int((bonus['damage_mult']-1)*100)}% damage")
+            if bonus.get("xp_mult") and bonus["xp_mult"] > 1:
+                bonus_parts.append(f"+{int((bonus['xp_mult']-1)*100)}% XP")
+            bonus_str = ", ".join(bonus_parts) if bonus_parts else "No bonuses yet."
+
+            # Next tier progress
+            next_tier_data = PLANAR_TIERS.get(tier_num + 1) if tier_num < 4 else None
+            flag_labels = {
+                "item.hearthstone.1": "1st Hearthstone (Abandoned Mine)",
+                "item.hearthstone.3": "3rd Hearthstone (Dragon's Tooth)",
+                "item.hearthstone.5": "5th Hearthstone (Windswept Isle)",
+                "boss_defeated.shadow_valdris": "Defeat Valdris the Broken",
+            }
+            if next_tier_data:
+                next_name  = next_tier_data.get("name", "")
+                next_flag  = next_tier_data.get("unlock_flag", "")
+                next_level = next_tier_data.get("min_level", 1)
+                next_col   = next_tier_data.get("color", (140, 130, 160))
+                flag_label = flag_labels.get(next_flag, next_flag.replace("_", " ").title())
+                min_level  = min((c.level for c in self.party), default=1)
+                flag_met   = bool(get_flag(next_flag)) if next_flag else False
+                level_met  = min_level >= next_level
+                reqs = []
+                if not flag_met:
+                    reqs.append(flag_label)
+                if not level_met:
+                    reqs.append(f"Party min level {next_level} (currently {min_level})")
+                next_req_str = "  |  ".join(reqs) if reqs else "Ready to advance!"
+                next_ready   = not reqs
+            else:
+                next_name    = ""
+                next_col     = rank_col
+                next_req_str = "Highest rank achieved."
+                next_ready   = False
+
+            # Draw panel
+            PANEL_Y = 110 + 3 * (88 + 16) + 10
+            panel_r = pygame.Rect(40, PANEL_Y, W - 80, 86)
+            pygame.draw.rect(surface, (22, 16, 36), panel_r, border_radius=6)
+            pygame.draw.rect(surface, rank_col, panel_r, 1, border_radius=6)
+
+            # Left: current rank
+            draw_text(surface, "WARDEN RANK", panel_r.x + 20, panel_r.y + 10,
+                      (90, 80, 110), 10, bold=True)
+            draw_text(surface, f"{rank_sym}  {rank_name}",
+                      panel_r.x + 20, panel_r.y + 27, rank_col, 22, bold=True)
+            draw_text(surface, bonus_str, panel_r.x + 20, panel_r.y + 60,
+                      (140, 130, 160), 12)
+
+            # Divider
+            div_x = panel_r.x + 340
+            pygame.draw.line(surface, (60, 50, 80),
+                             (div_x, panel_r.y + 12), (panel_r.bottom - 12, panel_r.y + 12),
+                             0)  # placeholder; draw vertical below
+            pygame.draw.line(surface, (60, 50, 80),
+                             (div_x, panel_r.y + 12), (div_x, panel_r.bottom - 12), 1)
+
+            # Right: next rank
+            if next_tier_data:
+                draw_text(surface, "NEXT RANK", div_x + 20, panel_r.y + 10,
+                          (90, 80, 110), 10, bold=True)
+                draw_text(surface, f"◆  {next_name}",
+                          div_x + 20, panel_r.y + 27,
+                          next_col if next_ready else (100, 90, 120), 18, bold=True)
+                req_col = (80, 200, 120) if next_ready else (180, 150, 80)
+                draw_text(surface, next_req_str, div_x + 20, panel_r.y + 58,
+                          req_col, 12, max_width=W - div_x - 60)
+            else:
+                draw_text(surface, "RANK COMPLETE", div_x + 20, panel_r.y + 10,
+                          (90, 80, 110), 10, bold=True)
+                draw_text(surface, next_req_str, div_x + 20, panel_r.y + 36,
+                          (140, 200, 160), 13)
         except Exception:
             pass
 

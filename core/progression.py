@@ -393,7 +393,7 @@ PLANAR_TIERS = {
         "symbol": "◆",
         "bonus":  {"all_stats": 1, "xp_mult": 1.05},
         "description": "Tested by the first trials. +1 all stats, +5% XP.",
-        "unlock_flag": "hearthstone_1_recovered",   # first Hearthstone (Abandoned Mine)
+        "unlock_flag": "item.hearthstone.1",        # first Hearthstone (Abandoned Mine)
         "min_level": 5,
     },
     2: {
@@ -402,7 +402,7 @@ PLANAR_TIERS = {
         "symbol": "◆",
         "bonus":  {"all_stats": 2, "max_hp_pct": 0.05, "xp_mult": 1.10},
         "description": "A proven Warden. +2 all stats, +5% max HP, +10% XP.",
-        "unlock_flag": "hearthstone_3_recovered",   # third Hearthstone (Dragon's Tooth)
+        "unlock_flag": "item.hearthstone.3",        # third Hearthstone (Dragon's Tooth)
         "min_level": 10,
     },
     3: {
@@ -411,7 +411,7 @@ PLANAR_TIERS = {
         "symbol": "◆",
         "bonus":  {"all_stats": 4, "max_hp_pct": 0.10, "damage_mult": 1.05, "xp_mult": 1.15},
         "description": "Keeper of the deeper wards. +4 all stats, +10% HP, +5% damage, +15% XP.",
-        "unlock_flag": "hearthstone_5_recovered",   # fifth (final) Hearthstone
+        "unlock_flag": "item.hearthstone.5",        # fifth (final) Hearthstone
         "min_level": 13,
     },
     4: {
@@ -420,7 +420,7 @@ PLANAR_TIERS = {
         "symbol": "◆",
         "bonus":  {"all_stats": 6, "max_hp_pct": 0.15, "damage_mult": 1.10, "xp_mult": 1.25},
         "description": "The highest rank of the mortal order. +6 all stats, +15% HP, +10% damage.",
-        "unlock_flag": "valdris_defeated",          # endgame
+        "unlock_flag": "boss_defeated.shadow_valdris",  # endgame
         "min_level": 15,
     },
 }
