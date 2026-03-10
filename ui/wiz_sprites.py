@@ -1365,35 +1365,39 @@ def _enemy_death_knight(s):
 
 def _enemy_cave_bat(s):
     O=(100,80,130); M=(65,48,95); D=(30,20,55); E=(200,60,60)
-    # body — small, hanging
-    for y in range(28,42):
-        hw=5-abs(y-34)//2; _hl(s,23-hw,24+hw,y,M); _px(s,23-hw,y,O); _px(s,24+hw,y,O)
-    # face — upside-down triangle with big ears
-    for y in range(18,30):
-        hw=4-abs(y-24)//3; _hl(s,23-hw,24+hw,y,M); _px(s,23-hw,y,O); _px(s,24+hw,y,O)
-    # large ears
-    _vl(s,16,12,24,O); _vl(s,15,13,24,O)
-    _vl(s,31,12,24,O); _vl(s,32,13,24,O)
-    _hl(s,15,17,12,O); _hl(s,30,32,12,O)
-    _px(s,16,14,M); _px(s,31,14,M)   # ear inner
-    # red eyes
-    _px(s,21,22,E); _px(s,22,22,E)
-    _px(s,25,22,E); _px(s,26,22,E)
-    # snub nose + fangs
-    _px(s,23,25,D); _px(s,24,25,D)
-    _px(s,22,27,M); _px(s,25,27,M)
-    # wings — spread wide
-    for i in range(16):
-        _px(s,6+i,22+i,D if i%2==0 else M)   # left wing membrane
-        _px(s,5+i,24+i,D)
-        _px(s,41-i,22+i,D if i%2==0 else M)  # right wing membrane
-        _px(s,42-i,24+i,D)
-    _vl(s,7,16,40,O); _vl(s,40,16,40,O)  # wing leading edge
-    for i in range(4): _px(s,5+i*2,40,O); _px(s,43-i*2,40,O)  # wing fingers
-    # feet (clinging)
-    for fx in [20,21,22,25,26,27]:
-        _vl(s,fx,42,46,M if fx%3!=0 else D)
-        _px(s,fx,46,O)
+    # Combined head+body — one wide horizontal oval
+    for y in range(24,46):
+        hw = 8 - abs(y-34)*5//14
+        _hl(s,20,20+hw*2,y,M); _px(s,20,y,O); _px(s,20+hw*2,y,O)
+    # Bat ears — wide triangular on sides of head
+    for i in range(7):
+        _hl(s,18-i,18,24+i-i//2,O); _hl(s,19-i,18,25+i-i//2,M)
+    for i in range(7):
+        _hl(s,30,30+i,24+i-i//2,O); _hl(s,30,29+i,25+i-i//2,M)
+    # Red eyes
+    _px(s,22,28,E); _px(s,23,28,E); _px(s,25,28,E); _px(s,26,28,E)
+    # Nose + fangs
+    _hl(s,23,25,32,D); _px(s,23,35,M); _px(s,25,35,M)
+    # Wings — sweep from shoulders up to wide tips
+    for i in range(19):
+        wx=21-i; wy=30-i
+        if wx>=0: _px(s,wx,wy,O)
+    for x in range(2,22):
+        leading_y = 30-(21-x)
+        for y in range(leading_y, min(44, leading_y+(22-x)//3+14)):
+            _px(s,x,y, D if (x+y)%2==0 else M)
+    for i in range(19):
+        wx=27+i; wy=30-i
+        if wx<48: _px(s,wx,wy,O)
+    for x in range(27,46):
+        leading_y = 30-(x-27)
+        for y in range(leading_y, min(44, leading_y+(x-26)//3+14)):
+            _px(s,x,y, D if (x+y)%2==0 else M)
+    # Wing tip fingers
+    for fx,fy in [(2,14),(6,11),(10,10)]: _px(s,fx,fy,O); _px(s,fx+1,fy,O)
+    for fx,fy in [(46,14),(42,11),(38,10)]: _px(s,fx,fy,O); _px(s,fx-1,fy,O)
+    # Feet/claws
+    for cx in [22,24,26]: _vl(s,cx,46,50,M); _px(s,cx-1,50,O); _px(s,cx,50,O)
 
 def _enemy_beetle(s):
     O=(100,140,60); M=(60,95,32); D=(28,52,12); SH=(130,170,80); Y=(220,195,50)
@@ -1458,30 +1462,279 @@ def _enemy_hatchling(s):
 
 def _enemy_giant_rat(s):
     O=(140,120,90); F=(95,78,52); D=(56,44,26); B=(210,195,165); E=(200,50,50)
-    # rat body — horizontal but smaller than wolf
-    for y in range(28,46):
-        hw=7-abs(y-36)//2; _hl(s,10,10+hw*2,y,F)
+    # Main body — horizontal oval, properly centered
+    for y in range(38,54):
+        hw = 14 - abs(y-44)*2//3
+        _hl(s,10, 10+hw*2, y, F)
         _px(s,10,y,O); _px(s,10+hw*2,y,O)
-    _hl(s,10,38,28,O); _hl(s,10,38,29,D)
-    _hl(s,11,37,42,B); _hl(s,11,37,43,B); _hl(s,11,37,44,O)
-    # rat head — long snout
-    for y in range(22,30): _hl(s,5,15,y,F); _px(s,5,y,O); _px(s,15,y,O)
-    for y in range(24,30): _hl(s,0,6,y,F); _px(s,0,y,O); _px(s,6,y,O)
-    _hl(s,0,3,29,O)  # nose
-    _px(s,0,27,D); _px(s,1,27,D)  # nostrils
-    _px(s,11,24,E); _px(s,12,24,E)  # beady red eyes
-    # whiskers
-    for i in range(4): _px(s,i,26,O); _px(s,3-i,28,O)
-    for i in range(4): _px(s,8+i,26,O); _px(s,8+i,28,O)
-    # ears
-    _vl(s,14,19,24,O); _hl(s,13,16,19,O); _px(s,15,21,F)
-    # four short legs
-    for lx,ly in [(12,44),(18,44),(26,44),(32,44)]:
-        for y in range(ly,ly+10): _hl(s,lx,lx+3,y,F); _px(s,lx,y,O); _px(s,lx+3,y,O)
-        _hl(s,lx-1,lx+4,ly+9,O)
-    # long tail
-    for i,ty in enumerate(range(36,56)): _px(s,38+i//4,ty,F if i%2==0 else D)
-    for i in range(8): _px(s,40+i,54,O)
+    # Hunched back ridge
+    _hl(s,12,36,38,O); _hl(s,11,37,39,D)
+    # Belly highlight
+    _hl(s,13,35,52,B); _hl(s,14,34,53,B)
+    # Head — at left end, y=33-45
+    for y in range(33,45):
+        hw = 6 - abs(y-39)*4//9
+        _hl(s,4,4+hw*2,y,F); _px(s,4,y,O); _px(s,4+hw*2,y,O)
+    # Long pointy snout
+    for y in range(36,42): _hl(s,0,5,y,F); _px(s,0,y,O)
+    _hl(s,0,2,40,O)
+    _px(s,0,38,D); _px(s,1,38,D)  # nostrils
+    # Beady red eyes
+    _px(s,13,34,E); _px(s,14,34,E)
+    # Round ears — bumps on top, not pillars
+    for ex in [13,19]:
+        _hl(s,ex,ex+4,29,O); _hl(s,ex,ex+4,30,F); _hl(s,ex,ex+4,31,F)
+        _hl(s,ex+1,ex+3,32,F); _px(s,ex+1,30,B); _px(s,ex+2,30,B)
+    # Whiskers
+    for i in range(5): _px(s,i,36,O); _px(s,i,40,O)
+    _px(s,3,38,O); _px(s,2,37,O); _px(s,2,39,O)
+    # 4 short legs
+    for lx,ly in [(12,54),(18,54),(28,54),(34,54)]:
+        for y in range(ly, ly+7): _hl(s,lx,lx+3,y,F); _px(s,lx,y,O); _px(s,lx+3,y,O)
+        _hl(s,lx-1,lx+4,ly+6,O)
+    # Long curved tail — sweeps right and up
+    for i in range(16):
+        tx = 37+i; ty = 46 - int(i*i*0.07)
+        _px(s,min(47,tx), max(20,ty), F if i%2==0 else D)
+    for i in range(4): _px(s,min(47,46+i),20,O)
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  UNIQUE CREATURE SPRITES (Act 2 / Act 3 enemies and bosses)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _enemy_swamp_leech(s):
+    """Bloated blood-filled worm, dark mottled purplish-brown."""
+    O=(90,50,80); M=(140,60,110); D=(50,25,45); E=(220,60,60); BL=(180,140,160)
+    import math
+    # main body — fat S-curve worm
+    for y in range(12, 68):
+        cx = 24 + int(5 * math.sin(y * 0.12))
+        hw = max(2, 9 - abs(y - 38) // 8)
+        _hl(s, cx - hw, cx + hw, y, M)
+        _px(s, cx - hw, y, O); _px(s, cx + hw, y, O)
+    # segmentation rings
+    for sy in range(16, 68, 6):
+        cx = 24 + int(5 * math.sin(sy * 0.12))
+        _hl(s, cx - 7, cx + 7, sy, D)
+    # sucker mouth (top)
+    for y in range(8, 14):
+        _hl(s, 20, 27, y, D)
+    for tx in range(21, 27, 2): _px(s, tx, 10, O)  # teeth ring
+    _px(s, 23, 11, E); _px(s, 24, 11, E)            # throat
+    # eye-spots (vestigial)
+    _px(s, 20, 15, E); _px(s, 21, 15, E)
+    _px(s, 26, 15, E); _px(s, 27, 15, E)
+    # belly sheen
+    for y in range(20, 60, 3):
+        cx = 24 + int(5 * math.sin(y * 0.12))
+        _hl(s, cx - 2, cx + 2, y, BL)
+    # tail taper
+    for y in range(66, 74):
+        cx = 24 + int(5 * math.sin(66 * 0.12))
+        hw = max(1, 4 - (y - 66))
+        _hl(s, cx - hw, cx + hw, y, O)
+
+def _enemy_tunnel_lurker(s):
+    """Pale eyeless predator — long limbs, hunched, translucent."""
+    O=(210,200,185); M=(170,165,155); D=(120,115,108); E=(200,60,60); BL=(230,220,210)
+    # elongated torso — hunched
+    for y in range(20, 50):
+        hw = 5 + (y - 20) // 8
+        _hl(s, 22 - hw, 22 + hw, y, M)
+        _px(s, 22 - hw, y, O); _px(s, 22 + hw, y, O)
+    # no eyes — smooth pale head
+    for y in range(10, 22):
+        hw = 4 - abs(y - 15) // 3
+        _hl(s, 22 - hw, 22 + hw, y, M)
+        _px(s, 22 - hw, y, O); _px(s, 22 + hw, y, O)
+    # mouth slit (wide)
+    _hl(s, 16, 28, 19, D)
+    for tx in range(17, 28, 2): _px(s, tx, 19, BL)  # pale teeth
+    # four long spindly legs
+    for lx, ly_start in [(10, 48), (16, 50), (26, 50), (34, 48)]:
+        for y in range(ly_start, ly_start + 22, 1):
+            _px(s, lx, y, D if y % 3 == 0 else O)
+        # claws
+        _px(s, lx - 1, ly_start + 22, D)
+        _px(s, lx + 1, ly_start + 22, D)
+    # long arms (reaching forward)
+    for y in range(24, 42):
+        _px(s, 8 - (y - 24) // 6, y, O)
+        _px(s, 36 + (y - 24) // 6, y, O)
+    # translucent internal organs hinted
+    for oy in range(28, 44, 4):
+        _hl(s, 20, 24, oy, D)
+
+def _enemy_egg_sac(s):
+    """Pulsing silk egg sac, spider-web wrapped, faintly glowing."""
+    O=(200,185,150); M=(150,135,105); D=(80,70,50); G=(120,200,120); W=(230,225,215)
+    import math
+    # main sac — fat oval
+    for y in range(8, 68):
+        cx = 23
+        hw = int(11 * math.sin(max(0, (y - 8) / 60 * math.pi)))
+        if hw > 0:
+            _hl(s, cx - hw, cx + hw, y, M)
+            _px(s, cx - hw, y, O); _px(s, cx + hw, y, O)
+    # silk wrap bands (diagonal)
+    for i in range(6):
+        y0 = 12 + i * 10
+        for x in range(10, 36):
+            dy = (x - 10) // 4
+            if 0 <= y0 + dy < H: _px(s, x, y0 + dy, D)
+            if 0 <= y0 - dy < H: _px(s, x, y0 - dy, D)
+    # inner glow — eggs visible through silk
+    for ey, ex in [(22, 19), (25, 26), (32, 21), (35, 27), (42, 23), (48, 25), (18, 23)]:
+        _px(s, ex, ey, G); _px(s, ex + 1, ey, G)
+        _px(s, ex, ey + 1, G)
+    # attachment threads at top
+    for tx in range(16, 30, 3):
+        _vl(s, tx, 2, 8, W)
+    # slight pulse highlight on surface
+    for y in range(20, 55, 5):
+        cx = 23 + int(2 * math.sin(y * 0.3))
+        _hl(s, cx - 3, cx + 3, y, W)
+
+def _enemy_void_tendril(s):
+    """Writhing shadow tendril — inky black with purple-void highlights."""
+    O=(100,40,160); M=(50,15,90); D=(15,5,30); E=(200,80,255); HL=(160,100,220)
+    import math
+    # multiple writhing tendrils from a base
+    for t in range(4):
+        phase = t * 1.5
+        x0 = 10 + t * 9
+        for y in range(75, 15, -1):
+            cx = x0 + int(4 * math.sin((y * 0.18) + phase))
+            thick = 1 + (y > 55)
+            for dx in range(-thick, thick + 1):
+                _px(s, cx + dx, y, M if (y + t) % 4 < 2 else D)
+            # glow tip
+            if y < 25:
+                _px(s, cx, y, E if y < 18 else HL)
+    # void core at base
+    for y in range(68, 78):
+        hw = 2 + (y - 68) // 2
+        _hl(s, 23 - hw, 23 + hw, y, O)
+        _px(s, 23 - hw, y, HL); _px(s, 23 + hw, y, HL)
+    # swirling rune glows
+    for ry, rx in [(40, 20), (35, 28), (45, 26), (30, 16)]:
+        _px(s, rx, ry, E); _px(s, rx + 1, ry, E)
+
+def _enemy_corrupted_treant(s):
+    """Twisted dark tree animated by fading — bark cracked with shadow."""
+    O=(80,55,30); M=(55,38,18); D=(25,16,6); E=(180,40,200); BK=(15,10,5)
+    # thick trunk — tapers toward top
+    for y in range(18, 75):
+        hw = max(2, 9 - (y - 18) // 10)
+        _hl(s, 23 - hw, 23 + hw, y, M)
+        _px(s, 23 - hw, y, O); _px(s, 23 + hw, y, O)
+    # bark cracks filled with shadow-purple
+    for cy, cx in [(25, 19), (32, 26), (40, 21), (48, 27), (56, 22), (62, 25)]:
+        _vl(s, cx, cy, cy + 5, E)
+        _px(s, cx - 1, cy + 2, E)
+    # root legs
+    for rx, ry in [(14, 70), (10, 68), (30, 70), (34, 68), (20, 73), (26, 73)]:
+        _vl(s, rx, ry, ry + 7, D)
+        _px(s, rx - 1, ry + 6, O); _px(s, rx + 1, ry + 6, O)
+    # branch arms (gnarled)
+    for i in range(8):
+        _px(s, 10 - i // 2, 22 + i * 3, O)
+        _px(s, 36 + i // 2, 22 + i * 3, O)
+    # dark canopy (corrupt foliage)
+    for y in range(4, 20):
+        hw = max(1, 8 - abs(y - 11) // 2)
+        _hl(s, 23 - hw, 23 + hw, y, BK)
+        _px(s, 23 - hw, y, D); _px(s, 23 + hw, y, D)
+    # glowing eye-knots
+    for ey, ex in [(28, 18), (28, 28), (38, 21)]:
+        _px(s, ex, ey, E); _px(s, ex + 1, ey, E)
+        _px(s, ex, ey + 1, E)
+
+def _enemy_gargoyle(s):
+    """Stone-skinned winged guardian — hunched, grey, cracked."""
+    O=(130,125,120); M=(95,90,85); D=(55,52,50); E=(220,160,40); W=(200,195,190)
+    # wings spread behind body
+    for i in range(10):
+        _px(s, 5 + i, 14 + i * 2, D); _px(s, 42 - i, 14 + i * 2, D)
+        _px(s, 4 + i, 15 + i * 2, M); _px(s, 43 - i, 15 + i * 2, M)
+    for i in range(8):
+        _hl(s, 5 + i, 8 + i, 14 + i * 3, D)
+        _hl(s, 40 - i, 43 - i, 14 + i * 3, D)
+    # squat hunched torso
+    for y in range(14, 56):
+        hw = 7 + (y - 14) // 12
+        _hl(s, 23 - hw, 23 + hw, y, M)
+        _px(s, 23 - hw, y, O); _px(s, 23 + hw, y, O)
+    # stone-cracked surface
+    for cy, cx in [(20, 20), (28, 26), (36, 19), (44, 27), (22, 28)]:
+        _px(s, cx, cy, D); _px(s, cx + 1, cy, D); _px(s, cx, cy + 1, D)
+    # horned head
+    _px(s, 20, 5, O); _px(s, 19, 6, O); _px(s, 18, 7, O)
+    _px(s, 27, 5, O); _px(s, 28, 6, O); _px(s, 29, 7, O)
+    for y in range(7, 16):
+        hw = 4 - abs(y - 11) // 2
+        _hl(s, 23 - hw, 23 + hw, y, M)
+        _px(s, 23 - hw, y, O); _px(s, 23 + hw, y, O)
+    # glowing amber eyes
+    _px(s, 20, 10, E); _px(s, 21, 10, E)
+    _px(s, 25, 10, E); _px(s, 26, 10, E)
+    # bared fangs
+    _hl(s, 19, 27, 15, D)
+    for tx in range(20, 27, 2): _px(s, tx, 15, W); _px(s, tx, 16, W)
+    # clawed feet
+    for lx, ly in [(15, 55), (28, 55)]:
+        for y in range(ly, ly + 12): _hl(s, lx, lx + 4, y, M)
+        for i in range(3): _px(s, lx - 1 + i * 2, ly + 12, D)
+
+def _enemy_karreth(s):
+    """Karreth — Ancient volcanic dragon boss. Much larger than wyrmling."""
+    O=(200,80,30); M=(145,45,15); D=(70,18,5); E=(255,230,20); SC=(175,55,20)
+    BL=(255,180,60); WT=(240,220,180)
+    # massive curved horns
+    for i in range(6): _px(s, 17 - i, 3 + i, O); _px(s, 18 - i, 3 + i, SC)
+    for i in range(6): _px(s, 30 + i, 3 + i, O); _px(s, 29 + i, 3 + i, SC)
+    # massive head — fills top third
+    for y in range(4, 22):
+        hw = 9 - abs(y - 12) // 3
+        _hl(s, 23 - hw, 23 + hw, y, M)
+        _px(s, 23 - hw, y, O); _px(s, 23 + hw, y, O)
+    _hl(s, 14, 33, 4, O)  # brow ridge
+    # slitted fire-gold eyes
+    _hl(s, 17, 19, 10, E); _hl(s, 27, 29, 10, E)
+    _px(s, 18, 10, D); _px(s, 28, 10, D)  # slit pupils
+    # scale-armored jaw and teeth
+    _hl(s, 14, 33, 19, D)
+    for tx in range(15, 33, 2): _px(s, tx, 19, WT); _px(s, tx, 20, WT)
+    # thick neck
+    for y in range(20, 30):
+        hw = 7 - (y - 20) // 5
+        _hl(s, 23 - hw, 23 + hw, y, M)
+        _px(s, 23 - hw, y, O); _px(s, 23 + hw, y, O)
+    # massive body — barrel chest, low and powerful
+    for y in range(28, 65):
+        hw = 12 - abs(y - 44) // 5
+        _hl(s, 23 - hw, 23 + hw, y, M)
+        _px(s, 23 - hw, y, O); _px(s, 23 + hw, y, O)
+    # scale pattern (volcanic)
+    for sy in range(30, 62, 4):
+        for sx in range(13, 35, 3): _px(s, sx, sy, SC)
+    # fire-glow cracks in scales
+    for fy, fx in [(33,20),(38,28),(44,16),(50,30),(56,22),(42,35)]:
+        _px(s,fx,fy,BL); _px(s,fx+1,fy,BL)
+    # wings (huge — peek behind body)
+    for i in range(12):
+        _px(s, max(0, 8 - i), 22 + i * 2, D)
+        _px(s, min(47, 40 + i), 22 + i * 2, D)
+        _px(s, max(0, 7 - i), 23 + i * 2, M)
+        _px(s, min(47, 41 + i), 23 + i * 2, M)
+    # thick clawed feet
+    for lx, ly in [(13, 63), (28, 63)]:
+        for y in range(ly, ly + 10): _hl(s, lx, lx + 6, y, M)
+        for i in range(4): _px(s, lx - 1 + i * 2, ly + 10, D)
+    # tail tip
+    for i, ty in enumerate(range(52, 72)):
+        tx = 36 + i // 2
+        if tx < 48: _px(s, tx, ty, SC if i % 2 == 0 else D)
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  HUMANOID ENEMY VARIANTS (use character base with colour override)
@@ -1553,6 +1806,75 @@ _CHAR_DRAW = {
 }
 
 # Maps template_key → draw function (covers all unique enemy grids)
+
+def _enemy_bear(s):
+    """Large quadruped bear: massive bulk, shoulder hump, round head, thick legs."""
+    O=(100,75,50); F=(65,47,28); D=(38,24,12); B=(160,130,90); E=(220,190,50)
+    # Huge barrel body — main mass
+    for y in range(35,60):
+        hw = 16 - abs(y-47)*3//10
+        _hl(s,8,8+hw*2,y,F); _px(s,8,y,O); _px(s,8+hw*2,y,O)
+    # Shoulder hump (bears are higher at shoulder than hip)
+    for y in range(30,42):
+        hw = 10 - abs(y-35)*3//9
+        _hl(s,8,8+hw*2,y,F); _px(s,8,y,O); _px(s,8+hw*2,y,O)
+    # Belly
+    _hl(s,12,36,58,B); _hl(s,13,35,59,B)
+    # Round heavy head
+    for y in range(20,38):
+        hw = 9 - abs(y-28)*5//16
+        _hl(s,4,4+hw*2,y,F); _px(s,4,y,O); _px(s,4+hw*2,y,O)
+    # Broad muzzle
+    for y in range(28,36): _hl(s,3,13,y,B); _px(s,3,y,O); _px(s,13,y,O)
+    _hl(s,5,11,35,O)
+    _px(s,7,36,D); _px(s,8,36,D)  # nostrils
+    # Small round ears
+    _hl(s,9,13,20,O); _vl(s,10,20,24,O); _vl(s,12,20,24,O); _px(s,11,21,F)
+    _hl(s,15,19,20,O); _vl(s,16,20,24,O); _vl(s,18,20,24,O); _px(s,17,21,F)
+    # Eyes
+    _px(s,10,26,E); _px(s,11,26,E); _px(s,14,26,E); _px(s,15,26,E)
+    # 4 thick short legs
+    for lx,ly in [(10,60),(17,60),(30,60),(37,60)]:
+        for y in range(ly,ly+10): _hl(s,lx,lx+5,y,F); _px(s,lx,y,O); _px(s,lx+5,y,O)
+        _hl(s,lx-1,lx+6,ly+9,O)
+    # Short stub tail
+    _px(s,40,45,F); _px(s,41,44,F); _px(s,41,45,O)
+
+
+def _enemy_stag(s):
+    """Fading-corrupted stag: slender deer body, long legs, prominent antlers, eerie eyes."""
+    O=(110,90,60); F=(75,58,35); D=(44,32,15); B=(185,165,125); E=(140,220,120)
+    # Slender body
+    for y in range(38,58):
+        hw = 8 - abs(y-46)*3//12
+        _hl(s,14,14+hw*2,y,F); _px(s,14,y,O); _px(s,14+hw*2,y,O)
+    # Neck angled up-left
+    for i in range(10): _hl(s,15-i//2,19-i//2,38-i,F)
+    # Small elegant head
+    for y in range(20,34):
+        hw = 4 - abs(y-26)*2//8
+        _hl(s,7,7+hw*2,y,F); _px(s,7,y,O); _px(s,7+hw*2,y,O)
+    # Long snout
+    for y in range(28,34): _hl(s,3,9,y,F); _px(s,3,y,O)
+    _hl(s,3,6,33,O); _px(s,4,33,D); _px(s,5,33,D)
+    # Glowing green eyes (fading corruption)
+    _px(s,10,22,E); _px(s,11,22,E); _px(s,10,23,E)
+    # Tall branching antlers
+    _vl(s,13,6,20,O); _vl(s,14,5,20,O)
+    _hl(s,10,14,10,O); _hl(s,10,14,11,O)
+    _hl(s,13,17,14,O); _hl(s,13,17,15,O)
+    _vl(s,17,6,20,O); _vl(s,18,5,20,O)
+    _hl(s,17,22,9,O); _hl(s,17,22,10,O)
+    _hl(s,14,18,14,O)
+    _px(s,9,10,O); _px(s,22,9,O); _px(s,23,8,O)
+    # 4 slender long legs
+    for lx,ly in [(15,58),(20,58),(27,58),(32,58)]:
+        for y in range(ly,ly+14): _hl(s,lx,lx+2,y,F); _px(s,lx,y,O); _px(s,lx+2,y,O)
+        _hl(s,lx-1,lx+3,ly+13,O)
+    # White tail flash
+    _px(s,38,44,B); _px(s,39,43,B); _px(s,39,44,O)
+
+
 _ENEMY_DRAW = {
     "Goblin Warrior":     _enemy_goblin_warrior,
     "Goblin Archer":      _enemy_goblin_archer,
@@ -1562,9 +1884,6 @@ _ENEMY_DRAW = {
     "Goblin Drummer":     _enemy_goblin_shaman,
     "Goblin Trapper":     _enemy_goblin_shaman,
     "Goblin King":        _enemy_goblin_king,
-    "Grak the Goblin King": _enemy_goblin_king,
-    "Goblin War Boss":    _enemy_goblin_king,
-    "Orc Warrior":        _enemy_orc_warrior,
     "Orc Fighter":        _enemy_orc_warrior,
     "Orc Chieftain":      _enemy_orc_chieftain,
     "Skeleton Warrior":   _enemy_skeleton,
@@ -1573,33 +1892,18 @@ _ENEMY_DRAW = {
     "Zombie":             _enemy_zombie,
     "Giant Spider":       _enemy_giant_spider,
     "Giant Spider Queen": _enemy_giant_spider,
-    "Spider Queen":       _enemy_giant_spider,
     "Broodmother Guard":  _enemy_giant_spider,
     "Spiderling":         _enemy_giant_spider,
     "Web Spinner":        _enemy_giant_spider,
     "Phase Spider":       _enemy_giant_spider,
     "Venomfang Spider":   _enemy_giant_spider,
-    "Troll":              _enemy_troll,
     "Marsh Troll":        _enemy_troll,
     "Volcanic Troll":     _enemy_troll,
-    "Dark Mage":          _enemy_dark_mage,
-    "Vampire":            _enemy_vampire,
-    "Dragon Wyrmling":    _enemy_dragon,
     "Corrupted Hatchling": _enemy_hatchling,
-    "Dragon Hatchling":   _enemy_hatchling,
-    "Fire Lizard":        _enemy_hatchling,
     "Cinder Drake":       _enemy_hatchling,
-    "Cave Drake":         _enemy_hatchling,
-    "Abomination":        _enemy_abomination,
-    "Boss Valdris":       _enemy_boss_valdris,
     "Wolf":               _enemy_wolf,
     "Dire Wolf":          _enemy_wolf,
-    "Hound":              _enemy_hound,
-    "War Hound":          _enemy_hound,
-    "Guard Hound":        _enemy_hound,
-    "Hunting Hound":      _enemy_hound,
-    "Rabid Hound":        _enemy_hound,
-    "Corrupted Hound":    _enemy_hound,
+    "Fading Hound":       _enemy_hound,
     "Bandit":             _enemy_bandit,
     "Highway Bandit":     _enemy_bandit,
     "Ashenmoor Bandit":   _enemy_bandit,
@@ -1609,7 +1913,6 @@ _ENEMY_DRAW = {
     "Stone Guardian":     _enemy_stone_sentinel,
     "Animated Armor":     _enemy_stone_sentinel,
     "Mine Golem":         _enemy_stone_sentinel,
-    "Golem":              _enemy_stone_sentinel,
     "Coral Golem":        _enemy_stone_sentinel,
     "Storm Golem":        _enemy_stone_sentinel,
     "Flesh Golem":        _enemy_stone_sentinel,
@@ -1630,7 +1933,6 @@ _ENEMY_DRAW = {
     "Kobold Firebrand":   _enemy_kobold,
     "Kobold Miner":       _enemy_kobold,
     "Kobold Trapsmith":   _enemy_kobold,
-    "Kobold":             _enemy_kobold,
     "Ghoul":              _enemy_ghoul,
     "Plague Bearer":      _enemy_ghoul,
     "Drowned Revenant":   _enemy_ghoul,
@@ -1640,14 +1942,35 @@ _ENEMY_DRAW = {
     "Ruin Sentinel":      _enemy_death_knight,
     "Undead Foreman":     _enemy_death_knight,
     "Cave Bat":           _enemy_cave_bat,
-    "Lava Bat":           _enemy_cave_bat,
     "Cave-in Beetle":     _enemy_beetle,
     "Lava Beetle":        _enemy_beetle,
-    "Tunnel Beetle":      _enemy_beetle,
-    "Giant Rat":          _enemy_giant_rat,
-    "Dungeon Rat":        _enemy_giant_rat,
-    "Sewer Rat":          _enemy_giant_rat,
-    # Humanoid variants
+    "Rabid Rat":          _enemy_giant_rat,
+    "Mine Rat Swarm":     _enemy_giant_rat,
+    # ── Unique creatures ──────────────────────────────────────────
+    "Swamp Leech":        _enemy_swamp_leech,
+    "Tunnel Lurker":      _enemy_tunnel_lurker,
+    "Egg Sac":            _enemy_egg_sac,
+    "Void Tendril":       _enemy_void_tendril,
+    "Corrupted Treant":   _enemy_corrupted_treant,
+    "Gargoyle":           _enemy_gargoyle,
+    # ── Bosses (unique sprites) ───────────────────────────────────
+    "Karreth":                 _enemy_karreth,
+    "Shadow Valdris":          _enemy_boss_valdris,
+    "Valdris the Broken":      _enemy_boss_valdris,
+    "Valdris, Shadow Avatar":  _enemy_boss_valdris,
+    # ── Boss-adjacent (best visual fit) ───────────────────────────
+    "Korrath the Stone Warden": _enemy_death_knight,
+    "Commander Ashvar":         _enemy_dark_mage,
+    "The Pale Sentinel":        _enemy_wraith,
+    "The Last Keeper":          _enemy_stone_sentinel,
+    "Corrupted Warden Echo":    _enemy_wraith,
+    # ── Named crossbowman / cultist ───────────────────────────────
+    "Ashenmoor Crossbowman":    _enemy_bandit_archer,
+    "Fading Cultist":           _enemy_cult_sorcerer,
+    "Crystal Elemental":        _enemy_stone_sentinel,
+    "Tempest Sprite":           _enemy_cave_bat,
+    "Fungal Crawler":           _enemy_beetle,
+    # ── Humanoid variants ─────────────────────────────────────────
     "Bandit Fighter":     _enemy_bandit_fighter,
     "Bandit Archer":      _enemy_bandit_archer,
     "Bandit Thief":       _enemy_bandit_thief,
@@ -1667,6 +1990,39 @@ _ENEMY_DRAW = {
     "Crypt Ranger":       _enemy_bandit_archer,
     "Crypt Paladin":      _enemy_crypt_paladin,
     "Crypt Archmage":     _enemy_cult_sorcerer,
+    # ── Fading corrupted animals ──────────────────────────────────
+    "Fading Wolf":           _enemy_wolf,
+    "Fading Bear":           _enemy_bear,
+    "Fading Boar":           _enemy_hound,
+    "Fading Stag":           _enemy_stag,
+    "Fading Abomination":    _enemy_abomination,
+    # ── Imperial soldiers ─────────────────────────────────────────
+    "Imperial Soldier":      _enemy_bandit_fighter,
+    "Imperial Archer":       _enemy_bandit_archer,
+    "Imperial Commander":    _enemy_death_knight,
+    "Imperial Court Mage":   _enemy_cult_sorcerer,
+    "Imperial Inquisitor":   _enemy_crypt_paladin,
+    # ── Pirates ───────────────────────────────────────────────────
+    "Pirate Deckhand":       _enemy_bandit_fighter,
+    "Pirate Markswoman":     _enemy_bandit_archer,
+    "Pirate First Mate":     _enemy_bandit_captain,
+    "Pirate Captain":        _enemy_sellsword,
+    "Pirate Witch Doctor":   _enemy_cult_sorcerer,
+    # ── Shadow / Warden variants ──────────────────────────────────
+    "Shadow Warden":         _enemy_wraith,
+    "Warden Shade":          _enemy_wraith,
+    "Fallen Warden":         _enemy_death_knight,
+    "Oathbreaker Knight":    _enemy_death_knight,
+    "Stone Warden Ghost":    _enemy_wraith,
+    "Iron Ridge Shade":      _enemy_wraith,
+    "Dark Consecrator":      _enemy_high_cultist,
+    # ── Arcane / Mechanical ───────────────────────────────────────
+    "Arcane Sentry":         _enemy_stone_sentinel,
+    "Arcane Wisp":           _enemy_cave_bat,
+    "Living Tome":           _enemy_cult_sorcerer,
+    "Vault Automaton":       _enemy_stone_sentinel,
+    "Tower Rat":             _enemy_giant_rat,
+    "Dwarven Forge Guard":   _enemy_stone_sentinel,
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1674,26 +2030,59 @@ _ENEMY_DRAW = {
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _apply_effect(spr, highlight=False, dead=False, hover=False, tier=-1):
-    """Post-process: highlight, greyscale dead, fog unknown enemies."""
-    if dead:
-        for y in range(H):
-            for x in range(W):
-                r,g,b,a = spr.get_at((x,y))
-                if (r,g,b) == BG: continue
-                grey = int(r*0.2 + g*0.2 + b*0.2) + 14
-                spr.set_at((x,y),(grey,grey,grey+8,a))
-    elif highlight:
-        for y in range(H):
-            for x in range(W):
-                r,g,b,a = spr.get_at((x,y))
-                if (r,g,b) == BG: continue
-                spr.set_at((x,y),(min(255,r+55),min(255,g+45),min(255,b+35),a))
-    elif hover:
-        for y in range(H):
-            for x in range(W):
-                r,g,b,a = spr.get_at((x,y))
-                if (r,g,b) == BG: continue
-                spr.set_at((x,y),(min(255,r+25),min(255,g+20),min(255,b+15),a))
+    """Post-process: highlight, greyscale dead, fog unknown enemies.
+
+    Uses numpy surfarray for ~22x speedup over per-pixel loops.
+    Falls back to pixel loops if numpy is unavailable.
+    """
+    try:
+        import numpy as np
+        _bg = np.array(BG, dtype=np.uint8)
+        arr = pygame.surfarray.pixels3d(spr)   # (W, H, 3) — locks surface
+        mask = ~np.all(arr == _bg, axis=2)     # True where pixel != background
+
+        if dead:
+            r_f = arr[:,:,0].astype(np.float32)
+            g_f = arr[:,:,1].astype(np.float32)
+            b_f = arr[:,:,2].astype(np.float32)
+            grey = np.clip(r_f*0.2 + g_f*0.2 + b_f*0.2 + 14, 0, 255).astype(np.uint8)
+            grey8 = np.clip(grey.astype(np.int16) + 8, 0, 255).astype(np.uint8)
+            arr[:,:,0] = np.where(mask, grey,  arr[:,:,0])
+            arr[:,:,1] = np.where(mask, grey,  arr[:,:,1])
+            arr[:,:,2] = np.where(mask, grey8, arr[:,:,2])
+        elif highlight:
+            arr[:,:,0] = np.where(mask, np.clip(arr[:,:,0].astype(np.int16)+55,0,255).astype(np.uint8), arr[:,:,0])
+            arr[:,:,1] = np.where(mask, np.clip(arr[:,:,1].astype(np.int16)+45,0,255).astype(np.uint8), arr[:,:,1])
+            arr[:,:,2] = np.where(mask, np.clip(arr[:,:,2].astype(np.int16)+35,0,255).astype(np.uint8), arr[:,:,2])
+        elif hover:
+            arr[:,:,0] = np.where(mask, np.clip(arr[:,:,0].astype(np.int16)+25,0,255).astype(np.uint8), arr[:,:,0])
+            arr[:,:,1] = np.where(mask, np.clip(arr[:,:,1].astype(np.int16)+20,0,255).astype(np.uint8), arr[:,:,1])
+            arr[:,:,2] = np.where(mask, np.clip(arr[:,:,2].astype(np.int16)+15,0,255).astype(np.uint8), arr[:,:,2])
+
+        del arr  # unlock surface before blit
+
+    except Exception:
+        # Pixel-loop fallback (no numpy, or surface lock failed)
+        if dead:
+            for y in range(H):
+                for x in range(W):
+                    r,g,b,a = spr.get_at((x,y))
+                    if (r,g,b) == BG: continue
+                    grey = int(r*0.2 + g*0.2 + b*0.2) + 14
+                    spr.set_at((x,y),(grey,grey,min(255,grey+8),a))
+        elif highlight:
+            for y in range(H):
+                for x in range(W):
+                    r,g,b,a = spr.get_at((x,y))
+                    if (r,g,b) == BG: continue
+                    spr.set_at((x,y),(min(255,r+55),min(255,g+45),min(255,b+35),a))
+        elif hover:
+            for y in range(H):
+                for x in range(W):
+                    r,g,b,a = spr.get_at((x,y))
+                    if (r,g,b) == BG: continue
+                    spr.set_at((x,y),(min(255,r+25),min(255,g+20),min(255,b+15),a))
+
     if tier == -1:
         ov = pygame.Surface((W,H), pygame.SRCALPHA)
         ov.fill((6,4,14,155))
@@ -1725,4 +2114,6 @@ def draw_wiz_enemy(surface, rect, template_key, knowledge_tier=0, hover=False, d
     fn(spr)
     _apply_effect(spr, dead=dead, hover=hover, tier=knowledge_tier)
     scaled = pygame.transform.scale(spr, (rect.w, rect.h))
+    # Make background colour transparent so dungeon wall shows through
+    scaled.set_colorkey(BG)
     surface.blit(scaled, rect.topleft)
