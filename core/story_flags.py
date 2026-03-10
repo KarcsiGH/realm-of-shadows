@@ -291,6 +291,9 @@ def auto_advance_quests(party=None):
         _flags["act"] = 2
     if current_act < 3 and _flags.get("maren.left"):
         _flags["act"] = 3
+        # Safety net: start the Spire quest if it wasn't started via Varek dialogue
+        if not _flags.get("quest.main_act3_spire.state"):
+            start_quest("main_act3_spire")
 
     return completed_now
 

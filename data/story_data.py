@@ -2735,7 +2735,7 @@ NPC_DIALOGUES = {
         # Act 3 — Sanctum under pressure, Aldara near breaking
         {
             "conditions": [
-                {"flag": "quest.main_act3_spire.state", "op": ">=", "value": 1},
+                {"flag": "maren.left", "op": "==", "value": True},
             ],
             "tree": {
                 "id": "aldara_act3",
@@ -3295,7 +3295,7 @@ NPC_DIALOGUES = {
         # Act 3 — the Fading is critical, Sira is doing final calculations
         {
             "conditions": [
-                {"flag": "quest.main_act3_spire.state", "op": ">=", "value": 1},
+                {"flag": "maren.left", "op": "==", "value": True},
             ],
             "tree": {
                 "id": "sira_act3",
@@ -5798,6 +5798,55 @@ _NEW_DIALOGUES = {
     ],
 
     "high_priest_aldara": [
+        # Act 3 — Sanctum under pressure, maren.left=True is the reliable gate
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "aldara_act3",
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "We have seen a thousand pilgrims a day since the eastern sky went dark. "
+                                "People want somewhere to pray. I cannot tell them their prayers will be enough. "
+                                "I can only tell them they are not alone in the dark.",
+                        "choices": [
+                            {"text": "Are you afraid?", "next": "afraid"},
+                            {"text": "We're going to the Spire.", "next": "spire"},
+                            {"text": "We need absolution before we go.", "next": "absolution"},
+                        ],
+                    },
+                    "afraid": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Every day for forty years I have stood in front of people in pain "
+                                "and told them the light holds. Today I believe it more than I ever have. "
+                                "Not because the evidence is good — it isn't. "
+                                "Because you are still standing.",
+                        "end": True,
+                    },
+                    "spire": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Then go. The Cathedral's blessing goes with you, "
+                                "for whatever weight that carries in a place of shadow. "
+                                "Come back. If you can, come back.",
+                        "on_enter": [{"action": "set_flag", "flag": "blessing.cathedral", "value": True}],
+                        "end": True,
+                    },
+                    "absolution": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Kneel, then. All of you. "
+                                "Whatever you have done, whatever choices you made to survive this far — "
+                                "you made them trying to save a world that doesn't deserve saving half as much "
+                                "as it deserves people like you trying to save it. "
+                                "Go. Be absolved.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "blessing.absolution", "value": True},
+                            {"action": "discover_lore", "lore": "aldara_absolution"},
+                        ],
+                        "end": True,
+                    },
+                },
+            },
+        },
         {
             "conditions": [{"flag": "lore.fading_basics", "op": "==", "value": True}],
             "tree": {
@@ -6655,6 +6704,7 @@ _NEW_DIALOGUES = {
                         "speaker": "Guild Commander Varek",
                         "text": "Three stones. I've had people watching — you've done what nobody else managed in a decade. There are two left. My operative found them: the Pale Coast Catacombs to the southwest, and the Windswept Isle ruins — accessible from the coast by ship. Get both. Then go north.",
                         "on_enter": [
+                            {"action": "start_quest", "quest": "main_act3_spire"},
                             {"action": "start_quest", "quest": "main_pale_coast"},
                             {"action": "start_quest", "quest": "main_windswept_isle"},
                         ],
@@ -6729,7 +6779,7 @@ _NEW_DIALOGUES = {
                     "not_stopping": {
                         "speaker": "Guild Commander Varek",
                         "text": "Good. I have an operative who's been tracking his supply routes for six months. I'll arrange a meeting. Don't mention this to the Council — half of them are his. When you're ready to move on the Spire, I can get you resources.",
-                        "on_exit": [
+                        "on_enter": [
                             {"action": "start_quest", "quest": "main_act3_spire"},
                             {"action": "set_flag", "flag": "lore.varek_contact", "value": True},
                         ],
@@ -6746,6 +6796,54 @@ _NEW_DIALOGUES = {
     ],
 
     "court_mage_sira": [
+        # Act 3 — Fading is critical, Sira doing final calculations
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "sira_act3",
+                "nodes": {
+                    "start": {
+                        "speaker": "Court Mage Sira",
+                        "text": "I have eight days of barrier integrity left on my projections. "
+                                "Maybe ten if you're lucky. After that the outer wards collapse entirely "
+                                "and the Fading accelerates beyond any ability to reverse it. "
+                                "Whatever Maren is attempting in that Spire — she's running the same "
+                                "numbers I am. She knows this too.",
+                        "choices": [
+                            {"text": "Is there anything you can do from here?", "next": "here"},
+                            {"text": "What happens if she fails?", "next": "fail"},
+                            {"text": "We're heading to the Spire now.", "next": "godspeed"},
+                        ],
+                    },
+                    "here": {
+                        "speaker": "Court Mage Sira",
+                        "text": "I've been feeding power into the ley lines for three days without sleep. "
+                                "It's like patching a crumbling dam with your hands. "
+                                "I can buy you hours, not days. "
+                                "Go. Be faster than the math.",
+                        "end": True,
+                    },
+                    "fail": {
+                        "speaker": "Court Mage Sira",
+                        "text": "If she fails and all five stones are spent? "
+                                "I think the Fading completes. Everything fades — "
+                                "not destroyed, not dead. Unmade. As if it never was. "
+                                "The records suggest it happened to three other worlds before this one.",
+                        "on_enter": [{"action": "discover_lore", "lore": "fading_other_worlds"}],
+                        "next": "godspeed",
+                    },
+                    "godspeed": {
+                        "speaker": "Court Mage Sira",
+                        "text": "For what it's worth — I've been running every calculation, "
+                                "every model, every simulation I know. "
+                                "Every version where the world survives has you at the center of it. "
+                                "That's not prophecy. It's just the only variable that keeps changing. "
+                                "Don't waste it.",
+                        "end": True,
+                    },
+                },
+            },
+        },
         {
             "conditions": [],
             "tree": {
