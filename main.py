@@ -541,10 +541,14 @@ class Game:
                     # Save button
                     save_btn = pygame.Rect(20, 40, 120, 40)
                     if save_btn.collidepoint(mx, my) and self.party:
-                        ok, path, msg = save_game(self.party)
+                        ok, path, msg = save_game(self.party,
+                                                  world_state=self.world_state)
                         self.save_msg = msg
                         self.save_msg_color = GREEN if ok else RED
                         self.save_msg_timer = 3000
+                        toast_col = (80, 200, 120) if ok else (220, 80, 80)
+                        toast_msg = "✓ Game saved." if ok else f"✗ Save failed: {msg}"
+                        self.add_toast(toast_msg, toast_col)
                         return
                     # Load button
                     load_btn = pygame.Rect(150, 40, 120, 40)
@@ -646,7 +650,14 @@ class Game:
                     elif result == "inn_save":
                         # Auto-save when resting at inn
                         try:
-                            save_game(self.party, world_state=self.world_state, slot_name="inn_autosave")
+                            ok, _path, _msg = save_game(
+                                self.party,
+                                world_state=self.world_state,
+                                slot_name="inn_autosave"
+                            )
+                            toast_col = (80, 200, 120) if ok else (220, 80, 80)
+                            toast_msg = "✓ Progress saved at inn." if ok else "✗ Autosave failed."
+                            self.add_toast(toast_msg, toast_col)
                         except Exception:
                             pass  # save is best-effort
                 elif e.button == 4:
