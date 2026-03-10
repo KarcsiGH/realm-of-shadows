@@ -12,9 +12,15 @@ from core.identification import (
     get_identify_options, attempt_identify,
     get_item_display_name, get_item_display_desc,
     can_arcane_lore, can_appraisal,
-    ARCANE_LORE_TRAINED as ARCANE_LORE_CLASSES,
-    APPRAISAL_TRAINED as APPRAISAL_CLASSES,
 )
+# Defined inline to avoid version-sensitive imports from identification.py
+ARCANE_LORE_CLASSES = {
+    "Mage", "Witch", "Necromancer", "Druid", "Mystic", "Spellblade",
+    "Archmage", "Cleric", "High Priest", "Warder", "Spellthief", "Sage", "Warlock",
+}
+APPRAISAL_CLASSES = {
+    "Thief", "Ranger", "Assassin", "Shadow Master", "Phantom", "Spellthief", "Merchant",
+}
 from core.classes import CLASSES, STAT_NAMES, STAT_FULL_NAMES
 
 # ═══════════════════════════════════════════════════════════════
