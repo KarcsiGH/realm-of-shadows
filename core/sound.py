@@ -323,6 +323,10 @@ def _generate_all_sounds():
     _sounds["debuff"]       = _make_sound(_sweep(720, 180, 0.55, 0.26))
     _sounds["death"]        = _make_sound(_mix(
         _sweep(380, 65, 0.80, 0.32), _noise(0.50, 0.16)))
+    # Enemy death: quick descending thud — distinct from player death sweep
+    _sounds["enemy_death"]  = _make_sound(_concat(
+        _mix(_noise(0.16, 0.42), _sine(140, 0.22, 0.16)),
+        _sweep(280, 80, 0.30, 0.22)))
     _sounds["victory"]      = _make_sound(_concat(
         _sine(523, 0.18, 0.32), _sine(659, 0.18, 0.32),
         _sine(784, 0.18, 0.32), _sine(1047, 0.40, 0.38)))
@@ -337,11 +341,15 @@ def _generate_all_sounds():
 
     # ── Dungeon ─────────────────────────────────────────────────
     _sounds["door_open"] = _make_sound(_concat(
+        # Quick wooden creak (0.18s) — the hinge, not a long scrape
+        _creak(0.18, 280, 80, volume=0.30, slip_count=4, seed=7),
+        # Brief mid-frequency wood-on-wood grind as door moves (0.14s)
         _mix(
-            _creak(1.5, 380, 90,  volume=0.28, slip_count=10, seed=7),
-            _bandpass_noise(1.5, 140, 60, volume=0.06, seed=21),
+            _creak(0.14, 180, 60, volume=0.18, slip_count=3, seed=23),
+            _bandpass_noise(0.14, 220, 80, volume=0.05, seed=31),
         ),
-        _silence(0.05), _thud(0.14, 0.14),
+        # Door settles: low thud as it opens fully
+        _silence(0.04), _thud(0.12, 0.18),
     ))
     _sounds["treasure_open"] = _make_sound(_concat(
         _creak(0.45, 620, 140, volume=0.25, slip_count=7, seed=33),
@@ -504,25 +512,37 @@ def _generate_all_sounds():
     )
     mel = phA + phB + phC + phB2
 
-    # ── Counter-melody: simple harmony above melody ────────────
-    #  Only active on even bars (alternating), adds texture without clutter
+    # ── Counter-melody: low harmony below the melody ───────────
+    # Stays in the lower register (G3–D4) so it warms the sound
+    # rather than adding shrillness. Sparse — rests on most bars.
     def _rest(d): return _sil(d)
+    # Use the plucked lute for a rounder tone in the harmony voice
+    def _hmny(freq, dur, vol=0.07):
+        """Soft held harmony note — sine with gentle envelope."""
+        n = int(SR * dur)
+        out = []
+        for i in range(n):
+            t   = i / SR
+            env = math.sin(math.pi * t / dur) ** 0.55
+            v   = math.sin(2 * math.pi * freq * t) + math.sin(2 * math.pi * freq * 2 * t) * 0.12
+            out.append(max(-32767, min(32767, int(32000 * vol * env * v))))
+        return out
+    D4 = D3 * 2    # 293.7 Hz
+    E4 = E3 * 2    # 329.6 Hz
+    B3 = 246.9
     ctr = (
-        # Phrase A harmony
-        _rest(bar)+_flute2(E5,beat)+_flute2(D5,beat)+_flute2(C5,beat) +    # bars 1-2
-        _rest(bar)+_flute2(B4,bar) +                                         # bars 3-4
-        _flute2(G4,beat)+_flute2(A4,beat)+_flute2(B4,beat) +                # bar 5
-        _rest(bar)+_flute2(C5,bar)+_rest(bar) +                              # bars 6-8
-        # Phrase B harmony
-        _flute2(E5,bar)+_rest(bar)+_flute2(D5,bar)+_rest(bar) +             # bars 9-12
-        _flute2(C5,beat)+_flute2(D5,beat)+_flute2(C5,beat) +                # bar 13
-        _rest(bar)+_flute2(B4,bar)+_rest(bar) +                              # bars 14-16
-        # Phrase C harmony
-        _flute2(G5 := G4*2,bar)+_rest(bar)+_flute2(E5,bar)+_rest(bar) +    # bars 17-20
-        _flute2(D5,bar)+_rest(bar)+_flute2(C5,bar)+_rest(bar) +             # bars 21-24
-        # Phrase B2 harmony
-        _flute2(E5,bar)+_rest(bar)+_flute2(D5,bar)+_rest(bar) +             # bars 25-28
-        _flute2(C5,bar)+_rest(bar)+_flute2(B4,bar)+_rest(bar)               # bars 29-32
+        # Phrase A — soft low harmony on key bars only
+        _rest(bar)+_hmny(D4,bar)+_rest(bar)+_hmny(B3,bar) +         # bars 1-4
+        _rest(bar)+_hmny(E4,bar)+_rest(bar)+_rest(bar) +             # bars 5-8
+        # Phrase B — sparse root support
+        _hmny(E4,bar)+_rest(bar)+_hmny(D4,bar)+_rest(bar) +         # bars 9-12
+        _hmny(E4,bar)+_rest(bar)+_hmny(D4,bar)+_rest(bar) +         # bars 13-16
+        # Phrase C — stay low, no high register
+        _hmny(D4,bar)+_rest(bar)+_hmny(E4,bar)+_rest(bar) +         # bars 17-20
+        _hmny(D4,bar)+_rest(bar)+_hmny(E4,bar)+_rest(bar) +         # bars 21-24
+        # Phrase B2 — mirror of B
+        _hmny(E4,bar)+_rest(bar)+_hmny(D4,bar)+_rest(bar) +         # bars 25-28
+        _hmny(D4,bar)+_rest(bar)+_hmny(B3,bar)+_rest(bar)           # bars 29-32
     )
 
     # ── Bass: root on 1, fifth on 3 of each bar × 32 bars ─────

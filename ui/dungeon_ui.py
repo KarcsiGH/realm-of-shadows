@@ -1716,6 +1716,27 @@ class DungeonUI:
             self._pending_event = None
             return ev
 
+        # ESC dismisses any active modal/confirm first
+        if key == pygame.K_ESCAPE:
+            if self.show_stairs_confirm:
+                self.show_stairs_confirm = False
+                return None
+            if self.show_camp_confirm:
+                self.show_camp_confirm = False
+                return None
+            if self.chest_modal:
+                step = self.chest_modal.get("step", "approach")
+                if step in ("pick_searcher",):
+                    self.chest_modal["step"] = "approach"
+                elif step in ("pick_disarmer",):
+                    self.chest_modal["step"] = "search_result"
+                elif step in ("approach", "search_result", "disarm_result"):
+                    self.chest_modal = None
+                else:
+                    self.chest_modal = None
+                return None
+            return None
+
         if self.show_camp_confirm or self.show_stairs_confirm or self.chest_modal:
             return None
 

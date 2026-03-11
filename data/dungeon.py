@@ -1246,6 +1246,8 @@ class DungeonState:
                 continue
             if _e["x"] == nx and _e["y"] == ny:
                 # Don't move; start combat with this enemy immediately
+                # Track position so post-combat cleanup can kill it on the map
+                self._last_contact_enemy = (nx, ny)
                 enc_event = {
                     "type": "random_encounter",
                     "dungeon_id": self.dungeon_id,

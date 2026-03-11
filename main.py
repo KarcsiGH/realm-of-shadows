@@ -2536,7 +2536,11 @@ class Game:
                     sfx.play("hit_physical")
                 # Play death sound if a player just went down
                 if result.get("defender", {}).get("alive") is False:
-                    sfx.play("death")
+                    tgt2 = result.get("defender", {})
+                    if tgt2.get("type") == "enemy":
+                        sfx.play("enemy_death")
+                    else:
+                        sfx.play("death")
                 self.enemy_turn_delay = 0
                 self.combat_ui.enemy_anim_timer = 0
 
@@ -3622,7 +3626,7 @@ class Game:
 
         elif event["type"] == "camp_rest_execute":
             # Actual rest execution (called from _end_camp)
-            import random
+            # random already imported at module level
             ambush_chance = 25 + self.dungeon_state.current_floor * 5
             for c in self.party:
                 if c.class_name == "Ranger":
@@ -3754,7 +3758,11 @@ class Game:
                 sfx.play("hit_physical")
             # Enemy killed?
             if result and result.get("defender", {}).get("alive") is False:
-                sfx.play("death")
+                tgt = result.get("defender", {})
+                if tgt.get("type") == "enemy":
+                    sfx.play("enemy_death")
+                else:
+                    sfx.play("death")
         elif action["type"] == "defend":
             self.combat_state.execute_player_action("defend")
             sfx.play("block")
