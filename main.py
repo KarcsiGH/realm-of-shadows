@@ -3270,9 +3270,8 @@ class Game:
 
             elif subtype == "cursed_altar":
                 data["used"] = True
-                import random as _rmod
                 buff_chance = data.get("buff_chance", 0.55)
-                if _rmod.random() < buff_chance:
+                if random.random() < buff_chance:
                     # Good outcome — temporary HP boost
                     bonus = data.get("buff_hp", 20)
                     for c in self.party:
@@ -3456,7 +3455,6 @@ class Game:
             sfx.play("trap_trigger")
             trap     = event["trap_data"]
             chest_ev = event["chest_ev"]
-            import random as rmod
             from data.dungeon import resolve_trap_saving_throw
             from core.status_effects import add_poison, add_curse
 
@@ -3560,7 +3558,6 @@ class Game:
             trap_name = data.get("name", "Trap")
             trap_target = data.get("target", "single")
             was_detected = data.get("detected", False)
-            import random as rmod
             from data.dungeon import resolve_trap_saving_throw
             from core.status_effects import add_poison, add_curse
 
@@ -3568,7 +3565,7 @@ class Game:
             if trap_target == "area":
                 targets = list(self.party)
             else:
-                targets = [rmod.choice(self.party)]
+                targets = [random.choice(self.party)]
 
             # Apply damage with saving throws
             results = []
@@ -3597,7 +3594,7 @@ class Game:
                     target.resources["HP"] = target.resources.get("HP", 0) - actual_dmg
                     results.append(f"{target.name}: {actual_dmg} dmg")
                     # Poison traps also apply poison on full hit (50% chance)
-                    if data.get("poison") and rmod.random() < 0.5:
+                    if data.get("poison") and random.random() < 0.5:
                         add_poison(target, data["poison"])
                         sfx.play("poison")
                         results.append(f"{target.name} poisoned!")
