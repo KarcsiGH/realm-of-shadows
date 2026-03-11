@@ -694,6 +694,10 @@ class Game:
                     self.combat_ui.handle_scroll(-1)
                 elif e.button == 5:
                     self.combat_ui.handle_scroll(1)
+            elif e.type == pygame.KEYDOWN:
+                action = self.combat_ui.handle_key(e.key)
+                if action:
+                    self.process_combat_action(action)
 
         elif self.state == S_POST_COMBAT:
             if e.type == pygame.MOUSEBUTTONDOWN:
@@ -3770,6 +3774,13 @@ class Game:
             result = self.combat_state.execute_player_action(
                 "ability", target=action["target"], ability=action["ability"]
             )
+            # Show resource cost flash so player can see MP/SP being spent
+            if result:
+                rsrc = result.get("_resource_spent")
+                if rsrc:
+                    rk, cost, remaining = rsrc
+                    short = rk.split("-")[-1]  # "INT-MP" → "MP", "DEX-SP" → "SP"
+                    self.combat_ui.add_flash(f"−{cost} {short} ({remaining} left)", (180, 140, 220))
             # Pick sound and flash color based on ability type
             ab = action.get("ability", {})
             ab_type = ab.get("type", "") if isinstance(ab, dict) else ""
@@ -3783,6 +3794,10 @@ class Game:
                 "holy": (255, 245, 180), "shadow": (180, 80, 240),
                 "poison": (130, 215, 65),
             }
+            # Determine if ability is physical (STR-SP / DEX-SP / Ki) or magical (MP)
+            ab_resource = ab.get("resource", "") if isinstance(ab, dict) else ""
+            is_physical_skill = any(x in ab_resource for x in ("STR-SP", "DEX-SP", "Ki"))
+
             if ab_type in ("heal", "aoe_heal"):
                 sfx.play("heal")
                 if result:
@@ -3796,13 +3811,17 @@ class Game:
                 sfx.play("debuff")
                 self.combat_ui.add_flash(f"↓ {ab_name}!", (220, 160, 60))
             else:
-                sfx.play("hit_magic")
+                # Physical skills get a heavy impact sound; spells get the magic sound
+                if is_physical_skill:
+                    sfx.play("hit_skill")
+                else:
+                    sfx.play("hit_magic")
                 if result and result.get("hit") is False:
                     self.combat_ui.add_flash(f"{ab_name} — RESISTED!", (150, 120, 180))
                 elif result:
                     dmg = result.get("damage", 0)
                     is_crit = result.get("is_crit", False)
-                    col = _ELEM_COL.get(ab_elem, (200, 160, 255))
+                    col = _ELEM_COL.get(ab_elem, (200, 160, 255)) if not is_physical_skill else (220, 180, 80)
                     if is_crit:
                         self.combat_ui.add_flash(f"✦ CRITICAL! {ab_name} {dmg}", (255, 215, 40))
                     elif ab_type == "aoe":

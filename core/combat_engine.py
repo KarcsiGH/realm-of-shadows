@@ -888,6 +888,8 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             )
             return result
         attacker["resources"][resource_key] -= cost
+        # Log the resource spend so the player can see it clearly
+        result["_resource_spent"] = (resource_key, cost, attacker["resources"][resource_key])
 
     # Passives are always-on — never directly executable
     if ability.get("type") == "passive":
