@@ -95,38 +95,73 @@ def auto_identify_mundane(item):
 
 ARCANE_LORE_COST = 5       # MP cost
 APPRAISAL_COST = 3         # SP cost
+DIVINE_LORE_COST = 4       # PIE-MP cost for religious item identification
 RETRY_COST_MULT = 1.5      # each retry on the same item costs 1.5× more
 
 # Difficulty scaling
 ARCANE_DIFF_SCALE = 10     # difficulty × this = target number
 APPRAISAL_DIFF_SCALE = 8
+DIVINE_DIFF_SCALE = 8
+
+# INT threshold: any class can attempt Arcane Lore if INT meets this
+INT_IDENTIFY_THRESHOLD = 10
+
+# PIE threshold: any class can attempt Divine Lore if PIE meets this
+PIE_DIVINE_THRESHOLD = 10
 
 
 # ═══════════════════════════════════════════════════════════════
 #  CLASS CAPABILITIES
 # ═══════════════════════════════════════════════════════════════
 
-# Classes that can use Arcane Lore (magic identification)
-ARCANE_LORE_CLASSES = {
+# Classes with trained Arcane Lore get bonus to the roll
+ARCANE_LORE_TRAINED = {
     # class_name: resource_key used for the cost
-    "Mage":       "INT-MP",
-    "Cleric":     "PIE-MP",
-    # Future hybrid classes
+    "Mage":        "INT-MP",
+    "Cleric":      "PIE-MP",
     "Battlemage":  "INT-MP",
     "Spellthief":  "INT-MP",
     "Sage":        "INT-MP",
     "Warlock":     "INT-MP",
+    "Witch":       "INT-MP",
+    "Necromancer": "INT-MP",
+    "Druid":       "INT-MP",
+    "Mystic":      "INT-MP",
+    "Spellblade":  "INT-MP",
+    "Archmage":    "INT-MP",
+    "High Priest": "PIE-MP",
 }
 
-# Classes that can use Appraisal (material/value identification)
-APPRAISAL_CLASSES = {
+# Classes with trained Appraisal get bonus
+APPRAISAL_TRAINED = {
     "Thief":      "DEX-SP",
     "Ranger":     "DEX-SP",
-    # Future hybrid classes
     "Assassin":   "DEX-SP",
     "Spellthief": "DEX-SP",
     "Merchant":   "DEX-SP",
+    "Shadow Master": "DEX-SP",
 }
+
+# Classes with trained Divine Lore
+DIVINE_LORE_TRAINED = {
+    "Cleric":      "PIE-MP",
+    "Paladin":     "PIE-MP",
+    "Templar":     "PIE-MP",
+    "Inquisitor":  "PIE-MP",
+    "Warden":      "PIE-MP",   # Warden hybrid class
+    "High Priest": "PIE-MP",
+    "Knight":      "PIE-MP",
+}
+
+# For untrained classes: which resource to drain for identification attempts
+# (falls back to first available MP-type resource)
+def _find_mp_resource(combatant):
+    """Find the first available MP-type resource, or None."""
+    resources = combatant.get("resources", {})
+    for rk in ("INT-MP", "PIE-MP", "WIS-MP", "MP"):
+        if rk in resources:
+            return rk
+    return None
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -134,69 +169,93 @@ APPRAISAL_CLASSES = {
 # ═══════════════════════════════════════════════════════════════
 
 def can_arcane_lore(combatant):
-    """Check if this character can perform Arcane Lore identification."""
+    """Any character with INT >= threshold can attempt Arcane Lore.
+    Returns (can_attempt, resource_key, cost, is_trained)."""
+    int_val = combatant.get("stats", {}).get("INT", 0)
     cls = combatant.get("class_name", "")
-    if cls not in ARCANE_LORE_CLASSES:
-        return False, None, 0
-    resource_key = ARCANE_LORE_CLASSES[cls]
+    if int_val < INT_IDENTIFY_THRESHOLD:
+        return False, None, 0, False
+    is_trained = cls in ARCANE_LORE_TRAINED
+    resource_key = ARCANE_LORE_TRAINED.get(cls) or _find_mp_resource(combatant)
+    if not resource_key:
+        return False, None, 0, False
     current = combatant.get("resources", {}).get(resource_key, 0)
-    if combatant.get("max_resources"):
-        current = combatant["resources"].get(resource_key, 0)
-    cost = ARCANE_LORE_COST
-    return current >= cost, resource_key, cost
+    return current >= ARCANE_LORE_COST, resource_key, ARCANE_LORE_COST, is_trained
 
 
 def can_appraisal(combatant):
-    """Check if this character can perform Appraisal identification."""
+    """Trained Appraisal classes get full access; any character with INT >= threshold
+    can attempt a basic material appraisal using their resource pool.
+    Returns (can_attempt, resource_key, cost, is_trained)."""
     cls = combatant.get("class_name", "")
-    if cls not in APPRAISAL_CLASSES:
-        return False, None, 0
-    resource_key = APPRAISAL_CLASSES[cls]
+    int_val = combatant.get("stats", {}).get("INT", 0)
+    is_trained = cls in APPRAISAL_TRAINED
+    if not is_trained and int_val < INT_IDENTIFY_THRESHOLD:
+        return False, None, 0, False
+    resource_key = APPRAISAL_TRAINED.get(cls) or _find_mp_resource(combatant)
+    if not resource_key:
+        return False, None, 0, False
     current = combatant.get("resources", {}).get(resource_key, 0)
-    if combatant.get("max_resources"):
-        current = combatant["resources"].get(resource_key, 0)
-    cost = APPRAISAL_COST
-    return current >= cost, resource_key, cost
+    return current >= APPRAISAL_COST, resource_key, APPRAISAL_COST, is_trained
+
+
+def can_divine_lore(combatant):
+    """Any character with PIE >= threshold can attempt Divine Lore (religious items).
+    Returns (can_attempt, resource_key, cost, is_trained)."""
+    pie_val = combatant.get("stats", {}).get("PIE", 0)
+    cls = combatant.get("class_name", "")
+    if pie_val < PIE_DIVINE_THRESHOLD:
+        return False, None, 0, False
+    is_trained = cls in DIVINE_LORE_TRAINED
+    resource_key = DIVINE_LORE_TRAINED.get(cls) or _find_mp_resource(combatant)
+    if not resource_key:
+        return False, None, 0, False
+    current = combatant.get("resources", {}).get(resource_key, 0)
+    return current >= DIVINE_LORE_COST, resource_key, DIVINE_LORE_COST, is_trained
 
 
 def can_full_identify(combatant):
     """Check if character can do both Arcane Lore and Appraisal."""
-    can_arc, arc_res, arc_cost = can_arcane_lore(combatant)
-    can_app, app_res, app_cost = can_appraisal(combatant)
+    can_arc, arc_res, arc_cost, _ = can_arcane_lore(combatant)
+    can_app, app_res, app_cost, _ = can_appraisal(combatant)
     return can_arc and can_app, arc_res, arc_cost, app_res, app_cost
 
 
-def get_identify_options(combatant):
+def get_identify_options(combatant, item=None):
     """Return list of identification actions available to this character.
     Each entry: (action_name, description, can_afford)"""
     options = []
+    is_relic = item and item.get("subtype") in ("relic", "holy_symbol", "divine_focus",
+                                                  "sacred_text", "blessed_item")
 
-    can_arc, arc_res, arc_cost = can_arcane_lore(combatant)
-    cls = combatant.get("class_name", "")
-
-    if cls in ARCANE_LORE_CLASSES:
+    can_arc, arc_res, arc_cost, arc_trained = can_arcane_lore(combatant)
+    if arc_res:
+        label = "Arcane Lore" if arc_trained else "Scrutinize"
         options.append({
             "action": "arcane_lore",
-            "name": "Arcane Lore",
-            "description": f"Reveal magical properties ({arc_cost} {arc_res})",
+            "name": label,
+            "description": f"Reveal magical properties ({arc_cost} {arc_res})"
+                           + ("" if arc_trained else " — untrained"),
             "can_afford": can_arc,
             "cost": arc_cost,
             "resource": arc_res,
         })
 
-    can_app, app_res, app_cost = can_appraisal(combatant)
-    if cls in APPRAISAL_CLASSES:
+    can_app, app_res, app_cost, app_trained = can_appraisal(combatant)
+    if app_res:
+        label = "Appraisal" if app_trained else "Examine"
         options.append({
             "action": "appraisal",
-            "name": "Appraisal",
-            "description": f"Reveal material & value ({app_cost} {app_res})",
+            "name": label,
+            "description": f"Reveal material & value ({app_cost} {app_res})"
+                           + ("" if app_trained else " — untrained"),
             "can_afford": can_app,
             "cost": app_cost,
             "resource": app_res,
         })
 
     # Full identify only if character has both capabilities
-    if cls in ARCANE_LORE_CLASSES and cls in APPRAISAL_CLASSES:
+    if arc_res and app_res:
         can_full = can_arc and can_app
         options.append({
             "action": "full_identify",
@@ -207,6 +266,21 @@ def get_identify_options(combatant):
             "resource": (arc_res, app_res),
         })
 
+    # Divine Lore for religious items
+    if is_relic or (item is None):  # show option if item unknown or is a relic
+        can_div, div_res, div_cost, div_trained = can_divine_lore(combatant)
+        if div_res:
+            label = "Divine Lore" if div_trained else "Sense Divinity"
+            options.append({
+                "action": "divine_lore",
+                "name": label,
+                "description": f"Reveal sacred properties ({div_cost} {div_res})"
+                               + ("" if div_trained else " — untrained"),
+                "can_afford": can_div,
+                "cost": div_cost,
+                "resource": div_res,
+            })
+
     return options
 
 
@@ -214,15 +288,17 @@ def get_identify_options(combatant):
 #  IDENTIFICATION ROLLS
 # ═══════════════════════════════════════════════════════════════
 
-def roll_arcane_lore(combatant, item):
+def roll_arcane_lore(combatant, item, is_trained=False):
     """Attempt Arcane Lore identification.
+    Trained classes get a bonus. Higher INT = better chance.
     Returns (success, message)."""
     difficulty = item.get("identify_difficulty", 1)
     target = difficulty * ARCANE_DIFF_SCALE
 
     int_val = combatant.get("stats", {}).get("INT", 0)
     level = combatant.get("level", 1)
-    check = int_val + (level * 2) + random.randint(0, 5)
+    trained_bonus = 8 if is_trained else 0
+    check = int_val + (level * 2) + trained_bonus + random.randint(0, 5)
 
     if check >= target:
         item["magic_identified"] = True
@@ -231,7 +307,7 @@ def roll_arcane_lore(combatant, item):
         return False, f"{combatant['name']} senses magic but can't discern its nature."
 
 
-def roll_appraisal(combatant, item):
+def roll_appraisal(combatant, item, is_trained=False):
     """Attempt Appraisal identification.
     Returns (success, message)."""
     difficulty = item.get("identify_difficulty", 1)
@@ -240,7 +316,8 @@ def roll_appraisal(combatant, item):
     int_val = combatant.get("stats", {}).get("INT", 0)
     dex_val = combatant.get("stats", {}).get("DEX", 0)
     level = combatant.get("level", 1)
-    check = (int_val + dex_val) // 2 + (level * 2) + random.randint(0, 5)
+    trained_bonus = 6 if is_trained else 0
+    check = (int_val + dex_val) // 2 + (level * 2) + trained_bonus + random.randint(0, 5)
 
     if check >= target:
         item["material_identified"] = True
@@ -249,34 +326,62 @@ def roll_appraisal(combatant, item):
         return False, f"{combatant['name']} can't determine anything unusual about this."
 
 
+def roll_divine_lore(combatant, item, is_trained=False):
+    """Attempt Divine Lore identification (religious/sacred items).
+    PIE is the primary stat. Works on relics, holy symbols, sacred texts.
+    Returns (success, message)."""
+    difficulty = item.get("identify_difficulty", 1)
+    target = difficulty * DIVINE_DIFF_SCALE
+
+    pie_val = combatant.get("stats", {}).get("PIE", 0)
+    level = combatant.get("level", 1)
+    trained_bonus = 8 if is_trained else 0
+    check = pie_val + (level * 2) + trained_bonus + random.randint(0, 5)
+
+    if check >= target:
+        item["magic_identified"] = True
+        item["material_identified"] = True
+        item["identified"] = True
+        return True, f"{combatant['name']} senses the sacred resonance within."
+    else:
+        return False, f"{combatant['name']} feels a presence but cannot read its nature."
+
+
 def attempt_identify(combatant, item, action):
     """Perform an identification attempt. Deducts resources on attempt (hit or miss).
     
-    action: 'arcane_lore', 'appraisal', or 'full_identify'
+    action: 'arcane_lore', 'appraisal', 'full_identify', or 'divine_lore'
     Returns: (results_list, all_succeeded)
       results_list: [(check_name, success, message), ...]
     """
     results = []
 
     if action in ("arcane_lore", "full_identify"):
-        # Deduct MP cost
-        can_arc, arc_res, arc_cost = can_arcane_lore(combatant)
+        can_arc, arc_res, arc_cost, arc_trained = can_arcane_lore(combatant)
         if can_arc:
             combatant["resources"][arc_res] -= arc_cost
-            success, msg = roll_arcane_lore(combatant, item)
+            success, msg = roll_arcane_lore(combatant, item, arc_trained)
             results.append(("Arcane Lore", success, msg))
         else:
             results.append(("Arcane Lore", False, "Not enough resources."))
 
     if action in ("appraisal", "full_identify"):
-        # Deduct SP cost
-        can_app, app_res, app_cost = can_appraisal(combatant)
+        can_app, app_res, app_cost, app_trained = can_appraisal(combatant)
         if can_app:
             combatant["resources"][app_res] -= app_cost
-            success, msg = roll_appraisal(combatant, item)
+            success, msg = roll_appraisal(combatant, item, app_trained)
             results.append(("Appraisal", success, msg))
         else:
             results.append(("Appraisal", False, "Not enough resources."))
+
+    if action == "divine_lore":
+        can_div, div_res, div_cost, div_trained = can_divine_lore(combatant)
+        if can_div:
+            combatant["resources"][div_res] -= div_cost
+            success, msg = roll_divine_lore(combatant, item, div_trained)
+            results.append(("Divine Lore", success, msg))
+        else:
+            results.append(("Divine Lore", False, "Not enough resources."))
 
     # Check if fully identified
     if item.get("magic_identified") and item.get("material_identified"):
@@ -309,6 +414,89 @@ def get_item_display_name(item):
                         f"??? {item.get('type', 'Item')}"))
     else:
         return item.get("unidentified_name", f"??? {item.get('type', 'Item')}")
+
+
+def _auto_unidentified_desc(item):
+    """Generate a surface-level description for an unidentified item.
+    Reveals only visible traits: glow color, material feel, general shape.
+    Never reveals stats, enchants, or curses."""
+    base = item.get("unidentified_desc") or item.get("surface_desc")
+    if base:
+        return base
+    # Auto-generate from item type
+    itype = item.get("type", "")
+    name  = item.get("name", "").lower()
+    elem  = item.get("element", "") or item.get("enchant_element", "")
+    # Visual glow hint if enchanted but not identified
+    glow = ""
+    if elem == "fire":     glow = "It glows with an orange light."
+    elif elem == "ice":    glow = "It shimmers with frosty blue light."
+    elif elem == "lightning": glow = "It crackles faintly with electricity."
+    elif elem == "holy":   glow = "It radiates a soft golden warmth."
+    elif elem == "shadow": glow = "It seems to drink in the light around it."
+    elif elem == "nature": glow = "Faint green runes mark its surface."
+    elif elem == "poison": glow = "A sickly green shimmer coats it."
+    elif item.get("enhance_bonus") or item.get("magic_item"): glow = "It has a faint magical aura."
+    elif item.get("cursed"): glow = "Something feels wrong about it."  # vague, no curse spoiler
+    # Type hint
+    if itype == "weapon":
+        shape = "A weapon of unfamiliar make."
+    elif itype == "armor":
+        shape = "A piece of armor whose quality is unclear."
+    elif itype in ("ring", "amulet", "accessory"):
+        shape = f"An ornate {itype}."
+    elif itype == "relic":
+        shape = "An ancient relic of unknown origin."
+    else:
+        shape = "An item of unknown purpose."
+    return f"{shape} {glow}".strip()
+
+
+def _auto_partial_magic_desc(item):
+    """Generate description revealing only magical properties (post magic-identify)."""
+    parts = []
+    elem = item.get("element") or item.get("enchant_element", "")
+    if elem:
+        parts.append(f"Enchanted with {elem.title()} magic.")
+    bonus = item.get("enhance_bonus", 0)
+    if bonus:
+        parts.append(f"+{bonus} enhancement bonus.")
+    if item.get("damage") and item.get("type") == "weapon":
+        parts.append(f"Damage: {item['damage']}.")
+    elem_dmg = item.get("element_damage")
+    if elem_dmg:
+        parts.append(f"+{elem_dmg} {elem.title()} damage." if elem else f"+{elem_dmg} elemental damage.")
+    if item.get("accuracy_bonus"):
+        parts.append(f"+{item['accuracy_bonus']} to hit.")
+    stat_bonuses = item.get("stat_bonus", {})
+    for stat, val in stat_bonuses.items():
+        sign = "+" if val > 0 else ""
+        parts.append(f"{sign}{val} {stat}.")
+    if item.get("defense") and item.get("type") != "weapon":
+        parts.append(f"+{item['defense']} Defense.")
+    if item.get("magic_resist"):
+        parts.append(f"+{item['magic_resist']} Magic Resist.")
+    if not parts:
+        parts.append("Magical properties detected but their nature is unclear.")
+    return " ".join(parts)
+
+
+def _auto_partial_material_desc(item):
+    """Generate description revealing only material/quality (post appraisal)."""
+    parts = []
+    mat = item.get("material_desc") or item.get("material", "")
+    if mat:
+        parts.append(mat)
+    val = item.get("estimated_value", 0)
+    if val:
+        parts.append(f"Estimated value: ~{val} gold.")
+    itype = item.get("type", "")
+    rarity = item.get("rarity", "common")
+    if rarity != "common":
+        parts.append(f"Quality: {rarity.title()}.")
+    if not parts:
+        parts.append("Good craftsmanship, but nothing stands out.")
+    return " ".join(parts)
 
 
 def get_item_display_desc(item):
@@ -426,20 +614,17 @@ def get_item_display_desc(item):
 
         return " ".join(parts) if parts else "No description."
 
-    # ── Unidentified items ──
-    parts.append(item.get("unidentified_desc",
-                          item.get("surface_desc", "You're not sure what this is.")))
+    # ── Unidentified items — tiered partial info ──
+    # Surface layer: always visible (visual clues, general shape — no spoilers)
+    parts.append(_auto_unidentified_desc(item))
 
+    # Appraisal layer: revealed if material was identified
     if item.get("material_identified"):
-        mat_desc = item.get("material_desc")
-        if mat_desc:
-            parts.append(mat_desc)
-        if item.get("estimated_value"):
-            parts.append(f"Estimated value: ~{item['estimated_value']} gold")
+        parts.append(_auto_partial_material_desc(item))
 
+    # Magic layer: revealed if magic was identified
     if item.get("magic_identified"):
-        magic_desc = item.get("magic_desc")
-        if magic_desc:
-            parts.append(magic_desc)
+        explicit = item.get("magic_desc")
+        parts.append(explicit if explicit else _auto_partial_magic_desc(item))
 
-    return " ".join(parts)
+    return " ".join(p for p in parts if p)

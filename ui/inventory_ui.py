@@ -480,22 +480,44 @@ class InventoryUI:
                 type_str += f" [{slot}]"
             draw_text(surface, type_str, rect.x + 10, rect.y + 22, DARK_GREY, 11)
 
-            # Stats
-            parts = []
-            if item.get("damage"):
-                parts.append(f"DMG {item['damage']}")
-            if item.get("defense", 0):
-                parts.append(f"DEF +{item['defense']}")
-            for stat, val in item.get("stat_bonuses", {}).items():
-                parts.append(f"{stat} +{val}")
-            if parts:
-                draw_text(surface, "  ".join(parts),
-                          rect.x + 10, rect.y + 38, GREY, 11)
-
-            # Unidentified badge
-            if needs_identification(item):
+            # Stats (only show magic/mechanical properties if identified)
+            if item.get("identified"):
+                parts = []
+                if item.get("damage"):
+                    parts.append(f"DMG {item['damage']}")
+                if item.get("defense", 0):
+                    parts.append(f"DEF +{item['defense']}")
+                for stat, val in item.get("stat_bonuses", {}).items():
+                    parts.append(f"{stat} +{val}")
+                if parts:
+                    draw_text(surface, "  ".join(parts),
+                              rect.x + 10, rect.y + 38, GREY, 11)
+                # Show item description for identified items
+                from core.identification import get_item_display_desc
+                _idesc = get_item_display_desc(item)
+                if _idesc and _idesc != "No description.":
+                    _idesc_short = _idesc[:80] + "…" if len(_idesc) > 80 else _idesc
+                    draw_text(surface, _idesc_short, rect.x + 10, rect.y + 52,
+                              (140, 160, 140), 10)
+            elif needs_identification(item):
+                # Unidentified: show partial desc (what's visible/known so far)
+                from core.identification import get_item_display_desc
+                _pdesc = get_item_display_desc(item)
+                _pdesc_short = _pdesc[:72] + "…" if len(_pdesc) > 72 else _pdesc
+                draw_text(surface, _pdesc_short, rect.x + 10, rect.y + 38,
+                          (160, 140, 170), 10)
                 draw_text(surface, "?? Unidentified",
-                          rect.x + 10, rect.y + 38, (180, 120, 220), 11)
+                          rect.x + 10, rect.y + 52, (180, 120, 220), 10)
+            else:
+                # Mundane identified item — show type stats
+                parts = []
+                if item.get("damage"):
+                    parts.append(f"DMG {item['damage']}")
+                if item.get("defense", 0):
+                    parts.append(f"DEF +{item['defense']}")
+                if parts:
+                    draw_text(surface, "  ".join(parts),
+                              rect.x + 10, rect.y + 38, GREY, 11)
 
             # Hover hints
             if is_hover:
@@ -517,11 +539,129 @@ class InventoryUI:
                     draw_text(surface, lbl3, hx - get_font(11).size(lbl3)[0],
                               rect.y + 26, (180, 120, 220), 11)
 
-            iy += 68
+                # ── Stat comparison tooltip ───────────────────
+                if equippable and item.get("identified"):
+                    self._draw_stat_compare_tooltip(surface, item, char, rect, mx, my)
+
+            iy += 80
 
         if end < len(char.inventory):
             draw_text(surface, "v scroll down",
                       panel.x + panel.width // 2 - 45, iy + 4, DIM_GOLD, 11)
+
+    # ─────────────────────────────────────────────────────────
+    #  STAT COMPARISON TOOLTIP
+    # ─────────────────────────────────────────────────────────
+
+    def _draw_stat_compare_tooltip(self, surface, new_item, char, item_rect, mx, my):
+        """Floating tooltip showing stat deltas vs currently equipped item in same slot."""
+        slot = resolve_item_slot(new_item)
+        if not slot:
+            return
+        equipped = char.equipment.get(slot)
+
+        # ── Build comparison rows ────────────────────────────
+        rows = []   # (label, old_val, new_val, delta, is_good)
+
+        def _get_dmg(item):
+            return item.get("damage", 0) if item else 0
+        def _get_def(item):
+            return item.get("defense", 0) if item else 0
+        def _get_mr(item):
+            return item.get("magic_resist", 0) if item else 0
+        def _get_spd(item):
+            return item.get("speed_bonus", 0) + item.get("speed_mod", 0) if item else 0
+        def _get_acc(item):
+            return item.get("accuracy_mod", 0) if item else 0
+        def _get_spb(item):
+            return item.get("spell_bonus", 0) if item else 0
+        def _get_stat(item, stat):
+            return item.get("stat_bonuses", {}).get(stat, 0) if item else 0
+
+        checks = [
+            ("DMG",   _get_dmg,  True),
+            ("DEF",   _get_def,  True),
+            ("MRes",  _get_mr,   True),
+            ("SPD",   _get_spd,  True),
+            ("ACC",   _get_acc,  True),
+            ("Spell", _get_spb,  True),
+        ]
+        for label, fn, higher_better in checks:
+            old_v = fn(equipped)
+            new_v = fn(new_item)
+            if old_v != 0 or new_v != 0:
+                rows.append((label, old_v, new_v, new_v - old_v, higher_better))
+
+        # Stat bonuses (STR, DEX, CON, …)
+        all_stats = set()
+        if equipped:
+            all_stats |= set(equipped.get("stat_bonuses", {}).keys())
+        all_stats |= set(new_item.get("stat_bonuses", {}).keys())
+        for stat in sorted(all_stats):
+            old_v = _get_stat(equipped, stat)
+            new_v = _get_stat(new_item, stat)
+            if old_v != 0 or new_v != 0:
+                rows.append((stat, old_v, new_v, new_v - old_v, True))
+
+        if not rows and not equipped:
+            # New slot, just show new values
+            rows_new = []
+            for label, fn, _ in checks:
+                v = fn(new_item)
+                if v:
+                    rows_new.append((label, 0, v, v, True))
+            rows = rows_new
+
+        if not rows:
+            return   # nothing useful to show
+
+        # ── Layout ───────────────────────────────────────────
+        ROW_H  = 16
+        PAD    = 8
+        TW     = 200
+        TH     = PAD * 2 + 16 + len(rows) * ROW_H + 4
+        # Position tooltip: prefer left of item rect, fall back right
+        tx = item_rect.x - TW - 6
+        if tx < 0:
+            tx = item_rect.right + 6
+        ty = item_rect.y
+        if ty + TH > surface.get_height():
+            ty = surface.get_height() - TH - 4
+
+        # Background
+        tip_rect = pygame.Rect(tx, ty, TW, TH)
+        pygame.draw.rect(surface, (12, 10, 26), tip_rect, border_radius=4)
+        pygame.draw.rect(surface, (80, 65, 120), tip_rect, 1, border_radius=4)
+
+        # Header: slot name + equipped name
+        slot_label = slot.replace("_", " ").title()
+        eq_name = equipped.get("name", "Nothing") if equipped else "Empty slot"
+        draw_text(surface, f"{slot_label}: {eq_name[:18]}", tx + PAD, ty + PAD,
+                  DIM_GOLD, 11, bold=True)
+
+        # Delta rows
+        ry = ty + PAD + 16
+        for label, old_v, new_v, delta, higher_better in rows:
+            # Old value
+            old_str = f"{old_v:+d}" if old_v != 0 else "—"
+            new_str = f"{new_v:+d}" if new_v != 0 else "—"
+
+            if delta == 0:
+                delta_col = GREY
+                delta_str = "="
+            elif (delta > 0) == higher_better:
+                delta_col = STAT_UP
+                delta_str = f"▲{abs(delta)}"
+            else:
+                delta_col = STAT_DOWN
+                delta_str = f"▼{abs(delta)}"
+
+            draw_text(surface, f"{label:<5}", tx + PAD, ry, GREY, 11)
+            draw_text(surface, old_str, tx + PAD + 44, ry, GREY, 11)
+            draw_text(surface, "→", tx + PAD + 78, ry, GREY, 11)
+            draw_text(surface, new_str, tx + PAD + 96, ry, CREAM, 11)
+            draw_text(surface, delta_str, tx + PAD + 136, ry, delta_col, 11, bold=(delta != 0))
+            ry += ROW_H
 
     # ─────────────────────────────────────────────────────────
     #  EVENT HANDLING
@@ -655,7 +795,7 @@ class InventoryUI:
                             else:
                                 self._show_message("This item cannot be equipped", DARK_GREY)
                     return None
-                iy += 68
+                iy += 80
 
         return None
 

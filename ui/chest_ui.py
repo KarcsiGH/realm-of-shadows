@@ -122,8 +122,8 @@ class ChestUI:
                 assigned_to = self.assignments[i]
                 taken = assigned_to is not None
 
-                item_rect = pygame.Rect(px + 16, list_top + i * 74,
-                                        pw - 32, 68)
+                item_rect = pygame.Rect(px + 16, list_top + i * 84,
+                                        pw - 32, 78)
                 self._item_rects.append(item_rect)
 
                 is_hover = item_rect.collidepoint(mx, my) and not taken
@@ -154,12 +154,24 @@ class ChestUI:
                 draw_text(surface, display, item_rect.x + 12, item_rect.y + 6,
                           name_col, 15, bold=True)
 
-                # Brief stats line
+                # Description line — color-coded by identification state
                 desc = get_item_display_desc(item)
-                if len(desc) > 85:
-                    desc = desc[:82] + "..."
+                if item.get("identified"):
+                    desc_col = GREY
+                elif item.get("magic_identified") or item.get("material_identified"):
+                    desc_col = (160, 140, 190)    # muted purple — partial knowledge
+                else:
+                    desc_col = (130, 120, 150)    # dim — almost nothing known
+                if len(desc) > 90:
+                    desc = desc[:87] + "…"
                 draw_text(surface, desc, item_rect.x + 12, item_rect.y + 28,
-                          GREY, 11, max_width=pw - 240)
+                          desc_col, 11, max_width=pw - 240)
+                # Unidentified badge on the second line
+                if not item.get("identified") and (item.get("magic_item") or
+                        item.get("enchant_element") or item.get("enhance_bonus") or
+                        item.get("cursed") or item.get("rarity") in ("rare","epic","legendary")):
+                    draw_text(surface, "?? Unidentified",
+                              item_rect.x + 12, item_rect.y + 44, (180, 120, 220), 10)
 
                 # Right side: assignment status / button
                 rx = item_rect.x + item_rect.width - 160

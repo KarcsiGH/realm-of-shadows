@@ -1024,12 +1024,12 @@ class CampUI:
 
         # Group party members (players only — no summons) by row
         from core.combat_config import ROWS as ROW_KEYS
-        players = [p for p in self.party if not p.get("is_summon")]
-        summons  = [p for p in self.party if p.get("is_summon")]
+        players = [p for p in self.party if not getattr(p, "is_summon", False)]
+        summons  = [p for p in self.party if getattr(p, "is_summon", False)]
 
         chars_in_row = {FRONT: [], MID: [], BACK: []}
         for p in players:
-            r = p.get("row", FRONT)
+            r = getattr(p, "combat_row", None) or FRONT
             if r not in chars_in_row:
                 r = FRONT
             chars_in_row[r].append(p)
@@ -1090,7 +1090,7 @@ class CampUI:
                         draw_text(surface, "Empty", sx + 60, sy + 38, (70, 60, 90), 12)
 
             # Summons note on right side of row
-            row_summons = [s for s in summons if s.get("row") == row_key]
+            row_summons = [s for s in summons if getattr(s, "combat_row", None) == row_key]
             if row_summons:
                 sx2 = PAD + 10 + 2 * (SLOT_W + SLOT_PAD) + 20
                 draw_text(surface, "Summons:", sx2, y + 28, (120, 200, 120), 11, bold=True)
@@ -1112,7 +1112,7 @@ class CampUI:
     def _handle_formation_click(self, mx, my):
         from core.combat_config import FRONT, MID, BACK
 
-        players = [p for p in self.party if not p.get("is_summon")]
+        players = [p for p in self.party if not getattr(p, "is_summon", False)]
 
         # Check slot clicks
         for (row_key, slot_i), slot_r in getattr(self, "_form_slot_rects", {}).items():
@@ -1121,7 +1121,7 @@ class CampUI:
 
             chars_in_row = {FRONT: [], MID: [], BACK: []}
             for p in players:
-                r = p.get("row", FRONT)
+                r = getattr(p, "combat_row", None) or FRONT
                 if r not in chars_in_row:
                     r = FRONT
                 chars_in_row[r].append(p)
@@ -1146,8 +1146,8 @@ class CampUI:
                     self.formation_selected = -1
                 elif len(chars_in_row[row_key]) < 2 or occupant:
                     # Swap the two characters
-                    mover_row   = mover.get("row", FRONT)
-                    occupant_row = occupant.get("row", FRONT)
+                    mover_row   = getattr(mover, "combat_row", None) or FRONT
+                    occupant_row = getattr(occupant, "combat_row", None) or FRONT
                     mover["row"]   = occupant_row
                     occupant["row"] = mover_row
                     self.formation_selected = -1

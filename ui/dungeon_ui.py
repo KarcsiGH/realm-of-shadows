@@ -1188,7 +1188,7 @@ class DungeonUI:
                     elif ev_t.get("detected"):
                         c = (220, 50, 50, 255)    # red — armed and known
                     else:
-                        continue  # undiscovered trap — don't show on minimap
+                        c = (88, 78, 62, 200)     # floor colour — undetected trap blends in
                 elif tt == DT_INTERACTABLE:
                     ev_i = tile.get("event") or {}
                     c = (80,80,75,150) if ev_i.get("used") else (80,200,255,255)
