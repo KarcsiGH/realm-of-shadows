@@ -322,7 +322,27 @@ class Game:
                 return
 
         if self.state == S_TITLE:
-            if e.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                from core.save_load import list_saves
+                has_saves = bool(list_saves())
+                if has_saves:
+                    btn_y = SCREEN_H // 2 + 120
+                    new_r  = pygame.Rect(SCREEN_W // 2 - 220, btn_y, 200, 48)
+                    cont_r = pygame.Rect(SCREEN_W // 2 + 20,  btn_y, 200, 48)
+                    if new_r.collidepoint(mx, my):
+                        self.go(S_MODE)
+                    elif cont_r.collidepoint(mx, my):
+                        from ui.save_load_ui import SaveLoadUI
+                        self.save_load_ui = SaveLoadUI("load")
+                        self._save_load_return_state = S_TITLE
+                        sfx.play("ui_open")
+                        self.go(S_SAVE_LOAD)
+                    # else: click elsewhere on title → do nothing
+                else:
+                    # No saves — any click starts a new game
+                    self.go(S_MODE)
+            elif e.type == pygame.KEYDOWN:
+                # Any key press goes to new game mode (classic behaviour)
                 self.go(S_MODE)
 
         elif self.state == S_MODE:
@@ -1414,7 +1434,7 @@ class Game:
 
 
     def draw_state(self, mx, my):
-        if self.state == S_TITLE:      self.draw_title()
+        if self.state == S_TITLE:      self.draw_title(mx, my)
         elif self.state == S_MODE:     self.draw_mode(mx, my)
         elif self.state == S_NAME:     self.draw_name()
         elif self.state == S_RACE:     self.draw_race(mx, my)
@@ -1443,7 +1463,7 @@ class Game:
 
     # ── Title Screen ──────────────────────────────────────────
 
-    def draw_title(self):
+    def draw_title(self, mx=0, my=0):
         import math, random
 
         t = self.title_t / 1000.0
@@ -1519,10 +1539,24 @@ class Game:
         draw_text(self.screen, "The Fading comes for all things.",
                   SCREEN_W // 2 - 175, SCREEN_H // 2 + 80, (140, 110, 180), 15)
 
-        # ── Blinking prompt ──
-        if (self.title_t // 800) % 2 == 0:
-            draw_text(self.screen, "Press any key to begin",
-                      SCREEN_W // 2 - 130, SCREEN_H // 2 + 130, DIM_GOLD, 16)
+        # ── New Game / Continue buttons (if saves exist) else blinking prompt ──
+        from core.save_load import list_saves
+        has_saves = bool(list_saves())
+
+        if has_saves:
+            btn_y = SCREEN_H // 2 + 120
+            new_r  = pygame.Rect(SCREEN_W // 2 - 220, btn_y,      200, 48)
+            cont_r = pygame.Rect(SCREEN_W // 2 + 20,  btn_y,      200, 48)
+            from ui.renderer import draw_button
+            draw_button(self.screen, new_r,  "New Game",
+                        hover=new_r.collidepoint(mx, my),  size=17)
+            draw_button(self.screen, cont_r, "Continue",
+                        hover=cont_r.collidepoint(mx, my), size=17)
+        else:
+            # No saves — keep the classic blinking prompt
+            if (self.title_t // 800) % 2 == 0:
+                draw_text(self.screen, "Press any key to begin",
+                          SCREEN_W // 2 - 130, SCREEN_H // 2 + 130, DIM_GOLD, 16)
 
         # ── Version / credit ──
         draw_text(self.screen, "An Advanced Class System RPG",
