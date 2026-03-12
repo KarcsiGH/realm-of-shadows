@@ -122,7 +122,7 @@ NEW_ENEMIES = {
 
         desc={0:"A kobold clutching a glowing ember.",1:"Kobold Firebrand",
               2:"Kobold Firebrand — fire magic. Weak to ice."}),
-    "Mine Golem": _e("Mine Golem",162,30,12,S(18,4,20,1,2,0),6,44,"melee","blunt",
+    "Mine Golem": _e("Mine Golem",162,20,12,S(18,4,20,1,2,0),6,44,"melee","blunt",
         ai="defensive",xp=45,gold=(8,20),
         res={"piercing":0.5,"slashing":0.5,"blunt":1.5,"fire":0.5,"lightning":2.0,"nature":0.0},
         imm=["Poisoned","Fear","Sleep"],        loot=[
@@ -143,7 +143,7 @@ NEW_ENEMIES = {
 
         desc={0:"A swirling dust cloud with glowing eyes.",1:"Dust Wraith",
               2:"Dust Wraith — drains life. Use divine/fire."}),
-    "Cave-in Beetle": _e("Cave-in Beetle",100,25,4,S(14,6,14,1,3,0),8,28,"melee","blunt",
+    "Cave-in Beetle": _e("Cave-in Beetle",100,14,4,S(14,6,14,1,3,0),8,28,"melee","blunt",
         ai="defensive",xp=25,gold=(2,6),res={"piercing":0.5,"fire":1.5},        loot=[
             {"drop_chance": 0.2, "item": {"name": 'Beetle Carapace', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Curved Shell', "unidentified_desc": 'A heavy curved shell segment.', "appraised_name": 'Cave Beetle Carapace', "material_desc": 'Tough insect shell. Tier 1 heavy armor component.', "magic_desc": 'No magical properties.', "estimated_value": 7, "description": 'Shell from a cave beetle.', "identified": False}},
         ],
@@ -347,8 +347,8 @@ NEW_ENEMIES = {
     # ── More spiders ──
     "Egg Sac": _e("Egg Sac",50,5,1,S(0,0,8,0,0,0),1,0,"melee","blunt",
         ai="defensive",xp=5,gold=(0,0),res={"fire":3.0},
-        ab=[{"name":"Hatch","type":"summon","target":"self",
-             "effect":{"spawn":"Spiderling","count":2},"description":"Hatches spiderlings."}],             loot=[
+        ab=[{"name":"Hatch","type":"aoe","element":"poison","power":6,
+             "description":"Hatches spiderlings — newborn spiders swarm all enemies."}],             loot=[
                  {"drop_chance": 0.25, "item": {"name": 'Spider Silk Bundle', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Silk Bundle', "unidentified_desc": 'A mass of wound silk threads.', "appraised_name": 'Spider Egg Silk', "material_desc": 'Protective silk from an egg sac. Tier 1 material.', "magic_desc": 'No magical properties.', "estimated_value": 5, "description": 'Silk from a spider egg sac.', "identified": False}},
              ],
 
@@ -421,7 +421,7 @@ NEW_ENEMIES = {
 
         desc={0:"A bloated undead oozing foul liquid.",1:"Plague Bearer",
               2:"Plague Bearer — high poison chance. Prioritize."}),
-    "Death Knight": _e("Death Knight",187,30,16,S(18,8,16,6,8,2),10,48,"melee","slashing",
+    "Death Knight": _e("Death Knight",187,22,16,S(18,8,16,6,8,2),10,48,"melee","slashing",
         acc=5,xp=55,gold=(15,35),
         res={"piercing":0.5,"shadow":0.0,"divine":2.0},imm=["Poisoned","Fear"],
         ab=[{"name":"Death Strike","type":"damage","target":"single_enemy","power":28,
