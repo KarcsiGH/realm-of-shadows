@@ -1176,6 +1176,36 @@ class Game:
                        "The smell follows them everywhere. They've stopped noticing."],
     }
 
+    def _scale_recruit_to_level(self, character, target_level: int):
+        """Level a freshly quick_rolled (level 1) character up to target_level.
+        Free stat points are auto-assigned to the class primary stat.
+        Resources are recalculated after all levels are applied."""
+        from core.progression import apply_level_up, MAX_LEVEL, xp_for_level
+        from core.classes import CLASSES, get_all_resources
+
+        target_level = max(1, min(target_level, MAX_LEVEL))
+        primary = CLASSES[character.class_name].get("primary", "STR")
+
+        # Grant enough XP so can_level_up always passes, then clear it after
+        character.xp = xp_for_level(target_level) + 1
+        for _ in range(target_level - 1):
+            apply_level_up(character, free_stat=primary)
+        character.xp = xp_for_level(character.level)   # XP at exact level threshold
+
+        # Recalculate resources at the new level/stats
+        character.resources = get_all_resources(
+            character.class_name, character.stats, character.level
+        )
+
+    def _recruit_target_level(self) -> int:
+        """Return the target level for new recruits: party average, ±1 at random."""
+        import random
+        if not self.party:
+            return 1
+        avg = sum(c.level for c in self.party) / len(self.party)
+        base = round(avg)
+        return max(1, base + random.randint(-1, 1))
+
     def _gen_inn_recruits(self):
         """Generate 16 pre-rolled adventurers available at the Inn (4×4 grid)."""
         from core.character import Character
@@ -1208,6 +1238,8 @@ class Game:
         name_pool = list(self._INN_NAMES)
         random.shuffle(name_pool)
 
+        target_level = self._recruit_target_level()
+
         for cls, race in zip(chosen_classes, race_assignments):
             for name, _ in name_pool:
                 if name not in used_names:
@@ -1215,6 +1247,8 @@ class Game:
                     break
             c = Character(name, race_name=race)
             c.quick_roll(cls)
+            if target_level > 1:
+                self._scale_recruit_to_level(c, target_level)
             blurbs = self._INN_BLURBS.get(cls, ["A seasoned adventurer seeking work."])
             c.inn_blurb = random.choice(blurbs)
             self.inn_recruits.append(c)
@@ -1258,17 +1292,20 @@ class Game:
         random.shuffle(name_pool)
 
         recruits = []
+        target_level = self._recruit_target_level()
         for i, (cls, race) in enumerate(zip(classes_6, races_6)):
             name = name_pool[i % len(name_pool)][0] if name_pool else f"Wanderer {i+1}"
             c = Character(name, race_name=race)
             c.quick_roll(cls)
+            if target_level > 1:
+                self._scale_recruit_to_level(c, target_level)
             blurbs = self._INN_BLURBS.get(cls, ["Looking for work."])
             color = TAVERN_COLORS.get(cls, (160, 150, 160))
             recruits.append({
                 "name":       c.name,
                 "class_name": cls,
                 "race_name":  race,
-                "level":      1,
+                "level":      c.level,
                 "color":      color,
                 "pitch":      random.choice(blurbs),
                 "hire_cost":  0,
