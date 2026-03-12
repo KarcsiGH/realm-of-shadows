@@ -65,6 +65,7 @@ S_GAME_OVER        = 20  # Party wipe screen before returning to title
 S_SETTINGS         = 21  # Volume / settings overlay
 S_INN_RECRUIT      = 23  # Inn: recruit 5 companions after hero creation
 S_SPELL_PICK       = 24  # Choose starting spell for Mage/Cleric/spellcasters
+S_SAVE_LOAD        = 25  # Save / load slot picker
 
 
 class Game:
@@ -116,6 +117,8 @@ class Game:
         self.save_msg = ""
         self.save_msg_timer = 0
         self.save_msg_color = CREAM
+        self.save_load_ui   = None   # SaveLoadUI instance when open
+        self._save_load_return_state = S_PARTY
         # World Map
         self.world_state = None
         self.world_map_ui = None
@@ -541,30 +544,24 @@ class Game:
                     # Save button
                     save_btn = pygame.Rect(20, 40, 120, 40)
                     if save_btn.collidepoint(mx, my) and self.party:
-                        ok, path, msg = save_game(self.party,
-                                                  world_state=self.world_state)
-                        self.save_msg = msg
-                        self.save_msg_color = GREEN if ok else RED
-                        self.save_msg_timer = 3000
-                        toast_col = (80, 200, 120) if ok else (220, 80, 80)
-                        toast_msg = "✓ Game saved." if ok else f"✗ Save failed: {msg}"
-                        self.add_toast(toast_msg, toast_col)
+                        from ui.save_load_ui import SaveLoadUI
+                        self.save_load_ui = SaveLoadUI(
+                            "save", party=self.party, world_state=self.world_state
+                        )
+                        self._save_load_return_state = self.state
+                        sfx.play("ui_open")
+                        self.go(S_SAVE_LOAD)
                         return
                     # Load button
                     load_btn = pygame.Rect(150, 40, 120, 40)
                     if load_btn.collidepoint(mx, my):
-                        ok, party, world_state, msg = load_game()
-                        if ok:
-                            self.party = party
-                            if world_state:
-                                self.world_state = world_state
-                                self.world_state.party = self.party
-                            self.save_msg = msg
-                            self.save_msg_color = GREEN
-                        else:
-                            self.save_msg = msg
-                            self.save_msg_color = RED
-                        self.save_msg_timer = 3000
+                        from ui.save_load_ui import SaveLoadUI
+                        self.save_load_ui = SaveLoadUI(
+                            "load", party=self.party, world_state=self.world_state
+                        )
+                        self._save_load_return_state = self.state
+                        sfx.play("ui_open")
+                        self.go(S_SAVE_LOAD)
                         return
                     # World Map / Back button
                     world_btn = pygame.Rect(290, 40, 160, 40)
@@ -780,6 +777,29 @@ class Game:
                     result = self.camp_ui.handle_key(e.key)
                     if self.camp_ui and self.camp_ui.finished:
                         self._end_camp()
+
+        elif self.state == S_SAVE_LOAD:
+            if self.save_load_ui:
+                self.save_load_ui.handle_event(e)
+                if self.save_load_ui.finished:
+                    result = self.save_load_ui.result
+                    self.save_load_ui = None
+                    if isinstance(result, tuple) and result[0] == "saved":
+                        sfx.play("ui_confirm")
+                        self.add_toast("✓ Game saved.", (80, 200, 120))
+                        self.go(self._save_load_return_state)
+                    elif isinstance(result, tuple) and result[0] == "loaded":
+                        _, party, world_state = result
+                        self.party = party
+                        if world_state:
+                            self.world_state = world_state
+                            self.world_state.party = self.party
+                        sfx.play("ui_confirm")
+                        self.add_toast("✓ Save loaded.", (80, 200, 120))
+                        self.go_fade(S_PARTY)
+                    else:
+                        sfx.play("ui_cancel")
+                        self.go(self._save_load_return_state)
 
     # ══════════════════════════════════════════════════════════
     #  LOGIC
@@ -1419,6 +1439,7 @@ class Game:
         elif self.state == S_INN_RECRUIT:       self._draw_inn_recruit(mx, my)
         elif self.state == S_SETTINGS:         self._draw_settings(mx, my)
         elif self.state == S_GAME_OVER:        self._draw_game_over(mx, my)
+        elif self.state == S_SAVE_LOAD:        self._draw_save_load(mx, my)
 
     # ── Title Screen ──────────────────────────────────────────
 
@@ -2490,6 +2511,13 @@ class Game:
         else:
             # Cancel — just go back
             self.go(return_state)
+
+    def _draw_save_load(self, mx, my):
+        """Draw the save/load slot picker overlay."""
+        # Render the party screen underneath so context is visible
+        self.draw_party(mx, my)
+        if self.save_load_ui:
+            self.save_load_ui.draw(self.screen, mx, my)
 
     def _draw_settings(self, mx, my):
         """Draw the volume settings overlay."""
