@@ -130,7 +130,7 @@ CLASSES = {
             {"name": "Iron Skin", "cost": 8, "resource": "Ki", "self_only": True,
              "desc": "Harden your body to reduce incoming damage."},
         ],
-        "ki_formula": lambda s, lvl: (s["WIS"] * 5) + (s["DEX"] * 3) + (lvl * 10) + 25,
+        "ki_formula": lambda s, lvl: (s["WIS"] * 2) + (s["DEX"] * 1) + (lvl * 2),
         "resources": ["HP", "DEX-SP", "WIS-MP", "Ki"],
         "stat_growth": {
             "WIS": "high", "DEX": "high", "CON": "medium", "STR": "medium",
@@ -147,25 +147,25 @@ CLASS_ORDER = ["Fighter", "Mage", "Cleric", "Thief", "Ranger", "Monk"]
 # ── Resource Calculations ─────────────────────────────────────
 
 def calc_hp(base_hp, con, level):
-    return base_hp + (con * 3) + (level * 5)
+    return base_hp + (con * 2) + (level * 3)
 
 def calc_ki(class_name, stats, level):
     return CLASSES[class_name]["ki_formula"](stats, level)
 
 def calc_int_mp(int_val, level):
-    return (int_val * 5) + (level * 10)
+    return (int_val * 2) + (level * 4)
 
 def calc_wis_mp(wis_val, level):
-    return (wis_val * 5) + (level * 10)
+    return (wis_val * 2) + (level * 4)
 
 def calc_pie_mp(pie_val, level):
-    return (pie_val * 5) + (level * 10)
+    return (pie_val * 2) + (level * 4)
 
 def calc_str_sp(str_val, level):
-    return (str_val * 3) + (level * 6)
+    return (str_val * 2) + (level * 4)
 
 def calc_dex_sp(dex_val, level):
-    return (dex_val * 3) + (level * 6)
+    return (dex_val * 2) + (level * 4)
 
 
 def get_all_resources(class_name, stats, level):

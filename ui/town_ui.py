@@ -1149,43 +1149,81 @@ class TownUI:
                 next_req_str = "Highest rank achieved."
                 next_ready   = False
 
-            # Draw panel
+            # Draw panel — taller for richer display
             PANEL_Y = 110 + 3 * (88 + 16) + 10
-            panel_r = pygame.Rect(40, PANEL_Y, W - 80, 86)
+            panel_r = pygame.Rect(40, PANEL_Y, W - 80, 110)
             pygame.draw.rect(surface, (22, 16, 36), panel_r, border_radius=6)
             pygame.draw.rect(surface, rank_col, panel_r, 1, border_radius=6)
 
-            # Left: current rank
+            # ── Left: current rank ──────────────────────────────────
             draw_text(surface, "WARDEN RANK", panel_r.x + 20, panel_r.y + 10,
                       (90, 80, 110), 10, bold=True)
             draw_text(surface, f"{rank_sym}  {rank_name}",
-                      panel_r.x + 20, panel_r.y + 27, rank_col, 22, bold=True)
-            draw_text(surface, bonus_str, panel_r.x + 20, panel_r.y + 60,
-                      (140, 130, 160), 12)
+                      panel_r.x + 20, panel_r.y + 26, rank_col, 22, bold=True)
+            # Tier description
+            tier_desc = tier_data.get("description", "")
+            if tier_desc:
+                draw_text(surface, tier_desc, panel_r.x + 20, panel_r.y + 56,
+                          (130, 120, 150), 11, max_width=290)
+            draw_text(surface, bonus_str, panel_r.x + 20, panel_r.y + 90,
+                      (160, 145, 180), 11)
 
-            # Divider
+            # Hearthstone count pips
+            hs_count = sum(
+                1 for i in range(1, 6) if get_flag(f"item.hearthstone.{i}")
+            )
+            for hi in range(5):
+                hx = panel_r.x + 20 + hi * 18
+                hy = panel_r.y + 76
+                col_hs = (220, 180, 60) if hi < hs_count else (60, 50, 80)
+                pygame.draw.circle(surface, col_hs, (hx, hy), 6)
+                pygame.draw.circle(surface, (90, 80, 110), (hx, hy), 6, 1)
+            draw_text(surface, f"Hearthstones: {hs_count}/5",
+                      panel_r.x + 116, panel_r.y + 70, (140, 130, 160), 10)
+
+            # Vertical divider
             div_x = panel_r.x + 340
-            pygame.draw.line(surface, (60, 50, 80),
-                             (div_x, panel_r.y + 12), (panel_r.bottom - 12, panel_r.y + 12),
-                             0)  # placeholder; draw vertical below
             pygame.draw.line(surface, (60, 50, 80),
                              (div_x, panel_r.y + 12), (div_x, panel_r.bottom - 12), 1)
 
-            # Right: next rank
+            # ── Right: next rank ────────────────────────────────────
             if next_tier_data:
                 draw_text(surface, "NEXT RANK", div_x + 20, panel_r.y + 10,
                           (90, 80, 110), 10, bold=True)
                 draw_text(surface, f"◆  {next_name}",
-                          div_x + 20, panel_r.y + 27,
+                          div_x + 20, panel_r.y + 26,
                           next_col if next_ready else (100, 90, 120), 18, bold=True)
-                req_col = (80, 200, 120) if next_ready else (180, 150, 80)
-                draw_text(surface, next_req_str, div_x + 20, panel_r.y + 58,
-                          req_col, 12, max_width=W - div_x - 60)
+
+                # Requirements list
+                req_y = panel_r.y + 54
+                if next_ready:
+                    draw_text(surface, "✓ Ready to advance!", div_x + 20, req_y,
+                              (80, 200, 120), 12)
+                else:
+                    if not flag_met:
+                        draw_text(surface, f"✗ {flag_label}",
+                                  div_x + 20, req_y, (200, 120, 60), 11,
+                                  max_width=W - div_x - 60)
+                        req_y += 18
+                    if not level_met:
+                        # Party level progress bar
+                        bar_w = min(200, W - div_x - 80)
+                        pct = min(1.0, min_level / next_level)
+                        pygame.draw.rect(surface, (40, 30, 60),
+                                         (div_x + 20, req_y + 14, bar_w, 8),
+                                         border_radius=4)
+                        pygame.draw.rect(surface, next_col,
+                                         (div_x + 20, req_y + 14, int(bar_w * pct), 8),
+                                         border_radius=4)
+                        draw_text(surface, f"Level {min_level} / {next_level} required",
+                                  div_x + 20, req_y, (180, 150, 80), 11)
             else:
                 draw_text(surface, "RANK COMPLETE", div_x + 20, panel_r.y + 10,
                           (90, 80, 110), 10, bold=True)
-                draw_text(surface, next_req_str, div_x + 20, panel_r.y + 36,
-                          (140, 200, 160), 13)
+                draw_text(surface, "Warden-Commander", div_x + 20, panel_r.y + 26,
+                          rank_col, 18, bold=True)
+                draw_text(surface, "Highest rank of the mortal order.",
+                          div_x + 20, panel_r.y + 54, (140, 200, 160), 12)
         except Exception:
             pass
 
@@ -2935,12 +2973,10 @@ class TownUI:
                                 new_char.level = rec["level"]
                                 for stat, val in rec["stats"].items():
                                     new_char.stats[stat] = val
-                                from core.progression import recalculate_max_hp
-                                try:
-                                    recalculate_max_hp(new_char)
-                                except Exception:
-                                    new_char.resources["MAX_HP"] = 20 + new_char.stats.get("CON", 5) * 2
-                                new_char.resources["HP"] = new_char.resources.get("MAX_HP", 20)
+                                from core.classes import get_all_resources
+                                new_char.resources = get_all_resources(
+                                    new_char.class_name, new_char.stats, new_char.level
+                                )
                                 new_char.gold = 0
                             self.party.append(new_char)
                             # Remove this recruit from the pool so they can't be hired twice

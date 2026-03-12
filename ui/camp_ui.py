@@ -1138,7 +1138,7 @@ class CampUI:
                 mover = players[self.formation_selected]
                 if occupant is None:
                     # Empty slot — just move
-                    mover["row"] = row_key
+                    mover.combat_row = row_key
                     self.formation_selected = -1
                     self._msg(f"{mover.name} moved to {row_key} row.", GOLD)
                 elif occupant is mover:
@@ -1146,10 +1146,10 @@ class CampUI:
                     self.formation_selected = -1
                 elif len(chars_in_row[row_key]) < 2 or occupant:
                     # Swap the two characters
-                    mover_row   = getattr(mover, "combat_row", None) or FRONT
+                    mover_row    = getattr(mover, "combat_row", None) or FRONT
                     occupant_row = getattr(occupant, "combat_row", None) or FRONT
-                    mover["row"]   = occupant_row
-                    occupant["row"] = mover_row
+                    mover.combat_row    = occupant_row
+                    occupant.combat_row = mover_row
                     self.formation_selected = -1
                     self._msg(f"Swapped {mover.name} ↔ {occupant.name}.", GOLD)
                 else:

@@ -3391,15 +3391,15 @@ class Game:
                         msgs.append(f"{ch.name} dives clear of the {trap_name}!")
                     elif result == "half":
                         dmg = max(1, dmg_base // 2)
-                        ch.hp = max(0, ch.hp - dmg)
+                        ch.resources["HP"] = max(0, ch.resources.get("HP", 0) - dmg)
                         msgs.append(f"{ch.name} partly evades {trap_name} — {dmg} damage!")
                     elif result == "crit_fail":
                         dmg = dmg_base
-                        ch.hp = max(0, ch.hp - dmg)
+                        ch.resources["HP"] = max(0, ch.resources.get("HP", 0) - dmg)
                         msgs.append(f"{ch.name} CRITICALLY FAILS — {trap_name} hits for {dmg} damage!")
                     else:
                         dmg = dmg_base
-                        ch.hp = max(0, ch.hp - dmg)
+                        ch.resources["HP"] = max(0, ch.resources.get("HP", 0) - dmg)
                         msgs.append(f"{ch.name} hit by {trap_name} for {dmg} damage!")
                     is_hit = result != "avoid"
                     if trap.get("poison") and is_hit:
@@ -3408,8 +3408,8 @@ class Game:
                         msgs.append(f"{ch.name} is poisoned!")
                     if trap.get("curse") and is_hit:
                         add_curse(ch, trap["curse"])
-                    if ch.hp <= 0:
-                        ch.hp = 0
+                    if ch.resources.get("HP", 1) <= 0:
+                        ch.resources["HP"] = 0
                         msgs.append(f"{ch.name} has fallen!")
                 if self.dungeon_ui:
                     for msg in msgs:
@@ -3483,15 +3483,15 @@ class Game:
                     msgs.append(f"{ch.name} dives clear of the {trap_name}!")
                 elif result == "half":
                     dmg = max(1, dmg_base // 2)
-                    ch.hp = max(0, ch.hp - dmg)
+                    ch.resources["HP"] = max(0, ch.resources.get("HP", 0) - dmg)
                     msgs.append(f"{ch.name} partly evades {trap_name} — {dmg} damage!")
                 elif result == "crit_fail":
                     dmg = dmg_base
-                    ch.hp = max(0, ch.hp - dmg)
+                    ch.resources["HP"] = max(0, ch.resources.get("HP", 0) - dmg)
                     msgs.append(f"{ch.name} CRITICALLY FAILS — {trap_name} hits for {dmg} damage!")
                 else:  # "full"
                     dmg = dmg_base
-                    ch.hp = max(0, ch.hp - dmg)
+                    ch.resources["HP"] = max(0, ch.resources.get("HP", 0) - dmg)
                     msgs.append(f"{ch.name} hit by {trap_name} for {dmg} damage!")
                 is_hit = result != "avoid"
                 if trap.get("poison") and is_hit:
@@ -3501,8 +3501,8 @@ class Game:
                 if trap.get("curse") and is_hit:
                     add_curse(ch, trap["curse"])
                     msgs.append(f"{ch.name} is cursed!")
-                if ch.hp <= 0:
-                    ch.hp = 0
+                if ch.resources.get("HP", 1) <= 0:
+                    ch.resources["HP"] = 0
                     msgs.append(f"{ch.name} has fallen!")
 
             if self.dungeon_ui:

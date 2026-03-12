@@ -37,7 +37,8 @@ class Character:
         self.abilities = []
         self.quick_rolled = False
         self.human_bonus_stat = None  # which stat the Human player boosted
-        self.planar_tier = 0          # Initiate(0) → Scout(1) → Warden(2) → Senior Warden(3) → Warden-Commander(4)
+        self.planar_tier = 0
+        self.combat_row  = "front"   # formation position: "front" | "mid" | "back"          # Initiate(0) → Scout(1) → Warden(2) → Senior Warden(3) → Warden-Commander(4)
 
     def apply_stat_bonus(self, bonuses: dict):
         """Apply stat bonuses from a life path event."""
