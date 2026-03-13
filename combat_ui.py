@@ -330,10 +330,11 @@ class CombatUI:
                     cy += card_h
                     continue
 
-                # Resource bars
-                bar_y     = iy + 26
-                bar_h_each = 6
-                bar_gap    = 11
+                # Resource bars — HP first, then all other resources in priority order
+                # Compact sizing to fit up to 4 bars in tight cards (6-person party)
+                bar_h_each = 5
+                bar_gap    = 10
+                bar_y      = iy + 26
 
                 hp  = p.get("hp", 0)
                 mhp = p.get("max_hp", 1)
@@ -343,23 +344,35 @@ class CombatUI:
                           (190, 150, 145), 9)
                 bar_y += bar_gap + bar_h_each
 
-                res   = p.get("resources", {})
-                stats = p.get("stats", {})
-                try:
-                    from core.classes import get_all_resources
-                    max_res = get_all_resources(cls, stats, p.get("level", 1))
-                except Exception:
-                    max_res = {}
+                res     = p.get("resources", {})
+                max_res = p.get("max_resources", {})
+                # Fallback: recalculate max if not in combatant (old save compat)
+                if not max_res:
+                    try:
+                        from core.classes import get_all_resources
+                        max_res = get_all_resources(cls, p.get("stats", {}), p.get("level", 1))
+                    except Exception:
+                        max_res = {}
 
-                for rk in [k for k in res if k != "HP"][:2]:
+                # Priority order: spell points → skill points → Ki (matches user-facing order)
+                _RES_ORDER = ["INT-MP", "WIS-MP", "PIE-MP", "STR-SP", "DEX-SP", "Ki", "EP"]
+                shown_keys = [k for k in _RES_ORDER if k in res or k in max_res]
+                # Also catch any unexpected resource keys not in priority list
+                for k in res:
+                    if k != "HP" and k not in shown_keys:
+                        shown_keys.append(k)
+
+                for rk in shown_keys:
                     cur_r = res.get(rk, 0)
                     max_r = max(1, max_res.get(rk, cur_r) or cur_r)
-                    rc2   = RES_COLORS.get(rk, RES_COLORS["MP"])
+                    rc2   = RES_COLORS.get(rk, RES_COLORS.get(
+                        "SP" if "SP" in rk else "MP" if "MP" in rk else "Ki",
+                        RES_COLORS["MP"]))
                     _draw_resource_bar(surface, ix, bar_y, iw, bar_h_each, cur_r, max_r, rc2)
                     draw_text(surface, f"{rk} {cur_r}/{max_r}", ix, bar_y + bar_h_each + 1,
                               rc2[2], 9)
                     bar_y += bar_gap + bar_h_each
-                    if bar_y > r.bottom - 10:
+                    if bar_y > r.bottom - 14:
                         break
 
                 # Status effect badges
@@ -712,7 +725,12 @@ class CombatUI:
             draw_text(surface, "▼ Click any ally card on the left", SCREEN_W // 2 - 160, ACTION_Y + 52, (100, 180, 120), 12)
             return
         if self.action_mode in ("target_attack", "target_ability"):
-            ab_name = self.selected_ability["name"] if self.selected_ability else "attack"
+            if self.selected_ability:
+                ab_name = self.selected_ability["name"]
+            else:
+                # Basic attack — show equipped weapon name
+                weapon = actor.get("weapon", {}) if actor else {}
+                ab_name = weapon.get("name", "Attack")
             prompt = f"→ Click an enemy to use  {ab_name}  (ESC to cancel)"
             draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (220, 120, 100), 15, bold=True)
             return
@@ -772,7 +790,15 @@ class CombatUI:
         """Populate self._popover_items for the given action label."""
         items = []
         if label == "attack":
-            items = [("Basic Attack", {"type": "attack_select"})]
+            weapon = actor.get("weapon", {})
+            w_name  = weapon.get("name", "Unarmed")
+            w_dmg   = weapon.get("damage", 2)
+            w_type  = weapon.get("phys_type", "blunt").capitalize()
+            w_range = weapon.get("range", "melee").capitalize()
+            w_acc   = weapon.get("accuracy_mod", 0)
+            acc_str = f" +{w_acc}% acc" if w_acc > 0 else (f" {w_acc}% acc" if w_acc < 0 else "")
+            item_lbl = f"{w_name}  [{w_dmg} dmg · {w_type} · {w_range}{acc_str}]"
+            items = [(item_lbl, {"type": "attack_select", "weapon": weapon})]
 
         elif label in ("spell", "skill"):
             abilities = actor.get("abilities", [])
@@ -835,7 +861,8 @@ class CombatUI:
         VISIBLE = 8
         ITEM_H  = 36
         PAD     = 10
-        POP_W   = 400
+        # Attack popover needs more width for weapon name + stats; others standard
+        POP_W   = 480 if label == "attack" else 400
         POP_H   = min(len(self._popover_items), VISIBLE) * ITEM_H + PAD * 2 + 24
 
         # Find which button column this popover belongs to
@@ -871,7 +898,15 @@ class CombatUI:
             item_col = GOLD if is_h else CREAM
             if data.get("type") in ("use_item",):
                 item_col = HEAL_COLOR if is_h else (100, 220, 140)
-            draw_text(surface, lbl[:40], ir.x + 8, ir.y + 10, item_col, 13)
+
+            # Attack items: split "WeaponName  [detail]" into two lines
+            if data.get("type") == "attack_select" and "  [" in lbl:
+                name_part, detail_part = lbl.split("  [", 1)
+                detail_part = "[" + detail_part
+                draw_text(surface, name_part, ir.x + 8, ir.y + 4, item_col, 14, bold=True)
+                draw_text(surface, detail_part, ir.x + 8, ir.y + 20, (150, 150, 180), 11)
+            else:
+                draw_text(surface, lbl[:40], ir.x + 8, ir.y + 10, item_col, 13)
 
             # Number shortcut
             draw_text(surface, str(real_i + 1), ir.x - 14, ir.y + 10, GREY, 13)
