@@ -31,6 +31,7 @@ SECRET_ITEMS_T1 = [
 
     {"name": "Wand of Sparks", "appraised_name": "Wand of Sparks", "type": "weapon", "slot": "weapon",
      "subtype": "Wand", "rarity": "uncommon", "damage": 4,
+     "damage_stat": {"INT": 0.8},
      "phys_type": "blunt", "range": "melee",
      "spell_bonus": 3,
      "enchant_element": "lightning", "enchant_bonus": 3,
@@ -51,14 +52,16 @@ SECRET_ITEMS_T1 = [
 
 SECRET_ITEMS_T2 = [
     {"name": "Firebrand Blade", "appraised_name": "Firebrand Blade", "type": "weapon", "slot": "weapon",
-     "subtype": "Longsword", "rarity": "rare", "damage": 14,
+     "subtype": "Longsword", "rarity": "rare", "damage": 16,
+     "damage_stat": {"STR": 0.7, "DEX": 0.3},
      "phys_type": "slashing", "range": "melee",
      "enchant_element": "fire", "enchant_bonus": 5, "enchant_name": "Flame",
      "description": "A longsword wreathed in faint flames. Deals bonus fire damage.",
      "identified": False, "estimated_value": 160},
 
     {"name": "Frostbite Dagger", "appraised_name": "Frostbite Dagger", "type": "weapon", "slot": "weapon",
-     "subtype": "Dagger", "rarity": "rare", "damage": 10,
+     "subtype": "Dagger", "rarity": "rare", "damage": 12,
+     "damage_stat": {"DEX": 1.0},
      "phys_type": "piercing", "range": "melee",
      "enchant_element": "ice", "enchant_bonus": 5, "enchant_name": "Frost",
      "effect": {"dex_bonus": 2},
@@ -110,6 +113,7 @@ SECRET_ITEMS_T2 = [
 SECRET_ITEMS_T3 = [
     {"name": "Warden's Oath", "appraised_name": "Warden's Oath", "type": "weapon", "slot": "weapon",
      "subtype": "Longsword", "rarity": "epic", "damage": 18,
+     "damage_stat": {"STR": 0.7, "DEX": 0.3},
      "phys_type": "slashing", "range": "melee",
      "enchant_element": "divine", "enchant_bonus": 6, "enchant_name": "Holy",
      "effect": {"str_bonus": 2, "pie_bonus": 2},
@@ -118,6 +122,7 @@ SECRET_ITEMS_T3 = [
 
     {"name": "Staff of the Fading", "appraised_name": "Staff of the Fading", "type": "weapon", "slot": "weapon",
      "subtype": "Staff", "rarity": "epic", "damage": 8,
+     "damage_stat": {"INT": 0.6, "STR": 0.4},
      "phys_type": "blunt", "range": "melee",
      "spell_bonus": 8,
      "enchant_element": "shadow", "enchant_bonus": 6, "enchant_name": "Shadow",
@@ -317,6 +322,7 @@ CURSED_ITEMS = [
         "rarity": "rare", "tier": 2,
         "cursed": True, "identified": False,
         "damage": 34,
+        "damage_stat": {"STR": 0.7, "DEX": 0.3},
         "estimated_value": 300,
         "enchant_element": "fire", "enchant_bonus": 5,
         "stat_penalty": {"magic_resist": -10},
@@ -400,7 +406,8 @@ UNIQUE_ITEMS = {
         "name": "Korrath's Last Oath",
         "type": "weapon", "subtype": "Greatsword", "slot": "weapon",
         "rarity": "legendary", "unique": True,
-        "damage": 22, "phys_type": "slashing", "range": "melee",
+        "damage": 30, "phys_type": "slashing", "range": "melee",
+        "damage_stat": {"STR": 0.7, "DEX": 0.3},
         "enchant_element": "shadow", "enchant_bonus": 6, "enchant_name": "Shadow",
         "stat_bonuses": {"STR": 2},
         "set_id": "warden_set",
@@ -838,6 +845,7 @@ RELIGIOUS_ITEMS = [
     # ── Tier 3 Relics ─────────────────────────────────────────
     {
         "name": "The Shepherd's Crook",
+        "damage_stat": {"PIE": 0.6, "WIS": 0.4},
         "unidentified_name": "Carved Staff Fragment",
         "unidentified_desc": "A carved wooden fragment from a larger piece. The grain shimmers slightly.",
         "appraised_name": "Fragment of the Shepherd's Crook",

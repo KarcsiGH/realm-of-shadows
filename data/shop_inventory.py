@@ -362,6 +362,7 @@ TOWN_SHOP_PROFILES = {
         "bonus_items": [
             {"name": "Dwarven War Hammer", "type": "weapon", "slot": "weapon",
              "subtype": "Mace", "rarity": "uncommon", "damage": 14,
+             "damage_stat": {"STR": 1.0},
              "phys_type": "blunt", "range": "melee",
              "special": {"armor_bypass": 0.20},
              "description": "Heavy dwarven hammer. Bypasses 20% armor.",
@@ -409,6 +410,7 @@ TOWN_SHOP_PROFILES = {
         "bonus_items": [
             {"name": "Smuggler's Blade", "type": "weapon", "slot": "weapon",
              "subtype": "Dagger", "rarity": "uncommon", "damage": 9,
+             "damage_stat": {"DEX": 1.0},
              "phys_type": "piercing", "range": "melee",
              "special": {"first_strike": True},
              "description": "A thin blade easy to hide. Always strikes first.",
@@ -446,6 +448,7 @@ TOWN_SHOP_PROFILES = {
              "buy_price": 140, "sell_price": 56, "identified": True},
             {"name": "Pilgrim's Staff", "type": "weapon", "slot": "weapon",
              "subtype": "Staff", "rarity": "uncommon", "damage": 8,
+             "damage_stat": {"PIE": 0.6, "STR": 0.4},
              "phys_type": "blunt", "range": "melee",
              "special": {"heal_on_kill": 15},
              "description": "A blessed walking staff. Restores 15 HP to the wielder on each kill.",
@@ -493,6 +496,7 @@ TOWN_SHOP_PROFILES = {
         "bonus_items": [
             {"name": "Imperial Longsword", "type": "weapon", "slot": "weapon",
              "subtype": "Longsword", "rarity": "rare", "damage": 16,
+             "damage_stat": {"STR": 0.7, "DEX": 0.3},
              "phys_type": "slashing", "range": "melee",
              "stat_bonus": {"STR": 1},
              "description": "An imperial-forged blade bearing the seal of Aldenmere. +1 STR.",

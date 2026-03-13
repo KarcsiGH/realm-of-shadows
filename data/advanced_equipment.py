@@ -214,7 +214,7 @@ MAGE_WEAPONS = [
        damage_stat={"INT": 0.6, "WIS": 0.4}),
 
     # T3
-    _w("Runemaster's Staff", "Staff", 10, "blunt", {"INT": 3, "WIS": 1},
+    _w("Runemaster's Staff", "Staff", 13, "blunt", {"INT": 3, "WIS": 1},
        260, "rare", "Covered in layered runes of amplification. +3 INT, +1 WIS.",
        spell_bonus=10, enchant_element="arcane", enchant_bonus=4, enchant_name="Arcane",
        damage_stat={"STR": 0.4, "INT": 0.6}),
@@ -323,7 +323,7 @@ CLERIC_WEAPONS = [
        enchant_element="divine", enchant_bonus=6, enchant_name="Sunfire",
        spell_bonus=5,
        damage_stat={"STR": 1.0}),
-    _w("Archpriest's Mace", "Mace", 14, "blunt", {"PIE": 3, "WIS": 2},
+    _w("Archpriest's Mace", "Mace", 17, "blunt", {"PIE": 3, "WIS": 2},
        250, "rare", "Carried by high priests of the Order. +3 PIE, +2 WIS.",
        spell_bonus=9,
        damage_stat={"STR": 1.0}),
@@ -334,7 +334,7 @@ CLERIC_WEAPONS = [
        enchant_element="divine", enchant_bonus=8, enchant_name="Dawnfire",
        spell_bonus=8,
        damage_stat={"STR": 1.0}),
-    _w("Radiant Scepter", "Staff", 12, "blunt", {"PIE": 4, "WIS": 4},
+    _w("Radiant Scepter", "Staff", 18, "blunt", {"PIE": 4, "WIS": 4},
        480, "epic", "A scepter that radiates pure divine energy. +4 PIE, +4 WIS.",
        spell_bonus=14, enchant_element="divine", enchant_bonus=6, enchant_name="Radiance",
        damage_stat={"STR": 0.4, "INT": 0.6}),
