@@ -30,7 +30,7 @@ SECRET_ITEMS_T1 = [
      "identified": False, "estimated_value": 70},
 
     {"name": "Wand of Sparks", "appraised_name": "Wand of Sparks", "type": "weapon", "slot": "weapon",
-     "subtype": "Wand", "rarity": "uncommon", "damage": 4,
+     "subtype": "Wand", "rarity": "uncommon", "damage": 6,
      "phys_type": "blunt", "range": "melee",
      "spell_bonus": 3,
      "enchant_element": "lightning", "enchant_bonus": 3,
@@ -59,6 +59,7 @@ SECRET_ITEMS_T2 = [
 
     {"name": "Frostbite Dagger", "appraised_name": "Frostbite Dagger", "type": "weapon", "slot": "weapon",
      "subtype": "Dagger", "rarity": "rare", "damage": 10,
+     "damage_stat": {"STR": 0.3, "DEX": 0.12},
      "phys_type": "piercing", "range": "melee",
      "enchant_element": "ice", "enchant_bonus": 5, "enchant_name": "Frost",
      "effect": {"dex_bonus": 2},
@@ -109,7 +110,8 @@ SECRET_ITEMS_T2 = [
 
 SECRET_ITEMS_T3 = [
     {"name": "Warden's Oath", "appraised_name": "Warden's Oath", "type": "weapon", "slot": "weapon",
-     "subtype": "Longsword", "rarity": "epic", "damage": 18,
+     "subtype": "Longsword", "rarity": "epic", "damage": 25,
+     "damage_stat": {"STR": 0.3, "DEX": 0.12},
      "phys_type": "slashing", "range": "melee",
      "enchant_element": "divine", "enchant_bonus": 6, "enchant_name": "Holy",
      "effect": {"str_bonus": 2, "pie_bonus": 2},
@@ -117,7 +119,8 @@ SECRET_ITEMS_T3 = [
      "identified": False, "estimated_value": 350},
 
     {"name": "Staff of the Fading", "appraised_name": "Staff of the Fading", "type": "weapon", "slot": "weapon",
-     "subtype": "Staff", "rarity": "epic", "damage": 8,
+     "subtype": "Staff", "rarity": "epic", "damage": 11,
+     "damage_stat": {"STR": 0.3, "DEX": 0.12},
      "phys_type": "blunt", "range": "melee",
      "spell_bonus": 8,
      "enchant_element": "shadow", "enchant_bonus": 6, "enchant_name": "Shadow",
@@ -151,7 +154,7 @@ BOSS_BONUS_LOOT = {
     "Giant Spider Queen": [
         {"drop_chance": 0.50, "item": {
             "name": "Venomstrike Fang", "appraised_name": "Venomstrike Fang", "type": "weapon", "slot": "weapon",
-            "subtype": "Dagger", "rarity": "rare", "damage": 11,
+            "subtype": "Dagger", "rarity": "rare", "damage": 15,
             "phys_type": "piercing", "range": "melee",
             "enchant_element": "nature", "enchant_bonus": 4, "enchant_name": "Venom",
             "effect": {"dex_bonus": 2},
@@ -176,6 +179,7 @@ BOSS_BONUS_LOOT = {
         {"drop_chance": 0.80, "item": {
             "name": "Valdris' Shadowstaff", "appraised_name": "Valdris' Shadowstaff", "type": "weapon", "slot": "weapon",
             "subtype": "Staff", "rarity": "epic", "damage": 8,
+            "damage_stat": {"STR": 0.16, "INT": 0.24},
             "phys_type": "blunt", "range": "melee",
             "spell_bonus": 7,
             "enchant_element": "shadow", "enchant_bonus": 6, "enchant_name": "Shadow",
@@ -193,18 +197,6 @@ BOSS_BONUS_LOOT = {
     "Ashvar": [
         {"drop_chance": 1.0, "unique_key": "ashvar_robes"},
         {"drop_chance": 0.70, "unique_key": "ashvar_focus"},
-    ],
-    "Karreth": [
-        # On kill path — scale drops as normal loot
-        {"drop_chance": 0.80, "unique_key": "karreth_scale"},
-    ],
-    "The Pale Sentinel": [
-        # On kill path — her buckler stays behind
-        {"drop_chance": 1.0, "unique_key": "sirenne_buckler"},
-    ],
-    "The Last Keeper": [
-        # Isle Keeper always drops its pendant
-        {"drop_chance": 1.0, "unique_key": "keeper_pendant"},
     ],
     # NOTE: Lingering Will boss loot is defined in tower_data.py
 }
@@ -306,7 +298,8 @@ CURSED_ITEMS = [
         "slot": "main_hand",
         "rarity": "rare", "tier": 2,
         "cursed": True, "identified": False,
-        "damage": 34,
+        "damage": 48,
+        "damage_stat": {"STR": 0.3, "DEX": 0.12},
         "estimated_value": 300,
         "enchant_element": "fire", "enchant_bonus": 5,
         "stat_penalty": {"magic_resist": -10},
@@ -390,7 +383,8 @@ UNIQUE_ITEMS = {
         "name": "Korrath's Last Oath",
         "type": "weapon", "subtype": "Greatsword", "slot": "weapon",
         "rarity": "legendary", "unique": True,
-        "damage": 22, "phys_type": "slashing", "range": "melee",
+        "damage": 31, "phys_type": "slashing", "range": "melee",
+        "damage_stat": {"STR": 0.4, "DEX": 0.1},
         "enchant_element": "shadow", "enchant_bonus": 6, "enchant_name": "Shadow",
         "stat_bonuses": {"STR": 2},
         "set_id": "warden_set",
@@ -587,36 +581,6 @@ UNIQUE_ITEMS = {
             "The ring was found in the exact center of the rift, resting on "
             "nothing. The Warden order is gone. The wards are new. "
             "Someone has to hold what they protected."
-        ),
-    },
-
-    # ── Karreth (peaceful resolution — Dragon's Tooth) ────────
-    "karreth_scale": {
-        "name": "Karreth's Willgift",
-        "type": "armor",
-        "subtype": "chest",
-        "slot": "body",
-        "rarity": "legendary",
-        "unique": True,
-        "defense": 16,
-        "magic_resist": 10,
-        "stat_bonuses": {"CON": 2, "STR": 2},
-        "enchant_element": "fire",
-        "enchant_bonus": 5,
-        "enchant_name": "Dragonfire",
-        "enchant_resist": "fire",
-        "enchant_resist_bonus": 20,
-        "identified": False,
-        "estimated_value": 480,
-        "description": (
-            "A scale shed willingly by Karreth-sol-Amendar, worked into chest armor. "
-            "Still warm. Always warm. +2 CON, +2 STR, fire damage, 20% fire resist."
-        ),
-        "lore": (
-            "The scale was given freely — which matters in old draconic tradition. "
-            "A willing gift from a guardian carries a fraction of the guardian's purpose. "
-            "Wearing it, you feel a faint, constant warmth at your sternum. "
-            "Not heat. Remembrance."
         ),
     },
 }

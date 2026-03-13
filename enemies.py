@@ -37,7 +37,8 @@ ENEMIES = {
             {"drop_chance": 0.15, "item": {
                 "name": "Goblin Shiv", "type": "weapon",
                 "subtype": "Dagger", "rarity": "common",
-                "damage": 3, "phys_type": "piercing",
+                "damage": 13, "phys_type": "piercing",
+                "damage_stat": {"DEX": 0.4},
                 "identify_difficulty": 1,
                 "unidentified_name": "Crude Blade",
                 "unidentified_desc": "A jagged piece of metal lashed to a bone handle.",
@@ -89,7 +90,8 @@ ENEMIES = {
             {"drop_chance": 0.12, "item": {
                 "name": "Crude Shortbow", "type": "weapon",
                 "subtype": "Shortbow", "rarity": "common",
-                "damage": 4, "phys_type": "piercing",
+                "damage": 14, "phys_type": "piercing",
+                "damage_stat": {"DEX": 0.35, "STR": 0.08},
                 "identify_difficulty": 1,
                 "unidentified_name": "Worn Shortbow",
                 "unidentified_desc": "A small bow made from a bent branch and sinew string.",
@@ -141,7 +143,8 @@ ENEMIES = {
             {"drop_chance": 0.12, "item": {
                 "name": "Bandit's Shortsword", "type": "weapon",
                 "subtype": "Short Sword", "rarity": "common",
-                "damage": 6, "phys_type": "slashing",
+                "damage": 16, "phys_type": "slashing",
+                "damage_stat": {"DEX": 0.28, "STR": 0.12},
                 "identify_difficulty": 1,
                 "unidentified_name": "Worn Short Sword",
                 "unidentified_desc": "A short blade with a leather-wrapped grip. Well-used but serviceable.",
@@ -315,7 +318,8 @@ ENEMIES = {
             {"drop_chance": 0.18, "item": {
                 "name": "Rusted Sword", "type": "weapon",
                 "subtype": "Short Sword", "rarity": "common",
-                "damage": 5, "phys_type": "slashing",
+                "damage": 15, "phys_type": "slashing",
+                "damage_stat": {"DEX": 0.28, "STR": 0.12},
                 "identify_difficulty": 1,
                 "unidentified_name": "Corroded Blade",
                 "unidentified_desc": "A blade pitted with rust, still holding an edge.",
@@ -380,7 +384,8 @@ ENEMIES = {
             {"drop_chance": 0.08, "item": {
                 "name": "Orcish Blade", "type": "weapon",
                 "subtype": "Broadsword", "rarity": "common",
-                "damage": 9, "phys_type": "slashing",
+                "damage": 19, "phys_type": "slashing",
+                "damage_stat": {"STR": 0.3, "DEX": 0.12},
                 "identify_difficulty": 1,
                 "unidentified_name": "Crude Broadsword",
                 "unidentified_desc": "A heavy iron blade with rough hammer marks. Brutally functional.",
@@ -436,7 +441,8 @@ ENEMIES = {
             {"drop_chance": 0.25, "item": {
                 "name": "Chieftain's Cleaver", "type": "weapon",
                 "subtype": "Broadsword", "rarity": "uncommon",
-                "damage": 12, "phys_type": "slashing",
+                "damage": 22, "phys_type": "slashing",
+                "damage_stat": {"STR": 0.3, "DEX": 0.12},
                 "enhance_bonus": 1, "effect": {"str_bonus": 1},
                 "identify_difficulty": 2,
                 "unidentified_name": "Ornate Broadsword",
@@ -529,6 +535,7 @@ ENEMIES = {
             {"drop_chance": 0.05, "item": {
                 "name": "Crude Wand", "type": "weapon",
                 "subtype": "Wand", "rarity": "common",
+                "damage": 10, "damage_stat": {"INT": 0.32},
                 "spell_bonus": 2,
                 "identify_difficulty": 2,
                 "unidentified_name": "Gnarled Stick",
@@ -661,7 +668,8 @@ ENEMIES = {
         "loot_table": [
             {"drop_chance": 0.80, "item": {
                 "name": "Foreman's Pickaxe", "type": "weapon", "subtype": "axe",
-                "rarity": "rare", "tier": 3, "damage": 22, "identified": True,
+                "rarity": "rare", "tier": 3, "damage": 32, "identified": True,
+                "damage_stat": {"STR": 0.4},
                 "estimated_value": 250,
                 "description": "A massive mining pick, still sharp after centuries. +22 base damage.",
             }},
@@ -709,7 +717,8 @@ ENEMIES = {
             }},
             {"drop_chance": 0.85, "item": {
                 "name": "Warden's Stone Hammer", "type": "weapon", "subtype": "hammer",
-                "rarity": "rare", "tier": 3, "damage": 26, "identified": True,
+                "rarity": "rare", "tier": 3, "damage": 36, "identified": True,
+                "damage_stat": {"STR": 0.4},
                 "estimated_value": 340,
                 "description": "A dwarven war-hammer inscribed with ward-runes. "
                                "+26 base damage, +8 magic resist to wielder.",
@@ -761,7 +770,8 @@ ENEMIES = {
             }},
             {"drop_chance": 0.60, "item": {
                 "name": "Scorched Warden Blade", "type": "weapon", "subtype": "sword",
-                "rarity": "uncommon", "tier": 3, "damage": 20, "identified": True,
+                "rarity": "uncommon", "tier": 3, "damage": 30, "identified": True,
+                "damage_stat": {"STR": 0.3, "DEX": 0.12},
                 "estimated_value": 210,
                 "description": "A warden's sword, blackened by whatever destroyed Ashenmoor. "
                                "+20 base damage, deals bonus fire damage.",
