@@ -39,13 +39,16 @@ def serialize_character(char):
         "quick_rolled": char.quick_rolled,
         "human_bonus_stat": getattr(char, "human_bonus_stat", None),
         "planar_tier": getattr(char, "planar_tier", 0),
+        "combat_row":  getattr(char, "combat_row", "front"),
     }
 
 
 def deserialize_character(data):
     """Reconstruct a Character from a saved dict."""
     race = data.get("race_name", "Human")
-    char = Character(data["name"], data["class_name"], race)
+    # Guard: class_name may be None in very old saves — fall back to Fighter
+    class_name = data.get("class_name") or "Fighter"
+    char = Character(data["name"], class_name, race)
     char.level = data.get("level", 1)
     char.xp = data.get("xp", 0)
     char.gold = data.get("gold", 0)
@@ -89,6 +92,7 @@ def deserialize_character(data):
     char.quick_rolled = data.get("quick_rolled", False)
     char.human_bonus_stat = data.get("human_bonus_stat", None)
     char.planar_tier = data.get("planar_tier", 0)
+    char.combat_row  = data.get("combat_row", "front")
     return char
 
 
