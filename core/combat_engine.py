@@ -108,7 +108,12 @@ def calc_combatant_speed(combatant):
         base += combatant["weapon"].get("speed_mod", 0)
         base += combatant.get("equip_speed_bonus", 0)
         # Non-proficient penalty
-        if not is_proficient(combatant["class_name"], combatant["weapon"]["type"]):
+        w = combatant["weapon"]
+        from data.weapons import SUBTYPE_TO_PROF
+        _wt = w.get("type", "")
+        _wtype = (w.get("subtype", _wt) if _wt == "weapon" else _wt)
+        _wtype = SUBTYPE_TO_PROF.get(_wtype, _wtype)
+        if not is_proficient(combatant["class_name"], _wtype):
             base += NON_PROFICIENT_SPEED
     else:
         # Enemy
@@ -219,7 +224,11 @@ def calc_physical_accuracy(attacker, defender, weapon, position_acc_mod=0):
 
     # Non-proficient penalty
     if attacker["type"] == "player":
-        if not is_proficient(attacker["class_name"], weapon["type"]):
+        from data.weapons import SUBTYPE_TO_PROF
+        _wt2 = weapon.get("type", "")
+        _wtype2 = (weapon.get("subtype", _wt2) if _wt2 == "weapon" else _wt2)
+        _wtype2 = SUBTYPE_TO_PROF.get(_wtype2, _wtype2)
+        if not is_proficient(attacker["class_name"], _wtype2):
             acc += NON_PROFICIENT_ACCURACY
 
     # Defender is defending
@@ -333,7 +342,11 @@ def calc_physical_damage(attacker, defender, weapon, position_dmg_mod=1.0,
 
     # Non-proficient penalty
     if attacker["type"] == "player":
-        if not is_proficient(attacker["class_name"], weapon["type"]):
+        from data.weapons import SUBTYPE_TO_PROF
+        _wt3 = weapon.get("type", "")
+        _wtype3 = (weapon.get("subtype", _wt3) if _wt3 == "weapon" else _wt3)
+        _wtype3 = SUBTYPE_TO_PROF.get(_wtype3, _wtype3)
+        if not is_proficient(attacker["class_name"], _wtype3):
             raw *= NON_PROFICIENT_DAMAGE_MULT
 
     # Position modifier

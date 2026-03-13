@@ -214,13 +214,32 @@ WEAPONS = {
 
 CLASS_PROFICIENCIES = {
     "Fighter": ["Fists", "Dagger", "Short Sword", "Longsword", "Broadsword",
-                "Mace", "Spear", "Crossbow", "Thrown"],
-    "Mage":    ["Fists", "Dagger", "Staff", "Sling"],
-    "Cleric":  ["Fists", "Mace", "Staff", "Sling"],
-    "Thief":   ["Fists", "Dagger", "Short Sword", "Sling", "Bow", "Thrown"],
+                "Mace", "Spear", "Crossbow", "Thrown", "Axe", "Warhammer",
+                "Greatsword", "Greataxe", "Shield"],
+    "Mage":    ["Fists", "Dagger", "Staff", "Sling", "Wand", "Orb"],
+    "Cleric":  ["Fists", "Mace", "Staff", "Sling", "Wand", "Warhammer"],
+    "Thief":   ["Fists", "Dagger", "Short Sword", "Sling", "Bow", "Thrown",
+                "Crossbow"],
     "Ranger":  ["Fists", "Dagger", "Short Sword", "Longsword", "Staff",
                 "Spear", "Bow", "Crossbow", "Thrown"],
-    "Monk":    ["Fists", "Staff", "Spear"],
+    "Monk":    ["Fists", "Staff", "Spear", "Handwraps", "Kama"],
+}
+
+# Maps weapon subtypes (used in shop/advanced items) to proficiency keys.
+# WEAPONS.py items already use the correct proficiency key in their "type" field.
+# Shop items use "type"="weapon" and "subtype"=the actual weapon category.
+SUBTYPE_TO_PROF = {
+    "Shortbow":   "Bow",
+    "Longbow":    "Bow",
+    "Warhammer":  "Warhammer",
+    "Shield":     "Shield",
+    "Greatsword": "Greatsword",
+    "Greataxe":   "Greataxe",
+    "Axe":        "Axe",
+    "Wand":       "Wand",
+    "Orb":        "Orb",
+    "Handwraps":  "Handwraps",
+    "Kama":       "Kama",
 }
 
 # Penalty for using non-proficient weapon
