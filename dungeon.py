@@ -52,10 +52,10 @@ DUNGEONS = {
         "floors": 4,
         "width": 35, "height": 28,
         "encounter_table": {
-            1: ["medium_goblins", "wolves"],
-            2: ["medium_bandits", "wolves"],
-            3: ["medium_bandits", "hard_mixed"],
-            4: ["hard_mixed"],
+            1: ["easy_spiders", "medium_spiders"],
+            2: ["medium_spiders", "hard_spiders"],
+            3: ["hard_spiders", "spider_swarm"],
+            4: ["spider_swarm", "hard_spiders"],
         },
         "boss_floor": 4,
         "boss_encounter": "boss_spider_queen",
@@ -1246,6 +1246,8 @@ class DungeonState:
                 continue
             if _e["x"] == nx and _e["y"] == ny:
                 # Don't move; start combat with this enemy immediately
+                # Track position so post-combat cleanup can kill it on the map
+                self._last_contact_enemy = (nx, ny)
                 enc_event = {
                     "type": "random_encounter",
                     "dungeon_id": self.dungeon_id,

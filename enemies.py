@@ -17,10 +17,10 @@ from core.combat_config import (
 ENEMIES = {
     "Goblin Warrior": {
         "name": "Goblin Warrior",
-        "hp": 76, "defense": 5, "magic_resist": 2,
+        "hp": 130, "defense": 7, "magic_resist": 2,
         "stats": {"STR": 6, "DEX": 10, "CON": 5, "INT": 4, "WIS": 4, "PIE": 2},
         "speed_base": 14,
-        "attack_damage": 25, "attack_type": "melee", "phys_type": "slashing",
+        "attack_damage": 30, "attack_type": "melee", "phys_type": "slashing",
         "accuracy_bonus": 0,
         "preferred_row": FRONT,
         "ai_type": "aggressive", "pack_tactics": True, "cowardly": True,
@@ -69,10 +69,10 @@ ENEMIES = {
 
     "Goblin Archer": {
         "name": "Goblin Archer",
-        "hp": 57, "defense": 3, "magic_resist": 2,
+        "hp": 95, "defense": 4, "magic_resist": 2,
         "stats": {"STR": 4, "DEX": 12, "CON": 4, "INT": 5, "WIS": 5, "PIE": 2},
         "speed_base": 16,
-        "attack_damage": 28, "attack_type": "ranged", "phys_type": "piercing",
+        "attack_damage": 31, "attack_type": "ranged", "phys_type": "piercing",
         "accuracy_bonus": 5,
         "preferred_row": MID,
         "ai_type": "aggressive", "pack_tactics": True, "cowardly": True,
@@ -489,10 +489,10 @@ ENEMIES = {
 
     "Goblin Shaman": {
         "name": "Goblin Shaman",
-        "hp": 66, "defense": 3, "magic_resist": 12,
+        "hp": 110, "defense": 3, "magic_resist": 12,
         "stats": {"STR": 3, "DEX": 8, "CON": 4, "INT": 10, "WIS": 10, "PIE": 6},
         "speed_base": 14,
-        "attack_damage": 16, "attack_type": "melee", "phys_type": "blunt",
+        "attack_damage": 22, "attack_type": "melee", "phys_type": "blunt",
         "accuracy_bonus": 0,
         "preferred_row": BACK,
         "ai_type": "supportive",
@@ -553,10 +553,10 @@ ENEMIES = {
 
     "Goblin King": {
         "name": "Grak the Goblin King",
-        "hp": 400, "defense": 12, "magic_resist": 8,
+        "hp": 550, "defense": 15, "magic_resist": 8,
         "stats": {"STR": 18, "DEX": 10, "CON": 16, "INT": 6, "WIS": 8, "PIE": 4},
         "speed_base": 12,
-        "attack_damage": 38, "attack_type": "melee", "phys_type": "blunt",
+        "attack_damage": 50, "attack_type": "melee", "phys_type": "blunt",
         "accuracy_bonus": 8,
         "preferred_row": FRONT,
         "ai_type": "boss",
@@ -602,10 +602,10 @@ ENEMIES = {
 
     "Giant Spider Queen": {
         "name": "Spider Queen",
-        "hp": 480, "defense": 20, "magic_resist": 20,
+        "hp": 620, "defense": 24, "magic_resist": 20,
         "stats": {"STR": 14, "DEX": 18, "CON": 14, "INT": 4, "WIS": 12, "PIE": 2},
         "speed_base": 18,
-        "attack_damage": 41, "attack_type": "melee", "phys_type": "piercing",
+        "attack_damage": 54, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 12,
         "preferred_row": FRONT,
         "ai_type": "boss",
@@ -785,10 +785,10 @@ ENEMIES = {
 
     "Giant Spider": {
         "name": "Giant Spider",
-        "hp": 84, "defense": 10, "magic_resist": 6,
+        "hp": 140, "defense": 13, "magic_resist": 6,
         "stats": {"STR": 10, "DEX": 16, "CON": 8, "INT": 2, "WIS": 8, "PIE": 1},
         "speed_base": 20,
-        "attack_damage": 25, "attack_type": "melee", "phys_type": "piercing",
+        "attack_damage": 32, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 8,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
@@ -932,6 +932,33 @@ ENCOUNTERS = {
             {"enemy": "Orc Fighter", "count": 3, "row": FRONT},
         ],
     },
+        # Spider's Nest encounters — added to replace goblin/bandit placeholders
+    "easy_spiders": {
+        "name": "Spider Nest",
+        "difficulty": "easy",
+        "groups": [
+            {"enemy": "Spiderling", "count": 4, "row": FRONT},
+            {"enemy": "Giant Spider", "count": 1, "row": FRONT},
+        ],
+    },
+    "medium_spiders": {
+        "name": "Spider Colony",
+        "difficulty": "medium",
+        "groups": [
+            {"enemy": "Giant Spider", "count": 2, "row": FRONT},
+            {"enemy": "Web Spinner", "count": 1, "row": BACK},
+            {"enemy": "Spiderling", "count": 2, "row": FRONT},
+        ],
+    },
+    "hard_spiders": {
+        "name": "Brood Chamber",
+        "difficulty": "hard",
+        "groups": [
+            {"enemy": "Venomfang Spider", "count": 2, "row": FRONT},
+            {"enemy": "Web Spinner", "count": 1, "row": BACK},
+            {"enemy": "Giant Spider", "count": 1, "row": FRONT},
+        ],
+    },
     "spider_swarm": {
         "name": "Spider Swarm",
         "difficulty": "medium",
@@ -954,9 +981,10 @@ DUNGEON_ENCOUNTER_TABLES = {
         "boss": "boss_goblin_king",
     },
     "spiders_nest": {
-        1: ["spider_swarm", "wolves"],
-        2: ["spider_swarm", "medium_bandits"],
-        3: ["spider_swarm", "hard_mixed"],
+        1: ["easy_spiders", "medium_spiders"],
+        2: ["medium_spiders", "hard_spiders"],
+        3: ["hard_spiders", "spider_swarm"],
+        4: ["spider_swarm", "hard_spiders"],
         "boss": "boss_spider_queen",
     },
     "abandoned_mine": {
