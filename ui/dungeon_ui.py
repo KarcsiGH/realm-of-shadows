@@ -94,6 +94,63 @@ def _gen_door_texture():
     return surf
 
 
+def _gen_stair_texture(going_down=True, light=(180,160,120), dark=(90,75,50)):
+    """Full-wall stair texture: perspective step pattern floor-to-ceiling."""
+    surf = pygame.Surface((TEX_W, TEX_H))
+    rng  = random.Random(0xF17E if going_down else 0xF17A)
+
+    STEP_COL   = light                         # step top face (lighter)
+    RISER_COL  = dark                          # step riser face (darker)
+    EDGE_COL   = tuple(max(0,c-30) for c in dark)  # step edge crease
+
+    # 5 steps, each occupying TEX_H//5 rows
+    n_steps = 5
+    step_h  = TEX_H // n_steps
+
+    for s in range(n_steps):
+        if going_down:
+            # Stairs going down: near step (s=0) is full width at top,
+            # far steps get narrower — perspective shrink on x axis
+            frac  = (n_steps - s) / n_steps      # 1.0→0.2 top to bottom
+        else:
+            frac  = (s + 1) / n_steps            # 0.2→1.0 top to bottom
+
+        # Horizontal span of this step across the texture
+        margin = int((1.0 - frac) * TEX_W * 0.45)
+        x0, x1 = margin, TEX_W - margin
+
+        y_top  = s * step_h
+        y_mid  = y_top + max(1, step_h // 3)    # riser/tread divider
+        y_bot  = y_top + step_h
+
+        # Step tread (top face, lighter)
+        for y in range(y_top, y_mid):
+            tone = rng.uniform(0.88, 1.08)
+            c = tuple(min(255, int(v * tone)) for v in STEP_COL)
+            for x in range(x0, x1):
+                surf.set_at((x, y), c)
+
+        # Step riser (front face, darker)
+        for y in range(y_mid, y_bot):
+            tone = rng.uniform(0.80, 1.0)
+            c = tuple(min(255, int(v * tone)) for v in RISER_COL)
+            for x in range(x0, x1):
+                surf.set_at((x, y), c)
+
+        # Edge crease lines
+        if y_top > 0:
+            pygame.draw.line(surf, EDGE_COL, (x0, y_top), (x1, y_top), 1)
+        pygame.draw.line(surf, EDGE_COL, (x0, y_mid), (x1, y_mid), 1)
+        # Side walls (the rock beside the stair edges)
+        for y in range(y_top, y_bot):
+            for x in range(0, x0):
+                surf.set_at((x, y), tuple(int(v*0.4) for v in RISER_COL))
+            for x in range(x1, TEX_W):
+                surf.set_at((x, y), tuple(int(v*0.4) for v in RISER_COL))
+
+    return surf
+
+
 def _gen_cave_textures(light, dark):
     """Cave: rough rock face / water-streaked / crumbling."""
     rng0 = random.Random(hash(("cave0", light)))
@@ -467,8 +524,14 @@ class DungeonUI:
         self._keys: set = set()
 
         # Pre-generate textures — NUM_WALL_VARIANTS per theme
-        self._tex_door   = _gen_door_texture()
-        self._door_cols  = self._bake_tex_cols(self._tex_door)
+        self._tex_door       = _gen_door_texture()
+        self._door_cols      = self._bake_tex_cols(self._tex_door)
+        self._tex_stair_down = _gen_stair_texture(going_down=True,
+            light=self.wall_light, dark=self.wall_dark)
+        self._tex_stair_up   = _gen_stair_texture(going_down=False,
+            light=self.wall_light, dark=self.wall_dark)
+        self._stair_down_cols = self._bake_tex_cols(self._tex_stair_down)
+        self._stair_up_cols   = self._bake_tex_cols(self._tex_stair_up)
         _variant_surfs   = _gen_theme_textures(
             self.theme_id, self.wall_light, self.wall_dark)
         self._wall_cols_variants = [
@@ -825,18 +888,18 @@ class DungeonUI:
             tex_x = int(wx * TEX_W) % TEX_W
             if is_door:
                 cols_src = door_cols[tex_x]
+            elif is_stair:
+                # Dedicated stair texture — no sprite overlay needed
+                if hit_tt == DT_STAIRS_DOWN:
+                    cols_src = self._stair_down_cols[tex_x]
+                else:
+                    cols_src = self._stair_up_cols[tex_x]
             else:
                 # Pick variant deterministically from tile coords — stable, no flicker
                 v_idx    = (hit_mx * 2654435761 ^ hit_my * 2246822519) % num_v
                 cols_src = wall_variants[v_idx][tex_x]
 
-            # Stair tint: blend a colour over the wall texture
-            stair_tint = None
-            if is_stair:
-                if hit_tt == DT_STAIRS_DOWN:
-                    stair_tint = (0.55, 0.22, 0.75)   # deep purple
-                else:
-                    stair_tint = (0.85, 0.70, 0.15)   # warm gold
+            stair_tint = None  # no longer needed — using dedicated texture
 
             # Lighting
             fog_t = min(1.0, dist / FOG)
@@ -849,12 +912,6 @@ class DungeonUI:
             for screen_y in range(max(0, top), min(VH, top + wall_h)):
                 tex_y = int((screen_y - top) / wall_h * TEX_H) % TEX_H
                 r, g, b = cols_src[tex_y]
-                if stair_tint:
-                    # Blend 50% toward the stair colour
-                    sr, sg, sb = stair_tint
-                    r = int(r * 0.5 + sr * 255 * 0.5)
-                    g = int(g * 0.5 + sg * 255 * 0.5)
-                    b = int(b * 0.5 + sb * 255 * 0.5)
                 rc = int(r * bright + fog_c[0] * fb)
                 gc = int(g * bright + fog_c[1] * fb)
                 bc = int(b * bright + fog_c[2] * fb)
@@ -888,7 +945,7 @@ class DungeonUI:
                 enc_key  = None
                 # Stairs are now solid walls in the raycaster — skip as sprites
                 if tt in (DT_STAIRS_DOWN, DT_STAIRS_UP):
-                    pass
+                    pass  # rendered as wall texture — no sprite needed
                 elif tt == DT_TRAP:
                     # Only show trap sprite if the party knows about it
                     ev = tile.get("event", {})
@@ -950,10 +1007,10 @@ class DungeonUI:
                 DT_TREASURE:     0.35,   # chest — squat, sits on floor
                 DT_STAIRS_DOWN:  0.55,   # stairs — wide, not tall
                 DT_STAIRS_UP:    0.55,
-                DT_INTERACTABLE: 0.50,   # shrine/fountain — pedestal height
+                DT_INTERACTABLE: 0.72,   # shrine/fountain — taller, more visible
                 DT_ENTRANCE:     0.80,   # archway — tall but not full wall
-                DT_TRAP:         0.20,   # trap plate — nearly flush with floor
-                "trap_disarmed": 0.20,
+                DT_TRAP:         0.35,   # trap plate — raised rune plate, visible
+                "trap_disarmed": 0.25,
                 "trap_tripped":  0.20,
                 "journal":       0.30,
                 "enemy":         0.85,
@@ -1033,16 +1090,21 @@ class DungeonUI:
                     draw_dungeon_object(spr, obj_r, "stairs_up")
 
                 elif icon_key == DT_INTERACTABLE:
-                    # Check if shrine/fountain is already used
+                    # Distinguish fountain (healing_pool) vs shrine (mp_shrine)
                     fl_d2 = self.dungeon.get_current_floor_data()
                     _ity, _itx = int(ty), int(tx)
                     if 0<=_ity<fl_d2["height"] and 0<=_itx<fl_d2["width"]:
-                        i_ev = (fl_d2["tiles"][_ity][_itx].get("event") or {})
-                        i_used = i_ev.get("used", False)
+                        i_ev    = (fl_d2["tiles"][_ity][_itx].get("event") or {})
+                        i_used  = i_ev.get("used", False)
+                        i_subtp = i_ev.get("subtype", "mp_shrine")
                     else:
-                        i_used = False
+                        i_used = False; i_subtp = "mp_shrine"
                     obj_r = pygame.Rect(0, 0, surf_w, surf_h)
-                    draw_dungeon_object(spr, obj_r, "shrine_used" if i_used else "shrine_active")
+                    if i_subtp == "healing_pool":
+                        obj_key = "fountain_used" if i_used else "fountain_active"
+                    else:
+                        obj_key = "shrine_used" if i_used else "shrine_active"
+                    draw_dungeon_object(spr, obj_r, obj_key)
 
                 elif icon_key == DT_TREASURE:
                     obj_r = pygame.Rect(0, 0, surf_w, surf_h)
@@ -1079,19 +1141,39 @@ class DungeonUI:
                     continue  # skip the generic spr blit below
 
                 elif icon_key == DT_TRAP:
-                    # Armed detected trap — red spike plate
-                    pw = max(6, surf_w * 4 // 5)
-                    ph = max(3, surf_h // 6)
+                    # Armed detected trap — glowing rune pressure plate
+                    pw = max(8, surf_w * 4 // 5)
+                    ph = max(4, surf_h // 4)
                     ox = (surf_w - pw) // 2
                     oy = surf_h - ph - 1
+                    # Plate base — dark stone
                     pygame.draw.rect(spr, dim, (ox, oy, pw, ph))
                     pygame.draw.rect(spr, c_a, (ox, oy, pw, ph), 1)
-                    num_spikes = max(3, pw // 5)
-                    spike_h = max(3, surf_h // 3)
-                    for si in range(num_spikes):
-                        sx_ = ox + (si * pw // num_spikes) + pw // (num_spikes * 2)
-                        pts = [(sx_-2, oy), (sx_+2, oy), (sx_, oy - spike_h)]
-                        pygame.draw.polygon(spr, c_a, pts)
+                    # Rune glow — pulsing red symbols on the plate
+                    pulse_a = int(alpha * (0.6 + 0.4 * abs(math.sin(self.t * 3.5))))
+                    glow_c = (*color, pulse_a)
+                    # Central rune circle
+                    cx_r, cy_r = surf_w // 2, oy + ph // 2
+                    r_sz = max(2, ph // 3)
+                    pygame.draw.circle(spr, glow_c, (cx_r, cy_r), r_sz, 1)
+                    # Radiating rune lines from centre
+                    for ang_i in range(4):
+                        import math as _m
+                        a_ = ang_i * _m.pi / 2
+                        rx = cx_r + int(_m.cos(a_) * (pw // 3))
+                        ry = cy_r + int(_m.sin(a_) * (ph // 2 - 1))
+                        rx = max(ox+1, min(ox+pw-2, rx))
+                        ry = max(oy+1, min(oy+ph-2, ry))
+                        pygame.draw.line(spr, glow_c, (cx_r, cy_r), (rx, ry), 1)
+                    # Outer glow halo — soft bleed above plate
+                    halo_h = max(2, ph)
+                    halo_a = pulse_a // 3
+                    for hly in range(halo_h):
+                        fade = int(halo_a * (1 - hly / halo_h))
+                        hw = max(2, pw * (halo_h - hly) // halo_h)
+                        hx = surf_w // 2 - hw // 2
+                        pygame.draw.line(spr, (*color, fade),
+                                         (hx, oy - hly), (hx + hw, oy - hly))
 
                 elif icon_key == "trap_disarmed":
                     # Disarmed trap — flat green-grey plate with X mark
@@ -1225,13 +1307,26 @@ class DungeonUI:
                 ecol = (255, 60, 60, 255) if enemy.get("state") == "chase" else (200, 80, 80, 220)
                 pygame.draw.circle(bg, ecol, (esx, esy), max(2, ts // 2 - 1))
 
-        # Party dot + facing arrow
+        # Party dot + directional arrowhead (contained within tile square)
         ppx = (px_i-x0)*ts + ts//2
         ppy = (py_i-y0)*ts + ts//2
-        ax  = ppx + int(math.cos(self.angle)*ts*1.2)
-        ay  = ppy + int(math.sin(self.angle)*ts*1.2)
-        pygame.draw.line(bg, (255,255,80,255), (ppx,ppy), (ax,ay), 2)
-        pygame.draw.circle(bg, (255,255,80,255), (ppx,ppy), ts//2)
+        # Arrow tip: stay within the tile (max ts//2 - 1 from centre)
+        arrow_r = max(2, ts//2 - 1)
+        ax  = ppx + int(math.cos(self.angle) * arrow_r)
+        ay  = ppy + int(math.sin(self.angle) * arrow_r)
+        # Draw filled party circle
+        pygame.draw.circle(bg, (255,255,80,255), (ppx,ppy), max(2, ts//2 - 1))
+        # Draw arrowhead triangle pointing in facing direction
+        perp_x = -math.sin(self.angle)
+        perp_y =  math.cos(self.angle)
+        tip_x  = ppx + int(math.cos(self.angle) * arrow_r)
+        tip_y  = ppy + int(math.sin(self.angle) * arrow_r)
+        base_w = max(1, ts // 4)
+        b1x = tip_x - int(math.cos(self.angle) * arrow_r * 0.7) + int(perp_x * base_w)
+        b1y = tip_y - int(math.sin(self.angle) * arrow_r * 0.7) + int(perp_y * base_w)
+        b2x = tip_x - int(math.cos(self.angle) * arrow_r * 0.7) - int(perp_x * base_w)
+        b2y = tip_y - int(math.sin(self.angle) * arrow_r * 0.7) - int(perp_y * base_w)
+        pygame.draw.polygon(bg, (255,220,0,255), [(tip_x,tip_y),(b1x,b1y),(b2x,b2y)])
         pygame.draw.rect(bg, (100,90,72,200), (0,0,cols*ts,rows*ts), 1)
 
         surface.blit(bg, (MM_X, MM_Y))

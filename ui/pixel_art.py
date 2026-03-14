@@ -1499,6 +1499,56 @@ DUNGEON_SHRINE_USED = [
 ]
 
 
+# FOUNTAIN ACTIVE: stone basin with arcing water jets
+# W=water arc, w=water drops, B=basin stone, b=basin shadow, M=base stone
+DUNGEON_FOUNTAIN_ACTIVE = [
+    "................",
+    "....W......W....",   # water arc peaks
+    "...WWW....WWW...",   # arcs
+    "..WWWWW..WWWWW..",   # arcs wide
+    "...WWW....WWW...",   # arcs falling
+    "....w..bb..w....",   # drops + basin rim
+    "...wbBBBBBBbw...",   # basin rim stone
+    "....bBBBBBBBb...",   # basin outer
+    "....bBwwwwwBb...",   # water surface
+    "....bBwwwwwBb...",   # water surface
+    "....bBBBBBBBb...",   # basin lower rim
+    ".....bbbbbbb....",   # basin base
+    "......MMMMM.....",   # pedestal top
+    "......MMMMM.....",   # pedestal
+    ".....MMMMMMM....",   # pedestal base
+    "....mmmmmmmmm...",   # ground trim
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+# FOUNTAIN USED: empty dry basin, no water
+DUNGEON_FOUNTAIN_USED = [
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    ".....bbbbbb.....",   # dry basin rim
+    "....bBBBBBBb....",   # basin rim
+    "....bBBBBBBBb...",   # basin outer
+    "....bBbbbbbbBb..",   # dry dark interior
+    "....bBbbbbbbBb..",   # dry interior
+    "....bBBBBBBBb...",   # basin lower
+    ".....bbbbbbb....",   # basin base
+    "......MMMMM.....",   # pedestal top
+    "......MMMMM.....",   # pedestal
+    ".....MMMMMMM....",   # pedestal base
+    "....mmmmmmmmm...",   # ground trim
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+
 # ── BEETLE: hard rounded carapace, antennae, segmented abdomen, leg stubs.
 #    Reads as insect/arthropod — oval dome, NOT humanoid.
 #    N/n = chitin/legs, C/H/D = carapace body
@@ -1587,8 +1637,10 @@ _DUNGEON_OBJECT_GRIDS = {
     "chest":         DUNGEON_CHEST,
     "stairs_down":   DUNGEON_STAIRS_DOWN,
     "stairs_up":     DUNGEON_STAIRS_UP,
-    "shrine_active": DUNGEON_SHRINE_ACTIVE,
-    "shrine_used":   DUNGEON_SHRINE_USED,
+    "shrine_active":   DUNGEON_SHRINE_ACTIVE,
+    "shrine_used":     DUNGEON_SHRINE_USED,
+    "fountain_active": DUNGEON_FOUNTAIN_ACTIVE,
+    "fountain_used":   DUNGEON_FOUNTAIN_USED,
 }
 
 
