@@ -70,6 +70,7 @@ class WorldMapUI:
         self.event_timer = 0
         self.event_color = CREAM
         self.show_camp_confirm = False
+        self.port_modal        = None   # {"loc_id", "loc", "routes", "hover_idx"}
 
     def draw(self, surface, mx, my, dt):
         self.event_timer = max(0, self.event_timer - dt)
@@ -91,6 +92,10 @@ class WorldMapUI:
         # ── Camp confirmation dialog ──
         if self.show_camp_confirm:
             self._draw_camp_dialog(surface, mx, my)
+
+        # ── Port destination picker ──
+        if self.port_modal:
+            self._draw_port_modal(surface, mx, my)
 
         # ── Fading world corruption overlay ──
         self._draw_fading_overlay(surface)
@@ -218,8 +223,12 @@ class WorldMapUI:
                                     (px + ox, py + oy, 10, 6), 0, 3.14, 1)
 
     def _draw_location_marker(self, surface, px, py, loc):
-        """Draw a location icon on the tile."""
+        """Draw a distinct icon for each location type."""
         loc_type = loc["type"]
+        is_capital = loc.get("is_capital", False)
+        name = loc.get("name", "")
+
+        # Base colors per type
         if loc_type == LOC_TOWN:
             col = LOC_TOWN_COL
         elif loc_type == LOC_DUNGEON:
@@ -231,25 +240,110 @@ class WorldMapUI:
         else:
             col = LOC_POI_COL
 
-        icon = loc.get("icon", "?")
-        is_capital = loc.get("is_capital", False)
+        cx = px + TILE_W // 2
+        cy = py + TILE_H // 2
+        dark = tuple(max(0, c - 60) for c in col)
 
-        if is_capital:
-            # Capital gets a larger, double-bordered banner
-            banner = pygame.Rect(px + TILE_W // 2 - 14, py, 28, 22)
-            pygame.draw.rect(surface, (0, 0, 0), banner)
-            pygame.draw.rect(surface, (180, 140, 40), banner, 3)
-            pygame.draw.rect(surface, (255, 220, 80), banner.inflate(-4, -4), 1)
-            draw_text(surface, icon, banner.x + 7, banner.y + 2, (255, 220, 80), 16, bold=True)
+        if loc_type == LOC_TOWN:
+            # House silhouette — roof triangle + square base
+            sz = 14 if is_capital else 10
+            # Base
+            base = pygame.Rect(cx - sz//2, cy - sz//3, sz, sz//2 + 2)
+            pygame.draw.rect(surface, dark, base)
+            pygame.draw.rect(surface, col, base, 1)
+            # Door
+            dw, dh = max(2, sz//4), max(3, sz//3)
+            pygame.draw.rect(surface, (40, 28, 16),
+                             (cx - dw//2, base.bottom - dh, dw, dh))
+            # Roof triangle
+            roof_h = sz * 2 // 3
+            roof_pts = [
+                (cx - sz//2 - 2, cy - sz//3),
+                (cx + sz//2 + 2, cy - sz//3),
+                (cx, cy - sz//3 - roof_h),
+            ]
+            pygame.draw.polygon(surface, col, roof_pts)
+            pygame.draw.polygon(surface, dark, roof_pts, 1)
+            if is_capital:
+                # Extra tower / banner
+                pygame.draw.line(surface, (255, 220, 80), (cx, cy - sz//3 - roof_h),
+                                 (cx, cy - sz//3 - roof_h - 6), 1)
+                pygame.draw.polygon(surface, (255, 220, 80), [
+                    (cx, cy - sz//3 - roof_h - 6),
+                    (cx + 5, cy - sz//3 - roof_h - 3),
+                    (cx, cy - sz//3 - roof_h),
+                ])
+
+        elif loc_type == LOC_DUNGEON:
+            # Arch/skull entrance — pointed archway with dark interior
+            sz = 12
+            # Arch frame
+            arch_rect = pygame.Rect(cx - sz//2, cy - sz//2, sz, sz)
+            pygame.draw.rect(surface, dark, arch_rect)
+            pygame.draw.rect(surface, col, arch_rect, 2)
+            # Pointed arch interior
+            inner = pygame.Rect(cx - sz//3, cy - sz//3 + 2, sz*2//3, sz*2//3)
+            pygame.draw.ellipse(surface, (8, 4, 12), inner)
+            # Skull dots (eye sockets)
+            eye_y = cy - 2
+            pygame.draw.circle(surface, col, (cx - 3, eye_y), 2)
+            pygame.draw.circle(surface, col, (cx + 3, eye_y), 2)
+
+        elif loc_type == LOC_PORT:
+            # Anchor symbol
+            sz = 10
+            # Circle top
+            pygame.draw.circle(surface, col, (cx, cy - sz//2), 3, 1)
+            # Vertical shaft
+            pygame.draw.line(surface, col, (cx, cy - sz//2 + 3), (cx, cy + sz//2), 2)
+            # Horizontal crossbar
+            pygame.draw.line(surface, col, (cx - sz//3, cy - sz//4),
+                             (cx + sz//3, cy - sz//4), 2)
+            # Flukes (curved ends)
+            pygame.draw.arc(surface, col,
+                            pygame.Rect(cx - sz//2, cy + sz//6, sz//2, sz//3),
+                            math.pi, math.pi * 2, 1)
+            pygame.draw.arc(surface, col,
+                            pygame.Rect(cx, cy + sz//6, sz//2, sz//3),
+                            0, math.pi, 1)
+
+        elif loc_type == LOC_SECRET:
+            # Question mark in a diamond
+            sz = 10
+            pts = [(cx, cy-sz), (cx+sz, cy), (cx, cy+sz), (cx-sz, cy)]
+            pygame.draw.polygon(surface, (20, 14, 30), pts)
+            pygame.draw.polygon(surface, col, pts, 1)
+            draw_text(surface, "?", cx - 4, cy - 7, col, 12, bold=True)
+
         else:
-            # Standard town banner
-            banner = pygame.Rect(px + TILE_W // 2 - 10, py + 2, 20, 18)
-            pygame.draw.rect(surface, (0, 0, 0), banner)
-            pygame.draw.rect(surface, col, banner, 2)
-            draw_text(surface, icon, banner.x + 4, banner.y + 1, col, 14, bold=True)
+            # POI — five-pointed star
+            sz = 8
+            star_pts = []
+            for k in range(10):
+                r_ = sz if k % 2 == 0 else sz // 2
+                a  = math.pi * k / 5 - math.pi / 2
+                star_pts.append((cx + int(r_ * math.cos(a)),
+                                 cy + int(r_ * math.sin(a))))
+            pygame.draw.polygon(surface, col, star_pts)
+            pygame.draw.polygon(surface, dark, star_pts, 1)
+
+        # Location name label (small, below marker)
+        if name:
+            font_size = 10
+            try:
+                lf = pygame.font.SysFont("courier,consolas,monospace", font_size)
+                lbl = lf.render(name[:14], True, col)
+                lx = cx - lbl.get_width() // 2
+                ly = py + TILE_H - 2
+                # Dark backing
+                pygame.draw.rect(surface, (0, 0, 0),
+                                 (lx - 1, ly, lbl.get_width() + 2, lbl.get_height()))
+                surface.blit(lbl, (lx, ly))
+            except Exception:
+                pass
 
     def _draw_party(self, surface):
-        """Draw the party token at center of viewport."""
+        """Draw the party token — a directional figure with facing indicator."""
         cx = MAP_OFFSET_X + (VIEW_COLS // 2) * TILE_W
         cy = MAP_OFFSET_Y + (VIEW_ROWS // 2) * TILE_H
 
@@ -258,29 +352,45 @@ class WorldMapUI:
         elev = TERRAIN_DATA[tile["terrain"]]["elevation"]
         cy -= elev * ELEVATION_PX
 
-        # Draw character diamond
         center_x = cx + TILE_W // 2
         center_y = cy + TILE_H // 2
-        size = 12
-        pts = [
-            (center_x, center_y - size),
-            (center_x + size, center_y),
-            (center_x, center_y + size),
-            (center_x - size, center_y),
-        ]
-        pygame.draw.polygon(surface, PARTY_COLOR, pts)
-        pygame.draw.polygon(surface, PARTY_OUTLINE, pts, 2)
 
-        # Pulsing glow
         import time
-        pulse = abs(math.sin(time.time() * 3)) * 4
-        glow_pts = [
-            (center_x, center_y - size - pulse),
-            (center_x + size + pulse, center_y),
-            (center_x, center_y + size + pulse),
-            (center_x - size - pulse, center_y),
+        pulse = abs(math.sin(time.time() * 3))
+
+        # Pulsing glow ring
+        glow_r = int(13 + pulse * 4)
+        glow_surf = pygame.Surface((glow_r*2+4, glow_r*2+4), pygame.SRCALPHA)
+        for gr in range(glow_r, glow_r-5, -1):
+            alpha = int(30 + (glow_r - gr) * 25)
+            pygame.draw.circle(glow_surf, (*PARTY_OUTLINE, alpha),
+                               (glow_r+2, glow_r+2), gr)
+        surface.blit(glow_surf, (center_x - glow_r - 2, center_y - glow_r - 2))
+
+        # Body — filled circle
+        pygame.draw.circle(surface, PARTY_COLOR, (center_x, center_y), 9)
+        pygame.draw.circle(surface, PARTY_OUTLINE, (center_x, center_y), 9, 2)
+
+        # Head dot
+        pygame.draw.circle(surface, PARTY_OUTLINE, (center_x, center_y - 4), 3)
+
+        # Facing arrow — short line in direction of travel
+        facing_x = self.world.facing_dx if hasattr(self.world, "facing_dx") else 0
+        facing_y = self.world.facing_dy if hasattr(self.world, "facing_dy") else -1
+        arrow_len = 14
+        ax = center_x + int(facing_x * arrow_len)
+        ay = center_y + int(facing_y * arrow_len)
+        pygame.draw.line(surface, PARTY_OUTLINE, (center_x, center_y), (ax, ay), 2)
+        # Arrowhead
+        perp_x, perp_y = -facing_y, facing_x
+        tip_pts = [
+            (ax, ay),
+            (ax - int(facing_x*4) + int(perp_x*3),
+             ay - int(facing_y*4) + int(perp_y*3)),
+            (ax - int(facing_x*4) - int(perp_x*3),
+             ay - int(facing_y*4) - int(perp_y*3)),
         ]
-        pygame.draw.polygon(surface, PARTY_OUTLINE, glow_pts, 1)
+        pygame.draw.polygon(surface, PARTY_OUTLINE, tip_pts)
 
     def _draw_hud(self, surface, mx, my):
         """Draw the HUD overlay with location info and buttons."""
@@ -480,6 +590,82 @@ class WorldMapUI:
                     pygame.draw.circle(bloom, (30, 0, 55, a), (cx, cy), ring)
             surface.blit(bloom, (0, 0))
 
+    def _draw_port_modal(self, surface, mx, my):
+        """Draw port destination picker modal."""
+        m = self.port_modal
+        routes = m["routes"]
+
+        # Dim overlay
+        overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))
+        surface.blit(overlay, (0, 0))
+
+        # Dialog box - height grows with number of destinations
+        n_routes = len(routes)
+        dlg_h = 130 + n_routes * 52 + 20
+        dlg = pygame.Rect(SCREEN_W // 2 - 260, SCREEN_H // 2 - dlg_h // 2, 520, dlg_h)
+        pygame.draw.rect(surface, (14, 20, 38), dlg, border_radius=6)
+        pygame.draw.rect(surface, (80, 180, 220), dlg, 2, border_radius=6)
+
+        # Header
+        draw_text(surface, "⚓ Set Sail", dlg.x + 20, dlg.y + 16, (80, 180, 220), 22, bold=True)
+        draw_text(surface, f"From: {m['loc']['name']}", dlg.x + 20, dlg.y + 46, CREAM, 14)
+        draw_text(surface, "Where do you want to sail?", dlg.x + 20, dlg.y + 68, GREY, 13)
+        pygame.draw.line(surface, (40, 80, 110),
+                         (dlg.x + 10, dlg.y + 90), (dlg.right - 10, dlg.y + 90))
+
+        # Destination buttons
+        m["_dest_rects"] = []
+        for i, dest_id in enumerate(routes):
+            dest = LOCATIONS.get(dest_id, {})
+            dest_name = dest.get("name", dest_id)
+            dest_desc = dest.get("description", "")
+            btn_y = dlg.y + 98 + i * 52
+            btn = pygame.Rect(dlg.x + 20, btn_y, dlg.width - 40, 44)
+            hover = btn.collidepoint(mx, my)
+            bg = (40, 90, 130) if hover else (20, 40, 65)
+            border = (80, 180, 220) if hover else (40, 80, 110)
+            pygame.draw.rect(surface, bg, btn, border_radius=4)
+            pygame.draw.rect(surface, border, btn, 1, border_radius=4)
+            draw_text(surface, f"→  {dest_name}", btn.x + 14, btn.y + 6,
+                      (140, 220, 255) if hover else CREAM, 14, bold=hover)
+            if dest_desc:
+                draw_text(surface, dest_desc[:60], btn.x + 14, btn.y + 26, GREY, 11)
+            m["_dest_rects"].append((btn, dest_id, dest_name))
+
+        # Cancel button
+        cancel_y = dlg.y + 98 + n_routes * 52 + 4
+        cancel_btn = pygame.Rect(dlg.x + dlg.width - 120, cancel_y, 100, 30)
+        pygame.draw.rect(surface, (40, 30, 50),
+                         cancel_btn, border_radius=4)
+        pygame.draw.rect(surface, PANEL_BORDER, cancel_btn, 1, border_radius=4)
+        draw_text(surface, "Cancel", cancel_btn.x + 16, cancel_btn.y + 6, GREY, 13)
+        m["_cancel_rect"] = cancel_btn
+
+    def _handle_port_modal_click(self, mx, my):
+        """Handle clicks inside the port destination picker."""
+        m = self.port_modal
+        if not m:
+            return None
+
+        # Cancel
+        cancel = m.get("_cancel_rect")
+        if cancel and cancel.collidepoint(mx, my):
+            self.port_modal = None
+            return None
+
+        # Destination selection
+        for btn, dest_id, dest_name in m.get("_dest_rects", []):
+            if btn.collidepoint(mx, my):
+                dest = LOCATIONS.get(dest_id, {})
+                self.port_modal = None
+                self._show_event(
+                    f"⚓ Set sail from {m['loc']['name']} → {dest_name}!",
+                    (80, 180, 220))
+                return {"type": "port_travel", "dest_id": dest_id, "dest": dest}
+
+        return None  # click inside modal but not on a button — consume event
+
     def _draw_camp_dialog(self, surface, mx, my):
         """Draw camp confirmation dialog."""
         overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
@@ -513,7 +699,9 @@ class WorldMapUI:
 
     def handle_key(self, key):
         """Handle keyboard input. Returns event dict or None."""
-        if self.show_camp_confirm:
+        if self.show_camp_confirm or self.port_modal:
+            if self.port_modal and key == pygame.K_ESCAPE:
+                self.port_modal = None
             return None  # handled by click
 
         # Movement
@@ -562,6 +750,10 @@ class WorldMapUI:
 
     def handle_click(self, mx, my):
         """Handle mouse clicks. Returns event dict or None."""
+        # Port modal
+        if self.port_modal:
+            return self._handle_port_modal_click(mx, my)
+
         # Camp dialog
         if self.show_camp_confirm:
             yes_btn = pygame.Rect(SCREEN_W // 2 - 220 + 60, SCREEN_H // 2 - 100 + 140, 140, 40)

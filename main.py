@@ -2271,32 +2271,25 @@ class Game:
     # ── Location Type Handlers ─────────────────────────────────
 
     def _handle_port(self, loc_id, loc):
-        """Port location — show fast travel options to other ports."""
+        """Port location — open destination picker modal."""
         from data.world_map import PORT_ROUTES
         routes = PORT_ROUTES.get(loc_id, [])
 
-        # Filter to only discovered destinations
-        discovered = self.world_state.discovered_locations
-        available = [
-            r for r in routes
-            if r in LOCATIONS and r in discovered
-        ]
+        # Show all connected ports — no discovery filter for sea routes
+        available = [r for r in routes if r in LOCATIONS]
 
         if not available:
             self.world_map_ui._show_event(
-                f"{loc['name']}: No known ports in range. Explore to find routes.",
+                f"{loc['name']}: No sea routes charted from here.",
                 (80, 180, 220))
             return
 
-        # Build a simple destination list in the event message area.
-        # For now we show the first reachable port and teleport there.
-        # A full port UI (Phase 5) will replace this with a proper menu.
-        dest_id = available[0]
-        dest = LOCATIONS[dest_id]
-        self.world_state.party_x = dest["x"]
-        self.world_state.party_y = dest["y"]
-        self.world_map_ui._show_event(
-            f"Set sail from {loc['name']} → {dest['name']}!", (80, 180, 220))
+        # Open the port destination picker modal
+        self.world_map_ui.port_modal = {
+            "loc_id": loc_id,
+            "loc":    loc,
+            "routes": available,
+        }
 
     def _handle_secret(self, loc_id, loc):
         """Secret location — reward on first visit, flavour text always."""
@@ -3234,7 +3227,7 @@ class Game:
                     enc_key = loc.get("encounter_key", "tutorial")
                     self.start_combat(enc_key)
             elif loc["type"] == LOC_PORT:
-                # Port — offer fast travel to other connected ports
+                # Port — open destination picker modal
                 self._handle_port(event.get("id", ""), loc)
 
             elif loc["type"] == LOC_SECRET:
@@ -3249,6 +3242,17 @@ class Game:
                 # Stable — handled via town has_stable flag; standalone stables not yet placed
                 self.world_map_ui._show_event(
                     f"{loc['name']}: Horses available here.", (180, 140, 80))
+
+        elif event["type"] == "port_travel":
+            # Player chose a port destination — teleport there
+            dest_id = event.get("dest_id", "")
+            dest    = event.get("dest", {})
+            if dest:
+                self.world_state.party_x = dest["x"]
+                self.world_state.party_y = dest["y"]
+                # Mark destination port as discovered
+                self.world_state.discovered_locations.add(dest_id)
+                sfx.play("stairs")  # repurpose travel sound
 
         elif event["type"] == "discovery":
             sfx.play("discovery")
