@@ -492,7 +492,7 @@ SPRITE_COLORS = {
     DT_STAIRS_DOWN:     (180, 80,  220),   # deep purple — descending into darkness
     DT_STAIRS_UP:       (255, 200, 55),    # warm gold — ascending toward light
     DT_ENTRANCE:        (255, 200, 80),    # warm golden arch
-    DT_TRAP:            (220, 40,  40),    # armed trap — red spikes
+    DT_TRAP:            (255, 90,  40),    # armed trap — bright orange-red rune
     "trap_disarmed":    (90,  140, 80),    # disarmed trap — green/grey flat plate
     "trap_tripped":     (110, 100, 90),    # tripped trap — dull grey plate
     DT_INTERACTABLE:    (80,  200, 255),
@@ -1150,7 +1150,7 @@ class DungeonUI:
                     pygame.draw.rect(spr, dim, (ox, oy, pw, ph))
                     pygame.draw.rect(spr, c_a, (ox, oy, pw, ph), 1)
                     # Rune glow — pulsing red symbols on the plate
-                    pulse_a = int(alpha * (0.6 + 0.4 * abs(math.sin(self.t * 3.5))))
+                    pulse_a = int(alpha * (0.75 + 0.25 * abs(math.sin(self.t * 3.5))))
                     glow_c = (*color, pulse_a)
                     # Central rune circle
                     cx_r, cy_r = surf_w // 2, oy + ph // 2
@@ -1167,7 +1167,7 @@ class DungeonUI:
                         pygame.draw.line(spr, glow_c, (cx_r, cy_r), (rx, ry), 1)
                     # Outer glow halo — soft bleed above plate
                     halo_h = max(2, ph)
-                    halo_a = pulse_a // 3
+                    halo_a = pulse_a // 2
                     for hly in range(halo_h):
                         fade = int(halo_a * (1 - hly / halo_h))
                         hw = max(2, pw * (halo_h - hly) // halo_h)
