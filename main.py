@@ -2979,16 +2979,16 @@ class Game:
     def _handle_fled_combat(self):
         """Handle successful flee from combat.
         Returns party to dungeon or world map — no rewards granted."""
-        self.combat_state = None
-        self.combat_ui = None
+        # Transition state FIRST so draw_state stops calling draw_combat,
+        # THEN null the combat objects (go_fade calls draw_state during fade)
         if self.dungeon_state:
-            # Fled from a dungeon encounter — return to dungeon
             self.go_fade(S_DUNGEON)
         elif self.current_town_id:
-            # Fled from a town-adjacent encounter
             self.go_fade(S_TOWN)
         else:
             self.go_fade(S_WORLD_MAP)
+        self.combat_state = None
+        self.combat_ui = None
 
     def _trigger_briarhollow_attack(self):
         """Trigger the Act 1 climax: shadow creatures attack Briarhollow.
