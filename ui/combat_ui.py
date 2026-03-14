@@ -654,8 +654,8 @@ class CombatUI:
                     pygame.draw.rect(surface, (50, 35, 55), item_r, border_radius=3)
                     pygame.draw.rect(surface, (180, 140, 220), item_r, 1, border_radius=3)
 
-            # Enemy name with number
-            name = enemy.get("name", "Enemy")
+            # Enemy name with number — use knowledge tier (identification system)
+            name = get_enemy_display_name(enemy)
             hp, mhp = enemy.get("hp", 0), enemy.get("max_hp", 1)
             draw_text(surface, f"{i+1}. {name}", px + PAD + 2, iy + 3,
                       (255, 100, 100) if is_hover and is_targeting else CREAM, 11)

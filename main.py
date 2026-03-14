@@ -3770,9 +3770,11 @@ class Game:
                     char = p.get("character_ref")
                     if char:
                         char.resources["HP"] = max(0, p["hp"])
-                        # Sync other resources (MP, SP, etc.)
+                        # Sync other resources (MP, SP, Ki, etc.) — skip HP,
+                        # already synced from p["hp"] which tracks combat damage
                         for rk, rv in p.get("resources", {}).items():
-                            char.resources[rk] = rv
+                            if rk != "HP":
+                                char.resources[rk] = rv
                         # Unconscious characters wake at 1 HP
                         if char.resources["HP"] <= 0:
                             char.resources["HP"] = 1

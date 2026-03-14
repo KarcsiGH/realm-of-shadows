@@ -38,7 +38,8 @@ TAB_IDENTIFY = 3
 TAB_STATS = 4
 TAB_TRANSFER = 5
 TAB_FORMATION = 6
-TAB_NAMES = ["Rest", "Inventory", "Equipment", "Identify", "Party", "Transfer", "Formation"]
+TAB_SPELLS    = 7
+TAB_NAMES = ["Rest", "Inventory", "Equipment", "Identify", "Party", "Transfer", "Formation", "Spells"]
 TAB_COUNT = len(TAB_NAMES)
 
 # ── Slots ──
@@ -75,6 +76,10 @@ class CampUI:
         self.transfer_src_char = 0
         self.transfer_dst_char = 1 if len(party) > 1 else 0
         self.transfer_selected_item = -1
+
+        # Spells tab state
+        self.spell_selected = -1      # index of selected spell
+        self.spell_target = 0         # index of target character
 
         # Formation state
         self.formation_selected = -1   # index of char being dragged/moved
@@ -117,6 +122,8 @@ class CampUI:
             self._draw_transfer(surface, mx, my, content_y)
         elif self.tab == TAB_FORMATION:
             self._draw_formation(surface, mx, my, content_y)
+        elif self.tab == TAB_SPELLS:
+            self._draw_spells(surface, mx, my, content_y)
 
         # Message bar
         if self.msg_timer > 0:
@@ -240,6 +247,77 @@ class CampUI:
                             hover=equip_btn.collidepoint(mx, my), size=13)
             drop_btn = pygame.Rect(340, by, 120, 34)
             draw_button(surface, drop_btn, "Drop", hover=drop_btn.collidepoint(mx, my), size=13)
+
+            # ── Item details panel ──────────────────────────
+            self._draw_item_details(surface, item, by + 50)
+
+    def _draw_item_details(self, surface, item, y):
+        """Draw item attribute panel for a selected item."""
+        from core.identification import get_item_display_name
+        if not item:
+            return
+
+        identified = item.get("identified", True)
+        panel = pygame.Rect(80, y, SCREEN_W - 160, 160)
+        pygame.draw.rect(surface, (18, 14, 30), panel, border_radius=5)
+        pygame.draw.rect(surface, EQUIP_SLOT_BORDER, panel, 1, border_radius=5)
+
+        x, dy = panel.x + 14, panel.y + 10
+        draw_text(surface, get_item_display_name(item), x, dy, GOLD, 14, bold=True)
+        dy += 22
+
+        if not identified:
+            draw_text(surface, item.get("unidentified_desc", "Properties unknown."), x, dy, GREY, 12)
+            dy += 18
+            draw_text(surface, "[Unidentified — use Identify tab to appraise]", x, dy, ORANGE, 11)
+            return
+
+        # Description
+        desc = item.get("description", "")
+        if desc:
+            draw_text(surface, desc, x, dy, GREY, 12)
+            dy += 18
+
+        # Type-specific stats
+        itype = item.get("type", "")
+        col2 = panel.x + panel.width // 2
+
+        if itype == "weapon":
+            base = item.get("damage", 0)
+            ds   = item.get("damage_stat", {})
+            ds_str = ", ".join(f"{k}×{v}" for k,v in ds.items()) if ds else "none"
+            draw_text(surface, f"Damage: {base} base  |  Stat scaling: {ds_str}", x, dy, STAT_VAL, 12)
+            dy += 16
+            mods = []
+            if item.get("accuracy_mod"): mods.append(f"Acc {item['accuracy_mod']:+d}%")
+            if item.get("crit_mod"):     mods.append(f"Crit {item['crit_mod']:+d}%")
+            if item.get("speed_mod"):    mods.append(f"Speed {item['speed_mod']:+d}")
+            if item.get("spell_bonus"):  mods.append(f"+{item['spell_bonus']} Spell Power")
+            if mods:
+                draw_text(surface, "  ".join(mods), x, dy, STAT_LABEL, 11)
+                dy += 16
+
+        elif itype == "armor":
+            draw_text(surface, f"Defense: {item.get('defense', 0)}  Magic Resist: {item.get('magic_resist', 0)}", x, dy, STAT_VAL, 12)
+            dy += 16
+
+        # Stat bonuses
+        stat_bonuses = item.get("stat_bonuses", {})
+        if stat_bonuses:
+            bonuses = ", ".join(f"{k} {v:+d}" for k,v in stat_bonuses.items() if v)
+            draw_text(surface, f"Bonuses: {bonuses}", x, dy, (140, 220, 160), 12)
+            dy += 16
+
+        # Enchant
+        if item.get("enchant_element"):
+            draw_text(surface, f"Enchant: {item['enchant_element'].title()} +{item.get('enchant_bonus',0)}",
+                      x, dy, (180, 140, 255), 12)
+            dy += 16
+
+        # Rarity and value
+        rarity = item.get("rarity", "").title()
+        value  = item.get("estimated_value", item.get("sell_price", 0))
+        draw_text(surface, f"{rarity}  |  Value: ~{value}g", x, dy, DIM_GOLD, 11)
 
     # ──────────────────────────────────────────────────────────
     #  EQUIPMENT TAB
@@ -468,6 +546,208 @@ class CampUI:
         self.message = text
         self.msg_color = color
         self.msg_timer = 3000
+
+    # ──────────────────────────────────────────────────────────
+    #  SPELLS TAB  (out-of-combat healing, cures, revives)
+    # ──────────────────────────────────────────────────────────
+
+    def _draw_spells(self, surface, mx, my, top):
+        """Draw the camp spells panel — heal/cure/revive abilities only."""
+        from core.classes import get_all_resources
+
+        # Character selector (caster)
+        self._draw_char_selector(surface, mx, my, top)
+        caster = self.party[self.selected_char]
+
+        CAMP_TYPES = ("heal", "aoe_heal", "cure", "revive")
+        abilities = [a for a in caster.abilities if a.get("type") in CAMP_TYPES]
+
+        if not abilities:
+            draw_text(surface, f"{caster.name} has no usable camp spells.", 80, top + 60, GREY, 14)
+            draw_text(surface, "(Clerics, Rangers, Monks and some hybrid classes can heal.)",
+                      80, top + 84, STAT_LABEL, 12)
+            return
+
+        # Caster resources
+        max_res = get_all_resources(caster.class_name, caster.stats, caster.level)
+        res_y = top + 48
+        draw_text(surface, "Resources:", 80, res_y, STAT_LABEL, 12)
+        rx = 180
+        for rk, mv in max_res.items():
+            if rk == "HP": continue
+            cv = caster.resources.get(rk, 0)
+            col = (100, 200, 140) if cv >= mv * 0.5 else ORANGE if cv > 0 else (180, 60, 60)
+            draw_text(surface, f"{rk}: {cv}/{mv}", rx, res_y, col, 12)
+            rx += 120
+
+        # Spell list
+        spell_y = res_y + 28
+        draw_text(surface, "Spells:", 80, spell_y, STAT_LABEL, 12)
+        spell_y += 20
+        self._spell_rects = []
+        for i, ab in enumerate(abilities):
+            rk   = ab.get("resource", "")
+            cost = ab.get("cost", 0)
+            cur  = caster.resources.get(rk, 0)
+            can  = cur >= cost
+            row  = pygame.Rect(80, spell_y + i * 42, SCREEN_W // 2 - 100, 38)
+            hover = row.collidepoint(mx, my)
+            sel   = (i == self.spell_selected)
+            bg    = (60, 45, 80) if sel else (ITEM_HOVER if hover else ITEM_BG)
+            pygame.draw.rect(surface, bg, row, border_radius=4)
+            pygame.draw.rect(surface, GOLD if sel else (PANEL_BORDER), row, 1, border_radius=4)
+            name_col = CREAM if can else (100, 85, 110)
+            draw_text(surface, ab["name"], row.x + 10, row.y + 5, name_col, 13, bold=True)
+            cost_col = (100, 200, 140) if can else (200, 80, 80)
+            draw_text(surface, f"{rk} -{cost}  ({ab.get('desc','')})",
+                      row.x + 10, row.y + 22, cost_col, 10)
+            self._spell_rects.append((row, i, ab, can))
+
+        # Target selector (right panel)
+        if self.spell_selected >= 0 and self.spell_selected < len(abilities):
+            ab = abilities[self.spell_selected]
+            tx = SCREEN_W // 2 + 20
+            ty = res_y + 28
+            draw_text(surface, "Target:", tx, ty, STAT_LABEL, 12)
+            ty += 20
+            self._spell_target_rects = []
+            ab_type = ab.get("type", "")
+            is_revive = (ab_type == "revive")
+            is_aoe = (ab_type == "aoe_heal")
+            if is_aoe:
+                # AOE: auto-targets all — just show cast button
+                draw_text(surface, "Targets all party members.", tx, ty, GREY, 12)
+                ty += 24
+                self._spell_target_rects = []
+            else:
+                for j, tgt in enumerate(self.party):
+                    max_res_t = get_all_resources(tgt.class_name, tgt.stats, tgt.level)
+                    mhp = max(1, max_res_t.get("HP", 1))
+                    chp = tgt.resources.get("HP", 0)
+                    dead = chp <= 0
+                    if not is_revive and dead:
+                        continue  # can't target dead with heals
+                    if is_revive and not dead:
+                        continue  # revive only targets dead
+
+                    trow = pygame.Rect(tx, ty, SCREEN_W - tx - 40, 34)
+                    thov = trow.collidepoint(mx, my)
+                    tsel = (j == self.spell_target)
+                    bg2  = (50, 40, 20) if tsel else (ITEM_HOVER if thov else ITEM_BG)
+                    pygame.draw.rect(surface, bg2, trow, border_radius=3)
+                    pygame.draw.rect(surface, DIM_GOLD if tsel else PANEL_BORDER, trow, 1, border_radius=3)
+                    hp_col = HP_BAR if chp / mhp > 0.5 else ORANGE if chp / mhp > 0.2 else RED
+                    label = f"{tgt.name} ({chp}/{mhp} HP)"
+                    if dead: label = f"{tgt.name} — FALLEN"
+                    draw_text(surface, label, trow.x + 8, trow.y + 8,
+                              hp_col if not dead else (180, 60, 60), 12)
+                    self._spell_target_rects.append((trow, j))
+                    ty += 38
+
+            # Cast button
+            cast_btn = pygame.Rect(tx, ty + 10, 160, 38)
+            rk   = ab.get("resource", "")
+            cost = ab.get("cost", 0)
+            can  = caster.resources.get(rk, 0) >= cost
+            col  = (80, 50, 10) if not can else None
+            draw_button(surface, cast_btn, f"Cast {ab['name']}",
+                        hover=cast_btn.collidepoint(mx, my) and can, size=13)
+            if not can:
+                draw_text(surface, "Not enough points", tx, ty + 52, (180, 80, 80), 11)
+            self._spell_cast_btn = cast_btn if can else None
+        else:
+            self._spell_target_rects = []
+            self._spell_cast_btn = None
+
+    def _handle_spells_click(self, mx, my):
+        from core.classes import get_all_resources
+        caster = self.party[self.selected_char]
+        CAMP_TYPES = ("heal", "aoe_heal", "cure", "revive")
+        abilities = [a for a in caster.abilities if a.get("type") in CAMP_TYPES]
+
+        # Spell list clicks
+        for row, i, ab, can in getattr(self, "_spell_rects", []):
+            if row.collidepoint(mx, my):
+                self.spell_selected = i
+                return None
+
+        # Target clicks
+        for trow, j in getattr(self, "_spell_target_rects", []):
+            if trow.collidepoint(mx, my):
+                self.spell_target = j
+                return None
+
+        # Cast button
+        cast_btn = getattr(self, "_spell_cast_btn", None)
+        if cast_btn and cast_btn.collidepoint(mx, my):
+            if 0 <= self.spell_selected < len(abilities):
+                ab = abilities[self.spell_selected]
+                self._cast_camp_spell(caster, ab)
+        return None
+
+    def _cast_camp_spell(self, caster, ability):
+        """Apply a camp spell effect directly to party resources."""
+        from core.classes import get_all_resources
+        ab_type = ab_name = ability.get("type", "")
+        rk   = ability.get("resource", "")
+        cost = ability.get("cost", 0)
+
+        # Deduct cost
+        cur = caster.resources.get(rk, 0)
+        if cur < cost:
+            self._msg(f"Not enough {rk}!", RED)
+            return
+        caster.resources[rk] = cur - cost
+
+        power  = ability.get("power", 1.0)
+        # Heal amount based on caster primary stat + power
+        stat   = caster.stats.get("WIS", 0) + caster.stats.get("PIE", 0)
+        amount = int((stat * power * 2) + (caster.level * power * 3))
+
+        targets = []
+        ab_type_key = ability.get("type", "")
+        if ab_type_key == "aoe_heal":
+            targets = [c for c in self.party if c.resources.get("HP", 0) > 0]
+        elif ab_type_key == "revive":
+            if 0 <= self.spell_target < len(self.party):
+                targets = [self.party[self.spell_target]]
+        else:
+            if 0 <= self.spell_target < len(self.party):
+                targets = [self.party[self.spell_target]]
+
+        if not targets:
+            self._msg("No valid target.", ORANGE)
+            return
+
+        msgs = []
+        for tgt in targets:
+            max_res = get_all_resources(tgt.class_name, tgt.stats, tgt.level)
+            if ab_type_key == "revive":
+                if tgt.resources.get("HP", 0) > 0:
+                    msgs.append(f"{tgt.name} is not fallen.")
+                    continue
+                revive_hp = max(1, int(max_res.get("HP", 1) * 0.3))
+                tgt.resources["HP"] = revive_hp
+                msgs.append(f"{tgt.name} revived with {revive_hp} HP!")
+            elif ab_type_key in ("heal", "aoe_heal"):
+                mhp = max(1, max_res.get("HP", 1))
+                old = tgt.resources.get("HP", 0)
+                new_hp = min(mhp, old + amount)
+                gained = new_hp - old
+                tgt.resources["HP"] = new_hp
+                if gained > 0:
+                    msgs.append(f"{tgt.name} +{gained} HP")
+                else:
+                    msgs.append(f"{tgt.name} already full HP")
+            elif ab_type_key == "cure":
+                from core.status_effects import get_status_effects, remove_status_effect
+                effects = get_status_effects(tgt) if hasattr(tgt, "_status_effects") else []
+                cured = [e for e in effects if e.get("type") in ("poison", "disease", "curse")]
+                for e in cured:
+                    remove_status_effect(tgt, e["name"])
+                msgs.append(f"{tgt.name}: {len(cured)} effect(s) cured")
+
+        self._msg("  ".join(msgs) if msgs else "No effect.", HEAL_COL)
 
     # ──────────────────────────────────────────────────────────
     #  TRANSFER TAB
@@ -721,6 +1001,8 @@ class CampUI:
             return self._handle_transfer_click(mx, my)
         elif self.tab == TAB_FORMATION:
             return self._handle_formation_click(mx, my)
+        elif self.tab == TAB_SPELLS:
+            return self._handle_spells_click(mx, my)
 
         return None
 
@@ -733,6 +1015,15 @@ class CampUI:
         if key == pygame.K_TAB:
             self.tab = (self.tab + 1) % TAB_COUNT
             return None
+        # Number keys 1-8 switch tabs directly
+        _num_keys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4,
+                     pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8]
+        if key in _num_keys:
+            idx = _num_keys.index(key)
+            if idx < TAB_COUNT:
+                self.tab = idx
+                self.selected_item = -1
+                return None
         # Arrow keys for char selection
         if key == pygame.K_LEFT and self.selected_char > 0:
             self.selected_char -= 1

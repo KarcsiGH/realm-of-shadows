@@ -600,7 +600,7 @@ class DungeonUI:
                 ns    = True
 
             if map_x < 0 or map_y < 0 or map_x >= fw or map_y >= fh:
-                return 20.0, 0.0, ns, False, 0, 0
+                return 20.0, 0.0, ns, False, 0, 0, 0.0
             tile = tiles[map_y][map_x]
             tt   = tile["type"]
             is_s     = tt == DT_SECRET_DOOR and not tile.get("secret_found")
@@ -618,7 +618,7 @@ class DungeonUI:
                 else:
                     wx = self.px + dist * ray_dx
                 wx -= math.floor(wx)
-                return max(0.01, dist), wx, ns, False, map_x, map_y, is_stair, tt
+                return max(0.01, dist), wx, ns, False, map_x, map_y, is_stair, tt, 0.0
 
             if is_d:
                 # Determine door orientation from neighbors.
@@ -647,7 +647,7 @@ class DungeonUI:
                         dist = (map_y - self.py + (1 - step_y)/2) / ray_dy
                         wx = self.px + dist * ray_dx
                     wx -= math.floor(wx)
-                    return max(0.01, dist), wx, ns, False, map_x, map_y, False, tt
+                    return max(0.01, dist), wx, ns, False, map_x, map_y, False, tt, 0.0
 
                 # Advance ray half a tile to door's midpoint (Wolfenstein style).
                 if not ns:
@@ -667,7 +667,7 @@ class DungeonUI:
                         dist = dist_face
                         wx = self.px + dist * ray_dx
                     wx -= math.floor(wx)
-                    return max(0.01, dist), wx, ns, False, map_x, map_y, False, tt
+                    return max(0.01, dist), wx, ns, False, map_x, map_y, False, tt, 0.0
 
                 dist_mid = dist_face + 0.5 / ray_comp
 
@@ -687,11 +687,11 @@ class DungeonUI:
                         dist = (map_y - self.py + (1 - step_y)/2) / ray_dy
                         wx = self.px + dist * ray_dx
                     wx -= math.floor(wx)
-                    return max(0.01, dist), wx, ns, False, map_x, map_y, False, tt
+                    return max(0.01, dist), wx, ns, False, map_x, map_y, False, tt, 0.0
                 else:
-                    return max(0.01, dist_mid), wx_mid, ns, True, map_x, map_y, False, tt
+                    return max(0.01, dist_mid), wx_mid, ns, True, map_x, map_y, False, tt, max(0.01, dist_face)
 
-        return 20.0, 0.0, False, False, 0, 0, False, DT_WALL
+        return 20.0, 0.0, False, False, 0, 0, False, DT_WALL, 0.0
 
     # ─────────────────────────────────────────────────────────
     #  MAIN DRAW
@@ -813,10 +813,13 @@ class DungeonUI:
             cam_x    = (2.0 * col / VW) - 1.0
             ray_dx   = self.dx + self.cx * cam_x
             ray_dy   = self.dy + self.cy * cam_x
-            dist, wx, ns, is_door, hit_mx, hit_my, is_stair, hit_tt = self._cast_ray(ray_dx, ray_dy)
+            dist, wx, ns, is_door, hit_mx, hit_my, is_stair, hit_tt, door_face_dist = self._cast_ray(ray_dx, ray_dy)
             zbuf[col] = dist
 
-            wall_h = min(VH, int(PROJ_DIST / max(0.01, dist)))
+            # Doors: use face distance for height (door is full wall height),
+            # dist is the midpoint distance used only for texture sampling.
+            _height_dist = door_face_dist if is_door else dist
+            wall_h = min(VH, int(PROJ_DIST / max(0.01, _height_dist)))
             top    = HH - wall_h // 2
 
             tex_x = int(wx * TEX_W) % TEX_W

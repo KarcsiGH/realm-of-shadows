@@ -37,7 +37,7 @@ def make_player_combatant(character, row=FRONT):
 
     # Monk unarmed scaling
     if weapon.get("special", {}).get("monk_scaling"):
-        weapon["damage"] = 3 + (character.level * 2)
+        weapon["damage"] = 4 + (character.level * 2)
 
     # Use effective stats (base + equipment bonuses)
     if hasattr(character, "effective_stats"):
@@ -66,7 +66,8 @@ def make_player_combatant(character, row=FRONT):
 
     # Get actual max resources (not current values)
     from core.classes import get_all_resources
-    actual_max = get_all_resources(character.class_name, stats, character.level)
+    safe_class = character.class_name or "Fighter"
+    actual_max = get_all_resources(safe_class, stats, character.level)
     max_hp = actual_max.get("HP", character.resources.get("HP", 50))
 
     return {
@@ -895,6 +896,7 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         current = attacker["resources"].get(resource_key, 0)
         if current < cost:
             result["hit"] = False
+            result["_resource_failed"] = True  # signal: don't consume turn
             result["messages"].append(
                 f"{attacker['name']} doesn't have enough {resource_key}! "
                 f"(need {cost}, have {current})"
@@ -2190,7 +2192,9 @@ class CombatState:
         for msg in result.get("messages", []):
             self.log(msg)
 
-        self.advance_turn()
+        # Don't consume the turn if the action failed due to insufficient resources
+        if not result.get("_resource_failed", False):
+            self.advance_turn()
         return result  # callers read hit/is_crit/damage for sound selection
 
     # ── Internal action helpers ───────────────────────────────────
