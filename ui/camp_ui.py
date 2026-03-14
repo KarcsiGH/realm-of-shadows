@@ -1067,12 +1067,16 @@ class CampUI:
                     sel_border = (180, 140, 255) if is_sel else (row_col if slot_hover else (80, 65, 110))
                     pygame.draw.rect(surface, sel_border, slot_r, 2, border_radius=5)
 
-                    hp_pct = char.hp / max(1, char.max_hp)
+                    from core.classes import get_all_resources as _gar
+                    _max_res = _gar(char.class_name, char.stats, char.level)
+                    _cur_hp  = char.resources.get("HP", 0)
+                    _max_hp  = max(1, _max_res.get("HP", 1))
+                    hp_pct = _cur_hp / _max_hp
                     hp_col = (80, 200, 100) if hp_pct > 0.5 else (220, 160, 50) if hp_pct > 0.25 else (200, 60, 60)
 
                     draw_text(surface, char.name[:18],     sx + 8, sy + 8,  CREAM, 13, bold=True)
-                    draw_text(surface, char.char_class,    sx + 8, sy + 26, GREY,  11)
-                    draw_text(surface, f"HP {char.hp}/{char.max_hp}", sx + 8, sy + 44, hp_col, 11)
+                    draw_text(surface, char.class_name or "",  sx + 8, sy + 26, GREY,  11)
+                    draw_text(surface, f"HP {_cur_hp}/{_max_hp}", sx + 8, sy + 44, hp_col, 11)
                     if is_sel:
                         draw_text(surface, "SELECTED",     sx + 8, sy + 62, (180, 140, 255), 11, bold=True)
                     draw_text(surface, "Lv " + str(char.level), sx + SLOT_W - 40, sy + 8, GOLD, 11)

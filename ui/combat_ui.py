@@ -330,10 +330,11 @@ class CombatUI:
                     cy += card_h
                     continue
 
-                # Resource bars
-                bar_y     = iy + 26
-                bar_h_each = 6
-                bar_gap    = 11
+                # Resource bars — HP first, then all other resources in priority order
+                # Compact sizing to fit up to 4 bars in tight cards (6-person party)
+                bar_h_each = 5
+                bar_gap    = 10
+                bar_y      = iy + 26
 
                 hp  = p.get("hp", 0)
                 mhp = p.get("max_hp", 1)
@@ -343,23 +344,35 @@ class CombatUI:
                           (190, 150, 145), 9)
                 bar_y += bar_gap + bar_h_each
 
-                res   = p.get("resources", {})
-                stats = p.get("stats", {})
-                try:
-                    from core.classes import get_all_resources
-                    max_res = get_all_resources(cls, stats, p.get("level", 1))
-                except Exception:
-                    max_res = {}
+                res     = p.get("resources", {})
+                max_res = p.get("max_resources", {})
+                # Fallback: recalculate max if not in combatant (old save compat)
+                if not max_res:
+                    try:
+                        from core.classes import get_all_resources
+                        max_res = get_all_resources(cls, p.get("stats", {}), p.get("level", 1))
+                    except Exception:
+                        max_res = {}
 
-                for rk in [k for k in res if k != "HP"][:2]:
+                # Priority order: spell points → skill points → Ki (matches user-facing order)
+                _RES_ORDER = ["INT-MP", "WIS-MP", "PIE-MP", "STR-SP", "DEX-SP", "Ki", "EP"]
+                shown_keys = [k for k in _RES_ORDER if k in res or k in max_res]
+                # Also catch any unexpected resource keys not in priority list
+                for k in res:
+                    if k != "HP" and k not in shown_keys:
+                        shown_keys.append(k)
+
+                for rk in shown_keys:
                     cur_r = res.get(rk, 0)
                     max_r = max(1, max_res.get(rk, cur_r) or cur_r)
-                    rc2   = RES_COLORS.get(rk, RES_COLORS["MP"])
+                    rc2   = RES_COLORS.get(rk, RES_COLORS.get(
+                        "SP" if "SP" in rk else "MP" if "MP" in rk else "Ki",
+                        RES_COLORS["MP"]))
                     _draw_resource_bar(surface, ix, bar_y, iw, bar_h_each, cur_r, max_r, rc2)
                     draw_text(surface, f"{rk} {cur_r}/{max_r}", ix, bar_y + bar_h_each + 1,
                               rc2[2], 9)
                     bar_y += bar_gap + bar_h_each
-                    if bar_y > r.bottom - 10:
+                    if bar_y > r.bottom - 14:
                         break
 
                 # Status effect badges
