@@ -3882,7 +3882,7 @@ class Game:
                     rk, cost, remaining = rsrc
                     short = rk.split("-")[-1]  # "INT-MP" → "MP", "DEX-SP" → "SP"
                     self.combat_ui.add_flash(f"−{cost} {short} ({remaining} left)", (180, 140, 220))
-            # Pick sound and flash color based on ability type
+            # Pick sound and flash color based on ability type and result
             ab = action.get("ability", {})
             ab_type = ab.get("type", "") if isinstance(ab, dict) else ""
             ab_elem = ab.get("element", "") if isinstance(ab, dict) else ""
@@ -3895,40 +3895,64 @@ class Game:
                 "holy": (255, 245, 180), "shadow": (180, 80, 240),
                 "poison": (130, 215, 65),
             }
-            # Determine if ability is physical (STR-SP / DEX-SP / Ki) or magical (MP)
             ab_resource = ab.get("resource", "") if isinstance(ab, dict) else ""
             is_physical_skill = any(x in ab_resource for x in ("STR-SP", "DEX-SP", "Ki"))
 
-            if ab_type in ("heal", "aoe_heal"):
-                sfx.play("heal")
-                if result:
-                    amt = result.get("healing", 0)
-                    self.combat_ui.add_flash(f"♥ {ab_name} +{amt} HP", (100, 255, 140))
+            # ── Priority 1: insufficient resources ──────────────────
+            if result and result.get("_resource_failed"):
+                sfx.play("no_resource")
+                rk = ab.get("resource", "points") if isinstance(ab, dict) else "points"
+                cost = ab.get("cost", 0) if isinstance(ab, dict) else 0
+                self.combat_ui.add_flash(
+                    f"✗ Not enough {rk} for {ab_name} (need {cost})", (200, 80, 80))
+
+            # ── Priority 2: buff/heal/debuff (self or ally) ──────────
+            elif ab_type in ("heal", "aoe_heal"):
+                if result and result.get("hit") is False:
+                    sfx.play("spell_miss")
+                    self.combat_ui.add_flash(f"{ab_name} — no effect!", (150, 120, 180))
+                else:
+                    sfx.play("heal")
+                    if result:
+                        amt = result.get("healing", 0)
+                        self.combat_ui.add_flash(f"♥ {ab_name} +{amt} HP", (100, 255, 140))
             elif ab_type == "buff":
                 sfx.play("buff")
-                buff_name = ab.get("buff", ab_name)
+                buff_name = ab.get("buff", ab_name) if isinstance(ab, dict) else ab_name
                 self.combat_ui.add_flash(f"✦ {buff_name.upper()} active!", (100, 220, 130))
-            elif ab_type in ("debuff",):
-                sfx.play("debuff")
-                self.combat_ui.add_flash(f"↓ {ab_name}!", (220, 160, 60))
-            else:
-                # Physical skills get a heavy impact sound; spells get the magic sound
-                if is_physical_skill:
-                    sfx.play("hit_skill")
-                else:
-                    sfx.play("hit_magic")
+            elif ab_type == "debuff":
                 if result and result.get("hit") is False:
-                    self.combat_ui.add_flash(f"{ab_name} — RESISTED!", (150, 120, 180))
-                elif result:
-                    dmg = result.get("damage", 0)
-                    is_crit = result.get("is_crit", False)
-                    col = _ELEM_COL.get(ab_elem, (200, 160, 255)) if not is_physical_skill else (220, 180, 80)
-                    if is_crit:
-                        self.combat_ui.add_flash(f"✦ CRITICAL! {ab_name} {dmg}", (255, 215, 40))
-                    elif ab_type == "aoe":
-                        self.combat_ui.add_flash(f"◈ {ab_name} hits all! {dmg}", col)
+                    sfx.play("spell_miss")
+                    self.combat_ui.add_flash(f"{ab_name} — resisted!", (150, 120, 180))
+                else:
+                    sfx.play("debuff")
+                    self.combat_ui.add_flash(f"↓ {ab_name}!", (220, 160, 60))
+
+            # ── Priority 3: offensive abilities ──────────────────────
+            else:
+                if result and result.get("hit") is False:
+                    # Miss or resist — use distinct sound, NOT the hit sound
+                    if is_physical_skill:
+                        sfx.play("miss")
                     else:
-                        self.combat_ui.add_flash(f"◆ {ab_name} {dmg}", col)
+                        sfx.play("spell_miss")
+                    self.combat_ui.add_flash(f"{ab_name} — RESISTED!", (150, 120, 180))
+                else:
+                    # Hit — now play the appropriate hit sound
+                    if is_physical_skill:
+                        sfx.play("hit_skill")
+                    else:
+                        sfx.play("hit_magic")
+                    if result:
+                        dmg = result.get("damage", 0)
+                        is_crit = result.get("is_crit", False)
+                        col = _ELEM_COL.get(ab_elem, (200, 160, 255)) if not is_physical_skill else (220, 180, 80)
+                        if is_crit:
+                            self.combat_ui.add_flash(f"✦ CRITICAL! {ab_name} {dmg}", (255, 215, 40))
+                        elif ab_type == "aoe":
+                            self.combat_ui.add_flash(f"◈ {ab_name} hits all! {dmg}", col)
+                        else:
+                            self.combat_ui.add_flash(f"◆ {ab_name} {dmg}", col)
         elif action["type"] == "move":
             self.combat_state.execute_player_action("move", target=action["direction"])
         elif action["type"] == "switch_weapon":

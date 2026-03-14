@@ -323,6 +323,12 @@ def _generate_all_sounds():
     _sounds["hit_magic"]    = _make_sound(_mix(
         _sweep(900, 180, 0.40, 0.32), _sine(440, 0.35, 0.18)))
     _sounds["miss"]         = _make_sound(_sweep(620, 380, 0.28, 0.16))
+    # No resource: dry buzzing click — "nope, can't do that"
+    _sounds["no_resource"]  = _make_sound(_mix(
+        _sine(180, 0.28, 0.16), _noise(0.10, 0.08)))
+    # Spell miss/resist: magic whoosh that dissipates without impact
+    _sounds["spell_miss"]   = _make_sound(_concat(
+        _sweep(800, 200, 0.32, 0.18), _silence(0.04), _sine(160, 0.12, 0.14)))
     _sounds["heal"]         = _make_sound(_concat(
         _sine(523, 0.18, 0.28), _sine(659, 0.18, 0.28), _sine(784, 0.24, 0.32)))
     _sounds["buff"]         = _make_sound(_sweep(280, 940, 0.50, 0.22))
