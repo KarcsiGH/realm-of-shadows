@@ -13,6 +13,73 @@ from core.equipment import empty_equipment
 SAVE_DIR = os.path.expanduser("~/Documents/RealmOfShadows/saves")
 
 
+
+# ── Weapon save migration ────────────────────────────────────────────────────
+# Injects damage_stat into old loot weapons that were saved before the
+# weapon ratio fix. Also bumps base damage by +10 to match the fixed loot tables.
+_WEAPON_SUBTYPE_DS = {
+    "Dagger":      {"DEX": 0.40},
+    "Short Sword": {"DEX": 0.28, "STR": 0.12},
+    "Shortsword":  {"DEX": 0.28, "STR": 0.12},
+    "Long Sword":  {"STR": 0.30, "DEX": 0.12},
+    "Longsword":   {"STR": 0.30, "DEX": 0.12},
+    "Broadsword":  {"STR": 0.30, "DEX": 0.12},
+    "Greatsword":  {"STR": 0.40, "DEX": 0.10},
+    "Axe":         {"STR": 0.40},
+    "Greataxe":    {"STR": 0.40},
+    "Warhammer":   {"STR": 0.40},
+    "Mace":        {"STR": 0.40},
+    "Club":        {"STR": 0.40},
+    "Staff":       {"STR": 0.16, "INT": 0.24},
+    "Wand":        {"INT": 0.32},
+    "Orb":         {"INT": 0.24, "WIS": 0.16},
+    "Shortbow":    {"DEX": 0.35, "STR": 0.08},
+    "Longbow":     {"DEX": 0.35, "STR": 0.08},
+    "Bow":         {"DEX": 0.35, "STR": 0.08},
+    "Crossbow":    {"DEX": 0.28, "STR": 0.12},
+    "Spear":       {"STR": 0.24, "DEX": 0.16},
+    "Rapier":      {"DEX": 0.40},
+    "Cutlass":     {"DEX": 0.28, "STR": 0.12},
+    "Saber":       {"DEX": 0.28, "STR": 0.12},
+    "Handwraps":   {"WIS": 0.20, "DEX": 0.20},
+    "Kama":        {"DEX": 0.24, "WIS": 0.16},
+    "Pick":        {"STR": 0.40},
+    "Hammer":      {"STR": 0.40},
+    "sword":       {"STR": 0.30, "DEX": 0.12},
+}
+
+def _migrate_weapon(item):
+    """Upgrade a weapon item from an old save: inject damage_stat if missing."""
+    if not item or item.get("type") != "weapon":
+        return item
+    if "damage_stat" in item:
+        return item  # already upgraded
+    subtype = item.get("subtype", "")
+    ds = _WEAPON_SUBTYPE_DS.get(subtype)
+    if not ds:
+        # Try case-insensitive match
+        for k, v in _WEAPON_SUBTYPE_DS.items():
+            if k.lower() == subtype.lower():
+                ds = v
+                break
+    if ds:
+        item = dict(item)  # don't mutate the original
+        item["damage_stat"] = ds
+        # Bump base damage by +10 to match fixed loot tables
+        item["damage"] = item.get("damage", 0) + 10
+    return item
+
+def _migrate_character_items(char):
+    """Migrate all weapons in a character's inventory and equipment slots."""
+    char.inventory = [_migrate_weapon(i) if i and i.get("type") == "weapon" else i
+                      for i in char.inventory]
+    if char.equipment:
+        for slot, item in char.equipment.items():
+            if item and item.get("type") == "weapon":
+                char.equipment[slot] = _migrate_weapon(item)
+    return char
+
+
 def ensure_save_dir():
     os.makedirs(SAVE_DIR, exist_ok=True)
 
@@ -46,7 +113,9 @@ def serialize_character(char):
 def deserialize_character(data):
     """Reconstruct a Character from a saved dict."""
     race = data.get("race_name", "Human")
-    char = Character(data["name"], data["class_name"], race)
+    # Guard: class_name may be None in very old saves — fall back to Fighter
+    class_name = data.get("class_name") or "Fighter"
+    char = Character(data["name"], class_name, race)
     char.level = data.get("level", 1)
     char.xp = data.get("xp", 0)
     char.gold = data.get("gold", 0)
@@ -91,6 +160,8 @@ def deserialize_character(data):
     char.human_bonus_stat = data.get("human_bonus_stat", None)
     char.planar_tier = data.get("planar_tier", 0)
     char.combat_row  = data.get("combat_row", "front")
+    # Migrate old save weapons that lack damage_stat
+    _migrate_character_items(char)
     return char
 
 
