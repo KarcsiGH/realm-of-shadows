@@ -34,11 +34,11 @@ WEAPONS = {
     },
     "Monk Unarmed": {
         "name": "Unarmed (Monk)", "type": "Fists",
-        "damage": 9, "damage_stat": {"STR": 0.2, "DEX": 0.2},
-        "range": "melee", "speed_mod": 2, "accuracy_mod": 5, "crit_mod": 0,
+        "damage": 9, "damage_stat": {"WIS": 0.30, "DEX": 0.20},
+        "range": "melee", "speed_mod": 2, "accuracy_mod": 5, "crit_mod": 5,
         "weight_class": "light", "phys_type": "blunt",
         "requirements": {}, "spell_bonus": 0,
-        "special": {"monk_scaling": True},  # damage = 3 + level * 2
+        "special": {"monk_scaling": True},  # damage = 4 + level * 2
     },
 
     # ── DAGGERS ──────────────────────────────────────────────
