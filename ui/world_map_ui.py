@@ -327,20 +327,8 @@ class WorldMapUI:
             pygame.draw.polygon(surface, col, star_pts)
             pygame.draw.polygon(surface, dark, star_pts, 1)
 
-        # Location name label (small, below marker)
-        if name:
-            font_size = 10
-            try:
-                lf = pygame.font.SysFont("courier,consolas,monospace", font_size)
-                lbl = lf.render(name[:14], True, col)
-                lx = cx - lbl.get_width() // 2
-                ly = py + TILE_H - 2
-                # Dark backing
-                pygame.draw.rect(surface, (0, 0, 0),
-                                 (lx - 1, ly, lbl.get_width() + 2, lbl.get_height()))
-                surface.blit(lbl, (lx, ly))
-            except Exception:
-                pass
+        # Name labels removed — icons communicate location type clearly.
+        # Name is shown in the HUD panel when the party stands on the location.
 
     def _draw_party(self, surface):
         """Draw the party token — a directional figure with facing indicator."""
