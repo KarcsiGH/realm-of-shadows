@@ -52,10 +52,10 @@ DUNGEONS = {
         "floors": 4,
         "width": 35, "height": 28,
         "encounter_table": {
-            1: ["medium_goblins", "wolves"],
-            2: ["medium_bandits", "wolves"],
-            3: ["medium_bandits", "hard_mixed"],
-            4: ["hard_mixed"],
+            1: ["easy_spiders", "medium_spiders"],
+            2: ["medium_spiders", "hard_spiders"],
+            3: ["hard_spiders", "spider_swarm"],
+            4: ["spider_swarm", "hard_spiders"],
         },
         "boss_floor": 4,
         "boss_encounter": "boss_spider_queen",
@@ -726,7 +726,8 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             if rng.random() < 0.35:
                 ex = room[0] + room[2] // 2
                 ey = room[1] + room[3] // 2
-                if tiles[ey][ex]["type"] == DT_FLOOR:
+                existing_ev = tiles[ey][ex].get("event") or {}
+                if tiles[ey][ex]["type"] == DT_FLOOR and existing_ev.get("type") != "boss_encounter":
                     tiles[ey][ex]["event"] = {
                         "type": "fixed_encounter",
                         "triggered": False,

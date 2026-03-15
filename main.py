@@ -3455,12 +3455,14 @@ class Game:
                 self.dungeon_ui.show_event(f"Ascended to Floor {floor}.", (80, 180, 220))
 
         elif event["type"] == "exit_dungeon":
-            self.dungeon_state = None
-            self.dungeon_ui = None
+            # Transition state FIRST so draw_state stops rendering dungeon,
+            # THEN null the dungeon objects (go_fade calls draw_state during fade)
             if self.world_state:
                 self.go_fade(S_WORLD_MAP)
             else:
                 self.go(S_PARTY)
+            self.dungeon_state = None
+            self.dungeon_ui = None
 
         elif event["type"] == "chest_approach":
             # Party stepped onto a chest — open the interaction modal

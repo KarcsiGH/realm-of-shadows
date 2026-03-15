@@ -489,15 +489,16 @@ def _gen_texture(wall_light, wall_dark, is_door=False):
 
 SPRITE_COLORS = {
     DT_TREASURE:        (255, 220, 50),
-    DT_STAIRS_DOWN:     (180, 80,  220),   # deep purple — descending into darkness
-    DT_STAIRS_UP:       (255, 200, 55),    # warm gold — ascending toward light
+    DT_STAIRS_DOWN:     (60,  120, 255),   # blue — descending into darkness
+    DT_STAIRS_UP:       (255, 160, 40),    # amber — ascending toward light
     DT_ENTRANCE:        (255, 200, 80),    # warm golden arch
-    DT_TRAP:            (255, 90,  40),    # armed trap — bright orange-red rune
+    DT_TRAP:            (255, 140,  0),    # armed trap — pure orange (distinct from enemy red)
     "trap_disarmed":    (90,  140, 80),    # disarmed trap — green/grey flat plate
     "trap_tripped":     (110, 100, 90),    # tripped trap — dull grey plate
     DT_INTERACTABLE:    (80,  200, 255),
     "enemy":            (200, 40,  40),
     "boss":             (255, 20,  100),
+    "boss_encounter":   (255, 40,  120),   # boss tile marker — vivid pink-red
     "journal":          (220, 200, 130),
 }
 
@@ -526,10 +527,14 @@ class DungeonUI:
         # Pre-generate textures — NUM_WALL_VARIANTS per theme
         self._tex_door       = _gen_door_texture()
         self._door_cols      = self._bake_tex_cols(self._tex_door)
-        self._tex_stair_down = _gen_stair_texture(going_down=True,
-            light=self.wall_light, dark=self.wall_dark)
-        self._tex_stair_up   = _gen_stair_texture(going_down=False,
-            light=self.wall_light, dark=self.wall_dark)
+        # Stairs down: cool blue-grey (going deeper into darkness)
+        _sd_l = (max(0,self.wall_light[0]-20), max(0,self.wall_light[1]-10), min(255,self.wall_light[2]+40))
+        _sd_d = (max(0,self.wall_dark[0]-15),  max(0,self.wall_dark[1]-8),   min(255,self.wall_dark[2]+25))
+        self._tex_stair_down = _gen_stair_texture(going_down=True,  light=_sd_l, dark=_sd_d)
+        # Stairs up: warm amber-tan (going toward the surface)
+        _su_l = (min(255,self.wall_light[0]+30), min(255,self.wall_light[1]+15), max(0,self.wall_light[2]-20))
+        _su_d = (min(255,self.wall_dark[0]+20),  min(255,self.wall_dark[1]+10),  max(0,self.wall_dark[2]-15))
+        self._tex_stair_up   = _gen_stair_texture(going_down=False, light=_su_l, dark=_su_d)
         self._stair_down_cols = self._bake_tex_cols(self._tex_stair_down)
         self._stair_up_cols   = self._bake_tex_cols(self._tex_stair_up)
         _variant_surfs   = _gen_theme_textures(
@@ -962,6 +967,10 @@ class DungeonUI:
                 if enc and not enc.get("cleared"):
                     icon_key = "boss" if enc.get("is_boss") else "enemy"
                     enc_key  = enc.get("enc_key")
+                # Boss encounter event tile — show pulsing marker before triggered
+                ev_t = tile.get("event") or {}
+                if ev_t.get("type") == "boss_encounter" and not ev_t.get("triggered"):
+                    icon_key = "boss_encounter"
                 if tile.get("has_journal") and not tile.get("journal_read"):
                     icon_key = "journal"
                 if icon_key is None:
@@ -1014,6 +1023,7 @@ class DungeonUI:
                 "trap_tripped":  0.20,
                 "journal":       0.30,
                 "enemy":         0.85,
+                "boss_encounter": 0.90,   # boss marker — tall, threatening
                 "boss":          1.00,
             }
             type_scale = _OBJ_SCALE.get(icon_key, 0.60)
@@ -1202,6 +1212,29 @@ class DungeonUI:
                         sx_ = ox + si * pw // max(2, pw // 6)
                         pygame.draw.line(spr, c_a, (sx_, oy - 1), (sx_ + 3, oy - 2), 1)
 
+                elif icon_key == "boss_encounter":
+                    # Pulsing boss marker — column of red-pink light
+                    pulse2 = abs(math.sin(self.t * 2.2))
+                    pulse_a2 = int(alpha * (0.65 + 0.35 * pulse2))
+                    bc = (*color, pulse_a2)
+                    bdc = (int(color[0]*0.4), int(color[1]*0.2), int(color[2]*0.3), pulse_a2//2)
+                    # Central pillar
+                    pw2 = max(4, surf_w // 4)
+                    pygame.draw.rect(spr, bdc, ((surf_w-pw2)//2, 0, pw2, surf_h))
+                    pygame.draw.rect(spr, bc,  ((surf_w-pw2)//2, 0, pw2, surf_h), 1)
+                    # Skull-like top shape
+                    skull_r = max(3, surf_w // 5)
+                    pygame.draw.circle(spr, bc, (surf_w//2, skull_r + 2), skull_r, 1)
+                    # Eye dots
+                    eye_y2 = skull_r + 1
+                    pygame.draw.circle(spr, bc, (surf_w//2 - skull_r//3, eye_y2), max(1, skull_r//4))
+                    pygame.draw.circle(spr, bc, (surf_w//2 + skull_r//3, eye_y2), max(1, skull_r//4))
+                    # Halo glow at top
+                    for hl in range(max(2, skull_r)):
+                        ha2 = int(pulse_a2 * 0.4 * (1 - hl / max(1, skull_r)))
+                        pygame.draw.circle(spr, (*color, ha2),
+                                           (surf_w//2, skull_r + 2), skull_r + hl, 1)
+
                 elif icon_key == "journal":
                     # Book rectangle
                     bw, bh_ = max(4, surf_w//2), max(5, surf_h*2//3)
@@ -1259,11 +1292,17 @@ class DungeonUI:
                 elif tt == DT_DOOR:
                     c = (180,130,60,255)
                 elif tt == DT_STAIRS_DOWN:
-                    c = (180, 80, 220, 255)   # purple — going down
+                    c = (60, 120, 255, 255)   # blue — going down (matches 3D)
                 elif tt == DT_STAIRS_UP:
-                    c = (255, 200, 55, 255)   # gold — going up
+                    c = (255, 160, 40, 255)   # amber — going up (matches 3D)
                 elif tt == DT_TREASURE:
                     c = (255,215,40,255)
+                elif tt == DT_FLOOR and (tile.get("event") or {}).get("type") == "boss_encounter":
+                    ev_be = tile.get("event") or {}
+                    if not ev_be.get("triggered"):
+                        c = (255, 30, 80, 255)    # bright red — boss marker
+                    else:
+                        c = (88, 78, 62, 200)     # floor — already triggered
                 elif tt == DT_TRAP:
                     ev_t = tile.get("event") or {}
                     if ev_t.get("disarmed"):
@@ -1271,7 +1310,7 @@ class DungeonUI:
                     elif ev_t.get("tripped"):
                         c = (110, 100, 90, 200)   # grey — sprung
                     elif ev_t.get("detected"):
-                        c = (220, 50, 50, 255)    # red — armed and known
+                        c = (255, 140, 0, 255)    # orange — armed and known (distinct from enemy red)
                     else:
                         c = (88, 78, 62, 200)     # floor colour — undetected trap blends in
                 elif tt == DT_INTERACTABLE:
@@ -1315,7 +1354,7 @@ class DungeonUI:
         ax  = ppx + int(math.cos(self.angle) * arrow_r)
         ay  = ppy + int(math.sin(self.angle) * arrow_r)
         # Draw filled party circle
-        pygame.draw.circle(bg, (255,255,80,255), (ppx,ppy), max(2, ts//2 - 1))
+        pygame.draw.circle(bg, (0,220,200,255), (ppx,ppy), max(2, ts//2 - 1))   # cyan — unique party color
         # Draw arrowhead triangle pointing in facing direction
         perp_x = -math.sin(self.angle)
         perp_y =  math.cos(self.angle)
@@ -1326,7 +1365,7 @@ class DungeonUI:
         b1y = tip_y - int(math.sin(self.angle) * arrow_r * 0.7) + int(perp_y * base_w)
         b2x = tip_x - int(math.cos(self.angle) * arrow_r * 0.7) - int(perp_x * base_w)
         b2y = tip_y - int(math.sin(self.angle) * arrow_r * 0.7) - int(perp_y * base_w)
-        pygame.draw.polygon(bg, (255,220,0,255), [(tip_x,tip_y),(b1x,b1y),(b2x,b2y)])
+        pygame.draw.polygon(bg, (0,220,200,255), [(tip_x,tip_y),(b1x,b1y),(b2x,b2y)])  # cyan party arrow
         pygame.draw.rect(bg, (100,90,72,200), (0,0,cols*ts,rows*ts), 1)
 
         surface.blit(bg, (MM_X, MM_Y))
