@@ -50,7 +50,15 @@ _WEAPON_SUBTYPE_DS = {
 
 def _migrate_weapon(item):
     """Upgrade a weapon item from an old save: inject damage_stat if missing."""
-    if not item or item.get("type") != "weapon":
+    if not item: return item
+    t = item.get("type", "")
+    if t not in ("weapon", "Fists"):  # Fists = Monk Unarmed
+        return item
+    # Special case: Monk Unarmed — inject WIS/DEX scaling if missing
+    if t == "Fists" or item.get("special", {}).get("monk_scaling"):
+        if not item.get("damage_stat"):
+            item = dict(item)
+            item["damage_stat"] = {"WIS": 0.30, "DEX": 0.20}
         return item
     if "damage_stat" in item:
         return item  # already upgraded
@@ -69,13 +77,19 @@ def _migrate_weapon(item):
         item["damage"] = item.get("damage", 0) + 10
     return item
 
+def _is_weapon_item(item):
+    """True for any item that should go through weapon migration (weapons + Fists)."""
+    if not item: return False
+    t = item.get("type", "")
+    return t == "weapon" or t == "Fists"  # Fists = Monk Unarmed
+
 def _migrate_character_items(char):
     """Migrate all weapons in a character's inventory and equipment slots."""
-    char.inventory = [_migrate_weapon(i) if i and i.get("type") == "weapon" else i
+    char.inventory = [_migrate_weapon(i) if _is_weapon_item(i) else i
                       for i in char.inventory]
     if char.equipment:
         for slot, item in char.equipment.items():
-            if item and item.get("type") == "weapon":
+            if _is_weapon_item(item):
                 char.equipment[slot] = _migrate_weapon(item)
     return char
 

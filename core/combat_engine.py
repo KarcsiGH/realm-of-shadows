@@ -35,9 +35,12 @@ def make_player_combatant(character, row=FRONT):
         weapon_key = STARTING_WEAPONS.get(character.class_name, "Unarmed")
         weapon = get_weapon(weapon_key)
 
-    # Monk unarmed scaling
+    # Monk unarmed scaling — always inject damage AND damage_stat
     if weapon.get("special", {}).get("monk_scaling"):
         weapon["damage"] = 4 + (character.level * 2)
+        # Ensure damage_stat is always present (handles old saves missing it)
+        if not weapon.get("damage_stat"):
+            weapon["damage_stat"] = {"WIS": 0.30, "DEX": 0.20}
 
     # Use effective stats (base + equipment bonuses)
     if hasattr(character, "effective_stats"):
