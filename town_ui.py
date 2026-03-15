@@ -138,6 +138,7 @@ class TownUI:
         self.tavern_tab = "patrons"  # "patrons" | "recruit" | "party"
         self.tavern_recruit_sel = 0
         self.tavern_party_sel = 0
+        self.current_rumor = ""      # story-aware rumor text, set on tavern open
 
         # NPC dialogue state
         self.active_dialogue = None  # DialogueUI when talking to an NPC
@@ -857,7 +858,7 @@ class TownUI:
             dx = -1; self.walk_facing = "left"
         elif key in (pygame.K_d, pygame.K_RIGHT):
             dx = 1; self.walk_facing = "right"
-        elif key == pygame.K_RETURN:
+        elif key in (pygame.K_RETURN, pygame.K_SPACE):
             return self._walk_interact()
         elif key == pygame.K_ESCAPE:
             self.finished = True
@@ -911,6 +912,8 @@ class TownUI:
                 elif btype == BLD_TEMPLE:
                     self.view = self.VIEW_TEMPLE
                 elif btype == BLD_TAVERN:
+                    from data.story_data import get_rumor
+                    self.current_rumor = get_rumor()
                     self.view = self.VIEW_TAVERN
                 elif btype == BLD_FORGE:
                     self.view = self.VIEW_FORGE
@@ -1093,21 +1096,134 @@ class TownUI:
         draw_text(surface, "\"We take the jobs no one else will touch.\"",
                   28, 50, (100, 90, 130), 13)
 
-        # Warden rank badge (top-right, left of back button)
+        # ── Warden Rank Panel (below option cards) ──────────────────
         try:
-            from core.progression import PLANAR_TIERS, get_party_tier
-            tier_num = get_party_tier(self.party)
+            from core.progression import PLANAR_TIERS
+            from core.story_flags import get_flag
+            tier_num  = max((getattr(c, "planar_tier", 0) for c in self.party), default=0)
             tier_data = PLANAR_TIERS.get(tier_num, {})
             rank_name = tier_data.get("name", "Initiate")
             rank_col  = tier_data.get("color", (140, 130, 160))
             rank_sym  = tier_data.get("symbol", "◆")
-            rank_label = f"{rank_sym} {rank_name}"
-            draw_text(surface, "WARDEN RANK", W - 300, 14, (90, 80, 110), 10, bold=True)
-            draw_text(surface, rank_label, W - 300, 30, rank_col, 16, bold=True)
+            bonus     = tier_data.get("bonus", {})
+
+            # Bonus summary
+            bonus_parts = []
+            if bonus.get("all_stats"):
+                bonus_parts.append(f"+{bonus['all_stats']} all stats")
+            if bonus.get("max_hp_pct"):
+                bonus_parts.append(f"+{int(bonus['max_hp_pct']*100)}% HP")
+            if bonus.get("damage_mult") and bonus["damage_mult"] > 1:
+                bonus_parts.append(f"+{int((bonus['damage_mult']-1)*100)}% damage")
+            if bonus.get("xp_mult") and bonus["xp_mult"] > 1:
+                bonus_parts.append(f"+{int((bonus['xp_mult']-1)*100)}% XP")
+            bonus_str = ", ".join(bonus_parts) if bonus_parts else "No bonuses yet."
+
+            # Next tier progress
+            next_tier_data = PLANAR_TIERS.get(tier_num + 1) if tier_num < 4 else None
+            flag_labels = {
+                "item.hearthstone.1": "1st Hearthstone (Abandoned Mine)",
+                "item.hearthstone.3": "3rd Hearthstone (Dragon's Tooth)",
+                "item.hearthstone.5": "5th Hearthstone (Windswept Isle)",
+                "boss_defeated.shadow_valdris": "Defeat Valdris the Broken",
+            }
+            if next_tier_data:
+                next_name  = next_tier_data.get("name", "")
+                next_flag  = next_tier_data.get("unlock_flag", "")
+                next_level = next_tier_data.get("min_level", 1)
+                next_col   = next_tier_data.get("color", (140, 130, 160))
+                flag_label = flag_labels.get(next_flag, next_flag.replace("_", " ").title())
+                min_level  = min((c.level for c in self.party), default=1)
+                flag_met   = bool(get_flag(next_flag)) if next_flag else False
+                level_met  = min_level >= next_level
+                reqs = []
+                if not flag_met:
+                    reqs.append(flag_label)
+                if not level_met:
+                    reqs.append(f"Party min level {next_level} (currently {min_level})")
+                next_req_str = "  |  ".join(reqs) if reqs else "Ready to advance!"
+                next_ready   = not reqs
+            else:
+                next_name    = ""
+                next_col     = rank_col
+                next_req_str = "Highest rank achieved."
+                next_ready   = False
+
+            # Draw panel — taller for richer display
+            PANEL_Y = 110 + 3 * (88 + 16) + 10
+            panel_r = pygame.Rect(40, PANEL_Y, W - 80, 110)
+            pygame.draw.rect(surface, (22, 16, 36), panel_r, border_radius=6)
+            pygame.draw.rect(surface, rank_col, panel_r, 1, border_radius=6)
+
+            # ── Left: current rank ──────────────────────────────────
+            draw_text(surface, "WARDEN RANK", panel_r.x + 20, panel_r.y + 10,
+                      (90, 80, 110), 10, bold=True)
+            draw_text(surface, f"{rank_sym}  {rank_name}",
+                      panel_r.x + 20, panel_r.y + 26, rank_col, 22, bold=True)
+            # Tier description
             tier_desc = tier_data.get("description", "")
             if tier_desc:
-                draw_text(surface, tier_desc[:50], W - 300, 52, (90, 80, 110), 10,
-                          max_width=160)
+                draw_text(surface, tier_desc, panel_r.x + 20, panel_r.y + 56,
+                          (130, 120, 150), 11, max_width=290)
+            draw_text(surface, bonus_str, panel_r.x + 20, panel_r.y + 90,
+                      (160, 145, 180), 11)
+
+            # Hearthstone count pips
+            hs_count = sum(
+                1 for i in range(1, 6) if get_flag(f"item.hearthstone.{i}")
+            )
+            for hi in range(5):
+                hx = panel_r.x + 20 + hi * 18
+                hy = panel_r.y + 76
+                col_hs = (220, 180, 60) if hi < hs_count else (60, 50, 80)
+                pygame.draw.circle(surface, col_hs, (hx, hy), 6)
+                pygame.draw.circle(surface, (90, 80, 110), (hx, hy), 6, 1)
+            draw_text(surface, f"Hearthstones: {hs_count}/5",
+                      panel_r.x + 116, panel_r.y + 70, (140, 130, 160), 10)
+
+            # Vertical divider
+            div_x = panel_r.x + 340
+            pygame.draw.line(surface, (60, 50, 80),
+                             (div_x, panel_r.y + 12), (div_x, panel_r.bottom - 12), 1)
+
+            # ── Right: next rank ────────────────────────────────────
+            if next_tier_data:
+                draw_text(surface, "NEXT RANK", div_x + 20, panel_r.y + 10,
+                          (90, 80, 110), 10, bold=True)
+                draw_text(surface, f"◆  {next_name}",
+                          div_x + 20, panel_r.y + 26,
+                          next_col if next_ready else (100, 90, 120), 18, bold=True)
+
+                # Requirements list
+                req_y = panel_r.y + 54
+                if next_ready:
+                    draw_text(surface, "✓ Ready to advance!", div_x + 20, req_y,
+                              (80, 200, 120), 12)
+                else:
+                    if not flag_met:
+                        draw_text(surface, f"✗ {flag_label}",
+                                  div_x + 20, req_y, (200, 120, 60), 11,
+                                  max_width=W - div_x - 60)
+                        req_y += 18
+                    if not level_met:
+                        # Party level progress bar
+                        bar_w = min(200, W - div_x - 80)
+                        pct = min(1.0, min_level / next_level)
+                        pygame.draw.rect(surface, (40, 30, 60),
+                                         (div_x + 20, req_y + 14, bar_w, 8),
+                                         border_radius=4)
+                        pygame.draw.rect(surface, next_col,
+                                         (div_x + 20, req_y + 14, int(bar_w * pct), 8),
+                                         border_radius=4)
+                        draw_text(surface, f"Level {min_level} / {next_level} required",
+                                  div_x + 20, req_y, (180, 150, 80), 11)
+            else:
+                draw_text(surface, "RANK COMPLETE", div_x + 20, panel_r.y + 10,
+                          (90, 80, 110), 10, bold=True)
+                draw_text(surface, "Warden-Commander", div_x + 20, panel_r.y + 26,
+                          rank_col, 18, bold=True)
+                draw_text(surface, "Highest rank of the mortal order.",
+                          div_x + 20, panel_r.y + 54, (140, 200, 160), 12)
         except Exception:
             pass
 
@@ -2127,6 +2243,25 @@ class TownUI:
                 draw_text(surface, tier_txt, row.x + 32, row.y + 24, DIM_GOLD if drinks else GREY, 10)
                 self._patron_rects.append((i, row))
 
+            # ── Rumor board — below patron list ───────────────────────────────
+            rumor_y = list_panel.y + 28 + len(patrons) * 54 + 10
+            rumor_panel = pygame.Rect(list_panel.x, rumor_y,
+                                      list_panel.width, H - rumor_y - 100)
+            if rumor_panel.height > 30:
+                draw_panel(surface, rumor_panel, bg_color=(14, 10, 18))
+                draw_text(surface, "Overheard:", rumor_panel.x + 10, rumor_panel.y + 8,
+                          RUMOR_COL, 10, bold=True)
+                rumor_text = self.current_rumor or "Ask around — buy someone a drink."
+                draw_text(surface, f'"{rumor_text}"',
+                          rumor_panel.x + 10, rumor_panel.y + 24,
+                          (200, 185, 230), 10, max_width=rumor_panel.width - 20)
+                # "Hear another" button
+                hear_btn = pygame.Rect(rumor_panel.x + 10,
+                                       H - 110, rumor_panel.width - 20, 28)
+                draw_button(surface, hear_btn, "Hear another (1g)",
+                            hover=hear_btn.collidepoint(mx, my), size=10)
+                self._tavern_hear_btn = hear_btn
+
             # Right panel — dialogue
             dlg_panel = pygame.Rect(316, 100, W - 336, H - 200)
             draw_panel(surface, dlg_panel, bg_color=(20, 14, 8))
@@ -2176,6 +2311,7 @@ class TownUI:
                               dlg_panel.x + 16, H - 142, DIM_GOLD, 11)
             else:
                 self._tavern_drink_btn = None
+                self._tavern_hear_btn = None
 
         # ── ADVENTURERS tab ───────────────────────────────────────────────────
         elif self.tavern_tab == "recruit":
@@ -2796,6 +2932,25 @@ class TownUI:
                     else:
                         self._msg(f"You can't afford a drink! (need {drink_cost}g)", RED)
 
+                # "Hear another" rumor button (costs 1g)
+                hear_btn = getattr(self, '_tavern_hear_btn', None)
+                if hear_btn and hear_btn.collidepoint(mx, my):
+                    total_gold = sum(c.gold for c in self.party)
+                    if total_gold >= 1:
+                        remaining = 1
+                        for c in self.party:
+                            if c.gold >= remaining:
+                                c.gold -= remaining; remaining = 0; break
+                            elif c.gold > 0:
+                                remaining -= c.gold; c.gold = 0
+                        from data.story_data import get_rumor
+                        self.current_rumor = get_rumor()
+                        sfx.play("ui_confirm")
+                        self._msg("You lean in and listen...", RUMOR_COL)
+                    else:
+                        self._msg("You need at least 1g to buy into the conversation.", RED)
+                    return None
+
             # ── RECRUIT tab ───────────────────────────────────────────────────
             elif self.tavern_tab == "recruit":
                 for i, rbtn, rec in getattr(self, '_recruit_rects', []):
@@ -2818,12 +2973,10 @@ class TownUI:
                                 new_char.level = rec["level"]
                                 for stat, val in rec["stats"].items():
                                     new_char.stats[stat] = val
-                                from core.progression import recalculate_max_hp
-                                try:
-                                    recalculate_max_hp(new_char)
-                                except Exception:
-                                    new_char.resources["MAX_HP"] = 20 + new_char.stats.get("CON", 5) * 2
-                                new_char.resources["HP"] = new_char.resources.get("MAX_HP", 20)
+                                from core.classes import get_all_resources
+                                new_char.resources = get_all_resources(
+                                    new_char.class_name, new_char.stats, new_char.level
+                                )
                                 new_char.gold = 0
                             self.party.append(new_char)
                             # Remove this recruit from the pool so they can't be hired twice

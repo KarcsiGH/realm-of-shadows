@@ -161,6 +161,74 @@ TEMPLE = {
 TAVERN = {
     "name": "The Shadowed Flagon",
     "welcome": "Pull up a chair! What'll it be?",
+    "drink_cost": 2,
+
+    "patrons": [
+        {
+            "name": "Old Varta",
+            "role": "regular",
+            "description": "A weathered woman nursing the same cup she arrived with.",
+            "color": (160, 140, 110),
+            "sober": [
+                "I've been coming here thirty years. Seen worse than whatever's troubling you.",
+                "Order something or stop blocking the light.",
+                "The road south was clear this morning. North... I wouldn't.",
+            ],
+            "drunk": [
+                "Y'know, I used t'think I'd seen everything. Then everything got worse.",
+                "My granddaughter wants to be an adventurer. I told her — do it now, before your knees go.",
+                "The Fading, they call it. My father called it the Greying. His father called it something else.",
+            ],
+        },
+        {
+            "name": "Brennan the Peddler",
+            "role": "merchant",
+            "description": "A traveling merchant with ink-stained fingers and a nervous habit of checking the door.",
+            "color": (120, 155, 130),
+            "sober": [
+                "Trade's bad. Everything west of Ironhearth takes twice as long to move now.",
+                "I don't ask what's in the crates anymore. Makes the job easier.",
+                "There's work if you're not picky.",
+            ],
+            "drunk": [
+                "I'll tell you something I shouldn't. The Governor's been moving gold east. A lot of it.",
+                "Someone's buying weapons in bulk. Not swords — ritual stuff. Doesn't go to any army I know.",
+                "Last month I saw Warden markings on a crate headed for Valdris' Spire. Didn't ask questions.",
+            ],
+        },
+        {
+            "name": "Silas",
+            "role": "drifter",
+            "description": "A young man with the look of someone who left somewhere in a hurry.",
+            "color": (140, 120, 160),
+            "sober": [
+                "Don't ask where I'm from. Drink your drink.",
+                "Funny place, this. Everyone passes through. Nobody stays.",
+                "I heard there's work north. Haven't decided if I'm desperate enough yet.",
+            ],
+            "drunk": [
+                "I left Thornhaven when the black-cloaks started recruiting. Some of my friends said yes.",
+                "You know what no one tells you about running away? You have to keep running.",
+                "There's a cult, or there was. Preaching about the Fading as a gift. They're still out there.",
+            ],
+        },
+        {
+            "name": "Marta Holt",
+            "role": "farmer",
+            "description": "A farmer with flour on her boots, taking a rare evening off.",
+            "color": (190, 160, 100),
+            "sober": [
+                "Harvest was good this year, at least. Small mercies.",
+                "My husband says the east field soil has gone grey. Never seen that before.",
+                "Whatever you lot are doing about the shadows — keep doing it.",
+            ],
+            "drunk": [
+                "My youngest saw something in the north field last harvest. Won't say what. Won't go back.",
+                "The old shrine near our farm — the one nobody tends — it's been lit at night. Nobody knows who.",
+                "You want to know why people don't talk about the Fading? Because talking about it makes it real.",
+            ],
+        },
+    ],
 
     "rumors": [
         "I heard goblins have been massing in the eastern woods. More than usual.",
@@ -258,7 +326,7 @@ TOWN_SHOP_PROFILES = {
              "rarity": "uncommon", "defense": 10, "magic_resist": 2,
              "description": "Solid dwarven steel armor. Premium protection.",
              "buy_price": 150, "sell_price": 60, "identified": True},
-            {"name": "Runic Amulet", "type": "accessory", "slot": "accessory1",
+            {"name": "Runic Amulet", "type": "accessory", "slot": "ring1",
              "rarity": "uncommon", "magic_resist": 4,
              "stat_bonus": {"INT": 2},
              "description": "A dwarf-forged amulet inscribed with protective runes.",
@@ -349,7 +417,7 @@ TOWN_SHOP_PROFILES = {
              "rarity": "rare", "teaches_spell": "fireball",
              "description": "Teaches the Fireball spell. Mages only.",
              "buy_price": 200, "sell_price": 80, "identified": True},
-            {"name": "Crystal Focus", "type": "accessory", "slot": "accessory1",
+            {"name": "Crystal Focus", "type": "accessory", "slot": "ring1",
              "rarity": "uncommon", "magic_resist": 3,
              "stat_bonus": {"INT": 3, "WIS": 1},
              "description": "A crystal lens that sharpens magical focus. +3 INT, +1 WIS.",
@@ -387,7 +455,7 @@ TOWN_SHOP_PROFILES = {
              "rarity": "rare", "defense": 14, "magic_resist": 4,
              "description": "Full plate armor from the imperial armory. The finest protection available.",
              "buy_price": 320, "sell_price": 128, "identified": True},
-            {"name": "Ring of the Realm", "type": "accessory", "slot": "accessory1",
+            {"name": "Ring of the Realm", "type": "accessory", "slot": "ring1",
              "rarity": "rare",
              "stat_bonus": {"STR": 1, "INT": 1, "WIS": 1, "DEX": 1, "CON": 1},
              "description": "Bearing the imperial crest. Grants +1 to all stats.",
