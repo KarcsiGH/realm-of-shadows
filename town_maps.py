@@ -401,7 +401,7 @@ WOODHAVEN_BUILDINGS = {
         "color": (160, 100, 50),
         "label_pos": (17, 14),
         "npc_name": "Smith Wren",
-        "indoor_npc": {"name": "Smith Wren", "npc_type": "forger", "title": "Smith", "description": "A wiry woman who crafts bows and arrowheads.", "color": (200, 130, 60), "dialogue_id": None},
+        "indoor_npc": {"name": "Smith Wren", "npc_type": "forger", "title": "Smith", "description": "A wiry woman who crafts bows and arrowheads.", "color": (200, 130, 60), "dialogue_id": "smith_wren"},
     },
     "guild": {
         "name": "Ranger's Guild",
@@ -549,7 +549,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (200, 120, 40),
         "label_pos": (7, 9),
         "npc_name": "Master Smith Thardin",
-        "indoor_npc": {"name": "Master Smith Thardin", "npc_type": "forger", "title": "Master Smith", "description": "The finest weaponsmith in the region.", "color": (220, 140, 40), "dialogue_id": None},
+        "indoor_npc": {"name": "Master Smith Thardin", "npc_type": "forger", "title": "Master Smith", "description": "The finest weaponsmith in the region.", "color": (220, 140, 40), "dialogue_id": "master_smith_thardin"},
     },
     "armory": {
         "name": "City Armory",
@@ -839,6 +839,7 @@ SALTMERE_BUILDINGS = {
         "color": (160, 100, 50),
         "label_pos": (18, 14),
         "npc_name": "Smith Crag",
+        "indoor_npc": {"name": "Smith Crag", "npc_type": "forger", "title": "Smith", "description": "A scarred smith who works salvaged sea-metal.", "color": (160, 130, 100), "dialogue_id": "smith_crag"},
     },
 }
 
@@ -1269,6 +1270,7 @@ THORNHAVEN_BUILDINGS = {
         "color": (200, 130, 50),
         "label_pos": (16, 17),
         "npc_name": "Royal Smith Hadra",
+        "indoor_npc": {"name": "Royal Smith Hadra", "npc_type": "forger", "title": "Royal Smith", "description": "The imperial garrison's master armorer. Direct and exacting.", "color": (200, 160, 80), "dialogue_id": "royal_smith_hadra"},
     },
     "barracks": {
         "name": "City Barracks",

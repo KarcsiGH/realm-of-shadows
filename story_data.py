@@ -870,6 +870,27 @@ NPCS = {
         "location": "briarhollow",
         "portrait_color": (160, 195, 160),
     },
+
+    "warden_liaison": {
+        "name": "Warden Liaison",
+        "portrait_color": (100, 175, 130),
+        "description": "A representative of the old Warden order. Watchful and weathered.",
+    },
+    "city_guard_thornhaven": {
+        "name": "City Guard",
+        "portrait_color": (140, 150, 170),
+        "description": "An Imperial soldier standing post at the capital.",
+    },
+    "refugee_elder": {
+        "name": "Refugee Elder",
+        "portrait_color": (160, 140, 110),
+        "description": "An elder from one of the villages displaced by the Fading.",
+    },
+    "innkeeper_thornhaven": {
+        "name": "Innkeeper Helda",
+        "portrait_color": (180, 150, 120),
+        "description": "The proprietor of the Thorn and Thistle. She's seen too much to be surprised by anything.",
+    },
 }
 
 
@@ -4920,6 +4941,292 @@ NPC_DIALOGUES = {
             }
         },
     ],
+
+
+
+    # ── FORGE NPCs ───────────────────────────────────────────────────────────
+
+    "smith_wren": [
+        # After Fading corruption is known (post Act 1)
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.1", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "wren_fading",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Smith Wren",
+                        "text": "The wood's wrong. You can feel it in the grain — trees I've been cutting arrows from for a decade, the timber's gone brittle. Twisted.\n\nI keep working. What else is there to do?",
+                        "choices": [
+                            {"text": "What do you make here?", "next": "makes"},
+                            {"text": "The Fading. We're looking into it.", "next": "fading"},
+                            {"text": "Let me browse what you can craft.", "next": None},
+                        ]
+                    },
+                    "makes": {
+                        "speaker": "Smith Wren",
+                        "text": "Bows, mostly. Arrowheads. Light blades for the rangers who don't want something heavy slowing them down.\n\nI can work heavier steel too — I learned under a proper smith in Ironhearth before I came out here. But the rangers want light. Fast.",
+                        "choices": [
+                            {"text": "What's the best thing you've made?", "next": "best"},
+                            {"text": "Leave.", "next": None},
+                        ]
+                    },
+                    "best": {
+                        "speaker": "Smith Wren",
+                        "text": "Phase spider silk fletching on an ashwood longbow. Took me two weeks. The arrow moves like it's alive.\n\nI gave it to a ranger who went north and never came back.\n\nNow I make two of everything.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                    "fading": {
+                        "speaker": "Smith Wren",
+                        "text": "Good. Someone should.\n\nThe spiders are worse because of it — bigger, angrier. Half my clients can't get to the eastern trailheads anymore.\n\nFix the wood, you fix the work. That's all I know about it.",
+                        "choices": [{"text": "We'll do what we can.", "next": None}]
+                    },
+                }
+            }
+        },
+        # Default (early game)
+        {
+            "conditions": [],
+            "tree": {
+                "id": "wren_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Smith Wren",
+                        "text": "Wren. I work the forge here.\n\nBows are my specialty but I can handle most things. What do you need?",
+                        "choices": [
+                            {"text": "What do you make?", "next": "makes"},
+                            {"text": "How's business?", "next": "business"},
+                            {"text": "Just looking. Thanks.", "next": None},
+                        ]
+                    },
+                    "makes": {
+                        "speaker": "Smith Wren",
+                        "text": "Bows, arrowheads, light blades. Trap components for the rangers. If it needs to be quiet and fast, I'm your smith.\n\nI can work plate too — learned it before I moved out here — but there's not much call for it in Woodhaven.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                    "business": {
+                        "speaker": "Smith Wren",
+                        "text": "Fine until the spider activity started picking up. Now half my deliveries get ambushed on the forest roads.\n\nI've started making clients come to me. Safer for everyone.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                }
+            }
+        },
+    ],
+
+    "master_smith_thardin": [
+        # After Ironhearth is visited and mine is known
+        {
+            "conditions": [
+                {"flag": "npc.foreman_brak.met", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "thardin_mine",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Master Smith Thardin",
+                        "text": "You've been talking to Brak. Good man — knows the mine better than anyone still breathing.\n\nThe ore quality from the deep shafts was extraordinary once. Dense, consistent, almost no impurities. Now it comes up brittle. Half of it crumbles before I can work it.\n\nSomething changed down there.",
+                        "choices": [
+                            {"text": "What changed?", "next": "changed"},
+                            {"text": "What can you make with what you have?", "next": "makes"},
+                            {"text": "Leave.", "next": None},
+                        ]
+                    },
+                    "changed": {
+                        "speaker": "Master Smith Thardin",
+                        "text": "Shadow in the rock, I call it. You can see it — a grey tinge in the grain, like the iron itself has given up.\n\nI've worked iron for forty years. I know what healthy ore looks like. That isn't it.",
+                        "choices": [
+                            {"text": "The Fading is corrupting the mine.", "next": "fading"},
+                            {"text": "Anything I can do to help?", "next": "help"},
+                        ]
+                    },
+                    "fading": {
+                        "speaker": "Master Smith Thardin",
+                        "text": "Is that what they're calling it. Aye, that fits.\n\nIf you're going into those tunnels — and I can tell you've already been — bring back anything unusual you find. Strange metal, odd crystals. The old shafts may hold things I can still work with.",
+                        "choices": [{"text": "We'll keep an eye out.", "next": None}]
+                    },
+                    "makes": {
+                        "speaker": "Master Smith Thardin",
+                        "text": "More than you'd think. Poor ore in skilled hands still makes decent steel.\n\nBut anything exceptional requires exceptional materials. If you find good ore in the deep shafts — or anything from old Warden stockpiles — bring it here first.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                    "help": {
+                        "speaker": "Master Smith Thardin",
+                        "text": "Clear the kobolds from the lower shafts. Let the miners work in peace.\n\nBrak asked the garrison for soldiers — they sent four men for three days. Useless.\n\nYou look more capable than that.",
+                        "choices": [{"text": "We'll look into it.", "next": None}]
+                    },
+                }
+            }
+        },
+        # Default
+        {
+            "conditions": [],
+            "tree": {
+                "id": "thardin_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Master Smith Thardin",
+                        "text": "Grand Forge of Ironhearth. Forty years this anvil's been mine.\n\nI've supplied half the armories in the region. What can I do for you?",
+                        "choices": [
+                            {"text": "What's your specialty?", "next": "specialty"},
+                            {"text": "How's the mine treating you?", "next": "mine"},
+                            {"text": "Just need the forge. Thanks.", "next": None},
+                        ]
+                    },
+                    "specialty": {
+                        "speaker": "Master Smith Thardin",
+                        "text": "Ironhearth steel. Dense, consistent, doesn't chip. I work weapons mostly — anything that needs to hold an edge under real use, not just look pretty in a display case.\n\nI can enchant too, if you've got the materials.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                    "mine": {
+                        "speaker": "Master Smith Thardin",
+                        "text": "The deep shafts have been problematic. Ore quality's dropped and the miners won't go below the third level anymore — too many kobolds.\n\nWe manage. The surface veins are still good.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                }
+            }
+        },
+    ],
+
+    "smith_crag": [
+        # After pale coast / Act 3 content is accessible
+        {
+            "conditions": [
+                {"flag": "act", "op": ">=", "value": 3},
+            ],
+            "tree": {
+                "id": "crag_act3",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Smith Crag",
+                        "text": "Ships don't come back from the Pale Coast anymore. I used to get salvage from the wrecks — good deep-water metal, salt-cured, dense as anything I've worked.\n\nNow the harbor's quiet and so's my trade.\n\nWhat do you need?",
+                        "choices": [
+                            {"text": "What can you make from sea salvage?", "next": "salvage"},
+                            {"text": "The Pale Coast — what happened there?", "next": "pale"},
+                            {"text": "Just the forge. Thanks.", "next": None},
+                        ]
+                    },
+                    "salvage": {
+                        "speaker": "Smith Crag",
+                        "text": "Anchors and chains mostly — but the hull fittings from old ships are something else. Wrought iron with a hundred years of salt in it. I've made blades from ship-chain that held an edge better than anything fresh from a mine.\n\nBring me materials and I'll show you what this forge can do.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                    "pale": {
+                        "speaker": "Smith Crag",
+                        "text": "Something down in those catacombs is wrong. Always was, the old sailors said — but now it's spilling out.\n\nI had a client come back from the coast road last month. Just the one. He didn't say much. Drank for two days straight and left town.\n\nI don't ask questions anymore.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                }
+            }
+        },
+        # Default
+        {
+            "conditions": [],
+            "tree": {
+                "id": "crag_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Smith Crag",
+                        "text": "Harbor Forge. I work salvage mostly — ship metal, dock fittings, whatever washes up.\n\nGood steel when you can get it, but the sea doesn't care about your metallurgy.\n\nWhat do you need?",
+                        "choices": [
+                            {"text": "What's your specialty?", "next": "specialty"},
+                            {"text": "Where do you get your materials?", "next": "materials"},
+                            {"text": "Just the forge. Thanks.", "next": None},
+                        ]
+                    },
+                    "specialty": {
+                        "speaker": "Smith Crag",
+                        "text": "Marine hardware, mostly. Anchors, chains, hooks. But I've made weapons for half the guild here — they like something that won't rust when it rains.\n\nSea-metal's got character. Forge it right and it holds.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                    "materials": {
+                        "speaker": "Smith Crag",
+                        "text": "Salvage from wrecks, mostly. Sometimes the tides bring things up from the catacombs — old Warden metalwork, usually. Dense stuff. Doesn't corrode.\n\nI don't ask where it came from. I just work it.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                }
+            }
+        },
+    ],
+
+    "royal_smith_hadra": [
+        # After reaching Thornhaven and knowing the political situation
+        {
+            "conditions": [
+                {"flag": "npc.governor_aldric.met", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "hadra_thornhaven",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Royal Smith Hadra",
+                        "text": "You've met the Governor. Good. Then you understand the situation.\n\nThe empire needs steel right now more than it needs anything else — and I'm producing half of what I was two years ago because the supply lines from Ironhearth keep getting cut.\n\nWhat can I do for you?",
+                        "choices": [
+                            {"text": "What's cutting the supply lines?", "next": "supply"},
+                            {"text": "What's the Royal Forge's specialty?", "next": "specialty"},
+                            {"text": "Just the forge.", "next": None},
+                        ]
+                    },
+                    "supply": {
+                        "speaker": "Royal Smith Hadra",
+                        "text": "Shadow Wardens, officially. But honestly? The roads have been failing for months — caravans that leave Ironhearth don't always arrive.\n\nThe Governor's ordered more patrols. The patrols don't come back either.\n\nI work with what I have.",
+                        "choices": [
+                            {"text": "We're clearing those roads.", "next": "roads"},
+                            {"text": "Leave.", "next": None},
+                        ]
+                    },
+                    "roads": {
+                        "speaker": "Royal Smith Hadra",
+                        "text": "Then I'll have something worth making by the time you're done.\n\nBring me good materials and I'll give you imperial quality in return. I still know how to make a proper blade — just haven't had the iron for it.",
+                        "choices": [{"text": "We'll hold you to that.", "next": None}]
+                    },
+                    "specialty": {
+                        "speaker": "Royal Smith Hadra",
+                        "text": "Military grade. Swords, plate, arrowheads in volume. The garrison doesn't care about beauty — they care about whether it holds under a charge.\n\nI can do exceptional work when the materials allow it. Right now they don't. But that may change.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                }
+            }
+        },
+        # Default
+        {
+            "conditions": [],
+            "tree": {
+                "id": "hadra_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Royal Smith Hadra",
+                        "text": "Royal Forge of Thornhaven. I supply the imperial garrison.\n\nIf you're not with the garrison, I still take work — but the garrison comes first.\n\nWhat do you need?",
+                        "choices": [
+                            {"text": "What do you make?", "next": "makes"},
+                            {"text": "How does the Royal Forge work?", "next": "how"},
+                            {"text": "Just the forge. Thanks.", "next": None},
+                        ]
+                    },
+                    "makes": {
+                        "speaker": "Royal Smith Hadra",
+                        "text": "Military hardware primarily. Swords, shields, plate armor, arrowheads.\n\nI also do enchanting when the garrison needs it — wards against fire mostly, for the siege engineers.\n\nBring me materials and I'll work them.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                    "how": {
+                        "speaker": "Royal Smith Hadra",
+                        "text": "Same as any forge — gold and materials. The difference is I know what I'm doing.\n\nUpgrade, enchant, craft from components, or repair what's already broken. If it's made of metal, I can work it.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                }
+            }
+        },
+    ],
+
 
 }
 
