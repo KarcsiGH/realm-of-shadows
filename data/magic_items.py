@@ -9,7 +9,7 @@ Organized by tier (1=early, 2=mid, 3=late).
 # ══════════════════════════════════════════════════════════
 
 SECRET_ITEMS_T1 = [
-    {"name": "Ring of Minor Fortitude", "appraised_name": "Ring of Minor Fortitude", "type": "accessory", "slot": "accessory1",
+    {"name": "Ring of Minor Fortitude", "appraised_name": "Ring of Minor Fortitude", "type": "accessory", "slot": "ring1",
      "subtype": "ring", "rarity": "uncommon",
      "effect": {"con_bonus": 2, "max_hp_bonus": 10},
      "description": "A plain iron ring that makes the wearer feel hardier. +2 CON, +10 max HP.",
@@ -30,15 +30,14 @@ SECRET_ITEMS_T1 = [
      "identified": False, "estimated_value": 70},
 
     {"name": "Wand of Sparks", "appraised_name": "Wand of Sparks", "type": "weapon", "slot": "weapon",
-     "subtype": "Wand", "rarity": "uncommon", "damage": 4,
-     "damage_stat": {"INT": 0.8},
+     "subtype": "Wand", "rarity": "uncommon", "damage": 6,
      "phys_type": "blunt", "range": "melee",
      "spell_bonus": 3,
      "enchant_element": "lightning", "enchant_bonus": 3,
      "description": "A wand crackling with static. +3 spell power, deals lightning damage.",
      "identified": False, "estimated_value": 65},
 
-    {"name": "Amulet of the Owl", "appraised_name": "Amulet of the Owl", "type": "accessory", "slot": "accessory1",
+    {"name": "Amulet of the Owl", "appraised_name": "Amulet of the Owl", "type": "accessory", "slot": "ring1",
      "subtype": "amulet", "rarity": "uncommon",
      "effect": {"wis_bonus": 2, "int_bonus": 1},
      "description": "A silver owl pendant. +2 WIS, +1 INT.",
@@ -52,23 +51,22 @@ SECRET_ITEMS_T1 = [
 
 SECRET_ITEMS_T2 = [
     {"name": "Firebrand Blade", "appraised_name": "Firebrand Blade", "type": "weapon", "slot": "weapon",
-     "subtype": "Longsword", "rarity": "rare", "damage": 16,
-     "damage_stat": {"STR": 0.7, "DEX": 0.3},
+     "subtype": "Longsword", "rarity": "rare", "damage": 14,
      "phys_type": "slashing", "range": "melee",
      "enchant_element": "fire", "enchant_bonus": 5, "enchant_name": "Flame",
      "description": "A longsword wreathed in faint flames. Deals bonus fire damage.",
      "identified": False, "estimated_value": 160},
 
     {"name": "Frostbite Dagger", "appraised_name": "Frostbite Dagger", "type": "weapon", "slot": "weapon",
-     "subtype": "Dagger", "rarity": "rare", "damage": 12,
-     "damage_stat": {"DEX": 1.0},
+     "subtype": "Dagger", "rarity": "rare", "damage": 10,
+     "damage_stat": {"STR": 0.3, "DEX": 0.12},
      "phys_type": "piercing", "range": "melee",
      "enchant_element": "ice", "enchant_bonus": 5, "enchant_name": "Frost",
      "effect": {"dex_bonus": 2},
      "description": "An ice-cold dagger. +2 DEX, bonus ice damage.",
      "identified": False, "estimated_value": 150},
 
-    {"name": "Ring of the Battlemage", "appraised_name": "Ring of the Battlemage", "type": "accessory", "slot": "accessory1",
+    {"name": "Ring of the Battlemage", "appraised_name": "Ring of the Battlemage", "type": "accessory", "slot": "ring1",
      "subtype": "ring", "rarity": "rare",
      "effect": {"int_bonus": 3, "str_bonus": 1},
      "description": "Worn by warrior-mages of the old Wardens. +3 INT, +1 STR.",
@@ -81,7 +79,7 @@ SECRET_ITEMS_T2 = [
      "description": "An ancient shield that still hums with protective magic. +1 CON.",
      "identified": False, "estimated_value": 180},
 
-    {"name": "Orb of Fading Sight", "appraised_name": "Orb of Fading Sight", "type": "accessory", "slot": "accessory1",
+    {"name": "Orb of Fading Sight", "appraised_name": "Orb of Fading Sight", "type": "accessory", "slot": "ring1",
      "subtype": "orb", "rarity": "rare",
      "effect": {"int_bonus": 3, "wis_bonus": 2},
      "spell_bonus": 4,
@@ -112,8 +110,8 @@ SECRET_ITEMS_T2 = [
 
 SECRET_ITEMS_T3 = [
     {"name": "Warden's Oath", "appraised_name": "Warden's Oath", "type": "weapon", "slot": "weapon",
-     "subtype": "Longsword", "rarity": "epic", "damage": 18,
-     "damage_stat": {"STR": 0.7, "DEX": 0.3},
+     "subtype": "Longsword", "rarity": "epic", "damage": 25,
+     "damage_stat": {"STR": 0.3, "DEX": 0.12},
      "phys_type": "slashing", "range": "melee",
      "enchant_element": "divine", "enchant_bonus": 6, "enchant_name": "Holy",
      "effect": {"str_bonus": 2, "pie_bonus": 2},
@@ -121,8 +119,8 @@ SECRET_ITEMS_T3 = [
      "identified": False, "estimated_value": 350},
 
     {"name": "Staff of the Fading", "appraised_name": "Staff of the Fading", "type": "weapon", "slot": "weapon",
-     "subtype": "Staff", "rarity": "epic", "damage": 8,
-     "damage_stat": {"INT": 0.6, "STR": 0.4},
+     "subtype": "Staff", "rarity": "epic", "damage": 11,
+     "damage_stat": {"STR": 0.3, "DEX": 0.12},
      "phys_type": "blunt", "range": "melee",
      "spell_bonus": 8,
      "enchant_element": "shadow", "enchant_bonus": 6, "enchant_name": "Shadow",
@@ -147,7 +145,7 @@ SECRET_ITEMS_T3 = [
 BOSS_BONUS_LOOT = {
     "Goblin King": [
         {"drop_chance": 0.40, "item": {
-            "name": "Grak's Lucky Coin", "appraised_name": "Grak's Lucky Coin", "type": "accessory", "slot": "accessory1",
+            "name": "Grak's Lucky Coin", "appraised_name": "Grak's Lucky Coin", "type": "accessory", "slot": "ring1",
             "subtype": "trinket", "rarity": "uncommon",
             "effect": {"dex_bonus": 1},
             "description": "A strange coin Grak carried. Brings luck to the bearer. +1 DEX.",
@@ -156,7 +154,7 @@ BOSS_BONUS_LOOT = {
     "Giant Spider Queen": [
         {"drop_chance": 0.50, "item": {
             "name": "Venomstrike Fang", "appraised_name": "Venomstrike Fang", "type": "weapon", "slot": "weapon",
-            "subtype": "Dagger", "rarity": "rare", "damage": 11,
+            "subtype": "Dagger", "rarity": "rare", "damage": 15,
             "phys_type": "piercing", "range": "melee",
             "enchant_element": "nature", "enchant_bonus": 4, "enchant_name": "Venom",
             "effect": {"dex_bonus": 2},
@@ -181,6 +179,7 @@ BOSS_BONUS_LOOT = {
         {"drop_chance": 0.80, "item": {
             "name": "Valdris' Shadowstaff", "appraised_name": "Valdris' Shadowstaff", "type": "weapon", "slot": "weapon",
             "subtype": "Staff", "rarity": "epic", "damage": 8,
+            "damage_stat": {"STR": 0.16, "INT": 0.24},
             "phys_type": "blunt", "range": "melee",
             "spell_bonus": 7,
             "enchant_element": "shadow", "enchant_bonus": 6, "enchant_name": "Shadow",
@@ -188,7 +187,7 @@ BOSS_BONUS_LOOT = {
             "description": "The shadow-echo of Valdris' staff. Crackling with dark power. +3 INT, +7 spell.",
             "identified": False, "estimated_value": 350}},
         {"drop_chance": 0.50, "item": {
-            "name": "Fading Shard Amulet", "appraised_name": "Fading Shard Amulet", "type": "accessory", "slot": "accessory1",
+            "name": "Fading Shard Amulet", "appraised_name": "Fading Shard Amulet", "type": "accessory", "slot": "ring1",
             "subtype": "amulet", "rarity": "epic",
             "effect": {"int_bonus": 3, "wis_bonus": 2, "pie_bonus": 1},
             "magic_resist": 5,
@@ -198,18 +197,6 @@ BOSS_BONUS_LOOT = {
     "Ashvar": [
         {"drop_chance": 1.0, "unique_key": "ashvar_robes"},
         {"drop_chance": 0.70, "unique_key": "ashvar_focus"},
-    ],
-    "Karreth": [
-        # On kill path — scale drops as normal loot
-        {"drop_chance": 0.80, "unique_key": "karreth_scale"},
-    ],
-    "The Pale Sentinel": [
-        # On kill path — her buckler stays behind
-        {"drop_chance": 1.0, "unique_key": "sirenne_buckler"},
-    ],
-    "The Last Keeper": [
-        # Isle Keeper always drops its pendant
-        {"drop_chance": 1.0, "unique_key": "keeper_pendant"},
     ],
     # NOTE: Lingering Will boss loot is defined in tower_data.py
 }
@@ -235,16 +222,6 @@ def get_secret_item(floor_num, total_floors, rng, party=None):
         pool = SECRET_ITEMS_T2
     else:
         pool = SECRET_ITEMS_T1
-
-    # Rare chance to find a training book in a deep secret room
-    if depth_ratio >= 0.6 and rng.random() < 0.08:   # 8% at mid-depth+
-        return get_random_training_book()
-
-    # Rare chance to find a relic in any secret room (deeper = better tier)
-    if rng.random() < 0.10:   # 10% base relic chance
-        max_tier = 3 if depth_ratio >= 0.8 else 2 if depth_ratio >= 0.4 else 1
-        return get_random_relic(max_tier)
-
     return dict(rng.choice(pool))
 
 
@@ -321,8 +298,8 @@ CURSED_ITEMS = [
         "slot": "main_hand",
         "rarity": "rare", "tier": 2,
         "cursed": True, "identified": False,
-        "damage": 34,
-        "damage_stat": {"STR": 0.7, "DEX": 0.3},
+        "damage": 48,
+        "damage_stat": {"STR": 0.3, "DEX": 0.12},
         "estimated_value": 300,
         "enchant_element": "fire", "enchant_bonus": 5,
         "stat_penalty": {"magic_resist": -10},
@@ -406,8 +383,8 @@ UNIQUE_ITEMS = {
         "name": "Korrath's Last Oath",
         "type": "weapon", "subtype": "Greatsword", "slot": "weapon",
         "rarity": "legendary", "unique": True,
-        "damage": 30, "phys_type": "slashing", "range": "melee",
-        "damage_stat": {"STR": 0.7, "DEX": 0.3},
+        "damage": 31, "phys_type": "slashing", "range": "melee",
+        "damage_stat": {"STR": 0.4, "DEX": 0.1},
         "enchant_element": "shadow", "enchant_bonus": 6, "enchant_name": "Shadow",
         "stat_bonuses": {"STR": 2},
         "set_id": "warden_set",
@@ -428,7 +405,7 @@ UNIQUE_ITEMS = {
 
     "korrath_ring": {
         "name": "Warden's Oath Ring",
-        "type": "accessory", "subtype": "ring", "slot": "accessory1",
+        "type": "accessory", "subtype": "ring", "slot": "ring1",
         "rarity": "rare", "unique": True,
         "stat_bonuses": {"STR": 2, "CON": 2},
         "magic_resist": 4,
@@ -469,7 +446,7 @@ UNIQUE_ITEMS = {
 
     "ashvar_focus": {
         "name": "The Shattered Focus",
-        "type": "accessory", "subtype": "amulet", "slot": "accessory2",
+        "type": "accessory", "subtype": "amulet", "slot": "neck",
         "rarity": "legendary", "unique": True,
         "stat_bonuses": {"INT": 4, "WIS": 1},
         "magic_resist": 6,
@@ -559,7 +536,7 @@ UNIQUE_ITEMS = {
         "name": "The Nameless Keeper's Seal",
         "type": "accessory",
         "subtype": "amulet",
-        "slot": "accessory2",
+        "slot": "neck",
         "rarity": "legendary",
         "unique": True,
         "stat_bonuses": {"INT": 3, "WIS": 3},
@@ -585,7 +562,7 @@ UNIQUE_ITEMS = {
         "name": "The Last Warden's Seal",
         "type": "accessory",
         "subtype": "ring",
-        "slot": "accessory1",
+        "slot": "ring1",
         "rarity": "legendary",
         "unique": True,
         "stat_bonuses": {"STR": 2, "INT": 2, "WIS": 2},
@@ -604,36 +581,6 @@ UNIQUE_ITEMS = {
             "The ring was found in the exact center of the rift, resting on "
             "nothing. The Warden order is gone. The wards are new. "
             "Someone has to hold what they protected."
-        ),
-    },
-
-    # ── Karreth (peaceful resolution — Dragon's Tooth) ────────
-    "karreth_scale": {
-        "name": "Karreth's Willgift",
-        "type": "armor",
-        "subtype": "chest",
-        "slot": "body",
-        "rarity": "legendary",
-        "unique": True,
-        "defense": 16,
-        "magic_resist": 10,
-        "stat_bonuses": {"CON": 2, "STR": 2},
-        "enchant_element": "fire",
-        "enchant_bonus": 5,
-        "enchant_name": "Dragonfire",
-        "enchant_resist": "fire",
-        "enchant_resist_bonus": 20,
-        "identified": False,
-        "estimated_value": 480,
-        "description": (
-            "A scale shed willingly by Karreth-sol-Amendar, worked into chest armor. "
-            "Still warm. Always warm. +2 CON, +2 STR, fire damage, 20% fire resist."
-        ),
-        "lore": (
-            "The scale was given freely — which matters in old draconic tradition. "
-            "A willing gift from a guardian carries a fraction of the guardian's purpose. "
-            "Wearing it, you feel a faint, constant warmth at your sternum. "
-            "Not heat. Remembrance."
         ),
     },
 }
@@ -737,262 +684,3 @@ def get_unique_item(key, party=None):
     if party and party_has_unique(party, item["name"]):
         return None
     return dict(item)
-
-
-# ══════════════════════════════════════════════════════════════
-#  RELIGIOUS ITEMS (Relics)
-#  Identified with Divine Lore (PIE >= 10). Trained Cleric/Paladin
-#  classes get a bonus to the check. Any character with sufficient
-#  PIE can *use* a relic for its passive bonus, but its effects
-#  are enhanced when equipped by a PIE-primary class.
-# ══════════════════════════════════════════════════════════════
-
-# ══════════════════════════════════════════════════════════════
-#  PANACEA — Cures both poison AND disease. Rare consumable.
-# ══════════════════════════════════════════════════════════════
-
-PANACEA = {
-    "name": "Panacea",
-    "type": "consumable",
-    "rarity": "rare",
-    "cures": ["Poison", "Disease"],
-    "description": (
-        "A golden vial of ancient alchemical remedy. Clears all poison "
-        "and disease from the user. Brewed only by masters of the craft."
-    ),
-    "buy_price": 180,
-    "sell_price": 45,
-    "identified": True,
-    "stack": 1,
-    "lore": "Healers say true Panacea requires ingredients from three different biomes.",
-}
-
-RELIGIOUS_ITEMS = [
-    # ── Tier 1 Relics ─────────────────────────────────────────
-    {
-        "name": "Warden's Talisman",
-        "unidentified_name": "Worn Talisman",
-        "unidentified_desc": "A talisman bearing a faint mark. The stone is warm to the touch.",
-        "appraised_name": "Talisman of Warden Craft",
-        "material_desc": "Carved from hearthstone. Old Warden workmanship.",
-        "magic_desc": "Hums with protective resonance. Divine in nature.",
-        "type": "accessory", "slot": "accessory1", "subtype": "relic",
-        "rarity": "uncommon",
-        "effect": {"pie_bonus": 2, "wis_bonus": 1},
-        "stat_bonus": {"PIE": 2, "WIS": 1},
-        "description": "A Warden-carved talisman. +2 PIE, +1 WIS. Heals +8% from divine sources.",
-        "healing_received_bonus": 0.08,  # extra healing when equipped
-        "identify_difficulty": 1,
-        "identified": False, "estimated_value": 80,
-        "lore": "Made by the first Wardens before the Fading began.",
-    },
-    {
-        "name": "Pale Candle Amulet",
-        "unidentified_name": "Wax Amulet",
-        "unidentified_desc": "A tiny candle molded in wax, threaded on a cord. Never melts.",
-        "appraised_name": "Amulet of the Pale Order",
-        "material_desc": "Hardened ceremonial wax, Pale Coast origin.",
-        "magic_desc": "Resists fear effects. Faint divine warmth.",
-        "type": "accessory", "slot": "accessory1", "subtype": "relic",
-        "rarity": "uncommon",
-        "effect": {"pie_bonus": 1},
-        "stat_bonus": {"PIE": 1},
-        "description": "A Pale Order ward-token. +1 PIE. Fear resistance +15%.",
-        "fear_resist_bonus": 0.15,
-        "identify_difficulty": 1,
-        "identified": False, "estimated_value": 70,
-        "lore": "Issued to villagers in Pale Coast fishing towns as wards against sea-spirits.",
-    },
-
-    # ── Tier 2 Relics ─────────────────────────────────────────
-    {
-        "name": "Icon of the Hearthkeepers",
-        "unidentified_name": "Stone Icon",
-        "unidentified_desc": "A smooth stone carved into a vaguely humanoid shape. Five notches on its base.",
-        "appraised_name": "Hearthkeeper Icon",
-        "material_desc": "Carved hearthstone. Pre-Fading craftsmanship.",
-        "magic_desc": "Radiates warmth. Strong divine resonance across all five Hearthstone sites.",
-        "type": "accessory", "slot": "accessory2", "subtype": "relic",
-        "rarity": "rare",
-        "effect": {"pie_bonus": 3, "wis_bonus": 2},
-        "stat_bonus": {"PIE": 3, "WIS": 2},
-        "description": "A pre-Fading Warden artifact. +3 PIE, +2 WIS. Heals +12% from any source.",
-        "healing_received_bonus": 0.12,
-        "fear_resist_bonus": 0.20,
-        "identify_difficulty": 2,
-        "identified": False, "estimated_value": 200,
-        "lore": "These icons were distributed to each of the five Hearthstone sites. "
-                "Four are lost. This one survived.",
-    },
-    {
-        "name": "Inquisitor's Brand",
-        "unidentified_name": "Branded Medallion",
-        "unidentified_desc": "A heavy medallion branded with an unfamiliar mark. Warm metal.",
-        "appraised_name": "Brand of the Old Inquisition",
-        "material_desc": "Hammered iron and silver. Formal religious workmanship.",
-        "magic_desc": "Detects undead and shadow-touched within 30 paces. Divine sight.",
-        "type": "accessory", "slot": "accessory1", "subtype": "relic",
-        "rarity": "rare",
-        "effect": {"pie_bonus": 2, "wis_bonus": 1},
-        "stat_bonus": {"PIE": 2, "WIS": 1},
-        "description": "Old Inquisition writ of authority. +2 PIE, +1 WIS. Sense undead passively.",
-        "passive_ability": "detect_undead",
-        "identify_difficulty": 2,
-        "identified": False, "estimated_value": 180,
-        "lore": "The Inquisition predates the Warden Order. Most of their relics were melted down.",
-    },
-
-    # ── Tier 3 Relics ─────────────────────────────────────────
-    {
-        "name": "The Shepherd's Crook",
-        "damage_stat": {"PIE": 0.6, "WIS": 0.4},
-        "unidentified_name": "Carved Staff Fragment",
-        "unidentified_desc": "A carved wooden fragment from a larger piece. The grain shimmers slightly.",
-        "appraised_name": "Fragment of the Shepherd's Crook",
-        "material_desc": "Livingwood, first-growth. Extremely old.",
-        "magic_desc": "Resonates with divine and natural energies both. A rare convergence.",
-        "type": "weapon", "slot": "weapon", "subtype": "Staff",
-        "rarity": "epic",
-        "damage": 8, "phys_type": "blunt", "range": "melee",
-        "spell_bonus": 6,
-        "effect": {"pie_bonus": 4, "wis_bonus": 3},
-        "stat_bonus": {"PIE": 4, "WIS": 3},
-        "description": "A Warden shepherd's weapon, fragment restored. +4 PIE, +3 WIS, +6 Spell Power.",
-        "healing_received_bonus": 0.15,
-        "fear_resist_bonus": 0.30,
-        "identify_difficulty": 3,
-        "identified": False, "estimated_value": 450,
-        "lore": "The Shepherd of the Old Wardens was a rank above Warden-Commander. "
-                "There has not been one since before the Fading.",
-    },
-]
-
-
-# ══════════════════════════════════════════════════════════════
-#  TRAINING BOOKS
-#  Rare loot found in deep dungeons and on boss drops.
-#  Using a training book permanently raises one stat by 1.
-#  Each book is consumed on use. A character may only benefit
-#  from a given book once (second use has no effect).
-#
-#  Identified with INT (Arcane Lore) or found already legible.
-#  No class restriction on use — anyone can read them.
-#  Narrative: these are survivor texts from the pre-Fading world,
-#  each encoding a philosophy of personal development.
-# ══════════════════════════════════════════════════════════════
-
-TRAINING_BOOKS = [
-    {
-        "name": "Way of Light",
-        "unidentified_name": "Tattered Devotional",
-        "unidentified_desc": "A worn book with pages of closely-written prayers. The ink never fades.",
-        "appraised_name": "Way of Light — Devotional Manual",
-        "material_desc": "Pale vellum, Pale Order origin. Preserved by divine ward.",
-        "magic_desc": "Reading it leaves a warmth in the chest. Spiritual resonance.",
-        "type": "consumable", "subtype": "training_book",
-        "rarity": "rare",
-        "trains_stat": "PIE", "trains_amount": 1,
-        "description": "A pre-Fading devotional on faith and presence. Permanently +1 PIE.",
-        "identify_difficulty": 2,
-        "identified": False, "estimated_value": 300,
-        "use_message": "The words settle into you — a conviction you didn't have before.",
-        "lore": "Compiled by the Pale Order before the first Hearthstone flickered.",
-    },
-    {
-        "name": "Way of the Quiet Mind",
-        "unidentified_name": "Small Philosophy Text",
-        "unidentified_desc": "A slim volume, densely written in a careful hand. No title on the cover.",
-        "appraised_name": "Way of the Quiet Mind — Sage's Meditations",
-        "material_desc": "Quality paper, tower-scholar binding. Pre-Fading academic press.",
-        "magic_desc": "Reading it sharpens focus. Mental resonance.",
-        "type": "consumable", "subtype": "training_book",
-        "rarity": "rare",
-        "trains_stat": "INT", "trains_amount": 1,
-        "description": "Scholar meditations on observation and reason. Permanently +1 INT.",
-        "identify_difficulty": 2,
-        "identified": False, "estimated_value": 300,
-        "use_message": "A pattern you'd never seen before suddenly seems obvious.",
-        "lore": "Attributed to a tower scholar who survived the first year of the Fading by pure analysis.",
-    },
-    {
-        "name": "Way of the Still Water",
-        "unidentified_name": "Worn Meditation Guide",
-        "unidentified_desc": "A guide with hand-drawn diagrams of posture and breathing. Some pages water-stained.",
-        "appraised_name": "Way of the Still Water — Ki Foundation",
-        "material_desc": "Monastery paper, monk binding. Very old.",
-        "magic_desc": "A meditative resonance. Natural and spiritual both.",
-        "type": "consumable", "subtype": "training_book",
-        "rarity": "rare",
-        "trains_stat": "WIS", "trains_amount": 1,
-        "description": "Monastery meditation techniques for natural perception. Permanently +1 WIS.",
-        "identify_difficulty": 2,
-        "identified": False, "estimated_value": 300,
-        "use_message": "You sit with it for an hour. Something in the world feels quieter now.",
-        "lore": "A foundation text of the Order of the Still River, now disbanded.",
-    },
-    {
-        "name": "Way of the Living Body",
-        "unidentified_name": "Field Surgeon's Manual",
-        "unidentified_desc": "A medical manual with anatomical diagrams. Practical, thorough.",
-        "appraised_name": "Way of the Living Body — Endurance Manual",
-        "material_desc": "Heavy paper, field-bound. Military origin.",
-        "magic_desc": "Subtle physical resonance — reads like it was written to be used, not studied.",
-        "type": "consumable", "subtype": "training_book",
-        "rarity": "rare",
-        "trains_stat": "CON", "trains_amount": 1,
-        "description": "Practical endurance and recovery techniques. Permanently +1 CON.",
-        "identify_difficulty": 2,
-        "identified": False, "estimated_value": 300,
-        "use_message": "You work through the exercises. Your body remembers something it didn't before.",
-        "lore": "Standard issue in the old Imperial Army. Most copies were burned after the Fading.",
-    },
-    {
-        "name": "Way of the Striking Hand",
-        "unidentified_name": "Combat Theory Manual",
-        "unidentified_desc": "A training manual with detailed strike diagrams. The pages are well-worn.",
-        "appraised_name": "Way of the Striking Hand — Combat Foundation",
-        "material_desc": "Durable pressed paper, Guild binding. Fighter's Guild origin.",
-        "magic_desc": "Physical resonance — the technique is almost encoded in the paper.",
-        "type": "consumable", "subtype": "training_book",
-        "rarity": "rare",
-        "trains_stat": "STR", "trains_amount": 1,
-        "description": "Core physical power development from the old Fighter's Guild. Permanently +1 STR.",
-        "identify_difficulty": 2,
-        "identified": False, "estimated_value": 300,
-        "use_message": "The drills in the last chapter are brutal. You feel different afterward.",
-        "lore": "Fighter's Guild training manual, last edition before the Guild dissolved.",
-    },
-    {
-        "name": "Way of the Open Hand",
-        "unidentified_name": "Thief's Craft Manual",
-        "unidentified_desc": "A slim manual written in a compact cipher. Clever layout — easy to conceal.",
-        "appraised_name": "Way of the Open Hand — Precision Manual",
-        "material_desc": "Thin paper, hand-copied. Thieves' Guild tradition.",
-        "magic_desc": "Precision resonance. Almost seems to move in your hands.",
-        "type": "consumable", "subtype": "training_book",
-        "rarity": "rare",
-        "trains_stat": "DEX", "trains_amount": 1,
-        "description": "Precision and reflex techniques from the old Thieves' Guild. Permanently +1 DEX.",
-        "identify_difficulty": 2,
-        "identified": False, "estimated_value": 300,
-        "use_message": "Your fingers work through the drills without thinking. That's the point.",
-        "lore": "The cipher was broken long ago. The techniques were never meant to be secret.",
-    },
-]
-
-
-def get_random_training_book():
-    """Return a copy of a random training book for loot drops."""
-    import random as _random
-    return dict(_random.choice(TRAINING_BOOKS))
-
-
-def get_random_relic(max_tier=2):
-    """Return a copy of a random religious item, filtered by tier."""
-    import random as _random
-    # difficulty 1 = tier 1, 2 = tier 2, 3 = tier 3
-    pool = [r for r in RELIGIOUS_ITEMS
-            if r.get("identify_difficulty", 1) <= max_tier]
-    if not pool:
-        return dict(RELIGIOUS_ITEMS[0])
-    return dict(_random.choice(pool))

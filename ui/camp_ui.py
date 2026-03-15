@@ -43,9 +43,8 @@ TAB_NAMES = ["Rest", "Inventory", "Equipment", "Identify", "Party", "Transfer", 
 TAB_COUNT = len(TAB_NAMES)
 
 # ── Slots ──
-EQUIP_SLOTS = ["weapon", "body", "head", "accessory1", "accessory2"]
-SLOT_LABELS = {"weapon": "Weapon", "body": "Body", "head": "Head",
-               "accessory1": "Ring 1", "accessory2": "Ring 2"}
+# Import from equipment.py — single source of truth
+from core.equipment import SLOT_ORDER as EQUIP_SLOTS, SLOT_NAMES as SLOT_LABELS
 
 
 class CampUI:

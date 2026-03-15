@@ -8,8 +8,9 @@ Equipment slots per character:
   Body       — armor (clothing/light/medium/heavy)
   Hands      — gloves/gauntlets
   Feet       — boots
-  Accessory1 — ring, amulet, trinket
-  Accessory2 — ring, amulet, trinket (cannot duplicate Accessory1)
+  Crown      — ornament, ion stone, circlet (headwear adornment)
+  Neck       — necklace, amulet, holy symbol
+  Ring1/2/3  — rings (three slots; wands/rods/orbs also usable in off_hand)
 
 Armor proficiency from Combat_System_Design_v2:
   Fighter: all armor, all shields
@@ -24,17 +25,20 @@ Armor proficiency from Combat_System_Design_v2:
 #  EQUIPMENT SLOTS
 # ═══════════════════════════════════════════════════════════════
 
-SLOT_ORDER = ["weapon", "off_hand", "head", "body", "hands", "feet", "accessory1", "accessory2"]
+SLOT_ORDER = ["weapon", "off_hand", "head", "crown", "body", "hands", "feet", "neck", "ring1", "ring2", "ring3"]
 
 SLOT_NAMES = {
-    "weapon":     "Weapon",
-    "off_hand":   "Off-Hand",
-    "head":       "Head",
-    "body":       "Body",
-    "hands":      "Hands",
-    "feet":       "Feet",
-    "accessory1": "Accessory 1",
-    "accessory2": "Accessory 2",
+    "weapon":   "Weapon",
+    "off_hand": "Off-Hand",
+    "head":     "Head",
+    "crown":    "Crown",
+    "body":     "Body",
+    "hands":    "Hands",
+    "feet":     "Feet",
+    "neck":     "Neck",
+    "ring1":    "Ring 1",
+    "ring2":    "Ring 2",
+    "ring3":    "Ring 3",
 }
 
 
@@ -71,7 +75,15 @@ CLASS_ARMOR_PROF = {
 }
 
 # Classes that can use shields
-SHIELD_CLASSES = {"Fighter", "Cleric", "Paladin", "Knight"}
+SHIELD_CLASSES = {"Fighter", "Cleric", "Paladin", "Knight", "Warder", "Templar"}
+
+# Classes that can use focus items (wands, rods, orbs) as a weapon or off-hand
+FOCUS_CLASSES = {
+    "Mage", "Cleric", "Ranger",           # base casters
+    "Spellblade", "Warder", "Templar",     # hybrid casters
+    "Archmage", "High Priest",             # apex casters
+    "Sage", "Warlock", "Battlemage",       # other hybrids
+}
 
 # Non-proficient penalties
 NON_PROF_ARMOR_DEF_MULT = 0.5    # only get 50% of armor defense
@@ -87,6 +99,9 @@ def can_wear_armor(class_name, armor_tier):
 
 def can_use_shield(class_name):
     return class_name in SHIELD_CLASSES
+
+def can_use_focus(class_name):
+    return class_name in FOCUS_CLASSES
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -271,6 +286,71 @@ ARMOR = {
         "description": "Heavy iron leg protection.",
     },
 
+    # ── Focus Items (Wand / Rod / Orb — weapon or off_hand) ──
+    "Apprentice Wand": {
+        "name": "Apprentice Wand", "type": "weapon", "slot": "weapon",
+        "subtype": "Wand", "rarity": "common",
+        "damage": 12, "damage_stat": {"INT": 0.35},
+        "phys_type": "arcane", "range": "ranged", "is_focus": True,
+        "speed_mod": 0, "stat_bonuses": {"INT": 1},
+        "identify_difficulty": 1,
+        "unidentified_name": "Plain Wand", "unidentified_desc": "A slender magical wand.",
+        "appraised_name": "Apprentice Wand",
+        "material_desc": "Ashwood tipped with a small crystal.",
+        "magic_desc": "Channels arcane energy into ranged bolts.",
+        "estimated_value": 40,
+        "description": "A basic wand for trainee mages. Fires arcane bolts.",
+        "identified": True,
+    },
+    "Battle Rod": {
+        "name": "Battle Rod", "type": "weapon", "slot": "weapon",
+        "subtype": "Rod", "rarity": "uncommon",
+        "damage": 18, "damage_stat": {"INT": 0.30, "STR": 0.10},
+        "phys_type": "blunt", "range": "melee", "is_focus": True,
+        "speed_mod": 0, "stat_bonuses": {"INT": 2},
+        "identify_difficulty": 2,
+        "unidentified_name": "Metal Rod", "unidentified_desc": "A heavy metal rod with runes.",
+        "appraised_name": "Battle Rod",
+        "material_desc": "Iron shaft inscribed with combat sigils.",
+        "magic_desc": "Enhances INT and can be used in melee or as focus.",
+        "estimated_value": 90,
+        "description": "An iron rod infused with battle magic. Viable in melee.",
+        "identified": False,
+    },
+    "Thought Orb": {
+        "name": "Thought Orb", "type": "weapon", "slot": "off_hand",
+        "subtype": "Orb", "rarity": "uncommon",
+        "damage": 14, "damage_stat": {"INT": 0.28, "WIS": 0.12},
+        "phys_type": "arcane", "range": "ranged", "is_focus": True,
+        "speed_mod": 0, "stat_bonuses": {"INT": 1, "WIS": 1},
+        "identify_difficulty": 2,
+        "unidentified_name": "Crystal Sphere", "unidentified_desc": "A glowing sphere.",
+        "appraised_name": "Thought Orb",
+        "material_desc": "Polished crystal that resonates with thought.",
+        "magic_desc": "Held in the off-hand; amplifies magical attacks.",
+        "estimated_value": 80,
+        "description": "An off-hand focus orb. Boosts magical damage when held.",
+        "identified": False,
+    },
+
+    # ── Crown Items (head ornament / ion stone slot) ──
+    "Silver Circlet": {
+        "name": "Silver Circlet", "type": "armor", "slot": "crown",
+        "subtype": "circlet", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 2, "speed_mod": 0,
+        "stat_bonuses": {"INT": 1},
+        "rarity": "uncommon", "value": 50,
+        "description": "A delicate silver band worn above the brow. Aids concentration.",
+    },
+    "Ion Stone": {
+        "name": "Ion Stone", "type": "armor", "slot": "crown",
+        "subtype": "ion stone", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 3, "speed_mod": 0,
+        "stat_bonuses": {"CON": 1},
+        "rarity": "rare", "value": 150,
+        "description": "A stone that orbits the wearer's head, radiating protective energy.",
+    },
+
     # ── Accessories ──
     "Ring of Strength": {
         "name": "Ring of Strength", "slot": "accessory",
@@ -324,9 +404,17 @@ STARTING_EQUIPMENT = {
 def get_item_slot(item):
     """Determine which equipment slot an item goes in."""
     slot = item.get("slot", "")
-    # Accessories can go in either accessory slot
+    subtype = item.get("subtype", "").lower()
+    # Legacy "accessory" slot: route by subtype
     if slot == "accessory":
-        return "accessory1"  # default; caller handles picking slot
+        if subtype in ("amulet", "necklace", "pendant", "holy symbol", "talisman"):
+            return "neck"
+        if subtype in ("circlet", "crown", "ornament", "ion stone", "diadem"):
+            return "crown"
+        return "ring1"  # default accessory → ring
+    # Legacy explicit accessory slots
+    if slot == "accessory1": return "ring1"
+    if slot == "accessory2": return "neck"
     return slot
 
 
@@ -334,6 +422,13 @@ def can_equip(character, item):
     """Check if a character can equip an item. Returns (can_equip, reason)."""
     slot = item.get("slot", "")
     class_name = character.class_name
+
+    # Focus item check (wand, rod, orb) — must come before generic weapon pass
+    subtype = item.get("subtype", "")
+    if subtype in ("Wand", "Rod", "Orb") or item.get("is_focus"):
+        if class_name not in FOCUS_CLASSES:
+            return False, f"{class_name} cannot use focus items"
+        return True, ""
 
     # Weapon check — handled by weapon proficiency (already in weapons.py)
     if slot == "weapon":
@@ -344,6 +439,8 @@ def can_equip(character, item):
         if not can_use_shield(class_name):
             return False, f"{class_name} cannot use shields"
         return True, ""
+
+    # (focus check handled above)
 
     # Armor proficiency check (body, head, hands, feet)
     armor_tier = item.get("armor_tier", "clothing")
@@ -371,16 +468,21 @@ def equip_item(character, item, target_slot=None):
 
     # Determine slot
     item_slot = item.get("slot", "")
-    if item_slot == "accessory":
-        # Try accessory1 first, then accessory2
-        if target_slot in ("accessory1", "accessory2"):
+    if item_slot in ("accessory", "ring1", "ring2", "ring3"):
+        # Route to appropriate slot: neck/crown/ring by subtype
+        resolved = get_item_slot(item)
+        if target_slot in ("ring1", "ring2", "ring3", "neck", "crown"):
             slot = target_slot
-        elif character.equipment.get("accessory1") is None:
-            slot = "accessory1"
-        elif character.equipment.get("accessory2") is None:
-            slot = "accessory2"
+        elif resolved in ("neck", "crown"):
+            slot = resolved
+        elif character.equipment.get("ring1") is None:
+            slot = "ring1"
+        elif character.equipment.get("ring2") is None:
+            slot = "ring2"
+        elif character.equipment.get("ring3") is None:
+            slot = "ring3"
         else:
-            slot = "accessory1"  # swap into slot 1 by default
+            slot = "ring1"  # swap into ring1 by default
     elif target_slot and target_slot in SLOT_ORDER:
         slot = target_slot
     else:

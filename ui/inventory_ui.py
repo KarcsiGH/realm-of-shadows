@@ -58,7 +58,7 @@ def resolve_item_slot(item):
     if slot and slot in SLOT_ORDER:
         return slot
     if slot == "accessory":
-        return "accessory1"
+        return "ring1"
 
     item_type = item.get("type", "")
     if item_type == "weapon":
@@ -79,7 +79,7 @@ def resolve_item_slot(item):
             return "off_hand"
         return armor_slot if armor_slot else "body"
     elif item_type == "accessory":
-        return "accessory1"
+        return "ring1"
     elif item_type in ("helmet", "head"):
         return "head"
     elif item_type in ("gloves", "hands"):
@@ -257,7 +257,7 @@ class InventoryUI:
                       cl["color"] if is_sel else GREY, 13, bold=is_sel)
 
     def _draw_equipment(self, surface, mx, my, char, top_y):
-        panel = pygame.Rect(20, top_y, 420, 470)
+        panel = pygame.Rect(20, top_y, 420, 620)  # 11 slots
         draw_panel(surface, panel, bg_color=INV_BG)
         draw_text(surface, "Equipment", panel.x + 12, panel.y + 8, GOLD, 16, bold=True)
         draw_text(surface, "Click a slot to unequip", panel.x + 160, panel.y + 10,

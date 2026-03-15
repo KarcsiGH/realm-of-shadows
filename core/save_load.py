@@ -150,6 +150,11 @@ def deserialize_character(data):
         pass  # non-critical — stubs still work, just miss type info
     char.inventory = data.get("inventory", [])
     char.equipment = data.get("equipment", empty_equipment())
+    # Migrate old slot names → new names (save compatibility)
+    _SLOT_MIGRATION = {"accessory1": "ring1", "accessory2": "neck"}
+    for old_s, new_s in _SLOT_MIGRATION.items():
+        if old_s in char.equipment and new_s not in char.equipment:
+            char.equipment[new_s] = char.equipment.pop(old_s)
     # Ensure all slots exist
     for slot in empty_equipment():
         if slot not in char.equipment:

@@ -25,8 +25,6 @@ def _w(name, subtype, damage, phys, stat_bonuses, buy, rarity, desc,
         "buy_price": buy, "sell_price": buy // 4,
         "identified": True, "description": desc,
     }
-    if damage_stat:
-        item["damage_stat"] = damage_stat
     if allowed:       item["allowed_classes"] = allowed
     if spell_bonus:   item["spell_bonus"] = spell_bonus
     if crit_mod:      item["crit_mod"] = crit_mod
@@ -37,6 +35,7 @@ def _w(name, subtype, damage, phys, stat_bonuses, buy, rarity, desc,
         item["enchant_bonus"] = enchant_bonus
         item["enchant_name"] = enchant_name
     if special:       item["special"] = special
+    if damage_stat:   item["damage_stat"] = damage_stat
     return item
 
 def _a(name, subtype, slot, defense, stat_bonuses, buy, rarity, desc,
@@ -83,56 +82,56 @@ def _acc(name, subtype, slot, stat_bonuses, buy, rarity, desc,
 # ══════════════════════════════════════════════════════════════
 FIGHTER_WEAPONS = [
     # T1 Common
-    _w("Militia Sword", "Longsword", 11, "slashing", {"STR": 1},
+    _w("Militia Sword", "Longsword", 18, "slashing", {"STR": 1},
        45, "common", "A standard-issue militia longsword. Reliable.",
-       damage_stat={"STR": 0.7, "DEX": 0.3}),
-    _w("Soldier's Axe", "Axe", 12, "slashing", {"STR": 1},
+       damage_stat={"STR": 0.3, "DEX": 0.12}),
+    _w("Soldier's Axe", "Axe", 19, "slashing", {"STR": 1},
        40, "common", "A heavy hand axe favored by infantry.",
-       damage_stat={"STR": 1.0}),
-    _w("Iron Warhammer", "Warhammer", 10, "blunt", {"STR": 1, "CON": 1},
+       damage_stat={"STR": 0.4}),
+    _w("Iron Warhammer", "Warhammer", 16, "blunt", {"STR": 1, "CON": 1},
        50, "common", "Slow but devastating against armored foes.",
-       damage_stat={"STR": 1.0}),
+       damage_stat={"STR": 0.4}),
 
     # T2 Uncommon
-    _w("Steel Longsword", "Longsword", 15, "slashing", {"STR": 2},
+    _w("Steel Longsword", "Longsword", 24, "slashing", {"STR": 2},
        120, "uncommon", "High-carbon steel holds an edge longer. +2 STR.",
-       damage_stat={"STR": 0.7, "DEX": 0.3}),
-    _w("Battleaxe", "Axe", 17, "slashing", {"STR": 2},
+       damage_stat={"STR": 0.3, "DEX": 0.12}),
+    _w("Battleaxe", "Axe", 27, "slashing", {"STR": 2},
        130, "uncommon", "A true two-hand battleaxe — wide, heavy swings. +2 STR.",
        crit_mod=5,
-       damage_stat={"STR": 1.0}),
-    _w("Flanged Mace", "Mace", 14, "blunt", {"STR": 1, "CON": 2},
+       damage_stat={"STR": 0.4}),
+    _w("Flanged Mace", "Mace", 22, "blunt", {"STR": 1, "CON": 2},
        110, "uncommon", "Flanges punch through armor gaps. +1 STR, +2 CON.",
-       damage_stat={"STR": 1.0}),
-    _w("Tower Shield Bash", "Shield", 8, "blunt", {"CON": 3},
+       damage_stat={"STR": 0.4}),
+    _w("Tower Shield Bash", "Shield", 13, "blunt", {"CON": 3},
        95, "uncommon", "Used offensively — ram foes with the shield edge. +3 CON.",
        special="shield_bash",
-       damage_stat={"STR": 0.6, "CON": 0.4}),
+       damage_stat={"STR": 0.24, "CON": 0.16}),
 
     # T3 Rare
-    _w("Forgemaster's Blade", "Greatsword", 22, "slashing", {"STR": 3},
+    _w("Forgemaster's Blade", "Greatsword", 35, "slashing", {"STR": 3},
        280, "rare", "Crafted by a master smith. The balance is perfect. +3 STR.",
        crit_mod=8,
-       damage_stat={"STR": 0.7, "DEX": 0.3}),
-    _w("Dawnbreaker Axe", "Greataxe", 24, "slashing", {"STR": 3, "CON": 1},
+       damage_stat={"STR": 0.4, "DEX": 0.1}),
+    _w("Dawnbreaker Axe", "Greataxe", 38, "slashing", {"STR": 3, "CON": 1},
        300, "rare", "An axe so heavy only the strongest can wield it well. +3 STR, +1 CON.",
        enchant_element="fire", enchant_bonus=4, enchant_name="Flame",
-       damage_stat={"STR": 1.0}),
-    _w("Stonebreaker Hammer", "Warhammer", 20, "blunt", {"STR": 2, "CON": 3},
+       damage_stat={"STR": 0.40}),
+    _w("Stonebreaker Hammer", "Warhammer", 32, "blunt", {"STR": 2, "CON": 3},
        260, "rare",
        "Forged to shatter stone — and skulls. +2 STR, +3 CON. Ignores some armor.",
        special="armor_pierce",
-       damage_stat={"STR": 1.0}),
+       damage_stat={"STR": 0.4}),
 
     # T4 Epic
-    _w("Aldenmere Greatsword", "Greatsword", 30, "slashing", {"STR": 4, "CON": 2},
+    _w("Aldenmere Greatsword", "Greatsword", 48, "slashing", {"STR": 4, "CON": 2},
        500, "epic", "A royal-issue greatsword used by imperial guard captains. +4 STR, +2 CON.",
        crit_mod=10, enchant_element="fire", enchant_bonus=5, enchant_name="Flame",
-       damage_stat={"STR": 0.7, "DEX": 0.3}),
-    _w("Voidcleaver", "Greataxe", 32, "slashing", {"STR": 5},
+       damage_stat={"STR": 0.4, "DEX": 0.1}),
+    _w("Voidcleaver", "Greataxe", 51, "slashing", {"STR": 5},
        550, "epic", "An axe said to cut the shadow itself. +5 STR. Shadow damage.",
        enchant_element="shadow", enchant_bonus=6, enchant_name="Shadow", crit_mod=12,
-       damage_stat={"STR": 1.0}),
+       damage_stat={"STR": 0.40}),
 ]
 
 FIGHTER_ARMOR = [
@@ -173,13 +172,13 @@ FIGHTER_ARMOR = [
 ]
 
 FIGHTER_ACCESSORIES = [
-    _acc("Soldier's Ring", "ring", "accessory1", {"STR": 1, "CON": 1}, 60, "common",
+    _acc("Soldier's Ring", "ring", "ring1", {"STR": 1, "CON": 1}, 60, "common",
          "A plain iron ring engraved with a crossed-swords sigil. +1 STR, +1 CON."),
-    _acc("Warrior's Amulet", "amulet", "accessory2", {"STR": 2}, 100, "uncommon",
+    _acc("Warrior's Amulet", "amulet", "neck", {"STR": 2}, 100, "uncommon",
          "A bronze amulet worn by veteran soldiers. +2 STR."),
-    _acc("Champion's Belt", "ring", "accessory1", {"STR": 3, "CON": 2}, 220, "rare",
+    _acc("Champion's Belt", "ring", "ring1", {"STR": 3, "CON": 2}, 220, "rare",
          "A heavy leather belt reinforced with iron studs. +3 STR, +2 CON."),
-    _acc("Ring of the Vanguard", "ring", "accessory1", {"STR": 4, "CON": 3}, 400, "epic",
+    _acc("Ring of the Vanguard", "ring", "ring1", {"STR": 4, "CON": 3}, 400, "epic",
          "Worn by generals who led from the front. +4 STR, +3 CON.",
          magic_resist=5),
 ]
@@ -190,55 +189,55 @@ FIGHTER_ACCESSORIES = [
 # ══════════════════════════════════════════════════════════════
 MAGE_WEAPONS = [
     # T1
-    _w("Apprentice Staff", "Staff", 5, "blunt", {"INT": 1},
+    _w("Apprentice Staff", "Staff", 8, "blunt", {"INT": 1},
        30, "common", "A basic carved staff for apprentice mages. +1 INT.",
        spell_bonus=3,
-       damage_stat={"STR": 0.4, "INT": 0.6}),
-    _w("Birchwood Wand", "Wand", 3, "blunt", {"INT": 1, "WIS": 1},
+       damage_stat={"STR": 0.16, "INT": 0.24}),
+    _w("Birchwood Wand", "Wand", 5, "blunt", {"INT": 1, "WIS": 1},
        25, "common", "Light wand for directing magical energy. +1 INT, +1 WIS.",
        spell_bonus=2, speed_mod=1,
-       damage_stat={"INT": 0.8}),
+       damage_stat={"INT": 0.32}),
 
     # T2
-    _w("Arcanist's Staff", "Staff", 7, "blunt", {"INT": 2},
+    _w("Arcanist's Staff", "Staff", 11, "blunt", {"INT": 2},
        110, "uncommon", "Carved with runes that amplify spell power. +2 INT.",
        spell_bonus=6,
-       damage_stat={"STR": 0.4, "INT": 0.6}),
-    _w("Crystal Wand", "Wand", 5, "blunt", {"INT": 2, "WIS": 1},
+       damage_stat={"STR": 0.16, "INT": 0.24}),
+    _w("Crystal Wand", "Wand", 8, "blunt", {"INT": 2, "WIS": 1},
        100, "uncommon", "A wand tipped with a raw spell crystal. +2 INT, +1 WIS.",
        spell_bonus=5, speed_mod=1,
-       damage_stat={"INT": 0.8}),
-    _w("Spell Orb", "Orb", 4, "blunt", {"INT": 2, "WIS": 2},
+       damage_stat={"INT": 0.32}),
+    _w("Spell Orb", "Orb", 6, "blunt", {"INT": 2, "WIS": 2},
        120, "uncommon", "An off-hand focus that enhances all spells. +2 INT, +2 WIS.",
        spell_bonus=7,
-       damage_stat={"INT": 0.6, "WIS": 0.4}),
+       damage_stat={"INT": 0.24, "WIS": 0.16}),
 
     # T3
-    _w("Runemaster's Staff", "Staff", 13, "blunt", {"INT": 3, "WIS": 1},
+    _w("Runemaster's Staff", "Staff", 16, "blunt", {"INT": 3, "WIS": 1},
        260, "rare", "Covered in layered runes of amplification. +3 INT, +1 WIS.",
        spell_bonus=10, enchant_element="arcane", enchant_bonus=4, enchant_name="Arcane",
-       damage_stat={"STR": 0.4, "INT": 0.6}),
-    _w("Frostweaver Wand", "Wand", 6, "blunt", {"INT": 3},
+       damage_stat={"STR": 0.16, "INT": 0.24}),
+    _w("Frostweaver Wand", "Wand", 10, "blunt", {"INT": 3},
        240, "rare", "Channels cold energy into spells. +3 INT. Ice damage bonus.",
        spell_bonus=8, enchant_element="ice", enchant_bonus=5, enchant_name="Frost",
        speed_mod=1,
-       damage_stat={"INT": 0.8}),
-    _w("Void Orb", "Orb", 5, "blunt", {"INT": 3, "WIS": 2},
+       damage_stat={"INT": 0.32}),
+    _w("Void Orb", "Orb", 8, "blunt", {"INT": 3, "WIS": 2},
        280, "rare", "A dark glass sphere crackling with void energy. +3 INT, +2 WIS.",
        spell_bonus=11, enchant_element="shadow", enchant_bonus=4, enchant_name="Void",
-       damage_stat={"INT": 0.6, "WIS": 0.4}),
+       damage_stat={"INT": 0.24, "WIS": 0.16}),
 
     # T4
-    _w("Archmagus Staff", "Staff", 14, "blunt", {"INT": 5, "WIS": 2},
+    _w("Archmagus Staff", "Staff", 22, "blunt", {"INT": 5, "WIS": 2},
        500, "epic", "Said to amplify spells beyond normal limits. +5 INT, +2 WIS.",
        spell_bonus=16, enchant_element="arcane", enchant_bonus=7, enchant_name="Arcane",
-       damage_stat={"STR": 0.4, "INT": 0.6}),
-    _w("Starfire Wand", "Wand", 8, "blunt", {"INT": 4, "WIS": 3},
+       damage_stat={"STR": 0.16, "INT": 0.24}),
+    _w("Starfire Wand", "Wand", 13, "blunt", {"INT": 4, "WIS": 3},
        480, "epic",
        "A wand that channels celestial fire. +4 INT, +3 WIS. Fire damage.",
        spell_bonus=14, speed_mod=2,
        enchant_element="fire", enchant_bonus=6, enchant_name="Starfire",
-       damage_stat={"INT": 0.8}),
+       damage_stat={"INT": 0.32}),
 ]
 
 MAGE_ARMOR = [
@@ -274,15 +273,15 @@ MAGE_ARMOR = [
 ]
 
 MAGE_ACCESSORIES = [
-    _acc("Apprentice Focus Ring", "ring", "accessory1", {"INT": 1}, 40, "common",
+    _acc("Apprentice Focus Ring", "ring", "ring1", {"INT": 1}, 40, "common",
          "A ring set with a chip of spell crystal. +1 INT."),
-    _acc("Scholar's Pendant", "amulet", "accessory2", {"INT": 2, "WIS": 1}, 90, "uncommon",
+    _acc("Scholar's Pendant", "amulet", "neck", {"INT": 2, "WIS": 1}, 90, "uncommon",
          "A pendant worn by wizards of the third circle. +2 INT, +1 WIS.",
          magic_resist=4),
-    _acc("Arcanist's Signet", "ring", "accessory1", {"INT": 3, "WIS": 2}, 210, "rare",
+    _acc("Arcanist's Signet", "ring", "ring1", {"INT": 3, "WIS": 2}, 210, "rare",
          "A signet ring that resonates with spell energy. +3 INT, +2 WIS.",
          magic_resist=6),
-    _acc("Ring of the Archmage", "ring", "accessory1", {"INT": 4, "WIS": 3}, 420, "epic",
+    _acc("Ring of the Archmage", "ring", "ring1", {"INT": 4, "WIS": 3}, 420, "epic",
          "Worn only by confirmed archmages. +4 INT, +3 WIS.",
          magic_resist=10,
          enchant_element="arcane", enchant_bonus=4, enchant_name="Arcane"),
@@ -294,50 +293,50 @@ MAGE_ACCESSORIES = [
 # ══════════════════════════════════════════════════════════════
 CLERIC_WEAPONS = [
     # T1
-    _w("Acolyte's Mace", "Mace", 7, "blunt", {"PIE": 1},
+    _w("Acolyte's Mace", "Mace", 11, "blunt", {"PIE": 1},
        35, "common", "A plain iron mace blessed by a village priest. +1 PIE.",
        spell_bonus=2,
-       damage_stat={"STR": 1.0}),
-    _w("Temple Stave", "Staff", 5, "blunt", {"PIE": 1, "WIS": 1},
+       damage_stat={"STR": 0.4}),
+    _w("Temple Stave", "Staff", 8, "blunt", {"PIE": 1, "WIS": 1},
        30, "common", "A staff carved with the Light's sigil. +1 PIE, +1 WIS.",
        spell_bonus=3,
-       damage_stat={"STR": 0.4, "INT": 0.6}),
+       damage_stat={"STR": 0.16, "INT": 0.24}),
 
     # T2
-    _w("Blessed Warhammer", "Warhammer", 12, "blunt", {"PIE": 2, "STR": 1},
+    _w("Blessed Warhammer", "Warhammer", 19, "blunt", {"PIE": 2, "STR": 1},
        115, "uncommon", "Consecrated iron — glows faintly against undead. +2 PIE, +1 STR.",
        enchant_element="divine", enchant_bonus=3, enchant_name="Holy",
-       damage_stat={"STR": 1.0}),
-    _w("Divine Mace", "Mace", 10, "blunt", {"PIE": 2},
+       damage_stat={"STR": 0.4}),
+    _w("Divine Mace", "Mace", 16, "blunt", {"PIE": 2},
        100, "uncommon", "Etched with prayers to the Light. +2 PIE.",
        spell_bonus=5, enchant_element="divine", enchant_bonus=2, enchant_name="Holy",
-       damage_stat={"STR": 1.0}),
-    _w("Healing Staff", "Staff", 7, "blunt", {"PIE": 2, "WIS": 2},
+       damage_stat={"STR": 0.4}),
+    _w("Healing Staff", "Staff", 11, "blunt", {"PIE": 2, "WIS": 2},
        110, "uncommon", "Channels healing power with every swing. +2 PIE, +2 WIS.",
        spell_bonus=6,
-       damage_stat={"STR": 0.4, "INT": 0.6}),
+       damage_stat={"STR": 0.16, "INT": 0.24}),
 
     # T3
-    _w("Sunfire Warhammer", "Warhammer", 17, "blunt", {"PIE": 3, "STR": 1},
+    _w("Sunfire Warhammer", "Warhammer", 27, "blunt", {"PIE": 3, "STR": 1},
        270, "rare", "Blazes with holy fire against shadow creatures. +3 PIE, +1 STR.",
        enchant_element="divine", enchant_bonus=6, enchant_name="Sunfire",
        spell_bonus=5,
-       damage_stat={"STR": 1.0}),
-    _w("Archpriest's Mace", "Mace", 17, "blunt", {"PIE": 3, "WIS": 2},
+       damage_stat={"STR": 0.4}),
+    _w("Archpriest's Mace", "Mace", 22, "blunt", {"PIE": 3, "WIS": 2},
        250, "rare", "Carried by high priests of the Order. +3 PIE, +2 WIS.",
        spell_bonus=9,
-       damage_stat={"STR": 1.0}),
+       damage_stat={"STR": 0.4}),
 
     # T4
-    _w("Dawnhammer", "Warhammer", 22, "blunt", {"PIE": 5, "STR": 2},
+    _w("Dawnhammer", "Warhammer", 35, "blunt", {"PIE": 5, "STR": 2},
        500, "epic", "The ceremonial hammer of the High Priest. +5 PIE, +2 STR.",
        enchant_element="divine", enchant_bonus=8, enchant_name="Dawnfire",
        spell_bonus=8,
-       damage_stat={"STR": 1.0}),
-    _w("Radiant Scepter", "Staff", 18, "blunt", {"PIE": 4, "WIS": 4},
+       damage_stat={"STR": 0.4}),
+    _w("Radiant Scepter", "Staff", 19, "blunt", {"PIE": 4, "WIS": 4},
        480, "epic", "A scepter that radiates pure divine energy. +4 PIE, +4 WIS.",
        spell_bonus=14, enchant_element="divine", enchant_bonus=6, enchant_name="Radiance",
-       damage_stat={"STR": 0.4, "INT": 0.6}),
+       damage_stat={"STR": 0.16, "INT": 0.24}),
 ]
 
 CLERIC_ARMOR = [
@@ -370,14 +369,14 @@ CLERIC_ARMOR = [
 ]
 
 CLERIC_ACCESSORIES = [
-    _acc("Initiate's Holy Symbol", "amulet", "accessory2", {"PIE": 1}, 30, "common",
+    _acc("Initiate's Holy Symbol", "amulet", "neck", {"PIE": 1}, 30, "common",
          "A plain silver symbol of the Light. +1 PIE.", magic_resist=3),
-    _acc("Silver Censer Ring", "ring", "accessory1", {"PIE": 2, "WIS": 1}, 85, "uncommon",
+    _acc("Silver Censer Ring", "ring", "ring1", {"PIE": 2, "WIS": 1}, 85, "uncommon",
          "A ring containing incense ash from the High Temple. +2 PIE, +1 WIS."),
-    _acc("Archpriest's Pendant", "amulet", "accessory2", {"PIE": 3, "WIS": 2}, 200, "rare",
+    _acc("Archpriest's Pendant", "amulet", "neck", {"PIE": 3, "WIS": 2}, 200, "rare",
          "Worn by senior clerics who have performed miracles. +3 PIE, +2 WIS.",
          magic_resist=8),
-    _acc("Divine Signet", "ring", "accessory1", {"PIE": 4, "WIS": 3}, 400, "epic",
+    _acc("Divine Signet", "ring", "ring1", {"PIE": 4, "WIS": 3}, 400, "epic",
          "The ring of office of the High Priest. +4 PIE, +3 WIS.",
          magic_resist=12, enchant_element="divine", enchant_bonus=4, enchant_name="Holy"),
 ]
@@ -388,55 +387,55 @@ CLERIC_ACCESSORIES = [
 # ══════════════════════════════════════════════════════════════
 THIEF_WEAPONS = [
     # T1
-    _w("Street Knife", "Dagger", 6, "piercing", {"DEX": 1},
+    _w("Street Knife", "Dagger", 10, "piercing", {"DEX": 1},
        20, "common", "A knife from the market district. Everyone has one. +1 DEX.",
        crit_mod=5, speed_mod=1,
-       damage_stat={"DEX": 1.0}),
-    _w("Pickpocket's Blade", "Dagger", 7, "piercing", {"DEX": 1, "INT": 1},
+       damage_stat={"DEX": 0.4}),
+    _w("Pickpocket's Blade", "Dagger", 11, "piercing", {"DEX": 1, "INT": 1},
        25, "common", "Thin enough to hide in a boot. +1 DEX, +1 INT.",
        crit_mod=5, speed_mod=1, accuracy_mod=5,
-       damage_stat={"DEX": 1.0}),
+       damage_stat={"DEX": 0.4}),
 
     # T2
-    _w("Shadow Dagger", "Dagger", 10, "piercing", {"DEX": 2},
+    _w("Shadow Dagger", "Dagger", 16, "piercing", {"DEX": 2},
        95, "uncommon", "Dark-bladed and whisper-quiet. +2 DEX.",
        crit_mod=10, speed_mod=2,
        enchant_element="shadow", enchant_bonus=3, enchant_name="Shadow",
-       damage_stat={"DEX": 1.0}),
-    _w("Cutpurse Blade", "Short Sword", 11, "slashing", {"DEX": 2, "INT": 1},
+       damage_stat={"DEX": 0.4}),
+    _w("Cutpurse Blade", "Short Sword", 18, "slashing", {"DEX": 2, "INT": 1},
        105, "uncommon", "Favored by guild thieves — fast and balanced. +2 DEX, +1 INT.",
        crit_mod=8, accuracy_mod=5,
-       damage_stat={"DEX": 0.7, "STR": 0.3}),
-    _w("Light Crossbow", "Crossbow", 12, "piercing", {"DEX": 1},
+       damage_stat={"DEX": 0.28, "STR": 0.12}),
+    _w("Light Crossbow", "Crossbow", 19, "piercing", {"DEX": 1},
        90, "uncommon", "Compact crossbow used for ambushes. +1 DEX.",
        range_="ranged", accuracy_mod=8, crit_mod=12,
-       damage_stat={"DEX": 0.3}),
+       damage_stat={"DEX": 0.28, "STR": 0.12}),
 
     # T3
-    _w("Assassin's Blade", "Dagger", 14, "piercing", {"DEX": 3, "INT": 1},
+    _w("Assassin's Blade", "Dagger", 22, "piercing", {"DEX": 3, "INT": 1},
        240, "rare", "A blade used by contract killers. +3 DEX, +1 INT.",
        crit_mod=15, speed_mod=2, accuracy_mod=8,
        enchant_element="shadow", enchant_bonus=4, enchant_name="Shadow",
-       damage_stat={"DEX": 1.0}),
-    _w("Twin Fang Daggers", "Dagger", 13, "piercing", {"DEX": 3},
+       damage_stat={"DEX": 0.4}),
+    _w("Twin Fang Daggers", "Dagger", 21, "piercing", {"DEX": 3},
        260, "rare", "Matched pair — one in each hand. +3 DEX.",
        crit_mod=18, special="dual_wield",
-       damage_stat={"DEX": 1.0}),
-    _w("Guild Recurve", "Crossbow", 16, "piercing", {"DEX": 2},
+       damage_stat={"DEX": 0.4}),
+    _w("Guild Recurve", "Crossbow", 26, "piercing", {"DEX": 2},
        250, "rare", "A masterwork crossbow from the Thieves' Guild armoury. +2 DEX.",
        range_="ranged", accuracy_mod=12, crit_mod=15,
-       damage_stat={"DEX": 0.3}),
+       damage_stat={"DEX": 0.28, "STR": 0.12}),
 
     # T4
-    _w("Shadowfang", "Dagger", 19, "piercing", {"DEX": 5},
+    _w("Shadowfang", "Dagger", 30, "piercing", {"DEX": 5},
        480, "epic", "A blade that seems to cut from within shadows. +5 DEX.",
        crit_mod=22, speed_mod=3,
        enchant_element="shadow", enchant_bonus=6, enchant_name="Shadowstrike",
-       damage_stat={"DEX": 1.0}),
-    _w("Guildmaster's Rapier", "Short Sword", 18, "piercing", {"DEX": 4, "INT": 2},
+       damage_stat={"DEX": 0.4}),
+    _w("Guildmaster's Rapier", "Short Sword", 29, "piercing", {"DEX": 4, "INT": 2},
        500, "epic", "The weapon of a Guildmaster — precise as a surgeon. +4 DEX, +2 INT.",
        crit_mod=18, accuracy_mod=12, speed_mod=2,
-       damage_stat={"DEX": 0.7, "STR": 0.3}),
+       damage_stat={"DEX": 0.28, "STR": 0.12}),
 ]
 
 THIEF_ARMOR = [
@@ -470,14 +469,14 @@ THIEF_ARMOR = [
 ]
 
 THIEF_ACCESSORIES = [
-    _acc("Nimble Fingers Ring", "ring", "accessory1", {"DEX": 1}, 35, "common",
+    _acc("Nimble Fingers Ring", "ring", "ring1", {"DEX": 1}, 35, "common",
          "A ring worn loose for faster hand movements. +1 DEX."),
-    _acc("Guild Emblem", "amulet", "accessory2", {"DEX": 2, "INT": 1}, 80, "uncommon",
+    _acc("Guild Emblem", "amulet", "neck", {"DEX": 2, "INT": 1}, 80, "uncommon",
          "Marks you as a member of the Thieves' Guild. +2 DEX, +1 INT."),
-    _acc("Shadow Signet", "ring", "accessory1", {"DEX": 3, "INT": 2}, 200, "rare",
+    _acc("Shadow Signet", "ring", "ring1", {"DEX": 3, "INT": 2}, 200, "rare",
          "A ring used to identify senior guild operatives. +3 DEX, +2 INT.",
          enchant_element="shadow", enchant_bonus=3, enchant_name="Shadow"),
-    _acc("Ring of the Phantom", "ring", "accessory1", {"DEX": 5, "INT": 2}, 420, "epic",
+    _acc("Ring of the Phantom", "ring", "ring1", {"DEX": 5, "INT": 2}, 420, "epic",
          "Worn only by the Guild's most feared assassins. +5 DEX, +2 INT.",
          enchant_element="shadow", enchant_bonus=5, enchant_name="Shadow"),
 ]
@@ -488,53 +487,53 @@ THIEF_ACCESSORIES = [
 # ══════════════════════════════════════════════════════════════
 RANGER_WEAPONS = [
     # T1
-    _w("Scout's Bow", "Shortbow", 8, "piercing", {"DEX": 1},
+    _w("Scout's Bow", "Shortbow", 13, "piercing", {"DEX": 1},
        35, "common", "A lightweight bow for scouts. +1 DEX.",
        range_="ranged", accuracy_mod=3,
-       damage_stat={"DEX": 0.8, "STR": 0.2}),
-    _w("Hunting Spear", "Spear", 9, "piercing", {"STR": 1, "DEX": 1},
+       damage_stat={"DEX": 0.35, "STR": 0.08}),
+    _w("Hunting Spear", "Spear", 14, "piercing", {"STR": 1, "DEX": 1},
        38, "common", "A balanced spear for both hunting and fighting. +1 STR, +1 DEX.",
        range_="reach",
-       damage_stat={"STR": 0.6, "DEX": 0.4}),
+       damage_stat={"STR": 0.24, "DEX": 0.16}),
 
     # T2
-    _w("Wildwood Longbow", "Longbow", 13, "piercing", {"DEX": 2},
+    _w("Wildwood Longbow", "Longbow", 21, "piercing", {"DEX": 2},
        115, "uncommon", "Crafted from aged wildwood. +2 DEX.",
        range_="ranged", accuracy_mod=6, crit_mod=5,
-       damage_stat={"DEX": 0.8, "STR": 0.2}),
-    _w("Tracker's Blade", "Short Sword", 11, "slashing", {"DEX": 1, "WIS": 1},
+       damage_stat={"DEX": 0.35, "STR": 0.08}),
+    _w("Tracker's Blade", "Short Sword", 18, "slashing", {"DEX": 1, "WIS": 1},
        100, "uncommon", "Used when the bow won't do. +1 DEX, +1 WIS.",
-       damage_stat={"DEX": 0.7, "STR": 0.3}),
-    _w("Ironwood Spear", "Spear", 13, "piercing", {"STR": 2, "WIS": 1},
+       damage_stat={"DEX": 0.28, "STR": 0.12}),
+    _w("Ironwood Spear", "Spear", 21, "piercing", {"STR": 2, "WIS": 1},
        110, "uncommon", "Hardened ironwood shaft — won't splinter. +2 STR, +1 WIS.",
        range_="reach",
-       damage_stat={"STR": 0.6, "DEX": 0.4}),
+       damage_stat={"STR": 0.24, "DEX": 0.16}),
 
     # T3
-    _w("Composite War Bow", "Longbow", 18, "piercing", {"DEX": 3},
+    _w("Composite War Bow", "Longbow", 29, "piercing", {"DEX": 3},
        265, "rare", "A laminated bow with serious draw weight. +3 DEX.",
        range_="ranged", accuracy_mod=10, crit_mod=10,
        enchant_element="nature", enchant_bonus=4, enchant_name="Verdant",
-       damage_stat={"DEX": 0.8, "STR": 0.2}),
-    _w("Ranger's Glaive", "Spear", 17, "slashing", {"DEX": 2, "WIS": 2},
+       damage_stat={"DEX": 0.35, "STR": 0.08}),
+    _w("Ranger's Glaive", "Spear", 27, "slashing", {"DEX": 2, "WIS": 2},
        250, "rare", "A bladed spear for mid-range control. +2 DEX, +2 WIS.",
        range_="reach",
-       damage_stat={"STR": 0.6, "DEX": 0.4}),
-    _w("Beastslayer Bow", "Longbow", 16, "piercing", {"DEX": 2, "STR": 1},
+       damage_stat={"STR": 0.24, "DEX": 0.16}),
+    _w("Beastslayer Bow", "Longbow", 26, "piercing", {"DEX": 2, "STR": 1},
        280, "rare", "Designed for large prey. +2 DEX, +1 STR. Extra damage vs beasts.",
        range_="ranged", special="beast_slayer", crit_mod=8,
-       damage_stat={"DEX": 0.8, "STR": 0.2}),
+       damage_stat={"DEX": 0.35, "STR": 0.08}),
 
     # T4
-    _w("Windwhisper Bow", "Longbow", 24, "piercing", {"DEX": 4, "WIS": 2},
+    _w("Windwhisper Bow", "Longbow", 38, "piercing", {"DEX": 4, "WIS": 2},
        500, "epic", "So precise it seems to anticipate the target. +4 DEX, +2 WIS.",
        range_="ranged", accuracy_mod=15, crit_mod=15,
        enchant_element="nature", enchant_bonus=6, enchant_name="Gale",
-       damage_stat={"DEX": 0.8, "STR": 0.2}),
-    _w("Thornwood Lance", "Spear", 22, "piercing", {"DEX": 3, "WIS": 3},
+       damage_stat={"DEX": 0.35, "STR": 0.08}),
+    _w("Thornwood Lance", "Spear", 35, "piercing", {"DEX": 3, "WIS": 3},
        480, "epic", "A living spear — the wood grows and repairs itself. +3 DEX, +3 WIS.",
        range_="reach", enchant_element="nature", enchant_bonus=5, enchant_name="Thorn",
-       damage_stat={"STR": 0.6, "DEX": 0.4}),
+       damage_stat={"STR": 0.24, "DEX": 0.16}),
 ]
 
 RANGER_ARMOR = [
@@ -569,14 +568,14 @@ RANGER_ARMOR = [
 ]
 
 RANGER_ACCESSORIES = [
-    _acc("Scout's Ring", "ring", "accessory1", {"DEX": 1, "WIS": 1}, 40, "common",
+    _acc("Scout's Ring", "ring", "ring1", {"DEX": 1, "WIS": 1}, 40, "common",
          "A simple ring worn by scouts. +1 DEX, +1 WIS."),
-    _acc("Warden's Pendant", "amulet", "accessory2", {"WIS": 2, "DEX": 1}, 90, "uncommon",
+    _acc("Warden's Pendant", "amulet", "neck", {"WIS": 2, "DEX": 1}, 90, "uncommon",
          "A carved bone pendant — a ranger tradition. +2 WIS, +1 DEX."),
-    _acc("Ranger's Signet", "ring", "accessory1", {"DEX": 2, "WIS": 3}, 210, "rare",
+    _acc("Ranger's Signet", "ring", "ring1", {"DEX": 2, "WIS": 3}, 210, "rare",
          "Worn by rangers who have earned their full title. +2 DEX, +3 WIS.",
          magic_resist=5),
-    _acc("Ring of the Wild", "ring", "accessory1", {"DEX": 3, "WIS": 4}, 420, "epic",
+    _acc("Ring of the Wild", "ring", "ring1", {"DEX": 3, "WIS": 4}, 420, "epic",
          "Bound to the forest itself. +3 DEX, +4 WIS.",
          magic_resist=8, enchant_element="nature", enchant_bonus=4, enchant_name="Wild"),
 ]
@@ -587,56 +586,56 @@ RANGER_ACCESSORIES = [
 # ══════════════════════════════════════════════════════════════
 MONK_WEAPONS = [
     # T1
-    _w("Wrappings of Focus", "Handwraps", 6, "blunt", {"WIS": 1, "DEX": 1},
+    _w("Wrappings of Focus", "Handwraps", 10, "blunt", {"WIS": 1, "DEX": 1},
        20, "common", "Simple cloth strips that channel ki through the knuckles. +1 WIS, +1 DEX.",
        speed_mod=2, crit_mod=5,
-       damage_stat={"WIS": 0.5, "DEX": 0.5}),
-    _w("Quarterstaff", "Staff", 7, "blunt", {"WIS": 1},
+       damage_stat={"WIS": 0.2, "DEX": 0.2}),
+    _w("Quarterstaff", "Staff", 11, "blunt", {"WIS": 1},
        22, "common", "A balanced wooden staff. +1 WIS.",
        speed_mod=1,
-       damage_stat={"STR": 0.4, "INT": 0.6}),
+       damage_stat={"STR": 0.16, "INT": 0.24}),
 
     # T2
-    _w("Iron Strike Wraps", "Handwraps", 10, "blunt", {"WIS": 2, "DEX": 1},
+    _w("Iron Strike Wraps", "Handwraps", 16, "blunt", {"WIS": 2, "DEX": 1},
        95, "uncommon", "Wrapped with iron-thread for harder strikes. +2 WIS, +1 DEX.",
        speed_mod=2, crit_mod=10,
-       damage_stat={"WIS": 0.5, "DEX": 0.5}),
-    _w("Ironwood Staff", "Staff", 11, "blunt", {"WIS": 2},
+       damage_stat={"WIS": 0.2, "DEX": 0.2}),
+    _w("Ironwood Staff", "Staff", 18, "blunt", {"WIS": 2},
        100, "uncommon", "Dense and balanced. +2 WIS.",
        speed_mod=1, crit_mod=5,
-       damage_stat={"STR": 0.4, "INT": 0.6}),
-    _w("Kama", "Kama", 9, "slashing", {"DEX": 2, "WIS": 1},
+       damage_stat={"STR": 0.16, "INT": 0.24}),
+    _w("Kama", "Kama", 14, "slashing", {"DEX": 2, "WIS": 1},
        90, "uncommon", "A curved blade mounted on a short handle. +2 DEX, +1 WIS.",
        crit_mod=8, speed_mod=2,
-       damage_stat={"DEX": 0.6, "WIS": 0.4}),
+       damage_stat={"DEX": 0.24, "WIS": 0.16}),
 
     # T3
-    _w("Spirit Wrappings", "Handwraps", 14, "blunt", {"WIS": 3, "DEX": 2},
+    _w("Spirit Wrappings", "Handwraps", 22, "blunt", {"WIS": 3, "DEX": 2},
        255, "rare", "Blessed cloth that conducts ki directly. +3 WIS, +2 DEX.",
        speed_mod=3, crit_mod=15,
        enchant_element="divine", enchant_bonus=3, enchant_name="Ki",
-       damage_stat={"WIS": 0.5, "DEX": 0.5}),
-    _w("Void Staff", "Staff", 15, "blunt", {"WIS": 3, "DEX": 1},
+       damage_stat={"WIS": 0.2, "DEX": 0.2}),
+    _w("Void Staff", "Staff", 24, "blunt", {"WIS": 3, "DEX": 1},
        260, "rare", "A staff carved from shadow-touched wood. +3 WIS, +1 DEX.",
        speed_mod=2, crit_mod=8,
        enchant_element="shadow", enchant_bonus=4, enchant_name="Void",
-       damage_stat={"STR": 0.4, "INT": 0.6}),
-    _w("Twin Kama", "Kama", 13, "slashing", {"DEX": 3, "WIS": 1},
+       damage_stat={"STR": 0.16, "INT": 0.24}),
+    _w("Twin Kama", "Kama", 21, "slashing", {"DEX": 3, "WIS": 1},
        270, "rare", "Matched pair — spinning techniques become deadly. +3 DEX, +1 WIS.",
        crit_mod=15, speed_mod=3, special="dual_wield",
-       damage_stat={"DEX": 0.6, "WIS": 0.4}),
+       damage_stat={"DEX": 0.24, "WIS": 0.16}),
 
     # T4
-    _w("Celestial Wraps", "Handwraps", 18, "blunt", {"WIS": 5, "DEX": 2},
+    _w("Celestial Wraps", "Handwraps", 29, "blunt", {"WIS": 5, "DEX": 2},
        490, "epic", "Made from the hide of a celestial beast. +5 WIS, +2 DEX.",
        speed_mod=4, crit_mod=20,
        enchant_element="divine", enchant_bonus=7, enchant_name="Celestial",
-       damage_stat={"WIS": 0.5, "DEX": 0.5}),
-    _w("Dragon Bone Staff", "Staff", 20, "blunt", {"WIS": 4, "DEX": 3},
+       damage_stat={"WIS": 0.2, "DEX": 0.2}),
+    _w("Dragon Bone Staff", "Staff", 32, "blunt", {"WIS": 4, "DEX": 3},
        510, "epic", "A staff made from the bones of an elder dragon. +4 WIS, +3 DEX.",
        speed_mod=3, crit_mod=12,
        enchant_element="fire", enchant_bonus=5, enchant_name="Dragonfire",
-       damage_stat={"STR": 0.4, "INT": 0.6}),
+       damage_stat={"STR": 0.16, "INT": 0.24}),
 ]
 
 MONK_ARMOR = [
@@ -670,13 +669,13 @@ MONK_ARMOR = [
 ]
 
 MONK_ACCESSORIES = [
-    _acc("Novice Bead Bracelet", "ring", "accessory1", {"WIS": 1}, 25, "common",
+    _acc("Novice Bead Bracelet", "ring", "ring1", {"WIS": 1}, 25, "common",
          "Prayer beads worn around the wrist. +1 WIS."),
-    _acc("Spirit Focus Ring", "ring", "accessory1", {"WIS": 2, "DEX": 1}, 80, "uncommon",
+    _acc("Spirit Focus Ring", "ring", "ring1", {"WIS": 2, "DEX": 1}, 80, "uncommon",
          "A ring that steadies ki flow. +2 WIS, +1 DEX."),
-    _acc("Temple Elder's Pendant", "amulet", "accessory2", {"WIS": 3, "DEX": 2}, 200, "rare",
+    _acc("Temple Elder's Pendant", "amulet", "neck", {"WIS": 3, "DEX": 2}, 200, "rare",
          "Given to monks who become elders. +3 WIS, +2 DEX.", magic_resist=6),
-    _acc("Ring of Inner Flame", "ring", "accessory1", {"WIS": 4, "DEX": 3}, 420, "epic",
+    _acc("Ring of Inner Flame", "ring", "ring1", {"WIS": 4, "DEX": 3}, 420, "epic",
          "Burns with a blue ki flame only the wearer can see. +4 WIS, +3 DEX.",
          magic_resist=10, enchant_element="divine", enchant_bonus=4, enchant_name="Ki"),
 ]
