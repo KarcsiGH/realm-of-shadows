@@ -826,10 +826,8 @@ class TownUI:
 
     def handle_key(self, key):
         """Handle keyboard input. Returns 'exit' to leave town, or None."""
-        if self.view != self.VIEW_WALK:
-            return None
-
-        # Dialogue takes priority — forward key events to dialogue UI
+        # Dialogue takes priority in ALL views — must check before the walk guard
+        # so SPACE/RETURN advances NPC dialogue even inside buildings.
         if self.active_dialogue and not self.active_dialogue.finished:
             import pygame as _pg
             event = _pg.event.Event(_pg.KEYDOWN, key=key, mod=0, unicode="")
@@ -842,6 +840,9 @@ class TownUI:
                     self.pending_quest_completions.extend(done)
                 except Exception:
                     pass
+            return None
+
+        if self.view != self.VIEW_WALK:
             return None
 
         from data.town_maps import is_walkable, get_building_at, get_npc_at, get_sign_at, is_exit, get_tile, TT_DOOR
@@ -858,7 +859,7 @@ class TownUI:
             dx = -1; self.walk_facing = "left"
         elif key in (pygame.K_d, pygame.K_RIGHT):
             dx = 1; self.walk_facing = "right"
-        elif key == pygame.K_RETURN:
+        elif key in (pygame.K_RETURN, pygame.K_SPACE):
             return self._walk_interact()
         elif key == pygame.K_ESCAPE:
             self.finished = True

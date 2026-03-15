@@ -162,7 +162,6 @@ class DialogueUI:
                       SCREEN_W // 2 - 70, SCREEN_H - 45, DARK_GREY, 12)
 
     def _draw_choices(self, surface, mx, my, top_y):
-        self.hover_choice = -1
         choices = self.state.get_choices()
         if not hasattr(self, "choice_scroll"):
             self.choice_scroll = 0
@@ -174,13 +173,17 @@ class DialogueUI:
         self.choice_scroll = min(self.choice_scroll, max(0, total - max_visible))
         visible = choices[self.choice_scroll:self.choice_scroll + max_visible]
 
+        # Track mouse hover separately so keyboard selection persists
+        mouse_hover = -1
         for i, choice in enumerate(visible):
             real_i = i + self.choice_scroll
             rect = pygame.Rect(DIALOGUE_MARGIN + 20, top_y + i * 46,
                                SCREEN_W - DIALOGUE_MARGIN * 2 - 40, 40)
-            hover = rect.collidepoint(mx, my)
-            if hover:
-                self.hover_choice = real_i
+            if rect.collidepoint(mx, my):
+                mouse_hover = real_i
+
+            # Highlighted if mouse is over it OR keyboard has selected it
+            hover = (real_i == self.hover_choice) or (real_i == mouse_hover)
 
             bg = CHOICE_HOVER if hover else CHOICE_BG
             border = CHOICE_HOVER_BORDER if hover else CHOICE_BORDER
@@ -191,6 +194,10 @@ class DialogueUI:
             col = GOLD if hover else CREAM
             draw_text(surface, f"{num}.", rect.x + 8, rect.y + 9, DIM_GOLD, 15)
             draw_text(surface, choice["text"], rect.x + 28, rect.y + 9, col, 16)
+
+        # Mouse movement updates hover_choice so SPACE/ENTER confirms it
+        if mouse_hover >= 0:
+            self.hover_choice = mouse_hover
 
         # Scroll indicators
         if self.choice_scroll > 0:
@@ -302,15 +309,41 @@ class DialogueUI:
                 if not self.full_text_shown:
                     self.displayed_chars = 999999
                     return None
-                # If choices available, select the hovered one or first one
+                # If choices available
                 if self.state.has_choices():
-                    idx = self.hover_choice if self.hover_choice >= 0 else 0
                     choices = self.state.get_choices()
-                    if idx < len(choices):
-                        return self._select_and_advance(idx)
+                    if not choices:
+                        return None
+                    # If only one choice, always select it immediately
+                    if len(choices) == 1:
+                        return self._select_and_advance(0)
+                    # Multiple choices: if one is already highlighted, confirm it
+                    if self.hover_choice >= 0 and self.hover_choice < len(choices):
+                        return self._select_and_advance(self.hover_choice)
+                    # No highlight yet: highlight the first choice as a visual cue.
+                    # Next SPACE press will confirm it.
+                    self.hover_choice = 0
                     return None
-                # Auto-advance (no choices)
+                # No choices — auto-advance or close end node
                 return self.handle_click(0, 0)
+
+            # Up/Down arrow keys navigate between choices
+            elif event.key in (pygame.K_UP, pygame.K_DOWN):
+                if self.full_text_shown and self.state.has_choices():
+                    choices = self.state.get_choices()
+                    n = len(choices)
+                    if n == 0:
+                        return None
+                    # Initialise to last choice on first DOWN, first choice on first UP
+                    if self.hover_choice < 0:
+                        self.hover_choice = 0 if event.key == pygame.K_DOWN else n - 1
+                    else:
+                        if event.key == pygame.K_DOWN:
+                            self.hover_choice = (self.hover_choice + 1) % n
+                        else:
+                            self.hover_choice = (self.hover_choice - 1) % n
+                return None
+
             elif event.key == pygame.K_ESCAPE:
                 # Locked dialogues (e.g. maren_betrayal) cannot be dismissed
                 # mid-scene — player must reach an end node to close them.
