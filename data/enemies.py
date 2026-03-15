@@ -417,10 +417,10 @@ ENEMIES = {
 
     "Orc Chieftain": {
         "name": "Orc Chieftain",
-        "hp": 270, "defense": 25, "magic_resist": 10,
+        "hp": 250, "defense": 18, "magic_resist": 10,
         "stats": {"STR": 20, "DEX": 10, "CON": 18, "INT": 8, "WIS": 8, "PIE": 4},
         "speed_base": 14,
-        "attack_damage": 64, "attack_type": "melee", "phys_type": "slashing",
+        "attack_damage": 44, "attack_type": "melee", "phys_type": "slashing",
         "accuracy_bonus": 5,
         "preferred_row": FRONT,
         "ai_type": "boss",
@@ -560,10 +560,10 @@ ENEMIES = {
 
     "Goblin King": {
         "name": "Grak the Goblin King",
-        "hp": 550, "defense": 15, "magic_resist": 8,
+        "hp": 380, "defense": 12, "magic_resist": 8,
         "stats": {"STR": 18, "DEX": 10, "CON": 16, "INT": 6, "WIS": 8, "PIE": 4},
         "speed_base": 12,
-        "attack_damage": 50, "attack_type": "melee", "phys_type": "blunt",
+        "attack_damage": 30, "attack_type": "melee", "phys_type": "blunt",
         "accuracy_bonus": 8,
         "preferred_row": FRONT,
         "ai_type": "boss",
@@ -609,10 +609,10 @@ ENEMIES = {
 
     "Giant Spider Queen": {
         "name": "Spider Queen",
-        "hp": 620, "defense": 24, "magic_resist": 20,
+        "hp": 480, "defense": 16, "magic_resist": 12,
         "stats": {"STR": 14, "DEX": 18, "CON": 14, "INT": 4, "WIS": 12, "PIE": 2},
         "speed_base": 18,
-        "attack_damage": 54, "attack_type": "melee", "phys_type": "piercing",
+        "attack_damage": 35, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 12,
         "preferred_row": FRONT,
         "ai_type": "boss",
@@ -648,10 +648,10 @@ ENEMIES = {
 
     "Undead Foreman": {
         "name": "The Foreman",
-        "hp": 450, "defense": 37, "magic_resist": 24,
+        "hp": 400, "defense": 20, "magic_resist": 14,
         "stats": {"STR": 20, "DEX": 8, "CON": 22, "INT": 10, "WIS": 14, "PIE": 2},
         "speed_base": 8,
-        "attack_damage": 60, "attack_type": "melee", "phys_type": "blunt",
+        "attack_damage": 40, "attack_type": "melee", "phys_type": "blunt",
         "accuracy_bonus": 6,
         "preferred_row": FRONT,
         "ai_type": "boss",
@@ -690,10 +690,10 @@ ENEMIES = {
     # ─── Abandoned Mine Boss ───────────────────────────────────────
     "Korrath the Stone Warden": {
         "name": "Korrath the Stone Warden",
-        "hp": 520, "defense": 44, "magic_resist": 30,
+        "hp": 480, "defense": 28, "magic_resist": 18,
         "stats": {"STR": 22, "DEX": 8, "CON": 26, "INT": 14, "WIS": 18, "PIE": 10},
         "speed_base": 6,
-        "attack_damage": 68, "attack_type": "melee", "phys_type": "blunt",
+        "attack_damage": 46, "attack_type": "melee", "phys_type": "blunt",
         "accuracy_bonus": 8,
         "preferred_row": FRONT,
         "ai_type": "boss",
@@ -743,10 +743,10 @@ ENEMIES = {
     # ─── Ruins of Ashenmoor Boss ───────────────────────────────────
     "Commander Ashvar": {
         "name": "Commander Ashvar",
-        "hp": 490, "defense": 38, "magic_resist": 42,
+        "hp": 440, "defense": 26, "magic_resist": 42,
         "stats": {"STR": 18, "DEX": 14, "CON": 20, "INT": 22, "WIS": 16, "PIE": 4},
         "speed_base": 10,
-        "attack_damage": 55, "attack_type": "melee", "phys_type": "slashing",
+        "attack_damage": 42, "attack_type": "melee", "phys_type": "slashing",
         "accuracy_bonus": 10,
         "preferred_row": FRONT,
         "ai_type": "boss",

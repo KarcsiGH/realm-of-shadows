@@ -206,7 +206,7 @@ NEW_ENEMIES = {
 
         desc={0:"A towering mass of fused bones.",1:"Bone Colossus",
               2:"Bone Colossus — elite. AoE bone storm. Use divine/blunt."}),
-    "Warden Revenant": _e("Warden Revenant",1000,35,24,S(18,12,20,14,16,8),12,48,"melee","shadow",
+    "Warden Revenant": _e("Warden Revenant",850,26,18,S(18,12,20,14,16,8),12,50,"melee","shadow",
         acc=8,ai="boss",xp=350,gold=(100,200),
         res={"piercing":0.5,"slashing":0.5,"shadow":0.0,"divine":2.0,"fire":1.5},
         imm=["Poisoned","Fear","Sleep"],ab=["Shadow Strike","Dark Ritual"],        loot=[
@@ -258,7 +258,7 @@ NEW_ENEMIES = {
 
         desc={0:"A twisted tree animated by dark magic.",1:"Corrupted Treant",
               2:"Corrupted Treant — AoE roots. Very weak to fire."}),
-    "Shadow Valdris": _e("Shadow Valdris",1125,30,32,S(14,14,16,22,18,10),14,40,"ranged","shadow",
+    "Shadow Valdris": _e("Shadow Valdris",950,24,26,S(14,14,16,22,18,10),14,52,"ranged","shadow",
         acc=10,row="back",ai="boss",xp=450,gold=(150,300),
         res={"shadow":0.0,"divine":2.0,"arcane":0.5},
         imm=["Poisoned","Fear","Sleep","Stun"],ab=["Shadow Nova","Dark Ritual","Fading Pulse"],        loot=[],
@@ -558,7 +558,7 @@ NEW_ENEMIES = {
               1:"Volcanic Troll",
               2:"Volcanic Troll — tough, slow. Ice doubles damage. Fire-resistant."}),
 
-    "Karreth": _e("Karreth",680,46,40,S(26,10,28,16,20,8),12,80,"melee","fire",
+    "Karreth": _e("Karreth",600,32,28,S(26,10,28,16,20,8),12,55,"melee","fire",
         acc=8,row="front",ai="aggressive",xp=500,gold=(200,400),
         res={"piercing":0.5,"slashing":0.5,"blunt":0.5,"fire":0.0,"ice":2.5,
              "lightning":1.0,"divine":1.5,"shadow":1.5,"nature":0.5,"arcane":1.0},
@@ -1043,10 +1043,10 @@ ACT3_ENEMIES = {
     # Boss: The Pale Sentinel
     "The Pale Sentinel": {
         "name": "The Pale Sentinel",
-        "hp": 750, "defense": 28, "magic_resist": 35,
+        "hp": 660, "defense": 22, "magic_resist": 25,
         "stats": {"STR": 18, "DEX": 14, "CON": 20, "INT": 16, "WIS": 22, "PIE": 18},
         "speed_base": 12,
-        "attack_damage": 45, "attack_type": "melee", "phys_type": "divine",
+        "attack_damage": 44, "attack_type": "melee", "phys_type": "divine",
         "accuracy_bonus": 8, "preferred_row": "mid",
         "ai_type": "boss",
         "xp_reward": 380, "gold_reward": (100, 220),
@@ -1184,10 +1184,10 @@ ACT3_ENEMIES = {
     # Boss: The Last Keeper
     "The Last Keeper": {
         "name": "The Last Keeper",
-        "hp": 680, "defense": 18, "magic_resist": 28,
+        "hp": 720, "defense": 16, "magic_resist": 22,
         "stats": {"STR": 14, "DEX": 18, "CON": 16, "INT": 18, "WIS": 14, "PIE": 8},
         "speed_base": 16,
-        "attack_damage": 40, "attack_type": "ranged", "phys_type": "lightning",
+        "attack_damage": 42, "attack_type": "ranged", "phys_type": "lightning",
         "accuracy_bonus": 10, "preferred_row": "back",
         "ai_type": "boss",
         "xp_reward": 360, "gold_reward": (90, 200),
