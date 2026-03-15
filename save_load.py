@@ -13,6 +13,87 @@ from core.equipment import empty_equipment
 SAVE_DIR = os.path.expanduser("~/Documents/RealmOfShadows/saves")
 
 
+
+# ── Weapon save migration ────────────────────────────────────────────────────
+# Injects damage_stat into old loot weapons that were saved before the
+# weapon ratio fix. Also bumps base damage by +10 to match the fixed loot tables.
+_WEAPON_SUBTYPE_DS = {
+    "Dagger":      {"DEX": 0.40},
+    "Short Sword": {"DEX": 0.28, "STR": 0.12},
+    "Shortsword":  {"DEX": 0.28, "STR": 0.12},
+    "Long Sword":  {"STR": 0.30, "DEX": 0.12},
+    "Longsword":   {"STR": 0.30, "DEX": 0.12},
+    "Broadsword":  {"STR": 0.30, "DEX": 0.12},
+    "Greatsword":  {"STR": 0.40, "DEX": 0.10},
+    "Axe":         {"STR": 0.40},
+    "Greataxe":    {"STR": 0.40},
+    "Warhammer":   {"STR": 0.40},
+    "Mace":        {"STR": 0.40},
+    "Club":        {"STR": 0.40},
+    "Staff":       {"STR": 0.16, "INT": 0.24},
+    "Wand":        {"INT": 0.32},
+    "Orb":         {"INT": 0.24, "WIS": 0.16},
+    "Shortbow":    {"DEX": 0.35, "STR": 0.08},
+    "Longbow":     {"DEX": 0.35, "STR": 0.08},
+    "Bow":         {"DEX": 0.35, "STR": 0.08},
+    "Crossbow":    {"DEX": 0.28, "STR": 0.12},
+    "Spear":       {"STR": 0.24, "DEX": 0.16},
+    "Rapier":      {"DEX": 0.40},
+    "Cutlass":     {"DEX": 0.28, "STR": 0.12},
+    "Saber":       {"DEX": 0.28, "STR": 0.12},
+    "Handwraps":   {"WIS": 0.20, "DEX": 0.20},
+    "Kama":        {"DEX": 0.24, "WIS": 0.16},
+    "Pick":        {"STR": 0.40},
+    "Hammer":      {"STR": 0.40},
+    "sword":       {"STR": 0.30, "DEX": 0.12},
+}
+
+def _migrate_weapon(item):
+    """Upgrade a weapon item from an old save: inject damage_stat if missing."""
+    if not item: return item
+    t = item.get("type", "")
+    if t not in ("weapon", "Fists"):  # Fists = Monk Unarmed
+        return item
+    # Special case: Monk Unarmed — inject WIS/DEX scaling if missing
+    if t == "Fists" or item.get("special", {}).get("monk_scaling"):
+        if not item.get("damage_stat"):
+            item = dict(item)
+            item["damage_stat"] = {"WIS": 0.30, "DEX": 0.20}
+        return item
+    if "damage_stat" in item:
+        return item  # already upgraded
+    subtype = item.get("subtype", "")
+    ds = _WEAPON_SUBTYPE_DS.get(subtype)
+    if not ds:
+        # Try case-insensitive match
+        for k, v in _WEAPON_SUBTYPE_DS.items():
+            if k.lower() == subtype.lower():
+                ds = v
+                break
+    if ds:
+        item = dict(item)  # don't mutate the original
+        item["damage_stat"] = ds
+        # Bump base damage by +10 to match fixed loot tables
+        item["damage"] = item.get("damage", 0) + 10
+    return item
+
+def _is_weapon_item(item):
+    """True for any item that should go through weapon migration (weapons + Fists)."""
+    if not item: return False
+    t = item.get("type", "")
+    return t == "weapon" or t == "Fists"  # Fists = Monk Unarmed
+
+def _migrate_character_items(char):
+    """Migrate all weapons in a character's inventory and equipment slots."""
+    char.inventory = [_migrate_weapon(i) if _is_weapon_item(i) else i
+                      for i in char.inventory]
+    if char.equipment:
+        for slot, item in char.equipment.items():
+            if _is_weapon_item(item):
+                char.equipment[slot] = _migrate_weapon(item)
+    return char
+
+
 def ensure_save_dir():
     os.makedirs(SAVE_DIR, exist_ok=True)
 
@@ -83,6 +164,11 @@ def deserialize_character(data):
         pass  # non-critical — stubs still work, just miss type info
     char.inventory = data.get("inventory", [])
     char.equipment = data.get("equipment", empty_equipment())
+    # Migrate old slot names → new names (save compatibility)
+    _SLOT_MIGRATION = {"accessory1": "ring1", "accessory2": "neck"}
+    for old_s, new_s in _SLOT_MIGRATION.items():
+        if old_s in char.equipment and new_s not in char.equipment:
+            char.equipment[new_s] = char.equipment.pop(old_s)
     # Ensure all slots exist
     for slot in empty_equipment():
         if slot not in char.equipment:
@@ -93,6 +179,8 @@ def deserialize_character(data):
     char.human_bonus_stat = data.get("human_bonus_stat", None)
     char.planar_tier = data.get("planar_tier", 0)
     char.combat_row  = data.get("combat_row", "front")
+    # Migrate old save weapons that lack damage_stat
+    _migrate_character_items(char)
     return char
 
 
@@ -257,3 +345,88 @@ def delete_save(slot_name):
         os.remove(filepath)
         return True, f"Deleted {slot_name}"
     return False, f"Save not found: {slot_name}"
+
+
+# ═══════════════════════════════════════════════════════════════
+#  CHARACTER EXPORT / IMPORT  (New Game+ / cross-game)
+# ═══════════════════════════════════════════════════════════════
+
+EXPORT_VERSION = 1
+
+def export_party(party, story_flags=None, filepath=None):
+    """Export the party to a portable JSON file for use in a sequel.
+
+    Exported data includes full character serialization plus a story_summary
+    of key flags (bosses defeated, hearthstones collected, moral choices).
+    Returns (success: bool, filepath: str, message: str).
+    """
+    import json, os, datetime
+    from core.story_flags import get_flag
+
+    if filepath is None:
+        filepath = os.path.join(os.path.expanduser("~"), "Documents",
+                                "RealmOfShadows", "party_export.json")
+
+    # Build story summary
+    story_summary = {
+        "hearthstones_collected": sum(
+            1 for i in range(1, 6) if get_flag(f"item.hearthstone.{i}")
+        ),
+        "shadow_valdris_defeated": bool(get_flag("boss_defeated.shadow_valdris")),
+        "maren_fate":   "betrayal" if get_flag("maren.left") else "ally",
+        "goblin_peace": bool(get_flag("goblin_peace")),
+        "completed_dungeons": [
+            d for d in ["goblin_warren","spiders_nest","abandoned_mine","sunken_crypt",
+                        "ruins_ashenmoor","dragons_tooth","pale_coast","windswept_isle",
+                        "valdris_spire","shadow_throne"]
+            if get_flag(f"boss_defeated.{d}")
+        ],
+    }
+    if story_flags:
+        story_summary.update(story_flags)
+
+    export_data = {
+        "export_version": EXPORT_VERSION,
+        "game_title":     "Realm of Shadows",
+        "exported_at":    datetime.datetime.now().isoformat(),
+        "story_summary":  story_summary,
+        "characters":     [serialize_character(c) for c in party],
+    }
+
+    try:
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, "w") as f:
+            json.dump(export_data, f, indent=2)
+        return True, filepath, f"Party exported to {filepath}"
+    except Exception as e:
+        return False, "", f"Export failed: {e}"
+
+
+def import_party(filepath=None):
+    """Import a party from a previous game export.
+
+    Returns (success: bool, party: list, story_summary: dict, message: str).
+    """
+    import json, os
+    if filepath is None:
+        filepath = os.path.join(os.path.expanduser("~"), "Documents",
+                                "RealmOfShadows", "party_export.json")
+
+    try:
+        with open(filepath) as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        return False, [], {}, f"No export file found at {filepath}"
+    except Exception as e:
+        return False, [], {}, f"Import failed: {e}"
+
+    ver = data.get("export_version", 0)
+    if ver > EXPORT_VERSION:
+        return False, [], {}, f"Export version {ver} is newer than this game supports."
+
+    try:
+        party = [deserialize_character(c) for c in data.get("characters", [])]
+        story_summary = data.get("story_summary", {})
+        return True, party, story_summary, f"Imported {len(party)} characters from {filepath}"
+    except Exception as e:
+        return False, [], {}, f"Character deserialization failed: {e}"

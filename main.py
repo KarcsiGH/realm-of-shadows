@@ -137,6 +137,8 @@ class Game:
         self.dialogue_return_state = None
         self.dialogue_callback = None  # function to call after dialogue ends
         self._post_combat_town = None  # if set, post-combat routes to this town
+        self._achievement_queue = []    # achievements pending toast display
+        self._achievement_toast = None  # currently showing toast
         # Camp screen
         self.camp_ui = None
         self.camp_return_state = None
@@ -201,6 +203,9 @@ class Game:
             self._draw_toasts(self.screen)
             self._draw_quest_banner(self.screen, dt)
             self._tick_toasts(dt)
+            # Achievement toast
+            self._update_achievement_toast(dt)
+            self._draw_achievement_toast(self.screen)
             # Fade
             if self.fade > 0:
                 s = pygame.Surface((SCREEN_W, SCREEN_H)); s.fill(BLACK)
@@ -2874,6 +2879,25 @@ class Game:
         import pygame
         if not self._ending_input_ready:
             return
+
+        # Final screen: export or back
+        if self._ending_key_index >= 5:  # 5 = len(PAGES)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mx, my = event.pos
+                if hasattr(self, "_ending_export_rect") and self._ending_export_rect.collidepoint(mx, my):
+                    from core.save_load import export_party
+                    ok, path, msg = export_party(self.party)
+                    self._ending_export_msg = msg
+                    self._ending_export_done = ok
+                    import pygame as pg
+                    if ok:
+                        self._msg(f"✓ {msg}", (100, 220, 120))
+                    else:
+                        self._msg(f"✗ {msg}", (220, 100, 100))
+                elif hasattr(self, "_ending_back_rect") and self._ending_back_rect.collidepoint(mx, my):
+                    self.go(S_TITLE)
+            return
+
         if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
             self._ending_key_index += 1
             self._ending_input_ready = False
@@ -2963,9 +2987,36 @@ class Game:
         ]
 
         if ki >= len(PAGES):
-            # After all pages — return to title
-            if t > 2.0:
-                self.go(S_TITLE)
+            # After all pages — export screen then return to title
+            surf.fill((4, 3, 10))
+            txt("Your journey is complete.", H // 2 - 80, 22, (220, 200, 160))
+            txt("Export your party to carry them into the next chapter.", H // 2 - 40, 15, (170, 160, 140))
+
+            # Export button
+            import pygame
+            exp_rect = pygame.Rect(W // 2 - 130, H // 2 + 20, 260, 44)
+            hover_exp = exp_rect.collidepoint(mx, my)
+            border = (200, 170, 100) if hover_exp else (120, 100, 60)
+            pygame.draw.rect(surf, (30, 24, 16), exp_rect, border_radius=6)
+            pygame.draw.rect(surf, border, exp_rect, 2, border_radius=6)
+            lbl = fnt(16).render("Export Party for Next Game", True,
+                                 (240, 210, 130) if hover_exp else (180, 160, 100))
+            surf.blit(lbl, (exp_rect.centerx - lbl.get_width() // 2,
+                            exp_rect.centery - lbl.get_height() // 2))
+
+            back_rect = pygame.Rect(W // 2 - 80, H // 2 + 90, 160, 36)
+            hover_back = back_rect.collidepoint(mx, my)
+            pygame.draw.rect(surf, (20, 18, 14), back_rect, border_radius=5)
+            pygame.draw.rect(surf, (80, 72, 60) if not hover_back else (140, 120, 90),
+                             back_rect, 2, border_radius=5)
+            bl = fnt(14).render("Return to Title", True,
+                                (140, 130, 110) if not hover_back else (200, 185, 150))
+            surf.blit(bl, (back_rect.centerx - bl.get_width() // 2,
+                           back_rect.centery - bl.get_height() // 2))
+
+            self._ending_export_rect = exp_rect
+            self._ending_back_rect   = back_rect
+            self._ending_input_ready = True
             return
 
         page = PAGES[ki]

@@ -35,9 +35,12 @@ def make_player_combatant(character, row=FRONT):
         weapon_key = STARTING_WEAPONS.get(character.class_name, "Unarmed")
         weapon = get_weapon(weapon_key)
 
-    # Monk unarmed scaling
+    # Monk unarmed scaling — always inject damage AND damage_stat
     if weapon.get("special", {}).get("monk_scaling"):
         weapon["damage"] = 4 + (character.level * 2)
+        # Ensure damage_stat is always present (handles old saves missing it)
+        if not weapon.get("damage_stat"):
+            weapon["damage_stat"] = {"WIS": 0.30, "DEX": 0.20}
 
     # Use effective stats (base + equipment bonuses)
     if hasattr(character, "effective_stats"):
@@ -896,6 +899,7 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         current = attacker["resources"].get(resource_key, 0)
         if current < cost:
             result["hit"] = False
+            result["_resource_failed"] = True  # signal: don't consume turn
             result["messages"].append(
                 f"{attacker['name']} doesn't have enough {resource_key}! "
                 f"(need {cost}, have {current})"
@@ -1132,6 +1136,27 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
 
     # ── REVIVE ─────────────────────────────────────────────────
     if is_revive:
+        # Mass Resurrection: revive ALL dead allies
+        if ability.get("targets") == "all_dead_allies":
+            fallen = [p for p in (all_players or []) if not p.get("alive")]
+            if not fallen:
+                result["messages"].append(
+                    f"{attacker['name']} uses {ability['name']} — no fallen allies!"
+                )
+                return result
+            total_healed = 0
+            for p in fallen:
+                p["alive"] = True
+                hp = int(p["max_hp"] * ability.get("revive_hp_pct", 0.5))
+                p["hp"] = hp
+                total_healed += hp
+                result["messages"].append(
+                    f"{attacker['name']} — {p['name']} rises with {hp} HP!"
+                )
+            result["healing"] = total_healed
+            return result
+
+        # Single-target revive
         revive_tgt = target if (target and not target["alive"]) else None
         if not revive_tgt and all_players:
             revive_tgt = next((p for p in all_players if not p["alive"]), None)
@@ -1260,6 +1285,29 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
 
     # ── DEBUFF ─────────────────────────────────────────────────
     if is_debuff:
+        # Special: Turn Undead — targets all undead enemies with Fear, no acc roll
+        if ability.get("targets") == "undead":
+            undead_targets = [e for e in all_enemies
+                              if e.get("alive") and "undead" in e.get("tags", [])]
+            if not undead_targets:
+                result["messages"].append(
+                    f"{attacker['name']} uses {ability['name']} — no undead present!"
+                )
+                return result
+            count = 0
+            for tgt in undead_targets:
+                if apply_status_effect(tgt, "Fear", 3, 1.0):
+                    tgt["attack_damage"] = max(1, int(tgt.get("attack_damage", 1) * 0.5))
+                    result["messages"].append(
+                        f"{tgt['name']} is TURNED — cowering in holy terror!"
+                    )
+                    count += 1
+            if not count:
+                result["messages"].append(
+                    f"{attacker['name']} uses {ability['name']} — undead resist!"
+                )
+            return result
+
         acc = calc_magic_accuracy(attacker, target)
         if not roll_hit(acc):
             result["hit"] = False
@@ -2191,7 +2239,9 @@ class CombatState:
         for msg in result.get("messages", []):
             self.log(msg)
 
-        self.advance_turn()
+        # Don't consume the turn if the action failed due to insufficient resources
+        if not result.get("_resource_failed", False):
+            self.advance_turn()
         return result  # callers read hit/is_crit/damage for sound selection
 
     # ── Internal action helpers ───────────────────────────────────
