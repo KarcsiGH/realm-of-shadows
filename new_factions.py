@@ -49,6 +49,32 @@ def _res(**overrides):
 
 def _coin(lo, hi): return (lo, hi)
 
+_WEAPON_DS = {
+    "Dagger":      {"DEX": 0.40},
+    "Short Sword": {"DEX": 0.28, "STR": 0.12},
+    "Long Sword":  {"STR": 0.30, "DEX": 0.12},
+    "Longsword":   {"STR": 0.30, "DEX": 0.12},
+    "Broadsword":  {"STR": 0.30, "DEX": 0.12},
+    "Greatsword":  {"STR": 0.40, "DEX": 0.10},
+    "Axe":         {"STR": 0.40},
+    "Greataxe":    {"STR": 0.40},
+    "Warhammer":   {"STR": 0.40},
+    "Mace":        {"STR": 0.40},
+    "Club":        {"STR": 0.40},
+    "Staff":       {"STR": 0.16, "INT": 0.24},
+    "Wand":        {"INT": 0.32},
+    "Orb":         {"INT": 0.24, "WIS": 0.16},
+    "Shortbow":    {"DEX": 0.35, "STR": 0.08},
+    "Longbow":     {"DEX": 0.35, "STR": 0.08},
+    "Crossbow":    {"DEX": 0.28, "STR": 0.12},
+    "Spear":       {"STR": 0.24, "DEX": 0.16},
+    "Rapier":      {"DEX": 0.40},
+    "Cutlass":     {"DEX": 0.28, "STR": 0.12},
+    "Saber":       {"DEX": 0.28, "STR": 0.12},
+    "Pick":        {"STR": 0.40},
+    "Hammer":      {"STR": 0.40},
+}
+
 def _item(name, itype, subtype, rarity, dmg_or_def, phys, unid, unid_desc,
           appraised, mat_desc, magic_desc, val, desc, diff=1, **kw):
     d = {"name": name, "type": itype, "subtype": subtype, "rarity": rarity,
@@ -57,8 +83,12 @@ def _item(name, itype, subtype, rarity, dmg_or_def, phys, unid, unid_desc,
          "appraised_name": appraised, "material_desc": mat_desc,
          "magic_desc": magic_desc, "estimated_value": val, "description": desc}
     if itype == "weapon":
-        d["damage"] = dmg_or_def
+        d["damage"] = dmg_or_def + 10  # +10 base to account for stat scaling
         d["phys_type"] = phys
+        if "damage_stat" not in kw:
+            ds = _WEAPON_DS.get(subtype)
+            if ds:
+                d["damage_stat"] = ds
     elif itype == "armor":
         d["defense"] = dmg_or_def
     d.update(kw)
@@ -84,10 +114,10 @@ BEAST_ENEMIES = {
 
     "Fading Wolf": {
         "name": "Fading Wolf",
-        "hp": 92, "defense": 5, "magic_resist": 8,
+        "hp": 55, "defense": 4, "magic_resist": 5,
         "stats": {"STR": 11, "DEX": 14, "CON": 9, "INT": 3, "WIS": 4, "PIE": 1},
         "speed_base": 20,
-        "attack_damage": 24, "attack_type": "melee", "phys_type": "piercing",
+        "attack_damage": 16, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 4,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
@@ -118,10 +148,10 @@ BEAST_ENEMIES = {
 
     "Fading Hound": {
         "name": "Fading Hound",
-        "hp": 78, "defense": 3, "magic_resist": 6,
+        "hp": 45, "defense": 2, "magic_resist": 3,
         "stats": {"STR": 9, "DEX": 16, "CON": 7, "INT": 2, "WIS": 3, "PIE": 1},
         "speed_base": 23,
-        "attack_damage": 18, "attack_type": "melee", "phys_type": "piercing",
+        "attack_damage": 11, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 6,
         "preferred_row": FRONT,
         "ai_type": "flanker",
@@ -1034,6 +1064,12 @@ DWARF_ENEMIES = {
                 "Strong divine resonance — uncorrupted.",50,
                 "A genuine Warden ward-rune. Unlike everything else in this dungeon, "
                 "it's not corrupted. Korrath's people maintained these until the end.",diff=4)),
+        
+            _drop(0.08, _item("Warden Steel","material","metal","rare",0,None,
+                "Ancient metal",
+                "Impossibly dense ancient Warden forge metal.",
+                "Warden Steel","Warden forge alloy.","Dense, silvery, uncorroded.",
+                60,"A rare ingot of true Warden steel, still sound after centuries.",diff=3))
         ],
         "description_tiers": {
             0: "A dwarven ghost in Warden robes. It looks at you with recognition, then grief.",
