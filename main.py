@@ -2660,11 +2660,11 @@ class Game:
             "goblin_warren":   "thornwood_map",    # unlocks Spider's Nest area
             "spiders_nest":    "mine_key",          # unlocks Abandoned Mine
             "abandoned_mine":  "ashenmoor_seal",    # unlocks Ruins of Ashenmoor
-            "sunken_crypt":    "spire_key",         # unlocks Valdris' Spire
-            "ruins_ashenmoor": "crypt_amulet",      # unlocks Sunken Crypt
-            "dragons_tooth":   "pale_coast_access", # unlocks Pale Coast Catacombs
+            "sunken_crypt":    "ship_passage",       # unlocks Dragon's Tooth (sea route)
+            "ruins_ashenmoor": "crypt_amulet",       # unlocks Sunken Crypt
+            "dragons_tooth":   "pale_coast_access",  # unlocks Pale Coast Catacombs
             "pale_coast":      "pale_coast_cleared",
-            "windswept_isle":  "isle_cleared",
+            "windswept_isle":  "spire_key",          # all 5 stones → Valdris' Spire unlocked
         }
         # Hearthstone numbers per dungeon
         HEARTHSTONE_MAP = {
@@ -2758,8 +2758,9 @@ class Game:
             "boss_defeated.spiders_nest":    "mine_key",
             "boss_defeated.abandoned_mine":  "ashenmoor_seal",
             "boss_defeated.ruins_ashenmoor": "crypt_amulet",
-            "boss_defeated.sunken_crypt":    "spire_key",
+            "boss_defeated.sunken_crypt":    "ship_passage",
             "boss_defeated.dragons_tooth":   "pale_coast_access",
+            "boss_defeated.windswept_isle":  "spire_key",
             "boss_defeated.pale_coast":      "pale_coast_cleared",
             "boss_defeated.windswept_isle":  "isle_cleared",
         }
