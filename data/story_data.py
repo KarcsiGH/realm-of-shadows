@@ -4199,7 +4199,8 @@ TOWN_NPCS = {
     "saltmere":    ["guildmaster_sable", "tide_priest_oran", "dockhand_riv"],
     "sanctum":     ["high_priest_aldara"],
     "crystalspire": ["archmage_solen", "teleport_master"],
-    "thornhaven":  ["governor_aldric", "guild_commander_varek", "court_mage_sira"],
+    "thornhaven":  ["governor_aldric", "guild_commander_varek", "court_mage_sira",
+                   "city_guard_thornhaven", "refugee_elder", "innkeeper_thornhaven"],
 }
 
 
@@ -6460,6 +6461,170 @@ _NEW_DIALOGUES = {
 
     # ── Thornhaven ─────────────────────────────────────────
 
+    "innkeeper_thornhaven": [
+        {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "innkeeper_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Innkeeper Brann",
+                        "text": "You're the ones who went north. I heard what you did up there. I don't have words for it, so I'll settle for this: your coin is no good in this inn. Not now, not ever.",
+                        "choices": [
+                            {"text": "We appreciate it.", "next": None},
+                        ],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "item.hearthstone.5", "op": "==", "value": True}],
+            "tree": {
+                "id": "innkeeper_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Innkeeper Brann",
+                        "text": "The word spreading through the taproom is that someone collected all five stones. If that's true — and it sounds mad, so it probably is — then Valdris' hold on the Fading is broken. Whatever he does next, he does it without that power. That changes things.",
+                        "choices": [
+                            {"text": "We still need to stop him.", "next": "stop"},
+                            {"text": "Just drinks, please.", "next": None},
+                        ],
+                    },
+                    "stop": {
+                        "speaker": "Innkeeper Brann",
+                        "text": "Then go. I'll keep a room warm. Something about this place has always drawn people who finish what they start. You look like that kind.",
+                        "choices": [{"text": "We'll be back.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "innkeeper_maren_left",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Innkeeper Brann",
+                        "text": "That scholar woman came through last night. Left before dawn. Didn't pay, but I didn't ask — she had the look of someone who'd paid enough already. You're looking for her, I assume. North road, then the old garrison trail. After that the maps run out.",
+                        "choices": [
+                            {"text": "Thank you.", "next": None},
+                        ],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "innkeeper_thornhaven_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Innkeeper Brann",
+                        "text": "Capital's been busier than it should be. Refugees from the east — I've given rooms to twelve families this month alone. Good people. Scared. If you're heading east, be careful. The Fading doesn't announce itself.",
+                        "choices": [
+                            {"text": "What have you heard about the eastern situation?", "next": "east"},
+                            {"text": "We'll be careful.", "next": None},
+                        ],
+                    },
+                    "east": {
+                        "speaker": "Innkeeper Brann",
+                        "text": "Villages going quiet — no battle, no warning. Traders stop coming back. I had a regular, Adric, from Millstone. Three years coming through every month. Stopped last autumn. No note, no word. That happens once, it's bad luck. Happens to fifty villages, it's something else.",
+                        "choices": [{"text": "We're looking into it.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "refugee_elder": [
+        {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "refugee_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Somi",
+                        "text": "My village was called Ashbury. Three hundred people. We heard a sound like the world forgetting itself — and then nothing. We ran. Forty-two of us made it here. You stopped the thing that took our home. I don't know if the land will come back. But the thing that took it is gone. That has to be enough.",
+                        "choices": [
+                            {"text": "We're sorry for what was lost.", "next": None},
+                        ],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "item.hearthstone.3", "op": "==", "value": True}],
+            "tree": {
+                "id": "refugee_three_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Somi",
+                        "text": "The guards say people like you have been weakening the Fading. I can feel it — the grey taste in the air is lighter than it was. My people can feel it too. They don't know why. I do. Whatever you're carrying north, carry it fast. Two more. Then end this.",
+                        "choices": [
+                            {"text": "How do you know about the stones?", "next": "know"},
+                            {"text": "We intend to.", "next": None},
+                        ],
+                    },
+                    "know": {
+                        "speaker": "Elder Somi",
+                        "text": "I was keeper of the village shrine — old Warden design, we thought it was just decoration. When the first stone was restored, the shrine lit up for three days. Ancient knowledge, waking up. The stones are anchors. Five of them hold the world in place. Valdris pulled them loose.",
+                        "choices": [{"text": "He won't pull any more.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "refugee_maren_left",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Somi",
+                        "text": "The Fading is weakening — I can feel the air changing. But the source is still there, somewhere north. I've seen the maps. Valdris' Spire. We all know about it. The question is whether someone goes there before he finishes what he started. Are you that someone?",
+                        "choices": [
+                            {"text": "Yes.", "next": "yes"},
+                            {"text": "We're working on it.", "next": None},
+                        ],
+                    },
+                    "yes": {
+                        "speaker": "Elder Somi",
+                        "text": "Then go. My people have nowhere else to be. We'll wait.",
+                        "choices": [{"text": "We'll come back.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "refugee_elder_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Somi",
+                        "text": "I led my village for twenty years. Buried my husband in that soil. Our shrine is a thousand years old — older than the city. The Fading took it in a night. We're camping in the Governor's courtyard. Forty-two of us from three hundred. If you're heading east, understand what you're walking toward.",
+                        "choices": [
+                            {"text": "We understand the stakes.", "next": None},
+                            {"text": "What can you tell us about the Fading?", "next": "fading"},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "Elder Somi",
+                        "text": "It doesn't destroy. It unmakes. Things touched by it don't leave ruins — they leave absence. A field where nothing grows, not even weeds. A village where even the foundations are gone. Whatever is causing it isn't just powerful. It's wrong in a way that goes deeper than power.",
+                        "choices": [{"text": "We're going to stop it.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
     "city_guard_thornhaven": [
         {
             "conditions": [],
@@ -6781,6 +6946,39 @@ _NEW_DIALOGUES = {
     ],
 
     "guild_commander_varek": [
+        # After 4 stones — final push, one stone left (Dragon's Tooth)
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.4", "op": "==", "value": True},
+                {"flag": "item.hearthstone.5", "op": "not_exists"},
+                {"flag": "boss_defeated.shadow_valdris", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "varek_penultimate",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Four stones. One left — the Dragon's Tooth, the volcanic island east of the coast. My operative confirmed the last stone is in the deepest chamber. The guardian there is unlike anything else. Prepare accordingly. After that, the Spire. You're close.",
+                        "choices": [
+                            {"text": "How do we reach Dragon's Tooth?", "next": "reach"},
+                            {"text": "What do you know about the guardian?", "next": "guardian"},
+                            {"text": "We're ready.", "next": None},
+                        ],
+                    },
+                    "reach": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Eastport, then by ship. It's a half-day sail in good weather. The island is active — volcanic vents, unstable ground. The ruins predate the Warden order. Whatever's down there sealed itself in voluntarily.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                    "guardian": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Old. Ancient, even by Warden standards. The reports call it Karreth — a name, not a title. It responds to something called a 'true name' — some kind of ancient binding. If you have that, the fight may be shorter. If not, expect it to be very long.",
+                        "choices": [{"text": "We'll find a way.", "next": None}],
+                    },
+                },
+            },
+        },
         # After getting 3 stones — send to Pale Coast and Windswept Isle
         {
             "conditions": [
