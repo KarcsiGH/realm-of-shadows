@@ -139,6 +139,8 @@ class TownUI:
         self.tavern_recruit_sel = 0
         self.tavern_party_sel = 0
         self.current_rumor = ""      # story-aware rumor text, set on tavern open
+        self._tavern_recruits = None        # cached recruit list
+        self._tavern_recruits_at_level = -1 # party avg level when cache was built
 
         # NPC dialogue state
         self.active_dialogue = None  # DialogueUI when talking to an NPC
@@ -915,6 +917,7 @@ class TownUI:
                 elif btype == BLD_TAVERN:
                     from data.story_data import get_rumor
                     self.current_rumor = get_rumor()
+                    self._tavern_recruits = None   # force refresh on entry
                     self.view = self.VIEW_TAVERN
                 elif btype == BLD_FORGE:
                     self.view = self.VIEW_FORGE
@@ -2183,6 +2186,16 @@ class TownUI:
     #  TAVERN
     # ─────────────────────────────────────────────────────────
 
+    def _get_tavern_recruits(self):
+        """Return cached recruit list, regenerating if party level has shifted."""
+        from core.tavern_recruits import generate_recruits, avg_party_level
+        current_avg = avg_party_level(self.party)
+        if (self._tavern_recruits is None
+                or abs(current_avg - self._tavern_recruits_at_level) >= 2):
+            self._tavern_recruits = generate_recruits(self.party, self.town_id)
+            self._tavern_recruits_at_level = current_avg
+        return self._tavern_recruits
+
     def _draw_tavern(self, surface, mx, my):
         from data.shop_inventory import TAVERN
         from core.story_flags import get_flag
@@ -2316,7 +2329,7 @@ class TownUI:
 
         # ── ADVENTURERS tab ───────────────────────────────────────────────────
         elif self.tavern_tab == "recruit":
-            recruits = TAVERN.get("recruits", [])
+            recruits = self._get_tavern_recruits()
             draw_text(surface, "Adventurers seeking work:", 30, 105, DIM_GOLD, 13)
 
             self._recruit_rects = []
