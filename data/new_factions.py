@@ -114,10 +114,10 @@ BEAST_ENEMIES = {
 
     "Fading Wolf": {
         "name": "Fading Wolf",
-        "hp": 92, "defense": 5, "magic_resist": 8,
+        "hp": 55, "defense": 4, "magic_resist": 5,
         "stats": {"STR": 11, "DEX": 14, "CON": 9, "INT": 3, "WIS": 4, "PIE": 1},
         "speed_base": 20,
-        "attack_damage": 24, "attack_type": "melee", "phys_type": "piercing",
+        "attack_damage": 16, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 4,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
@@ -148,10 +148,10 @@ BEAST_ENEMIES = {
 
     "Fading Hound": {
         "name": "Fading Hound",
-        "hp": 78, "defense": 3, "magic_resist": 6,
+        "hp": 45, "defense": 2, "magic_resist": 3,
         "stats": {"STR": 9, "DEX": 16, "CON": 7, "INT": 2, "WIS": 3, "PIE": 1},
         "speed_base": 23,
-        "attack_damage": 18, "attack_type": "melee", "phys_type": "piercing",
+        "attack_damage": 11, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 6,
         "preferred_row": FRONT,
         "ai_type": "flanker",

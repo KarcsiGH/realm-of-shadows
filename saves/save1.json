@@ -1,39 +1,39 @@
 {
   "version": 4,
-  "timestamp": "2026-03-11T09:04:49.225739",
+  "timestamp": "2026-03-14T21:36:08.276668",
   "slot_name": "save1",
   "metadata": {
     "party_summary": [
-      "K Lv.1 Dwarf Monk",
-      "Enna Lv.1 Human Ranger",
-      "Torvin Lv.1 Human Fighter",
-      "Wulf Lv.1 Fading-Touched Cleric",
-      "Aldus Lv.1 Half-Orc Thief",
-      "Syla Lv.1 Fading-Touched Mage"
+      "Karcsi Lv.1 Dwarf Monk",
+      "Asha Lv.1 Half-Orc Thief",
+      "Brom Lv.1 Elf Mage",
+      "Enna Lv.1 Fading-Touched Cleric",
+      "Dax Lv.1 Half-Orc Fighter",
+      "Lira Lv.1 Halfling Ranger"
     ],
     "total_gold": 0
   },
   "party": [
     {
-      "name": "K",
+      "name": "Karcsi",
       "class_name": "Monk",
       "race_name": "Dwarf",
       "level": 1,
       "xp": 8,
       "gold": 0,
       "stats": {
-        "STR": 13,
-        "DEX": 14,
-        "CON": 14,
-        "INT": 8,
-        "WIS": 18,
-        "PIE": 11
+        "STR": 15,
+        "DEX": 15,
+        "CON": 12,
+        "INT": 10,
+        "WIS": 17,
+        "PIE": 12
       },
       "resources": {
-        "HP": 97,
-        "Ki": 167,
-        "WIS-MP": 100,
-        "DEX-SP": 48
+        "HP": 77,
+        "Ki": 51,
+        "WIS-MP": 38,
+        "DEX-SP": 34
       },
       "abilities": [
         {
@@ -84,6 +84,7 @@
         },
         "off_hand": null,
         "head": null,
+        "crown": null,
         "body": {
           "name": "Traveler's Clothes",
           "slot": "body",
@@ -99,78 +100,77 @@
         },
         "hands": null,
         "feet": null,
-        "accessory1": null,
-        "accessory2": null
+        "neck": null,
+        "ring1": null,
+        "ring2": null,
+        "ring3": null
       },
       "life_path": [],
       "backstory_parts": [],
       "quick_rolled": true,
       "human_bonus_stat": null,
-      "planar_tier": 0
+      "planar_tier": 0,
+      "combat_row": "front"
     },
     {
-      "name": "Enna",
-      "class_name": "Ranger",
-      "race_name": "Human",
+      "name": "Asha",
+      "class_name": "Thief",
+      "race_name": "Half-Orc",
       "level": 1,
       "xp": 8,
       "gold": 0,
       "stats": {
-        "STR": 11,
-        "DEX": 15,
-        "CON": 12,
-        "INT": 12,
-        "WIS": 14,
-        "PIE": 7
+        "STR": 13,
+        "DEX": 18,
+        "CON": 10,
+        "INT": 11,
+        "WIS": 9,
+        "PIE": 4
       },
       "resources": {
-        "HP": 91,
-        "Ki": 125,
-        "WIS-MP": 80,
-        "DEX-SP": 51
+        "HP": 63,
+        "Ki": 133,
+        "DEX-SP": 40
       },
       "abilities": [
         {
-          "name": "Aimed Shot",
-          "cost": 10,
-          "resource": "DEX-SP",
-          "type": "attack",
-          "level": 1,
-          "power": 1.5,
-          "bonus_accuracy": 20,
-          "desc": "Carefully aimed ranged attack. +20% accuracy."
-        },
-        {
-          "name": "Splitting Arrow",
+          "name": "Quick Strike",
           "cost": 8,
           "resource": "DEX-SP",
           "type": "attack",
           "level": 1,
-          "power": 0.8,
-          "pierce_rows": true,
-          "desc": "Arrow pierces front row, hitting back row too. Reduced damage."
+          "power": 1.3,
+          "bonus_crit": 15,
+          "desc": "Fast strike with +15% crit chance."
+        },
+        {
+          "name": "Evade",
+          "cost": 6,
+          "resource": "DEX-SP",
+          "type": "buff",
+          "level": 1,
+          "buff": "evasion",
+          "duration": 2,
+          "self_only": true,
+          "desc": "Greatly increase dodge chance for 2 turns."
         }
       ],
       "inventory": [],
       "equipment": {
         "weapon": {
-          "name": "Short Bow",
-          "type": "Bow",
-          "damage": 7,
+          "name": "Rusty Knife",
+          "type": "Dagger",
+          "damage": 5,
           "damage_stat": {
-            "DEX": 0.8,
-            "STR": 0.2
+            "DEX": 1.0
           },
-          "range": "ranged",
-          "speed_mod": 0,
+          "range": "melee",
+          "speed_mod": 2,
           "accuracy_mod": 5,
-          "crit_mod": 3,
-          "weight_class": "medium",
+          "crit_mod": 5,
+          "weight_class": "light",
           "phys_type": "piercing",
-          "requirements": {
-            "DEX": 10,
-            "STR": 8
-          },
+          "requirements": {},
           "spell_bonus": 0,
           "special": {},
           "identified": true,
@@ -178,6 +178,7 @@
         },
         "off_hand": null,
         "head": null,
+        "crown": null,
         "body": {
           "name": "Leather Vest",
           "slot": "body",
@@ -193,121 +194,117 @@
         },
         "hands": null,
         "feet": null,
-        "accessory1": null,
-        "accessory2": null
+        "neck": null,
+        "ring1": null,
+        "ring2": null,
+        "ring3": null
       },
       "life_path": [],
       "backstory_parts": [],
       "quick_rolled": true,
       "human_bonus_stat": null,
-      "planar_tier": 0
+      "planar_tier": 0,
+      "combat_row": "front"
     },
     {
-      "name": "Torvin",
-      "class_name": "Fighter",
-      "race_name": "Human",
+      "name": "Brom",
+      "class_name": "Mage",
+      "race_name": "Elf",
       "level": 1,
       "xp": 8,
       "gold": 0,
       "stats": {
-        "STR": 15,
-        "DEX": 11,
-        "CON": 12,
-        "INT": 6,
-        "WIS": 8,
-        "PIE": 5
+        "STR": 6,
+        "DEX": 9,
+        "CON": 6,
+        "INT": 20,
+        "WIS": 13,
+        "PIE": 6
       },
       "resources": {
-        "HP": 101,
-        "Ki": 121,
-        "STR-SP": 51
+        "HP": 45,
+        "Ki": 149,
+        "INT-MP": 44,
+        "WIS-MP": 30
       },
       "abilities": [
         {
-          "name": "Power Strike",
-          "cost": 10,
-          "resource": "STR-SP",
-          "type": "attack",
+          "name": "Magic Missile",
+          "cost": 8,
+          "resource": "INT-MP",
+          "type": "spell",
           "level": 1,
-          "power": 1.6,
-          "desc": "Heavy melee attack dealing 60% bonus damage."
+          "power": 1.0,
+          "element": "arcane",
+          "bonus_accuracy": 30,
+          "desc": "Unerring arcane bolt. Very high hit chance."
         },
         {
-          "name": "Defensive Stance",
-          "cost": 8,
-          "resource": "STR-SP",
+          "name": "Arcane Shield",
+          "cost": 10,
+          "resource": "INT-MP",
           "type": "buff",
           "level": 1,
-          "buff": "defense_up",
-          "duration": 2,
+          "buff": "magic_shield",
+          "duration": 3,
           "self_only": true,
-          "desc": "Reduce incoming damage for 2 turns."
+          "desc": "Erect a personal arcane barrier. Reduces all damage taken for 3 turns."
         }
       ],
       "inventory": [],
       "equipment": {
         "weapon": {
-          "name": "Worn Longsword",
-          "type": "Longsword",
-          "damage": 8,
+          "name": "Walking Stick",
+          "type": "Staff",
+          "damage": 3,
           "damage_stat": {
-            "STR": 0.7,
-            "DEX": 0.3
+            "STR": 0.4,
+            "INT": 0.6
           },
           "range": "melee",
           "speed_mod": 0,
           "accuracy_mod": 0,
           "crit_mod": 0,
           "weight_class": "medium",
-          "phys_type": "slashing",
-          "requirements": {
-            "STR": 10
-          },
-          "spell_bonus": 0,
+          "phys_type": "blunt",
+          "requirements": {},
+          "spell_bonus": 2,
           "special": {},
           "identified": true,
           "slot": "weapon"
         },
-        "off_hand": {
-          "name": "Wooden Shield",
-          "slot": "off_hand",
-          "armor_tier": "shield",
-          "defense": 3,
-          "magic_resist": 0,
-          "speed_mod": 0,
-          "stat_bonuses": {},
-          "rarity": "common",
-          "value": 10,
-          "description": "A simple round wooden shield.",
-          "identified": true
-        },
+        "off_hand": null,
         "head": null,
+        "crown": null,
         "body": {
-          "name": "Leather Vest",
+          "name": "Traveler's Clothes",
           "slot": "body",
-          "armor_tier": "light",
-          "defense": 4,
+          "armor_tier": "clothing",
+          "defense": 1,
           "magic_resist": 0,
           "speed_mod": 0,
           "stat_bonuses": {},
           "rarity": "common",
-          "value": 20,
-          "description": "Basic leather protection.",
+          "value": 5,
+          "description": "Simple clothing. Offers minimal protection.",
           "identified": true
         },
         "hands": null,
         "feet": null,
-        "accessory1": null,
-        "accessory2": null
+        "neck": null,
+        "ring1": null,
+        "ring2": null,
+        "ring3": null
       },
       "life_path": [],
       "backstory_parts": [],
       "quick_rolled": true,
       "human_bonus_stat": null,
-      "planar_tier": 0
+      "planar_tier": 0,
+      "combat_row": "front"
     },
     {
-      "name": "Wulf",
+      "name": "Enna",
       "class_name": "Cleric",
       "race_name": "Fading-Touched",
       "level": 1,
@@ -317,15 +314,15 @@
         "STR": 9,
         "DEX": 9,
         "CON": 10,
-        "INT": 13,
-        "WIS": 14,
+        "INT": 14,
+        "WIS": 12,
         "PIE": 18
       },
       "resources": {
-        "HP": 80,
-        "Ki": 142,
-        "WIS-MP": 80,
-        "PIE-MP": 100
+        "HP": 68,
+        "Ki": 136,
+        "WIS-MP": 28,
+        "PIE-MP": 40
       },
       "abilities": [
         {
@@ -387,6 +384,7 @@
           "identified": true
         },
         "head": null,
+        "crown": null,
         "body": {
           "name": "Chain Shirt",
           "slot": "body",
@@ -402,81 +400,99 @@
         },
         "hands": null,
         "feet": null,
-        "accessory1": null,
-        "accessory2": null
+        "neck": null,
+        "ring1": null,
+        "ring2": null,
+        "ring3": null
       },
       "life_path": [],
       "backstory_parts": [],
       "quick_rolled": true,
       "human_bonus_stat": null,
-      "planar_tier": 0
+      "planar_tier": 0,
+      "combat_row": "front"
     },
     {
-      "name": "Aldus",
-      "class_name": "Thief",
+      "name": "Dax",
+      "class_name": "Fighter",
       "race_name": "Half-Orc",
       "level": 1,
       "xp": 8,
       "gold": 0,
       "stats": {
-        "STR": 13,
-        "DEX": 17,
-        "CON": 8,
-        "INT": 11,
+        "STR": 17,
+        "DEX": 10,
+        "CON": 13,
+        "INT": 6,
         "WIS": 8,
-        "PIE": 5
+        "PIE": 3
       },
       "resources": {
-        "HP": 69,
-        "Ki": 128,
-        "DEX-SP": 57
+        "HP": 89,
+        "Ki": 134,
+        "STR-SP": 38
       },
       "abilities": [
         {
-          "name": "Quick Strike",
-          "cost": 8,
-          "resource": "DEX-SP",
+          "name": "Power Strike",
+          "cost": 10,
+          "resource": "STR-SP",
           "type": "attack",
           "level": 1,
-          "power": 1.3,
-          "bonus_crit": 15,
-          "desc": "Fast strike with +15% crit chance."
+          "power": 1.6,
+          "desc": "Heavy melee attack dealing 60% bonus damage."
         },
         {
-          "name": "Evade",
-          "cost": 6,
-          "resource": "DEX-SP",
+          "name": "Defensive Stance",
+          "cost": 8,
+          "resource": "STR-SP",
           "type": "buff",
           "level": 1,
-          "buff": "evasion",
+          "buff": "defense_up",
           "duration": 2,
           "self_only": true,
-          "desc": "Greatly increase dodge chance for 2 turns."
+          "desc": "Reduce incoming damage for 2 turns."
         }
       ],
       "inventory": [],
       "equipment": {
         "weapon": {
-          "name": "Rusty Knife",
-          "type": "Dagger",
-          "damage": 5,
+          "name": "Worn Longsword",
+          "type": "Longsword",
+          "damage": 8,
           "damage_stat": {
-            "DEX": 1.0
+            "STR": 0.7,
+            "DEX": 0.3
           },
           "range": "melee",
-          "speed_mod": 2,
-          "accuracy_mod": 5,
-          "crit_mod": 5,
-          "weight_class": "light",
-          "phys_type": "piercing",
-          "requirements": {},
+          "speed_mod": 0,
+          "accuracy_mod": 0,
+          "crit_mod": 0,
+          "weight_class": "medium",
+          "phys_type": "slashing",
+          "requirements": {
+            "STR": 10
+          },
           "spell_bonus": 0,
           "special": {},
           "identified": true,
           "slot": "weapon"
         },
-        "off_hand": null,
+        "off_hand": {
+          "name": "Wooden Shield",
+          "slot": "off_hand",
+          "armor_tier": "shield",
+          "defense": 3,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {},
+          "rarity": "common",
+          "value": 10,
+          "description": "A simple round wooden shield.",
+          "identified": true
+        },
         "head": null,
+        "crown": null,
         "body": {
           "name": "Leather Vest",
           "slot": "body",
@@ -492,121 +508,129 @@
         },
         "hands": null,
         "feet": null,
-        "accessory1": null,
-        "accessory2": null
+        "neck": null,
+        "ring1": null,
+        "ring2": null,
+        "ring3": null
       },
       "life_path": [],
       "backstory_parts": [],
       "quick_rolled": true,
       "human_bonus_stat": null,
-      "planar_tier": 0
+      "planar_tier": 0,
+      "combat_row": "front"
     },
     {
-      "name": "Syla",
-      "class_name": "Mage",
-      "race_name": "Fading-Touched",
+      "name": "Lira",
+      "class_name": "Ranger",
+      "race_name": "Halfling",
       "level": 1,
       "xp": 8,
       "gold": 0,
       "stats": {
-        "STR": 6,
-        "DEX": 8,
-        "CON": 6,
-        "INT": 20,
-        "WIS": 12,
-        "PIE": 7
+        "STR": 11,
+        "DEX": 17,
+        "CON": 10,
+        "INT": 12,
+        "WIS": 17,
+        "PIE": 8
       },
       "resources": {
-        "HP": 53,
+        "HP": 73,
         "Ki": 146,
-        "INT-MP": 110,
-        "WIS-MP": 70
+        "WIS-MP": 38,
+        "DEX-SP": 38
       },
       "abilities": [
         {
-          "name": "Magic Missile",
-          "cost": 8,
-          "resource": "INT-MP",
-          "type": "spell",
+          "name": "Aimed Shot",
+          "cost": 10,
+          "resource": "DEX-SP",
+          "type": "attack",
           "level": 1,
-          "power": 1.0,
-          "element": "arcane",
-          "bonus_accuracy": 30,
-          "desc": "Unerring arcane bolt. Very high hit chance."
+          "power": 1.5,
+          "bonus_accuracy": 20,
+          "desc": "Carefully aimed ranged attack. +20% accuracy."
         },
         {
-          "name": "Arcane Shield",
-          "cost": 10,
-          "resource": "INT-MP",
-          "type": "buff",
+          "name": "Splitting Arrow",
+          "cost": 8,
+          "resource": "DEX-SP",
+          "type": "attack",
           "level": 1,
-          "buff": "magic_shield",
-          "duration": 3,
-          "self_only": true,
-          "desc": "Erect a personal arcane barrier. Reduces all damage taken for 3 turns."
+          "power": 0.8,
+          "pierce_rows": true,
+          "desc": "Arrow pierces front row, hitting back row too. Reduced damage."
         }
       ],
       "inventory": [],
       "equipment": {
         "weapon": {
-          "name": "Walking Stick",
-          "type": "Staff",
-          "damage": 3,
+          "name": "Short Bow",
+          "type": "Bow",
+          "damage": 7,
           "damage_stat": {
-            "STR": 0.4,
-            "INT": 0.6
+            "DEX": 0.8,
+            "STR": 0.2
           },
-          "range": "melee",
+          "range": "ranged",
           "speed_mod": 0,
-          "accuracy_mod": 0,
-          "crit_mod": 0,
+          "accuracy_mod": 5,
+          "crit_mod": 3,
           "weight_class": "medium",
-          "phys_type": "blunt",
-          "requirements": {},
-          "spell_bonus": 2,
+          "phys_type": "piercing",
+          "requirements": {
+            "DEX": 10,
+            "STR": 8
+          },
+          "spell_bonus": 0,
           "special": {},
           "identified": true,
           "slot": "weapon"
         },
         "off_hand": null,
         "head": null,
+        "crown": null,
         "body": {
-          "name": "Traveler's Clothes",
+          "name": "Leather Vest",
           "slot": "body",
-          "armor_tier": "clothing",
-          "defense": 1,
+          "armor_tier": "light",
+          "defense": 4,
           "magic_resist": 0,
           "speed_mod": 0,
           "stat_bonuses": {},
           "rarity": "common",
-          "value": 5,
-          "description": "Simple clothing. Offers minimal protection.",
+          "value": 20,
+          "description": "Basic leather protection.",
           "identified": true
         },
         "hands": null,
         "feet": null,
-        "accessory1": null,
-        "accessory2": null
+        "neck": null,
+        "ring1": null,
+        "ring2": null,
+        "ring3": null
       },
       "life_path": [],
       "backstory_parts": [],
       "quick_rolled": true,
       "human_bonus_stat": null,
-      "planar_tier": 0
+      "planar_tier": 0,
+      "combat_row": "front"
     }
   ],
   "knowledge": {
     "identified_items": [
-      "Chain Shirt",
-      "Rusty Knife",
-      "Traveler's Clothes",
-      "Walking Stick",
       "Monk Unarmed",
-      "Wooden Club",
-      "Leather Vest",
-      "Short Bow",
       "Worn Longsword",
-      "Wooden Shield"
+      "Walking Stick",
+      "Traveler's Clothes",
+      "Rusty Knife",
+      "Chain Shirt",
+      "Leather Vest",
+      "Wooden Club",
+      "Wooden Shield",
+      "Short Bow"
     ],
     "known_enemies": {}
   },
@@ -615,15 +639,6 @@
     "intro_seen": true,
     "quest.main_meet_maren.state": -2,
     "town.briarhollow.visited": true,
-    "quest.side_wolf_pelts.state": 1,
-    "quest.side_missing_patrol.state": 1,
-    "npc.maren.met": true,
-    "lore.wardens_history": true,
-    "lore.hearthstones": true,
-    "quest.main_goblin_warren.state": 1,
-    "quest.main_meet_maren.rewarded": true,
-    "npc.old_petra.met": true,
-    "quest.main_spiders_nest.state": 1,
     "job.bh_goblin_ears.state": 1,
     "job.bh_goblin_ears.progress": 0,
     "job.bh_wolf_pelts.state": 1,
@@ -634,13 +649,22 @@
     "job.bh_rat_problem.progress": 0,
     "job.bh_bat_wings.state": 1,
     "job.bh_bat_wings.progress": 0,
-    "npc.elder_thom.met": true,
-    "npc.priestess_alia.met": true
+    "quest.side_wolf_pelts.state": 1,
+    "quest.side_missing_patrol.state": 1,
+    "npc.young_tomas.met": true,
+    "npc.old_petra.met": true,
+    "quest.main_spiders_nest.state": 1,
+    "npc.maren.met": true,
+    "lore.wardens_history": true,
+    "lore.hearthstones": true,
+    "quest.main_goblin_warren.state": 1,
+    "quest.main_meet_maren.rewarded": true,
+    "npc.elder_thom.met": true
   },
   "world_state": {
-    "party_x": 60,
+    "party_x": 59,
     "party_y": 70,
-    "step_counter": 17,
+    "step_counter": 1,
     "discovered_locations": [
       "abandoned_mine",
       "briarhollow",

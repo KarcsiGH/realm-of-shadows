@@ -17,10 +17,10 @@ from core.combat_config import (
 ENEMIES = {
     "Goblin Warrior": {
         "name": "Goblin Warrior",
-        "hp": 130, "defense": 7, "magic_resist": 2,
+        "hp": 70, "defense": 5, "magic_resist": 2,
         "stats": {"STR": 6, "DEX": 10, "CON": 5, "INT": 4, "WIS": 4, "PIE": 2},
         "speed_base": 14,
-        "attack_damage": 30, "attack_type": "melee", "phys_type": "slashing",
+        "attack_damage": 18, "attack_type": "melee", "phys_type": "slashing",
         "accuracy_bonus": 0,
         "preferred_row": FRONT,
         "ai_type": "aggressive", "pack_tactics": True, "cowardly": True,

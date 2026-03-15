@@ -30,7 +30,7 @@ S = lambda s,d,c,i,w,p: {"STR":s,"DEX":d,"CON":c,"INT":i,"WIS":w,"PIE":p}
 
 NEW_ENEMIES = {
     # ── Cave / Goblin Warren ──
-    "Goblin Scout": _e("Goblin Scout",80,5,1,S(4,14,3,3,6,1),20,22,"melee","piercing",
+    "Goblin Scout": _e("Goblin Scout",45,3,1,S(4,14,3,3,6,1),20,12,"melee","piercing",
         acc=3,xp=10,gold=(2,6),        loot=[
             {"drop_chance": 0.14, "item": {"name": 'Crude Knife', "type": 'material', "subtype": 'blade_scrap', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Rusty Blade', "unidentified_desc": 'A short rusty knife.', "appraised_name": "Scout's Crude Knife", "material_desc": 'Poor-grade iron.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": "A goblin scout's knife.", "identified": False}},
             {"drop_chance": 0.1, "item": {"name": 'Goblin Ear', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Severed Ear', "unidentified_desc": 'A small pointed ear.', "appraised_name": 'Goblin Ear', "material_desc": 'A goblin trophy.', "magic_desc": 'No magical properties.', "estimated_value": 2, "description": 'A goblin ear.', "identified": False}},
@@ -56,7 +56,7 @@ NEW_ENEMIES = {
 
         desc={0:"A goblin fiddling with strange devices.",1:"Goblin Trapper",
               2:"Goblin Trapper — throws caltrops to slow you."}),
-    "Cave Bat": _e("Cave Bat",35,4,1,S(3,16,2,1,8,1),24,12,"melee","piercing",
+    "Cave Bat": _e("Cave Bat",28,3,1,S(3,16,2,1,8,1),24,8,"melee","piercing",
         acc=6,xp=6,gold=(0,2),res={"lightning":1.5,"nature":0.5},        loot=[
             {"drop_chance": 0.18, "item": {"name": 'Bat Wing', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Leathery Wing', "unidentified_desc": 'A thin veiny wing.', "appraised_name": 'Cave Bat Wing', "material_desc": 'Thin membrane wing. Tier 1 reagent.', "magic_desc": 'Faint echo-sense.', "estimated_value": 4, "description": 'A cave bat wing.', "identified": False}},
         ],
@@ -325,7 +325,7 @@ NEW_ENEMIES = {
 
         desc={0:"A goblin beating a crude drum.",1:"Goblin Drummer",
               2:"Goblin Drummer — buffs ally speed. Low threat alone."}),
-    "Rabid Rat": _e("Rabid Rat",25,3,1,S(3,14,3,1,4,0),22,10,"melee","piercing",
+    "Rabid Rat": _e("Rabid Rat",20,2,1,S(3,14,3,1,4,0),22,7,"melee","piercing",
         acc=4,xp=4,gold=(0,1),
         ab=[{"name":"Rabid Bite","type":"damage","target":"single_enemy","power":4,
              "element":"nature","status":"Poisoned","status_chance":0.2,
@@ -617,7 +617,7 @@ NEW_ENCOUNTERS = {
     "gw_scouts":      {"name":"Goblin Scouts","difficulty":"easy",
         "groups":[{"enemy":"Goblin Scout","count":4,"row":"front"}]},
     "gw_bats":        {"name":"Bat Swarm","difficulty":"easy",
-        "groups":[{"enemy":"Cave Bat","count":6,"row":"front"}]},
+        "groups":[{"enemy":"Cave Bat","count":4,"row":"front"}]},
     "gw_brute_pack":  {"name":"Goblin Brute & Friends","difficulty":"medium",
         "groups":[{"enemy":"Goblin Brute","count":1,"row":"front"},
                   {"enemy":"Goblin Scout","count":3,"row":"front"}]},
