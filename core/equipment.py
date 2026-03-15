@@ -780,6 +780,396 @@ ARMOR = {
         "description": "A stone that orbits the wearer's head, radiating protective energy.",
     },
 
+    # ═══════════════════════════════════════════════════════════════
+    #  CLASS-SPECIFIC BODY ARMOR
+    # ═══════════════════════════════════════════════════════════════
+
+    # ── Monk Gi / Training Wear (clothing — Ki-boosted) ──────────────────────
+    "Novice Gi": {
+        "name": "Novice Gi", "slot": "body", "armor_tier": "clothing",
+        "defense": 3, "magic_resist": 1, "speed_mod": 1,
+        "stat_bonuses": {"WIS": 1, "DEX": 1}, "rarity": "common", "value": 20,
+        "description": "A simple training uniform. Light and unrestrictive. +1 WIS, +1 DEX.",
+    },
+    "Temple Gi": {
+        "name": "Temple Gi", "slot": "body", "armor_tier": "clothing",
+        "defense": 5, "magic_resist": 2, "speed_mod": 1,
+        "stat_bonuses": {"WIS": 2, "DEX": 1}, "rarity": "uncommon", "value": 65,
+        "description": "A gi woven at the temple, its threads blessed with Ki focus. +2 WIS, +1 DEX.",
+    },
+    "Master's Gi": {
+        "name": "Master's Gi", "slot": "body", "armor_tier": "clothing",
+        "defense": 7, "magic_resist": 3, "speed_mod": 1,
+        "stat_bonuses": {"WIS": 3, "DEX": 1}, "rarity": "rare", "value": 160,
+        "description": "A robe worn by temple masters. Channels Ki through its weave. +3 WIS, +1 DEX.",
+    },
+    "Grandmaster's Vestments": {
+        "name": "Grandmaster's Vestments", "slot": "body", "armor_tier": "clothing",
+        "defense": 10, "magic_resist": 5, "speed_mod": 2,
+        "stat_bonuses": {"WIS": 4, "DEX": 2, "CON": 1}, "rarity": "epic", "value": 460,
+        "description": "Robes of absolute martial mastery. Ki radiates from them. +4 WIS, +2 DEX, +1 CON.",
+    },
+    "Journeyman's Robe": {
+        "name": "Journeyman's Robe", "slot": "body", "armor_tier": "clothing",
+        "defense": 3, "magic_resist": 5, "speed_mod": 0,
+        "stat_bonuses": {"INT": 1}, "rarity": "uncommon", "value": 55,
+        "description": "A robe of a travelling scholar. Warded against magical feedback. +1 INT.",
+    },
+    "Wizard's Robe": {
+        "name": "Wizard's Robe", "slot": "body", "armor_tier": "clothing",
+        "defense": 4, "magic_resist": 7, "speed_mod": 0,
+        "stat_bonuses": {"INT": 2, "WIS": 1}, "rarity": "rare", "value": 160,
+        "description": "A robe of a trained wizard. Woven with power-channeling inscriptions. +2 INT, +1 WIS.",
+    },
+    "Nightweave Armour": {
+        "name": "Nightweave Armour", "slot": "body", "armor_tier": "light",
+        "defense": 8, "magic_resist": 2, "speed_mod": 2,
+        "stat_bonuses": {"DEX": 2, "INT": 1}, "rarity": "rare", "value": 200,
+        "description": "Armour woven from shadow-spider silk. Practically invisible in darkness. +2 DEX, +1 INT.",
+    },
+    "Phantom Armour": {
+        "name": "Phantom Armour", "slot": "body", "armor_tier": "light",
+        "defense": 10, "magic_resist": 3, "speed_mod": 3,
+        "stat_bonuses": {"DEX": 3, "INT": 1}, "rarity": "epic", "value": 480,
+        "description": "Legendary armour worn by the greatest assassins. The wearer moves like a ghost. +3 DEX, +1 INT.",
+    },
+    "Huntsman's Leathers": {
+        "name": "Huntsman's Leathers", "slot": "body", "armor_tier": "light",
+        "defense": 8, "magic_resist": 1, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 2, "WIS": 2}, "rarity": "rare", "value": 190,
+        "description": "Supple leathers worked with woodland herbs. Noiseless in brush. +2 DEX, +2 WIS.",
+    },
+    "Ancient Bark Armour": {
+        "name": "Ancient Bark Armour", "slot": "body", "armor_tier": "medium",
+        "defense": 14, "magic_resist": 4, "speed_mod": 0,
+        "stat_bonuses": {"WIS": 2, "DEX": 1, "CON": 1}, "rarity": "rare", "value": 260,
+        "description": "Armour grown from living bark, blessed by old forest spirits. +2 WIS, +1 DEX, +1 CON.",
+    },
+    "Warden's Hauberk": {
+        "name": "Warden's Hauberk", "slot": "body", "armor_tier": "medium",
+        "defense": 16, "magic_resist": 5, "speed_mod": 0,
+        "stat_bonuses": {"WIS": 3, "DEX": 2}, "rarity": "epic", "value": 440,
+        "description": "A hauberk worn by the old Warden order. Nature and protection entwined. +3 WIS, +2 DEX.",
+    },
+    "Berserker's Plate": {
+        "name": "Berserker's Plate", "slot": "body", "armor_tier": "heavy",
+        "defense": 20, "magic_resist": 0, "speed_mod": -2,
+        "stat_bonuses": {"STR": 3, "CON": 1}, "rarity": "rare", "value": 340,
+        "description": "Thick plate built for attack over defence. +3 STR, +1 CON.",
+    },
+    "Sentinel's Armour": {
+        "name": "Sentinel's Armour", "slot": "body", "armor_tier": "heavy",
+        "defense": 28, "magic_resist": 3, "speed_mod": -3,
+        "stat_bonuses": {"CON": 3, "STR": 2}, "rarity": "epic", "value": 640,
+        "description": "The armour of an unbreakable sentinel. Few weapons find purchase. +3 CON, +2 STR.",
+    },
+    "Sanctified Chainmail": {
+        "name": "Sanctified Chainmail", "slot": "body", "armor_tier": "medium",
+        "defense": 12, "magic_resist": 4, "speed_mod": -1,
+        "stat_bonuses": {"PIE": 1, "CON": 1}, "rarity": "uncommon", "value": 110,
+        "description": "Chainmail blessed at the temple altar. Wards against shadow. +1 PIE, +1 CON.",
+    },
+    "Holy Plate": {
+        "name": "Holy Plate", "slot": "body", "armor_tier": "heavy",
+        "defense": 23, "magic_resist": 5, "speed_mod": -3,
+        "stat_bonuses": {"PIE": 2, "CON": 1}, "rarity": "rare", "value": 380,
+        "description": "Plate armour consecrated in a great cathedral. Shines with inner light. +2 PIE, +1 CON.",
+    },
+    "Archbishop's Armour": {
+        "name": "Archbishop's Armour", "slot": "body", "armor_tier": "heavy",
+        "defense": 27, "magic_resist": 8, "speed_mod": -2,
+        "stat_bonuses": {"PIE": 3, "WIS": 2}, "rarity": "epic", "value": 600,
+        "description": "Ceremonial plate worn only by the highest clergy. +3 PIE, +2 WIS.",
+    },
+    "Crusader's Plate": {
+        "name": "Crusader's Plate", "slot": "body", "armor_tier": "heavy",
+        "defense": 22, "magic_resist": 4, "speed_mod": -3,
+        "stat_bonuses": {"STR": 2, "PIE": 2}, "rarity": "rare", "value": 370,
+        "description": "Plate armour worn by holy warriors on crusade. +2 STR, +2 PIE.",
+    },
+    "Radiant Armour": {
+        "name": "Radiant Armour", "slot": "body", "armor_tier": "heavy",
+        "defense": 27, "magic_resist": 6, "speed_mod": -2,
+        "stat_bonuses": {"STR": 2, "PIE": 3, "CON": 1}, "rarity": "epic", "value": 620,
+        "description": "Armour that glows with divine radiance. Undead recoil from its wearer. +2 STR, +3 PIE, +1 CON.",
+    },
+
+    # ═══════════════════════════════════════════════════════════════
+    #  CLASS-SPECIFIC HEAD ARMOR
+    # ═══════════════════════════════════════════════════════════════
+
+    "Monk's Training Band": {
+        "name": "Monk's Training Band", "slot": "head", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 2, "speed_mod": 0,
+        "stat_bonuses": {"WIS": 2, "DEX": 1}, "rarity": "uncommon", "value": 35,
+        "description": "A cloth band worn across the brow during Ki training. +2 WIS, +1 DEX.",
+    },
+    "Grandmaster's Crown": {
+        "name": "Grandmaster's Crown", "slot": "head", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 5, "speed_mod": 1,
+        "stat_bonuses": {"WIS": 3, "DEX": 2}, "rarity": "epic", "value": 380,
+        "description": "The headband of a true grandmaster. Ki flows freely through the wearer. +3 WIS, +2 DEX.",
+    },
+    "Ranger's Feathered Cap": {
+        "name": "Ranger's Feathered Cap", "slot": "head", "armor_tier": "light",
+        "defense": 1, "magic_resist": 1, "speed_mod": 0,
+        "stat_bonuses": {"DEX": 1, "WIS": 1}, "rarity": "common", "value": 14,
+        "description": "A wide-brimmed cap with a hawk feather. +1 DEX, +1 WIS.",
+    },
+    "Druid's Antler Crown": {
+        "name": "Druid's Antler Crown", "slot": "head", "armor_tier": "medium",
+        "defense": 3, "magic_resist": 4, "speed_mod": 0,
+        "stat_bonuses": {"WIS": 2, "CON": 1}, "rarity": "rare", "value": 160,
+        "description": "A helm adorned with stag antlers. The old forest remembers its wearer. +2 WIS, +1 CON.",
+    },
+    "Thief's Shadow Cowl": {
+        "name": "Thief's Shadow Cowl", "slot": "head", "armor_tier": "light",
+        "defense": 2, "magic_resist": 3, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 3}, "rarity": "rare", "value": 155,
+        "description": "A cowl that bends shadow around the face. +3 DEX.",
+    },
+    "Phantom Cowl": {
+        "name": "Phantom Cowl", "slot": "head", "armor_tier": "light",
+        "defense": 3, "magic_resist": 4, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 4}, "rarity": "epic", "value": 360,
+        "description": "A legendary hood from the guild vault. The wearer is almost impossible to track. +4 DEX.",
+    },
+    "Holy Helm": {
+        "name": "Holy Helm", "slot": "head", "armor_tier": "heavy",
+        "defense": 8, "magic_resist": 4, "speed_mod": -1,
+        "stat_bonuses": {"CON": 1, "PIE": 1}, "rarity": "uncommon", "value": 90,
+        "description": "A helm blessed at the temple. +1 CON, +1 PIE.",
+    },
+    "Paladin's Greathelm": {
+        "name": "Paladin's Greathelm", "slot": "head", "armor_tier": "heavy",
+        "defense": 12, "magic_resist": 6, "speed_mod": -1,
+        "stat_bonuses": {"CON": 2, "PIE": 2}, "rarity": "epic", "value": 440,
+        "description": "A magnificent helm bearing the sunburst of divine office. +2 CON, +2 PIE.",
+    },
+    "Arcane Cowl": {
+        "name": "Arcane Cowl", "slot": "head", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 6, "speed_mod": 0,
+        "stat_bonuses": {"INT": 2, "WIS": 1}, "rarity": "rare", "value": 160,
+        "description": "A dark cowl embroidered with sigils of power. +2 INT, +1 WIS.",
+    },
+
+    # ═══════════════════════════════════════════════════════════════
+    #  CLASS-SPECIFIC HANDS
+    # ═══════════════════════════════════════════════════════════════
+
+    "Monk's Iron Knuckles": {
+        "name": "Monk's Iron Knuckles", "slot": "hands", "armor_tier": "clothing",
+        "defense": 1, "magic_resist": 1, "speed_mod": 0,
+        "stat_bonuses": {"WIS": 2, "STR": 1}, "rarity": "rare", "value": 130,
+        "description": "Iron knuckle-guards that channel Ki into each strike. +2 WIS, +1 STR.",
+    },
+    "Arcane Focus Gloves": {
+        "name": "Arcane Focus Gloves", "slot": "hands", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 4, "speed_mod": 0,
+        "stat_bonuses": {"INT": 2}, "rarity": "rare", "value": 140,
+        "description": "Gloves sewn with focus-crystals at the fingertips. Spells channel cleanly. +2 INT.",
+    },
+    "Ranger's Bracers": {
+        "name": "Ranger's Bracers", "slot": "hands", "armor_tier": "light",
+        "defense": 2, "magic_resist": 1, "speed_mod": 0,
+        "stat_bonuses": {"DEX": 2, "WIS": 1}, "rarity": "uncommon", "value": 60,
+        "description": "Vambraces of tooled leather. Protect the draw arm and improve aim. +2 DEX, +1 WIS.",
+    },
+    "Shadow Wraps": {
+        "name": "Shadow Wraps", "slot": "hands", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 2, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 3}, "rarity": "rare", "value": 140,
+        "description": "Dark silk wraps dyed with shadow essence. +3 DEX.",
+    },
+    "Holy Gauntlets": {
+        "name": "Holy Gauntlets", "slot": "hands", "armor_tier": "heavy",
+        "defense": 4, "magic_resist": 3, "speed_mod": 0,
+        "stat_bonuses": {"STR": 1, "PIE": 1}, "rarity": "uncommon", "value": 75,
+        "description": "Gauntlets blessed in a temple forge. +1 STR, +1 PIE.",
+    },
+    "Fighter's Iron Fists": {
+        "name": "Fighter's Iron Fists", "slot": "hands", "armor_tier": "heavy",
+        "defense": 5, "magic_resist": 0, "speed_mod": 0,
+        "stat_bonuses": {"STR": 2, "CON": 1}, "rarity": "rare", "value": 140,
+        "description": "Reinforced plate gauntlets that add weight to every punch. +2 STR, +1 CON.",
+    },
+    "Warden's Bracers": {
+        "name": "Warden's Bracers", "slot": "hands", "armor_tier": "medium",
+        "defense": 3, "magic_resist": 3, "speed_mod": 0,
+        "stat_bonuses": {"CON": 1, "WIS": 2}, "rarity": "rare", "value": 145,
+        "description": "Bracers engraved with old Warden ward-runes. +1 CON, +2 WIS.",
+    },
+
+    # ═══════════════════════════════════════════════════════════════
+    #  CLASS-SPECIFIC FEET
+    # ═══════════════════════════════════════════════════════════════
+
+    "Monk's Sandals": {
+        "name": "Monk's Sandals", "slot": "feet", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 1, "speed_mod": 2,
+        "stat_bonuses": {"WIS": 2, "DEX": 1}, "rarity": "uncommon", "value": 42,
+        "description": "Straw sandals tied with blessing-cords. Allow Ki to flow through the earth. +2 WIS, +1 DEX.",
+    },
+    "Temple Sandals": {
+        "name": "Temple Sandals", "slot": "feet", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 3, "speed_mod": 2,
+        "stat_bonuses": {"WIS": 3, "DEX": 1}, "rarity": "rare", "value": 130,
+        "description": "Ceremonial sandals worn during the highest rites. The wearer barely touches the ground. +3 WIS, +1 DEX.",
+    },
+    "Mage's Slippers": {
+        "name": "Mage's Slippers", "slot": "feet", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 2, "speed_mod": 1,
+        "stat_bonuses": {"INT": 1}, "rarity": "uncommon", "value": 35,
+        "description": "Enchanted slippers that glide silently. +1 INT.",
+    },
+    "Nature's Step Boots": {
+        "name": "Nature's Step Boots", "slot": "feet", "armor_tier": "light",
+        "defense": 3, "magic_resist": 2, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 2, "WIS": 1}, "rarity": "rare", "value": 160,
+        "description": "Boots made from living bark and forest leather. Leave no tracks. +2 DEX, +1 WIS.",
+    },
+    "Shadow Stalker Boots": {
+        "name": "Shadow Stalker Boots", "slot": "feet", "armor_tier": "light",
+        "defense": 3, "magic_resist": 3, "speed_mod": 3,
+        "stat_bonuses": {"DEX": 3}, "rarity": "epic", "value": 400,
+        "description": "Legendary boots worn by the greatest assassins. +3 DEX.",
+    },
+    "Holy Sabatons": {
+        "name": "Holy Sabatons", "slot": "feet", "armor_tier": "heavy",
+        "defense": 6, "magic_resist": 2, "speed_mod": 0,
+        "stat_bonuses": {"CON": 1, "PIE": 1}, "rarity": "uncommon", "value": 90,
+        "description": "Plate sabatons blessed with a prayer of steadfastness. +1 CON, +1 PIE.",
+    },
+    "Battle Greaves": {
+        "name": "Battle Greaves", "slot": "feet", "armor_tier": "heavy",
+        "defense": 8, "magic_resist": 0, "speed_mod": -1,
+        "stat_bonuses": {"STR": 1, "CON": 2}, "rarity": "rare", "value": 170,
+        "description": "Heavy battle greaves that add punishing weight to every kick. +1 STR, +2 CON.",
+    },
+
+    # ═══════════════════════════════════════════════════════════════
+    #  EXPANDED SHIELDS
+    # ═══════════════════════════════════════════════════════════════
+
+    "Holy Shield": {
+        "name": "Holy Shield", "slot": "off_hand", "armor_tier": "shield",
+        "defense": 7, "magic_resist": 5, "speed_mod": 0,
+        "stat_bonuses": {"PIE": 1}, "rarity": "rare", "value": 190,
+        "description": "A shield consecrated in a great temple. Effective against shadow. +1 PIE.",
+    },
+    "Champion's Shield": {
+        "name": "Champion's Shield", "slot": "off_hand", "armor_tier": "shield",
+        "defense": 10, "magic_resist": 2, "speed_mod": -1,
+        "stat_bonuses": {"CON": 2, "STR": 1}, "rarity": "rare", "value": 210,
+        "description": "A broad tournament shield of a grand champion. +2 CON, +1 STR.",
+    },
+    "Knight's Bulwark": {
+        "name": "Knight's Bulwark", "slot": "off_hand", "armor_tier": "shield",
+        "defense": 13, "magic_resist": 3, "speed_mod": -1,
+        "stat_bonuses": {"CON": 3}, "rarity": "epic", "value": 420,
+        "description": "A legendary shield passed down through the knightly order. +3 CON.",
+    },
+    "Warden's Ward": {
+        "name": "Warden's Ward", "slot": "off_hand", "armor_tier": "shield",
+        "defense": 8, "magic_resist": 8, "speed_mod": 0,
+        "stat_bonuses": {"WIS": 2, "CON": 1}, "rarity": "epic", "value": 440,
+        "description": "A shield carved from warding-wood. Exceptional magic resistance. +2 WIS, +1 CON.",
+    },
+
+    # ═══════════════════════════════════════════════════════════════
+    #  EXPANDED CROWN (Ion Stones + Circlets)
+    # ═══════════════════════════════════════════════════════════════
+
+    "Emerald Ion Stone": {
+        "name": "Emerald Ion Stone", "slot": "crown", "subtype": "ion stone",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 4, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 2}, "rarity": "rare", "value": 185,
+        "description": "An emerald ion stone orbiting the head, lending nimble grace. +2 DEX.",
+    },
+    "Topaz Ion Stone": {
+        "name": "Topaz Ion Stone", "slot": "crown", "subtype": "ion stone",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 4, "speed_mod": 0,
+        "stat_bonuses": {"WIS": 2}, "rarity": "rare", "value": 185,
+        "description": "A warm topaz stone that deepens spiritual insight. +2 WIS.",
+    },
+    "Onyx Ion Stone": {
+        "name": "Onyx Ion Stone", "slot": "crown", "subtype": "ion stone",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 6, "speed_mod": 0,
+        "stat_bonuses": {"CON": 2}, "rarity": "rare", "value": 190,
+        "description": "A black ion stone that absorbs shadow energy. +2 CON.",
+    },
+    "Monk's Third Eye": {
+        "name": "Monk's Third Eye", "slot": "crown", "subtype": "ornament",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 6, "speed_mod": 1,
+        "stat_bonuses": {"WIS": 3, "DEX": 1}, "rarity": "epic", "value": 400,
+        "description": "A crystal bound to the brow by a silk cord. Heightens Ki awareness. +3 WIS, +1 DEX.",
+    },
+    "Thief's Mark": {
+        "name": "Thief's Mark", "slot": "crown", "subtype": "ornament",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 4, "speed_mod": 2,
+        "stat_bonuses": {"DEX": 3}, "rarity": "epic", "value": 390,
+        "description": "A dark ornament worn by the guild's finest. Marks one as a master of the craft. +3 DEX.",
+    },
+    "Ranger's Brow Band": {
+        "name": "Ranger's Brow Band", "slot": "crown", "subtype": "circlet",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 2, "speed_mod": 1,
+        "stat_bonuses": {"WIS": 1, "DEX": 1}, "rarity": "uncommon", "value": 45,
+        "description": "A leather brow band worn by forest scouts. +1 WIS, +1 DEX.",
+    },
+
+    # ═══════════════════════════════════════════════════════════════
+    #  EXPANDED NECK SLOT (Class-flavoured)
+    # ═══════════════════════════════════════════════════════════════
+
+    "Monk's Prayer Beads": {
+        "name": "Monk's Prayer Beads", "slot": "neck", "subtype": "necklace",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 3, "speed_mod": 0,
+        "stat_bonuses": {"WIS": 2}, "rarity": "uncommon", "value": 55,
+        "description": "A loop of carved bone beads used during meditation. +2 WIS.",
+    },
+    "Ki Master's Chain": {
+        "name": "Ki Master's Chain", "slot": "neck", "subtype": "amulet",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 5, "speed_mod": 1,
+        "stat_bonuses": {"WIS": 4, "DEX": 2}, "rarity": "epic", "value": 460,
+        "description": "A legendary chain worn by the greatest monks. The links pulse with Ki energy. +4 WIS, +2 DEX.",
+    },
+    "Mage's Spell Focus": {
+        "name": "Mage's Spell Focus", "slot": "neck", "subtype": "amulet",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 4, "speed_mod": 0,
+        "stat_bonuses": {"INT": 2}, "rarity": "uncommon", "value": 70,
+        "description": "A crystal amulet that reduces spell feedback. +2 INT.",
+    },
+    "Archmage's Pendant": {
+        "name": "Archmage's Pendant", "slot": "neck", "subtype": "amulet",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 7, "speed_mod": 0,
+        "stat_bonuses": {"INT": 3, "WIS": 2}, "rarity": "epic", "value": 470,
+        "description": "The pendant of a true archmage. +3 INT, +2 WIS.",
+    },
+    "Ranger's Nature Token": {
+        "name": "Ranger's Nature Token", "slot": "neck", "subtype": "pendant",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 2, "speed_mod": 0,
+        "stat_bonuses": {"DEX": 2, "WIS": 2}, "rarity": "uncommon", "value": 65,
+        "description": "A token carved from a tree that survived a Fading event. +2 DEX, +2 WIS.",
+    },
+    "Assassin's Mark": {
+        "name": "Assassin's Mark", "slot": "neck", "subtype": "pendant",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 3, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 4}, "rarity": "epic", "value": 450,
+        "description": "A pendant marking the wearer as a master assassin. +4 DEX.",
+    },
+    "Warden's Ward Necklace": {
+        "name": "Warden's Ward Necklace", "slot": "neck", "subtype": "amulet",
+        "armor_tier": "clothing", "defense": 2, "magic_resist": 5, "speed_mod": 0,
+        "stat_bonuses": {"WIS": 3, "CON": 1}, "rarity": "epic", "value": 465,
+        "description": "A necklace bearing the last Warden ward-seal. +3 WIS, +1 CON.",
+    },
+    "Fighter's Trophy Chain": {
+        "name": "Fighter's Trophy Chain", "slot": "neck", "subtype": "necklace",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 1, "speed_mod": 0,
+        "stat_bonuses": {"STR": 2, "CON": 2}, "rarity": "rare", "value": 165,
+        "description": "A chain hung with trophies from past victories. +2 STR, +2 CON.",
+    },
+
     # ── Accessories ──
     "Ring of Strength": {
         "name": "Ring of Strength", "slot": "accessory",
