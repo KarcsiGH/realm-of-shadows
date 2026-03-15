@@ -238,6 +238,40 @@ MAGE_WEAPONS = [
        spell_bonus=14, speed_mod=2,
        enchant_element="fire", enchant_bonus=6, enchant_name="Starfire",
        damage_stat={"INT": 0.32}),
+
+    # ── Rods (common → epic) ──────────────────────────────────────────────
+    _w("Apprentice Rod", "Rod", 9, "blunt", {"INT": 1},
+       35, "common", "A plain iron rod etched with basic sigils. +1 INT.",
+       damage_stat={"INT": 0.32}),
+    _w("Arcane Rod", "Rod", 14, "blunt", {"INT": 2},
+       90, "uncommon", "A runed rod that channels arcane force. +2 INT.",
+       damage_stat={"INT": 0.30, "STR": 0.10}),
+    _w("Force Rod", "Rod", 20, "blunt", {"INT": 2, "STR": 1},
+       180, "rare", "Heavy rod for arcane melee impact. +2 INT, +1 STR.",
+       damage_stat={"INT": 0.28, "STR": 0.14}),
+    _w("Void Rod", "Rod", 28, "blunt", {"INT": 3, "WIS": 2},
+       380, "epic", "A rod of condensed void energy. +3 INT, +2 WIS.",
+       spell_bonus=8, damage_stat={"INT": 0.32, "WIS": 0.10}),
+
+    # ── Orbs — expanded progression ───────────────────────────────────────
+    _w("Arcane Orb", "Orb", 7, "arcane", {"INT": 1},
+       40, "common", "A crystalline orb that focuses arcane thought. +1 INT.",
+       damage_stat={"INT": 0.28, "WIS": 0.12}),
+    _w("Wisdom Orb", "Orb", 9, "arcane", {"WIS": 2, "INT": 1},
+       80, "uncommon", "A jade orb resonant with natural insight. +2 WIS, +1 INT.",
+       damage_stat={"WIS": 0.24, "INT": 0.16}),
+    _w("Eclipse Orb", "Orb", 14, "arcane", {"INT": 2, "WIS": 2},
+       200, "rare", "A dark orb that eclipses both mind and nature. +2 INT, +2 WIS.",
+       spell_bonus=6, damage_stat={"INT": 0.22, "WIS": 0.18}),
+    _w("Infinity Orb", "Orb", 20, "arcane", {"INT": 3, "WIS": 2, "PIE": 1},
+       420, "epic", "A perfect orb containing all schools of magic. +3 INT, +2 WIS, +1 PIE.",
+       spell_bonus=10, damage_stat={"INT": 0.20, "WIS": 0.15, "PIE": 0.05}),
+
+    # ── Grimoire ──────────────────────────────────────────────────────────
+    _w("Battlemage Grimoire", "Grimoire", 12, "blunt", {"INT": 2, "WIS": 2},
+       220, "rare",
+       "A tome bound in dragonhide, wielded as a weapon. +2 INT, +2 WIS.",
+       spell_bonus=8, damage_stat={"INT": 0.26, "WIS": 0.14}),
 ]
 
 MAGE_ARMOR = [
@@ -337,6 +371,64 @@ CLERIC_WEAPONS = [
        480, "epic", "A scepter that radiates pure divine energy. +4 PIE, +4 WIS.",
        spell_bonus=14, enchant_element="divine", enchant_bonus=6, enchant_name="Radiance",
        damage_stat={"STR": 0.16, "INT": 0.24}),
+    # ── Scepters (PIE+INT — divine focus) ──────────────────────────────────
+    _w("Initiate's Scepter", "Scepter", 8, "blunt", {"PIE": 1, "INT": 1},
+       30, "common", "A short bronze scepter engraved with holy script. +1 PIE, +1 INT.",
+       damage_stat={"PIE": 0.30, "INT": 0.15}),
+    _w("Holy Scepter", "Scepter", 13, "blunt", {"PIE": 2, "INT": 1},
+       90, "uncommon", "A silver scepter crowned with a divine sun emblem. +2 PIE, +1 INT.",
+       spell_bonus=4, damage_stat={"PIE": 0.32, "INT": 0.12}),
+    _w("Grand Scepter", "Scepter", 20, "blunt", {"PIE": 3, "INT": 2},
+       200, "rare", "An ornate ceremonial scepter charged with divine will. +3 PIE, +2 INT.",
+       spell_bonus=8, enchant_element="divine", enchant_bonus=3, enchant_name="Sacred",
+       damage_stat={"PIE": 0.34, "INT": 0.14}),
+    _w("Archpriest's Scepter", "Scepter", 30, "blunt", {"PIE": 4, "WIS": 2, "INT": 2},
+       420, "epic", "The scepter of the highest clergy. Radiates divine authority. +4 PIE, +2 WIS, +2 INT.",
+       spell_bonus=12, enchant_element="divine", enchant_bonus=6, enchant_name="Consecrated",
+       damage_stat={"PIE": 0.35, "WIS": 0.10, "INT": 0.10}),
+
+    # ── Censers (PIE+WIS — holy rites weapons) ──────────────────────────
+    _w("Bronze Censer", "Censer", 11, "blunt", {"PIE": 2, "WIS": 1},
+       70, "uncommon", "A swinging incense censer, its smoke blessed. +2 PIE, +1 WIS.",
+       damage_stat={"PIE": 0.28, "WIS": 0.14}),
+    _w("Censer of Devotion", "Censer", 18, "blunt", {"PIE": 3, "WIS": 2},
+       180, "rare", "A silver censer of sacred resin. +3 PIE, +2 WIS.",
+       spell_bonus=6, enchant_element="divine", enchant_bonus=3, enchant_name="Blessed",
+       damage_stat={"PIE": 0.30, "WIS": 0.16}),
+    _w("Archpriest's Censer", "Censer", 26, "blunt", {"PIE": 4, "WIS": 3},
+       380, "epic", "A golden censer of legendary piety. Fills foes with divine dread. +4 PIE, +3 WIS.",
+       spell_bonus=10, enchant_element="divine", enchant_bonus=5, enchant_name="Hallowed",
+       damage_stat={"PIE": 0.32, "WIS": 0.18}),
+
+    # ── Sacred Wands (PIE-scaled) ────────────────────────────────────────
+    _w("Wand of Mending", "Wand", 7, "arcane", {"PIE": 2},
+       40, "common", "A simple wand that channels healing intent. +2 PIE.",
+       spell_bonus=4, damage_stat={"PIE": 0.36}),
+    _w("Wand of Smiting", "Wand", 13, "arcane", {"PIE": 2, "STR": 1},
+       110, "uncommon", "A wand that delivers divine smite strikes. +2 PIE, +1 STR.",
+       enchant_element="divine", enchant_bonus=4, enchant_name="Holy",
+       damage_stat={"PIE": 0.30, "STR": 0.12}),
+    _w("Wand of Divine Fury", "Wand", 22, "arcane", {"PIE": 3, "INT": 1},
+       300, "rare", "A wand crackling with righteous energy. +3 PIE, +1 INT.",
+       spell_bonus=8, enchant_element="divine", enchant_bonus=6, enchant_name="Radiant",
+       damage_stat={"PIE": 0.32, "INT": 0.10}),
+
+    # ── Morning Stars (STR+PIE) ──────────────────────────────────────────
+    _w("Iron Morning Star", "Morning Star", 14, "blunt", {"STR": 1, "PIE": 1},
+       65, "common", "A spiked iron ball on a chain. +1 STR, +1 PIE.",
+       damage_stat={"STR": 0.30, "PIE": 0.14}),
+    _w("Silver Morning Star", "Morning Star", 22, "blunt", {"STR": 2, "PIE": 2},
+       180, "rare", "A silver-spiked morning star. Blessed metal burns undead. +2 STR, +2 PIE.",
+       enchant_element="divine", enchant_bonus=4, enchant_name="Silver-Blessed",
+       damage_stat={"STR": 0.28, "PIE": 0.18}),
+
+    # ── Flails (STR+PIE) ─────────────────────────────────────────────────
+    _w("Temple Flail", "Flail", 12, "blunt", {"STR": 1, "PIE": 1},
+       60, "common", "A weighted flail used in temple defence. +1 STR, +1 PIE.",
+       damage_stat={"STR": 0.32, "PIE": 0.12}),
+    _w("War Flail", "Flail", 24, "blunt", {"STR": 3, "CON": 1},
+       210, "rare", "A battle-hardened flail favoured by crusaders. +3 STR, +1 CON.",
+       damage_stat={"STR": 0.40}),
 ]
 
 CLERIC_ARMOR = [
