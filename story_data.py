@@ -765,6 +765,18 @@ NPCS = {
         "location": "spiders_nest",
         "portrait_color": (90, 40, 140),
     },
+    "old_petra": {
+        "name": "Old Petra",
+        "title": "Briarhollow Elder",
+        "location": "briarhollow",
+        "portrait_color": (190, 180, 160),
+    },
+    "young_tomas": {
+        "name": "Young Tomas",
+        "title": "Local Youth",
+        "location": "briarhollow",
+        "portrait_color": (160, 195, 160),
+    },
 }
 
 
@@ -791,6 +803,7 @@ NPC_DIALOGUES = {
             ],
             "tree": {
                 "id": "maren_betrayal",
+                "locked": True,
                 "nodes": {
                     "start": {
                         "speaker": "Maren",
@@ -1497,6 +1510,97 @@ NPC_DIALOGUES = {
                 },
             },
         },
+        # Turn-in: missing patrol journal found in goblin warren
+        {
+            "conditions": [
+                {"flag": "quest.side_missing_patrol.state", "op": ">=", "value": 2},
+                {"flag": "quest.side_missing_patrol.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "rowan_patrol_turnin",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Captain Rowan",
+                        "text": "You found the journal? So they're gone. All six of them. "
+                                "I'll need a moment. The road just... wasn't there anymore. "
+                                "That's not wolves or goblins — that's something else entirely.\n"
+                                "Thank you for bringing it back. Their families deserved to know.",
+                        "on_enter": [{"action": "complete_quest", "quest": "side_missing_patrol"}],
+                        "choices": [
+                            {"text": "The Fading took the road. It's spreading.", "next": "fading"},
+                            {"text": "We're sorry for your loss.", "next": "sorry"},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "Captain Rowan",
+                        "text": "The Fading. Maren's word for it. I thought it was superstition. "
+                                "Now I don't know what to believe. How do you fight something "
+                                "that erases roads?",
+                        "choices": [{"text": "That's what we're trying to find out.", "next": None}],
+                    },
+                    "sorry": {
+                        "speaker": "Captain Rowan",
+                        "text": "So am I. Good soldiers. Keep moving — I'll handle the paperwork. "
+                                "You have bigger problems to deal with.",
+                        "choices": [{"text": "We will.", "next": None}],
+                    },
+                },
+            },
+        },
+        # Turn-in: wolf pelts collected
+        {
+            "conditions": [
+                {"flag": "wolf_pelts_quest.count", "op": ">=", "value": 5},
+                {"flag": "quest.side_wolf_pelts.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "rowan_wolf_turnin",
+                "nodes": {
+                    "start": {
+                        "speaker": "Captain Rowan",
+                        "text": "You've got the pelts? Good. The tanner's been waiting. "
+                                "Here's your coin — well earned.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "side_wolf_pelts"},
+                        ],
+                        "choices": [{"text": "Happy to help.", "next": None}],
+                    },
+                },
+            },
+        },
+        # Post-mine: abandoned mine cleared
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {
+                "id": "rowan_post_mine",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Captain Rowan",
+                        "text": "You cleared the mine. I won't pretend I thought you'd pull it off. "
+                                "The townsfolk are sleeping better. I suppose I owe you a drink.",
+                        "choices": [
+                            {"text": "What happens to the mine now?", "next": "mine_fate"},
+                            {"text": "Just doing our job.", "next": "modest"},
+                        ],
+                    },
+                    "mine_fate": {
+                        "speaker": "Captain Rowan",
+                        "text": "The Guild wants to reopen it. I say leave it sealed. "
+                                "Whatever Valdris was doing down there — I don't want it under "
+                                "our feet again. But nobody asks guards.",
+                        "choices": [{"text": "Thanks, Captain.", "next": None}],
+                    },
+                    "modest": {
+                        "speaker": "Captain Rowan",
+                        "text": "Don't be modest. Half my garrison wouldn't have gone in. "
+                                "Take the compliment.",
+                        "choices": [{"text": "We'll be moving on soon.", "next": None}],
+                    },
+                },
+            },
+        },
         # Default
         {
             "conditions": [],
@@ -1545,8 +1649,10 @@ NPC_DIALOGUES = {
                         "text": "She left before dawn. Paid her tab in full — in advance, "
                                 "actually, which surprised me. Maren didn't seem like someone "
                                 "who planned to leave. Something must have pushed her.",
+                        "on_enter": [{"action": "meet_npc", "npc": "bess"}],
                         "choices": [
                             {"text": "Did she say anything before she went?", "next": "last_words"},
+                            {"text": "Do you know where she went?", "next": "where_she_went"},
                             {"text": "Was she alone?", "next": "alone"},
                             {"text": "Any word from the road since?", "next": "road_word"},
                             {"text": "Thanks, Bess.", "next": "bye"},
@@ -1557,6 +1663,16 @@ NPC_DIALOGUES = {
                         "text": "She came down before first light and left a note on the bar. "
                                 "Just said: 'Tell them I'm sorry. Tell them I know what I'm doing.' "
                                 "I don't know who 'them' was. I figure it was you.",
+                        "next": "start",
+                    },
+                    "where_she_went": {
+                        "speaker": "Bess",
+                        "text": "The note she left said one thing clearly: 'Find me at the Spire.' "
+                                "I don't know what that means, but a merchant who passed through "
+                                "yesterday said there's a black tower far out in the Ashlands — "
+                                "Valdris' Spire, they call it. Sounds like where she was headed. "
+                                "You'll need whatever opened the crypt to get there, I'd wager. "
+                                "She had that look — the one that means she's already planned past you.",
                         "next": "start",
                     },
                     "alone": {
@@ -2710,7 +2826,7 @@ NPC_DIALOGUES = {
         # Act 3 — Sanctum under pressure, Aldara near breaking
         {
             "conditions": [
-                {"flag": "quest.main_act3_spire.state", "op": ">=", "value": 1},
+                {"flag": "maren.left", "op": "==", "value": True},
             ],
             "tree": {
                 "id": "aldara_act3",
@@ -3270,7 +3386,7 @@ NPC_DIALOGUES = {
         # Act 3 — the Fading is critical, Sira is doing final calculations
         {
             "conditions": [
-                {"flag": "quest.main_act3_spire.state", "op": ">=", "value": 1},
+                {"flag": "maren.left", "op": "==", "value": True},
             ],
             "tree": {
                 "id": "sira_act3",
@@ -4067,6 +4183,167 @@ NPC_DIALOGUES = {
             },
         },
     ],
+
+    # ── Warden Liaison ────────────────────────────────────────────────────────
+    "warden_liaison": [
+        # Initiate tier (no hearthstones yet)
+        {
+            "conditions": [{"flag": "item.hearthstone.1", "op": "==", "value": False}],
+            "tree": {
+                "id": "warden_initiate",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "You wear the mark of the Warden calling.\nYour rank: Initiate.\n\nThe first Hearthstone will prove you are more than that.",
+                        "choices": [
+                            {"text": "What does Warden rank mean?", "next": "explain_ranks"},
+                            {"text": "What are my current bonuses?", "next": "initiate_bonuses"},
+                            {"text": "How do I advance?", "next": "how_advance"},
+                            {"text": "Leave.", "next": None},
+                        ]
+                    },
+                    "explain_ranks": {
+                        "speaker": "Warden Liaison",
+                        "text": "The order measures its members by what they have endured.\n\nInitiate — Scout — Warden — Senior Warden — Warden-Commander.\n\nEach rank brings tangible growth. The order believes in earning what you carry.",
+                        "choices": [{"text": "Back.", "next": "start"}]
+                    },
+                    "initiate_bonuses": {
+                        "speaker": "Warden Liaison",
+                        "text": "Rank: Initiate\n\nNo bonuses yet. You are untested.\n\nNext: Scout rank grants +1 all stats, +5% XP.\nProve yourself at the Abandoned Mine.",
+                        "choices": [{"text": "Back.", "next": "start"}]
+                    },
+                    "how_advance": {
+                        "speaker": "Warden Liaison",
+                        "text": "Rank advances when you recover Hearthstones and reach the required level.\n\nFirst stone (level 5+): Scout.\nThird stone (level 10+): Warden.\nAll five stones (level 13+): Senior Warden.\nValdris defeated (level 15+): Warden-Commander.",
+                        "choices": [{"text": "Back.", "next": "start"}]
+                    },
+                }
+            }
+        },
+        # Scout tier (1 hearthstone)
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.1", "op": "==", "value": True},
+                {"flag": "item.hearthstone.3", "op": "==", "value": False},
+            ],
+            "tree": {
+                "id": "warden_scout",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "The first Hearthstone recovered. You are no longer untested.\nYour rank: Scout.\n\nThe old order would be glad.",
+                        "choices": [
+                            {"text": "What are my bonuses?", "next": "scout_bonuses"},
+                            {"text": "How do I reach Warden rank?", "next": "advance_warden"},
+                            {"text": "Leave.", "next": None},
+                        ]
+                    },
+                    "scout_bonuses": {
+                        "speaker": "Warden Liaison",
+                        "text": "Rank: Scout\n\n+1 to all stats\n+5% XP gain\n\nSmall. But the first step always is.",
+                        "choices": [{"text": "Back.", "next": "start"}]
+                    },
+                    "advance_warden": {
+                        "speaker": "Warden Liaison",
+                        "text": "The third Hearthstone and level 10 will elevate you to Warden rank.\n\nWarden rank grants: +2 all stats, +5% max HP, +10% XP.\n\nDragon\'s Tooth holds what you need.",
+                        "choices": [{"text": "Back.", "next": "start"}]
+                    },
+                }
+            }
+        },
+        # Warden tier (3 hearthstones)
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.3", "op": "==", "value": True},
+                {"flag": "item.hearthstone.5", "op": "==", "value": False},
+            ],
+            "tree": {
+                "id": "warden_rank",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Three stones. The order\'s heart is half-restored.\nYour rank: Warden.\n\nFew carry this name with meaning. You are among them.",
+                        "choices": [
+                            {"text": "What are my bonuses?", "next": "warden_bonuses"},
+                            {"text": "What comes next?", "next": "advance_senior"},
+                            {"text": "Leave.", "next": None},
+                        ]
+                    },
+                    "warden_bonuses": {
+                        "speaker": "Warden Liaison",
+                        "text": "Rank: Warden\n\n+2 to all stats\n+5% max HP\n+10% XP gain\n\nYou carry the weight of this world\'s protection now.",
+                        "choices": [{"text": "Back.", "next": "start"}]
+                    },
+                    "advance_senior": {
+                        "speaker": "Warden Liaison",
+                        "text": "Senior Warden requires all five Hearthstones and level 13.\n\nSenior Warden grants: +4 all stats, +10% HP, +5% damage, +15% XP.\n\nThe Pale Coast and Windswept Isle await.",
+                        "choices": [{"text": "Back.", "next": "start"}]
+                    },
+                }
+            }
+        },
+        # Senior Warden (all 5 hearthstones)
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.5", "op": "==", "value": True},
+                {"flag": "boss_defeated.shadow_valdris", "op": "==", "value": False},
+            ],
+            "tree": {
+                "id": "warden_senior",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "All five Hearthstones recovered.\nYour rank: Senior Warden.\n\nThe old order had hundreds who carried this rank.\nNow there is only you.",
+                        "choices": [
+                            {"text": "What are my bonuses?", "next": "senior_bonuses"},
+                            {"text": "What is Warden-Commander?", "next": "advance_commander"},
+                            {"text": "Leave.", "next": None},
+                        ]
+                    },
+                    "senior_bonuses": {
+                        "speaker": "Warden Liaison",
+                        "text": "Rank: Senior Warden\n\n+4 to all stats\n+10% max HP\n+5% damage dealt\n+15% XP gain\n\nThe Fading itself will feel you now.",
+                        "choices": [{"text": "Back.", "next": "start"}]
+                    },
+                    "advance_commander": {
+                        "speaker": "Warden Liaison",
+                        "text": "Only Valdris\'s defeat can bestow Warden-Commander.\nThe highest the mortal order can grant.\n\nIt has never been given to a living person.\nThe last Commander died when the Spire fell.",
+                        "choices": [{"text": "Back.", "next": "start"}]
+                    },
+                }
+            }
+        },
+        # Warden-Commander (endgame)
+        {
+            "conditions": [
+                {"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "warden_commander",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Warden-Commander.\n\nThe last to hold this rank built the Spire.\nYou tore down what he left behind.\n\nI have nothing left to teach you.",
+                        "choices": [
+                            {"text": "What are my bonuses?", "next": "commander_bonuses"},
+                            {"text": "Leave.", "next": None},
+                        ]
+                    },
+                    "commander_bonuses": {
+                        "speaker": "Warden Liaison",
+                        "text": "Rank: Warden-Commander\n\n+6 to all stats\n+15% max HP\n+10% damage dealt\n+25% XP gain\n\nYou are what stands between this world and the next Fading.",
+                        "choices": [{"text": "Back.", "next": "start"}]
+                    },
+                }
+            }
+        },
+    ],
+
 }
 
 
@@ -4076,14 +4353,15 @@ NPC_DIALOGUES = {
 # ═══════════════════════════════════════════════════════════════
 
 TOWN_NPCS = {
-    "briarhollow": ["maren", "captain_rowan", "bess"],
-    "woodhaven":   ["elder_theron", "sylla"],
-    "ironhearth":  ["forgemaster_dunn", "merchant_kira"],
-    "greenwood":   ["scout_feryn", "old_moss"],
-    "saltmere":    ["guildmaster_sable", "tide_priest_oran", "dockhand_riv"],
-    "sanctum":     ["high_priest_aldara"],
-    "crystalspire": ["archmage_solen", "teleport_master"],
-    "thornhaven":  ["governor_aldric", "guild_commander_varek", "court_mage_sira"],
+    "briarhollow": ["maren", "captain_rowan", "bess", "old_petra", "young_tomas", 'warden_liaison'],
+    "woodhaven":   ["elder_theron", "sylla", "warden_liaison"],
+    "ironhearth":  ["forgemaster_dunn", "merchant_kira", "warden_liaison"],
+    "greenwood":   ["scout_feryn", "old_moss", "warden_liaison"],
+    "saltmere":    ["guildmaster_sable", "tide_priest_oran", "dockhand_riv", "warden_liaison"],
+    "sanctum":     ["high_priest_aldara", "warden_liaison"],
+    "crystalspire": ["archmage_solen", "teleport_master", 'warden_liaison'],
+    "thornhaven":  ["governor_aldric", "guild_commander_varek", "court_mage_sira",
+                   "city_guard_thornhaven", "refugee_elder", "innkeeper_thornhaven", "warden_liaison"],
 }
 
 
@@ -5773,6 +6051,55 @@ _NEW_DIALOGUES = {
     ],
 
     "high_priest_aldara": [
+        # Act 3 — Sanctum under pressure, maren.left=True is the reliable gate
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "aldara_act3",
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "We have seen a thousand pilgrims a day since the eastern sky went dark. "
+                                "People want somewhere to pray. I cannot tell them their prayers will be enough. "
+                                "I can only tell them they are not alone in the dark.",
+                        "choices": [
+                            {"text": "Are you afraid?", "next": "afraid"},
+                            {"text": "We're going to the Spire.", "next": "spire"},
+                            {"text": "We need absolution before we go.", "next": "absolution"},
+                        ],
+                    },
+                    "afraid": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Every day for forty years I have stood in front of people in pain "
+                                "and told them the light holds. Today I believe it more than I ever have. "
+                                "Not because the evidence is good — it isn't. "
+                                "Because you are still standing.",
+                        "end": True,
+                    },
+                    "spire": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Then go. The Cathedral's blessing goes with you, "
+                                "for whatever weight that carries in a place of shadow. "
+                                "Come back. If you can, come back.",
+                        "on_enter": [{"action": "set_flag", "flag": "blessing.cathedral", "value": True}],
+                        "end": True,
+                    },
+                    "absolution": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Kneel, then. All of you. "
+                                "Whatever you have done, whatever choices you made to survive this far — "
+                                "you made them trying to save a world that doesn't deserve saving half as much "
+                                "as it deserves people like you trying to save it. "
+                                "Go. Be absolved.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "blessing.absolution", "value": True},
+                            {"action": "discover_lore", "lore": "aldara_absolution"},
+                        ],
+                        "end": True,
+                    },
+                },
+            },
+        },
         {
             "conditions": [{"flag": "lore.fading_basics", "op": "==", "value": True}],
             "tree": {
@@ -6295,6 +6622,170 @@ _NEW_DIALOGUES = {
 
     # ── Thornhaven ─────────────────────────────────────────
 
+    "innkeeper_thornhaven": [
+        {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "innkeeper_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Innkeeper Brann",
+                        "text": "You're the ones who went north. I heard what you did up there. I don't have words for it, so I'll settle for this: your coin is no good in this inn. Not now, not ever.",
+                        "choices": [
+                            {"text": "We appreciate it.", "next": None},
+                        ],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "item.hearthstone.5", "op": "==", "value": True}],
+            "tree": {
+                "id": "innkeeper_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Innkeeper Brann",
+                        "text": "The word spreading through the taproom is that someone collected all five stones. If that's true — and it sounds mad, so it probably is — then Valdris' hold on the Fading is broken. Whatever he does next, he does it without that power. That changes things.",
+                        "choices": [
+                            {"text": "We still need to stop him.", "next": "stop"},
+                            {"text": "Just drinks, please.", "next": None},
+                        ],
+                    },
+                    "stop": {
+                        "speaker": "Innkeeper Brann",
+                        "text": "Then go. I'll keep a room warm. Something about this place has always drawn people who finish what they start. You look like that kind.",
+                        "choices": [{"text": "We'll be back.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "innkeeper_maren_left",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Innkeeper Brann",
+                        "text": "That scholar woman came through last night. Left before dawn. Didn't pay, but I didn't ask — she had the look of someone who'd paid enough already. You're looking for her, I assume. North road, then the old garrison trail. After that the maps run out.",
+                        "choices": [
+                            {"text": "Thank you.", "next": None},
+                        ],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "innkeeper_thornhaven_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Innkeeper Brann",
+                        "text": "Capital's been busier than it should be. Refugees from the east — I've given rooms to twelve families this month alone. Good people. Scared. If you're heading east, be careful. The Fading doesn't announce itself.",
+                        "choices": [
+                            {"text": "What have you heard about the eastern situation?", "next": "east"},
+                            {"text": "We'll be careful.", "next": None},
+                        ],
+                    },
+                    "east": {
+                        "speaker": "Innkeeper Brann",
+                        "text": "Villages going quiet — no battle, no warning. Traders stop coming back. I had a regular, Adric, from Millstone. Three years coming through every month. Stopped last autumn. No note, no word. That happens once, it's bad luck. Happens to fifty villages, it's something else.",
+                        "choices": [{"text": "We're looking into it.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
+    "refugee_elder": [
+        {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "refugee_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Somi",
+                        "text": "My village was called Ashbury. Three hundred people. We heard a sound like the world forgetting itself — and then nothing. We ran. Forty-two of us made it here. You stopped the thing that took our home. I don't know if the land will come back. But the thing that took it is gone. That has to be enough.",
+                        "choices": [
+                            {"text": "We're sorry for what was lost.", "next": None},
+                        ],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "item.hearthstone.3", "op": "==", "value": True}],
+            "tree": {
+                "id": "refugee_three_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Somi",
+                        "text": "The guards say people like you have been weakening the Fading. I can feel it — the grey taste in the air is lighter than it was. My people can feel it too. They don't know why. I do. Whatever you're carrying north, carry it fast. Two more. Then end this.",
+                        "choices": [
+                            {"text": "How do you know about the stones?", "next": "know"},
+                            {"text": "We intend to.", "next": None},
+                        ],
+                    },
+                    "know": {
+                        "speaker": "Elder Somi",
+                        "text": "I was keeper of the village shrine — old Warden design, we thought it was just decoration. When the first stone was restored, the shrine lit up for three days. Ancient knowledge, waking up. The stones are anchors. Five of them hold the world in place. Valdris pulled them loose.",
+                        "choices": [{"text": "He won't pull any more.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "refugee_maren_left",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Somi",
+                        "text": "The Fading is weakening — I can feel the air changing. But the source is still there, somewhere north. I've seen the maps. Valdris' Spire. We all know about it. The question is whether someone goes there before he finishes what he started. Are you that someone?",
+                        "choices": [
+                            {"text": "Yes.", "next": "yes"},
+                            {"text": "We're working on it.", "next": None},
+                        ],
+                    },
+                    "yes": {
+                        "speaker": "Elder Somi",
+                        "text": "Then go. My people have nowhere else to be. We'll wait.",
+                        "choices": [{"text": "We'll come back.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "refugee_elder_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Somi",
+                        "text": "I led my village for twenty years. Buried my husband in that soil. Our shrine is a thousand years old — older than the city. The Fading took it in a night. We're camping in the Governor's courtyard. Forty-two of us from three hundred. If you're heading east, understand what you're walking toward.",
+                        "choices": [
+                            {"text": "We understand the stakes.", "next": None},
+                            {"text": "What can you tell us about the Fading?", "next": "fading"},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "Elder Somi",
+                        "text": "It doesn't destroy. It unmakes. Things touched by it don't leave ruins — they leave absence. A field where nothing grows, not even weeds. A village where even the foundations are gone. Whatever is causing it isn't just powerful. It's wrong in a way that goes deeper than power.",
+                        "choices": [{"text": "We're going to stop it.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
     "city_guard_thornhaven": [
         {
             "conditions": [],
@@ -6616,6 +7107,39 @@ _NEW_DIALOGUES = {
     ],
 
     "guild_commander_varek": [
+        # After 4 stones — final push, one stone left (Dragon's Tooth)
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.4", "op": "==", "value": True},
+                {"flag": "item.hearthstone.5", "op": "not_exists"},
+                {"flag": "boss_defeated.shadow_valdris", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "varek_penultimate",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Four stones. One left — the Dragon's Tooth, the volcanic island east of the coast. My operative confirmed the last stone is in the deepest chamber. The guardian there is unlike anything else. Prepare accordingly. After that, the Spire. You're close.",
+                        "choices": [
+                            {"text": "How do we reach Dragon's Tooth?", "next": "reach"},
+                            {"text": "What do you know about the guardian?", "next": "guardian"},
+                            {"text": "We're ready.", "next": None},
+                        ],
+                    },
+                    "reach": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Eastport, then by ship. It's a half-day sail in good weather. The island is active — volcanic vents, unstable ground. The ruins predate the Warden order. Whatever's down there sealed itself in voluntarily.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                    "guardian": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Old. Ancient, even by Warden standards. The reports call it Karreth — a name, not a title. It responds to something called a 'true name' — some kind of ancient binding. If you have that, the fight may be shorter. If not, expect it to be very long.",
+                        "choices": [{"text": "We'll find a way.", "next": None}],
+                    },
+                },
+            },
+        },
         # After getting 3 stones — send to Pale Coast and Windswept Isle
         {
             "conditions": [
@@ -6630,6 +7154,7 @@ _NEW_DIALOGUES = {
                         "speaker": "Guild Commander Varek",
                         "text": "Three stones. I've had people watching — you've done what nobody else managed in a decade. There are two left. My operative found them: the Pale Coast Catacombs to the southwest, and the Windswept Isle ruins — accessible from the coast by ship. Get both. Then go north.",
                         "on_enter": [
+                            {"action": "start_quest", "quest": "main_act3_spire"},
                             {"action": "start_quest", "quest": "main_pale_coast"},
                             {"action": "start_quest", "quest": "main_windswept_isle"},
                         ],
@@ -6704,7 +7229,7 @@ _NEW_DIALOGUES = {
                     "not_stopping": {
                         "speaker": "Guild Commander Varek",
                         "text": "Good. I have an operative who's been tracking his supply routes for six months. I'll arrange a meeting. Don't mention this to the Council — half of them are his. When you're ready to move on the Spire, I can get you resources.",
-                        "on_exit": [
+                        "on_enter": [
                             {"action": "start_quest", "quest": "main_act3_spire"},
                             {"action": "set_flag", "flag": "lore.varek_contact", "value": True},
                         ],
@@ -6721,6 +7246,54 @@ _NEW_DIALOGUES = {
     ],
 
     "court_mage_sira": [
+        # Act 3 — Fading is critical, Sira doing final calculations
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "sira_act3",
+                "nodes": {
+                    "start": {
+                        "speaker": "Court Mage Sira",
+                        "text": "I have eight days of barrier integrity left on my projections. "
+                                "Maybe ten if you're lucky. After that the outer wards collapse entirely "
+                                "and the Fading accelerates beyond any ability to reverse it. "
+                                "Whatever Maren is attempting in that Spire — she's running the same "
+                                "numbers I am. She knows this too.",
+                        "choices": [
+                            {"text": "Is there anything you can do from here?", "next": "here"},
+                            {"text": "What happens if she fails?", "next": "fail"},
+                            {"text": "We're heading to the Spire now.", "next": "godspeed"},
+                        ],
+                    },
+                    "here": {
+                        "speaker": "Court Mage Sira",
+                        "text": "I've been feeding power into the ley lines for three days without sleep. "
+                                "It's like patching a crumbling dam with your hands. "
+                                "I can buy you hours, not days. "
+                                "Go. Be faster than the math.",
+                        "end": True,
+                    },
+                    "fail": {
+                        "speaker": "Court Mage Sira",
+                        "text": "If she fails and all five stones are spent? "
+                                "I think the Fading completes. Everything fades — "
+                                "not destroyed, not dead. Unmade. As if it never was. "
+                                "The records suggest it happened to three other worlds before this one.",
+                        "on_enter": [{"action": "discover_lore", "lore": "fading_other_worlds"}],
+                        "next": "godspeed",
+                    },
+                    "godspeed": {
+                        "speaker": "Court Mage Sira",
+                        "text": "For what it's worth — I've been running every calculation, "
+                                "every model, every simulation I know. "
+                                "Every version where the world survives has you at the center of it. "
+                                "That's not prophecy. It's just the only variable that keeps changing. "
+                                "Don't waste it.",
+                        "end": True,
+                    },
+                },
+            },
+        },
         {
             "conditions": [],
             "tree": {
@@ -7312,35 +7885,63 @@ def get_peaceful_resolution(dungeon_id):
 _TRAINER_DIALOGUES = {
     "trainer_briarhollow": [
         {
-            "condition": None,
-            "lines": [
-                {"speaker": "Guildmaster Oren", "text":
-                    "Experience forges new paths, adventurer. When your abilities are seasoned enough — "
-                    "around level 10 — you may find yourself capable of walking between disciplines."},
-                {"speaker": "Guildmaster Oren", "text":
-                    "A Fighter who hones both sword and holy conviction can become a Paladin. "
-                    "A Thief who masters the shadows becomes something far more dangerous. "
-                    "The Guild calls these transitions."},
-                {"speaker": "Guildmaster Oren", "text":
-                    "Visit the class board in any guild hall when your party reaches level 10. "
-                    "Your attributes must meet the demands of the new path — and not all roads are open to all."},
-            ],
+            "conditions": [],
+            "tree": {
+                "id": "trainer_briarhollow",
+                "nodes": {
+                    "start": {
+                        "speaker": "Guildmaster Oren",
+                        "text": "Experience forges new paths, adventurer. When your abilities are seasoned "
+                                "enough — around level 10 — you may find yourself capable of walking between "
+                                "disciplines.",
+                        "next": "node2",
+                    },
+                    "node2": {
+                        "speaker": "Guildmaster Oren",
+                        "text": "A Fighter who hones both sword and holy conviction can become a Paladin. "
+                                "A Thief who masters the shadows becomes something far more dangerous. "
+                                "The Guild calls these transitions.",
+                        "next": "node3",
+                    },
+                    "node3": {
+                        "speaker": "Guildmaster Oren",
+                        "text": "Visit the class board in any guild hall when your party reaches level 10. "
+                                "Your attributes must meet the demands of the new path — and not all roads "
+                                "are open to all.",
+                        "end": True,
+                    },
+                },
+            },
         },
     ],
     "trainer_ironhearth": [
         {
-            "condition": None,
-            "lines": [
-                {"speaker": "Guildmaster Dorric", "text":
-                    "Aye, I've trained a few who went beyond their first calling. "
-                    "It's not about forgetting what you were — it's about becoming more."},
-                {"speaker": "Guildmaster Dorric", "text":
-                    "I've seen Fighters who studied the arcane become Spellblades. Monks who found the divine "
-                    "and became Templar. And Rangers who walked the shadow — best not ask what became of them."},
-                {"speaker": "Guildmaster Dorric", "text":
-                    "Get to level 10, keep your stats sharp, and talk to the class board in the guild. "
-                    "The old masters say there's a path beyond that too — at level 15 — but I've never seen it."},
-            ],
+            "conditions": [],
+            "tree": {
+                "id": "trainer_ironhearth",
+                "nodes": {
+                    "start": {
+                        "speaker": "Guildmaster Dorric",
+                        "text": "Aye, I've trained a few who went beyond their first calling. "
+                                "It's not about forgetting what you were — it's about becoming more.",
+                        "next": "node2",
+                    },
+                    "node2": {
+                        "speaker": "Guildmaster Dorric",
+                        "text": "I've seen Fighters who studied the arcane become Spellblades. Monks who "
+                                "found the divine and became Templar. And Rangers who walked the shadow — "
+                                "best not ask what became of them.",
+                        "next": "node3",
+                    },
+                    "node3": {
+                        "speaker": "Guildmaster Dorric",
+                        "text": "Get to level 10, keep your stats sharp, and talk to the class board in "
+                                "the guild. The old masters say there's a path beyond that too — at "
+                                "level 15 — but I've never seen it.",
+                        "end": True,
+                    },
+                },
+            },
         },
     ],
 }
