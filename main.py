@@ -2657,7 +2657,80 @@ class Game:
         self.post_combat_ui = PostCombatUI(
             self.party, rewards, self.combat_state.players
         )
+        # Track total kills for achievement checking
+        from core.story_flags import get_flag, set_flag
+        kills = len(getattr(self.combat_state, "defeated_enemies", []))
+        if kills:
+            cur = get_flag("total_kills", 0) or 0
+            set_flag("total_kills", cur + kills)
+        # Check achievements after combat
+        try:
+            from core.achievement_tracker import check_achievements
+            newly = check_achievements(self.party)
+            self._queue_achievements(newly)
+        except Exception:
+            pass
         self.go(S_POST_COMBAT)
+
+    def _queue_achievements(self, newly_unlocked: list):
+        """Add newly unlocked achievements to the display queue."""
+        if newly_unlocked:
+            self._achievement_queue.extend(newly_unlocked)
+
+    def _show_next_achievement(self):
+        if self._achievement_queue:
+            ach = self._achievement_queue.pop(0)
+            self._achievement_toast = {"ach": ach, "timer": 4.0}
+            try:
+                from core.sfx import SFXManager
+                sfx = SFXManager.instance()
+                if sfx: sfx.play("quest_complete")
+            except Exception:
+                pass
+
+    def _update_achievement_toast(self, dt: float):
+        """Advance achievement toast timer. Call once per frame."""
+        if self._achievement_toast:
+            self._achievement_toast["timer"] -= dt
+            if self._achievement_toast["timer"] <= 0:
+                self._achievement_toast = None
+                if self._achievement_queue:
+                    self._show_next_achievement()
+        elif self._achievement_queue:
+            self._show_next_achievement()
+
+    def _draw_achievement_toast(self, surface):
+        """Draw achievement unlock toast in bottom-right corner."""
+        toast = self._achievement_toast
+        if not toast:
+            return
+        import pygame
+        ach = toast["ach"]
+        t   = toast["timer"]
+        alpha = min(255, int(255 * min(t, 4.0 - t) / 0.5))
+        W, H = surface.get_size()
+        TW, TH = 320, 64
+        tx, ty = W - TW - 12, H - TH - 60
+
+        panel = pygame.Surface((TW, TH), pygame.SRCALPHA)
+        panel.fill((20, 16, 10, min(220, alpha)))
+        pygame.draw.rect(panel, (*ach.get("icon", (180, 150, 80)), alpha),
+                         (0, 0, TW, TH), 2, border_radius=6)
+        surface.blit(panel, (tx, ty))
+
+        try: f_small = pygame.font.SysFont("georgia", 11)
+        except: f_small = pygame.font.Font(None, 13)
+        try: f_big   = pygame.font.SysFont("georgia", 15)
+        except: f_big   = pygame.font.Font(None, 17)
+
+        lab = f_small.render("ACHIEVEMENT UNLOCKED", True,
+                             (*ach.get("icon",(200,180,80)), alpha))
+        surface.blit(lab, (tx + 8, ty + 7))
+        name_surf = f_big.render(ach["name"], True, (240, 220, 160, alpha))
+        surface.blit(name_surf, (tx + 8, ty + 24))
+        desc_text = ach.get("description","")[:44]
+        desc_surf = f_small.render(desc_text, True, (160, 150, 130, alpha))
+        surface.blit(desc_surf, (tx + 8, ty + 44))
 
     def draw_post_combat(self, mx, my):
         """Draw the post-combat results screen."""

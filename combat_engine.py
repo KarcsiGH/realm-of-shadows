@@ -32,7 +32,16 @@ def make_player_combatant(character, row=FRONT):
     if equipped_weapon:
         weapon = dict(equipped_weapon)
     else:
-        weapon_key = STARTING_WEAPONS.get(character.class_name, "Unarmed")
+        # Fall back to base class weapon if hybrid class not in STARTING_WEAPONS
+        _cls_for_weapon = character.class_name
+        if _cls_for_weapon not in STARTING_WEAPONS:
+            from core.progression import CLASS_TRANSITIONS
+            _trans = CLASS_TRANSITIONS.get(_cls_for_weapon)
+            if _trans:
+                _cls_for_weapon = _trans["base_classes"][0]
+            else:
+                _cls_for_weapon = "Fighter"
+        weapon_key = STARTING_WEAPONS.get(_cls_for_weapon, "Unarmed")
         weapon = get_weapon(weapon_key)
 
     # Monk unarmed scaling — always inject damage AND damage_stat
@@ -68,8 +77,13 @@ def make_player_combatant(character, row=FRONT):
                     relic_fear_bonus    += item.get("fear_resist_bonus", 0.0)
 
     # Get actual max resources (not current values)
-    from core.classes import get_all_resources
+    from core.classes import get_all_resources, CLASSES
     safe_class = character.class_name or "Fighter"
+    # Hybrid/apex classes are not in CLASSES — map back to their first base class
+    if safe_class not in CLASSES:
+        from core.progression import CLASS_TRANSITIONS
+        _trans = CLASS_TRANSITIONS.get(safe_class)
+        safe_class = _trans["base_classes"][0] if _trans else "Fighter"
     actual_max = get_all_resources(safe_class, stats, character.level)
     max_hp = actual_max.get("HP", character.resources.get("HP", 50))
 
