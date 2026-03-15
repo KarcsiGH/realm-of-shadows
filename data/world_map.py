@@ -237,7 +237,7 @@ LOCATIONS = {
         "visible": False, "icon": "D",
         "description": "Storm-battered ruins on a remote island. An ancient elemental guardian protects what's buried here.",
         "encounter_key": "boss_isle_keeper", "floors": 3, "difficulty": "hard",
-        "required_key": None, "discovery_radius": 3,
+        "required_key": "pale_coast_cleared", "discovery_radius": 3,
     },
     "dragons_tooth": {
         "name": "Dragon's Tooth", "type": LOC_DUNGEON,

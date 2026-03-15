@@ -789,7 +789,13 @@ class Game:
 
         elif self.state == S_CAMP:
             if self.camp_ui:
-                if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                if e.type == pygame.MOUSEWHEEL:
+                    self.camp_ui.handle_scroll(e.y * -1)
+                elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 4:
+                    self.camp_ui.handle_scroll(-1)
+                elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 5:
+                    self.camp_ui.handle_scroll(1)
+                elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
                     result = self.camp_ui.handle_click(mx, my)
                     if self.camp_ui.finished:
                         self._end_camp()
@@ -3102,7 +3108,6 @@ class Game:
             return
 
         if event["type"] == "encounter":
-            print(f"[DEBUG] World encounter triggered: {event['key']}")
             sfx.play("encounter")
             self.start_combat(event["key"])
 
@@ -3121,7 +3126,6 @@ class Game:
 
         elif event["type"] == "enter_location":
             loc = event["data"]
-            print(f"[DEBUG] enter_location: id={event.get('id')}, type={loc['type']}")
             if loc["type"] == LOC_TOWN:
                 town_id = event.get("id", "briarhollow")
                 self.current_town_id = town_id
@@ -3152,10 +3156,8 @@ class Game:
                 # Find matching dungeon ID
                 loc_id = event.get("id", "")
                 dungeon_id = loc_id  # location ID matches dungeon ID
-                print(f"[DEBUG] Dungeon entry: loc_id={loc_id}, in DUNGEONS={loc_id in DUNGEONS}")
                 if dungeon_id in DUNGEONS:
                     can, reason = self.world_state.can_enter_dungeon(loc_id)
-                    print(f"[DEBUG] Can enter: {can}, reason: {reason}")
                     if can:
                         # ── Fading entry warning (Act 2+) ──────────────────
                         from core.story_flags import hearthstone_count, get_flag
@@ -3220,7 +3222,6 @@ class Game:
                         # Tutorial hints — first dungeon floor
                         from core.tutorial import fire_dungeon_hints
                         fire_dungeon_hints("first_floor", self.dungeon_ui)
-                        print(f"[DEBUG] Entered dungeon! State={self.state}")
                     else:
                         self.world_map_ui._show_event(reason, RED)
                 else:

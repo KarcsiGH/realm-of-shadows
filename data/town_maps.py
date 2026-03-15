@@ -232,6 +232,14 @@ BRIARHOLLOW_BUILDINGS = {
 
 
 BRIARHOLLOW_NPCS = [
+    {
+        "name": "Warden Liaison",
+        "x": 9, "y": 9,
+        "dialogue_id": "warden_liaison",
+        "description": "A representative of the old Warden order. Weathered but watchful.",
+        "color": (100, 175, 130),
+        "npc_type": "warden",
+    },
     # Elder Thom stands just outside his house in the NE — worth finding.
     {
         "name": "Elder Thom",
@@ -240,6 +248,15 @@ BRIARHOLLOW_NPCS = [
         "description": "The village elder, watching the square with sharp eyes.",
         "color": (185, 175, 140),
         "npc_type": "elder",
+    },
+    # Guildmaster Oren can also be found near the guild door giving transition advice.
+    {
+        "name": "Guildmaster Oren",
+        "x": 22, "y": 6,
+        "dialogue_id": "trainer_briarhollow",
+        "description": "The guild's veteran master. He speaks of paths beyond the first calling.",
+        "color": (100, 140, 80),
+        "npc_type": "guildmaster",
     },
     # Maren near the well in the town square.
     {
@@ -405,6 +422,14 @@ WOODHAVEN_BUILDINGS = {
 }
 
 WOODHAVEN_NPCS = [
+    {
+        "name": "Warden Liaison",
+        "x": 10, "y": 8,
+        "dialogue_id": "warden_liaison",
+        "description": "A representative of the old Warden order. Weathered but watchful.",
+        "color": (100, 175, 130),
+        "npc_type": "warden",
+    },
     # Story NPCs
     {
         "name": "Ranger Lyric",
@@ -554,6 +579,14 @@ IRONHEARTH_BUILDINGS = {
 }
 
 IRONHEARTH_NPCS = [
+    {
+        "name": "Warden Liaison",
+        "x": 11, "y": 9,
+        "dialogue_id": "warden_liaison",
+        "description": "A representative of the old Warden order. Weathered but watchful.",
+        "color": (100, 175, 130),
+        "npc_type": "warden",
+    },
     # Story NPCs
     {
         "name": "Foreman Brak",
@@ -568,6 +601,15 @@ IRONHEARTH_NPCS = [
         "dialogue_id": "scholar_petra",
         "description": "A human scholar studying dwarven runes.",
         "color": (160, 160, 200),
+    },
+    # Guildmaster Dorric outside guild — offers transition guidance
+    {
+        "name": "Guildmaster Dorric",
+        "x": 9, "y": 18,
+        "dialogue_id": "trainer_ironhearth",
+        "description": "The guild's weathered master. He speaks of warriors who walked two paths.",
+        "color": (140, 160, 180),
+        "npc_type": "guildmaster",
     },
     # Ambient NPCs
     {
@@ -668,6 +710,14 @@ GREENWOOD_BUILDINGS = {
 }
 
 GREENWOOD_NPCS = [
+    {
+        "name": "Warden Liaison",
+        "x": 8, "y": 8,
+        "dialogue_id": "warden_liaison",
+        "description": "A representative of the old Warden order. Weathered but watchful.",
+        "color": (100, 175, 130),
+        "npc_type": "warden",
+    },
     {
         "name": "Scout Feryn",
         "x": 7, "y": 7,        # on path (P)
@@ -794,6 +844,14 @@ SALTMERE_BUILDINGS = {
 
 SALTMERE_NPCS = [
     {
+        "name": "Warden Liaison",
+        "x": 10, "y": 9,
+        "dialogue_id": "warden_liaison",
+        "description": "A representative of the old Warden order. Weathered but watchful.",
+        "color": (100, 175, 130),
+        "npc_type": "warden",
+    },
+    {
         "name": "Dockhand Riv",
         "x": 25, "y": 17,      # open area near the harbor wall
         "dialogue_id": "dockhand_riv",
@@ -915,6 +973,14 @@ SANCTUM_BUILDINGS = {
 
 SANCTUM_NPCS = [
     {
+        "name": "Warden Liaison",
+        "x": 12, "y": 10,
+        "dialogue_id": "warden_liaison",
+        "description": "A representative of the old Warden order. Weathered but watchful.",
+        "color": (100, 175, 130),
+        "npc_type": "warden",
+    },
+    {
         "name": "Pilgrim Elder",
         "x": 14, "y": 8,
         "dialogue_id": "pilgrim_elder",
@@ -1034,6 +1100,14 @@ CRYSTALSPIRE_BUILDINGS = {
 }
 
 CRYSTALSPIRE_NPCS = [
+    {
+        "name": "Warden Liaison",
+        "x": 13, "y": 10,
+        "dialogue_id": "warden_liaison",
+        "description": "A representative of the old Warden order. Weathered but watchful.",
+        "color": (100, 175, 130),
+        "npc_type": "warden",
+    },
     {
         "name": "Apprentice Mage",
         "x": 20, "y": 1,       # open area row 1 away from buildings
@@ -1198,6 +1272,14 @@ THORNHAVEN_BUILDINGS = {
 }
 
 THORNHAVEN_NPCS = [
+    {
+        "name": "Warden Liaison",
+        "x": 14, "y": 11,
+        "dialogue_id": "warden_liaison",
+        "description": "A representative of the old Warden order. Weathered but watchful.",
+        "color": (100, 175, 130),
+        "npc_type": "warden",
+    },
     # Story/ambient NPCs
     {
         "name": "City Guard",

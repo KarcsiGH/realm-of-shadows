@@ -62,6 +62,11 @@ class CampUI:
         self.selected_char = 0
         self.selected_item = -1
         self.scroll_offset = 0
+        self._stats_scroll = 0
+        self._manual_open  = False
+        self._manual_page  = 0
+        self._manual_scroll = 0
+        self._manual_tabs  = []
         self.message = ""
         self.msg_color = CREAM
         self.msg_timer = 0
@@ -123,6 +128,18 @@ class CampUI:
             self._draw_formation(surface, mx, my, content_y)
         elif self.tab == TAB_SPELLS:
             self._draw_spells(surface, mx, my, content_y)
+
+        # Manual button (bottom-left corner so it doesn't clash with "Break Camp")
+        _mb = pygame.Rect(20, SCREEN_H - 48, 130, 34)
+        _mhov = _mb.collidepoint(mx, my)
+        pygame.draw.rect(surface, (30,25,50) if not _mhov else (50,40,70), _mb, border_radius=5)
+        pygame.draw.rect(surface, GOLD if _mhov else (80,70,100), _mb, 1, border_radius=5)
+        draw_text(surface, "◈ Manual  [M]", _mb.x + 8, _mb.y + 9,
+                  GOLD if _mhov else CREAM, 12)
+        self._manual_btn_rect = _mb
+
+        # Manual overlay (drawn on top of everything)
+        self._draw_manual(surface, mx, my)
 
         # Message bar
         if self.msg_timer > 0:
@@ -430,71 +447,574 @@ class CampUI:
     #  STATS TAB
     # ──────────────────────────────────────────────────────────
 
+
+    # ────────────────────────────────────────────────────────────────────────
+    #  PARTY STATS TAB  (complete rewrite)
+    # ────────────────────────────────────────────────────────────────────────
+
     def _draw_stats(self, surface, mx, my, top):
+        """Rich party stats panel: tier badge, effective stats, resistances,
+        known abilities/spells with scrollable descriptions."""
         self._draw_char_selector(surface, mx, my, top)
         c = self.party[self.selected_char]
+
         from core.classes import get_all_resources, STAT_NAMES
+        from core.progression import PLANAR_TIERS, get_party_tier
 
-        sy = top + 45
-        # Basic info
-        draw_text(surface, f"{c.name}", 80, sy, GOLD, 18, bold=True)
+        # ── Layout constants ───────────────────────────────────────────────
+        LEFT_X   = 30
+        MID_X    = 430
+        RIGHT_X  = 850
+        BODY_TOP = top + 52        # below char selector
+        BODY_BOT = SCREEN_H - 60  # leave room for Manual button
+        CONTENT_H = BODY_BOT - BODY_TOP
+
+        # ── Clipping region for scroll ─────────────────────────────────────
+        clip = pygame.Rect(0, BODY_TOP, SCREEN_W, CONTENT_H)
+        surface.set_clip(clip)
+
+        # ─────────────────────────────────────────────────────────────────
+        #  LEFT COLUMN: Tier badge + Base stats + Resources + Resistances
+        # ─────────────────────────────────────────────────────────────────
+        y = BODY_TOP + 4
+
+        # ── Tier badge ─────────────────────────────────────────────────────
+        try:
+            from core.story_flags import _flags as _sf
+            party_flags = dict(_sf)
+        except Exception:
+            party_flags = {}
+        min_lvl = min(ch.level for ch in self.party) if self.party else 1
+        tier_idx = get_party_tier(party_flags, min_lvl)
+        tier_data = PLANAR_TIERS.get(tier_idx, PLANAR_TIERS[0])
+        tier_name  = tier_data["name"]
+        tier_color = tier_data["color"]
+        tier_sym   = tier_data.get("symbol", "◆")
+        tier_desc  = tier_data.get("description", "")
+
+        badge_rect = pygame.Rect(LEFT_X, y, 380, 52)
+        pygame.draw.rect(surface, (20, 15, 35), badge_rect, border_radius=6)
+        pygame.draw.rect(surface, tier_color, badge_rect, 2, border_radius=6)
+        draw_text(surface, f"{tier_sym}  WARDEN RANK", LEFT_X + 10, y + 6, tier_color, 10, bold=True)
+        draw_text(surface, tier_name, LEFT_X + 10, y + 20, tier_color, 18, bold=True)
+        draw_text(surface, tier_desc, LEFT_X + 10, y + 40, GREY, 10, max_width=370)
+        y += 66
+
+        # Tier bonuses
+        bonuses = tier_data.get("bonus", {})
+        if bonuses:
+            bonus_parts = []
+            if bonuses.get("all_stats"): bonus_parts.append(f"+{bonuses['all_stats']} all stats")
+            if bonuses.get("max_hp_pct"): bonus_parts.append(f"+{int(bonuses['max_hp_pct']*100)}% HP")
+            if bonuses.get("damage_mult") and bonuses["damage_mult"] > 1:
+                bonus_parts.append(f"+{int((bonuses['damage_mult']-1)*100)}% dmg")
+            if bonuses.get("xp_mult") and bonuses["xp_mult"] > 1:
+                bonus_parts.append(f"+{int((bonuses['xp_mult']-1)*100)}% XP")
+            if bonus_parts:
+                draw_text(surface, "Bonuses: " + "  •  ".join(bonus_parts),
+                          LEFT_X, y, tier_color, 11)
+                y += 18
+        y += 6
+
+        # ── Character name / class / race / level ──────────────────────────
+        draw_text(surface, c.name, LEFT_X, y, GOLD, 18, bold=True)
+        y += 22
         draw_text(surface, f"Level {c.level} {c.race_name} {c.class_name}",
-                  80, sy + 24, CREAM, 14)
-        draw_text(surface, f"XP: {c.xp}", 80, sy + 44, DIM_GOLD, 12)
+                  LEFT_X, y, CREAM, 13)
+        y += 16
+        # XP progress
+        from core.progression import xp_for_level
+        xp_this = xp_for_level(c.level)
+        xp_next = xp_for_level(c.level + 1)
+        xp_pct = min(1.0, (c.xp - xp_this) / max(1, xp_next - xp_this))
+        draw_text(surface, f"XP: {c.xp:,}", LEFT_X, y, DIM_GOLD, 11)
+        bar = pygame.Rect(LEFT_X + 80, y + 2, 200, 8)
+        pygame.draw.rect(surface, (30,25,45), bar, border_radius=3)
+        fill = pygame.Rect(bar.x, bar.y, int(bar.width * xp_pct), bar.height)
+        pygame.draw.rect(surface, DIM_GOLD, fill, border_radius=3)
+        if c.level < 30:
+            draw_text(surface, f"→ L{c.level+1}", LEFT_X + 288, y, GREY, 10)
+        y += 22
 
-        # Stats
-        sy += 70
-        stat_x = 80
-        for i, stat in enumerate(STAT_NAMES):
-            val = c.stats.get(stat, 0)
-            col = STAT_VAL
-            if hasattr(c, "effective_stats"):
-                eff = c.effective_stats().get(stat, val)
-                if eff > val:
-                    col = GREEN
-                elif eff < val:
-                    col = RED
-                val = eff
+        # ── Stats ──────────────────────────────────────────────────────────
+        pygame.draw.line(surface, (60,50,80), (LEFT_X, y), (LEFT_X+380, y))
+        y += 6
+        draw_text(surface, "ATTRIBUTES", LEFT_X, y, STAT_LABEL, 10, bold=True)
+        y += 14
 
-            draw_text(surface, f"{stat}:", stat_x, sy + i * 24, STAT_LABEL, 14)
-            draw_text(surface, str(val), stat_x + 45, sy + i * 24, col, 14, bold=True)
+        base_stats = dict(c.stats)
+        eff_stats  = c.effective_stats() if hasattr(c, "effective_stats") else base_stats
 
-        # Resources
-        rx = 280
-        max_res = get_all_resources(c.class_name, c.stats, c.level)
-        ry = top + 115
-        for rn, mv in max_res.items():
-            cv = c.resources.get(rn, 0)
-            pct = cv / mv if mv > 0 else 0
-            draw_text(surface, f"{rn}:", rx, ry, STAT_LABEL, 13)
-            # Bar
-            bar = pygame.Rect(rx + 60, ry + 2, 150, 12)
-            pygame.draw.rect(surface, HP_BAR_BG, bar, border_radius=2)
-            if rn == "HP":
-                fill_col = HP_BAR
-            elif "MP" in rn:
-                fill_col = MP_BAR
-            else:
-                fill_col = SP_BAR
-            fill = pygame.Rect(bar.x, bar.y, int(bar.width * pct), bar.height)
-            pygame.draw.rect(surface, fill_col, fill, border_radius=2)
-            draw_text(surface, f"{cv}/{mv}", rx + 220, ry, GREY, 12)
-            ry += 22
+        stat_col_w = 90
+        FULL_NAMES = {"STR":"Strength","DEX":"Dexterity","CON":"Constitution",
+                      "INT":"Intelligence","WIS":"Wisdom","PIE":"Piety"}
+        for idx_s, stat in enumerate(STAT_NAMES):
+            sx = LEFT_X + (idx_s % 2) * 195
+            sy = y + (idx_s // 2) * 20
+            base = base_stats.get(stat, 0)
+            eff  = eff_stats.get(stat, base)
+            col  = (100, 200, 120) if eff > base else RED if eff < base else STAT_VAL
+            full = FULL_NAMES.get(stat, stat)
+            draw_text(surface, f"{full[:3]}:", sx, sy, STAT_LABEL, 12)
+            draw_text(surface, str(eff), sx + 36, sy, col, 12, bold=True)
+            if eff != base:
+                diff = eff - base
+                sign = "+" if diff > 0 else ""
+                draw_text(surface, f"({sign}{diff})", sx + 60, sy, col, 10)
+        y += (len(STAT_NAMES) // 2 + 1) * 20 + 6
 
-        # Status effects
+        # ── Resources ─────────────────────────────────────────────────────
+        pygame.draw.line(surface, (60,50,80), (LEFT_X, y), (LEFT_X+380, y))
+        y += 6
+        draw_text(surface, "RESOURCES", LEFT_X, y, STAT_LABEL, 10, bold=True)
+        y += 14
+        max_res = get_all_resources(c.class_name, eff_stats, c.level)
+        for rname, mval in max_res.items():
+            cval = c.resources.get(rname, 0)
+            pct  = cval / mval if mval > 0 else 0
+            draw_text(surface, f"{rname}:", LEFT_X, y, STAT_LABEL, 12)
+            bar2 = pygame.Rect(LEFT_X + 70, y + 3, 200, 10)
+            pygame.draw.rect(surface, HP_BAR_BG, bar2, border_radius=2)
+            fc = HP_BAR if rname == "HP" else MP_BAR if "MP" in rname else SP_BAR
+            fill2 = pygame.Rect(bar2.x, bar2.y, int(bar2.width * pct), bar2.height)
+            pygame.draw.rect(surface, fc, fill2, border_radius=2)
+            draw_text(surface, f"{cval}/{mval}", LEFT_X + 278, y, GREY, 11)
+            y += 18
+        y += 4
+
+        # ── Resistances ───────────────────────────────────────────────────
+        pygame.draw.line(surface, (60,50,80), (LEFT_X, y), (LEFT_X+380, y))
+        y += 6
+        draw_text(surface, "RESISTANCES", LEFT_X, y, STAT_LABEL, 10, bold=True)
+        y += 14
+        # Calculate resistances from equipment
+        res = {}
+        if hasattr(c, "equipment") and c.equipment:
+            for slot, item in c.equipment.items():
+                if not item: continue
+                for rtype, rval in item.get("resistances", {}).items():
+                    res[rtype] = res.get(rtype, 0) + rval
+        # Base magic resist
+        base_mr = eff_stats.get("WIS", 0) * 2
+        race_rs = {}
+        try:
+            from core.races import RACES
+            race_data = RACES.get(c.race_name, {})
+            race_rs = race_data.get("resistances", {})
+        except Exception:
+            pass
+
+        RES_NAMES = [("fire","Fire"),("ice","Ice"),("lightning","Ltng"),
+                     ("shadow","Shad"),("divine","Divn"),("nature","Natr"),("arcane","Arcn")]
+        for idx_r, (rk, rl) in enumerate(RES_NAMES):
+            rx = LEFT_X + (idx_r % 3) * 130
+            ry = y + (idx_r // 3) * 18
+            val = res.get(rk, 0) + race_rs.get(rk, 0)
+            col = (100,200,120) if val > 0 else (200,100,100) if val < 0 else GREY
+            sign = "+" if val > 0 else ""
+            draw_text(surface, f"{rl}: {sign}{val}%", rx, ry, col, 11)
+        y += (len(RES_NAMES)//3 + 1) * 18 + 4
+
+        # ── Status effects ─────────────────────────────────────────────────
         if hasattr(c, "status_effects") and c.status_effects:
-            ry += 10
-            draw_text(surface, "Status:", rx, ry, STAT_LABEL, 13)
-            ry += 18
-            for eff in c.status_effects:
-                eff_name = eff.get("type", eff.get("name", "???"))
-                draw_text(surface, f"• {eff_name}", rx + 10, ry, ORANGE, 12)
-                ry += 16
+            pygame.draw.line(surface, (60,50,80), (LEFT_X, y), (LEFT_X+380, y))
+            y += 6
+            draw_text(surface, "ACTIVE EFFECTS", LEFT_X, y, STAT_LABEL, 10, bold=True)
+            y += 14
+            for eff in c.status_effects[:6]:
+                ename = eff.get("type") or eff.get("name","?")
+                dur   = eff.get("duration", 0)
+                draw_text(surface, f"• {ename}" + (f" ({dur}t)" if dur else ""),
+                          LEFT_X + 4, y, ORANGE, 11)
+                y += 14
 
-    # ──────────────────────────────────────────────────────────
-    #  SHARED WIDGETS
-    # ──────────────────────────────────────────────────────────
+        # ─────────────────────────────────────────────────────────────────
+        #  MIDDLE COLUMN: Known abilities / spells (scrollable)
+        # ─────────────────────────────────────────────────────────────────
+        from core.abilities import CLASS_ABILITIES
 
+        col_x = MID_X
+        col_w = RIGHT_X - MID_X - 20
+        ay = BODY_TOP + 4
+
+        draw_text(surface, "ABILITIES & SPELLS", col_x, ay, STAT_LABEL, 10, bold=True)
+        ay += 16
+
+        # Gather all abilities this character knows (unlocked by level)
+        all_class_abs = CLASS_ABILITIES.get(c.class_name, [])
+        known = [ab for ab in all_class_abs if ab.get("level",1) <= c.level]
+        locked = [ab for ab in all_class_abs if ab.get("level",1) > c.level]
+
+        scroll_offset = getattr(self, "_stats_scroll", 0)
+
+        TYPE_COLORS = {
+            "attack": (220,120,80), "spell": (100,160,255), "heal": (80,220,120),
+            "aoe": (220,80,120), "aoe_heal": (80,220,160), "buff": (220,200,80),
+            "debuff": (180,120,220), "cure": (100,240,160),
+        }
+
+        # Build all rows first to know total height
+        rows = []
+        for ab in known:
+            rows.append(("known", ab))
+        if locked:
+            rows.append(("header", "NOT YET LEARNED"))
+            for ab in locked[:8]:  # cap at 8 locked
+                rows.append(("locked", ab))
+
+        ROW_H = 58
+        total_h = len(rows) * ROW_H
+        max_scroll = max(0, total_h - (BODY_BOT - BODY_TOP - 20))
+
+        # Clamp scroll
+        scroll_offset = max(0, min(scroll_offset, max_scroll))
+        self._stats_scroll = scroll_offset
+
+        # Draw scrollbar if needed
+        if max_scroll > 0:
+            sb_x = col_x + col_w + 4
+            sb_h = BODY_BOT - BODY_TOP - 20
+            sb_rect = pygame.Rect(sb_x, ay, 6, sb_h)
+            pygame.draw.rect(surface, (40,35,55), sb_rect, border_radius=3)
+            thumb_h = max(20, int(sb_h * (sb_h / total_h)))
+            thumb_y = ay + int((sb_h - thumb_h) * scroll_offset / max_scroll)
+            pygame.draw.rect(surface, (100,80,140),
+                             pygame.Rect(sb_x, thumb_y, 6, thumb_h), border_radius=3)
+
+        ry2 = ay - scroll_offset
+        for kind, ab in rows:
+            if ry2 + ROW_H < ay or ry2 > BODY_BOT:
+                ry2 += ROW_H
+                continue
+            if kind == "header":
+                draw_text(surface, ab, col_x, ry2 + 4, (80,70,110), 10, bold=True)
+                ry2 += ROW_H
+                continue
+
+            card_rect = pygame.Rect(col_x, ry2, col_w, ROW_H - 4)
+            is_locked = (kind == "locked")
+            bg_col = (14, 11, 22) if not is_locked else (10, 8, 16)
+            pygame.draw.rect(surface, bg_col, card_rect, border_radius=4)
+
+            ab_type = ab.get("type","attack")
+            type_col = TYPE_COLORS.get(ab_type, GREY)
+            if is_locked: type_col = (60,55,70)
+            pygame.draw.rect(surface, type_col if not is_locked else (40,35,55),
+                             card_rect, 1, border_radius=4)
+
+            # Name + level unlock
+            name_col = CREAM if not is_locked else (80,75,90)
+            draw_text(surface, ab.get("name","?"), col_x + 8, ry2 + 5, name_col, 13, bold=not is_locked)
+
+            if is_locked:
+                draw_text(surface, f"Unlocks at level {ab.get('level',1)}",
+                          col_x + 8, ry2 + 20, (70,65,85), 11)
+            else:
+                # Type pill
+                type_label = ab_type.upper().replace("_"," ")
+                pill_w = get_font(9).size(type_label)[0] + 8
+                pill = pygame.Rect(col_x + col_w - pill_w - 6, ry2 + 5, pill_w, 14)
+                pygame.draw.rect(surface, type_col, pill, border_radius=3)
+                draw_text(surface, type_label, pill.x + 4, pill.y + 2, (20,15,30), 9, bold=True)
+
+                # Cost
+                cost = ab.get("cost", 0)
+                res_key = ab.get("resource","STR-SP")
+                if cost:
+                    draw_text(surface, f"Cost: {cost} {res_key}",
+                              col_x + 8, ry2 + 20, (160,140,100), 11)
+
+                # Description
+                desc = ab.get("desc") or ab.get("description","")
+                if desc:
+                    draw_text(surface, desc, col_x + 8, ry2 + 33,
+                              GREY, 11, max_width=col_w - 16)
+
+            ry2 += ROW_H
+
+        # ─────────────────────────────────────────────────────────────────
+        #  RIGHT COLUMN: Equipment summary
+        # ─────────────────────────────────────────────────────────────────
+        ex = RIGHT_X
+        ey = BODY_TOP + 4
+
+        draw_text(surface, "EQUIPPED", ex, ey, STAT_LABEL, 10, bold=True)
+        ey += 16
+
+        from core.equipment import SLOT_NAMES
+        EQUIP_DISPLAY = [
+            ("weapon","Weapon"), ("off_hand","Off-Hand"),
+            ("head","Head"), ("crown","Crown"), ("body","Body"),
+            ("hands","Hands"), ("feet","Feet"), ("neck","Neck"),
+            ("ring1","Ring 1"), ("ring2","Ring 2"), ("ring3","Ring 3"),
+        ]
+        for slot_key, slot_label in EQUIP_DISPLAY:
+            item = c.equipment.get(slot_key) if hasattr(c,"equipment") else None
+            draw_text(surface, f"{slot_label}:", ex, ey, STAT_LABEL, 11)
+            if item:
+                iname = item.get("name","?")
+                rar = item.get("rarity","")
+                RAR_COL = {"common":CREAM,"uncommon":(140,200,255),
+                           "rare":(180,120,255),"epic":(255,180,60)}.get(rar, CREAM)
+                draw_text(surface, iname[:22], ex + 72, ey, RAR_COL, 11)
+                # Show main bonus
+                sb = item.get("stat_bonuses",{})
+                if sb:
+                    bonus_str = "  ".join(f"+{v}{k}" for k,v in list(sb.items())[:2])
+                    draw_text(surface, bonus_str, ex + 72, ey + 12, (120,180,120), 10)
+            else:
+                draw_text(surface, "—", ex + 72, ey, (50,45,65), 11)
+            ey += 28 if item and item.get("stat_bonuses") else 16
+
+        surface.set_clip(None)
+
+    # ─────────────────────────────────────────────────────────────────
+    #  MANUAL OVERLAY
+    # ─────────────────────────────────────────────────────────────────
+
+    _MANUAL_PAGES = [
+        {
+            "title": "Welcome to Realm of Shadows",
+            "sections": [
+                ("The World", "Aldenmere is dying — the Fading, a magical entropy, is dissolving reality at the edges. You are Wardens, an ancient order charged with recovering the five Hearthstones and confronting the source of the Shadow."),
+                ("Moving Around", "On the World Map, click a location to travel to it. Towns show services. Dungeons require exploration. Ports allow sea travel to distant regions."),
+                ("Saving the Game", "Use the Save button on the World Map or inside a dungeon. The game auto-saves when you rest at an inn."),
+                ("Resting", "The Camp screen (C key in dungeon, or from the World Map) lets you rest, manage equipment, review your party, and access abilities."),
+            ]
+        },
+        {
+            "title": "Combat",
+            "sections": [
+                ("Turn Order", "Combatants act in speed order (DEX matters). Your party goes when the action bar shows your character. Enemies act automatically."),
+                ("Actions", "Each turn: Attack (standard hit), Use Ability (costs resources), Defend (+50% physical defense this round), or Flee (attempt escape)."),
+                ("Targeting", "Click an enemy to target them. Front-row enemies must be eliminated before you can target the back row."),
+                ("Abilities", "Abilities cost SP (Strength Points), MP (Magic Points), or Ki. Your resources restore fully when you rest at an inn."),
+                ("Status Effects", "Poisoned: lose HP each round. Stunned: skip turn. Slowed: act last. Burning: fire damage over time. Check the combat log for details."),
+                ("Winning and Losing", "Victory: all enemies defeated. Defeat: whole party unconscious. You respawn at the last inn with a gold penalty."),
+            ]
+        },
+        {
+            "title": "Equipment",
+            "sections": [
+                ("Slots", "Each character has 11 equipment slots: Weapon, Off-Hand, Head, Crown, Body, Hands, Feet, Neck, and three Ring slots."),
+                ("Proficiency", "Equipping a weapon your class isn't trained with deals 20% less damage. Check the Equipment tab to see what you can use."),
+                ("Identification", "Items found in dungeons are often unidentified. Use the Identify tab in Camp, or visit a temple to identify items."),
+                ("Rarity", "Common (white) → Uncommon (blue) → Rare (purple) → Epic (gold). Higher rarity means better stats."),
+                ("Wands, Rods, Orbs", "Focus items used by casters. Scale with INT (wands, rods) or INT+WIS (orbs). Only caster classes can use them effectively."),
+            ]
+        },
+        {
+            "title": "Character Classes",
+            "sections": [
+                ("Fighter", "Front-line melee warrior. High HP, heavy armor, strong physical abilities. Power Strike, Shield Bash, War Cry."),
+                ("Mage", "Arcane spellcaster. Fragile but devastating. Fireball, Chain Lightning, Meteor. Stays in the back row."),
+                ("Cleric", "Divine healer and smiter. Heal, Prayer of Healing, Turn Undead. Can wear heavy armor and use blessed weapons."),
+                ("Thief", "Agile striker with high dodge and crit. Backstab, Poison Blade, Assassinate. Wears light armor."),
+                ("Ranger", "Versatile hunter: ranged attacks and nature magic. Aimed Shot, Barrage, Nature's Balm. Medium armor."),
+                ("Monk", "Unarmed martial artist. Unarmed damage scales with level and WIS. Flurry of Blows, Stunning Fist, Dragon Strike. Clothing only."),
+            ]
+        },
+        {
+            "title": "The Warden Rank System",
+            "sections": [
+                ("Overview", "Your party earns Warden Rank as you recover Hearthstones and advance in level. Rank brings permanent bonuses to all characters."),
+                ("Initiate", "Starting rank. No bonuses. Prove yourself."),
+                ("Scout", "Earned after the first Hearthstone (Abandoned Mine, level 5+). +1 all stats, +5% XP."),
+                ("Warden", "After the third Hearthstone (Dragon's Tooth, level 10+). +2 all stats, +5% HP, +10% XP."),
+                ("Senior Warden", "After all five Hearthstones (level 13+). +4 all stats, +10% HP, +5% damage, +15% XP."),
+                ("Warden-Commander", "After defeating Valdris (level 15+). +6 all stats, +15% HP, +10% damage, +25% XP. The highest rank."),
+                ("Certification", "Visit the Warden Liaison NPC in any town to check your current rank and learn what is needed to advance."),
+            ]
+        },
+        {
+            "title": "Dungeons",
+            "sections": [
+                ("Exploring", "Move with WASD or arrow keys. The 3D view shows what's ahead. The minimap in the corner shows your position and explored tiles."),
+                ("Encounters", "Moving through dungeons triggers random encounters. Boss encounters are fixed on the final floor."),
+                ("Interactables", "Chests contain loot. Shrines restore HP/MP. Fountains have one-time effects. Traps can be disarmed by Thieves."),
+                ("Floors", "Stairs down go deeper. Stairs up return toward the entrance. Floor 1 is easiest; deepest floors have the boss."),
+                ("The Fading", "In Act 2 and 3, some dungeons are corrupted by the Fading. Enemies are tougher and the atmosphere changes."),
+                ("Fleeing", "You can attempt to flee combat. Success chance depends on your DEX vs the enemies. Fleeing returns you to the dungeon corridor."),
+            ]
+        },
+        {
+            "title": "Towns & Services",
+            "sections": [
+                ("Shop", "Buy weapons, armor, and consumables. Sell found items. Prices vary by town."),
+                ("Temple", "Revive fallen party members, remove curses, identify items, buy healing supplies."),
+                ("Inn", "Rest to restore all HP, MP, and SP. Level up characters here. Choose between Common Room (50% restore, cheaper) or Private Room (full restore)."),
+                ("Tavern", "Hear rumors — story-relevant whispers change as the world shifts. Buy drinks to learn more."),
+                ("Guild", "Post and collect job board contracts for extra gold and XP. Bounties on specific dungeon enemies."),
+                ("Warden Liaison", "Found in each town. Shows your current Warden Rank, active bonuses, and what is required to advance to the next rank."),
+            ]
+        },
+        {
+            "title": "Tips & Secrets",
+            "sections": [
+                ("Formation Matters", "Put your toughest characters in the front row. Back-row characters take less damage but deal less with melee weapons."),
+                ("Resource Management", "Don't use all your abilities in every fight. Save big spells for boss encounters and hard fights."),
+                ("Hearthstones Are Story", "Recovering Hearthstones advances the main story and unlocks new areas. Each one makes the whole party stronger."),
+                ("Moral Choices", "Not every enemy is simply evil. Some bosses can be negotiated with. Listen to what they say before attacking."),
+                ("Tavern Rumors", "The rumors in taverns change as the story progresses. They hint at where to go next and what threats are growing."),
+                ("Explore Everything", "Secret locations are hidden on the world map. Some require specific keys to discover. Talk to everyone — NPCs give hints."),
+            ]
+        },
+    ]
+
+    def _draw_manual(self, surface, mx, my):
+        """Draw the in-game manual overlay."""
+        if not getattr(self, "_manual_open", False):
+            return
+
+        # Darken background
+        overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 200))
+        surface.blit(overlay, (0, 0))
+
+        page = getattr(self, "_manual_page", 0)
+        pages = self._MANUAL_PAGES
+        page = max(0, min(page, len(pages)-1))
+        self._manual_page = page
+
+        # Panel
+        PW, PH = 900, 680
+        px = SCREEN_W//2 - PW//2
+        py = SCREEN_H//2 - PH//2
+        panel = pygame.Surface((PW, PH), pygame.SRCALPHA)
+        panel.fill((8, 6, 20, 252))
+        surface.blit(panel, (px, py))
+        pygame.draw.rect(surface, GOLD, (px, py, PW, PH), 2, border_radius=8)
+        pygame.draw.rect(surface, (60, 200, 100), (px, py, PW, 5), border_radius=8)
+
+        # Title
+        draw_text(surface, "◈  REALM OF SHADOWS — MANUAL  ◈",
+                  px + PW//2 - get_font(14).size("◈  REALM OF SHADOWS — MANUAL  ◈")[0]//2,
+                  py + 10, GOLD, 14, bold=True)
+
+        # Page nav
+        page_str = f"Page {page+1} of {len(pages)}"
+        draw_text(surface, page_str,
+                  px + PW//2 - get_font(11).size(page_str)[0]//2,
+                  py + 30, GREY, 11)
+
+        # Prev / Next buttons
+        self._manual_prev_rect = pygame.Rect(px + 20, py + PH - 44, 110, 32)
+        self._manual_next_rect = pygame.Rect(px + PW - 130, py + PH - 44, 110, 32)
+        self._manual_close_rect = pygame.Rect(px + PW//2 - 55, py + PH - 44, 110, 32)
+
+        for rect, label, enabled in [
+            (self._manual_prev_rect, "◄  Previous", page > 0),
+            (self._manual_next_rect, "Next  ►", page < len(pages)-1),
+            (self._manual_close_rect, "Close  [M]", True),
+        ]:
+            col = (40,35,60) if enabled else (20,18,30)
+            bcol = GOLD if enabled else (40,35,55)
+            pygame.draw.rect(surface, col, rect, border_radius=5)
+            pygame.draw.rect(surface, bcol, rect, 1, border_radius=5)
+            tcol = CREAM if enabled else (60,55,75)
+            tw = get_font(12).size(label)[0]
+            draw_text(surface, label, rect.x + (rect.width - tw)//2,
+                      rect.y + 8, tcol, 12)
+
+        # Page tabs (small) along left
+        tab_h = min(44, (PH - 100) // len(pages))
+        for i, pg in enumerate(pages):
+            tr = pygame.Rect(px - 22, py + 50 + i * tab_h, 22, tab_h - 2)
+            is_cur = (i == page)
+            pygame.draw.rect(surface, (40,35,60) if is_cur else (18,14,28), tr,
+                             border_radius=3)
+            if is_cur:
+                pygame.draw.rect(surface, GOLD, tr, 1, border_radius=3)
+            if tr.collidepoint(mx, my):
+                pygame.draw.rect(surface, DIM_GOLD, tr, 1, border_radius=3)
+            # Store for click detection
+            if not hasattr(self, "_manual_tabs"):
+                self._manual_tabs = []
+            if i >= len(self._manual_tabs):
+                self._manual_tabs.append(tr)
+            else:
+                self._manual_tabs[i] = tr
+            # Page number in tab
+            draw_text(surface, str(i+1),
+                      tr.x + 6, tr.y + (tab_h - 14)//2,
+                      GOLD if is_cur else GREY, 10)
+
+        # Content area
+        content_rect = pygame.Rect(px + 20, py + 50, PW - 40, PH - 110)
+        surface.set_clip(content_rect)
+
+        pg_data = pages[page]
+        cy = py + 52
+
+        # Page title
+        draw_text(surface, pg_data["title"], px + 20, cy, GOLD, 18, bold=True)
+        cy += 28
+        pygame.draw.line(surface, (60, 200, 100), (px+20, cy), (px+PW-20, cy))
+        cy += 10
+
+        scroll = getattr(self, "_manual_scroll", 0)
+        cy -= scroll
+
+        for section_title, section_text in pg_data["sections"]:
+            if cy > py + PH - 60:
+                break
+            draw_text(surface, section_title, px + 20, cy,
+                      (100, 200, 255), 13, bold=True)
+            cy += 17
+            draw_text(surface, section_text, px + 28, cy,
+                      CREAM, 12, max_width=PW - 56)
+            # Estimate height of wrapped text
+            words = section_text.split()
+            char_per_line = (PW - 56) // 7  # rough
+            lines_count = max(1, len(" ".join(words)) // char_per_line + 1)
+            cy += lines_count * 15 + 12
+
+        surface.set_clip(None)
+
+    def _handle_stats_click(self, mx, my):
+        """Handle clicks on the stats tab (ability scroll, manual)."""
+        pass  # scroll handled by handle_scroll
+
+    def handle_scroll(self, direction):
+        """Handle mousewheel scrolling."""
+        if self.tab == TAB_STATS:
+            cur = getattr(self, "_stats_scroll", 0)
+            self._stats_scroll = max(0, cur + direction * 24)
+        elif self.tab == TAB_INVENTORY:
+            self.scroll_offset = max(0, self.scroll_offset + direction)
+        elif getattr(self, "_manual_open", False):
+            cur = getattr(self, "_manual_scroll", 0)
+            self._manual_scroll = max(0, cur + direction * 24)
+
+    def toggle_manual(self):
+        """Open or close the in-game manual."""
+        self._manual_open = not getattr(self, "_manual_open", False)
+        if self._manual_open:
+            self._manual_page = 0
+            self._manual_scroll = 0
+            self._manual_tabs = []
+
+    def handle_manual_click(self, mx, my):
+        """Handle clicks within the manual overlay. Returns True if consumed."""
+        if not getattr(self, "_manual_open", False):
+            return False
+        if getattr(self, "_manual_prev_rect", None) and self._manual_prev_rect.collidepoint(mx, my):
+            self._manual_page = max(0, getattr(self,"_manual_page",0) - 1)
+            self._manual_scroll = 0
+            return True
+        if getattr(self, "_manual_next_rect", None) and self._manual_next_rect.collidepoint(mx, my):
+            self._manual_page = min(len(self._MANUAL_PAGES)-1, getattr(self,"_manual_page",0) + 1)
+            self._manual_scroll = 0
+            return True
+        if getattr(self, "_manual_close_rect", None) and self._manual_close_rect.collidepoint(mx, my):
+            self._manual_open = False
+            return True
+        for i, tr in enumerate(getattr(self, "_manual_tabs", [])):
+            if tr.collidepoint(mx, my):
+                self._manual_page = i
+                self._manual_scroll = 0
+                return True
+        return True  # consume all clicks while manual is open
     def _draw_char_selector(self, surface, mx, my, top):
         """Draw character tabs for selecting party member, with reorder arrows."""
         # Reorder arrows (◄ ►) for selected char
@@ -943,6 +1463,13 @@ class CampUI:
 
     def handle_click(self, mx, my):
         """Handle mouse click. Returns result string or None."""
+        # Manual click handler (overlay consumes all clicks when open)
+        if self.handle_manual_click(mx, my):
+            return None
+        # Manual button
+        if getattr(self, "_manual_btn_rect", None) and self._manual_btn_rect.collidepoint(mx, my):
+            self.toggle_manual()
+            return None
         # Leave camp
         leave = pygame.Rect(SCREEN_W - 130, 8, 110, 30)
         if leave.collidepoint(mx, my):
@@ -1007,6 +1534,9 @@ class CampUI:
 
     def handle_key(self, key):
         """Handle keyboard input."""
+        if key == pygame.K_m or key == pygame.K_F1:
+            self.toggle_manual()
+            return None
         if key == pygame.K_ESCAPE:
             self.finished = True
             self.result = "cancel"

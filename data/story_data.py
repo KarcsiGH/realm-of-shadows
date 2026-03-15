@@ -4192,15 +4192,15 @@ NPC_DIALOGUES = {
 # ═══════════════════════════════════════════════════════════════
 
 TOWN_NPCS = {
-    "briarhollow": ["maren", "captain_rowan", "bess", "old_petra", "young_tomas"],
-    "woodhaven":   ["elder_theron", "sylla"],
-    "ironhearth":  ["forgemaster_dunn", "merchant_kira"],
-    "greenwood":   ["scout_feryn", "old_moss"],
-    "saltmere":    ["guildmaster_sable", "tide_priest_oran", "dockhand_riv"],
-    "sanctum":     ["high_priest_aldara"],
-    "crystalspire": ["archmage_solen", "teleport_master"],
+    "briarhollow": ["maren", "captain_rowan", "bess", "old_petra", "young_tomas", 'warden_liaison'],
+    "woodhaven":   ["elder_theron", "sylla", "warden_liaison"],
+    "ironhearth":  ["forgemaster_dunn", "merchant_kira", "warden_liaison"],
+    "greenwood":   ["scout_feryn", "old_moss", "warden_liaison"],
+    "saltmere":    ["guildmaster_sable", "tide_priest_oran", "dockhand_riv", "warden_liaison"],
+    "sanctum":     ["high_priest_aldara", "warden_liaison"],
+    "crystalspire": ["archmage_solen", "teleport_master", 'warden_liaison'],
     "thornhaven":  ["governor_aldric", "guild_commander_varek", "court_mage_sira",
-                   "city_guard_thornhaven", "refugee_elder", "innkeeper_thornhaven"],
+                   "city_guard_thornhaven", "refugee_elder", "innkeeper_thornhaven", "warden_liaison"],
 }
 
 
