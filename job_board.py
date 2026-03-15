@@ -395,6 +395,204 @@ JOBS = {
         "repeatable": False,
         "level_req": 6,
     },
+
+    # ── Saltmere Act 3 Jobs ──
+    # The Pale Coast has become active — sea creatures, spectral wardens, tidal horrors.
+    "sm_warden_echoes": {
+        "name": "Echoes of the Wardens",
+        "town": "saltmere",
+        "description": "Corrupted Warden Echoes have been sighted in the Pale Coast shallows. "
+                       "The Tide Priest says they follow the ley lines north. "
+                       "Put down 3 before they reach the shipping lanes.",
+        "type": "bounty",
+        "enemy_name": "Corrupted Warden Echo",
+        "required": 3,
+        "reward_gold": 380,
+        "reward_xp": 260,
+        "repeatable": True,
+        "level_req": 11,
+    },
+    "sm_pale_coast_deep": {
+        "name": "Into the Deep Vaults",
+        "town": "saltmere",
+        "description": "The last maritime cartographer paid to map the Pale Coast "
+                       "never returned. The Guild will pay handsomely for proof you "
+                       "reached the third level. Don't come back with less.",
+        "type": "explore",
+        "dungeon_id": "pale_coast",
+        "floor_required": 3,
+        "reward_gold": 500,
+        "reward_xp": 350,
+        "repeatable": False,
+        "level_req": 12,
+    },
+    "sm_tide_wraith_deep": {
+        "name": "Tide Wraith Plague",
+        "town": "saltmere",
+        "description": "Tide Wraiths are now boarding ships in open water — three vessels "
+                       "lost this month alone. The harbour master offers bounties: "
+                       "5 Tide Wraiths for the week's haul.",
+        "type": "bounty",
+        "enemy_name": "Tide Wraith",
+        "required": 5,
+        "reward_gold": 320,
+        "reward_xp": 220,
+        "repeatable": True,
+        "level_req": 10,
+    },
+
+    # ── Thornhaven Act 3 Jobs ──
+    # The empire is crumbling at the edges. Shadow Wardens assault caravans,
+    # Fading Wolves raid the northern villages, the Spire casts a shadow over the city.
+    "th_shadow_wardens": {
+        "name": "Shadow Warden Incursion",
+        "town": "thornhaven",
+        "description": "Shadow Wardens have breached the northern perimeter — three "
+                       "scouts dead, two more missing. Commander Varek authorises lethal "
+                       "force. Kill 4 Shadow Wardens and end the incursion.",
+        "type": "bounty",
+        "enemy_name": "Shadow Warden",
+        "required": 4,
+        "reward_gold": 450,
+        "reward_xp": 320,
+        "repeatable": True,
+        "level_req": 12,
+    },
+    "th_fallen_wardens": {
+        "name": "The Fallen Order",
+        "town": "thornhaven",
+        "description": "Fallen Wardens — corrupted by the Shadow but retaining their "
+                       "training — are targeting Warden-marked individuals. You qualify. "
+                       "The Guild pays for their defeat: 3 Fallen Wardens.",
+        "type": "bounty",
+        "enemy_name": "Fallen Warden",
+        "required": 3,
+        "reward_gold": 420,
+        "reward_xp": 300,
+        "repeatable": True,
+        "level_req": 11,
+    },
+    "th_windswept_scouting": {
+        "name": "Chart the Isle",
+        "town": "thornhaven",
+        "description": "The fifth Hearthstone is on the Windswept Isle. Imperial scouts "
+                       "couldn't get past floor 2. The empire will reward any group "
+                       "that reaches floor 4 and returns with a map of what lies deeper.",
+        "type": "explore",
+        "dungeon_id": "windswept_isle",
+        "floor_required": 4,
+        "reward_gold": 600,
+        "reward_xp": 420,
+        "repeatable": False,
+        "level_req": 12,
+    },
+    "th_storm_golems": {
+        "name": "Elemental Containment",
+        "town": "thornhaven",
+        "description": "Storm Golems from the Isle have been seen marching south along "
+                       "the coast road. The Archmage says they're following ley disruptions. "
+                       "Destroy 3 before they reach the outlying villages.",
+        "type": "bounty",
+        "enemy_name": "Storm Golem",
+        "required": 3,
+        "reward_gold": 480,
+        "reward_xp": 330,
+        "repeatable": True,
+        "level_req": 12,
+    },
+
+    # ── Crystalspire Act 3 Jobs ──
+    # The academy monitors Fading disruptions. The Spire casts a shadow
+    # across the ley lines. Scholars want data, soldiers want bodies.
+    "cs_void_tendrils": {
+        "name": "Void Tendril Outbreak",
+        "town": "crystalspire",
+        "description": "Void Tendrils have begun manifesting in the eastern tunnels — "
+                       "drawn to ley line disruptions near the Spire. "
+                       "The Academy pays per confirmed termination. Kill 5.",
+        "type": "bounty",
+        "enemy_name": "Void Tendril",
+        "required": 5,
+        "reward_gold": 360,
+        "reward_xp": 250,
+        "repeatable": True,
+        "level_req": 10,
+    },
+    "cs_spire_reach": {
+        "name": "The Spire's Outer Ring",
+        "town": "crystalspire",
+        "description": "Archmage Solen needs ley line readings from inside Valdris' Spire. "
+                       "Reach the second level and return. The Academy will pay more than "
+                       "the Guild — but the data must be from the actual Spire.",
+        "type": "explore",
+        "dungeon_id": "valdris_spire",
+        "floor_required": 2,
+        "reward_gold": 550,
+        "reward_xp": 380,
+        "repeatable": False,
+        "level_req": 13,
+    },
+    "cs_throne_shades": {
+        "name": "Shadow Throne Shades",
+        "town": "crystalspire",
+        "description": "Throne Shades from the Shadow Throne have begun crossing into "
+                       "the material world. They pass through walls and drain life force. "
+                       "Destroy 4 before more of them anchor themselves here.",
+        "type": "bounty",
+        "enemy_name": "Throne Shade",
+        "required": 4,
+        "reward_gold": 500,
+        "reward_xp": 360,
+        "repeatable": True,
+        "level_req": 13,
+    },
+
+    # ── Sanctum Act 3 Jobs ──
+    # The Church is losing its grip. The Fading corrodes sacred ground.
+    # High Priest Aldara dispenses silver and prayer in equal measure.
+    "sc_warden_revenants": {
+        "name": "Warden Revenants",
+        "town": "sanctum",
+        "description": "Warden Revenants — the strongest of the fallen — have been seen "
+                       "near the Cathedral grounds. Two pilgrims have been killed. "
+                       "The Church implores you: destroy 2 of them. Prayers included.",
+        "type": "bounty",
+        "enemy_name": "Warden Revenant",
+        "required": 2,
+        "reward_gold": 600,
+        "reward_xp": 450,
+        "repeatable": True,
+        "level_req": 13,
+    },
+    "sc_shadow_throne_entry": {
+        "name": "The Last Seal",
+        "town": "sanctum",
+        "description": "The Church has long maintained a seal on the Shadow Throne. "
+                       "It has broken. High Priest Aldara asks only that you bear witness "
+                       "to what is inside. Reach the second floor. The faithful will know it happened.",
+        "type": "explore",
+        "dungeon_id": "shadow_throne",
+        "floor_required": 2,
+        "reward_gold": 520,
+        "reward_xp": 380,
+        "repeatable": False,
+        "level_req": 14,
+    },
+    "sc_stone_warden_ghosts": {
+        "name": "Ghosts of the Old Order",
+        "town": "sanctum",
+        "description": "Stone Warden Ghosts haunt the pilgrimage roads — echoes of Wardens "
+                       "who died before the order fell. They attack the faithful on sight. "
+                       "Put 4 of them to final rest. The Church will absolve what you must do.",
+        "type": "bounty",
+        "enemy_name": "Stone Warden Ghost",
+        "required": 4,
+        "reward_gold": 440,
+        "reward_xp": 310,
+        "repeatable": True,
+        "level_req": 12,
+    },
+
 }
 
 
@@ -525,6 +723,16 @@ def on_enemy_killed(enemy_name):
             continue
         if job["enemy_name"] == enemy_name:
             add_job_progress(job_id)
+
+    # Side quest: Last Evacuees — track Shadow Warden kills
+    if enemy_name == "Shadow Warden":
+        from core.story_flags import get_flag, set_flag, get_quest_state
+        if get_flag("quest.side_last_evacuees.state", 0) == 1:
+            cur = get_flag("side_evacuees.wardens_killed", 0)
+            new_count = cur + 1
+            set_flag("side_evacuees.wardens_killed", new_count)
+            if new_count >= 4:
+                set_flag("side_evacuees.wardens_cleared", True)
 
 
 def on_dungeon_floor_reached(dungeon_id, floor_num):

@@ -436,6 +436,99 @@ QUESTS = {
             },
         ],
     },
+
+    # ── Act 3 Side Quests ─────────────────────────────────────────────────────
+
+    "side_last_evacuees": {
+        "name": "The Last Evacuees",
+        "description": "A village north of Thornhaven has been cut off by Fading activity. "
+                       "Governor Aldric needs someone to escort the remaining refugees "
+                       "to safety before the Fading closes in completely.",
+        "act": 3,
+        "giver_npc": "Governor Aldric",
+        "turn_in_npc": "Governor Aldric",
+        "reward_gold": 400,
+        "reward_xp": 350,
+        "reward_items": [],
+        "objectives": [
+            {"text": "Defeat the Shadow Wardens blocking the northern road",
+             "flag": "side_evacuees.wardens_cleared", "op": "==", "value": True},
+            {"text": "Report back to Governor Aldric",
+             "flag": "quest.side_last_evacuees.state", "op": ">=", "value": -2},
+        ],
+    },
+    "side_warden_relic": {
+        "name": "Relic of the First Order",
+        "description": "The Warden Liaison has word of an ancient Warden artifact "
+                       "on the lower floors of Valdris' Spire — sealed there when the "
+                       "order fell. Recover it before Valdris destroys it.",
+        "act": 3,
+        "giver_npc": "Warden Liaison",
+        "turn_in_npc": "Warden Liaison",
+        "reward_gold": 500,
+        "reward_xp": 400,
+        "reward_items": [{"id": "warden_signet"}],
+        "objectives": [
+            {"text": "Reach floor 3 of Valdris' Spire",
+             "flag": "explored.valdris_spire.floor3", "op": "==", "value": True},
+            {"text": "Return the relic to the Warden Liaison",
+             "flag": "quest.side_warden_relic.state", "op": ">=", "value": -2},
+        ],
+    },
+    "side_arcane_salvage": {
+        "name": "Arcane Salvage",
+        "description": "Archmage Solen needs reagents from within Valdris' Spire itself — "
+                       "crystals that only form near corrupted ley lines. "
+                       "Bring back 3 Spire Crystals from the Spire's depths.",
+        "act": 3,
+        "giver_npc": "Archmage Solen",
+        "turn_in_npc": "Archmage Solen",
+        "reward_gold": 450,
+        "reward_xp": 380,
+        "reward_items": [],
+        "objectives": [
+            {"text": "Collect 3 Spire Crystals from Valdris' Spire",
+             "flag": "side_salvage.crystals_collected", "op": ">=", "value": 3},
+        ],
+        "auto_complete": False,
+    },
+    "side_deserters": {
+        "name": "The Deserters",
+        "description": "A unit of Imperial soldiers deserted their post and fled into "
+                       "the Shadow Throne's outer ring rather than face the Fading. "
+                       "Guild Commander Varek needs the situation resolved — quietly.",
+        "act": 3,
+        "giver_npc": "Guild Commander Varek",
+        "turn_in_npc": "Guild Commander Varek",
+        "reward_gold": 350,
+        "reward_xp": 300,
+        "reward_items": [],
+        "objectives": [
+            {"text": "Reach floor 2 of the Shadow Throne",
+             "flag": "explored.shadow_throne.floor2", "op": "==", "value": True},
+            {"text": "Report to Guild Commander Varek",
+             "flag": "quest.side_deserters.state", "op": ">=", "value": -2},
+        ],
+    },
+    "side_tide_priest_request": {
+        "name": "The Tide Priest's Vigil",
+        "description": "Tide Priest Oran in Saltmere believes the sea itself is "
+                       "remembering the Pale Coast catastrophe. He needs someone to "
+                       "place a ward-stone on the deepest accessible floor of the "
+                       "Pale Coast before the anniversary — three days hence.",
+        "act": 3,
+        "giver_npc": "Tide Priest Oran",
+        "turn_in_npc": "Tide Priest Oran",
+        "reward_gold": 420,
+        "reward_xp": 360,
+        "reward_items": [],
+        "objectives": [
+            {"text": "Reach floor 3 of the Pale Coast",
+             "flag": "explored.pale_coast.floor3", "op": "==", "value": True},
+            {"text": "Return to Tide Priest Oran",
+             "flag": "quest.side_tide_priest_request.state", "op": ">=", "value": -2},
+        ],
+    },
 }
 
 
@@ -2772,8 +2865,67 @@ NPC_DIALOGUES = {
 
     # ─────────────────────────────────────────────────────────
     #  TIDE PRIEST ORAN — Saltmere shrine
-    # ─────────────────────────────────────────────────────────
     "tide_priest_oran": [
+        {
+            "conditions": [
+                {"flag": "act", "op": ">=", "value": 3},
+                {"flag": "quest.side_tide_priest_request.state", "op": "==", "value": 0},
+            ],
+            "tree": {
+                "id": "oran_vigil_start",
+                "loop": False,
+                "nodes": {
+                    "start": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "The Pale Coast catastrophe happened on an anniversary. The sea remembers dates.\n\nI need someone to place a ward-stone on the Pale Coast's third floor before the date passes. It won't stop anything. But the sea will know someone tried.",
+                        "choices": [
+                            {"text": "We'll do it.", "next": "accept"},
+                            {"text": "That sounds like nothing.", "next": "explain"},
+                        ]
+                    },
+                    "accept": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Third floor. Place it near water if you can. The ward-stone is in my satchel — I'll give it to you now.\n\nThank you.",
+                        "on_enter": [{"action": "start_quest", "quest": "side_tide_priest_request"}],
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                    "explain": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Perhaps. But the sea has capsized ships for reasons no sailor could explain.\n\nI'd rather be foolish and respectful than wise and drowned.",
+                        "choices": [
+                            {"text": "Fine. We'll place it.", "next": "accept"},
+                            {"text": "Leave.", "next": None},
+                        ]
+                    },
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.side_tide_priest_request.state", "op": "==", "value": 1},
+                {"flag": "explored.pale_coast.floor3", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "oran_vigil_turnin",
+                "loop": False,
+                "nodes": {
+                    "start": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "You made it to the third floor. You placed the stone.\n\nThe sea will remember that. It keeps better records than men do.\n\nTake this — the Church's gratitude and mine.",
+                        "on_enter": [{"action": "complete_quest", "quest": "side_tide_priest_request"}],
+                        "choices": [
+                            {"text": "The Pale Coast is as dark as they said.", "next": "dark"},
+                            {"text": "Leave.", "next": None}
+                        ]
+                    },
+                    "dark": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "It always has been. The Fading was there before anyone named it.\n\nWhat you did matters. More than you'll know.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                }
+            }
+        },
         {
             "conditions": [],
             "tree": {
@@ -2817,7 +2969,36 @@ NPC_DIALOGUES = {
                 },
             },
         },
+        {
+            "conditions": [{"flag": "item.hearthstone.2", "op": "==", "value": True}],
+            "tree": {
+                "id": "oran_hs3",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "You recovered the bay stone. The third is in Dragon's Tooth archipelago. I've known its location for twenty years and dreaded this moment. The warden there isn't dead — he's worse than dead.",
+                        "on_enter": [{"action": "start_quest", "quest": "main_hearthstone_3"}],
+                        "choices": [
+                            {"text": "How do we get there?", "next": "passage"},
+                            {"text": "What's waiting for us?", "next": "waiting"},
+                        ],
+                    },
+                    "passage": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Dockhand Riv can arrange passage — she knows every captain who owes a favor. Tell her I sent you. Two days crossing in good weather.",
+                        "choices": [{"text": "We'll find her.", "next": None}],
+                    },
+                    "waiting": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Karreth. The last Warden of the outer islands — a dragon-tamer before the Fading took his mind. He commands the creatures there. Bring fire.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                },
+            },
+        },
     ],
+    # ─────────────────────────────────────────────────────────
 
     # ─────────────────────────────────────────────────────────
     #  HIGH PRIEST ALDARA — Sanctum, grand cathedral
@@ -3191,9 +3372,57 @@ NPC_DIALOGUES = {
 
     # ─────────────────────────────────────────────────────────
     #  GOVERNOR ALDRIC — Thornhaven capital, Iron tier
-    # ─────────────────────────────────────────────────────────
     "governor_aldric": [
-        # After party has all 5 hearthstones (endgame)
+        {
+            "conditions": [
+                {"flag": "act", "op": ">=", "value": 3},
+                {"flag": "quest.side_last_evacuees.state", "op": "==", "value": 0},
+                {"flag": "boss_defeated.shadow_valdris", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "aldric_evacuees_start",
+                "loop": False,
+                "nodes": {
+                    "start": {
+                        "speaker": "Governor Aldric",
+                        "text": "There's a settlement north of here — Millhaven. The Fading has cut the road. Shadow Wardens are blocking the only pass.\n\nI have civilians there who can't fight their way out. I need people who can.\n\nWill you clear the road?",
+                        "choices": [
+                            {"text": "We'll clear the road.", "next": "accept"},
+                            {"text": "Not our fight.", "next": "decline"},
+                        ]
+                    },
+                    "accept": {
+                        "speaker": "Governor Aldric",
+                        "text": "The northern road. The wardens are camped at the Millhaven crossroads — you can't miss them.\n\nKill four and the road opens.",
+                        "on_enter": [{"action": "start_quest", "quest": "side_last_evacuees"}],
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                    "decline": {
+                        "speaker": "Governor Aldric",
+                        "text": "Then those people die.\n\nIf you change your mind, you know where to find me.",
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.side_last_evacuees.state", "op": "==", "value": 1},
+                {"flag": "side_evacuees.wardens_cleared", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "aldric_evacuees_turnin",
+                "loop": False,
+                "nodes": {
+                    "start": {
+                        "speaker": "Governor Aldric",
+                        "text": "The road is clear? The refugees are through?\n\nGood. Forty-three people who'll see tomorrow because of what you did.\n\nI don't say this often — well done.",
+                        "on_enter": [{"action": "complete_quest", "quest": "side_last_evacuees"}],
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                }
+            }
+        },
         {
             "conditions": [
                 {"flag": "quest.main_hearthstone_5.state", "op": "==", "value": -2},
@@ -3238,7 +3467,6 @@ NPC_DIALOGUES = {
                 },
             },
         },
-        # First meeting — cautious, politically careful
         {
             "conditions": [
                 {"flag": "npc.governor_aldric.met", "op": "not_exists"},
@@ -3293,7 +3521,6 @@ NPC_DIALOGUES = {
                 },
             },
         },
-        # Default
         {
             "conditions": [],
             "tree": {
@@ -3328,12 +3555,165 @@ NPC_DIALOGUES = {
                 },
             },
         },
+        {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "aldric_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Governor Aldric",
+                        "text": "You've done it. I doubted you — I will admit that freely. The Empire has watched the east collapse for years and done nothing. You did something. Whatever comes next, the histories will note it.",
+                        "choices": [
+                            {"text": "Is it truly over?", "next": "over"},
+                            {"text": "Valdris had help.", "next": "help"},
+                        ],
+                    },
+                    "over": {
+                        "speaker": "Governor Aldric",
+                        "text": "The shadow he built — yes. What he uncovered about the Hearthstones, what he set in motion... that will take years to fully understand. But the immediate threat is gone. The land can start to heal.",
+                        "choices": [{"text": "That's enough for now.", "next": None}],
+                    },
+                    "help": {
+                        "speaker": "Governor Aldric",
+                        "text": "I know. The Council inquiry is already underway. Some of those names will surprise people. Others won't. Let me handle that part — you've earned the rest.",
+                        "choices": [{"text": "Don't let them bury it.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "aldric_maren_left",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Governor Aldric",
+                        "text": "I heard the scholar left. Alone, at night, headed north. My people tried to follow — she was gone before they reached the gate. She knows something she hasn't shared with you, doesn't she.",
+                        "choices": [
+                            {"text": "She's trying to end this herself.", "next": "herself"},
+                            {"text": "We're not sure what she knows.", "next": "unsure"},
+                        ],
+                    },
+                    "herself": {
+                        "speaker": "Governor Aldric",
+                        "text": "Brave. Possibly foolish. Possibly both. If she has a plan, I hope it's better than mine was — which was 'wait and see.' I've been waiting for three years. The seeing hasn't improved.",
+                        "choices": [{"text": "We're going after her.", "next": "going"}],
+                    },
+                    "unsure": {
+                        "speaker": "Governor Aldric",
+                        "text": "In my experience, when someone knows something and doesn't share it, one of two things is true: they don't trust you, or the knowledge would break you. Given what she's walked into — probably both.",
+                        "choices": [{"text": "We're still going after her.", "next": "going"}],
+                    },
+                    "going": {
+                        "speaker": "Governor Aldric",
+                        "text": "Then go. Varek can give you Guild support to the border. After that you're on your own — I have no authority in the Ashlands. I'll hold the city. I'll be here when you come back.",
+                        "choices": [{"text": "We'll be back.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "aldric_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Governor Aldric",
+                        "text": "I govern the capital and three hundred miles of territory, half of which is now silent. The eastern villages — gone. Thousands of people. No bodies, no struggle. The Empire calls it 'regional instability.' I call it a catastrophe.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.governor.met", "value": True}],
+                        "choices": [
+                            {"text": "We know what's causing it.", "next": "know"},
+                            {"text": "What resources do you have?", "next": "resources"},
+                        ],
+                    },
+                    "know": {
+                        "speaker": "Governor Aldric",
+                        "text": "Then you know more than my intelligence reports. Tell me. I've been waiting two years for someone to come in here and say those words.",
+                        "choices": [
+                            {"text": "The Hearthstone extraction. Valdris.", "next": "valdris"},
+                        ],
+                    },
+                    "valdris": {
+                        "speaker": "Governor Aldric",
+                        "text": "That name. It keeps appearing. He has Imperial letters — real ones. Someone in the Council signed off on his operations. I cannot move against him officially without evidence he hasn't buried. Can you get me that evidence?",
+                        "choices": [{"text": "That's what we're doing.", "next": None}],
+                    },
+                    "resources": {
+                        "speaker": "Governor Aldric",
+                        "text": "Limited. The Imperial military won't act without an order from the Council. I have city guards, a treasury that's being bled by refugee costs, and an extremely good Guild Commander. The Guild is your best ally here.",
+                        "choices": [{"text": "We'll work with them.", "next": None}],
+                    },
+                },
+            },
+        },
     ],
+    # ─────────────────────────────────────────────────────────
 
     # ─────────────────────────────────────────────────────────
     #  GUILD COMMANDER VAREK — Thornhaven adventurers' guild
-    # ─────────────────────────────────────────────────────────
     "guild_commander_varek": [
+        {
+            "conditions": [
+                {"flag": "act", "op": ">=", "value": 3},
+                {"flag": "quest.side_deserters.state", "op": "==", "value": 0},
+                {"flag": "boss_defeated.shadow_valdris", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "varek_deserters_start",
+                "loop": False,
+                "nodes": {
+                    "start": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "I have a sensitive matter.\n\nTwelve soldiers deserted their post three weeks ago. Spotted near the Shadow Throne's outer ring. I need someone to go in, assess the situation, and report back. Quietly.",
+                        "choices": [
+                            {"text": "We'll investigate.", "next": "accept"},
+                            {"text": "Find someone else.", "next": None},
+                        ]
+                    },
+                    "accept": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "The Shadow Throne's first two floors should tell you what you need to know. Report to me first. No one else.\n\nAnd if they've turned — you know what to do.",
+                        "on_enter": [{"action": "start_quest", "quest": "side_deserters"}],
+                        "choices": [{"text": "Understood.", "next": None}]
+                    },
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.side_deserters.state", "op": "==", "value": 1},
+                {"flag": "explored.shadow_throne.floor2", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "varek_deserters_turnin",
+                "loop": False,
+                "nodes": {
+                    "start": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "You've been inside. What did you find?",
+                        "choices": [
+                            {"text": "They're gone — taken by the Throne.", "next": "taken"},
+                            {"text": "They chose to stay.", "next": "stayed"},
+                        ]
+                    },
+                    "taken": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Then they're beyond help or punishment. That closes the matter.\n\nHere — you've done what I asked.",
+                        "on_enter": [{"action": "complete_quest", "quest": "side_deserters"}],
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                    "stayed": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Chose to stay. In the Shadow Throne.\n\nEither way — it's done. Take your payment.",
+                        "on_enter": [{"action": "complete_quest", "quest": "side_deserters"}],
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                }
+            }
+        },
         {
             "conditions": [],
             "tree": {
@@ -3377,7 +3757,101 @@ NPC_DIALOGUES = {
                 },
             },
         },
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.4", "op": "==", "value": True},
+                {"flag": "item.hearthstone.5", "op": "not_exists"},
+                {"flag": "boss_defeated.shadow_valdris", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "varek_penultimate",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Four stones. One left — the Dragon's Tooth, the volcanic island east of the coast. My operative confirmed the last stone is in the deepest chamber. The guardian there is unlike anything else. Prepare accordingly. After that, the Spire. You're close.",
+                        "choices": [
+                            {"text": "How do we reach Dragon's Tooth?", "next": "reach"},
+                            {"text": "What do you know about the guardian?", "next": "guardian"},
+                            {"text": "We're ready.", "next": None},
+                        ],
+                    },
+                    "reach": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Eastport, then by ship. It's a half-day sail in good weather. The island is active — volcanic vents, unstable ground. The ruins predate the Warden order. Whatever's down there sealed itself in voluntarily.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                    "guardian": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Old. Ancient, even by Warden standards. The reports call it Karreth — a name, not a title. It responds to something called a 'true name' — some kind of ancient binding. If you have that, the fight may be shorter. If not, expect it to be very long.",
+                        "choices": [{"text": "We'll find a way.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.3", "op": "==", "value": True},
+                {"flag": "item.hearthstone.4", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "varek_act3_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Three stones. I've had people watching — you've done what nobody else managed in a decade. There are two left. My operative found them: the Pale Coast Catacombs to the southwest, and the Windswept Isle ruins — accessible from the coast by ship. Get both. Then go north.",
+                        "on_enter": [
+                            {"action": "start_quest", "quest": "main_act3_spire"},
+                            {"action": "start_quest", "quest": "main_pale_coast"},
+                            {"action": "start_quest", "quest": "main_windswept_isle"},
+                        ],
+                        "choices": [
+                            {"text": "What do you know about the Pale Coast guardian?", "next": "pale"},
+                            {"text": "What's on the Windswept Isle?", "next": "isle"},
+                            {"text": "Understood. We'll move.", "next": None},
+                        ],
+                    },
+                    "pale": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "A Warden. One of the original order — she sealed herself in decades ago to protect the stone. She may still be alive, or she may have become something else. My operative couldn't get close enough to tell. Approach with caution. If she's coherent, she may yield willingly.",
+                        "choices": [{"text": "And the isle?", "next": "isle"}, {"text": "We'll handle it.", "next": None}],
+                    },
+                    "isle": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "An elemental guardian. Pre-order — bound before Wardens existed. It doesn't negotiate and it doesn't retreat. It's also immune to the Fading entirely, which is the only reason the stone there survived. You'll need to fight it straight.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.5", "op": "==", "value": True},
+                {"flag": "boss_defeated.shadow_valdris", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "varek_send_north",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "All five. I won't pretend I expected that. Valdris' Spire is north of Thornhaven — past the last garrison, past the last road. Below the Spire is the Shadow Throne — that's where he actually lives. The Spire is the lock. The Throne is the man. Go.",
+                        "choices": [
+                            {"text": "What do we do when we find him?", "next": "choice"},
+                            {"text": "We're ready.", "next": None},
+                        ],
+                    },
+                    "choice": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "That's between you and him and whatever Maren is planning. I've heard she's already inside. Whatever she wants — I'd think carefully before agreeing to it. She's her father's daughter in more ways than she admits.",
+                        "choices": [{"text": "Noted.", "next": None}],
+                    },
+                },
+            },
+        },
     ],
+    # ─────────────────────────────────────────────────────────
 
     # ─────────────────────────────────────────────────────────
     #  COURT MAGE SIRA — Thornhaven, Maren's Act II reveal
@@ -4186,6 +4660,73 @@ NPC_DIALOGUES = {
 
     # ── Warden Liaison ────────────────────────────────────────────────────────
     "warden_liaison": [
+        # ── Act 3: Warden Relic quest giver + turn-in ─────────────────────────
+        {
+            "conditions": [
+                {"flag": "spire_key", "op": "==", "value": True},
+                {"flag": "quest.side_warden_relic.state", "op": "==", "value": 0},
+                {"flag": "boss_defeated.shadow_valdris", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "liaison_relic_start",
+                "loop": False,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Before you enter the Spire — I must ask something.\n\nWhen the last Commander sealed the Spire, he hid a signet on the third floor. The seal of the first Warden order. Not a weapon. Just proof that we existed.\n\nIf you find it — bring it back.",
+                        "choices": [
+                            {"text": "We'll look for it.", "next": "accept"},
+                            {"text": "We can't promise anything.", "next": "understood"},
+                        ]
+                    },
+                    "accept": {
+                        "speaker": "Warden Liaison",
+                        "text": "Third floor, near the central chamber. The wards there were strongest.\n\nThank you.",
+                        "on_enter": [{"action": "start_quest", "quest": "side_warden_relic"}],
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                    "understood": {
+                        "speaker": "Warden Liaison",
+                        "text": "I know. Do what you can.\n\nWe'll take what we get.",
+                        "on_enter": [{"action": "start_quest", "quest": "side_warden_relic"}],
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.side_warden_relic.state", "op": "==", "value": 1},
+                {"flag": "explored.valdris_spire.floor3", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "liaison_relic_turnin",
+                "loop": False,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "You reached the third floor. Did you find it?",
+                        "choices": [
+                            {"text": "Yes — here.", "next": "found"},
+                            {"text": "We looked. It wasn't there.", "next": "not_found"},
+                        ]
+                    },
+                    "found": {
+                        "speaker": "Warden Liaison",
+                        "text": "I... thank you.\n\nFour hundred years. We thought everything was gone.\n\nThe order didn't just fail. It ended on its own terms. There's a difference.",
+                        "on_enter": [{"action": "complete_quest", "quest": "side_warden_relic"}],
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                    "not_found": {
+                        "speaker": "Warden Liaison",
+                        "text": "Then Valdris found it first. Or it's deeper than I thought.\n\nIt doesn't matter. You made it to the third floor — that took something.\n\nTake this for the effort.",
+                        "on_enter": [{"action": "complete_quest", "quest": "side_warden_relic"}],
+                        "choices": [{"text": "Leave.", "next": None}]
+                    },
+                }
+            }
+        },
+
         # Initiate tier (no hearthstones yet)
         {
             "conditions": [{"flag": "item.hearthstone.1", "op": "==", "value": False}],
@@ -5849,87 +6390,6 @@ _NEW_DIALOGUES = {
         },
     ],
 
-        "tide_priest_oran": [
-        {
-            "conditions": [{"flag": "item.hearthstone.2", "op": "==", "value": True}],
-            "tree": {
-                "id": "oran_hs3",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Tide Priest Oran",
-                        "text": "You recovered the bay stone. The third is in Dragon's Tooth archipelago. I've known its location for twenty years and dreaded this moment. The warden there isn't dead — he's worse than dead.",
-                        "on_enter": [{"action": "start_quest", "quest": "main_hearthstone_3"}],
-                        "choices": [
-                            {"text": "How do we get there?", "next": "passage"},
-                            {"text": "What's waiting for us?", "next": "waiting"},
-                        ],
-                    },
-                    "passage": {
-                        "speaker": "Tide Priest Oran",
-                        "text": "Dockhand Riv can arrange passage — she knows every captain who owes a favor. Tell her I sent you. Two days crossing in good weather.",
-                        "choices": [{"text": "We'll find her.", "next": None}],
-                    },
-                    "waiting": {
-                        "speaker": "Tide Priest Oran",
-                        "text": "Karreth. The last Warden of the outer islands — a dragon-tamer before the Fading took his mind. He commands the creatures there. Bring fire.",
-                        "choices": [{"text": "Understood.", "next": None}],
-                    },
-                },
-            },
-        },
-        {
-            "conditions": [],
-            "tree": {
-                "id": "oran_default",
-                "loop": True,             "nodes": {
-                    "start": {
-                        "speaker": "Tide Priest Oran",
-                        "text": "The tides have been wrong for months. Coming in at the wrong hour. Going out too fast. The sea knows something is out of balance — she always does, long before the land catches on.",
-                        "on_enter": [{"action": "set_flag", "flag": "npc.oran.met", "value": True}],
-                        "choices": [
-                            {"text": "What does the sea know?", "next": "sea_knows"},
-                            {"text": "Is it related to the Fading?", "next": "fading"},
-                        ],
-                    },
-                    "sea_knows": {
-                        "speaker": "Tide Priest Oran",
-                        "text": "That the ley lines are shifting. The Hearthstone network — you've heard of it? — runs under the sea floor too. Pull a stone on land and the whole web trembles. Including the tides.",
-                        "choices": [
-                            {"text": "You know about the Hearthstones?", "next": "knows_stones"},
-                            {"text": "What can be done?", "next": "what_done"},
-                        ],
-                    },
-                    "knows_stones": {
-                        "speaker": "Tide Priest Oran",
-                        "text": "Every tide priest knows. We've been tracking the disruptions for generations. But knowledge and power are different things. We watch. We record. We pray. It helps less than I'd like.",
-                        "choices": [{"text": "We're doing more than watching.", "next": "active"}],
-                    },
-                    "active": {
-                        "speaker": "Tide Priest Oran",
-                        "text": "Then the sea favors you. There's a stone under the bay — it was sealed there centuries ago by the first tide priests. If Valdris finds it, the tides won't be the only thing that goes wrong.",
-                        "on_enter": [{"action": "start_quest", "quest": "main_hearthstone_2"}],
-                        "choices": [{"text": "We'll protect it.", "next": None}],
-                    },
-                    "fading": {
-                        "speaker": "Tide Priest Oran",
-                        "text": "It's the same phenomenon. Different name — we call it the Emptying. The land dries, the sea shifts, the sky goes thin. All from the same wound.",
-                        "choices": [{"text": "What wound?", "next": "wound"}],
-                    },
-                    "wound": {
-                        "speaker": "Tide Priest Oran",
-                        "text": "The extraction of what should never be extracted. The stones aren't ore. They're the world's own vitality, crystallized. Take enough of them and nothing grows back.",
-                        "choices": [{"text": "We'll stop it.", "next": None}],
-                    },
-                    "what_done": {
-                        "speaker": "Tide Priest Oran",
-                        "text": "Return what was taken, if any remain. Or at minimum, stop more from being taken. Either buys time.",
-                        "choices": [{"text": "We're working on it.", "next": None}],
-                    },
-                },
-            },
-        },
-    ],
 
     # ── Sanctum ────────────────────────────────────────────
 
@@ -6339,6 +6799,34 @@ _NEW_DIALOGUES = {
     ],
 
     "archmage_solen": [
+        # ── Act 3: Arcane Salvage quest giver ─────────────────────────────────
+        {
+            "conditions": [
+                {"flag": "spire_key", "op": "==", "value": True},
+                {"flag": "quest.side_arcane_salvage.state", "op": "==", "value": 0},
+            ],
+            "tree": {
+                "id": "solen_salvage_start",
+                "loop": False,
+                "nodes": {
+                    "start": {
+                        "speaker": "Archmage Solen",
+                        "text": "Valdris' Spire sits above a ley confluence. The corruption creates unique crystalline formations — Spire Crystals. They don't exist anywhere else.\n\nI need three. The Academy pays well. Better than well.",
+                        "choices": [
+                            {"text": "We'll collect them.", "next": "accept"},
+                            {"text": "Another time.", "next": None},
+                        ]
+                    },
+                    "accept": {
+                        "speaker": "Archmage Solen",
+                        "text": "Blue-black crystals in the Spire's walls — you'll know them. Take the whole formation. Don't drop them.",
+                        "on_enter": [{"action": "start_quest", "quest": "side_arcane_salvage"}],
+                        "choices": [{"text": "We'll be careful.", "next": None}]
+                    },
+                }
+            }
+        },
+
         # Act 3 — All 5 stones, Maren left: send-off
         {
             "conditions": [
@@ -7009,241 +7497,7 @@ _NEW_DIALOGUES = {
         },
     ],
 
-    "governor_aldric": [
-        {
-            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
-            "tree": {
-                "id": "aldric_post_valdris",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Governor Aldric",
-                        "text": "You've done it. I doubted you — I will admit that freely. The Empire has watched the east collapse for years and done nothing. You did something. Whatever comes next, the histories will note it.",
-                        "choices": [
-                            {"text": "Is it truly over?", "next": "over"},
-                            {"text": "Valdris had help.", "next": "help"},
-                        ],
-                    },
-                    "over": {
-                        "speaker": "Governor Aldric",
-                        "text": "The shadow he built — yes. What he uncovered about the Hearthstones, what he set in motion... that will take years to fully understand. But the immediate threat is gone. The land can start to heal.",
-                        "choices": [{"text": "That's enough for now.", "next": None}],
-                    },
-                    "help": {
-                        "speaker": "Governor Aldric",
-                        "text": "I know. The Council inquiry is already underway. Some of those names will surprise people. Others won't. Let me handle that part — you've earned the rest.",
-                        "choices": [{"text": "Don't let them bury it.", "next": None}],
-                    },
-                },
-            },
-        },
-        {
-            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
-            "tree": {
-                "id": "aldric_maren_left",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Governor Aldric",
-                        "text": "I heard the scholar left. Alone, at night, headed north. My people tried to follow — she was gone before they reached the gate. She knows something she hasn't shared with you, doesn't she.",
-                        "choices": [
-                            {"text": "She's trying to end this herself.", "next": "herself"},
-                            {"text": "We're not sure what she knows.", "next": "unsure"},
-                        ],
-                    },
-                    "herself": {
-                        "speaker": "Governor Aldric",
-                        "text": "Brave. Possibly foolish. Possibly both. If she has a plan, I hope it's better than mine was — which was 'wait and see.' I've been waiting for three years. The seeing hasn't improved.",
-                        "choices": [{"text": "We're going after her.", "next": "going"}],
-                    },
-                    "unsure": {
-                        "speaker": "Governor Aldric",
-                        "text": "In my experience, when someone knows something and doesn't share it, one of two things is true: they don't trust you, or the knowledge would break you. Given what she's walked into — probably both.",
-                        "choices": [{"text": "We're still going after her.", "next": "going"}],
-                    },
-                    "going": {
-                        "speaker": "Governor Aldric",
-                        "text": "Then go. Varek can give you Guild support to the border. After that you're on your own — I have no authority in the Ashlands. I'll hold the city. I'll be here when you come back.",
-                        "choices": [{"text": "We'll be back.", "next": None}],
-                    },
-                },
-            },
-        },
-        {
-            "conditions": [],
-            "tree": {
-                "id": "aldric_default",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Governor Aldric",
-                        "text": "I govern the capital and three hundred miles of territory, half of which is now silent. The eastern villages — gone. Thousands of people. No bodies, no struggle. The Empire calls it 'regional instability.' I call it a catastrophe.",
-                        "on_enter": [{"action": "set_flag", "flag": "npc.governor.met", "value": True}],
-                        "choices": [
-                            {"text": "We know what's causing it.", "next": "know"},
-                            {"text": "What resources do you have?", "next": "resources"},
-                        ],
-                    },
-                    "know": {
-                        "speaker": "Governor Aldric",
-                        "text": "Then you know more than my intelligence reports. Tell me. I've been waiting two years for someone to come in here and say those words.",
-                        "choices": [
-                            {"text": "The Hearthstone extraction. Valdris.", "next": "valdris"},
-                        ],
-                    },
-                    "valdris": {
-                        "speaker": "Governor Aldric",
-                        "text": "That name. It keeps appearing. He has Imperial letters — real ones. Someone in the Council signed off on his operations. I cannot move against him officially without evidence he hasn't buried. Can you get me that evidence?",
-                        "choices": [{"text": "That's what we're doing.", "next": None}],
-                    },
-                    "resources": {
-                        "speaker": "Governor Aldric",
-                        "text": "Limited. The Imperial military won't act without an order from the Council. I have city guards, a treasury that's being bled by refugee costs, and an extremely good Guild Commander. The Guild is your best ally here.",
-                        "choices": [{"text": "We'll work with them.", "next": None}],
-                    },
-                },
-            },
-        },
-    ],
 
-    "guild_commander_varek": [
-        # After 4 stones — final push, one stone left (Dragon's Tooth)
-        {
-            "conditions": [
-                {"flag": "item.hearthstone.4", "op": "==", "value": True},
-                {"flag": "item.hearthstone.5", "op": "not_exists"},
-                {"flag": "boss_defeated.shadow_valdris", "op": "not_exists"},
-            ],
-            "tree": {
-                "id": "varek_penultimate",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Guild Commander Varek",
-                        "text": "Four stones. One left — the Dragon's Tooth, the volcanic island east of the coast. My operative confirmed the last stone is in the deepest chamber. The guardian there is unlike anything else. Prepare accordingly. After that, the Spire. You're close.",
-                        "choices": [
-                            {"text": "How do we reach Dragon's Tooth?", "next": "reach"},
-                            {"text": "What do you know about the guardian?", "next": "guardian"},
-                            {"text": "We're ready.", "next": None},
-                        ],
-                    },
-                    "reach": {
-                        "speaker": "Guild Commander Varek",
-                        "text": "Eastport, then by ship. It's a half-day sail in good weather. The island is active — volcanic vents, unstable ground. The ruins predate the Warden order. Whatever's down there sealed itself in voluntarily.",
-                        "choices": [{"text": "Understood.", "next": None}],
-                    },
-                    "guardian": {
-                        "speaker": "Guild Commander Varek",
-                        "text": "Old. Ancient, even by Warden standards. The reports call it Karreth — a name, not a title. It responds to something called a 'true name' — some kind of ancient binding. If you have that, the fight may be shorter. If not, expect it to be very long.",
-                        "choices": [{"text": "We'll find a way.", "next": None}],
-                    },
-                },
-            },
-        },
-        # After getting 3 stones — send to Pale Coast and Windswept Isle
-        {
-            "conditions": [
-                {"flag": "item.hearthstone.3", "op": "==", "value": True},
-                {"flag": "item.hearthstone.4", "op": "not_exists"},
-            ],
-            "tree": {
-                "id": "varek_act3_stones",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Guild Commander Varek",
-                        "text": "Three stones. I've had people watching — you've done what nobody else managed in a decade. There are two left. My operative found them: the Pale Coast Catacombs to the southwest, and the Windswept Isle ruins — accessible from the coast by ship. Get both. Then go north.",
-                        "on_enter": [
-                            {"action": "start_quest", "quest": "main_act3_spire"},
-                            {"action": "start_quest", "quest": "main_pale_coast"},
-                            {"action": "start_quest", "quest": "main_windswept_isle"},
-                        ],
-                        "choices": [
-                            {"text": "What do you know about the Pale Coast guardian?", "next": "pale"},
-                            {"text": "What's on the Windswept Isle?", "next": "isle"},
-                            {"text": "Understood. We'll move.", "next": None},
-                        ],
-                    },
-                    "pale": {
-                        "speaker": "Guild Commander Varek",
-                        "text": "A Warden. One of the original order — she sealed herself in decades ago to protect the stone. She may still be alive, or she may have become something else. My operative couldn't get close enough to tell. Approach with caution. If she's coherent, she may yield willingly.",
-                        "choices": [{"text": "And the isle?", "next": "isle"}, {"text": "We'll handle it.", "next": None}],
-                    },
-                    "isle": {
-                        "speaker": "Guild Commander Varek",
-                        "text": "An elemental guardian. Pre-order — bound before Wardens existed. It doesn't negotiate and it doesn't retreat. It's also immune to the Fading entirely, which is the only reason the stone there survived. You'll need to fight it straight.",
-                        "choices": [{"text": "Understood.", "next": None}],
-                    },
-                },
-            },
-        },
-        # After getting all 5 stones — point to the Spire and Shadow Throne
-        {
-            "conditions": [
-                {"flag": "item.hearthstone.5", "op": "==", "value": True},
-                {"flag": "boss_defeated.shadow_valdris", "op": "not_exists"},
-            ],
-            "tree": {
-                "id": "varek_send_north",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Guild Commander Varek",
-                        "text": "All five. I won't pretend I expected that. Valdris' Spire is north of Thornhaven — past the last garrison, past the last road. Below the Spire is the Shadow Throne — that's where he actually lives. The Spire is the lock. The Throne is the man. Go.",
-                        "choices": [
-                            {"text": "What do we do when we find him?", "next": "choice"},
-                            {"text": "We're ready.", "next": None},
-                        ],
-                    },
-                    "choice": {
-                        "speaker": "Guild Commander Varek",
-                        "text": "That's between you and him and whatever Maren is planning. I've heard she's already inside. Whatever she wants — I'd think carefully before agreeing to it. She's her father's daughter in more ways than she admits.",
-                        "choices": [{"text": "Noted.", "next": None}],
-                    },
-                },
-            },
-        },
-        # Default
-        {
-            "conditions": [],
-            "tree": {
-                "id": "varek_default",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Guild Commander Varek",
-                        "text": "Adventurers registered with the Imperial Guild get access to better contracts, better information, and my personal backing if things go sideways politically. If you're doing what I think you're doing, you'll want all three.",
-                        "on_enter": [{"action": "set_flag", "flag": "npc.varek.met", "value": True}],
-                        "choices": [
-                            {"text": "What do you think we're doing?", "next": "think"},
-                            {"text": "What contracts are available?", "next": "contracts"},
-                        ],
-                    },
-                    "think": {
-                        "speaker": "Guild Commander Varek",
-                        "text": "Chasing Valdris. You have the look. Determined, tired, slightly haunted. I've seen it before — anyone who digs deep enough into the eastern question gets that look. Most of them stop digging.",
-                        "choices": [
-                            {"text": "We're not stopping.", "next": "not_stopping"},
-                        ],
-                    },
-                    "not_stopping": {
-                        "speaker": "Guild Commander Varek",
-                        "text": "Good. I have an operative who's been tracking his supply routes for six months. I'll arrange a meeting. Don't mention this to the Council — half of them are his. When you're ready to move on the Spire, I can get you resources.",
-                        "on_enter": [
-                            {"action": "start_quest", "quest": "main_act3_spire"},
-                            {"action": "set_flag", "flag": "lore.varek_contact", "value": True},
-                        ],
-                        "choices": [{"text": "Understood.", "next": None}],
-                    },
-                    "contracts": {
-                        "speaker": "Guild Commander Varek",
-                        "text": "Refugee escort work, mostly. Dangerous — the roads east are not safe. Also: information bounties on Valdris's operations. I pay well for verified intelligence. Better than you'd expect from a man with limited official authority.",
-                        "choices": [{"text": "We'll check back.", "next": None}],
-                    },
-                },
-            },
-        },
-    ],
 
     "court_mage_sira": [
         # Act 3 — Fading is critical, Sira doing final calculations

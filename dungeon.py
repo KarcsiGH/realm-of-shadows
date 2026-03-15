@@ -161,14 +161,18 @@ DUNGEONS = {
 
     "windswept_isle": {
         "name": "Windswept Isle Ruins",
-        "floors": 3,
-        "width": 32, "height": 26,
+        "floors": 6,
+        "width": 36, "height": 30,
         "encounter_table": {
-            1: ["wi_wraiths", "wi_sprites"],
-            2: ["wi_mixed", "wi_golem"],
-            3: ["wi_storm_mob", "wi_golem"],
+            1: ["wi_sprites", "wi_wraiths", "wi_sprite_pack", "wi_wraith_mob"],
+            2: ["wi_mixed", "wi_shade_pack", "wi_wraith_mob", "wi_shade_storm"],
+            3: ["wi_golem", "wi_storm_mob", "wi_golem_pair", "wi_golem_escort"],
+            4: ["wi_warden_echo", "wi_warden_shade", "wi_shade_storm", "wi_deep_storm"],
+            5: ["wi_shadow_warden", "wi_fallen_wardens", "wi_fallen_solo", "wi_elite_echo",
+                "wi_warden_echoes", "wi_warden_revenant"],
+            6: ["wi_fallen_solo", "wi_elite_echo", "wi_warden_revenant"],
         },
-        "boss_floor": 3,
+        "boss_floor": 6,
         "boss_encounter": "boss_isle_keeper",
         "theme": "ruins",
         "encounter_rate": 7,
@@ -726,7 +730,8 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             if rng.random() < 0.35:
                 ex = room[0] + room[2] // 2
                 ey = room[1] + room[3] // 2
-                if tiles[ey][ex]["type"] == DT_FLOOR:
+                existing_ev = tiles[ey][ex].get("event") or {}
+                if tiles[ey][ex]["type"] == DT_FLOOR and existing_ev.get("type") != "boss_encounter":
                     tiles[ey][ex]["event"] = {
                         "type": "fixed_encounter",
                         "triggered": False,

@@ -12,8 +12,15 @@ from core.identification import (
     get_identify_options, attempt_identify,
     get_item_display_name, get_item_display_desc,
     can_arcane_lore, can_appraisal,
-    ARCANE_LORE_CLASSES, APPRAISAL_CLASSES,
 )
+# Defined inline to avoid version-sensitive imports from identification.py
+ARCANE_LORE_CLASSES = {
+    "Mage", "Witch", "Necromancer", "Druid", "Mystic", "Spellblade",
+    "Archmage", "Cleric", "High Priest", "Warder", "Spellthief", "Sage", "Warlock",
+}
+APPRAISAL_CLASSES = {
+    "Thief", "Ranger", "Assassin", "Shadow Master", "Phantom", "Spellthief", "Merchant",
+}
 from core.classes import CLASSES, STAT_NAMES, STAT_FULL_NAMES
 
 # ═══════════════════════════════════════════════════════════════
@@ -770,24 +777,37 @@ class PostCombatUI:
             sfx.play("item_pickup")
 
     def _trigger_quest_item(self, item):
-        """Fire story flags when a quest item enters the party inventory."""
-        if item.get("type") != "quest_item":
-            return
+        """Fire story flags when a notable item enters the party inventory."""
+        item_type = item.get("type", "")
         name = item.get("name", "")
         try:
-            from core.story_flags import set_flag, start_quest, has
+            from core.story_flags import set_flag, start_quest, has, increment
         except ImportError:
             return
-        if name == "Commission Letter":
-            if not has("item.commission_letter"):
-                set_flag("item.commission_letter", True)
-                # The letter implicates the Governor in silencing Dragon's Tooth visitors
-                set_flag("lore.governor_conspiracy", True)
-        elif name == "Imperial Command Seal":
-            if not has("item.imperial_seal"):
-                set_flag("item.imperial_seal", True)
-                # Direct evidence of the Governor's personal orders
-                set_flag("lore.governor_direct_order", True)
+
+        # Quest items: set flags on first pickup
+        if item_type == "quest_item":
+            if name == "Commission Letter":
+                if not has("item.commission_letter"):
+                    set_flag("item.commission_letter", True)
+                    set_flag("lore.governor_conspiracy", True)
+            elif name == "Imperial Command Seal":
+                if not has("item.imperial_seal"):
+                    set_flag("item.imperial_seal", True)
+                    set_flag("lore.governor_direct_order", True)
+
+        # Wolf Pelts: count toward side_wolf_pelts quest objective
+        elif name == "Wolf Pelt":
+            start_quest("side_wolf_pelts")   # no-op if already started or not yet given
+            increment("wolf_pelts_quest.count")
+
+        # Spire Crystals: count toward side_arcane_salvage quest objective
+        elif name == "Spire Crystal":
+            from data.story_data import QUESTS
+            from core.story_flags import get_flag
+            if get_flag("quest.side_arcane_salvage.state", 0) == 1:
+                cur = get_flag("side_salvage.crystals_collected", 0)
+                set_flag("side_salvage.crystals_collected", cur + 1)
 
     # ─────────────────────────────────────────────────────────
     #  HELPERS

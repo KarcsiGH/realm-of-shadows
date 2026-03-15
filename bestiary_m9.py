@@ -30,7 +30,7 @@ S = lambda s,d,c,i,w,p: {"STR":s,"DEX":d,"CON":c,"INT":i,"WIS":w,"PIE":p}
 
 NEW_ENEMIES = {
     # ── Cave / Goblin Warren ──
-    "Goblin Scout": _e("Goblin Scout",80,5,1,S(4,14,3,3,6,1),20,22,"melee","piercing",
+    "Goblin Scout": _e("Goblin Scout",45,3,1,S(4,14,3,3,6,1),20,12,"melee","piercing",
         acc=3,xp=10,gold=(2,6),        loot=[
             {"drop_chance": 0.14, "item": {"name": 'Crude Knife', "type": 'material', "subtype": 'blade_scrap', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Rusty Blade', "unidentified_desc": 'A short rusty knife.', "appraised_name": "Scout's Crude Knife", "material_desc": 'Poor-grade iron.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": "A goblin scout's knife.", "identified": False}},
             {"drop_chance": 0.1, "item": {"name": 'Goblin Ear', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Severed Ear', "unidentified_desc": 'A small pointed ear.', "appraised_name": 'Goblin Ear', "material_desc": 'A goblin trophy.', "magic_desc": 'No magical properties.', "estimated_value": 2, "description": 'A goblin ear.', "identified": False}},
@@ -40,7 +40,7 @@ NEW_ENEMIES = {
               2:"Goblin Scout — fast, weak. Often in groups."}),
     "Goblin Brute": _e("Goblin Brute",190,13,2,S(14,6,12,2,3,1),10,42,"melee","blunt",
         xp=28,gold=(8,16),        loot=[
-            {"drop_chance": 0.12, "item": {"name": 'Crude Club', "type": 'weapon', "slot": 'weapon', "subtype": 'Club', "rarity": 'common', "damage": 6, "phys_type": 'blunt', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Heavy Club', "unidentified_desc": 'A rough wooden club.', "appraised_name": 'Goblin War Club', "material_desc": 'Scavenged wood and iron nails.', "magic_desc": 'No magical properties.', "estimated_value": 8, "description": 'A heavy club from a goblin brute.', "identified": False}},
+            {"drop_chance": 0.12, "item": {"name": 'Crude Club', "type": 'weapon', "slot": 'weapon', "subtype": 'Club', "rarity": 'common', "damage": 16, "damage_stat": {"STR": 0.4}, "phys_type": 'blunt', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Heavy Club', "unidentified_desc": 'A rough wooden club.', "appraised_name": 'Goblin War Club', "material_desc": 'Scavenged wood and iron nails.', "magic_desc": 'No magical properties.', "estimated_value": 8, "description": 'A heavy club from a goblin brute.', "identified": False}},
             {"drop_chance": 0.16, "item": {"name": 'Goblin Hide Scraps', "type": 'material', "subtype": 'leather', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Thick Scraps', "unidentified_desc": 'Pieces of rough hide.', "appraised_name": 'Goblin Hide', "material_desc": 'Thick goblin skin. Tier 1 leather.', "magic_desc": 'No magical properties.', "estimated_value": 5, "description": 'Rough goblin hide.', "identified": False}},
         ],
 
@@ -56,7 +56,7 @@ NEW_ENEMIES = {
 
         desc={0:"A goblin fiddling with strange devices.",1:"Goblin Trapper",
               2:"Goblin Trapper — throws caltrops to slow you."}),
-    "Cave Bat": _e("Cave Bat",35,4,1,S(3,16,2,1,8,1),24,12,"melee","piercing",
+    "Cave Bat": _e("Cave Bat",28,3,1,S(3,16,2,1,8,1),24,8,"melee","piercing",
         acc=6,xp=6,gold=(0,2),res={"lightning":1.5,"nature":0.5},        loot=[
             {"drop_chance": 0.18, "item": {"name": 'Bat Wing', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Leathery Wing', "unidentified_desc": 'A thin veiny wing.', "appraised_name": 'Cave Bat Wing', "material_desc": 'Thin membrane wing. Tier 1 reagent.', "magic_desc": 'Faint echo-sense.', "estimated_value": 4, "description": 'A cave bat wing.', "identified": False}},
         ],
@@ -106,7 +106,7 @@ NEW_ENEMIES = {
     # ── Abandoned Mine ──
     "Kobold Miner": _e("Kobold Miner",70,7,2,S(8,10,6,5,5,2),14,24,"melee","blunt",
         xp=18,gold=(6,14),        loot=[
-            {"drop_chance": 0.15, "item": {"name": 'Iron Pick', "type": 'weapon', "slot": 'weapon', "subtype": 'Pick', "rarity": 'common', "damage": 6, "phys_type": 'piercing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Heavy Pick', "unidentified_desc": 'A well-worn pickaxe.', "appraised_name": "Kobold Miner's Pick", "material_desc": 'Common iron mine-forged.', "magic_desc": 'No magical properties.', "estimated_value": 9, "description": "A kobold miner's pick.", "identified": False}},
+            {"drop_chance": 0.15, "item": {"name": 'Iron Pick', "type": 'weapon', "slot": 'weapon', "subtype": 'Pick', "rarity": 'common', "damage": 16, "damage_stat": {"STR": 0.4}, "phys_type": 'piercing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Heavy Pick', "unidentified_desc": 'A well-worn pickaxe.', "appraised_name": "Kobold Miner's Pick", "material_desc": 'Common iron mine-forged.', "magic_desc": 'No magical properties.', "estimated_value": 9, "description": "A kobold miner's pick.", "identified": False}},
             {"drop_chance": 0.14, "item": {"name": 'Iron Ore Chunk', "type": 'material', "subtype": 'ore', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Heavy Rock', "unidentified_desc": 'A heavy dark chunk.', "appraised_name": 'Iron Ore Chunk', "material_desc": 'Raw iron ore. Tier 1 smithing.', "magic_desc": 'No magical properties.', "estimated_value": 6, "description": 'A chunk of iron ore.', "identified": False}},
         ],
 
@@ -206,7 +206,7 @@ NEW_ENEMIES = {
 
         desc={0:"A towering mass of fused bones.",1:"Bone Colossus",
               2:"Bone Colossus — elite. AoE bone storm. Use divine/blunt."}),
-    "Warden Revenant": _e("Warden Revenant",1000,35,24,S(18,12,20,14,16,8),12,48,"melee","shadow",
+    "Warden Revenant": _e("Warden Revenant",850,26,18,S(18,12,20,14,16,8),12,50,"melee","shadow",
         acc=8,ai="boss",xp=350,gold=(100,200),
         res={"piercing":0.5,"slashing":0.5,"shadow":0.0,"divine":2.0,"fire":1.5},
         imm=["Poisoned","Fear","Sleep"],ab=["Shadow Strike","Dark Ritual"],        loot=[
@@ -220,7 +220,7 @@ NEW_ENEMIES = {
     # ── Ruins of Ashenmoor ──
     "Ashenmoor Bandit": _e("Ashenmoor Bandit",137,15,6,S(14,12,10,6,6,3),15,32,"melee","slashing",
         acc=3,xp=35,gold=(12,28),        loot=[
-            {"drop_chance": 0.14, "item": {"name": 'Worn Longsword', "type": 'weapon', "slot": 'weapon', "subtype": 'Longsword', "rarity": 'common', "damage": 9, "phys_type": 'slashing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Notched Blade', "unidentified_desc": 'A sword with deep notches.', "appraised_name": 'Worn Iron Longsword', "material_desc": 'Common iron, poorly maintained.', "magic_desc": 'No magical properties.', "estimated_value": 15, "description": "A bandit's longsword.", "identified": False}},
+            {"drop_chance": 0.14, "item": {"name": 'Worn Longsword', "type": 'weapon', "slot": 'weapon', "subtype": 'Longsword', "rarity": 'common', "damage": 19, "damage_stat": {"STR": 0.3, "DEX": 0.12}, "phys_type": 'slashing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Notched Blade', "unidentified_desc": 'A sword with deep notches.', "appraised_name": 'Worn Iron Longsword', "material_desc": 'Common iron, poorly maintained.', "magic_desc": 'No magical properties.', "estimated_value": 15, "description": "A bandit's longsword.", "identified": False}},
             {"drop_chance": 0.12, "item": {"name": 'Bandit Mail Patch', "type": 'armor', "slot": 'body', "subtype": 'body_armor', "rarity": 'common', "armor_tier": 'light', "defense": 3, "identify_difficulty": 1, "unidentified_name": 'Scrap Mail', "unidentified_desc": 'A patch of chain links sewn to leather.', "appraised_name": 'Scrap Chainmail Vest', "material_desc": 'Mixed scrap metal and leather.', "magic_desc": 'No magical properties.', "estimated_value": 12, "description": 'Patched mail from a bandit.', "identified": False}},
         ],
 
@@ -258,7 +258,7 @@ NEW_ENEMIES = {
 
         desc={0:"A twisted tree animated by dark magic.",1:"Corrupted Treant",
               2:"Corrupted Treant — AoE roots. Very weak to fire."}),
-    "Shadow Valdris": _e("Shadow Valdris",1125,30,32,S(14,14,16,22,18,10),14,40,"ranged","shadow",
+    "Shadow Valdris": _e("Shadow Valdris",950,24,26,S(14,14,16,22,18,10),14,52,"ranged","shadow",
         acc=10,row="back",ai="boss",xp=450,gold=(150,300),
         res={"shadow":0.0,"divine":2.0,"arcane":0.5},
         imm=["Poisoned","Fear","Sleep","Stun"],ab=["Shadow Nova","Dark Ritual","Fading Pulse"],        loot=[],
@@ -278,7 +278,7 @@ NEW_ENEMIES = {
         acc=3,xp=25,gold=(10,22),
         ab=[{"name":"Cheap Shot","type":"damage","target":"single_enemy","power":18,
              "element":"piercing","description":"Dirty fighting."}],             loot=[
-                 {"drop_chance": 0.14, "item": {"name": 'Worn Short Sword', "type": 'weapon', "slot": 'weapon', "subtype": 'Short Sword', "rarity": 'common', "damage": 6, "phys_type": 'slashing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Road-Worn Blade', "unidentified_desc": 'A short sword with a worn grip.', "appraised_name": "Highway Bandit's Blade", "material_desc": 'Common steel, road-worn.', "magic_desc": 'No magical properties.', "estimated_value": 10, "description": "A highway bandit's blade.", "identified": False}},
+                 {"drop_chance": 0.14, "item": {"name": 'Worn Short Sword', "type": 'weapon', "slot": 'weapon', "subtype": 'Short Sword', "rarity": 'common', "damage": 16, "damage_stat": {"DEX": 0.28, "STR": 0.12}, "phys_type": 'slashing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Road-Worn Blade', "unidentified_desc": 'A short sword with a worn grip.', "appraised_name": "Highway Bandit's Blade", "material_desc": 'Common steel, road-worn.', "magic_desc": 'No magical properties.', "estimated_value": 10, "description": "A highway bandit's blade.", "identified": False}},
                  {"drop_chance": 0.1, "item": {"name": 'Leather Scraps', "type": 'material', "subtype": 'leather', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Leather Scraps', "unidentified_desc": 'Rough leather.', "appraised_name": 'Boiled Leather Scraps', "material_desc": 'Tier 1 leather material.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": 'Leather scraps from a bandit.', "identified": False}},
              ],
 
@@ -325,7 +325,7 @@ NEW_ENEMIES = {
 
         desc={0:"A goblin beating a crude drum.",1:"Goblin Drummer",
               2:"Goblin Drummer — buffs ally speed. Low threat alone."}),
-    "Rabid Rat": _e("Rabid Rat",25,3,1,S(3,14,3,1,4,0),22,10,"melee","piercing",
+    "Rabid Rat": _e("Rabid Rat",20,2,1,S(3,14,3,1,4,0),22,7,"melee","piercing",
         acc=4,xp=4,gold=(0,1),
         ab=[{"name":"Rabid Bite","type":"damage","target":"single_enemy","power":4,
              "element":"nature","status":"Poisoned","status_chance":0.2,
@@ -558,7 +558,7 @@ NEW_ENEMIES = {
               1:"Volcanic Troll",
               2:"Volcanic Troll — tough, slow. Ice doubles damage. Fire-resistant."}),
 
-    "Karreth": _e("Karreth",680,46,40,S(26,10,28,16,20,8),12,80,"melee","fire",
+    "Karreth": _e("Karreth",600,32,28,S(26,10,28,16,20,8),12,55,"melee","fire",
         acc=8,row="front",ai="aggressive",xp=500,gold=(200,400),
         res={"piercing":0.5,"slashing":0.5,"blunt":0.5,"fire":0.0,"ice":2.5,
              "lightning":1.0,"divine":1.5,"shadow":1.5,"nature":0.5,"arcane":1.0},
@@ -604,6 +604,84 @@ NEW_ENCOUNTERS = {
         "groups":[{"enemy":"Volcanic Troll","count":1,"row":"front"},
                   {"enemy":"Cinder Drake","count":2,"row":"mid"},
                   {"enemy":"Corrupted Hatchling","count":1,"row":"front"}]},
+
+
+    # ── Valdris' Spire — encounter set ───────────────────────────────────────
+    "vs_animated":     {"name": "Animated Armour Pack", "difficulty": "medium",
+        "groups": [{"enemy": "Animated Armor", "count": 3, "row": "front"}]},
+    "vs_constructs":   {"name": "Construct Patrol", "difficulty": "medium",
+        "groups": [{"enemy": "Animated Armor", "count": 2, "row": "front"},
+                   {"enemy": "Arcane Wisp", "count": 2, "row": "back"}]},
+    "vs_wraiths":      {"name": "Fading Wraiths", "difficulty": "medium",
+        "groups": [{"enemy": "Fading Wraith", "count": 3, "row": "front"},
+                   {"enemy": "Arcane Wisp", "count": 1, "row": "back"}]},
+    "vs_mixed":        {"name": "Spire Defenders", "difficulty": "hard",
+        "groups": [{"enemy": "Animated Armor", "count": 2, "row": "front"},
+                   {"enemy": "Fading Wraith", "count": 2, "row": "mid"},
+                   {"enemy": "Arcane Wisp", "count": 1, "row": "back"}]},
+    "vs_elite":        {"name": "Elite Spire Guard", "difficulty": "hard",
+        "groups": [{"enemy": "Corrupted Scholar", "count": 2, "row": "back"},
+                   {"enemy": "Animated Armor", "count": 2, "row": "front"}]},
+    "vs_shadow_mob":   {"name": "Shadow Mob", "difficulty": "hard",
+        "groups": [{"enemy": "Throne Shade", "count": 2, "row": "front"},
+                   {"enemy": "Fading Wraith", "count": 2, "row": "mid"},
+                   {"enemy": "Corrupted Scholar", "count": 1, "row": "back"}]},
+    "vs_warden_shades": {"name": "Warden Shade Patrol", "difficulty": "hard",
+        "groups": [{"enemy": "Warden Shade", "count": 3, "row": "front"},
+                   {"enemy": "Arcane Wisp", "count": 2, "row": "back"}]},
+
+    # ── Windswept Isle — expanded encounter set ───────────────────────────────
+    "wi_sprite_pack":     {"name": "Tempest Sprites", "difficulty": "easy",
+        "groups": [{"enemy": "Tempest Sprite", "count": 4, "row": "front"},
+                   {"enemy": "Wind Wraith", "count": 1, "row": "mid"}]},
+    "wi_wraith_mob":      {"name": "Wind Wraith Pack", "difficulty": "easy",
+        "groups": [{"enemy": "Wind Wraith", "count": 3, "row": "front"}]},
+    "wi_shade_pack":      {"name": "Isle Shades", "difficulty": "medium",
+        "groups": [{"enemy": "Isle Shade", "count": 3, "row": "front"},
+                   {"enemy": "Tempest Sprite", "count": 2, "row": "mid"}]},
+    "wi_warden_shade":    {"name": "Warden Shades", "difficulty": "medium",
+        "groups": [{"enemy": "Warden Shade", "count": 2, "row": "front"},
+                   {"enemy": "Isle Shade", "count": 2, "row": "mid"}]},
+    "wi_shade_storm":     {"name": "Shadow Storm", "difficulty": "medium",
+        "groups": [{"enemy": "Wind Wraith", "count": 2, "row": "mid"},
+                   {"enemy": "Isle Shade", "count": 2, "row": "front"},
+                   {"enemy": "Warden Shade", "count": 1, "row": "back"}]},
+    "wi_golem_pair":      {"name": "Storm Golem Pair", "difficulty": "hard",
+        "groups": [{"enemy": "Storm Golem", "count": 2, "row": "front"},
+                   {"enemy": "Tempest Sprite", "count": 2, "row": "mid"}]},
+    "wi_golem_escort":    {"name": "Golem with Sprites", "difficulty": "hard",
+        "groups": [{"enemy": "Storm Golem", "count": 1, "row": "front"},
+                   {"enemy": "Wind Wraith", "count": 2, "row": "mid"},
+                   {"enemy": "Isle Shade", "count": 2, "row": "back"}]},
+    "wi_warden_echo":     {"name": "Corrupted Warden Echo", "difficulty": "hard",
+        "groups": [{"enemy": "Corrupted Warden Echo", "count": 1, "row": "front"},
+                   {"enemy": "Warden Shade", "count": 2, "row": "mid"}]},
+    "wi_warden_echoes":   {"name": "Warden Echo Pack", "difficulty": "hard",
+        "groups": [{"enemy": "Corrupted Warden Echo", "count": 2, "row": "front"},
+                   {"enemy": "Isle Shade", "count": 2, "row": "back"}]},
+    "wi_shadow_warden":   {"name": "Shadow Warden", "difficulty": "hard",
+        "groups": [{"enemy": "Shadow Warden", "count": 1, "row": "front"},
+                   {"enemy": "Warden Shade", "count": 2, "row": "mid"},
+                   {"enemy": "Tempest Sprite", "count": 1, "row": "back"}]},
+    "wi_fallen_wardens":  {"name": "Fallen Wardens", "difficulty": "hard",
+        "groups": [{"enemy": "Fallen Warden", "count": 2, "row": "front"},
+                   {"enemy": "Warden Shade", "count": 1, "row": "back"}]},
+    "wi_fallen_solo":     {"name": "Fallen Warden", "difficulty": "hard",
+        "groups": [{"enemy": "Fallen Warden", "count": 1, "row": "front"},
+                   {"enemy": "Shadow Warden", "count": 1, "row": "mid"},
+                   {"enemy": "Isle Shade", "count": 2, "row": "back"}]},
+    "wi_elite_echo":      {"name": "Elite Warden Guard", "difficulty": "hard",
+        "groups": [{"enemy": "Corrupted Warden Echo", "count": 1, "row": "front"},
+                   {"enemy": "Shadow Warden", "count": 1, "row": "mid"},
+                   {"enemy": "Wind Wraith", "count": 2, "row": "back"}]},
+    "wi_warden_revenant": {"name": "Warden Revenant Patrol", "difficulty": "boss",
+        "groups": [{"enemy": "Warden Revenant", "count": 1, "row": "front"},
+                   {"enemy": "Warden Shade", "count": 2, "row": "mid"}]},
+    "wi_deep_storm":      {"name": "Deep Storm Mob", "difficulty": "hard",
+        "groups": [{"enemy": "Storm Golem", "count": 1, "row": "front"},
+                   {"enemy": "Corrupted Warden Echo", "count": 1, "row": "mid"},
+                   {"enemy": "Wind Wraith", "count": 2, "row": "back"}]},
+
     "boss_karreth":   {"name":"Karreth the Corrupted","difficulty":"boss",
         "groups":[{"enemy":"Karreth","count":1,"row":"front"},
                   {"enemy":"Cinder Drake","count":2,"row":"mid"}]},
@@ -617,7 +695,7 @@ NEW_ENCOUNTERS = {
     "gw_scouts":      {"name":"Goblin Scouts","difficulty":"easy",
         "groups":[{"enemy":"Goblin Scout","count":4,"row":"front"}]},
     "gw_bats":        {"name":"Bat Swarm","difficulty":"easy",
-        "groups":[{"enemy":"Cave Bat","count":6,"row":"front"}]},
+        "groups":[{"enemy":"Cave Bat","count":4,"row":"front"}]},
     "gw_brute_pack":  {"name":"Goblin Brute & Friends","difficulty":"medium",
         "groups":[{"enemy":"Goblin Brute","count":1,"row":"front"},
                   {"enemy":"Goblin Scout","count":3,"row":"front"}]},
@@ -857,6 +935,49 @@ NEW_DUNGEON_ENCOUNTER_TABLES = {
         4: ["ra_mixed","ra_treant","ra_full_force","ra_abomination","ra_gargoyles"],
         "boss": "boss_ashenmoor",
     },
+
+    "dragons_tooth": {
+        1: ["dt_hatchlings", "dt_beetles"],
+        2: ["dt_beetles", "dt_drakes", "dt_troll"],
+        3: ["dt_troll", "dt_drakes", "dt_drake_swarm", "dt_mixed"],
+        "boss": "boss_karreth",
+    },
+    "pale_coast": {
+        1: ["pc_drowned", "pc_shades"],
+        2: ["pc_drowned_mob", "pc_tide", "pc_shades"],
+        3: ["pc_golem", "pc_tide", "pc_drowned_mob"],
+        4: ["pc_twin_golems", "pc_golem", "pc_tide"],
+        "boss": "boss_pale_warden",
+    },
+    "windswept_isle": {
+        1: ["wi_sprites", "wi_wraiths", "wi_sprite_pack", "wi_wraith_mob"],
+        2: ["wi_mixed", "wi_shade_pack", "wi_wraith_mob", "wi_shade_storm"],
+        3: ["wi_golem", "wi_storm_mob", "wi_golem_pair", "wi_golem_escort"],
+        4: ["wi_warden_echo", "wi_warden_shade", "wi_shade_storm", "wi_deep_storm"],
+        5: ["wi_shadow_warden", "wi_fallen_wardens", "wi_fallen_solo",
+            "wi_elite_echo", "wi_warden_echoes"],
+        6: ["wi_fallen_solo", "wi_elite_echo", "wi_warden_revenant", "wi_deep_storm"],
+        "boss": "boss_isle_keeper",
+    },
+    "valdris_spire": {
+        1: ["vs_animated", "vs_constructs"],
+        2: ["vs_constructs", "vs_wraiths", "vs_mixed"],
+        3: ["vs_elite", "vs_wraiths", "vs_mixed"],
+        4: ["vs_elite", "vs_shadow_mob", "vs_constructs"],
+        5: ["vs_shadow_mob", "vs_elite", "vs_warden_shades"],
+        "boss": "boss_lingering_will",
+    },
+    "shadow_throne": {
+        1: ["st_shades", "st_mixed"],
+        2: ["st_mixed", "st_shadow_squad"],
+        3: ["st_shadow_squad", "st_abominations"],
+        4: ["st_abominations", "st_echoes"],
+        5: ["st_echoes", "st_elite"],
+        6: ["st_elite", "st_warden_elite"],
+        7: ["st_warden_elite", "st_void"],
+        8: ["st_void", "st_warden_elite", "st_elite"],
+        "boss": "boss_valdris_phase1",
+    },
 }
 
 # ══════════════════════════════════════════════════════════
@@ -953,6 +1074,10 @@ ACT3_ENEMIES = {
                 "rarity": "common", "identified": True, "estimated_value": 20,
                 "description": "Rusted plate, still dripping. Useless as armor, but the metal holds alchemical value."
             }}
+        ,
+            {"item": {"name": "Spire Crystal", "type": "material",
+                      "description": "A blue-black crystal that forms near corrupted ley lines. Pulses faintly.",
+                      "value": 80, "rarity": "uncommon"}, "drop_chance": 0.12},
         ],
         "description_tiers": {
             0: "A body washed up from the deep, still walking.",
@@ -1043,10 +1168,10 @@ ACT3_ENEMIES = {
     # Boss: The Pale Sentinel
     "The Pale Sentinel": {
         "name": "The Pale Sentinel",
-        "hp": 750, "defense": 28, "magic_resist": 35,
+        "hp": 660, "defense": 22, "magic_resist": 25,
         "stats": {"STR": 18, "DEX": 14, "CON": 20, "INT": 16, "WIS": 22, "PIE": 18},
         "speed_base": 12,
-        "attack_damage": 45, "attack_type": "melee", "phys_type": "divine",
+        "attack_damage": 44, "attack_type": "melee", "phys_type": "divine",
         "accuracy_bonus": 8, "preferred_row": "mid",
         "ai_type": "boss",
         "xp_reward": 380, "gold_reward": (100, 220),
@@ -1184,10 +1309,10 @@ ACT3_ENEMIES = {
     # Boss: The Last Keeper
     "The Last Keeper": {
         "name": "The Last Keeper",
-        "hp": 680, "defense": 18, "magic_resist": 28,
+        "hp": 720, "defense": 16, "magic_resist": 22,
         "stats": {"STR": 14, "DEX": 18, "CON": 16, "INT": 18, "WIS": 14, "PIE": 8},
         "speed_base": 16,
-        "attack_damage": 40, "attack_type": "ranged", "phys_type": "lightning",
+        "attack_damage": 42, "attack_type": "ranged", "phys_type": "lightning",
         "accuracy_bonus": 10, "preferred_row": "back",
         "ai_type": "boss",
         "xp_reward": 360, "gold_reward": (90, 200),
