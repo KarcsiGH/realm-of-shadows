@@ -214,13 +214,14 @@ WEAPONS = {
 
 CLASS_PROFICIENCIES = {
     "Fighter":      ["Fists", "Dagger", "Short Sword", "Longsword", "Broadsword",
+                     "Glaive", "Lance", "Hand Axe",
                      "Mace", "Spear", "Crossbow", "Thrown", "Bow",
                      "Axe", "Greataxe", "Warhammer", "Greatsword", "Shield", "Glaive", "Lance"],
     "Mage":         ["Fists", "Dagger", "Staff", "Sling", "Wand", "Orb", "Rod", "Grimoire"],
     "Cleric":       ["Fists", "Mace", "Staff", "Sling", "Wand", "Warhammer", "Rod", "Scepter", "Censer", "Flail", "Morning Star"],
-    "Thief":        ["Fists", "Dagger", "Short Sword", "Sling", "Bow", "Thrown", "Rapier", "Crossbow"],
+    "Thief":        ["Fists", "Dagger", "Short Sword", "Sling", "Bow", "Thrown", "Rapier", "Crossbow", "Saber"],
     "Ranger":       ["Fists", "Dagger", "Short Sword", "Longsword", "Staff",
-                     "Spear", "Bow", "Shortbow", "Longbow", "Crossbow", "Thrown", "Glaive"],
+                     "Spear", "Bow", "Shortbow", "Crossbow", "Longbow", "Crossbow", "Thrown", "Glaive"],
     "Monk":         ["Fists", "Staff", "Spear", "Handwraps", "Kama"],
     "Paladin":      ["Fists", "Dagger", "Short Sword", "Longsword", "Broadsword",
                      "Mace", "Spear", "Shield", "Axe", "Staff", "Wand"],
@@ -268,6 +269,12 @@ SUBTYPE_TO_PROF = {
     "Flail":        "Mace",
     "Grimoire":     "Staff",
     "Sling":        "Sling",
+    # Fighter/Ranger/Thief/Monk expansion
+    "Broadsword":  "Broadsword",
+    "Hand Axe":    "Axe",
+    "Maul":        "Warhammer",
+    "Javelin":     "Spear",
+    "Throwing Knife": "Dagger",
 }
 
 # Penalty for using non-proficient weapon

@@ -286,7 +286,436 @@ ARMOR = {
         "description": "Heavy iron leg protection.",
     },
 
+
+    # ═══════════════════════════════════════════════════════════════
+    #  EXPANDED ARMOR — Body
+    # ═══════════════════════════════════════════════════════════════
+
+    # ── Clothing tier ──
+    "Silk Robes": {
+        "name": "Silk Robes", "slot": "body", "armor_tier": "clothing",
+        "defense": 2, "magic_resist": 4, "speed_mod": 1,
+        "stat_bonuses": {"INT": 1, "WIS": 1}, "rarity": "uncommon", "value": 45,
+        "description": "Fine silk that shimmers with subtle enchantment. +1 INT, +1 WIS.",
+    },
+    "Arcane Vestments": {
+        "name": "Arcane Vestments", "slot": "body", "armor_tier": "clothing",
+        "defense": 3, "magic_resist": 8, "speed_mod": 1,
+        "stat_bonuses": {"INT": 2, "WIS": 1}, "rarity": "rare", "value": 140,
+        "description": "Robes inscribed with power-channeling runes. +2 INT, +1 WIS.",
+    },
+    "Blessed Vestments": {
+        "name": "Blessed Vestments", "slot": "body", "armor_tier": "clothing",
+        "defense": 3, "magic_resist": 6, "speed_mod": 0,
+        "stat_bonuses": {"PIE": 2, "WIS": 1}, "rarity": "rare", "value": 130,
+        "description": "Temple-blessed robes worn during high rites. +2 PIE, +1 WIS.",
+    },
+    "Shadowweave Cloak": {
+        "name": "Shadowweave Cloak", "slot": "body", "armor_tier": "clothing",
+        "defense": 2, "magic_resist": 3, "speed_mod": 2,
+        "stat_bonuses": {"DEX": 2}, "rarity": "rare", "value": 150,
+        "description": "A cloak woven from shadow-thread. Fades into darkness. +2 DEX.",
+    },
+    "Archmagus Robe": {
+        "name": "Archmagus Robe", "slot": "body", "armor_tier": "clothing",
+        "defense": 4, "magic_resist": 12, "speed_mod": 1,
+        "stat_bonuses": {"INT": 3, "WIS": 2}, "rarity": "epic", "value": 450,
+        "description": "A robe of absolute magical authority. +3 INT, +2 WIS.",
+    },
+
+    # ── Light armor tier ──
+    "Padded Leather": {
+        "name": "Padded Leather", "slot": "body", "armor_tier": "light",
+        "defense": 5, "magic_resist": 0, "speed_mod": 0,
+        "stat_bonuses": {}, "rarity": "common", "value": 22,
+        "description": "Padded leather with an inner quilted layer.",
+    },
+    "Reinforced Leather": {
+        "name": "Reinforced Leather", "slot": "body", "armor_tier": "light",
+        "defense": 7, "magic_resist": 0, "speed_mod": 0,
+        "stat_bonuses": {"CON": 1}, "rarity": "uncommon", "value": 65,
+        "description": "Leather reinforced with metal plates at the joints. +1 CON.",
+    },
+    "Ranger's Leathers": {
+        "name": "Ranger's Leathers", "slot": "body", "armor_tier": "light",
+        "defense": 6, "magic_resist": 1, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 1, "WIS": 1}, "rarity": "uncommon", "value": 75,
+        "description": "Light, flexible leather suited to forest scouts. +1 DEX, +1 WIS.",
+    },
+    "Assassin's Leathers": {
+        "name": "Assassin's Leathers", "slot": "body", "armor_tier": "light",
+        "defense": 7, "magic_resist": 2, "speed_mod": 2,
+        "stat_bonuses": {"DEX": 2}, "rarity": "rare", "value": 160,
+        "description": "Supple black leather worn by guild assassins. +2 DEX.",
+    },
+    "Elven Chainmail": {
+        "name": "Elven Chainmail", "slot": "body", "armor_tier": "light",
+        "defense": 9, "magic_resist": 3, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 1, "INT": 1}, "rarity": "epic", "value": 420,
+        "description": "Elvish ringmail — light as cloth, strong as steel. +1 DEX, +1 INT.",
+    },
+
+    # ── Medium armor tier ──
+    "Chainmail": {
+        "name": "Chainmail", "slot": "body", "armor_tier": "medium",
+        "defense": 11, "magic_resist": 0, "speed_mod": -1,
+        "stat_bonuses": {}, "rarity": "common", "value": 70,
+        "description": "A full shirt of interlocking rings.",
+    },
+    "Half-Plate": {
+        "name": "Half-Plate", "slot": "body", "armor_tier": "medium",
+        "defense": 14, "magic_resist": 0, "speed_mod": -1,
+        "stat_bonuses": {"CON": 1}, "rarity": "uncommon", "value": 130,
+        "description": "Plate covering the torso with chainmail at the joins. +1 CON.",
+    },
+    "Battle Armour": {
+        "name": "Battle Armour", "slot": "body", "armor_tier": "medium",
+        "defense": 13, "magic_resist": 1, "speed_mod": -1,
+        "stat_bonuses": {"STR": 1, "CON": 1}, "rarity": "rare", "value": 200,
+        "description": "Seasoned armour with many campaign scars. +1 STR, +1 CON.",
+    },
+
+    # ── Heavy armor tier ──
+    "Plate Armour": {
+        "name": "Plate Armour", "slot": "body", "armor_tier": "heavy",
+        "defense": 18, "magic_resist": 0, "speed_mod": -3,
+        "stat_bonuses": {"CON": 1}, "rarity": "uncommon", "value": 200,
+        "description": "A full suit of articulated plate. +1 CON.",
+    },
+    "Knight's Plate": {
+        "name": "Knight's Plate", "slot": "body", "armor_tier": "heavy",
+        "defense": 22, "magic_resist": 2, "speed_mod": -3,
+        "stat_bonuses": {"STR": 1, "CON": 2}, "rarity": "rare", "value": 380,
+        "description": "Armour forged for a veteran knight. Blessed at the forge. +1 STR, +2 CON.",
+    },
+    "Dragonscale Armour": {
+        "name": "Dragonscale Armour", "slot": "body", "armor_tier": "heavy",
+        "defense": 26, "magic_resist": 8, "speed_mod": -2,
+        "stat_bonuses": {"CON": 2, "STR": 1}, "rarity": "epic", "value": 600,
+        "description": "Armour of true dragon scales. Fire-resistant and terrifying. +2 CON, +1 STR.",
+    },
+    "Mithral Plate": {
+        "name": "Mithral Plate", "slot": "body", "armor_tier": "heavy",
+        "defense": 24, "magic_resist": 5, "speed_mod": -1,
+        "stat_bonuses": {"DEX": 1, "CON": 2}, "rarity": "epic", "value": 650,
+        "description": "Mithral plate — lighter than iron, stronger than steel. +1 DEX, +2 CON.",
+    },
+
+    # ═══════════════════════════════════════════════════════════════
+    #  EXPANDED ARMOR — Head
+    # ═══════════════════════════════════════════════════════════════
+
+    # ── Cloth / Mage head ──
+    "Witch's Hat": {
+        "name": "Witch's Hat", "slot": "head", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 3, "speed_mod": 0,
+        "stat_bonuses": {"INT": 1, "WIS": 1}, "rarity": "uncommon", "value": 40,
+        "description": "A peaked hat that focuses arcane thought. +1 INT, +1 WIS.",
+    },
+    "Mage's Cowl": {
+        "name": "Mage's Cowl", "slot": "head", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 5, "speed_mod": 0,
+        "stat_bonuses": {"INT": 2}, "rarity": "rare", "value": 110,
+        "description": "A cowl woven with spell-amplifying thread. +2 INT.",
+    },
+    "Monk's Hood": {
+        "name": "Monk's Hood", "slot": "head", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 2, "speed_mod": 1,
+        "stat_bonuses": {"WIS": 2}, "rarity": "uncommon", "value": 38,
+        "description": "A meditative hood that aids Ki focus. +2 WIS.",
+    },
+    "High Priest's Mitre": {
+        "name": "High Priest's Mitre", "slot": "head", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 6, "speed_mod": 0,
+        "stat_bonuses": {"PIE": 3, "WIS": 1}, "rarity": "epic", "value": 360,
+        "description": "A towering mitre of divine office. +3 PIE, +1 WIS.",
+    },
+
+    # ── Light head ──
+    "Scout's Cap": {
+        "name": "Scout's Cap", "slot": "head", "armor_tier": "light",
+        "defense": 1, "magic_resist": 0, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 1}, "rarity": "common", "value": 10,
+        "description": "A light leather cap with a wide brim. +1 DEX.",
+    },
+    "Leather Hood": {
+        "name": "Leather Hood", "slot": "head", "armor_tier": "light",
+        "defense": 2, "magic_resist": 0, "speed_mod": 0,
+        "stat_bonuses": {"DEX": 1}, "rarity": "common", "value": 12,
+        "description": "A hooded leather coif that conceals the face. +1 DEX.",
+    },
+    "Shadow Hood": {
+        "name": "Shadow Hood", "slot": "head", "armor_tier": "light",
+        "defense": 2, "magic_resist": 2, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 2}, "rarity": "rare", "value": 130,
+        "description": "A hood of shadow-dyed leather. The wearer seems to fade. +2 DEX.",
+    },
+
+    # ── Medium head ──
+    "Chain Coif": {
+        "name": "Chain Coif", "slot": "head", "armor_tier": "medium",
+        "defense": 4, "magic_resist": 0, "speed_mod": 0,
+        "stat_bonuses": {}, "rarity": "common", "value": 30,
+        "description": "A head covering of chainmail. Deflects glancing blows.",
+    },
+    "Visored Helm": {
+        "name": "Visored Helm", "slot": "head", "armor_tier": "medium",
+        "defense": 5, "magic_resist": 0, "speed_mod": 0,
+        "stat_bonuses": {"CON": 1}, "rarity": "uncommon", "value": 65,
+        "description": "A medium helm with a pivoting visor. +1 CON.",
+    },
+    "War Helm": {
+        "name": "War Helm", "slot": "head", "armor_tier": "medium",
+        "defense": 6, "magic_resist": 0, "speed_mod": 0,
+        "stat_bonuses": {"STR": 1, "CON": 1}, "rarity": "rare", "value": 140,
+        "description": "A battered campaign helm worn by veterans. +1 STR, +1 CON.",
+    },
+
+    # ── Heavy head ──
+    "Great Helm": {
+        "name": "Great Helm", "slot": "head", "armor_tier": "heavy",
+        "defense": 8, "magic_resist": 0, "speed_mod": -1,
+        "stat_bonuses": {"CON": 1}, "rarity": "uncommon", "value": 80,
+        "description": "A fully encasing helm. Excellent protection, limited vision. +1 CON.",
+    },
+    "Knight's Helm": {
+        "name": "Knight's Helm", "slot": "head", "armor_tier": "heavy",
+        "defense": 10, "magic_resist": 2, "speed_mod": -1,
+        "stat_bonuses": {"CON": 2}, "rarity": "rare", "value": 200,
+        "description": "A crested knight's helm of finest plate. +2 CON.",
+    },
+    "Dragon Helm": {
+        "name": "Dragon Helm", "slot": "head", "armor_tier": "heavy",
+        "defense": 13, "magic_resist": 5, "speed_mod": -1,
+        "stat_bonuses": {"CON": 2, "STR": 1}, "rarity": "epic", "value": 420,
+        "description": "A helm crowned with dragon-bone horns. Inspires fear. +2 CON, +1 STR.",
+    },
+
+    # ═══════════════════════════════════════════════════════════════
+    #  EXPANDED ARMOR — Hands
+    # ═══════════════════════════════════════════════════════════════
+
+    "Silk Gloves": {
+        "name": "Silk Gloves", "slot": "hands", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 2, "speed_mod": 0,
+        "stat_bonuses": {"INT": 1}, "rarity": "uncommon", "value": 30,
+        "description": "Silk gloves threaded with arcane sigils. +1 INT.",
+    },
+    "Padded Gloves": {
+        "name": "Padded Gloves", "slot": "hands", "armor_tier": "light",
+        "defense": 1, "magic_resist": 0, "speed_mod": 0,
+        "stat_bonuses": {}, "rarity": "common", "value": 8,
+        "description": "Simple padded gloves. Protect the knuckles.",
+    },
+    "Archer's Glove": {
+        "name": "Archer's Glove", "slot": "hands", "armor_tier": "light",
+        "defense": 1, "magic_resist": 0, "speed_mod": 0,
+        "stat_bonuses": {"DEX": 2}, "rarity": "uncommon", "value": 50,
+        "description": "A single bracer-glove protecting the draw hand. +2 DEX.",
+    },
+    "Brawler's Wraps": {
+        "name": "Brawler's Wraps", "slot": "hands", "armor_tier": "light",
+        "defense": 2, "magic_resist": 0, "speed_mod": 0,
+        "stat_bonuses": {"STR": 1, "CON": 1}, "rarity": "uncommon", "value": 55,
+        "description": "Tight wraps around the knuckles and wrists. +1 STR, +1 CON.",
+    },
+    "Chain Gauntlets": {
+        "name": "Chain Gauntlets", "slot": "hands", "armor_tier": "medium",
+        "defense": 3, "magic_resist": 0, "speed_mod": 0,
+        "stat_bonuses": {"CON": 1}, "rarity": "uncommon", "value": 60,
+        "description": "Chainmail gloves with riveted knuckle-plates. +1 CON.",
+    },
+    "Mithral Gauntlets": {
+        "name": "Mithral Gauntlets", "slot": "hands", "armor_tier": "heavy",
+        "defense": 5, "magic_resist": 3, "speed_mod": 0,
+        "stat_bonuses": {"STR": 2, "DEX": 1}, "rarity": "epic", "value": 380,
+        "description": "Gauntlets of true mithral. Grip like iron, light as air. +2 STR, +1 DEX.",
+    },
+    "Ki-Infused Wraps": {
+        "name": "Ki-Infused Wraps", "slot": "hands", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 3, "speed_mod": 1,
+        "stat_bonuses": {"WIS": 2, "DEX": 1}, "rarity": "rare", "value": 160,
+        "description": "Wraps infused with dormant Ki energy. +2 WIS, +1 DEX.",
+    },
+
+    # ═══════════════════════════════════════════════════════════════
+    #  EXPANDED ARMOR — Feet
+    # ═══════════════════════════════════════════════════════════════
+
+    "Soft Shoes": {
+        "name": "Soft Shoes", "slot": "feet", "armor_tier": "clothing",
+        "defense": 0, "magic_resist": 0, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 1}, "rarity": "common", "value": 7,
+        "description": "Silent-soled cloth shoes. +1 DEX.",
+    },
+    "Pilgrim's Boots": {
+        "name": "Pilgrim's Boots", "slot": "feet", "armor_tier": "light",
+        "defense": 1, "magic_resist": 0, "speed_mod": 1,
+        "stat_bonuses": {"CON": 1}, "rarity": "common", "value": 12,
+        "description": "Well-worn boots of a long-road traveller. +1 CON.",
+    },
+    "Scout's Boots": {
+        "name": "Scout's Boots", "slot": "feet", "armor_tier": "light",
+        "defense": 2, "magic_resist": 0, "speed_mod": 2,
+        "stat_bonuses": {"DEX": 2}, "rarity": "uncommon", "value": 70,
+        "description": "Soft-soled boots with a reinforced toe. Silent movement. +2 DEX.",
+    },
+    "Ranger's Treads": {
+        "name": "Ranger's Treads", "slot": "feet", "armor_tier": "light",
+        "defense": 2, "magic_resist": 1, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 1, "WIS": 1}, "rarity": "uncommon", "value": 75,
+        "description": "Boots made for rough terrain. Treat difficult ground as open. +1 DEX, +1 WIS.",
+    },
+    "Heavy Boots": {
+        "name": "Heavy Boots", "slot": "feet", "armor_tier": "medium",
+        "defense": 4, "magic_resist": 0, "speed_mod": -1,
+        "stat_bonuses": {"STR": 1}, "rarity": "common", "value": 25,
+        "description": "Iron-capped work boots that double as weapons. +1 STR.",
+    },
+    "Steel Sabatons": {
+        "name": "Steel Sabatons", "slot": "feet", "armor_tier": "heavy",
+        "defense": 6, "magic_resist": 0, "speed_mod": -1,
+        "stat_bonuses": {"CON": 1, "STR": 1}, "rarity": "uncommon", "value": 90,
+        "description": "Full plate foot armour. Stomps with authority. +1 CON, +1 STR.",
+    },
+    "Mithral Boots": {
+        "name": "Mithral Boots", "slot": "feet", "armor_tier": "heavy",
+        "defense": 5, "magic_resist": 2, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 1, "CON": 1}, "rarity": "epic", "value": 340,
+        "description": "Mithral sabatons — heavy-duty without the weight penalty. +1 DEX, +1 CON.",
+    },
+
+    # ═══════════════════════════════════════════════════════════════
+    #  EXPANDED SHIELDS
+    # ═══════════════════════════════════════════════════════════════
+
+    "Buckler": {
+        "name": "Buckler", "slot": "off_hand", "armor_tier": "shield",
+        "defense": 2, "magic_resist": 0, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 1}, "rarity": "common", "value": 15,
+        "description": "A small round shield worn on the fist. Fast parrying. +1 DEX.",
+    },
+    "Heater Shield": {
+        "name": "Heater Shield", "slot": "off_hand", "armor_tier": "shield",
+        "defense": 6, "magic_resist": 1, "speed_mod": 0,
+        "stat_bonuses": {"CON": 1}, "rarity": "uncommon", "value": 55,
+        "description": "A triangular knight's shield bearing a blazon. +1 CON.",
+    },
+    "Kite Shield": {
+        "name": "Kite Shield", "slot": "off_hand", "armor_tier": "shield",
+        "defense": 9, "magic_resist": 2, "speed_mod": -1,
+        "stat_bonuses": {"CON": 2}, "rarity": "rare", "value": 130,
+        "description": "A large kite-shaped shield that covers the full torso. +2 CON.",
+    },
+    "Warden's Shield": {
+        "name": "Warden's Shield", "slot": "off_hand", "armor_tier": "shield",
+        "defense": 11, "magic_resist": 4, "speed_mod": -1,
+        "stat_bonuses": {"CON": 2, "STR": 1}, "rarity": "epic", "value": 350,
+        "description": "A shield etched with old Warden ward-runes. Resists shadow. +2 CON, +1 STR.",
+    },
+
+    # ═══════════════════════════════════════════════════════════════
+    #  EXPANDED CROWN (Ion Stones and Circlets)
+    # ═══════════════════════════════════════════════════════════════
+
+    "Jade Circlet": {
+        "name": "Jade Circlet", "slot": "crown", "subtype": "circlet",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 3, "speed_mod": 0,
+        "stat_bonuses": {"WIS": 2}, "rarity": "uncommon", "value": 65,
+        "description": "A circlet of carved jade that calms the mind. +2 WIS.",
+    },
+    "Golden Diadem": {
+        "name": "Golden Diadem", "slot": "crown", "subtype": "crown",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 4, "speed_mod": 0,
+        "stat_bonuses": {"PIE": 2, "INT": 1}, "rarity": "rare", "value": 200,
+        "description": "A diadem of hammered gold set with divine opals. +2 PIE, +1 INT.",
+    },
+    "Moonstone Circlet": {
+        "name": "Moonstone Circlet", "slot": "crown", "subtype": "circlet",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 5, "speed_mod": 0,
+        "stat_bonuses": {"INT": 2, "WIS": 1}, "rarity": "rare", "value": 210,
+        "description": "A circlet set with a glowing moonstone. Sharpens the arcane mind. +2 INT, +1 WIS.",
+    },
+    "Amber Ion Stone": {
+        "name": "Amber Ion Stone", "slot": "crown", "subtype": "ion stone",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 4, "speed_mod": 0,
+        "stat_bonuses": {"STR": 2}, "rarity": "rare", "value": 180,
+        "description": "An amber stone that orbits the head, radiating strength. +2 STR.",
+    },
+    "Sapphire Ion Stone": {
+        "name": "Sapphire Ion Stone", "slot": "crown", "subtype": "ion stone",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 5, "speed_mod": 0,
+        "stat_bonuses": {"INT": 2}, "rarity": "rare", "value": 200,
+        "description": "A sapphire ion stone that resonates with arcane thought. +2 INT.",
+    },
+    "Ruby Ion Stone": {
+        "name": "Ruby Ion Stone", "slot": "crown", "subtype": "ion stone",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 5, "speed_mod": 0,
+        "stat_bonuses": {"PIE": 2}, "rarity": "rare", "value": 200,
+        "description": "A ruby ion stone infused with divine warmth. +2 PIE.",
+    },
+
+    # ═══════════════════════════════════════════════════════════════
+    #  NECK SLOT ITEMS (Amulets, Necklaces, Pendants)
+    # ═══════════════════════════════════════════════════════════════
+
+    "Copper Chain": {
+        "name": "Copper Chain", "slot": "neck", "subtype": "necklace",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 1, "speed_mod": 0,
+        "stat_bonuses": {"CON": 1}, "rarity": "common", "value": 18,
+        "description": "A plain copper chain. Nothing fancy, but solid. +1 CON.",
+    },
+    "Hunter's Totem": {
+        "name": "Hunter's Totem", "slot": "neck", "subtype": "pendant",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 1, "speed_mod": 0,
+        "stat_bonuses": {"DEX": 1, "WIS": 1}, "rarity": "common", "value": 22,
+        "description": "A carved wooden pendant bearing a hunting beast. +1 DEX, +1 WIS.",
+    },
+    "Necklace of Fortitude": {
+        "name": "Necklace of Fortitude", "slot": "neck", "subtype": "necklace",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 2, "speed_mod": 0,
+        "stat_bonuses": {"CON": 2, "STR": 1}, "rarity": "uncommon", "value": 75,
+        "description": "A heavy iron chain with a bear-claw clasp. +2 CON, +1 STR.",
+    },
+    "Scholar's Medallion": {
+        "name": "Scholar's Medallion", "slot": "neck", "subtype": "amulet",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 3, "speed_mod": 0,
+        "stat_bonuses": {"INT": 2, "WIS": 1}, "rarity": "uncommon", "value": 80,
+        "description": "A bronze medallion engraved with an open tome. +2 INT, +1 WIS.",
+    },
+    "Amulet of the Warden": {
+        "name": "Amulet of the Warden", "slot": "neck", "subtype": "amulet",
+        "armor_tier": "clothing", "defense": 2, "magic_resist": 4, "speed_mod": 0,
+        "stat_bonuses": {"WIS": 2, "CON": 1}, "rarity": "rare", "value": 160,
+        "description": "An amulet bearing the Warden crest. Resists shadow. +2 WIS, +1 CON.",
+    },
+    "Shadowheart Pendant": {
+        "name": "Shadowheart Pendant", "slot": "neck", "subtype": "pendant",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 5, "speed_mod": 1,
+        "stat_bonuses": {"DEX": 2, "INT": 1}, "rarity": "rare", "value": 170,
+        "description": "A black obsidian pendant carved with a shadow-rune. +2 DEX, +1 INT.",
+    },
+    "Holy Symbol of Piety": {
+        "name": "Holy Symbol of Piety", "slot": "neck", "subtype": "holy symbol",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 5, "speed_mod": 0,
+        "stat_bonuses": {"PIE": 3, "WIS": 1}, "rarity": "rare", "value": 175,
+        "description": "A polished divine symbol worn close to the heart. +3 PIE, +1 WIS.",
+    },
+    "Dragon Fang Necklace": {
+        "name": "Dragon Fang Necklace", "slot": "neck", "subtype": "necklace",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 6, "speed_mod": 0,
+        "stat_bonuses": {"STR": 2, "CON": 2}, "rarity": "epic", "value": 400,
+        "description": "A necklace strung with true dragon fangs. +2 STR, +2 CON.",
+    },
+    "Archmage's Focus Chain": {
+        "name": "Archmage's Focus Chain", "slot": "neck", "subtype": "amulet",
+        "armor_tier": "clothing", "defense": 0, "magic_resist": 8, "speed_mod": 0,
+        "stat_bonuses": {"INT": 3, "WIS": 2}, "rarity": "epic", "value": 480,
+        "description": "A chain of linked focus-crystals. Amplifies all spells. +3 INT, +2 WIS.",
+    },
+
     # ── Focus Items (Wand / Rod / Orb — weapon or off_hand) ──
+
     "Apprentice Wand": {
         "name": "Apprentice Wand", "type": "weapon", "slot": "weapon",
         "subtype": "Wand", "rarity": "common",

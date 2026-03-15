@@ -132,6 +132,89 @@ FIGHTER_WEAPONS = [
        550, "epic", "An axe said to cut the shadow itself. +5 STR. Shadow damage.",
        enchant_element="shadow", enchant_bonus=6, enchant_name="Shadow", crit_mod=12,
        damage_stat={"STR": 0.40}),
+
+    # ── Broadswords (STR + DEX balance) ──────────────────────────────────────
+    _w("Iron Broadsword",    "Broadsword", 16, "slashing", {"STR": 1},
+       55, "common",   "A heavy wide-bladed sword. Reliable in any hand. +1 STR.",
+       damage_stat={"STR": 0.32, "DEX": 0.08}),
+    _w("Steel Broadsword",   "Broadsword", 22, "slashing", {"STR": 2, "DEX": 1},
+       130, "uncommon", "A well-forged broadsword, balanced for power. +2 STR, +1 DEX.",
+       damage_stat={"STR": 0.30, "DEX": 0.10}),
+    _w("Knight's Broadsword","Broadsword", 30, "slashing", {"STR": 3, "DEX": 1},
+       260, "rare",    "A broadsword fit for a knight — heavy and authoritative. +3 STR, +1 DEX.",
+       enchant_element="blunt", enchant_bonus=2, enchant_name="Weighty",
+       damage_stat={"STR": 0.32, "DEX": 0.08}),
+    _w("Kingsblade",         "Broadsword", 40, "slashing", {"STR": 4, "DEX": 2},
+       480, "epic",    "A royal broadsword of legendary make. +4 STR, +2 DEX.",
+       enchant_element="divine", enchant_bonus=5, enchant_name="Sovereign",
+       damage_stat={"STR": 0.34, "DEX": 0.10}),
+
+    # ── Longsword (rare + epic tier fill) ─────────────────────────────────────
+    _w("War Longsword",      "Longsword", 28, "slashing", {"STR": 2, "DEX": 2},
+       240, "rare",    "A battle-tested longsword. Long reach, high precision. +2 STR, +2 DEX.",
+       accuracy_mod=6, damage_stat={"STR": 0.28, "DEX": 0.14}),
+    _w("Dawnbreaker",        "Longsword", 38, "slashing", {"STR": 3, "DEX": 3},
+       460, "epic",    "A longsword that catches morning light in its steel. +3 STR, +3 DEX.",
+       enchant_element="divine", enchant_bonus=6, enchant_name="Dawnforged",
+       damage_stat={"STR": 0.30, "DEX": 0.14}),
+
+    # ── Halberd / Glaive (two-handed polearms) ────────────────────────────────
+    _w("Iron Halberd",       "Glaive", 20, "slashing", {"STR": 2, "CON": 1},
+       95, "common",   "A pole weapon combining axe, hook, and spear. +2 STR, +1 CON.",
+       accuracy_mod=4, damage_stat={"STR": 0.38}),
+    _w("War Halberd",        "Glaive", 29, "slashing", {"STR": 3, "CON": 1},
+       200, "uncommon", "A heavy halberd favoured by heavy infantry. +3 STR, +1 CON.",
+       accuracy_mod=4, damage_stat={"STR": 0.38}),
+    _w("Champion's Glaive",  "Glaive", 38, "slashing", {"STR": 4, "CON": 2},
+       380, "rare",    "A war glaive bearing the crest of a champion. +4 STR, +2 CON.",
+       enchant_element="slashing", enchant_bonus=4, enchant_name="Razored",
+       damage_stat={"STR": 0.40}),
+    _w("Dragonhewn Glaive",  "Glaive", 50, "slashing", {"STR": 5, "CON": 2},
+       550, "epic",    "Said to have split a dragon's scale. +5 STR, +2 CON.",
+       enchant_element="fire", enchant_bonus=7, enchant_name="Dragonbane",
+       damage_stat={"STR": 0.42}),
+
+    # ── Lance (cavalry / charge weapon) ───────────────────────────────────────
+    _w("War Lance",          "Lance", 24, "piercing", {"STR": 2},
+       110, "uncommon", "A long cavalry weapon. Devastating on the charge. +2 STR.",
+       accuracy_mod=-4, damage_stat={"STR": 0.40}),
+    _w("Knight's Lance",     "Lance", 36, "piercing", {"STR": 3, "CON": 1},
+       300, "rare",    "A heavy jousting lance reinforced for war. +3 STR, +1 CON.",
+       accuracy_mod=-2, damage_stat={"STR": 0.42}),
+
+    # ── Maul (slow, massive two-handed blunt) ─────────────────────────────────
+    _w("Stone Maul",         "Warhammer", 26, "blunt", {"STR": 3, "CON": 2},
+       160, "uncommon", "A huge stone-headed war maul. Slow but devastating. +3 STR, +2 CON.",
+       speed_mod=-2, damage_stat={"STR": 0.44}),
+    _w("Titan's Maul",       "Warhammer", 45, "blunt", {"STR": 5, "CON": 3},
+       520, "epic",    "A maul forged for a giant. Barely wielded by mortals. +5 STR, +3 CON.",
+       speed_mod=-3, enchant_element="blunt", enchant_bonus=8, enchant_name="Earthshaker",
+       damage_stat={"STR": 0.46}),
+
+    # ── More Axes ─────────────────────────────────────────────────────────────
+    _w("Hand Axe",           "Hand Axe", 13, "slashing", {"STR": 1, "DEX": 1},
+       45, "common",   "A light axe, throwable in a pinch. +1 STR, +1 DEX.",
+       damage_stat={"STR": 0.28, "DEX": 0.12}),
+    _w("Reinforced Hand Axe","Hand Axe", 19, "slashing", {"STR": 2, "DEX": 1},
+       100, "uncommon", "A heavier hand axe with an iron-banded haft. +2 STR, +1 DEX.",
+       damage_stat={"STR": 0.30, "DEX": 0.10}),
+    _w("Champion's Axe",     "Axe",  32, "slashing", {"STR": 4, "CON": 1},
+       300, "rare",    "A broad-headed axe, balanced for war. +4 STR, +1 CON.",
+       damage_stat={"STR": 0.40}),
+
+    # ── More Maces ────────────────────────────────────────────────────────────
+    _w("War Mace",           "Mace", 21, "blunt", {"STR": 2, "CON": 1},
+       105, "uncommon", "A heavy spiked mace. Good against armour. +2 STR, +1 CON.",
+       damage_stat={"STR": 0.38}),
+    _w("Blessed Mace",       "Mace", 30, "blunt", {"STR": 3, "PIE": 1},
+       250, "rare",    "A mace consecrated by the temple. Bonus vs undead. +3 STR, +1 PIE.",
+       enchant_element="divine", enchant_bonus=4, enchant_name="Consecrated",
+       damage_stat={"STR": 0.36, "PIE": 0.06}),
+    _w("Titan's Mace",       "Mace", 42, "blunt", {"STR": 5, "CON": 2},
+       490, "epic",    "A mace of legendary weight. Dents armour on contact. +5 STR, +2 CON.",
+       enchant_element="blunt", enchant_bonus=6, enchant_name="Crushing",
+       damage_stat={"STR": 0.42}),
+
 ]
 
 FIGHTER_ARMOR = [
@@ -528,6 +611,76 @@ THIEF_WEAPONS = [
        500, "epic", "The weapon of a Guildmaster — precise as a surgeon. +4 DEX, +2 INT.",
        crit_mod=18, accuracy_mod=12, speed_mod=2,
        damage_stat={"DEX": 0.28, "STR": 0.12}),
+
+    # ── Rapier (DEX-heavy, high crit/accuracy) ────────────────────────────────
+    _w("Worn Rapier",        "Rapier", 10, "piercing", {"DEX": 1},
+       28, "common",   "A thin, flexible blade. Fast and precise. +1 DEX.",
+       crit_mod=8, accuracy_mod=6, speed_mod=1,
+       damage_stat={"DEX": 0.44}),
+    _w("Dueling Rapier",     "Rapier", 15, "piercing", {"DEX": 2},
+       90, "uncommon", "A fencer's rapier with a swept guard. +2 DEX.",
+       crit_mod=10, accuracy_mod=8, speed_mod=1,
+       damage_stat={"DEX": 0.44}),
+    _w("Viper Rapier",       "Rapier", 22, "piercing", {"DEX": 3, "INT": 1},
+       210, "rare",    "A rapier etched with serpent scales. Venomous tip. +3 DEX, +1 INT.",
+       crit_mod=12, accuracy_mod=10, speed_mod=1,
+       enchant_element="nature", enchant_bonus=3, enchant_name="Venomed",
+       damage_stat={"DEX": 0.44, "INT": 0.06}),
+    _w("Shadowstrike",       "Rapier", 32, "piercing", {"DEX": 4, "INT": 2},
+       430, "epic",    "A rapier forged in shadow-steel. Strikes before the eye can follow. +4 DEX, +2 INT.",
+       crit_mod=16, accuracy_mod=14, speed_mod=2,
+       enchant_element="shadow", enchant_bonus=6, enchant_name="Shadowforged",
+       damage_stat={"DEX": 0.46, "INT": 0.08}),
+
+    # ── Saber (DEX+STR curved blade) ─────────────────────────────────────────
+    _w("Corsair's Saber",    "Saber", 13, "slashing", {"DEX": 1, "STR": 1},
+       50, "common",   "A curved blade favoured by sailors and pirates. +1 DEX, +1 STR.",
+       crit_mod=5, damage_stat={"DEX": 0.32, "STR": 0.12}),
+    _w("Cutthroat's Saber",  "Saber", 19, "slashing", {"DEX": 2, "STR": 1},
+       120, "uncommon", "A saber with a notched blade for disarming. +2 DEX, +1 STR.",
+       crit_mod=6, accuracy_mod=4,
+       damage_stat={"DEX": 0.32, "STR": 0.12}),
+    _w("Pirate's Saber",     "Saber", 27, "slashing", {"DEX": 3, "STR": 2},
+       240, "rare",    "A legendary saber from the Eastern Sea routes. +3 DEX, +2 STR.",
+       crit_mod=8, accuracy_mod=6,
+       enchant_element="slashing", enchant_bonus=3, enchant_name="Keen",
+       damage_stat={"DEX": 0.34, "STR": 0.12}),
+
+    # ── Short Sword (fill tiers) ───────────────────────────────────────────────
+    _w("Worn Short Sword",   "Short Sword", 8, "slashing", {"DEX": 1},
+       18, "common",   "A battered short sword. Gets the job done. +1 DEX.",
+       damage_stat={"DEX": 0.36, "STR": 0.08}),
+    _w("Assassin's Blade",   "Short Sword", 25, "slashing", {"DEX": 3, "INT": 1},
+       210, "rare",    "A short sword with a false edge and fullers. +3 DEX, +1 INT.",
+       crit_mod=10, accuracy_mod=6,
+       damage_stat={"DEX": 0.40, "STR": 0.08}),
+
+    # ── Hand Crossbow (light, fast) ───────────────────────────────────────────
+    _w("Hand Crossbow",      "Crossbow", 14, "piercing", {"DEX": 2},
+       70, "common",   "A compact wrist-mounted crossbow. Concealable. +2 DEX.",
+       range_="ranged", accuracy_mod=4, speed_mod=1,
+       damage_stat={"DEX": 0.36}),
+    _w("Assassin's Crossbow","Crossbow", 21, "piercing", {"DEX": 3, "INT": 1},
+       170, "uncommon", "A repeating hand crossbow with a venom reservoir. +3 DEX, +1 INT.",
+       range_="ranged", accuracy_mod=6, speed_mod=1,
+       enchant_element="nature", enchant_bonus=3, enchant_name="Envenomed",
+       damage_stat={"DEX": 0.36, "INT": 0.06}),
+    _w("Shadow Crossbow",    "Crossbow", 30, "piercing", {"DEX": 4},
+       320, "rare",    "A crossbow of shadow-forged steel. Silent, fast, deadly. +4 DEX.",
+       range_="ranged", accuracy_mod=10, speed_mod=2, crit_mod=8,
+       enchant_element="shadow", enchant_bonus=4, enchant_name="Silenced",
+       damage_stat={"DEX": 0.40}),
+
+    # ── Throwing Knife ────────────────────────────────────────────────────────
+    _w("Throwing Knife",     "Dagger", 11, "piercing", {"DEX": 2},
+       35, "common",   "Balanced for throwing. Works in melee too. +2 DEX.",
+       range_="ranged", accuracy_mod=6, speed_mod=2,
+       damage_stat={"DEX": 0.42}),
+    _w("Balanced Throwing Knife", "Dagger", 17, "piercing", {"DEX": 3},
+       110, "uncommon", "Precision-balanced for maximum range and impact. +3 DEX.",
+       range_="ranged", accuracy_mod=8, speed_mod=2, crit_mod=6,
+       damage_stat={"DEX": 0.44}),
+
 ]
 
 THIEF_ARMOR = [
@@ -626,6 +779,76 @@ RANGER_WEAPONS = [
        480, "epic", "A living spear — the wood grows and repairs itself. +3 DEX, +3 WIS.",
        range_="reach", enchant_element="nature", enchant_bonus=5, enchant_name="Thorn",
        damage_stat={"STR": 0.24, "DEX": 0.16}),
+
+    # ── Shortbow fill (uncommon→epic) ─────────────────────────────────────────
+    _w("Ashwood Shortbow",   "Shortbow", 13, "piercing", {"DEX": 2},
+       60, "uncommon", "A shortbow of flexible ashwood. Reliable draw. +2 DEX.",
+       range_="ranged", accuracy_mod=6,
+       damage_stat={"DEX": 0.36, "STR": 0.06}),
+    _w("Forest Shortbow",    "Shortbow", 19, "piercing", {"DEX": 3, "WIS": 1},
+       140, "rare",    "Carved from a single piece of living yew. +3 DEX, +1 WIS.",
+       range_="ranged", accuracy_mod=8,
+       enchant_element="nature", enchant_bonus=3, enchant_name="Living",
+       damage_stat={"DEX": 0.36, "WIS": 0.06}),
+    _w("Hawk's Shortbow",    "Shortbow", 27, "piercing", {"DEX": 4, "WIS": 2},
+       320, "epic",    "A bow of hawk-wing wood that guided every arrow true. +4 DEX, +2 WIS.",
+       range_="ranged", accuracy_mod=12, crit_mod=8,
+       enchant_element="nature", enchant_bonus=5, enchant_name="Trueflight",
+       damage_stat={"DEX": 0.38, "WIS": 0.08}),
+
+    # ── More Longbows ─────────────────────────────────────────────────────────
+    _w("Scout's Longbow",    "Longbow", 14, "piercing", {"DEX": 1},
+       45, "common",   "A light longbow for scouting in dense terrain. +1 DEX.",
+       range_="ranged", accuracy_mod=4,
+       damage_stat={"DEX": 0.34, "STR": 0.08}),
+    _w("Stormwood Longbow",  "Longbow", 36, "piercing", {"DEX": 4, "WIS": 2},
+       400, "epic",    "Heartwood from a storm-struck oak. Lightning-fast release. +4 DEX, +2 WIS.",
+       range_="ranged", accuracy_mod=14, crit_mod=8, speed_mod=1,
+       enchant_element="lightning", enchant_bonus=6, enchant_name="Stormforged",
+       damage_stat={"DEX": 0.38, "WIS": 0.10}),
+
+    # ── Javelin (thrown + melee) ──────────────────────────────────────────────
+    _w("Iron Javelin",       "Spear", 15, "piercing", {"STR": 2, "DEX": 1},
+       55, "common",   "A throwing spear that works equally well in melee. +2 STR, +1 DEX.",
+       range_="ranged", accuracy_mod=4,
+       damage_stat={"STR": 0.26, "DEX": 0.16}),
+    _w("Weighted Javelin",   "Spear", 22, "piercing", {"STR": 2, "DEX": 2},
+       120, "uncommon", "A javelin with a lead-weighted tip for longer throws. +2 STR, +2 DEX.",
+       range_="ranged", accuracy_mod=6,
+       damage_stat={"STR": 0.24, "DEX": 0.18}),
+    _w("Warden Javelin",     "Spear", 32, "piercing", {"STR": 3, "DEX": 3, "WIS": 1},
+       280, "rare",    "A javelin engraved with old Warden runes. +3 STR, +3 DEX, +1 WIS.",
+       range_="ranged", accuracy_mod=8,
+       enchant_element="nature", enchant_bonus=4, enchant_name="Wardenbless'd",
+       damage_stat={"STR": 0.24, "DEX": 0.20}),
+
+    # ── Short Sword for Rangers (light melee backup) ──────────────────────────
+    _w("Hunter's Blade",     "Short Sword", 12, "slashing", {"DEX": 2, "STR": 1},
+       42, "common",   "A wide hunting blade for close-quarters work. +2 DEX, +1 STR.",
+       damage_stat={"DEX": 0.32, "STR": 0.12}),
+    _w("Ranger's Shortsword","Short Sword", 20, "slashing", {"DEX": 3, "WIS": 1},
+       130, "uncommon", "A balanced short sword for the ambush hunter. +3 DEX, +1 WIS.",
+       crit_mod=6, damage_stat={"DEX": 0.34, "WIS": 0.08}),
+    _w("Stalker's Blade",    "Short Sword", 30, "slashing", {"DEX": 4, "WIS": 2},
+       270, "rare",    "A blade that seems to find gaps in armour naturally. +4 DEX, +2 WIS.",
+       crit_mod=8, accuracy_mod=6,
+       damage_stat={"DEX": 0.36, "WIS": 0.10}),
+
+    # ── Hunting Crossbow ─────────────────────────────────────────────────────
+    _w("Hunting Crossbow",   "Crossbow", 18, "piercing", {"DEX": 2, "STR": 1},
+       85, "common",   "A crossbow built for hunting large game. +2 DEX, +1 STR.",
+       range_="ranged", accuracy_mod=6,
+       damage_stat={"DEX": 0.30, "STR": 0.12}),
+    _w("War Crossbow",       "Crossbow", 27, "piercing", {"DEX": 3, "STR": 2},
+       200, "uncommon", "A heavy military crossbow. Punches through armour. +3 DEX, +2 STR.",
+       range_="ranged", accuracy_mod=8,
+       damage_stat={"DEX": 0.28, "STR": 0.14}),
+    _w("Siege Crossbow",     "Crossbow", 38, "piercing", {"DEX": 4, "STR": 2},
+       380, "rare",    "A crossbow powerful enough to pin a man to a wall. +4 DEX, +2 STR.",
+       range_="ranged", accuracy_mod=10,
+       enchant_element="piercing", enchant_bonus=5, enchant_name="Armorbane",
+       damage_stat={"DEX": 0.30, "STR": 0.14}),
+
 ]
 
 RANGER_ARMOR = [
@@ -728,6 +951,75 @@ MONK_WEAPONS = [
        speed_mod=3, crit_mod=12,
        enchant_element="fire", enchant_bonus=5, enchant_name="Dragonfire",
        damage_stat={"STR": 0.16, "INT": 0.24}),
+
+    # ── Nunchaku (DEX+WIS, fast, multi-hit feel) ──────────────────────────────
+    _w("Wooden Nunchaku",    "Kama", 8, "blunt", {"DEX": 1, "WIS": 1},
+       22, "common",   "Two hardwood sticks linked by a short chain. +1 DEX, +1 WIS.",
+       speed_mod=1, crit_mod=4,
+       damage_stat={"DEX": 0.24, "WIS": 0.20}),
+    _w("Iron Nunchaku",      "Kama", 13, "blunt", {"DEX": 2, "WIS": 1},
+       65, "uncommon", "Iron-weighted nunchaku. Hits harder, spins faster. +2 DEX, +1 WIS.",
+       speed_mod=1, crit_mod=6,
+       damage_stat={"DEX": 0.26, "WIS": 0.20}),
+    _w("Temple Nunchaku",    "Kama", 20, "blunt", {"DEX": 3, "WIS": 2},
+       155, "rare",    "Sacred nunchaku carved with meditative scripture. +3 DEX, +2 WIS.",
+       speed_mod=1, crit_mod=8, spell_bonus=4,
+       enchant_element="arcane", enchant_bonus=3, enchant_name="Focused",
+       damage_stat={"DEX": 0.26, "WIS": 0.22}),
+    _w("Storm Nunchaku",     "Kama", 30, "blunt", {"DEX": 4, "WIS": 3},
+       350, "epic",    "Nunchaku that blur into a storm of strikes. +4 DEX, +3 WIS.",
+       speed_mod=2, crit_mod=12, spell_bonus=6,
+       enchant_element="lightning", enchant_bonus=5, enchant_name="Stormspun",
+       damage_stat={"DEX": 0.28, "WIS": 0.24}),
+
+    # ── Tonfa (STR+WIS, defensive striker) ───────────────────────────────────
+    _w("Wooden Tonfa",       "Kama", 9, "blunt", {"STR": 1, "WIS": 1},
+       24, "common",   "Side-handled club. Excellent for blocking. +1 STR, +1 WIS.",
+       damage_stat={"STR": 0.22, "WIS": 0.22}),
+    _w("Iron Tonfa",         "Kama", 15, "blunt", {"STR": 2, "WIS": 1},
+       75, "uncommon", "Iron-capped tonfa — a monk's answer to plate armour. +2 STR, +1 WIS.",
+       damage_stat={"STR": 0.24, "WIS": 0.22}),
+    _w("Jade Tonfa",         "Kama", 24, "blunt", {"STR": 2, "WIS": 3},
+       230, "rare",    "Carved jade tonfa — Ki flows through the stone. +2 STR, +3 WIS.",
+       spell_bonus=5, damage_stat={"STR": 0.20, "WIS": 0.28}),
+    _w("Void Tonfa",         "Kama", 34, "blunt", {"STR": 3, "WIS": 4},
+       400, "epic",    "Tonfa etched with void glyphs. Strikes from unexpected angles. +3 STR, +4 WIS.",
+       speed_mod=1, spell_bonus=8, crit_mod=8,
+       enchant_element="shadow", enchant_bonus=5, enchant_name="Voidtouched",
+       damage_stat={"STR": 0.20, "WIS": 0.30}),
+
+    # ── Kama (fill common + epic) ─────────────────────────────────────────────
+    _w("Worn Kama",          "Kama", 8, "slashing", {"DEX": 1, "WIS": 1},
+       18, "common",   "A farm sickle repurposed as a weapon. Crude but effective. +1 DEX, +1 WIS.",
+       damage_stat={"DEX": 0.24, "WIS": 0.20}),
+    _w("Dragon Kama",        "Kama", 35, "slashing", {"DEX": 4, "WIS": 4},
+       440, "epic",    "Twin kama with dragon-tooth blades. +4 DEX, +4 WIS.",
+       crit_mod=12, speed_mod=1,
+       enchant_element="fire", enchant_bonus=7, enchant_name="Dragonblessed",
+       damage_stat={"DEX": 0.30, "WIS": 0.26}),
+
+    # ── Handwraps (fill rare + more variety) ──────────────────────────────────
+    _w("Silk Handwraps",     "Handwraps", 7, "blunt", {"DEX": 1, "WIS": 2},
+       20, "common",   "Soft silk wraps that don't restrict movement. +1 DEX, +2 WIS.",
+       speed_mod=1, damage_stat={"WIS": 0.28, "DEX": 0.16}),
+    _w("Blessed Handwraps",  "Handwraps", 16, "blunt", {"WIS": 2, "PIE": 1},
+       100, "uncommon", "Temple-blessed wraps that channel divine Ki. +2 WIS, +1 PIE.",
+       spell_bonus=4, damage_stat={"WIS": 0.28, "PIE": 0.10}),
+    _w("Iron-Knuckle Wraps", "Handwraps", 22, "blunt", {"STR": 2, "WIS": 2},
+       180, "rare",    "Wraps with iron knuckle plates sewn in. +2 STR, +2 WIS.",
+       damage_stat={"STR": 0.20, "WIS": 0.24}),
+
+    # ── Staff fill (fill gaps) ────────────────────────────────────────────────
+    _w("Battle Staff",       "Staff", 16, "blunt", {"STR": 2, "WIS": 1},
+       80, "common",   "A thick iron-capped battle staff for aggressive monks. +2 STR, +1 WIS.",
+       damage_stat={"STR": 0.24, "WIS": 0.18}),
+    _w("Spirit Staff",       "Staff", 22, "blunt", {"WIS": 3, "DEX": 1},
+       160, "uncommon", "A staff resonant with spiritual energy. +3 WIS, +1 DEX.",
+       spell_bonus=5, damage_stat={"WIS": 0.28, "DEX": 0.12}),
+    _w("Ancestor's Staff",   "Staff", 30, "blunt", {"WIS": 3, "STR": 2},
+       290, "rare",    "A staff carved with the faces of revered ancestors. +3 WIS, +2 STR.",
+       spell_bonus=6, damage_stat={"WIS": 0.26, "STR": 0.18}),
+
 ]
 
 MONK_ARMOR = [
