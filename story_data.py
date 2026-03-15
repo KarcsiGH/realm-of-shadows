@@ -452,9 +452,9 @@ QUESTS = {
         "reward_items": [],
         "objectives": [
             {"text": "Defeat the Shadow Wardens blocking the northern road",
-             "flag": "side_evacuees.wardens_cleared", "op": "==", "value": True},
+             "flag": "side_evacuees.wardens_cleared", "op": "==", "val": True},
             {"text": "Report back to Governor Aldric",
-             "flag": "quest.side_last_evacuees.state", "op": ">=", "value": -2},
+             "flag": "quest.side_last_evacuees.state", "op": ">=", "val": -2},
         ],
     },
     "side_warden_relic": {
@@ -470,9 +470,9 @@ QUESTS = {
         "reward_items": [{"id": "warden_signet"}],
         "objectives": [
             {"text": "Reach floor 3 of Valdris' Spire",
-             "flag": "explored.valdris_spire.floor3", "op": "==", "value": True},
+             "flag": "explored.valdris_spire.floor3", "op": "==", "val": True},
             {"text": "Return the relic to the Warden Liaison",
-             "flag": "quest.side_warden_relic.state", "op": ">=", "value": -2},
+             "flag": "quest.side_warden_relic.state", "op": ">=", "val": -2},
         ],
     },
     "side_arcane_salvage": {
@@ -488,7 +488,7 @@ QUESTS = {
         "reward_items": [],
         "objectives": [
             {"text": "Collect 3 Spire Crystals from Valdris' Spire",
-             "flag": "side_salvage.crystals_collected", "op": ">=", "value": 3},
+             "flag": "side_salvage.crystals_collected", "op": ">=", "val": 3},
         ],
         "auto_complete": False,
     },
@@ -505,9 +505,9 @@ QUESTS = {
         "reward_items": [],
         "objectives": [
             {"text": "Reach floor 2 of the Shadow Throne",
-             "flag": "explored.shadow_throne.floor2", "op": "==", "value": True},
+             "flag": "explored.shadow_throne.floor2", "op": "==", "val": True},
             {"text": "Report to Guild Commander Varek",
-             "flag": "quest.side_deserters.state", "op": ">=", "value": -2},
+             "flag": "quest.side_deserters.state", "op": ">=", "val": -2},
         ],
     },
     "side_tide_priest_request": {
@@ -524,9 +524,9 @@ QUESTS = {
         "reward_items": [],
         "objectives": [
             {"text": "Reach floor 3 of the Pale Coast",
-             "flag": "explored.pale_coast.floor3", "op": "==", "value": True},
+             "flag": "explored.pale_coast.floor3", "op": "==", "val": True},
             {"text": "Return to Tide Priest Oran",
-             "flag": "quest.side_tide_priest_request.state", "op": ">=", "value": -2},
+             "flag": "quest.side_tide_priest_request.state", "op": ">=", "val": -2},
         ],
     },
 }
@@ -2866,6 +2866,42 @@ NPC_DIALOGUES = {
     # ─────────────────────────────────────────────────────────
     #  TIDE PRIEST ORAN — Saltmere shrine
     "tide_priest_oran": [
+        # ── main_hearthstone_2: The Sunken Stone ─────────────────────────────
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.1", "op": "==", "value": True},
+                {"flag": "item.hearthstone.2", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "oran_hs2",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "You carry the first Hearthstone. Good.\n\nThe second is in the Sunken Crypt — below the tidal shelf, half-drowned since the great storm of my grandfather\'s time. The warden there has been waiting.\n\nShe won\'t be glad to see you.",
+                        "on_enter": [
+                            {"action": "start_quest", "quest": "main_hearthstone_2"},
+                        ],
+                        "choices": [
+                            {"text": "How do we reach it?", "next": "reach"},
+                            {"text": "What do you know about the warden?", "next": "warden"},
+                            {"text": "Leave.", "next": None},
+                        ]
+                    },
+                    "reach": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "The crypt entrance is on the coast south of Saltmere. Accessible at low tide — the tides here run on a six-hour cycle. Go when the water is pulling back.\n\nBring torches. The lower levels have been dark for forty years.",
+                        "choices": [{"text": "Understood.", "next": None}]
+                    },
+                    "warden": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "She was called Sera Voss. Warden of the coastal wards. When the Fading took the bay village, she sealed herself inside rather than abandon her post.\n\nFour decades underwater. Whatever she is now, she\'s been waiting to pass the stone to someone worthy.\n\nOr she\'s been waiting to end whoever disturbs her rest.",
+                        "choices": [{"text": "We\'ll find out.", "next": None}]
+                    },
+                }
+            }
+        },
+
         {
             "conditions": [
                 {"flag": "act", "op": ">=", "value": 3},
@@ -2978,7 +3014,7 @@ NPC_DIALOGUES = {
                     "start": {
                         "speaker": "Tide Priest Oran",
                         "text": "You recovered the bay stone. The third is in Dragon's Tooth archipelago. I've known its location for twenty years and dreaded this moment. The warden there isn't dead — he's worse than dead.",
-                        "on_enter": [{"action": "start_quest", "quest": "main_hearthstone_3"}],
+                        "on_enter": [{"action": "complete_quest", "quest": "main_hearthstone_2"}, {"action": "start_quest", "quest": "main_hearthstone_3"}],
                         "choices": [
                             {"text": "How do we get there?", "next": "passage"},
                             {"text": "What's waiting for us?", "next": "waiting"},
@@ -3479,7 +3515,7 @@ NPC_DIALOGUES = {
                         "text": "Adventurers in my court. An unusual occurrence. I am told "
                                 "you have been asking questions about the Fading across the realm. "
                                 "I find that... interesting. Tell me — what have you learned?",
-                        "on_enter": [{"action": "meet_npc", "npc": "governor_aldric"}],
+                        "on_enter": [{"action": "meet_npc", "npc": "governor_aldric"}, {"action": "complete_quest", "quest": "main_thornhaven"}],
                         "choices": [
                             {"text": "The Hearthstones are the key to stopping it.", "next": "hearthstones"},
                             {"text": "We know you have Warden records.", "next": "records"},
@@ -6799,6 +6835,36 @@ _NEW_DIALOGUES = {
     ],
 
     "archmage_solen": [
+        # ── side_arcane_salvage: Spire Crystal turn-in ────────────────────────
+        {
+            "conditions": [
+                {"flag": "quest.side_arcane_salvage.state", "op": "==", "value": 1},
+                {"flag": "side_salvage.crystals_collected", "op": ">=", "value": 3},
+            ],
+            "tree": {
+                "id": "solen_salvage_turnin",
+                "loop": False,
+                "nodes": {
+                    "start": {
+                        "speaker": "Archmage Solen",
+                        "text": "You have the crystals?\n\nGive them here. Yes — this is exactly what I needed. The pulse is stronger than the models predicted.\n\nThere\'s something in that Spire the Academy has been wrong about for a century. This changes the calculus entirely.\n\nYour payment.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "side_arcane_salvage"},
+                        ],
+                        "choices": [
+                            {"text": "What does it change?", "next": "what_changes"},
+                            {"text": "Leave.", "next": None},
+                        ]
+                    },
+                    "what_changes": {
+                        "speaker": "Archmage Solen",
+                        "text": "The ley lines don\'t run through the Spire. The Spire runs through the ley lines.\n\nValdris didn\'t corrupt the network. He IS part of it now. When you defeat him — if you can — something in the world\'s arcane structure will shift.\n\nBe ready for that.",
+                        "choices": [{"text": "We\'ll remember it.", "next": None}]
+                    },
+                }
+            }
+        },
+
         # ── Act 3: Arcane Salvage quest giver ─────────────────────────────────
         {
             "conditions": [

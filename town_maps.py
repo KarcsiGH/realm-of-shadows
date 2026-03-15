@@ -865,6 +865,23 @@ SALTMERE_NPCS = [
         "description": "A cloaked figure who meets your gaze and looks away too quickly.",
         "color": (80, 70, 100),
     },
+
+    {
+        "name": "Tide Priest Oran",
+        "x": 12, "y": 16,
+        "dialogue_id": "tide_priest_oran",
+        "description": "The Tide Priest stands at the water's edge, watching the horizon.",
+        "color": (80, 130, 200),
+        "npc_type": "priest",
+    },
+    {
+        "name": "Guildmaster Sable",
+        "x": 8, "y": 12,
+        "dialogue_id": "guildmaster_sable",
+        "description": "The Guildmaster leans against the wall, arms folded, watching everyone.",
+        "color": (120, 90, 160),
+        "npc_type": "guildmaster",
+    },
 ]
 
 SALTMERE_SIGNS = {
