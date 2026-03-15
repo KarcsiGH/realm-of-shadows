@@ -309,12 +309,20 @@ class DialogueUI:
                 if not self.full_text_shown:
                     self.displayed_chars = 999999
                     return None
-                # If choices available, confirm the highlighted one (must be hovered)
+                # If choices available
                 if self.state.has_choices():
                     choices = self.state.get_choices()
+                    if not choices:
+                        return None
+                    # If only one choice, always select it immediately
+                    if len(choices) == 1:
+                        return self._select_and_advance(0)
+                    # Multiple choices: if one is already highlighted, confirm it
                     if self.hover_choice >= 0 and self.hover_choice < len(choices):
                         return self._select_and_advance(self.hover_choice)
-                    # No choice highlighted — do nothing (player must select one)
+                    # No highlight yet: highlight the first choice as a visual cue.
+                    # Next SPACE press will confirm it.
+                    self.hover_choice = 0
                     return None
                 # No choices — auto-advance or close end node
                 return self.handle_click(0, 0)
