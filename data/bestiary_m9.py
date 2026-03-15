@@ -30,7 +30,7 @@ S = lambda s,d,c,i,w,p: {"STR":s,"DEX":d,"CON":c,"INT":i,"WIS":w,"PIE":p}
 
 NEW_ENEMIES = {
     # ── Cave / Goblin Warren ──
-    "Goblin Scout": _e("Goblin Scout",50,4,1,S(4,14,3,3,6,1),20,16,"melee","piercing",
+    "Goblin Scout": _e("Goblin Scout",80,5,1,S(4,14,3,3,6,1),20,22,"melee","piercing",
         acc=3,xp=10,gold=(2,6),        loot=[
             {"drop_chance": 0.14, "item": {"name": 'Crude Knife', "type": 'material', "subtype": 'blade_scrap', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Rusty Blade', "unidentified_desc": 'A short rusty knife.', "appraised_name": "Scout's Crude Knife", "material_desc": 'Poor-grade iron.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": "A goblin scout's knife.", "identified": False}},
             {"drop_chance": 0.1, "item": {"name": 'Goblin Ear', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Severed Ear', "unidentified_desc": 'A small pointed ear.', "appraised_name": 'Goblin Ear', "material_desc": 'A goblin trophy.', "magic_desc": 'No magical properties.', "estimated_value": 2, "description": 'A goblin ear.', "identified": False}},
@@ -38,15 +38,15 @@ NEW_ENEMIES = {
 
         desc={0:"A scrawny goblin with a rusty knife.",1:"Goblin Scout",
               2:"Goblin Scout — fast, weak. Often in groups."}),
-    "Goblin Brute": _e("Goblin Brute",120,10,2,S(14,6,12,2,3,1),10,36,"melee","blunt",
+    "Goblin Brute": _e("Goblin Brute",190,13,2,S(14,6,12,2,3,1),10,42,"melee","blunt",
         xp=28,gold=(8,16),        loot=[
-            {"drop_chance": 0.12, "item": {"name": 'Crude Club', "type": 'weapon', "slot": 'weapon', "subtype": 'Club', "rarity": 'common', "damage": 6, "phys_type": 'blunt', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Heavy Club', "unidentified_desc": 'A rough wooden club.', "appraised_name": 'Goblin War Club', "material_desc": 'Scavenged wood and iron nails.', "magic_desc": 'No magical properties.', "estimated_value": 8, "description": 'A heavy club from a goblin brute.', "identified": False}},
+            {"drop_chance": 0.12, "item": {"name": 'Crude Club', "type": 'weapon', "slot": 'weapon', "subtype": 'Club', "rarity": 'common', "damage": 16, "damage_stat": {"STR": 0.4}, "phys_type": 'blunt', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Heavy Club', "unidentified_desc": 'A rough wooden club.', "appraised_name": 'Goblin War Club', "material_desc": 'Scavenged wood and iron nails.', "magic_desc": 'No magical properties.', "estimated_value": 8, "description": 'A heavy club from a goblin brute.', "identified": False}},
             {"drop_chance": 0.16, "item": {"name": 'Goblin Hide Scraps', "type": 'material', "subtype": 'leather', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Thick Scraps', "unidentified_desc": 'Pieces of rough hide.', "appraised_name": 'Goblin Hide', "material_desc": 'Thick goblin skin. Tier 1 leather.', "magic_desc": 'No magical properties.', "estimated_value": 5, "description": 'Rough goblin hide.', "identified": False}},
         ],
 
         desc={0:"A hulking goblin with a wooden club.",1:"Goblin Brute",
               2:"Goblin Brute — slow but hits hard."}),
-    "Goblin Trapper": _e("Goblin Trapper",65,5,4,S(5,12,5,7,8,2),15,20,"ranged","piercing",
+    "Goblin Trapper": _e("Goblin Trapper",105,6,4,S(5,12,5,7,8,2),15,27,"ranged","piercing",
         acc=4,row="mid",ai="supportive",xp=22,gold=(5,10),
         ab=[{"name":"Caltrops","type":"debuff","target":"single_enemy",
              "effect":{"speed_penalty":0.5,"duration":2},"description":"Slows an enemy."}],             loot=[
@@ -75,13 +75,13 @@ NEW_ENEMIES = {
               2:"Fungal Crawler — poison spores. Weak to fire."}),
 
     # ── Spider's Nest ──
-    "Spiderling": _e("Spiderling",30,4,2,S(4,14,3,1,4,1),22,10,"melee","piercing",
+    "Spiderling": _e("Spiderling",50,5,2,S(4,14,3,1,4,1),22,15,"melee","piercing",
         acc=5,xp=6,gold=(0,2),res={"fire":1.5},        loot=[
             {"drop_chance": 0.15, "item": {"name": 'Spider Silk Thread', "type": 'material', "subtype": 'reagent', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Fine Thread', "unidentified_desc": 'A wisp of iridescent silk.', "appraised_name": 'Phase-Spider Silk Thread', "material_desc": 'Silk from a Fading-touched spider. Tier 1 reagent.', "magic_desc": 'Faint planar shimmer.', "estimated_value": 5, "description": 'A thread of spider silk.', "identified": False}},
         ],
 
         desc={0:"A cat-sized spider.",1:"Spiderling",2:"Spiderling — tiny but numerous."}),
-    "Web Spinner": _e("Web Spinner",70,7,10,S(6,12,6,6,8,2),14,16,"ranged","nature",
+    "Web Spinner": _e("Web Spinner",115,9,10,S(6,12,6,6,8,2),14,24,"ranged","nature",
         acc=4,row="mid",ai="supportive",xp=24,gold=(3,8),res={"fire":2.0,"nature":0.0},
         ab=[{"name":"Web Shot","type":"debuff","target":"single_enemy",
              "effect":{"speed_penalty":0.3,"duration":3},"description":"Sticky web."}],             loot=[
@@ -91,7 +91,7 @@ NEW_ENEMIES = {
 
         desc={0:"A spider dangling silk.",1:"Web Spinner",
               2:"Web Spinner — webs slow your party."}),
-    "Venomfang Spider": _e("Venomfang Spider",105,12,8,S(12,14,10,2,8,1),18,32,"melee","piercing",
+    "Venomfang Spider": _e("Venomfang Spider",170,15,8,S(12,14,10,2,8,1),18,39,"melee","piercing",
         acc=8,xp=35,gold=(4,10),res={"fire":1.5,"nature":0.0},imm=["Poisoned"],
         ab=[{"name":"Venom Bite","type":"damage","target":"single_enemy","power":12,
              "element":"nature","status":"Poisoned","status_chance":0.5,
@@ -106,7 +106,7 @@ NEW_ENEMIES = {
     # ── Abandoned Mine ──
     "Kobold Miner": _e("Kobold Miner",70,7,2,S(8,10,6,5,5,2),14,24,"melee","blunt",
         xp=18,gold=(6,14),        loot=[
-            {"drop_chance": 0.15, "item": {"name": 'Iron Pick', "type": 'weapon', "slot": 'weapon', "subtype": 'Pick', "rarity": 'common', "damage": 6, "phys_type": 'piercing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Heavy Pick', "unidentified_desc": 'A well-worn pickaxe.', "appraised_name": "Kobold Miner's Pick", "material_desc": 'Common iron mine-forged.', "magic_desc": 'No magical properties.', "estimated_value": 9, "description": "A kobold miner's pick.", "identified": False}},
+            {"drop_chance": 0.15, "item": {"name": 'Iron Pick', "type": 'weapon', "slot": 'weapon', "subtype": 'Pick', "rarity": 'common', "damage": 16, "damage_stat": {"STR": 0.4}, "phys_type": 'piercing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Heavy Pick', "unidentified_desc": 'A well-worn pickaxe.', "appraised_name": "Kobold Miner's Pick", "material_desc": 'Common iron mine-forged.', "magic_desc": 'No magical properties.', "estimated_value": 9, "description": "A kobold miner's pick.", "identified": False}},
             {"drop_chance": 0.14, "item": {"name": 'Iron Ore Chunk', "type": 'material', "subtype": 'ore', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Heavy Rock', "unidentified_desc": 'A heavy dark chunk.', "appraised_name": 'Iron Ore Chunk', "material_desc": 'Raw iron ore. Tier 1 smithing.', "magic_desc": 'No magical properties.', "estimated_value": 6, "description": 'A chunk of iron ore.', "identified": False}},
         ],
 
@@ -220,7 +220,7 @@ NEW_ENEMIES = {
     # ── Ruins of Ashenmoor ──
     "Ashenmoor Bandit": _e("Ashenmoor Bandit",137,15,6,S(14,12,10,6,6,3),15,32,"melee","slashing",
         acc=3,xp=35,gold=(12,28),        loot=[
-            {"drop_chance": 0.14, "item": {"name": 'Worn Longsword', "type": 'weapon', "slot": 'weapon', "subtype": 'Longsword', "rarity": 'common', "damage": 9, "phys_type": 'slashing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Notched Blade', "unidentified_desc": 'A sword with deep notches.', "appraised_name": 'Worn Iron Longsword', "material_desc": 'Common iron, poorly maintained.', "magic_desc": 'No magical properties.', "estimated_value": 15, "description": "A bandit's longsword.", "identified": False}},
+            {"drop_chance": 0.14, "item": {"name": 'Worn Longsword', "type": 'weapon', "slot": 'weapon', "subtype": 'Longsword', "rarity": 'common', "damage": 19, "damage_stat": {"STR": 0.3, "DEX": 0.12}, "phys_type": 'slashing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Notched Blade', "unidentified_desc": 'A sword with deep notches.', "appraised_name": 'Worn Iron Longsword', "material_desc": 'Common iron, poorly maintained.', "magic_desc": 'No magical properties.', "estimated_value": 15, "description": "A bandit's longsword.", "identified": False}},
             {"drop_chance": 0.12, "item": {"name": 'Bandit Mail Patch', "type": 'armor', "slot": 'body', "subtype": 'body_armor', "rarity": 'common', "armor_tier": 'light', "defense": 3, "identify_difficulty": 1, "unidentified_name": 'Scrap Mail', "unidentified_desc": 'A patch of chain links sewn to leather.', "appraised_name": 'Scrap Chainmail Vest', "material_desc": 'Mixed scrap metal and leather.', "magic_desc": 'No magical properties.', "estimated_value": 12, "description": 'Patched mail from a bandit.', "identified": False}},
         ],
 
@@ -278,7 +278,7 @@ NEW_ENEMIES = {
         acc=3,xp=25,gold=(10,22),
         ab=[{"name":"Cheap Shot","type":"damage","target":"single_enemy","power":18,
              "element":"piercing","description":"Dirty fighting."}],             loot=[
-                 {"drop_chance": 0.14, "item": {"name": 'Worn Short Sword', "type": 'weapon', "slot": 'weapon', "subtype": 'Short Sword', "rarity": 'common', "damage": 6, "phys_type": 'slashing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Road-Worn Blade', "unidentified_desc": 'A short sword with a worn grip.', "appraised_name": "Highway Bandit's Blade", "material_desc": 'Common steel, road-worn.', "magic_desc": 'No magical properties.', "estimated_value": 10, "description": "A highway bandit's blade.", "identified": False}},
+                 {"drop_chance": 0.14, "item": {"name": 'Worn Short Sword', "type": 'weapon', "slot": 'weapon', "subtype": 'Short Sword', "rarity": 'common', "damage": 16, "damage_stat": {"DEX": 0.28, "STR": 0.12}, "phys_type": 'slashing', "range": 'melee', "identify_difficulty": 1, "unidentified_name": 'Road-Worn Blade', "unidentified_desc": 'A short sword with a worn grip.', "appraised_name": "Highway Bandit's Blade", "material_desc": 'Common steel, road-worn.', "magic_desc": 'No magical properties.', "estimated_value": 10, "description": "A highway bandit's blade.", "identified": False}},
                  {"drop_chance": 0.1, "item": {"name": 'Leather Scraps', "type": 'material', "subtype": 'leather', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Leather Scraps', "unidentified_desc": 'Rough leather.', "appraised_name": 'Boiled Leather Scraps', "material_desc": 'Tier 1 leather material.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": 'Leather scraps from a bandit.', "identified": False}},
              ],
 
@@ -315,7 +315,7 @@ NEW_ENEMIES = {
     # ══════════════════════════════════════════════════════════
 
     # ── More cave/goblin ──
-    "Goblin Drummer": _e("Goblin Drummer",55,4,2,S(4,8,4,4,6,4),12,12,"melee","blunt",
+    "Goblin Drummer": _e("Goblin Drummer",88,5,2,S(4,8,4,4,6,4),12,17,"melee","blunt",
         row="back",ai="supportive",xp=18,gold=(3,8),
         ab=[{"name":"War Drums","type":"buff","target":"all_allies",
              "effect":{"speed_boost":1.2,"duration":2},"description":"Drums speed allies up."}],             loot=[
@@ -360,7 +360,7 @@ NEW_ENEMIES = {
              "estimated_value":20,"description":"Hard spider chitin, useful for armor crafting."}}],
         desc={0:"An enormous armored spider.",1:"Broodmother Guard",
               2:"Broodmother Guard — elite spider. Tough and venomous."}),
-    "Phase Spider": _e("Phase Spider",80,5,16,S(8,18,6,10,10,2),22,28,"melee","piercing",
+    "Phase Spider": _e("Phase Spider",130,6,16,S(8,18,6,10,10,2),22,38,"melee","piercing",
         acc=10,xp=38,gold=(6,14),res={"arcane":0.0,"fire":1.5},
         ab=[{"name":"Phase Shift","type":"buff","target":"self",
              "effect":{"evasion_boost":1.5,"duration":1},"description":"Phases partially out of reality."}],             loot=[

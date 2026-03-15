@@ -17,10 +17,10 @@ from core.combat_config import (
 ENEMIES = {
     "Goblin Warrior": {
         "name": "Goblin Warrior",
-        "hp": 76, "defense": 5, "magic_resist": 2,
+        "hp": 130, "defense": 7, "magic_resist": 2,
         "stats": {"STR": 6, "DEX": 10, "CON": 5, "INT": 4, "WIS": 4, "PIE": 2},
         "speed_base": 14,
-        "attack_damage": 25, "attack_type": "melee", "phys_type": "slashing",
+        "attack_damage": 30, "attack_type": "melee", "phys_type": "slashing",
         "accuracy_bonus": 0,
         "preferred_row": FRONT,
         "ai_type": "aggressive", "pack_tactics": True, "cowardly": True,
@@ -37,7 +37,8 @@ ENEMIES = {
             {"drop_chance": 0.15, "item": {
                 "name": "Goblin Shiv", "type": "weapon",
                 "subtype": "Dagger", "rarity": "common",
-                "damage": 3, "phys_type": "piercing",
+                "damage": 13, "phys_type": "piercing",
+                "damage_stat": {"DEX": 0.4},
                 "identify_difficulty": 1,
                 "unidentified_name": "Crude Blade",
                 "unidentified_desc": "A jagged piece of metal lashed to a bone handle.",
@@ -69,10 +70,10 @@ ENEMIES = {
 
     "Goblin Archer": {
         "name": "Goblin Archer",
-        "hp": 57, "defense": 3, "magic_resist": 2,
+        "hp": 95, "defense": 4, "magic_resist": 2,
         "stats": {"STR": 4, "DEX": 12, "CON": 4, "INT": 5, "WIS": 5, "PIE": 2},
         "speed_base": 16,
-        "attack_damage": 28, "attack_type": "ranged", "phys_type": "piercing",
+        "attack_damage": 31, "attack_type": "ranged", "phys_type": "piercing",
         "accuracy_bonus": 5,
         "preferred_row": MID,
         "ai_type": "aggressive", "pack_tactics": True, "cowardly": True,
@@ -89,7 +90,8 @@ ENEMIES = {
             {"drop_chance": 0.12, "item": {
                 "name": "Crude Shortbow", "type": "weapon",
                 "subtype": "Shortbow", "rarity": "common",
-                "damage": 4, "phys_type": "piercing",
+                "damage": 14, "phys_type": "piercing",
+                "damage_stat": {"DEX": 0.35, "STR": 0.08},
                 "identify_difficulty": 1,
                 "unidentified_name": "Worn Shortbow",
                 "unidentified_desc": "A small bow made from a bent branch and sinew string.",
@@ -141,7 +143,8 @@ ENEMIES = {
             {"drop_chance": 0.12, "item": {
                 "name": "Bandit's Shortsword", "type": "weapon",
                 "subtype": "Short Sword", "rarity": "common",
-                "damage": 6, "phys_type": "slashing",
+                "damage": 16, "phys_type": "slashing",
+                "damage_stat": {"DEX": 0.28, "STR": 0.12},
                 "identify_difficulty": 1,
                 "unidentified_name": "Worn Short Sword",
                 "unidentified_desc": "A short blade with a leather-wrapped grip. Well-used but serviceable.",
@@ -315,7 +318,8 @@ ENEMIES = {
             {"drop_chance": 0.18, "item": {
                 "name": "Rusted Sword", "type": "weapon",
                 "subtype": "Short Sword", "rarity": "common",
-                "damage": 5, "phys_type": "slashing",
+                "damage": 15, "phys_type": "slashing",
+                "damage_stat": {"DEX": 0.28, "STR": 0.12},
                 "identify_difficulty": 1,
                 "unidentified_name": "Corroded Blade",
                 "unidentified_desc": "A blade pitted with rust, still holding an edge.",
@@ -380,7 +384,8 @@ ENEMIES = {
             {"drop_chance": 0.08, "item": {
                 "name": "Orcish Blade", "type": "weapon",
                 "subtype": "Broadsword", "rarity": "common",
-                "damage": 9, "phys_type": "slashing",
+                "damage": 19, "phys_type": "slashing",
+                "damage_stat": {"STR": 0.3, "DEX": 0.12},
                 "identify_difficulty": 1,
                 "unidentified_name": "Crude Broadsword",
                 "unidentified_desc": "A heavy iron blade with rough hammer marks. Brutally functional.",
@@ -436,7 +441,8 @@ ENEMIES = {
             {"drop_chance": 0.25, "item": {
                 "name": "Chieftain's Cleaver", "type": "weapon",
                 "subtype": "Broadsword", "rarity": "uncommon",
-                "damage": 12, "phys_type": "slashing",
+                "damage": 22, "phys_type": "slashing",
+                "damage_stat": {"STR": 0.3, "DEX": 0.12},
                 "enhance_bonus": 1, "effect": {"str_bonus": 1},
                 "identify_difficulty": 2,
                 "unidentified_name": "Ornate Broadsword",
@@ -489,10 +495,10 @@ ENEMIES = {
 
     "Goblin Shaman": {
         "name": "Goblin Shaman",
-        "hp": 66, "defense": 3, "magic_resist": 12,
+        "hp": 110, "defense": 3, "magic_resist": 12,
         "stats": {"STR": 3, "DEX": 8, "CON": 4, "INT": 10, "WIS": 10, "PIE": 6},
         "speed_base": 14,
-        "attack_damage": 16, "attack_type": "melee", "phys_type": "blunt",
+        "attack_damage": 22, "attack_type": "melee", "phys_type": "blunt",
         "accuracy_bonus": 0,
         "preferred_row": BACK,
         "ai_type": "supportive",
@@ -529,6 +535,7 @@ ENEMIES = {
             {"drop_chance": 0.05, "item": {
                 "name": "Crude Wand", "type": "weapon",
                 "subtype": "Wand", "rarity": "common",
+                "damage": 10, "damage_stat": {"INT": 0.32},
                 "spell_bonus": 2,
                 "identify_difficulty": 2,
                 "unidentified_name": "Gnarled Stick",
@@ -553,10 +560,10 @@ ENEMIES = {
 
     "Goblin King": {
         "name": "Grak the Goblin King",
-        "hp": 400, "defense": 12, "magic_resist": 8,
+        "hp": 550, "defense": 15, "magic_resist": 8,
         "stats": {"STR": 18, "DEX": 10, "CON": 16, "INT": 6, "WIS": 8, "PIE": 4},
         "speed_base": 12,
-        "attack_damage": 38, "attack_type": "melee", "phys_type": "blunt",
+        "attack_damage": 50, "attack_type": "melee", "phys_type": "blunt",
         "accuracy_bonus": 8,
         "preferred_row": FRONT,
         "ai_type": "boss",
@@ -602,10 +609,10 @@ ENEMIES = {
 
     "Giant Spider Queen": {
         "name": "Spider Queen",
-        "hp": 480, "defense": 20, "magic_resist": 20,
+        "hp": 620, "defense": 24, "magic_resist": 20,
         "stats": {"STR": 14, "DEX": 18, "CON": 14, "INT": 4, "WIS": 12, "PIE": 2},
         "speed_base": 18,
-        "attack_damage": 41, "attack_type": "melee", "phys_type": "piercing",
+        "attack_damage": 54, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 12,
         "preferred_row": FRONT,
         "ai_type": "boss",
@@ -661,7 +668,8 @@ ENEMIES = {
         "loot_table": [
             {"drop_chance": 0.80, "item": {
                 "name": "Foreman's Pickaxe", "type": "weapon", "subtype": "axe",
-                "rarity": "rare", "tier": 3, "damage": 22, "identified": True,
+                "rarity": "rare", "tier": 3, "damage": 32, "identified": True,
+                "damage_stat": {"STR": 0.4},
                 "estimated_value": 250,
                 "description": "A massive mining pick, still sharp after centuries. +22 base damage.",
             }},
@@ -709,7 +717,8 @@ ENEMIES = {
             }},
             {"drop_chance": 0.85, "item": {
                 "name": "Warden's Stone Hammer", "type": "weapon", "subtype": "hammer",
-                "rarity": "rare", "tier": 3, "damage": 26, "identified": True,
+                "rarity": "rare", "tier": 3, "damage": 36, "identified": True,
+                "damage_stat": {"STR": 0.4},
                 "estimated_value": 340,
                 "description": "A dwarven war-hammer inscribed with ward-runes. "
                                "+26 base damage, +8 magic resist to wielder.",
@@ -761,7 +770,8 @@ ENEMIES = {
             }},
             {"drop_chance": 0.60, "item": {
                 "name": "Scorched Warden Blade", "type": "weapon", "subtype": "sword",
-                "rarity": "uncommon", "tier": 3, "damage": 20, "identified": True,
+                "rarity": "uncommon", "tier": 3, "damage": 30, "identified": True,
+                "damage_stat": {"STR": 0.3, "DEX": 0.12},
                 "estimated_value": 210,
                 "description": "A warden's sword, blackened by whatever destroyed Ashenmoor. "
                                "+20 base damage, deals bonus fire damage.",
@@ -785,10 +795,10 @@ ENEMIES = {
 
     "Giant Spider": {
         "name": "Giant Spider",
-        "hp": 84, "defense": 10, "magic_resist": 6,
+        "hp": 140, "defense": 13, "magic_resist": 6,
         "stats": {"STR": 10, "DEX": 16, "CON": 8, "INT": 2, "WIS": 8, "PIE": 1},
         "speed_base": 20,
-        "attack_damage": 25, "attack_type": "melee", "phys_type": "piercing",
+        "attack_damage": 32, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 8,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
@@ -932,6 +942,33 @@ ENCOUNTERS = {
             {"enemy": "Orc Fighter", "count": 3, "row": FRONT},
         ],
     },
+        # Spider's Nest encounters — added to replace goblin/bandit placeholders
+    "easy_spiders": {
+        "name": "Spider Nest",
+        "difficulty": "easy",
+        "groups": [
+            {"enemy": "Spiderling", "count": 4, "row": FRONT},
+            {"enemy": "Giant Spider", "count": 1, "row": FRONT},
+        ],
+    },
+    "medium_spiders": {
+        "name": "Spider Colony",
+        "difficulty": "medium",
+        "groups": [
+            {"enemy": "Giant Spider", "count": 2, "row": FRONT},
+            {"enemy": "Web Spinner", "count": 1, "row": BACK},
+            {"enemy": "Spiderling", "count": 2, "row": FRONT},
+        ],
+    },
+    "hard_spiders": {
+        "name": "Brood Chamber",
+        "difficulty": "hard",
+        "groups": [
+            {"enemy": "Venomfang Spider", "count": 2, "row": FRONT},
+            {"enemy": "Web Spinner", "count": 1, "row": BACK},
+            {"enemy": "Giant Spider", "count": 1, "row": FRONT},
+        ],
+    },
     "spider_swarm": {
         "name": "Spider Swarm",
         "difficulty": "medium",
@@ -954,9 +991,10 @@ DUNGEON_ENCOUNTER_TABLES = {
         "boss": "boss_goblin_king",
     },
     "spiders_nest": {
-        1: ["spider_swarm", "wolves"],
-        2: ["spider_swarm", "medium_bandits"],
-        3: ["spider_swarm", "hard_mixed"],
+        1: ["easy_spiders", "medium_spiders"],
+        2: ["medium_spiders", "hard_spiders"],
+        3: ["hard_spiders", "spider_swarm"],
+        4: ["spider_swarm", "hard_spiders"],
         "boss": "boss_spider_queen",
     },
     "abandoned_mine": {

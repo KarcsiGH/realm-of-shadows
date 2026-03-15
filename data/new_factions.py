@@ -49,6 +49,32 @@ def _res(**overrides):
 
 def _coin(lo, hi): return (lo, hi)
 
+_WEAPON_DS = {
+    "Dagger":      {"DEX": 0.40},
+    "Short Sword": {"DEX": 0.28, "STR": 0.12},
+    "Long Sword":  {"STR": 0.30, "DEX": 0.12},
+    "Longsword":   {"STR": 0.30, "DEX": 0.12},
+    "Broadsword":  {"STR": 0.30, "DEX": 0.12},
+    "Greatsword":  {"STR": 0.40, "DEX": 0.10},
+    "Axe":         {"STR": 0.40},
+    "Greataxe":    {"STR": 0.40},
+    "Warhammer":   {"STR": 0.40},
+    "Mace":        {"STR": 0.40},
+    "Club":        {"STR": 0.40},
+    "Staff":       {"STR": 0.16, "INT": 0.24},
+    "Wand":        {"INT": 0.32},
+    "Orb":         {"INT": 0.24, "WIS": 0.16},
+    "Shortbow":    {"DEX": 0.35, "STR": 0.08},
+    "Longbow":     {"DEX": 0.35, "STR": 0.08},
+    "Crossbow":    {"DEX": 0.28, "STR": 0.12},
+    "Spear":       {"STR": 0.24, "DEX": 0.16},
+    "Rapier":      {"DEX": 0.40},
+    "Cutlass":     {"DEX": 0.28, "STR": 0.12},
+    "Saber":       {"DEX": 0.28, "STR": 0.12},
+    "Pick":        {"STR": 0.40},
+    "Hammer":      {"STR": 0.40},
+}
+
 def _item(name, itype, subtype, rarity, dmg_or_def, phys, unid, unid_desc,
           appraised, mat_desc, magic_desc, val, desc, diff=1, **kw):
     d = {"name": name, "type": itype, "subtype": subtype, "rarity": rarity,
@@ -57,8 +83,12 @@ def _item(name, itype, subtype, rarity, dmg_or_def, phys, unid, unid_desc,
          "appraised_name": appraised, "material_desc": mat_desc,
          "magic_desc": magic_desc, "estimated_value": val, "description": desc}
     if itype == "weapon":
-        d["damage"] = dmg_or_def
+        d["damage"] = dmg_or_def + 10  # +10 base to account for stat scaling
         d["phys_type"] = phys
+        if "damage_stat" not in kw:
+            ds = _WEAPON_DS.get(subtype)
+            if ds:
+                d["damage_stat"] = ds
     elif itype == "armor":
         d["defense"] = dmg_or_def
     d.update(kw)
@@ -271,6 +301,7 @@ FALLEN_WARDEN_ENEMIES = {
         "resistances": _res(shadow=RESISTANT, divine=VULNERABLE,
                             piercing=RESISTANT, slashing=RESISTANT),
         "status_immunities": ["Poisoned"],
+        "tags": ["undead"],
         "abilities": [
             _ab_damage("Inverted Ward", 24, "shadow",
                        "Turns a ward-mark against its target, dealing shadow damage"),
@@ -897,6 +928,7 @@ DWARF_ENEMIES = {
         "resistances": _res(shadow=RESISTANT, divine=VULNERABLE,
                             piercing=RESISTANT, slashing=RESISTANT),
         "status_immunities": ["Poisoned"],
+        "tags": ["undead"],
         "abilities": [
             _ab_debuff("Miner's Curse",
                        {"accuracy_reduction": 12, "duration": 2},
@@ -1013,6 +1045,7 @@ DWARF_ENEMIES = {
                             piercing=RESISTANT, slashing=RESISTANT,
                             blunt=RESISTANT),
         "status_immunities": ["Cursed","Stunned","Poisoned"],
+        "tags": ["undead"],
         "abilities": [
             _ab_damage("Ward Pulse", 32, "divine",
                        "A burst of genuine ward-energy — what Warden magic was supposed to be",

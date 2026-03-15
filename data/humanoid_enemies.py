@@ -25,7 +25,9 @@ def _coin(lo, hi): return (lo, hi)
 
 def _sword(name, unid, dmg, val, desc):
     return {"name": name, "type": "weapon", "subtype": "Short Sword",
-            "rarity": "common", "damage": dmg, "phys_type": "slashing",
+            "rarity": "common", "damage": dmg + 10,
+            "damage_stat": {"DEX": 0.28, "STR": 0.12},
+            "phys_type": "slashing",
             "identify_difficulty": 1,
             "unidentified_name": unid, "unidentified_desc": "A serviceable blade.",
             "appraised_name": name, "material_desc": "Common steel.",
@@ -34,7 +36,9 @@ def _sword(name, unid, dmg, val, desc):
 
 def _dagger(name, dmg, val, desc):
     return {"name": name, "type": "weapon", "subtype": "Dagger",
-            "rarity": "common", "damage": dmg, "phys_type": "piercing",
+            "rarity": "common", "damage": dmg + 10,
+            "damage_stat": {"DEX": 0.40},
+            "phys_type": "piercing",
             "identify_difficulty": 1,
             "unidentified_name": "Hidden Blade", "unidentified_desc": "A short, concealable blade.",
             "appraised_name": name, "material_desc": "Steel blade, edge honed repeatedly.",
@@ -43,7 +47,9 @@ def _dagger(name, dmg, val, desc):
 
 def _staff(name, dmg, val, desc):
     return {"name": name, "type": "weapon", "subtype": "Staff",
-            "rarity": "common", "damage": dmg, "phys_type": "blunt",
+            "rarity": "common", "damage": dmg + 10,
+            "damage_stat": {"STR": 0.16, "INT": 0.24},
+            "phys_type": "blunt",
             "identify_difficulty": 2,
             "unidentified_name": "Carved Staff", "unidentified_desc": "A staff with crude sigils carved into it.",
             "appraised_name": name, "material_desc": "Ashwood, reinforced with iron rings.",
@@ -269,7 +275,8 @@ HUMANOID_ENEMIES = {
         "loot_table": [
             {"drop_chance": 0.15, "item": {
                 "name": "Reinforced Shortbow", "type": "weapon", "subtype": "Shortbow",
-                "rarity": "common", "damage": 7, "phys_type": "piercing",
+                "rarity": "common", "damage_stat": {"DEX": 0.35, "STR": 0.08},
+                "damage": 17, "phys_type": "piercing",
                 "identify_difficulty": 1,
                 "unidentified_name": "Well-made Bow", "unidentified_desc": "A compact bow, better than average.",
                 "appraised_name": "Mercenary Shortbow", "material_desc": "Laminated hardwood, professionally strung.",
@@ -328,7 +335,8 @@ HUMANOID_ENEMIES = {
         "loot_table": [
             {"drop_chance": 0.18, "item": {
                 "name": "Mercenary's Iron Mace", "type": "weapon", "subtype": "Mace",
-                "rarity": "common", "damage": 9, "phys_type": "blunt",
+                "rarity": "common", "damage_stat": {"STR": 0.4},
+                "damage": 19, "phys_type": "blunt",
                 "identify_difficulty": 1,
                 "unidentified_name": "Heavy Mace", "unidentified_desc": "A sturdy iron mace.",
                 "appraised_name": "Iron War Mace", "material_desc": "Cast iron head, hardwood haft.",
@@ -364,7 +372,8 @@ HUMANOID_ENEMIES = {
         "loot_table": [
             {"drop_chance": 0.22, "item": {
                 "name": "Rune-Etched Sword", "type": "weapon", "subtype": "Long Sword",
-                "rarity": "uncommon", "damage": 10, "phys_type": "slashing",
+                "rarity": "uncommon", "damage_stat": {"STR": 0.3, "DEX": 0.12},
+                "damage": 20, "phys_type": "slashing",
                 "identify_difficulty": 3, "element": "arcane",
                 "unidentified_name": "Glowing Blade", "unidentified_desc": "A sword with faintly glowing runes.",
                 "appraised_name": "Arcane Longsword", "material_desc": "Steel blade with arcane runes.",
@@ -453,7 +462,8 @@ HUMANOID_ENEMIES = {
         "loot_table": [
             {"drop_chance": 0.20, "item": {
                 "name": "Hexblade Saber", "type": "weapon", "subtype": "Long Sword",
-                "rarity": "uncommon", "damage": 9, "phys_type": "slashing",
+                "rarity": "uncommon", "damage_stat": {"STR": 0.3, "DEX": 0.12},
+                "damage": 19, "phys_type": "slashing",
                 "identify_difficulty": 3, "element": "shadow",
                 "unidentified_name": "Dark-stained Blade",
                 "unidentified_desc": "A sword with an oil-dark blade that seems to absorb light.",
@@ -518,7 +528,8 @@ HUMANOID_ENEMIES = {
         "loot_table": [
             {"drop_chance": 0.35, "item": {
                 "name": "High Cultist's Grimoire", "type": "weapon", "subtype": "Staff",
-                "rarity": "rare", "damage": 8, "phys_type": "shadow",
+                "rarity": "rare", "damage_stat": {"STR": 0.16, "INT": 0.24},
+                "damage": 18, "phys_type": "shadow",
                 "identify_difficulty": 4, "element": "shadow",
                 "unidentified_name": "Black Tome", "unidentified_desc": "A heavy book sealed with dark sigils.",
                 "appraised_name": "Tome of Unmaking",
@@ -551,11 +562,13 @@ HUMANOID_ENEMIES = {
         "resistances": _res(shadow=RESISTANT, divine=VULNERABLE,
                             poison=RESISTANT, blunt=NEUTRAL),
         "status_immunities": ["Poisoned"],
+        "tags": ["undead"],
         "abilities": [],
         "loot_table": [
             {"drop_chance": 0.10, "item": {
                 "name": "Corroded Sword", "type": "weapon", "subtype": "Long Sword",
-                "rarity": "common", "damage": 7, "phys_type": "slashing",
+                "rarity": "common", "damage_stat": {"STR": 0.3, "DEX": 0.12},
+                "damage": 17, "phys_type": "slashing",
                 "identify_difficulty": 1,
                 "unidentified_name": "Rusted Blade", "unidentified_desc": "A heavily corroded longsword.",
                 "appraised_name": "Corroded Iron Sword", "material_desc": "Iron nearly eaten through by rust.",
@@ -581,6 +594,7 @@ HUMANOID_ENEMIES = {
         "xp_reward": 36, "gold_reward": _coin(0, 4),
         "resistances": _res(shadow=RESISTANT, divine=VULNERABLE),
         "status_immunities": ["Poisoned"],
+        "tags": ["undead"],
         "abilities": [],
         "loot_table": [
             {"drop_chance": 0.12, "item": {
@@ -608,6 +622,7 @@ HUMANOID_ENEMIES = {
         "resistances": _res(shadow=RESISTANT, divine=VULNERABLE,
                             fire=RESISTANT, ice=RESISTANT),
         "status_immunities": ["Poisoned", "Stunned", "Cursed"],
+        "tags": ["undead"],
         "abilities": ["enemy_cleave", "enemy_war_cry"],
         "loot_table": [
             {"drop_chance": 0.18, "item": {
@@ -639,11 +654,13 @@ HUMANOID_ENEMIES = {
         "resistances": _res(shadow=RESISTANT, arcane=RESISTANT, divine=VULNERABLE,
                             fire=RESISTANT, ice=RESISTANT),
         "status_immunities": ["Poisoned", "Cursed"],
+        "tags": ["undead"],
         "abilities": ["enemy_fireball", "enemy_arcane_slash", "enemy_shadow_bolt"],
         "loot_table": [
             {"drop_chance": 0.22, "item": {
                 "name": "Crypt Archmage's Orb", "type": "weapon", "subtype": "Orb",
-                "rarity": "rare", "damage": 10, "phys_type": "arcane",
+                "rarity": "rare", "damage_stat": {"INT": 0.24, "WIS": 0.16},
+                "damage": 20, "phys_type": "arcane",
                 "identify_difficulty": 4, "element": "arcane",
                 "unidentified_name": "Cracked Orb", "unidentified_desc": "A sphere of glass criss-crossed with dark veins.",
                 "appraised_name": "Void Orb",
