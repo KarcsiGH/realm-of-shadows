@@ -663,6 +663,19 @@ class Game:
                 if result == "exit":
                     self._init_world_map()
                     self.go_fade(S_WORLD_MAP)
+                elif result == "inn_save":
+                    # Auto-save when resting at inn (keyboard path)
+                    try:
+                        ok, _path, _msg = save_game(
+                            self.party,
+                            world_state=self.world_state,
+                            slot_name="inn_autosave"
+                        )
+                        toast_col = (80, 200, 120) if ok else (220, 80, 80)
+                        toast_msg = "✓ Progress saved at inn." if ok else "✗ Autosave failed."
+                        self.add_toast(toast_msg, toast_col)
+                    except Exception:
+                        pass
             elif e.type == pygame.MOUSEBUTTONDOWN:
                 if e.button == 1:
                     result = self.town_ui.handle_click(mx, my)
