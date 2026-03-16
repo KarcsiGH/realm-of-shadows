@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "timestamp": "2026-03-15T16:06:25.876025",
+  "timestamp": "2026-03-15T17:58:42.696743",
   "slot_name": "save1",
   "metadata": {
     "party_summary": [
@@ -19,7 +19,7 @@
       "class_name": "Fighter",
       "race_name": "Elf",
       "level": 1,
-      "xp": 0,
+      "xp": 8,
       "gold": 0,
       "stats": {
         "STR": 16,
@@ -137,7 +137,7 @@
       "class_name": "Mage",
       "race_name": "Gnome",
       "level": 1,
-      "xp": 0,
+      "xp": 8,
       "gold": 0,
       "stats": {
         "STR": 4,
@@ -234,7 +234,7 @@
       "class_name": "Cleric",
       "race_name": "Half-Orc",
       "level": 1,
-      "xp": 0,
+      "xp": 8,
       "gold": 0,
       "stats": {
         "STR": 11,
@@ -343,7 +343,7 @@
       "class_name": "Ranger",
       "race_name": "Half-Orc",
       "level": 1,
-      "xp": 0,
+      "xp": 8,
       "gold": 0,
       "stats": {
         "STR": 16,
@@ -441,7 +441,7 @@
       "class_name": "Monk",
       "race_name": "Halfling",
       "level": 1,
-      "xp": 0,
+      "xp": 8,
       "gold": 0,
       "stats": {
         "STR": 12,
@@ -539,7 +539,7 @@
       "class_name": "Thief",
       "race_name": "Fading-Touched",
       "level": 1,
-      "xp": 0,
+      "xp": 8,
       "gold": 0,
       "stats": {
         "STR": 12,
@@ -631,27 +631,48 @@
   ],
   "knowledge": {
     "identified_items": [
-      "Chain Shirt",
-      "Worn Longsword",
-      "Short Bow",
-      "Monk Unarmed",
       "Wooden Shield",
-      "Walking Stick",
-      "Leather Vest",
-      "Traveler's Clothes",
       "Wooden Club",
-      "Rusty Knife"
+      "Short Bow",
+      "Traveler's Clothes",
+      "Monk Unarmed",
+      "Rusty Knife",
+      "Chain Shirt",
+      "Walking Stick",
+      "Worn Longsword",
+      "Leather Vest"
     ],
     "known_enemies": {}
   },
   "story_flags": {
     "act": 1,
     "intro_seen": true,
-    "quest.main_meet_maren.state": 1,
+    "quest.main_meet_maren.state": -2,
     "town.briarhollow.visited": true,
     "quest.side_wolf_pelts.state": 1,
     "quest.side_missing_patrol.state": 1,
-    "npc.bess.met": true
+    "npc.bess.met": true,
+    "npc.forgemaster_dunn.met": true,
+    "npc.merchant_kira.met": true,
+    "npc.old_petra.met": true,
+    "quest.main_spiders_nest.state": 1,
+    "job.bh_goblin_ears.state": 1,
+    "job.bh_goblin_ears.progress": 0,
+    "job.bh_wolf_pelts.state": 1,
+    "job.bh_wolf_pelts.progress": 0,
+    "job.bh_warren_scout.state": 1,
+    "job.bh_warren_scout.progress": 0,
+    "job.bh_rat_problem.state": 1,
+    "job.bh_rat_problem.progress": 0,
+    "job.bh_bat_wings.state": 1,
+    "job.bh_bat_wings.progress": 0,
+    "npc.elder_thom.met": true,
+    "npc.priestess_alia.met": true,
+    "npc.maren.met": true,
+    "lore.wardens_history": true,
+    "lore.hearthstones": true,
+    "quest.main_goblin_warren.state": 1,
+    "quest.main_meet_maren.rewarded": true
   },
   "world_state": null
 }

@@ -161,14 +161,18 @@ DUNGEONS = {
 
     "windswept_isle": {
         "name": "Windswept Isle Ruins",
-        "floors": 3,
-        "width": 32, "height": 26,
+        "floors": 6,
+        "width": 36, "height": 30,
         "encounter_table": {
-            1: ["wi_wraiths", "wi_sprites"],
-            2: ["wi_mixed", "wi_golem"],
-            3: ["wi_storm_mob", "wi_golem"],
+            1: ["wi_sprites", "wi_wraiths", "wi_sprite_pack", "wi_wraith_mob"],
+            2: ["wi_mixed", "wi_shade_pack", "wi_wraith_mob", "wi_shade_storm"],
+            3: ["wi_golem", "wi_storm_mob", "wi_golem_pair", "wi_golem_escort"],
+            4: ["wi_warden_echo", "wi_warden_shade", "wi_shade_storm", "wi_deep_storm"],
+            5: ["wi_shadow_warden", "wi_fallen_wardens", "wi_fallen_solo", "wi_elite_echo",
+                "wi_warden_echoes", "wi_warden_revenant"],
+            6: ["wi_fallen_solo", "wi_elite_echo", "wi_warden_revenant"],
         },
-        "boss_floor": 3,
+        "boss_floor": 6,
         "boss_encounter": "boss_isle_keeper",
         "theme": "ruins",
         "encounter_rate": 7,
@@ -1042,6 +1046,37 @@ class DungeonState:
             }
             enemies.append(enemy)
 
+        # ── Boss floor: place a dedicated boss enemy ──────────────────────
+        # The boss enemy starts at the boss tile (center of last room)
+        # and is flagged is_boss=True so dialogue fires on contact.
+        if floor_num == self.total_floors and self.definition.get("boss_encounter"):
+            boss_enc_key = self.definition["boss_encounter"]
+            # Find the boss tile position
+            boss_pos = None
+            for y2 in range(fh):
+                for x2 in range(fw):
+                    if (tiles[y2][x2].get("event") or {}).get("type") == "boss_encounter":
+                        boss_pos = (x2, y2)
+                        break
+                if boss_pos:
+                    break
+            # Fallback: center of last room
+            if not boss_pos and len(floor.get("rooms",[])) > 0:
+                last = floor["rooms"][-1]
+                boss_pos = (last[0] + last[2]//2, last[1] + last[3]//2)
+            if boss_pos:
+                boss_enemy = {
+                    "x": boss_pos[0],
+                    "y": boss_pos[1],
+                    "enc_key": boss_enc_key,
+                    "is_boss": True,
+                    "state": "patrol",
+                    "patrol_dir": (0, 0),   # boss stands still
+                    "move_cooldown": 999,   # boss does not patrol
+                    "alert_range": 3,        # only activates when player is close
+                    "chase_speed": 0,        # boss doesn't chase — player walks to it
+                }
+                enemies.append(boss_enemy)
         floor["enemies"] = enemies
 
     def _move_enemies(self):
@@ -1254,7 +1289,7 @@ class DungeonState:
                     "dungeon_id": self.dungeon_id,
                     "floor": self.current_floor,
                     "total_floors": self.total_floors,
-                    "is_boss": False,
+                    "is_boss": _e.get("is_boss", False),
                     "_enc_key": _e.get("enc_key"),
                 }
                 return enc_event
@@ -1354,7 +1389,7 @@ class DungeonState:
                 "dungeon_id": self.dungeon_id,
                 "floor": self.current_floor,
                 "total_floors": self.total_floors,
-                "is_boss": False,
+                "is_boss": contact.get("is_boss", False),
                 "_enc_key": contact["enc_key"],
             }
             # Attach any pending door surprise
