@@ -242,6 +242,69 @@ TAVERN = {
         "The blacksmith says ore quality has dropped. Something's wrong with the mines.",
         "I've seen strange folk in dark robes passing through at night. Gives me the chills.",
     ],
+
+    "recruits": [
+        {
+            "name": "Aldric",
+            "race_name": "Human",
+            "class_name": "Fighter",
+            "level": 2,
+            "color": (200, 120, 60),
+            "pitch": "I know which end of a sword to hold. Pay's fair and I won't run.",
+            "stats": {"STR": 16, "DEX": 12, "CON": 14, "INT": 8, "WIS": 8, "PIE": 6},
+            "_char": None,
+        },
+        {
+            "name": "Vespa",
+            "race_name": "Human",
+            "class_name": "Thief",
+            "level": 2,
+            "color": (120, 160, 140),
+            "pitch": "Locks, traps, back entrances. I don't ask what's inside.",
+            "stats": {"STR": 10, "DEX": 18, "CON": 10, "INT": 12, "WIS": 12, "PIE": 5},
+            "_char": None,
+        },
+        {
+            "name": "Sorel",
+            "race_name": "Human",
+            "class_name": "Mage",
+            "level": 2,
+            "color": (100, 130, 200),
+            "pitch": "Three years at the academy. I can cast. That's more than most.",
+            "stats": {"STR": 6, "DEX": 11, "CON": 8, "INT": 18, "WIS": 14, "PIE": 8},
+            "_char": None,
+        },
+        {
+            "name": "Brynn",
+            "race_name": "Human",
+            "class_name": "Cleric",
+            "level": 2,
+            "color": (200, 190, 100),
+            "pitch": "The light provides. So do I — if you treat the wounded.",
+            "stats": {"STR": 10, "DEX": 10, "CON": 12, "INT": 10, "WIS": 14, "PIE": 16},
+            "_char": None,
+        },
+        {
+            "name": "Kael",
+            "race_name": "Human",
+            "class_name": "Ranger",
+            "level": 3,
+            "color": (120, 180, 100),
+            "pitch": "Tracked prey through three kingdoms. Dungeons are just smaller forests.",
+            "stats": {"STR": 12, "DEX": 16, "CON": 12, "INT": 10, "WIS": 14, "PIE": 7},
+            "_char": None,
+        },
+        {
+            "name": "Mira",
+            "race_name": "Human",
+            "class_name": "Monk",
+            "level": 3,
+            "color": (160, 120, 200),
+            "pitch": "I don't need a weapon. I've never needed a weapon.",
+            "stats": {"STR": 11, "DEX": 14, "CON": 13, "INT": 11, "WIS": 18, "PIE": 10},
+            "_char": None,
+        },
+    ],
 }
 
 
@@ -253,8 +316,12 @@ def get_sell_price(item):
     """Calculate sell price for an item. Identified items sell for more."""
     if "sell_price" in item:
         return item["sell_price"]
-    # Estimate from buy price or value
+    # Estimate from buy price or value — coerce to int in case stored as string
     value = item.get("buy_price", item.get("estimated_value", item.get("value", 5)))
+    try:
+        value = int(value)
+    except (TypeError, ValueError):
+        value = 5
     if item.get("identified"):
         return max(1, value // 3)
     else:

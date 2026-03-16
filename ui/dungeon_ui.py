@@ -1295,6 +1295,8 @@ class DungeonUI:
                     c = (60, 120, 255, 255)   # blue — going down (matches 3D)
                 elif tt == DT_STAIRS_UP:
                     c = (255, 160, 40, 255)   # amber — going up (matches 3D)
+                elif tt == DT_ENTRANCE:
+                    c = (100, 220, 100, 255)  # green — dungeon exit back to overworld
                 elif tt == DT_TREASURE:
                     c = (255,215,40,255)
                 elif tt == DT_FLOOR and (tile.get("event") or {}).get("type") == "boss_encounter":
