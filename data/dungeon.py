@@ -36,7 +36,7 @@ DUNGEONS = {
     "goblin_warren": {
         "name": "Goblin Warren",
         "floors": 3,
-        "width": 50, "height": 40,
+        "width": 32, "height": 26,
         "encounter_table": {
             1: ["medium_goblins", "wolves"],
             2: ["medium_goblins", "wolves"],

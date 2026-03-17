@@ -3909,12 +3909,11 @@ class Game:
                     max_res = get_all_resources(c.class_name, c.stats, c.level)
                     max_hp = max_res.get("HP", 1)
                     c.resources["HP"] = min(max_hp, c.resources.get("HP", 0) + int(max_hp * 0.25))
-                    # Iterate max_res (not c.resources) so new resource types from levelling
-                    # are also restored — e.g. Mage's INT-MP if it wasn't in char.resources yet
+                    # Restore SP/MP/Ki fully — camping lets you recover all stamina/magic
+                    # even in a dungeon. HP stays partial (25%) due to danger.
                     for res, max_val in max_res.items():
                         if res != "HP":
-                            cur = c.resources.get(res, 0)
-                            c.resources[res] = min(max_val, cur + int(max_val * 0.15))
+                            c.resources[res] = max_val
                 self.dungeon_ui.show_event("Rested safely in the dungeon.", GREEN)
 
         elif event["type"] == "menu":

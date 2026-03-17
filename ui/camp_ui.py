@@ -166,11 +166,11 @@ class CampUI:
             ambush_pct = max(5, ambush_pct)
             draw_text(surface, f"Ambush risk: {ambush_pct}%", SCREEN_W // 2 - 70,
                       top + 30, ORANGE, 14)
-            draw_text(surface, "Restores ~25% HP, ~15% MP/SP",
+            draw_text(surface, "Restores 25% HP, all SP/MP/Ki",
                       SCREEN_W // 2 - 115, top + 52, GREY, 13)
         else:
             draw_text(surface, "Ambush risk: Low", SCREEN_W // 2 - 60, top + 30, GREEN, 14)
-            draw_text(surface, "Restores ~40% HP, ~25% MP/SP",
+            draw_text(surface, "Restores 40% HP, all SP/MP/Ki",
                       SCREEN_W // 2 - 115, top + 52, GREY, 13)
 
         # Party status preview
