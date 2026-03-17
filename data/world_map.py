@@ -945,11 +945,12 @@ class WorldState:
             max_hp = max_res.get("HP", 1)
             heal_hp = int(max_hp * 0.25)
             c.resources["HP"] = min(max_hp, old_hp + heal_hp)
-            for res_name in c.resources:
+            # Restore SP/MP/Ki fully on camp (same as dungeon camp)
+            # Iterate max_res so new resource types from levelling are included
+            for res_name, max_val in max_res.items():
                 if res_name == "HP":
                     continue
-                max_val = max_res.get(res_name, 0)
-                c.resources[res_name] = min(max_val, c.resources[res_name] + int(max_val * 0.15))
+                c.resources[res_name] = max_val
             healed[c.name] = c.resources["HP"] - old_hp
 
         return {"type": "camp_safe", "healed": healed}
