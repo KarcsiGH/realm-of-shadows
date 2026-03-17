@@ -3143,7 +3143,8 @@ class Game:
         # THEN null the combat objects (go_fade calls draw_state during fade)
         if self.dungeon_state:
             self.go_fade(S_DUNGEON)
-        elif self.current_town_id:
+        elif self.state == S_TOWN and self.town_ui is not None:
+            # Only return to town if we actually came from an active town screen
             self.go_fade(S_TOWN)
         else:
             self.go_fade(S_WORLD_MAP)
