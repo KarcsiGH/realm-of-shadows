@@ -3906,7 +3906,8 @@ class Game:
             else:
                 from core.classes import get_all_resources
                 for c in self.party:
-                    max_res = get_all_resources(c.class_name, c.stats, c.level)
+                    _eff = c.effective_stats() if hasattr(c, "effective_stats") else c.stats
+                    max_res = get_all_resources(c.class_name, _eff, c.level)
                     max_hp = max_res.get("HP", 1)
                     c.resources["HP"] = min(max_hp, c.resources.get("HP", 0) + int(max_hp * 0.25))
                     # Restore SP/MP/Ki fully — camping lets you recover all stamina/magic

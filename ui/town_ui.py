@@ -2150,7 +2150,8 @@ class TownUI:
 
         # Restore resources
         for c in self.party:
-            max_res = get_all_resources(c.class_name, c.stats, c.level)
+            _eff = c.effective_stats() if hasattr(c, "effective_stats") else c.stats
+            max_res = get_all_resources(c.class_name, _eff, c.level)
             for res_name, max_val in max_res.items():
                 current = c.resources.get(res_name, 0)
                 if res_name == "HP":
