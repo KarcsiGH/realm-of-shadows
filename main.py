@@ -3893,10 +3893,12 @@ class Game:
                     max_res = get_all_resources(c.class_name, c.stats, c.level)
                     max_hp = max_res.get("HP", 1)
                     c.resources["HP"] = min(max_hp, c.resources.get("HP", 0) + int(max_hp * 0.25))
-                    for res in c.resources:
+                    # Iterate max_res (not c.resources) so new resource types from levelling
+                    # are also restored — e.g. Mage's INT-MP if it wasn't in char.resources yet
+                    for res, max_val in max_res.items():
                         if res != "HP":
-                            max_val = max_res.get(res, 0)
-                            c.resources[res] = min(max_val, c.resources[res] + int(max_val * 0.15))
+                            cur = c.resources.get(res, 0)
+                            c.resources[res] = min(max_val, cur + int(max_val * 0.15))
                 self.dungeon_ui.show_event("Rested safely in the dungeon.", GREEN)
 
         elif event["type"] == "menu":
@@ -4098,6 +4100,13 @@ class Game:
                             self.combat_ui.add_flash(f"◈ {ab_name} hits all! {dmg}", col)
                         else:
                             self.combat_ui.add_flash(f"◆ {ab_name} {dmg}", col)
+                # Play kill sound when ability finishes an enemy — distinct from the hit sound
+                if result and result.get("defender", {}).get("alive") is False:
+                    tgt = result.get("defender", {})
+                    if tgt.get("type") == "enemy":
+                        sfx.play("enemy_death")
+                    else:
+                        sfx.play("death")
         elif action["type"] == "move":
             self.combat_state.execute_player_action("move", target=action["direction"])
         elif action["type"] == "switch_weapon":

@@ -977,6 +977,7 @@ NPC_DIALOGUES = {
         {
             "conditions": [
                 {"flag": "boss.grak.defeated", "op": "==", "value": True},
+                {"flag": "boss_defeated.goblin_warren", "op": "==", "value": True},
                 {"flag": "quest.main_goblin_warren.state", "op": "!=", "value": -2},
             ],
             "tree": {
@@ -1421,6 +1422,50 @@ NPC_DIALOGUES = {
                     },
                 },
             },
+        },
+        # When goblin_warren complete but mine quest hasn't been cleared yet —
+        # give a contextual "what's next" pointing at the Abandoned Mine
+        # (prevents maren_default from saying "The Warren..." after it's done)
+        {
+            "conditions": [
+                {"flag": "quest.main_goblin_warren.state", "op": "==", "value": -2},
+                {"flag": "quest.main_hearthstone_1.state", "op": "==", "value": 1},
+                {"flag": "boss_defeated.abandoned_mine", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "maren_post_warren_hint",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Maren",
+                        "text": "The Warren is clear \u2014 good. But the Fading runs deeper. "
+                                "There's an old mine northwest of here. The goblins were hauling "
+                                "crates marked with the Warden seal out of it.\n\n"
+                                "Whatever they were doing in there matters. That's your next move.",
+                        "choices": [
+                            {"text": "The Abandoned Mine. Understood.", "next": "understood"},
+                            {"text": "What do you know about the Wardens?", "next": "wardens"},
+                            {"text": "Goodbye.", "next": None},
+                        ]
+                    },
+                    "understood": {
+                        "speaker": "Maren",
+                        "text": "Northeast of the forest road. You'll need to pass the Thornwood. "
+                                "Stay on the main trail \u2014 the trees are wrong there at night.",
+                        "choices": [
+                            {"text": "We'll find it.", "next": None},
+                        ]
+                    },
+                    "wardens": {
+                        "speaker": "Maren",
+                        "text": "The last order to stand against the Fading. They failed \u2014 "
+                                "or we thought they did.\n\n"
+                                "The fragment Grak had was Warden-made. If there are more, "
+                                "they're in that mine.",
+                        "choices": [{"text": "We'll go.", "next": None}],
+                    },
+                }
+            }
         },
         # Default fallback — after first meeting
         {
