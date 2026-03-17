@@ -978,7 +978,7 @@ NPC_DIALOGUES = {
             "conditions": [
                 {"flag": "boss.grak.defeated", "op": "==", "value": True},
                 {"flag": "boss_defeated.goblin_warren", "op": "==", "value": True},
-                {"flag": "quest.main_goblin_warren.state", "op": "!=", "value": -2},
+                {"flag": "quest.main_goblin_warren.state", "op": "==", "value": 1},
             ],
             "tree": {
                 "id": "maren_post_warren",
@@ -1024,7 +1024,7 @@ NPC_DIALOGUES = {
         {
             "conditions": [
                 {"flag": "boss.korrath.defeated", "op": "==", "value": True},
-                {"flag": "quest.main_hearthstone_1.state", "op": "!=", "value": -2},
+                {"flag": "quest.main_hearthstone_1.state", "op": "==", "value": 1},
             ],
             "tree": {
                 "id": "maren_post_mine",
@@ -1086,7 +1086,7 @@ NPC_DIALOGUES = {
         {
             "conditions": [
                 {"flag": "boss.ashvar.defeated", "op": "==", "value": True},
-                {"flag": "quest.main_ashenmoor.state", "op": "!=", "value": -2},
+                {"flag": "quest.main_ashenmoor.state", "op": "==", "value": 1},
             ],
             "tree": {
                 "id": "maren_post_ashenmoor",
@@ -1217,7 +1217,7 @@ NPC_DIALOGUES = {
         {
             "conditions": [
                 {"flag": "boss_defeated.spiders_nest", "op": "==", "value": True},
-                {"flag": "quest.main_spiders_nest.state", "op": "!=", "value": -2},
+                {"flag": "quest.main_spiders_nest.state", "op": "==", "value": 1},
             ],
             "tree": {
                 "id": "maren_post_spiders",
