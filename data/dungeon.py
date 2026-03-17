@@ -1487,6 +1487,23 @@ class DungeonState:
                 return False         # closed doors block LOS
         return True
 
+
+    def restore_explored(self, explored_data):
+        """Restore discovered tile state from saved data.
+        explored_data: {floor_num_str: [[x, y], ...]}
+        Ensures the floor is generated before applying discovered flags.
+        """
+        for floor_str, coords in explored_data.items():
+            floor_num = int(floor_str)
+            self._ensure_floor(floor_num)
+            floor = self.floors[floor_num]
+            tiles = floor["tiles"]
+            fh = len(tiles)
+            fw = len(tiles[0]) if fh > 0 else 0
+            for x, y in coords:
+                if 0 <= y < fh and 0 <= x < fw:
+                    tiles[y][x]["discovered"] = True
+
     def _update_fog(self):
         """Reveal tiles within LOS sight range (3 tiles, walls/doors block)."""
         floor  = self.floors[self.current_floor]

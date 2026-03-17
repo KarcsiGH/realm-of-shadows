@@ -670,6 +670,8 @@ class Game:
                             self.party,
                             world_state=self.world_state,
                             slot_name="inn_autosave"
+                        ,
+                            dungeon_cache=self.dungeon_cache
                         )
                         toast_col = (80, 200, 120) if ok else (220, 80, 80)
                         toast_msg = "✓ Progress saved at inn." if ok else "✗ Autosave failed."
@@ -689,7 +691,9 @@ class Game:
                                 self.party,
                                 world_state=self.world_state,
                                 slot_name="inn_autosave"
-                            )
+                            ,
+                            dungeon_cache=self.dungeon_cache
+                        )
                             toast_col = (80, 200, 120) if ok else (220, 80, 80)
                             toast_msg = "✓ Progress saved at inn." if ok else "✗ Autosave failed."
                             self.add_toast(toast_msg, toast_col)
@@ -833,11 +837,23 @@ class Game:
                         self.add_toast("✓ Game saved.", (80, 200, 120))
                         self.go(self._save_load_return_state)
                     elif isinstance(result, tuple) and result[0] == "loaded":
-                        _, party, world_state = result
+                        _, party, world_state = result[0], result[1], result[2]
+                        dungeon_explored = result[3] if len(result) > 3 else {}
                         self.party = party
                         if world_state:
                             self.world_state = world_state
                             self.world_state.party = self.party
+                        # Restore dungeon minimap (explored tiles) from save
+                        self.dungeon_cache = {}
+                        if dungeon_explored:
+                            from data.dungeon import DungeonState as _DS
+                            for _did, _edata in dungeon_explored.items():
+                                try:
+                                    _ds = _DS(_did, party)
+                                    _ds.restore_explored(_edata)
+                                    self.dungeon_cache[_did] = _ds
+                                except Exception:
+                                    pass  # skip unknown dungeons gracefully
                         sfx.play("ui_confirm")
                         self.add_toast("✓ Save loaded.", (80, 200, 120))
                         self.go_fade(S_PARTY)

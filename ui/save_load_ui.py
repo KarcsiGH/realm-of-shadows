@@ -472,9 +472,9 @@ class SaveLoadUI:
 
     def _do_load(self, idx: int):
         slot = SLOT_NAMES[idx] if idx < 3 else "inn_autosave"
-        ok, party, world_state, msg = load_game(slot)
+        ok, party, world_state, msg, dungeon_explored = load_game(slot)
         if ok:
-            self.result   = ("loaded", party, world_state)
+            self.result   = ("loaded", party, world_state, dungeon_explored)
             self.finished = True
         else:
             self._error_msg   = msg

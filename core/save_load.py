@@ -238,7 +238,28 @@ def deserialize_world_state(data, party):
         return None
 
 
-def save_game(party, world_state=None, slot_name="save1", metadata=None):
+
+def _serialize_dungeon_explored(dungeon_cache):
+    """Serialize which tiles have been discovered in each cached dungeon floor."""
+    if not dungeon_cache:
+        return {}
+    result = {}
+    for dungeon_id, dstate in dungeon_cache.items():
+        floors_data = {}
+        for floor_num, floor in dstate.floors.items():
+            discovered = []
+            tiles = floor.get("tiles", [])
+            for ty, row in enumerate(tiles):
+                for tx, tile in enumerate(row):
+                    if tile.get("discovered"):
+                        discovered.append([tx, ty])
+            if discovered:
+                floors_data[str(floor_num)] = discovered
+        if floors_data:
+            result[dungeon_id] = floors_data
+    return result
+
+def save_game(party, world_state=None, slot_name="save1", metadata=None, dungeon_cache=None):
     """Save the party (and optionally world state) to a JSON file.
     Returns (success, filepath, message)."""
     ensure_save_dir()
@@ -260,6 +281,7 @@ def save_game(party, world_state=None, slot_name="save1", metadata=None):
         "knowledge": knowledge,
         "story_flags": story,
         "world_state": serialize_world_state(world_state),
+        "dungeon_explored": _serialize_dungeon_explored(dungeon_cache),
     }
 
     # Serialize each character with individual error reporting
@@ -291,7 +313,7 @@ def load_game(slot_name="save1"):
     filepath = os.path.join(SAVE_DIR, f"{slot_name}.json")
 
     if not os.path.exists(filepath):
-        return False, None, None, f"No save found: {slot_name}"
+        return False, None, None, f"No save found: {slot_name}", {}
 
     try:
         with open(filepath, "r") as f:
@@ -314,9 +336,10 @@ def load_game(slot_name="save1"):
         # Restore world state (v4+ saves only)
         world_state = deserialize_world_state(save_data.get("world_state"), party)
 
-        return True, party, world_state, f"Loaded {slot_name}"
+        dungeon_explored = save_data.get("dungeon_explored", {})
+        return True, party, world_state, f"Loaded {slot_name}", dungeon_explored
     except Exception as e:
-        return False, None, None, f"Load failed: {e}"
+        return False, None, None, f"Load failed: {e}", {}
 
 
 def list_saves():
