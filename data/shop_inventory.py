@@ -323,9 +323,9 @@ def get_sell_price(item):
     except (TypeError, ValueError):
         value = 5
     if item.get("identified"):
-        return max(1, value // 3)
+        return max(1, int(value * 0.40))  # 40% for identified items
     else:
-        return max(1, value // 5)
+        return max(1, int(value * 0.20))  # 20% for unidentified items
 
 
 # ═══════════════════════════════════════════════════════════════

@@ -1324,23 +1324,6 @@ class DungeonUI:
                 sy = (ty-y0)*ts
                 pygame.draw.rect(bg, c, (sx,sy,ts-1,ts-1))
 
-        # ── Stairs compass — arrow pointing toward undiscovered stairs ──
-        fl_data = fl
-        sd_pos = fl_data.get("stairs_down")
-        if sd_pos:
-            sdx, sdy = sd_pos
-            if not fl_data["tiles"][sdy][sdx].get("discovered"):
-                # Stairs not yet found — draw compass arrow at minimap edge
-                sx_rel = sdx - px_i
-                sy_rel = sdy - py_i
-                dist = max(abs(sx_rel), abs(sy_rel), 1)
-                arrow_x = int((sx_rel / dist) * (cols // 2 - 1) + cols // 2) * ts + ts // 2
-                arrow_y = int((sy_rel / dist) * (rows // 2 - 1) + rows // 2) * ts + ts // 2
-                arrow_x = max(ts, min(cols * ts - ts, arrow_x))
-                arrow_y = max(ts, min(rows * ts - ts, arrow_y))
-                pygame.draw.circle(bg, (60, 120, 255, 220), (arrow_x, arrow_y), ts)
-                pygame.draw.circle(bg, (120, 180, 255, 255), (arrow_x, arrow_y), ts - 1, 2)
-
         # Enemy dots — only when tile is discovered AND currently in LOS
         for enemy in fl.get("enemies", []):
             if enemy.get("state") == "dead":

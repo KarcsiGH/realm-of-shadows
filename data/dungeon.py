@@ -761,11 +761,16 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
         _place_interactables(tiles, rooms, floor_num, total_floors, rng, dungeon_id)
 
         # ── Place secret rooms with magic item chests ──
-        # 40% chance per floor, higher on deeper floors
-        secret_chance = 0.35 + floor_num * 0.08
-        if rng.random() < secret_chance and len(rooms) >= 3:
+        # Always attempt placement — the function itself handles space constraints.
+        # Two attempts per floor so larger floors with many rooms get more secrets.
+        # No probability gate: if there's space, there's a secret room to find.
+        if len(rooms) >= 3:
             _place_secret_room(tiles, rooms, width, height, floor_num,
                                total_floors, rng, dungeon_id)
+            # Second attempt on deeper floors (more rooms, more space)
+            if floor_num >= 2:
+                _place_secret_room(tiles, rooms, width, height, floor_num,
+                                   total_floors, rng, dungeon_id)
 
         return {
             "tiles": tiles,
