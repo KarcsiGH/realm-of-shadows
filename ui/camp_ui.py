@@ -62,6 +62,7 @@ class CampUI:
         self.selected_char = 0
         self.selected_item = -1
         self.scroll_offset = 0
+        self.equip_scroll = 0  # scroll offset for equipment tab inventory list
         self._stats_scroll = 0
         self._manual_open  = False
         self._manual_page  = 0
@@ -344,51 +345,87 @@ class CampUI:
         c = self.party[self.selected_char]
         equipment = c.equipment if hasattr(c, "equipment") and c.equipment else {}
 
+        # ── Equipment slots (two columns to fit all 11 without crowding) ──
+        COL_W = (SCREEN_W - 140) // 2
         ey = top + 45
-        for slot in EQUIP_SLOTS:
-            row = pygame.Rect(60, ey, SCREEN_W - 120, 38)
+        self._equip_slot_rects = {}
+        for idx, slot in enumerate(EQUIP_SLOTS):
+            col = idx % 2
+            row_num = idx // 2
+            sx = 60 + col * (COL_W + 20)
+            sy = ey + row_num * 42
+            row = pygame.Rect(sx, sy, COL_W, 38)
+            self._equip_slot_rects[slot] = row
             hover = row.collidepoint(mx, my)
             bg = ITEM_HOVER if hover else EQUIP_SLOT_BG
             pygame.draw.rect(surface, bg, row, border_radius=3)
             pygame.draw.rect(surface, EQUIP_SLOT_BORDER, row, 1, border_radius=3)
 
             label = SLOT_LABELS.get(slot, slot)
-            draw_text(surface, f"{label}:", row.x + 10, row.y + 8, STAT_LABEL, 13)
+            draw_text(surface, f"{label}:", row.x + 8, row.y + 8, STAT_LABEL, 12)
 
             equipped = equipment.get(slot)
             if equipped:
                 from core.identification import get_item_display_name
                 name = get_item_display_name(equipped)
-                draw_text(surface, name, row.x + 120, row.y + 8, CREAM, 13, bold=True)
-                # Unequip hint on hover
+                # Show stat summary if identified
+                stats_str = ""
+                if equipped.get("identified"):
+                    dmg = equipped.get("damage", "")
+                    dfn = equipped.get("defense", equipped.get("def", ""))
+                    bonuses = equipped.get("stat_bonuses", {})
+                    parts = []
+                    if dmg: parts.append(f"{dmg}dmg")
+                    if dfn: parts.append(f"{dfn}def")
+                    for s, v in list(bonuses.items())[:2]:
+                        parts.append(f"+{v}{s}")
+                    if parts:
+                        stats_str = "  " + "  ".join(parts)
+                draw_text(surface, name[:22], row.x + 80, row.y + 3, CREAM, 12, bold=True)
+                draw_text(surface, stats_str[:28], row.x + 80, row.y + 18, DIM_GOLD, 10)
                 if hover:
-                    draw_text(surface, "[Click to unequip]", row.x + row.width - 150,
-                              row.y + 8, DIM_GOLD, 11)
+                    draw_text(surface, "[unequip]", row.x + row.width - 70, row.y + 10,
+                              (180, 140, 80), 10)
             else:
-                draw_text(surface, "— empty —", row.x + 120, row.y + 8, DARK_GREY, 13)
+                draw_text(surface, "— empty —", row.x + 80, row.y + 10, DARK_GREY, 12)
 
-            ey += 42
+        # ── Equippable items from inventory (scrollable) ──
+        rows_used = (len(EQUIP_SLOTS) + 1) // 2  # ceil(11/2) = 6 rows
+        inv_y = ey + rows_used * 42 + 12
 
-        # Show equippable items from inventory
-        draw_text(surface, "Equippable items in inventory:", 60, ey + 10, DIM_GOLD, 13)
-        ey += 30
-        for i, item in enumerate(c.inventory):
-            if not item.get("slot"):
-                continue
-            row = pygame.Rect(80, ey, SCREEN_W - 160, 32)
+        equip_inv = [(i, it) for i, it in enumerate(c.inventory) if it.get("slot")]
+        draw_text(surface, f"Equippable items ({len(equip_inv)}):", 60, inv_y, DIM_GOLD, 13)
+        inv_y += 24
+
+        VISIBLE_INV = max(1, (SCREEN_H - 80 - inv_y) // 34)
+        start = getattr(self, "equip_scroll", 0)
+        start = max(0, min(start, max(0, len(equip_inv) - VISIBLE_INV)))
+        self.equip_scroll = start
+
+        for offset, (i, item) in enumerate(equip_inv[start:start + VISIBLE_INV]):
+            row = pygame.Rect(70, inv_y + offset * 34, SCREEN_W - 140, 30)
             hover = row.collidepoint(mx, my)
             bg = ITEM_HOVER if hover else ITEM_BG
             pygame.draw.rect(surface, bg, row, border_radius=3)
             from core.identification import get_item_display_name
             name = get_item_display_name(item)
-            slot = item["slot"]
-            draw_text(surface, f"{name} [{slot}]", row.x + 10, row.y + 6, CREAM, 12)
+            slot_lbl = SLOT_LABELS.get(item["slot"], item["slot"])
+            rarity_col = {"common": CREAM, "uncommon": (120, 200, 120),
+                          "rare": (100, 160, 255), "epic": (200, 120, 255)}.get(
+                              item.get("rarity","common"), CREAM)
+            draw_text(surface, name[:35], row.x + 8, row.y + 7, rarity_col, 12)
+            draw_text(surface, f"[{slot_lbl}]", row.x + row.width - 90, row.y + 7,
+                      STAT_LABEL, 11)
             if hover:
-                draw_text(surface, "[Click to equip]", row.x + row.width - 130,
-                          row.y + 6, DIM_GOLD, 11)
-            ey += 36
-            if ey > SCREEN_H - 60:
-                break
+                draw_text(surface, "click to equip", row.x + row.width - 190,
+                          row.y + 7, DIM_GOLD, 11)
+
+        # Scroll hints
+        if start > 0:
+            draw_text(surface, "▲ scroll up", 60, inv_y - 16, DIM_GOLD, 11)
+        if start + VISIBLE_INV < len(equip_inv):
+            draw_text(surface, "▼ scroll down", 60,
+                      inv_y + VISIBLE_INV * 34 + 2, DIM_GOLD, 11)
 
     # ──────────────────────────────────────────────────────────
     #  IDENTIFY TAB
@@ -1618,31 +1655,28 @@ class CampUI:
         equipment = c.equipment if hasattr(c, "equipment") and c.equipment else {}
         top = 80
 
-        # Unequip slot clicks
-        ey = top + 45
-        for slot in EQUIP_SLOTS:
-            row = pygame.Rect(60, ey, SCREEN_W - 120, 38)
-            if row.collidepoint(mx, my) and equipment.get(slot):
-                # Unequip
-                item = equipment.pop(slot)
-                c.inventory.append(item)
-                self._msg(f"Unequipped {item.get('name', 'item')}.", DIM_GOLD)
+        # Unequip: click on a slot row (uses rects cached by _draw_equipment)
+        for slot, row in getattr(self, "_equip_slot_rects", {}).items():
+            if row.collidepoint(mx, my):
+                equipped = equipment.get(slot)
+                if equipped:
+                    item = equipment.pop(slot)
+                    c.inventory.append(item)
+                    self._msg(f"Unequipped {item.get('name', 'item')}.", DIM_GOLD)
                 return None
-            ey += 42
 
-        # Equippable inventory items
-        ey += 30
-        for i, item in enumerate(c.inventory):
-            if not item.get("slot"):
-                continue
-            row = pygame.Rect(80, ey, SCREEN_W - 160, 32)
+        # Equip: click on inventory list below slots
+        COL_W = (SCREEN_W - 140) // 2
+        rows_used = (len(EQUIP_SLOTS) + 1) // 2
+        inv_y = top + 45 + rows_used * 42 + 12 + 24
+        equip_inv = [(i, it) for i, it in enumerate(c.inventory) if it.get("slot")]
+        VISIBLE_INV = max(1, (SCREEN_H - 80 - inv_y) // 34)
+        start = getattr(self, "equip_scroll", 0)
+        for offset, (i, item) in enumerate(equip_inv[start:start + VISIBLE_INV]):
+            row = pygame.Rect(70, inv_y + offset * 34, SCREEN_W - 140, 30)
             if row.collidepoint(mx, my):
                 self._equip_item(c, i)
                 return None
-            ey += 36
-            if ey > SCREEN_H - 60:
-                break
-
         return None
 
     def _handle_identify_click(self, mx, my):

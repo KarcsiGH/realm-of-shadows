@@ -1054,7 +1054,11 @@ class DungeonState:
         # ── Boss floor: place a dedicated boss enemy ──────────────────────
         # The boss enemy starts at the boss tile (center of last room)
         # and is flagged is_boss=True so dialogue fires on contact.
-        if floor_num == self.total_floors and self.definition.get("boss_encounter"):
+        # Skip spawning if the boss was already defeated (avoids stale-flag confusion).
+        from core.story_flags import get_flag as _gf
+        boss_already_defeated = _gf(f"boss_defeated.{self.dungeon_id}")
+        if floor_num == self.total_floors and self.definition.get("boss_encounter")\
+                and not boss_already_defeated:
             boss_enc_key = self.definition["boss_encounter"]
             # Find the boss tile position
             boss_pos = None

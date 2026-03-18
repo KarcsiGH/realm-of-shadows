@@ -338,7 +338,7 @@ class Game:
                         self.go(S_MODE)
                     elif cont_r.collidepoint(mx, my):
                         from ui.save_load_ui import SaveLoadUI
-                        self.save_load_ui = SaveLoadUI("load")
+                        self.save_load_ui = SaveLoadUI("load", dungeon_cache=self.dungeon_cache)
                         self._save_load_return_state = S_TITLE
                         sfx.play("ui_open")
                         self.go(S_SAVE_LOAD)
@@ -571,7 +571,8 @@ class Game:
                     if save_btn.collidepoint(mx, my) and self.party:
                         from ui.save_load_ui import SaveLoadUI
                         self.save_load_ui = SaveLoadUI(
-                            "save", party=self.party, world_state=self.world_state
+                            "save", party=self.party, world_state=self.world_state,
+                            dungeon_cache=self.dungeon_cache
                         )
                         self._save_load_return_state = self.state
                         sfx.play("ui_open")
@@ -582,7 +583,8 @@ class Game:
                     if load_btn.collidepoint(mx, my):
                         from ui.save_load_ui import SaveLoadUI
                         self.save_load_ui = SaveLoadUI(
-                            "load", party=self.party, world_state=self.world_state
+                            "load", party=self.party, world_state=self.world_state,
+                            dungeon_cache=self.dungeon_cache
                         )
                         self._save_load_return_state = self.state
                         sfx.play("ui_open")
@@ -3414,8 +3416,8 @@ class Game:
             sfx.play("discovery")
 
         elif event["type"] == "menu":
-            # Go to party screen (inventory, etc.)
-            self.go(S_PARTY)
+            # Open camp screen (inventory, rest, stats, etc.) — same as dungeon camp
+            self.start_camp(location="overworld", return_state=S_WORLD_MAP)
 
     def _process_dungeon_event(self, event):
         """Handle events from the dungeon."""

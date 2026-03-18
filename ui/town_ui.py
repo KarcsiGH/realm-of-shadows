@@ -1456,15 +1456,17 @@ class TownUI:
         draw_text(surface, "Sell Items", 20, 12, GOLD, 22, bold=True)
 
         total_gold = sum(c.gold for c in self.party)
-        draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W - 220, 15, DIM_GOLD, 16)
+        draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 80, 15, DIM_GOLD, 16)
 
-        back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
+        # Back button in top-right, clear of character tabs
+        back = pygame.Rect(SCREEN_W - 140, 14, 120, 30)
         draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
 
-        # Character tabs
+        # Character tabs — constrained width so they don't overlap back button
+        tab_area_w = SCREEN_W - 170  # leave 170px for back button
         for i, c in enumerate(self.party):
             cls = CLASSES[c.class_name]
-            tw = (SCREEN_W - 40) // len(self.party)
+            tw = tab_area_w // len(self.party)
             tr = pygame.Rect(20 + i * tw, 50, tw - 4, 32)
             is_sel = (i == self.sell_char)
             hover = tr.collidepoint(mx, my)
@@ -2635,7 +2637,7 @@ class TownUI:
 
         # ── Shop sell ──
         elif self.view == self.VIEW_SHOP_SELL:
-            back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
+            back = pygame.Rect(SCREEN_W - 140, 14, 120, 30)
             if back.collidepoint(mx, my):
                 self.view = self.VIEW_SHOP
                 return None
