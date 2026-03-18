@@ -946,15 +946,29 @@ class WorldState:
             max_hp = max_res.get("HP", 1)
             heal_hp = int(max_hp * 0.25)
             c.resources["HP"] = min(max_hp, old_hp + heal_hp)
-            # Restore SP/MP/Ki fully on camp (same as dungeon camp)
-            # Iterate max_res so new resource types from levelling are included
+            # Restore 25% SP/MP/Ki per camp rest — same pace as HP
             for res_name, max_val in max_res.items():
-                if res_name == "HP":
+                if res_name == "HP" or max_val <= 0:
                     continue
-                c.resources[res_name] = max_val
+                cur_r = c.resources.get(res_name, 0)
+                c.resources[res_name] = min(max_val, cur_r + int(max_val * 0.25))
             healed[c.name] = c.resources["HP"] - old_hp
 
-        return {"type": "camp_safe", "healed": healed}
+        # Apply one poison tick during rest
+        poison_msgs = []
+        from core.status_effects import get_status_effects
+        for c in self.party:
+            for s in get_status_effects(c):
+                if s["type"] == "poison" and s.get("ticks_left", 0) > 0:
+                    dmg = s["dmg"]
+                    s["ticks_left"] -= 1
+                    c.resources["HP"] = max(0, c.resources.get("HP", 0) - dmg)
+                    poison_msgs.append(f"{c.name} poisoned: -{dmg} HP")
+                    if s["ticks_left"] <= 0:
+                        from core.status_effects import remove_status
+                        remove_status(c, s["id"])
+
+        return {"type": "camp_safe", "healed": healed, "poison_msgs": poison_msgs}
 
     def can_enter_dungeon(self, loc_id):
         """Check if party can enter a dungeon. Returns (can_enter, reason)."""

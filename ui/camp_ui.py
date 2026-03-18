@@ -167,11 +167,11 @@ class CampUI:
             ambush_pct = max(5, ambush_pct)
             draw_text(surface, f"Ambush risk: {ambush_pct}%", SCREEN_W // 2 - 70,
                       top + 30, ORANGE, 14)
-            draw_text(surface, "Restores 25% HP, all SP/MP/Ki",
+            draw_text(surface, "Restores 25% HP and SP/MP/Ki",
                       SCREEN_W // 2 - 115, top + 52, GREY, 13)
         else:
             draw_text(surface, "Ambush risk: Low", SCREEN_W // 2 - 60, top + 30, GREEN, 14)
-            draw_text(surface, "Restores 40% HP, all SP/MP/Ki",
+            draw_text(surface, "Restores 40% HP and SP/MP/Ki",
                       SCREEN_W // 2 - 115, top + 52, GREY, 13)
 
         # Party status preview
@@ -1181,18 +1181,23 @@ class CampUI:
                     mhp = max(1, max_res_t.get("HP", 1))
                     chp = tgt.resources.get("HP", 0)
                     dead = chp <= 0
-                    if not is_revive and dead:
-                        continue  # can't target dead with heals
                     if is_revive and not dead:
-                        continue  # revive only targets dead
+                        continue  # revive only targets downed chars
+                    # Healing CAN target downed chars (HP=0) — starts from 0
 
                     trow = pygame.Rect(tx, ty, SCREEN_W - tx - 40, 34)
                     thov = trow.collidepoint(mx, my)
                     tsel = (j == self.spell_target)
-                    bg2  = (50, 40, 20) if tsel else (ITEM_HOVER if thov else ITEM_BG)
+                    # Downed characters: red background, show as needing help
+                    if dead:
+                        bg2 = (60, 20, 20) if tsel else ((50, 25, 25) if thov else (40, 18, 18))
+                        border_col = RED
+                    else:
+                        bg2 = (50, 40, 20) if tsel else (ITEM_HOVER if thov else ITEM_BG)
+                        border_col = DIM_GOLD if tsel else PANEL_BORDER
                     pygame.draw.rect(surface, bg2, trow, border_radius=3)
-                    pygame.draw.rect(surface, DIM_GOLD if tsel else PANEL_BORDER, trow, 1, border_radius=3)
-                    hp_col = HP_BAR if chp / mhp > 0.5 else ORANGE if chp / mhp > 0.2 else RED
+                    pygame.draw.rect(surface, border_col, trow, 1, border_radius=3)
+                    hp_col = RED if dead else (HP_BAR if chp / mhp > 0.5 else ORANGE if chp / mhp > 0.2 else RED)
                     label = f"{tgt.name} ({chp}/{mhp} HP)"
                     if dead: label = f"{tgt.name} — FALLEN"
                     draw_text(surface, label, trow.x + 8, trow.y + 8,

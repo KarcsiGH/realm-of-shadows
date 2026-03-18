@@ -2231,7 +2231,13 @@ class Game:
     def _start_opening(self):
         """Begin the opening narrative sequence."""
         from data.story_data import OPENING_SEQUENCE
-        from core.story_flags import set_flag, start_quest
+        from core.story_flags import set_flag, start_quest, _flags
+        # Clear all story flags before a new game begins.
+        # Without this, flags from a prior session (including boss_defeated)
+        # persist and corrupt quest dialogue in the new run.
+        _flags.clear()
+        # Also reset dungeon cache so no old explored tiles carry over
+        self.dungeon_cache = {}
         self.opening_lines = OPENING_SEQUENCE
         self.opening_idx = 0
         self.opening_chars = 0
@@ -2912,6 +2918,20 @@ class Game:
         if not self._game_over_ready:
             return
         if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+            # Clear boss-defeated flags for the dungeon the party just failed.
+            # They saw the boss but didn't defeat it — clear flags so the boss
+            # isn't treated as dead when they return.
+            dungeon_id = getattr(self, "_game_over_dungeon", None)
+            if dungeon_id:
+                from core.story_flags import _flags
+                # Remove boss flags for this specific dungeon only
+                boss_keys = [k for k in list(_flags.keys())
+                             if dungeon_id in k and
+                             (k.startswith("boss_defeated.") or
+                              k.startswith("boss.") or
+                              k.startswith("boss_dialogue."))]
+                for k in boss_keys:
+                    del _flags[k]
             # Build inn UI with the recovery message, then fade to town
             self.town_ui = TownUI(self.party, town_id=self.current_town_id)
             self.town_ui.inn_result = (
@@ -3277,8 +3297,13 @@ class Game:
                 sfx.play("camp_rest")
                 healed = result.get("healed", {})
                 parts = [f"{name} +{hp}HP" for name, hp in healed.items() if hp > 0]
-                msg = "Rested safely. " + ", ".join(parts) if parts else "Rested safely. Already at full health."
-                self.world_map_ui._show_event(msg, GREEN)
+                msg = "Rested safely. " + ", ".join(parts) if parts else "Rested safely."
+                col = GREEN
+                poison_msgs = result.get("poison_msgs", [])
+                if poison_msgs:
+                    msg += "  " + "  ".join(poison_msgs[:3])
+                    col = ORANGE
+                self.world_map_ui._show_event(msg, col)
 
         elif event["type"] == "enter_location":
             loc = event["data"]
@@ -3913,12 +3938,30 @@ class Game:
                     max_res = get_all_resources(c.class_name, _eff, c.level)
                     max_hp = max_res.get("HP", 1)
                     c.resources["HP"] = min(max_hp, c.resources.get("HP", 0) + int(max_hp * 0.25))
-                    # Restore SP/MP/Ki fully — camping lets you recover all stamina/magic
-                    # even in a dungeon. HP stays partial (25%) due to danger.
+                    # Restore 25% SP/MP/Ki — same pace as HP. Rest helps but doesn't
+                    # fully refill resources; the danger of camping limits recovery.
                     for res, max_val in max_res.items():
-                        if res != "HP":
-                            c.resources[res] = max_val
-                self.dungeon_ui.show_event("Rested safely in the dungeon.", GREEN)
+                        if res != "HP" and max_val > 0:
+                            cur = c.resources.get(res, 0)
+                            c.resources[res] = min(max_val, cur + int(max_val * 0.25))
+                # Apply poison ticks during rest — poison doesn't pause for sleep
+                from core.status_effects import get_status_effects
+                poison_msgs = []
+                for c in self.party:
+                    effects = get_status_effects(c)
+                    for s in effects:
+                        if s["type"] == "poison" and s.get("ticks_left", 0) > 0:
+                            dmg = s["dmg"]
+                            s["ticks_left"] -= 1
+                            c.resources["HP"] = max(0, c.resources.get("HP", 0) - dmg)
+                            poison_msgs.append(f"{c.name} poisoned: -{dmg} HP")
+                            if s["ticks_left"] <= 0:
+                                from core.status_effects import remove_status
+                                remove_status(c, s["id"])
+                rest_msg = "Rested in the dungeon."
+                if poison_msgs:
+                    rest_msg += "  " + "  ".join(poison_msgs[:3])
+                self.dungeon_ui.show_event(rest_msg, GREEN if not poison_msgs else ORANGE)
 
         elif event["type"] == "menu":
             self.pre_dungeon_state = S_DUNGEON

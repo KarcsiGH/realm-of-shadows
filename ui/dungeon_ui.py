@@ -1439,12 +1439,13 @@ class DungeonUI:
                     pygame.draw.rect(surface, fill_c, (text_x, cy_h, mw, 7))
                     surface.blit(fs.render(f"{rk}: {cur_r}/{max_r}", True, text_c), (text_x, cy_h+8))
 
-        # Buttons
-        bx = 8
+        # Buttons — placed on right side of HUD to avoid overlapping char cards
+        # char cards span x=8 to ~x=1100; buttons go from x=1108 rightward
+        _btn_x = SCREEN_W - 360
         bdata = [
-            ("C Camp",   pygame.Rect(bx,           by+HUD_H-34, 108, 26)),
-            ("M Menu",   pygame.Rect(bx+118,        by+HUD_H-34, 108, 26)),
-            ("T Disarm", pygame.Rect(bx+236,        by+HUD_H-34, 118, 26)),
+            ("C Camp",   pygame.Rect(_btn_x,       by + 4, 100, 24)),
+            ("M Menu",   pygame.Rect(_btn_x + 110, by + 4, 100, 24)),
+            ("T Disarm", pygame.Rect(_btn_x + 220, by + 4, 110, 24)),
         ]
         for lbl, r in bdata:
             hov = r.collidepoint(mx,my)
@@ -1929,11 +1930,12 @@ class DungeonUI:
             return self._handle_chest_modal_click(mx, my)
 
         by = SCREEN_H - HUD_H
-        if pygame.Rect(8, by+HUD_H-34, 108, 26).collidepoint(mx,my):
-            self.show_camp_confirm = True; return None
-        if pygame.Rect(126, by+HUD_H-34, 108, 26).collidepoint(mx,my):
-            return {"type":"menu"}
-        if pygame.Rect(244, by+HUD_H-34, 118, 26).collidepoint(mx,my):
+        _btn_x = SCREEN_W - 360
+        if pygame.Rect(_btn_x,       by + 4, 100, 24).collidepoint(mx,my):
+            return {"type": "camp"}
+        if pygame.Rect(_btn_x + 110, by + 4, 100, 24).collidepoint(mx,my):
+            return {"type": "menu"}
+        if pygame.Rect(_btn_x + 220, by + 4, 110, 24).collidepoint(mx,my):
             return self._try_disarm()
         return None
 
