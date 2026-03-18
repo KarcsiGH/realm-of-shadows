@@ -2212,7 +2212,7 @@ class TownUI:
         self._tavern_tab_rects = []
         for key, label in tabs:
             tw2 = get_font(13).size(label)[0] + 24
-            tr = pygame.Rect(tx, 62, tw2, 28)
+            tr = pygame.Rect(tx, 78, tw2, 28)
             active = (self.tavern_tab == key)
             bg = (50, 40, 20) if active else (25, 18, 10)
             border = GOLD if active else PANEL_BORDER
@@ -3406,26 +3406,26 @@ class TownUI:
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Gold: {total_gold}", SCREEN_W - 150, 20, DIM_GOLD, 14)
 
-        # Tab bar
+        # Tab bar (starts at y=78 to clear the NPC portrait at y=8-70)
         tabs = [("Craft", self.VIEW_FORGE_CRAFT),
                 ("Upgrade", self.VIEW_FORGE_UPGRADE),
                 ("Enchant", self.VIEW_FORGE_ENCHANT),
                 ("Repair",  self.VIEW_FORGE_REPAIR)]
         for i, (label, view) in enumerate(tabs):
-            tr = pygame.Rect(20 + i * 140, 50, 130, 32)
+            tr = pygame.Rect(20 + i * 140, 78, 130, 32)
             active = self.view == view or (self.view == self.VIEW_FORGE and i == 0)
             col = FORGE_ORANGE if active else FORGE_DIM
             pygame.draw.rect(surface, col, tr, 0 if active else 1, 4)
             tc = BLACK if active else col
             draw_text(surface, label, tr.x + 35, tr.y + 7, tc, 15, bold=active)
 
-        # Back button
-        back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
+        # Back button (at y=78 to clear the NPC portrait)
+        back = pygame.Rect(SCREEN_W - 140, 78, 120, 34)
         pygame.draw.rect(surface, (100, 60, 60), back, 1, 4)
         draw_text(surface, "Back", back.x + 40, back.y + 8, RED, 14)
 
-        # Materials summary bar
-        draw_text(surface, "Materials:", 20, 90, GREY, 12)
+        # Materials summary bar (below tabs at y=78+32=110, with small gap)
+        draw_text(surface, "Materials:", 20, 118, GREY, 12)
         mx_pos = 100
         shown_mats = {}
         for c in self.party:
@@ -3435,11 +3435,11 @@ class TownUI:
                     shown_mats[n] = shown_mats.get(n, 0) + item.get("quantity", 1)
         for mat_name, count in list(shown_mats.items())[:8]:
             short = mat_name[:12]
-            draw_text(surface, f"{short}×{count}", mx_pos, 90, CREAM, 11)
+            draw_text(surface, f"{short}×{count}", mx_pos, 118, CREAM, 11)
             mx_pos += 110
 
         active_view = self.view if self.view != self.VIEW_FORGE else self.VIEW_FORGE_CRAFT
-        y = 110
+        y = 138
 
         if active_view == self.VIEW_FORGE_CRAFT:
             self._draw_forge_craft(surface, mx, my, y, RECIPES, total_gold, FORGE_ORANGE)
@@ -3592,7 +3592,7 @@ class TownUI:
         )
 
         # Back button
-        back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
+        back = pygame.Rect(SCREEN_W - 140, 78, 120, 34)
         if back.collidepoint(mx, my):
             self._return_to_town()
             self.forge_selected_item = None
