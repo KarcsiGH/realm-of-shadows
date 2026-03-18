@@ -4130,7 +4130,9 @@ class Game:
             self.combat_state.execute_player_action("switch_weapon", item=action["item"])
 
         elif action["type"] == "use_consumable":
-            self.combat_state.execute_player_action("use_consumable", item=action["item"])
+            self.combat_state.execute_player_action(
+                "use_consumable", item=action["item"],
+                target=action.get("target"))
             sfx.play("heal")  # generic item sound
 
         elif action["type"] == "flee":

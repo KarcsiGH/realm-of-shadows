@@ -2187,7 +2187,7 @@ class CombatState:
             result = self._exec_switch_weapon(actor, item)
 
         elif action_type == "use_consumable":
-            result = self._exec_use_consumable(actor, item)
+            result = self._exec_use_consumable(actor, item, target=target)
 
         else:
             return
@@ -2224,7 +2224,7 @@ class CombatState:
         char_ref.equipment["weapon"] = dict(item)
         return {"messages": [f"{actor['name']} switches to {item.get('name', 'a weapon')}!"]}
 
-    def _exec_use_consumable(self, actor, item):
+    def _exec_use_consumable(self, actor, item, target=None):
         """Use a consumable item in combat. Costs action."""
         if not item:
             return {"messages": []}
@@ -2234,13 +2234,17 @@ class CombatState:
         used = False
 
         # ── Healing ──────────────────────────────────────────────
-        if item.get("heal", 0):
-            heal_amt = item["heal"]
-            actual = min(actor["max_hp"] - actor["hp"], heal_amt)
-            actor["hp"] = min(actor["max_hp"], actor["hp"] + heal_amt)
-            if char_ref:
-                char_ref.resources["HP"] = actor["hp"]
-            msgs.append(f"{actor['name']} uses {name}: +{actual} HP!")
+        heal_amt = item.get("heal", item.get("heal_amount", 0))  # normalize field name
+        if heal_amt:
+            # Use target if provided (player clicked an ally), else heal the user
+            tgt_actor = target if target else actor
+            tgt_ref   = tgt_actor.get("character_ref")
+            actual = min(tgt_actor["max_hp"] - tgt_actor["hp"], heal_amt)
+            tgt_actor["hp"] = min(tgt_actor["max_hp"], tgt_actor["hp"] + heal_amt)
+            if tgt_ref:
+                tgt_ref.resources["HP"] = tgt_actor["hp"]
+            tgt_name = tgt_actor.get("name", actor["name"])
+            msgs.append(f"{actor['name']} uses {name} on {tgt_name}: +{actual} HP!")
             used = True
 
         # ── MP restore ───────────────────────────────────────────
@@ -2271,6 +2275,8 @@ class CombatState:
 
         # ── Remove Cure Poison (via cures list or name) ───────────
         elif "Poison" in item.get("cures", []):
+            tgt_actor2 = target if target else actor
+            char_ref = tgt_actor2.get("character_ref")
             if char_ref:
                 from core.status_effects import remove_all_poison, remove_all_disease, get_status_effects
                 effects = get_status_effects(char_ref)

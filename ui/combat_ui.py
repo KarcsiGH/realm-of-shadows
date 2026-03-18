@@ -168,6 +168,7 @@ class CombatUI:
         # Targeting / popover state
         self.action_mode    = "main"       # main | target_attack | target_ability | target_heal
         self.selected_ability = None
+        self.selected_item_for_use = None  # item waiting for target click
         self.popover        = None         # None | "attack"|"spell"|"skill"|"item"|"move"
         self.popover_scroll = 0
         self._popover_items = []           # list of (label, data) for current popover
@@ -291,7 +292,7 @@ class CombatUI:
                 r = pygame.Rect(LEFT_X + 3, cy + 2, LEFT_W - 6, card_h - 4)
                 is_cur  = (p is cur)
                 is_dead = not p.get("alive", True)
-                is_target = (self.action_mode == "target_heal") and not is_dead
+                is_target = (self.action_mode in ("target_heal", "target_item_ally")) and not is_dead
 
                 bg     = PLAYER_ACTIVE_BG if is_cur else PLAYER_BG
                 border = GOLD if is_cur else ((200, 200, 80) if (is_target and r.collidepoint(mx, my))
@@ -719,6 +720,17 @@ class CombatUI:
         draw_text(surface, f"{actor['name']}'s Turn", 8, ACTION_Y + 4, GOLD, 15, bold=True)
 
         # Targeting instruction — shown instead of normal buttons when in a targeting mode
+        if self.action_mode == "target_item_ally":
+            item_name = self.selected_item_for_use.get("name", "item") if self.selected_item_for_use else "item"
+            prompt = f"← Click an ally to use  {item_name}  (ESC to cancel)"
+            draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (120, 220, 140), 15, bold=True)
+            draw_text(surface, "▼ Click any ally card on the left", SCREEN_W // 2 - 160, ACTION_Y + 52, (100, 180, 120), 12)
+            return
+        if self.action_mode == "target_item_enemy":
+            item_name = self.selected_item_for_use.get("name", "item") if self.selected_item_for_use else "item"
+            prompt = f"→ Click an enemy to use  {item_name}  (ESC to cancel)"
+            draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (220, 120, 100), 15, bold=True)
+            return
         if self.action_mode == "target_heal":
             prompt = f"← Click an ally to use  {self.selected_ability['name'] if self.selected_ability else 'ability'}  (ESC to cancel)"
             draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (120, 220, 140), 15, bold=True)
@@ -828,11 +840,37 @@ class CombatUI:
                 equip = getattr(ref, "equipment", {}) or {}
                 cur_weapon = equip.get("weapon")
                 for it in inv:
-                    slot = it.get("slot", "")
-                    if slot == "consumable" or it.get("usable_in_combat"):
+                    itype = it.get("type", "")
+                    islot = it.get("slot", "")
+                    # Consumable: type OR slot == "consumable", or explicit flag
+                    is_consumable = (
+                        itype == "consumable" or islot == "consumable"
+                        or it.get("usable_in_combat")
+                        or itype in ("potion", "scroll", "food", "elixir")
+                    )
+                    if is_consumable:
+                        # Build a descriptive label
+                        heal = it.get("heal", it.get("heal_amount", 0))
+                        rmp  = it.get("restore_mp", 0)
+                        cures = it.get("cures", [])
+                        if heal and rmp:
+                            detail = f"+{heal} HP, +{rmp} MP"
+                        elif heal:
+                            detail = f"+{heal} HP"
+                        elif rmp:
+                            detail = f"+{rmp} MP"
+                        elif cures:
+                            detail = f"Cures {', '.join(cures)}"
+                        elif it.get("effect"):
+                            detail = it["effect"].replace("_", " ").title()
+                        else:
+                            detail = it.get("description", "")[:35]
+                        stack = it.get("stack", 1)
+                        stack_str = f" x{stack}" if stack > 1 else ""
+                        lbl = f"{it.get('name', 'Item')}{stack_str}  [{detail}]"
                         self._combat_items.append(("consumable", it))
-                        items.append((it.get("name", "Item"), {"type": "use_item", "item": it}))
-                    elif slot == "weapon" and it != cur_weapon:
+                        items.append((lbl, {"type": "use_item", "item": it}))
+                    elif islot == "weapon" and it != cur_weapon:
                         self._combat_items.append(("weapon", it))
                         items.append((f"Equip: {it.get('name','')}", {"type": "switch_weapon", "item": it}))
 
@@ -1070,6 +1108,20 @@ class CombatUI:
                         self.stack_popover_key = group_key
                         return None
 
+        elif self.action_mode == "target_item_ally":
+            if self.hover_player:
+                item = self.selected_item_for_use
+                self.selected_item_for_use = None
+                self.action_mode = "main"
+                return {"type": "use_consumable", "item": item, "target": self.hover_player}
+
+        elif self.action_mode == "target_item_enemy":
+            if self.hover_enemy and self.hover_enemy["alive"]:
+                item = self.selected_item_for_use
+                self.selected_item_for_use = None
+                self.action_mode = "main"
+                return {"type": "use_consumable", "item": item, "target": self.hover_enemy}
+
         elif self.action_mode == "target_heal":
             if self.hover_player and self.hover_player.get("alive"):
                 self.action_mode = "main"
@@ -1159,7 +1211,26 @@ class CombatUI:
             self.action_mode = "target_ability"
             return None
         if t == "use_item":
-            return {"type": "use_consumable", "item": data["item"]}
+            item = data["item"]
+            heal = item.get("heal", item.get("heal_amount", 0))
+            rmp  = item.get("restore_mp", 0)
+            cures = item.get("cures", [])
+            effect = item.get("effect", "")
+            # Items that benefit a specific ally need target selection
+            needs_ally_target = bool(heal or rmp or cures or
+                effect in ("cure_disease", "remove_curse", "revive"))
+            if needs_ally_target:
+                self.selected_item_for_use = item
+                self.action_mode = "target_item_ally"
+                return None  # wait for ally click
+            # Items that fire on enemies (e.g. offensive scrolls)
+            needs_enemy_target = effect in ("fireball", "lightning", "blizzard", "attack")
+            if needs_enemy_target:
+                self.selected_item_for_use = item
+                self.action_mode = "target_item_enemy"
+                return None
+            # No target needed (e.g. Scroll of Identify, Smoke Bomb)
+            return {"type": "use_consumable", "item": item}
         if t == "switch_weapon":
             return {"type": "switch_weapon", "item": data["item"]}
         if t == "move":
@@ -1193,6 +1264,7 @@ class CombatUI:
             elif self.action_mode != "main":
                 self.action_mode = "main"
                 self.selected_ability = None
+                self.selected_item_for_use = None
             return None
 
         # Number keys 1-9 for popover item selection
