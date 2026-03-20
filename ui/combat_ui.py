@@ -292,7 +292,7 @@ class CombatUI:
                 r = pygame.Rect(LEFT_X + 3, cy + 2, LEFT_W - 6, card_h - 4)
                 is_cur  = (p is cur)
                 is_dead = not p.get("alive", True)
-                is_target = (self.action_mode in ("target_heal", "target_item_ally")) and not is_dead
+                is_target = self.action_mode in ("target_heal", "target_item_ally")  # highlight all
 
                 bg     = PLAYER_ACTIVE_BG if is_cur else PLAYER_BG
                 border = GOLD if is_cur else ((200, 200, 80) if (is_target and r.collidepoint(mx, my))
@@ -1123,16 +1123,11 @@ class CombatUI:
                 return {"type": "use_consumable", "item": item, "target": self.hover_enemy}
 
         elif self.action_mode == "target_heal":
-            if self.hover_player and self.hover_player.get("alive"):
+            if self.hover_player:
+                # Allow healing downed chars (HP=0) — heal starts from 0
                 self.action_mode = "main"
                 return {"type": "ability", "ability": self.selected_ability,
                         "target": self.hover_player}
-            # Also allow targeting downed allies for revival
-            if self.hover_player:
-                ab = self.selected_ability
-                if ab and "revive" in ab.get("name", "").lower():
-                    self.action_mode = "main"
-                    return {"type": "ability", "ability": ab, "target": self.hover_player}
 
         # Cancel targeting on ESC / clicking void
         if self.action_mode != "main":

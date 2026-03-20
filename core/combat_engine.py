@@ -1286,7 +1286,7 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
     # ── HEAL / AOE_HEAL ────────────────────────────────────────
     if is_heal:
         if ab_type == "aoe_heal":
-            heal_targets = [p for p in (all_players or [target or attacker]) if p["alive"]]
+            heal_targets = [p for p in (all_players or [target or attacker])]  # includes downed
         else:
             heal_targets = [target if target else attacker]
 
