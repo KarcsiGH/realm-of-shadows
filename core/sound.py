@@ -322,13 +322,18 @@ def _generate_all_sounds():
         _noise(0.22, 0.48), _sine(130, 0.26, 0.38), _sine(260, 0.18, 0.22)))
     _sounds["hit_magic"]    = _make_sound(_mix(
         _sweep(900, 180, 0.40, 0.32), _sine(440, 0.35, 0.18)))
-    _sounds["miss"]         = _make_sound(_sweep(620, 380, 0.28, 0.16))
+    _sounds["miss"]         = _make_sound(_concat(
+        _sweep(800, 200, 0.18, 0.22),   # fast whoosh sweep
+        _noise(0.08, 0.08)))              # brief thud of miss
     # No resource: dry buzzing click — "nope, can't do that"
     _sounds["no_resource"]  = _make_sound(_mix(
         _sine(180, 0.28, 0.16), _noise(0.10, 0.08)))
     # Spell miss/resist: magic whoosh that dissipates without impact
     _sounds["spell_miss"]   = _make_sound(_concat(
-        _sweep(800, 200, 0.32, 0.18), _silence(0.04), _sine(160, 0.12, 0.14)))
+        _sweep(1200, 400, 0.22, 0.16),  # high magical rise
+        _silence(0.03),
+        _sweep(400, 150, 0.28, 0.18),   # fizzle descend
+        _noise(0.06, 0.10)))              # dissipation noise
     _sounds["heal"]         = _make_sound(_concat(
         _sine(523, 0.18, 0.28), _sine(659, 0.18, 0.28), _sine(784, 0.24, 0.32)))
     _sounds["buff"]         = _make_sound(_sweep(280, 940, 0.50, 0.22))
@@ -337,10 +342,11 @@ def _generate_all_sounds():
         _sweep(380, 65, 0.80, 0.32), _noise(0.50, 0.16)))
     # Enemy death: sharp impact crack → low tumble → silence — distinctive & satisfying
     _sounds["enemy_death"] = _make_sound(_concat(
-        # Initial sharp crack (impact)
-        _mix(_noise(0.28, 0.06), _sine(220, 0.30, 0.06)),
-        # Heavy mid thud
-        _mix(_sine(90, 0.55, 0.18), _noise(0.35, 0.12)),
+        # Sharp impact crack
+        _mix(_noise(0.40, 0.05), _sine(180, 0.45, 0.05)),
+        # Descending dramatic fall — clearly different from hit_magic
+        _sweep(380, 60, 0.55, 0.25),
+        _mix(_sine(60, 0.35, 0.18), _noise(0.20, 0.14)),
         # Low rumble fadeout
         _sweep(160, 35, 0.70, 0.28),
         _silence(0.04),

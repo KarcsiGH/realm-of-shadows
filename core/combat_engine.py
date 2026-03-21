@@ -2424,6 +2424,9 @@ class CombatState:
 
         elif action == "ability" and ability:
             ab_type = ability.get("type", "")
+            result = {"action": "enemy_ability", "ability_type": ab_type,
+                      "ability_name": ability.get("name", ""),
+                      "element": ability.get("element", "")}
 
             if ab_type == "heal" and target:
                 # Healing ability
@@ -2448,6 +2451,7 @@ class CombatState:
 
                 if not hit:
                     self.log(f"{actor['name']} uses {ability['name']} on {target['name']} — RESISTED!")
+                    result["hit"] = False
                 else:
                     # Damage: power + INT scaling
                     raw = power + casting_val * 0.5
@@ -2469,6 +2473,7 @@ class CombatState:
 
                     if not target["alive"]:
                         self.log(f"{target['name']} falls unconscious!")
+                    result["defender"] = target
 
                     # Apply status effect if ability has one
                     status_name = ability.get("status")

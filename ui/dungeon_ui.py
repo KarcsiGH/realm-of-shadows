@@ -564,6 +564,7 @@ class DungeonUI:
 
         # Chest interaction modal
         self.chest_modal         = None   # None or dict with modal state
+        self.interactable_modal  = None   # fountain/shrine/altar modal state
 
         self.fading_intensity = 0.0
         self._update_fading()
@@ -793,6 +794,8 @@ class DungeonUI:
             self._draw_confirm_dialog(surface, mx, my, t, m, "Yes", "No", "stairs")
         if self.chest_modal:
             self._draw_chest_modal(surface, mx, my)
+        if self.interactable_modal:
+            self._draw_interactable_modal(surface, mx, my)
 
 
         if (self.event_message and self.event_timer > 0) or self.event_queue:
@@ -1439,13 +1442,15 @@ class DungeonUI:
                     pygame.draw.rect(surface, fill_c, (text_x, cy_h, mw, 7))
                     surface.blit(fs.render(f"{rk}: {cur_r}/{max_r}", True, text_c), (text_x, cy_h+8))
 
-        # Buttons — placed on right side of HUD to avoid overlapping char cards
-        # char cards span x=8 to ~x=1100; buttons go from x=1108 rightward
-        _btn_x = SCREEN_W - 360
+        # Buttons — vertical stack in right panel (x=MM_X), below minimap
+        # This keeps them completely clear of the character card area (x=0-1100)
+        _btn_x = MM_X + 4
+        _btn_w = SCREEN_W - MM_X - 8
+        _btn_y = by + 4
         bdata = [
-            ("C Camp",   pygame.Rect(_btn_x,       by + 4, 100, 24)),
-            ("M Menu",   pygame.Rect(_btn_x + 110, by + 4, 100, 24)),
-            ("T Disarm", pygame.Rect(_btn_x + 220, by + 4, 110, 24)),
+            ("C Camp",   pygame.Rect(_btn_x, _btn_y,      _btn_w, 24)),
+            ("M Menu",   pygame.Rect(_btn_x, _btn_y + 30, _btn_w, 24)),
+            ("T Disarm", pygame.Rect(_btn_x, _btn_y + 60, _btn_w, 24)),
         ]
         for lbl, r in bdata:
             hov = r.collidepoint(mx,my)
@@ -1471,6 +1476,81 @@ class DungeonUI:
     # ─────────────────────────────────────────────────────────
     #  DIALOGS
     # ─────────────────────────────────────────────────────────
+
+
+    def _draw_interactable_modal(self, surface, mx, my):
+        """Draw the fountain/shrine/altar interaction modal."""
+        data = self.interactable_modal
+        if not data:
+            return
+        import pygame
+        from ui.renderer import SCREEN_W, SCREEN_H, GOLD, CREAM, GREY, GREEN, RED, ORANGE
+        from ui.renderer import draw_text, draw_button
+
+        subtype = data.get("subtype", "")
+        name    = data.get("name", "Strange Object")
+        hint    = data.get("hint", "")
+        desc    = data.get("description", hint)
+
+        # Color scheme by subtype
+        COLOR_MAP = {
+            "healing_pool": ((80, 200, 255),   "🌊 Healing Pool"),
+            "mp_shrine":    ((140, 100, 255),   "✨ Arcane Shrine"),
+            "cursed_altar": ((180, 60,  220),   "🔮 Dark Altar"),
+        }
+        accent, icon_label = COLOR_MAP.get(subtype, (GOLD, "❓ Object"))
+
+        # Modal box
+        W, H = 520, 220
+        mx2  = SCREEN_W // 2 - W // 2
+        my2  = SCREEN_H // 2 - H // 2
+        box  = pygame.Rect(mx2, my2, W, H)
+        pygame.draw.rect(surface, (18, 14, 30), box, border_radius=8)
+        pygame.draw.rect(surface, accent, box, 2, border_radius=8)
+
+        # Header
+        draw_text(surface, name,        box.x + 16, box.y + 14, accent, 20, bold=True)
+        draw_text(surface, icon_label,  box.x + 16, box.y + 38, GREY,   13)
+
+        # Description — what does this object do?
+        EFFECT_DESC = {
+            "healing_pool": f"Restores {int(data.get('heal_pct', 0.30)*100)}% HP to the entire party. Single use.",
+            "mp_shrine":    f"Restores {int(data.get('restore_pct', 0.25)*100)}% SP/MP/Ki to the entire party. Single use.",
+            "cursed_altar": "Offers dark power — may grant HP or curse the party. Risky. Single use.",
+        }
+        effect_str = EFFECT_DESC.get(subtype, desc or "An ancient object of unknown purpose.")
+        draw_text(surface, effect_str, box.x + 16, box.y + 65, CREAM, 13, max_width=W - 32)
+
+        # Flavour hint
+        if hint and hint != effect_str:
+            draw_text(surface, f'"{hint}"', box.x + 16, box.y + 105, (140, 130, 160), 12,
+                      max_width=W - 32)
+
+        # Buttons
+        use_btn  = pygame.Rect(box.x + 40,      box.y + H - 55, 180, 38)
+        leave_btn= pygame.Rect(box.x + W - 220, box.y + H - 55, 180, 38)
+        draw_button(surface, use_btn,   "Use",   hover=use_btn.collidepoint(mx, my),  size=15)
+        draw_button(surface, leave_btn, "Leave", hover=leave_btn.collidepoint(mx, my), size=15)
+
+        self._interactable_use_btn   = use_btn
+        self._interactable_leave_btn = leave_btn
+
+    def _handle_interactable_modal_click(self, mx, my):
+        """Handle clicks inside the interactable modal."""
+        import pygame
+        use_btn   = getattr(self, "_interactable_use_btn",   None)
+        leave_btn = getattr(self, "_interactable_leave_btn", None)
+
+        if leave_btn and leave_btn.collidepoint(mx, my):
+            self.interactable_modal = None
+            return None
+
+        if use_btn and use_btn.collidepoint(mx, my):
+            data = self.interactable_modal
+            self.interactable_modal = None
+            return {"type": "use_interactable", "data": data}
+
+        return None  # click inside modal but not on a button — absorb it
 
     def _draw_chest_modal(self, surface, mx, my):
         """Render the multi-step chest interaction modal."""
@@ -1926,16 +2006,20 @@ class DungeonUI:
                 self.show_camp_confirm = False
             return None
 
+        if self.interactable_modal:
+            return self._handle_interactable_modal_click(mx, my)
         if self.chest_modal:
             return self._handle_chest_modal_click(mx, my)
 
         by = SCREEN_H - HUD_H
-        _btn_x = SCREEN_W - 360
-        if pygame.Rect(_btn_x,       by + 4, 100, 24).collidepoint(mx,my):
+        _btn_x = MM_X + 4
+        _btn_w = SCREEN_W - MM_X - 8
+        _btn_y = by + 4
+        if pygame.Rect(_btn_x, _btn_y,      _btn_w, 24).collidepoint(mx,my):
             return {"type": "camp"}
-        if pygame.Rect(_btn_x + 110, by + 4, 100, 24).collidepoint(mx,my):
+        if pygame.Rect(_btn_x, _btn_y + 30, _btn_w, 24).collidepoint(mx,my):
             return {"type": "menu"}
-        if pygame.Rect(_btn_x + 220, by + 4, 110, 24).collidepoint(mx,my):
+        if pygame.Rect(_btn_x, _btn_y + 60, _btn_w, 24).collidepoint(mx,my):
             return self._try_disarm()
         return None
 

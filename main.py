@@ -498,11 +498,9 @@ class Game:
                     self.char_index += 1
                     if self.char_index >= PARTY_SIZE:
                         self.party_scroll = 0
-                        from core.story_flags import has
-                        if not has("intro_seen"):
-                            self._start_opening()
-                        else:
-                            self.go(S_PARTY)
+                        # Always call _start_opening so flags are cleared.
+                        # _start_opening skips the narrative if already seen.
+                        self._start_opening()
                     elif self.char_index == 1:
                         # Hero created — now recruit companions from the Inn
                         self._gen_inn_recruits()
@@ -1395,11 +1393,8 @@ class Game:
                     self.party.append(self.inn_recruits[i])
                 self.char_index = PARTY_SIZE  # set directly — don't increment per-recruit
                 self.party_scroll = 0
-                from core.story_flags import has
-                if not has("intro_seen"):
-                    self._start_opening()
-                else:
-                    self.go(S_PARTY)
+                # Always call _start_opening so flags are cleared.
+                self._start_opening()
 
 
     def _draw_inn_recruit(self, mx, my):
@@ -2229,15 +2224,17 @@ class Game:
     # ══════════════════════════════════════════════════════════
 
     def _start_opening(self):
-        """Begin the opening narrative sequence."""
+        """Begin the opening narrative sequence (or skip if already seen).
+        Always clears story flags so new games start with a clean slate.
+        """
         from data.story_data import OPENING_SEQUENCE
-        from core.story_flags import set_flag, start_quest, _flags
-        # Clear all story flags before a new game begins.
-        # Without this, flags from a prior session (including boss_defeated)
-        # persist and corrupt quest dialogue in the new run.
+        from core.story_flags import set_flag, start_quest, _flags, has
+        # ALWAYS clear flags — this is the guaranteed clean-slate point
+        # for every new game, regardless of whether it's the first run.
         _flags.clear()
-        # Also reset dungeon cache so no old explored tiles carry over
-        self.dungeon_cache = {}
+        self.dungeon_cache = {}  # clear explored dungeon data
+        self.world_state  = None  # fresh world state
+        already_seen = has("intro_seen")  # always False now since we just cleared
         self.opening_lines = OPENING_SEQUENCE
         self.opening_idx = 0
         self.opening_chars = 0
@@ -2672,13 +2669,17 @@ class Game:
             if self.enemy_turn_delay > 600:  # 600ms delay between enemy actions
                 result = self.combat_state.execute_enemy_turn()
                 # Pick sound from what actually happened
+                _eact = result.get("action", "")
+                _is_spell = _eact == "enemy_ability"
                 if result.get("hit") is False:
-                    sfx.play("miss")
+                    sfx.play("spell_miss" if _is_spell else "miss")
                 elif result.get("is_crit"):
                     sfx.play("hit_critical")
-                elif result.get("action") == "enemy_attack":
+                elif _is_spell:
+                    sfx.play("hit_magic")  # enemy spell hit sounds magical
+                elif _eact == "enemy_attack":
                     sfx.play("hit_physical")
-                # Play death sound if a player just went down
+                # Play kill sound if something died
                 if result.get("defender", {}).get("alive") is False:
                     tgt2 = result.get("defender", {})
                     if tgt2.get("type") == "enemy":
@@ -3514,27 +3515,36 @@ class Game:
 
         elif event["type"] == "interactable":
             data = event["data"]
-            subtype = data.get("subtype", "")
             name = data.get("name", "Strange Object")
-            hint = data.get("hint", "")
-
             if data.get("used"):
                 self.dungeon_ui.show_event(f"{name} — already used.", GREY)
-            elif subtype == "healing_pool":
+            else:
+                # Open a modal so the player can read about the object
+                # and choose to use it — no auto-activation.
+                self.dungeon_ui.interactable_modal = data
+                sfx.play("discovery")
+
+        elif event["type"] == "use_interactable":
+            # Player confirmed use of a fountain/shrine/altar via modal
+            data = event["data"]
+            subtype = data.get("subtype", "")
+            name = data.get("name", "Strange Object")
+            from core.classes import get_all_resources
+
+            if subtype == "healing_pool":
                 data["used"] = True
                 heal_pct = data.get("heal_pct", 0.30)
-                from core.classes import get_all_resources
                 healed = []
                 for c in self.party:
                     max_res = get_all_resources(c.class_name, c.stats, c.level)
                     max_hp = max_res.get("HP", 1)
-                    old = c.resources.get("HP", 0)
-                    c.resources["HP"] = min(max_hp, old + int(max_hp * heal_pct))
-                    gained = c.resources["HP"] - old
+                    old_hp = c.resources.get("HP", 0)
+                    c.resources["HP"] = min(max_hp, old_hp + int(max_hp * heal_pct))
+                    gained = c.resources["HP"] - old_hp
                     if gained > 0:
                         healed.append(f"{c.name} +{gained}")
-                sfx.play("camp_rest")
-                self.dungeon_ui.show_event(f"🌊 {name}", (80, 200, 255))
+                sfx.play("heal")
+                self.dungeon_ui.show_event(f"🌊 {name} — the party drinks deeply.", (80, 200, 255))
                 if healed:
                     self.dungeon_ui.show_event("  ".join(healed), GREEN)
                 else:
@@ -3543,7 +3553,6 @@ class Game:
             elif subtype == "mp_shrine":
                 data["used"] = True
                 restore_pct = data.get("restore_pct", 0.25)
-                from core.classes import get_all_resources
                 restored = []
                 for c in self.party:
                     max_res = get_all_resources(c.class_name, c.stats, c.level)
@@ -3555,8 +3564,8 @@ class Game:
                         gained = c.resources[rk] - cur
                         if gained > 0:
                             restored.append(f"{c.name} +{gained} {rk}")
-                sfx.play("camp_rest")
-                self.dungeon_ui.show_event(f"✨ {name}", (120, 100, 220))
+                sfx.play("buff")
+                self.dungeon_ui.show_event(f"✨ {name} — arcane energy flows through you.", (120, 100, 220))
                 if restored:
                     self.dungeon_ui.show_event("  ".join(restored[:4]), (140, 180, 255))
                 else:
@@ -3566,15 +3575,13 @@ class Game:
                 data["used"] = True
                 buff_chance = data.get("buff_chance", 0.55)
                 if random.random() < buff_chance:
-                    # Good outcome — temporary HP boost
                     bonus = data.get("buff_hp", 20)
                     for c in self.party:
                         c.resources["HP"] = c.resources.get("HP", 0) + bonus
                     sfx.play("camp_rest")
-                    self.dungeon_ui.show_event(f"🔮 {name} — dark power flows through you!", (180, 120, 255))
+                    self.dungeon_ui.show_event(f"🔮 {name} — dark power surges through you!", (180, 120, 255))
                     self.dungeon_ui.show_event(f"Party gained +{bonus} temporary HP!", GREEN)
                 else:
-                    # Bad outcome — damage
                     dmg = data.get("curse_dmg", 15)
                     for c in self.party:
                         c.resources["HP"] = max(1, c.resources.get("HP", 0) - dmg)
@@ -3582,6 +3589,7 @@ class Game:
                     self.dungeon_ui.show_event(f"💀 {name} — a curse lashes out!", RED)
                     self.dungeon_ui.show_event(f"Party took {dmg} shadow damage!", ORANGE)
             else:
+                hint = data.get("hint", "")
                 self.dungeon_ui.show_event(f"{name}: {hint}", CREAM)
 
         elif event["type"] == "stairs_down":
@@ -3909,6 +3917,9 @@ class Game:
 
             msg = prefix + " " + " | ".join(results[:4])  # limit display length
             self.dungeon_ui.show_event(msg, color)
+            # Mark trap as disarmed after it fires — it has already sprung,
+            # no reason for it to trigger again on the same tile.
+            data["disarmed"] = True
 
         elif event["type"] == "camp":
             # Open camp screen instead of instant rest
