@@ -761,6 +761,8 @@ class Game:
                         sfx.play("ui_open")
                         self.go(S_INVENTORY)
                         return
+                    if not self.post_combat_ui:
+                        return
                     result = self.post_combat_ui.handle_click(mx, my)
                     if result == "continue":
                         self.party_scroll = 0
@@ -777,10 +779,11 @@ class Game:
                         else:
                             self.go(S_PARTY)
                 elif e.button == 4:
-                    self.post_combat_ui.handle_scroll(-1)
+                    if self.post_combat_ui:
+                        self.post_combat_ui.handle_scroll(-1)
                 elif e.button == 5:
-                    self.post_combat_ui.handle_scroll(1)
-                    self.combat_ui.handle_scroll(1)
+                    if self.post_combat_ui:
+                        self.post_combat_ui.handle_scroll(1)
 
         elif self.state == S_OPENING:
             if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
@@ -2792,6 +2795,8 @@ class Game:
 
     def draw_post_combat(self, mx, my):
         """Draw the post-combat results screen."""
+        if not self.post_combat_ui:
+            return
         dt = self.clock.get_time()
         self.post_combat_ui.draw(self.screen, mx, my, dt)
 

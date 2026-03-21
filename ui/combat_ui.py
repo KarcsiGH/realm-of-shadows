@@ -720,6 +720,17 @@ class CombatUI:
         draw_text(surface, f"{actor['name']}'s Turn", 8, ACTION_Y + 4, GOLD, 15, bold=True)
 
         # Targeting instruction — shown instead of normal buttons when in a targeting mode
+        if self.action_mode == "target_attack":
+            weapon = actor.get("weapon", {}) if actor else {}
+            ab_name = weapon.get("name", "Attack")
+            prompt = f"→ Click an enemy to attack with  {ab_name}  (ESC to cancel)"
+            draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (220, 120, 100), 15, bold=True)
+            return
+        if self.action_mode == "target_ability":
+            ab_name = self.selected_ability["name"] if self.selected_ability else "ability"
+            prompt = f"→ Click an enemy to use  {ab_name}  (ESC to cancel)"
+            draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (220, 120, 100), 15, bold=True)
+            return
         if self.action_mode == "target_item_ally":
             item_name = self.selected_item_for_use.get("name", "item") if self.selected_item_for_use else "item"
             prompt = f"← Click an ally to use  {item_name}  (ESC to cancel)"

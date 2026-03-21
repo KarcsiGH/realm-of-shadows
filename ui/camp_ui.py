@@ -1017,6 +1017,13 @@ class CampUI:
         if self.tab == TAB_STATS:
             cur = getattr(self, "_stats_scroll", 0)
             self._stats_scroll = max(0, cur + direction * 24)
+        elif self.tab == TAB_EQUIP:
+            c = self.party[self.selected_char] if self.party else None
+            if c:
+                equip_inv = [it for it in getattr(c, "inventory", []) if it.get("slot")]
+                cur = getattr(self, "equip_scroll", 0)
+                self.equip_scroll = max(0, min(max(0, len(equip_inv) - 3),
+                                                cur + direction))
         elif self.tab == TAB_INVENTORY:
             self.scroll_offset = max(0, self.scroll_offset + direction)
         elif getattr(self, "_manual_open", False):
