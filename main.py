@@ -3508,6 +3508,10 @@ class Game:
         elif event["type"] == "fixed_encounter":
             enc_key = self.dungeon_state.get_encounter_key()
             self.pre_dungeon_state = S_DUNGEON
+            # Store party position so we can kill the enemy here after combat
+            px = self.dungeon_state.party_x
+            py = self.dungeon_state.party_y
+            self.dungeon_state._last_contact_enemy = (px, py)
             self.start_combat(enc_key)
 
         elif event["type"] == "journal":
@@ -4028,16 +4032,18 @@ class Game:
                                 sfx.play("poison")
 
                 # ── Grant dungeon keys on boss victory ──
-                # ONLY fire for actual boss encounters, not every random fight.
-                # combat_state.is_boss is set when enemies include a boss template.
-                if self.dungeon_state and getattr(self.combat_state, "is_boss", False):
-                    self._grant_boss_rewards(self.dungeon_state.dungeon_id)
-
-                    # Mark visible enemy as dead on the map
+                # Mark the visible enemy sprite as dead after EVERY combat victory.
+                # Without this, the enemy remains on the floor and patrols back
+                # into the party, re-triggering the same fight indefinitely.
+                if self.dungeon_state:
                     contact_pos = getattr(self.dungeon_state, '_last_contact_enemy', None)
                     if contact_pos:
                         self.dungeon_state.kill_enemy_at(*contact_pos)
                         self.dungeon_state._last_contact_enemy = None
+
+                # Boss-only: grant dungeon keys and story flags
+                if self.dungeon_state and getattr(self.combat_state, "is_boss", False):
+                    self._grant_boss_rewards(self.dungeon_state.dungeon_id)
 
                 # ── Track kills for job board bounties ──
                 from data.job_board import on_enemy_killed
