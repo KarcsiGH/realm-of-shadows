@@ -335,6 +335,13 @@ class Game:
                     new_r  = pygame.Rect(SCREEN_W // 2 - 220, btn_y, 200, 48)
                     cont_r = pygame.Rect(SCREEN_W // 2 + 20,  btn_y, 200, 48)
                     if new_r.collidepoint(mx, my):
+                        # Reset party state so a new game truly starts fresh
+                        # regardless of whether a save was loaded before.
+                        self.party = []
+                        self.char_index = 0
+                        self.world_state = None
+                        self.dungeon_cache = {}
+                        self.current_char = None
                         self.go(S_MODE)
                     elif cont_r.collidepoint(mx, my):
                         from ui.save_load_ui import SaveLoadUI
@@ -348,6 +355,11 @@ class Game:
                     self.go(S_MODE)
             elif e.type == pygame.KEYDOWN:
                 # Any key press goes to new game mode (classic behaviour)
+                self.party = []
+                self.char_index = 0
+                self.world_state = None
+                self.dungeon_cache = {}
+                self.current_char = None
                 self.go(S_MODE)
 
         elif self.state == S_MODE:
@@ -1238,12 +1250,20 @@ class Game:
         )
 
     def _recruit_target_level(self) -> int:
-        """Return the target level for new recruits: party average, ±1 at random."""
+        """Return the target level for new recruits: party average, ±1 at random.
+        No variance for brand new parties (all level 1) — recruits always start
+        at level 1 alongside a fresh hero.
+        """
         import random
         if not self.party:
             return 1
         avg = sum(c.level for c in self.party) / len(self.party)
         base = round(avg)
+        # No ±1 variance for a brand-new party — all members are level 1,
+        # recruits should also be level 1. Variance only kicks in for
+        # mid-game replacement recruits.
+        if base <= 1:
+            return 1
         return max(1, base + random.randint(-1, 1))
 
     def _gen_inn_recruits(self):
