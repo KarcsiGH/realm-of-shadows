@@ -4028,7 +4028,9 @@ class Game:
                                 sfx.play("poison")
 
                 # ── Grant dungeon keys on boss victory ──
-                if self.dungeon_state:
+                # ONLY fire for actual boss encounters, not every random fight.
+                # combat_state.is_boss is set when enemies include a boss template.
+                if self.dungeon_state and getattr(self.combat_state, "is_boss", False):
                     self._grant_boss_rewards(self.dungeon_state.dungeon_id)
 
                     # Mark visible enemy as dead on the map

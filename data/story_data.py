@@ -973,10 +973,66 @@ NPC_DIALOGUES = {
                 },
             },
         },
-        # After goblin warren cleared
+        # After goblin warren — peaceful resolution (Grak spared)
+        # Checked BEFORE the kill path so it takes priority when both flags exist
         {
             "conditions": [
-                {"flag": "boss.grak.defeated", "op": "==", "value": True},
+                {"flag": "choice.grak_spared", "op": "==", "value": True},
+                {"flag": "boss_defeated.goblin_warren", "op": "==", "value": True},
+                {"flag": "quest.main_goblin_warren.state", "op": "==", "value": 1},
+            ],
+            "tree": {
+                "id": "maren_post_warren_peaceful",
+                "nodes": {
+                    "start": {
+                        "speaker": "Maren",
+                        "text": "You're back. I expected... I don't know what I expected. "
+                                "But not this. The goblins are calm. The scouts say they've "
+                                "stopped raiding entirely.\nWhat happened in that Warren?",
+                        "choices": [
+                            {"text": "Grak was protecting a Hearthstone fragment. We made peace.",
+                             "next": "peace_truth",
+                             "conditions": [{"flag": "lore.grak_truth", "op": "==", "value": True}]},
+                            {"text": "We found a way to end the fighting without bloodshed.",
+                             "next": "peace_simple"},
+                        ],
+                    },
+                    "peace_truth": {
+                        "speaker": "Maren",
+                        "text": "He was... protecting it.\n"
+                                "The goblins weren't driven mad by the Fading — they were guarding "
+                                "against it. A Warden must have given the fragment to them generations "
+                                "ago, and Grak honoured that trust.\n"
+                                "This changes things. The old Wardens didn't just fight the Fading — "
+                                "they made alliances. Built networks.\n"
+                                "We need to find the others. The Abandoned Mine is our next step.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "main_goblin_warren"},
+                            {"action": "start_quest", "quest": "main_hearthstone_1"},
+                            {"action": "discover_lore", "lore": "warden_alliances"},
+                        ],
+                        "end": True,
+                    },
+                    "peace_simple": {
+                        "speaker": "Maren",
+                        "text": "Without bloodshed. I admit I didn't think that was possible once "
+                                "the raids started.\n"
+                                "The goblins were protecting something in that Warren — something "
+                                "connected to the Fading. That's what matters.\n"
+                                "We need to keep moving. The Abandoned Mine is our next destination.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "main_goblin_warren"},
+                            {"action": "start_quest", "quest": "main_hearthstone_1"},
+                        ],
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # After goblin warren — kill path (Grak defeated in combat)
+        {
+            "conditions": [
+                {"flag": "choice.grak_killed", "op": "==", "value": True},
                 {"flag": "boss_defeated.goblin_warren", "op": "==", "value": True},
                 {"flag": "quest.main_goblin_warren.state", "op": "==", "value": 1},
             ],
