@@ -2556,8 +2556,9 @@ class Game:
         # cinematic dialogue UI with "Continue" advances rather than a wall of text.
         nodes = {}
         for i, line in enumerate(lines):
-            nid   = f"p{i}"
-            nxt   = f"p{i+1}" if i + 1 < len(lines) else None
+            # DialogueState always looks for nodes["start"] as the entry point
+            nid = "start" if i == 0 else f"p{i}"
+            nxt = f"p{i+1}" if i + 1 < len(lines) else None
             nodes[nid] = {
                 "speaker": speaker if i == 0 else ("" if not speaker else speaker),
                 "text":    line,
@@ -2568,7 +2569,6 @@ class Game:
         synth_tree = {
             "id":    post["id"],
             "nodes": nodes,
-            "start": "p0",
         }
 
         # Reuse the standalone dialogue system with a synthetic NPC id
