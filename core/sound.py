@@ -28,11 +28,16 @@ def init():
         return
     try:
         current = _mixer.get_init()
-        # Re-init if not initialized or if format doesn't match (freq, size, channels)
-        if not current or current[0] != 22050 or current[2] != 1:
-            if current:
-                _mixer.quit()
-            _mixer.init(22050, -16, 1, 1024)
+        if not current:
+            # Not yet initialized — try preferred settings, fall back gracefully
+            try:
+                _mixer.init(22050, -16, 1, 1024)
+            except Exception:
+                try:
+                    _mixer.init()  # Let pygame pick defaults (works on macOS)
+                except Exception:
+                    return
+        # Accept whatever the mixer is running at — pygame resamples on playback
         _mixer.set_num_channels(12)
         _music_channel   = _mixer.Channel(10)
         _ambient_channel = _mixer.Channel(11)
