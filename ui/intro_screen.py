@@ -56,48 +56,79 @@ PIXEL_BLOCK = 5   # 5×5 real pixels per "retro pixel"
 
 def _make_retro_logo(original_surf, block=PIXEL_BLOCK):
     """
-    Downscale → quantise to neon green/transparent → scale back up with big pixels.
-    Black and near-black pixels become TRANSPARENT so the logo floats over any BG.
-    Bright pixels become neon green (0, lum*1.2, 0).
+    Convert logo to chunky retro-pixel art using max-pooling (preserves thin strokes).
+    Dark green pixels are boosted to bright neon green.
+    Black text ("BAD" / "BAT") is invisible in the source; we draw it separately.
     """
-    import numpy as np  # noqa — used for array ops
+    import numpy as np
+    from PIL import Image as _PILImage
 
+    # Load via PIL for accurate (h, w, 4) numpy access
     w, h = original_surf.get_size()
-    tiny_w = max(1, w // block)
-    tiny_h = max(1, h // block)
+    raw = pygame.surfarray.array3d(original_surf)  # pygame: (w, h, 3)
+    # Transpose to PIL convention (h, w, 3)
+    arr = raw.transpose(1, 0, 2).astype(np.float32)
 
-    # Downscale (keep SRCALPHA so we see what's transparent in the source)
-    tiny = pygame.transform.smoothscale(
-        original_surf.convert_alpha(), (tiny_w, tiny_h)
-    )
+    tiny_h = h // block
+    tiny_w = w // block
 
-    # Pull RGB as numpy — image has black bg + neon green logo (all alpha=255)
-    rgb  = pygame.surfarray.array3d(tiny).astype(np.float32)  # [w, h, 3]
-    R, G, B = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
+    G = arr[:, :, 1]
+    R = arr[:, :, 0]
+    B = arr[:, :, 2]
 
-    # Detect green pixels directly: G channel dominant over R and B
-    # This is more reliable than luminance for neon-green-on-black logos
-    is_green = (G > 20) & (G > R * 1.5) & (G > B * 1.5)
-    bright = is_green
-    green_vals = np.clip(G * 1.4, 0, 255).astype(np.uint8)
+    # Max-pool: in each block take the maximum green value
+    # This preserves thin strokes that smoothscale would blur away
+    G_pool = G[:tiny_h*block, :tiny_w*block].reshape(
+        tiny_h, block, tiny_w, block).max(axis=(1, 3))
+    R_pool = R[:tiny_h*block, :tiny_w*block].reshape(
+        tiny_h, block, tiny_w, block).max(axis=(1, 3))
+    B_pool = B[:tiny_h*block, :tiny_w*block].reshape(
+        tiny_h, block, tiny_w, block).max(axis=(1, 3))
 
-    # Build result surface with SRCALPHA
+    # Detect logo pixels: green channel dominant, above low threshold
+    # Threshold is low because the source uses dark green (not bright neon)
+    is_logo = (G_pool > 5) & (G_pool >= R_pool) & (G_pool >= B_pool)
+
+    # Boost dark green → bright neon green
+    neon = np.clip(G_pool * 4.0, 60, 255).astype(np.uint8)
+
+    # Build SRCALPHA surface — transparent bg, neon green logo
     result_tiny = pygame.Surface((tiny_w, tiny_h), pygame.SRCALPHA)
-    result_tiny.fill((0, 0, 0, 0))   # start fully transparent
+    result_tiny.fill((0, 0, 0, 0))
 
-    # Write green channel and alpha using surfarray
-    rgb_view   = pygame.surfarray.pixels3d(result_tiny)
-    alpha_view = pygame.surfarray.pixels_alpha(result_tiny)
-    rgb_view[:,:,0] = 0
-    rgb_view[:,:,1] = np.where(bright, green_vals, 0)
-    rgb_view[:,:,2] = 0
-    alpha_view[:,:] = np.where(bright, 255, 0).astype(np.uint8)
-    del rgb_view, alpha_view
+    # Transpose back to pygame's (w, h) convention
+    is_T = is_logo.T
+    n_T  = neon.T
 
-    # Scale up with nearest-neighbour for chunky retro pixels
+    rgb_v   = pygame.surfarray.pixels3d(result_tiny)
+    alpha_v = pygame.surfarray.pixels_alpha(result_tiny)
+    rgb_v[:, :, 0] = 0
+    rgb_v[:, :, 1] = np.where(is_T, n_T, 0)
+    rgb_v[:, :, 2] = 0
+    alpha_v[:, :] = np.where(is_T, 255, 0).astype(np.uint8)
+    del rgb_v, alpha_v
+
     retro = pygame.transform.scale(result_tiny, (tiny_w * block, tiny_h * block))
     return retro
 
+
+def _draw_retro_text(surf, text, x, y, size, block=PIXEL_BLOCK):
+    """
+    Draw pixelated (block-pixel) green text — simulates a chunky retro font.
+    Used to render 'BAD' and 'BAT' that are pure-black (invisible) in the source logo.
+    """
+    try:
+        font = pygame.font.SysFont("monospace", size, bold=True)
+        txt_surf = font.render(text, False, (0, 255, 0))  # aliased green
+        tw, th = txt_surf.get_size()
+        # Pixelate: scale down then back up
+        tiny = pygame.transform.scale(txt_surf, (max(1, tw // block), max(1, th // block)))
+        chunky = pygame.transform.scale(tiny, (tw, th))
+        # Make transparent bg (black bg → transparent)
+        chunky.set_colorkey((0, 0, 0))
+        surf.blit(chunky, (x, y))
+    except Exception:
+        pass
 
 def _build_logo_surface():
     """Load the logo from the assets folder, return (original, retro) or (None, None)."""
@@ -385,6 +416,28 @@ class IntroScreen:
             alpha_arr[:] = (alpha_arr.astype(np.float32) * logo_a / 255).astype(np.uint8)
             del alpha_arr
             surf.blit(faded, (lx, ly))
+
+            # Draw "BAD" and "BAT" in pixelated green text
+            # These are pure black in the source logo (invisible on black bg)
+            # Position: vertically centred in the logo, left and right of the bat
+            # Logo occupies lx..lx+nw, roughly top third is the bat face
+            text_y = ly + int(nh * 0.18)   # align with upper part of bat
+            text_size = max(18, int(nh * 0.22))
+            # "BAD" — left of bat (roughly first 35% of logo width)
+            bad_x = lx + int(nw * 0.01)
+            # "BAT" — right of bat (roughly last 35% of logo width)
+            bat_x = lx + int(nw * 0.65)
+            # Only draw at opacity tied to logo_a
+            if logo_a >= 40:
+                alpha_txt = pygame.Surface((int(nw*0.34), text_size + 8), pygame.SRCALPHA)
+                _draw_retro_text(alpha_txt, "BAD", 0, 0, text_size)
+                alpha_txt.set_alpha(logo_a)
+                surf.blit(alpha_txt, (bad_x, text_y))
+
+                alpha_txt2 = pygame.Surface((int(nw*0.34), text_size + 8), pygame.SRCALPHA)
+                _draw_retro_text(alpha_txt2, "BAT", 0, 0, text_size)
+                alpha_txt2.set_alpha(logo_a)
+                surf.blit(alpha_txt2, (bat_x, text_y))
         else:
             # Fallback text logo
             f_big = pygame.font.SysFont("monospace", 52, bold=True)
