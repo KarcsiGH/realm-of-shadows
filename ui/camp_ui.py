@@ -357,7 +357,7 @@ class CampUI:
 
         # Magic resist
         if item.get("magic_resist"):
-            draw_text(surface, f"+{item["magic_resist"]} Magic Resist", x, dy, (120, 180, 255), 12)
+            draw_text(surface, f"+{item['magic_resist']} Magic Resist", x, dy, (120, 180, 255), 12)
             dy += 16
 
         # Enchant

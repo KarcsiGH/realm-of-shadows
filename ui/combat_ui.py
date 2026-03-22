@@ -1213,7 +1213,7 @@ class CombatUI:
             if data.get("is_bolt"):
                 # Bolt attack from wand/rod/orb — ranged, INT-based
                 self.selected_ability = {
-                    "name": f"Bolt ({data["weapon"].get("name", "Wand")})",
+                    "name": f"Bolt ({data['weapon'].get('name', 'Wand')})",
                     "_is_bolt": True,
                     "_bolt_dmg": data["bolt_dmg"],
                     "_bolt_element": data.get("bolt_element", "arcane"),
