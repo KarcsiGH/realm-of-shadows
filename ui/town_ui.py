@@ -3615,14 +3615,14 @@ class TownUI:
                 return None
 
         active_view = self.view if self.view != self.VIEW_FORGE else self.VIEW_FORGE_CRAFT
-        y = 110
+        y = 138  # matches _draw_forge y=138
 
         if active_view == self.VIEW_FORGE_REPAIR:
             from core.durability import (
                 has_durability, get_durability_state, get_repair_cost,
                 repair_item, init_durability
             )
-            y_r = 110 + 40
+            y_r = 138 + 40  # matches _draw_forge_repair: y + 40
             row_h = 52
             btn_w, btn_h = 120, 30
             for ci, char in enumerate(self.party):

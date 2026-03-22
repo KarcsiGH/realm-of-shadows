@@ -2650,6 +2650,23 @@ class Game:
                 self._process_dungeon_event({"type": "camp_rest_execute"})
             elif return_state == S_WORLD_MAP:
                 self._process_world_event({"type": "camp"})
+            elif return_state == S_TOWN:
+                # Resting at a town inn — restore 50% HP/resources, no ambush risk
+                from core.classes import get_all_resources
+                healed = {}
+                for c in self.party:
+                    max_res = get_all_resources(c.class_name, c.stats, c.level)
+                    for rk, mval in max_res.items():
+                        cur = c.resources.get(rk, 0)
+                        restore = int(mval * 0.50)
+                        new_val = min(mval, cur + restore)
+                        if rk == "HP":
+                            healed[c.name] = new_val - cur
+                        c.resources[rk] = new_val
+                sfx.play("camp_rest")
+                parts = [f"{n} +{hp}HP" for n, hp in healed.items() if hp > 0]
+                msg = "Rested at the inn. " + ", ".join(parts) if parts else "Rested at the inn."
+                self.add_toast(msg, GREEN)
         else:
             # Cancel — just go back
             self.go(return_state)
@@ -2870,6 +2887,20 @@ class Game:
         boss_npc = BOSS_NPC_IDS.get(dungeon_id)
         if boss_npc:
             defeat_boss(boss_npc)
+
+        # Set dungeon lore flags that Maren dialogue requires.
+        # These are normally set via peaceful in-dungeon dialogue trees,
+        # but must also be set on combat victory so Maren acknowledges
+        # the quest even if the player killed the boss without negotiating.
+        DUNGEON_LORE_FLAGS = {
+            "goblin_warren":   "lore.grak_truth",
+            "abandoned_mine":  "lore.korrath_truth",
+            "ruins_ashenmoor": "lore.ashvar_truth",
+            "dragons_tooth":   "lore.karreth_truth",
+        }
+        lore_flag = DUNGEON_LORE_FLAGS.get(dungeon_id)
+        if lore_flag:
+            set_flag(lore_flag, True)
 
         # Pale Sentinel — if she yielded peacefully, skip the "boss defeated" fanfare tone
         if dungeon_id == "pale_coast" and get_flag("sentinel.yielded"):
@@ -3803,11 +3834,15 @@ class Game:
                 for i, c in enumerate(self.party):
                     c.gold += share + (1 if i < remainder else 0)
             from core.party_knowledge import auto_identify_if_known, mark_item_identified
+            from core.identification import auto_identify_mundane
             processed = []
             for item in items:
                 item_copy = dict(item)
                 if is_secret:
                     item_copy["identified"] = True
+                # Auto-identify mundane/common items — no wizard needed
+                auto_identify_mundane(item_copy)
+                # Auto-identify if party already knows this item type
                 auto_identify_if_known(item_copy)
                 if item_copy.get("identified"):
                     mark_item_identified(item_copy.get("name", ""))
@@ -3897,9 +3932,11 @@ class Game:
                 for i, c in enumerate(self.party):
                     c.gold += share + (1 if i < remainder else 0)
             from core.party_knowledge import auto_identify_if_known, mark_item_identified
+            from core.identification import auto_identify_mundane
             processed = []
             for item in items:
                 item_copy = dict(item)
+                auto_identify_mundane(item_copy)
                 auto_identify_if_known(item_copy)
                 if item_copy.get("identified"):
                     mark_item_identified(item_copy.get("name", ""))
@@ -3923,11 +3960,15 @@ class Game:
 
             # Auto-identify items as needed
             from core.party_knowledge import auto_identify_if_known, mark_item_identified
+            from core.identification import auto_identify_mundane
             processed = []
             for item in items:
                 item_copy = dict(item)
                 if is_secret:
                     item_copy["identified"] = True
+                # Auto-identify mundane/common items — no wizard needed
+                auto_identify_mundane(item_copy)
+                # Auto-identify if party already knows this item type
                 auto_identify_if_known(item_copy)
                 if item_copy.get("identified"):
                     mark_item_identified(item_copy.get("name", ""))

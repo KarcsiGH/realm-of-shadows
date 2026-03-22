@@ -93,7 +93,12 @@ class CampUI:
         surface.fill(CAMP_BG)
 
         # Title
-        title = "Camp — Dungeon" if self.location == "dungeon" else "Camp — Wilderness"
+        if self.location == "dungeon":
+            title = "Camp — Dungeon"
+        elif self.location == "town":
+            title = "Camp — Town"
+        else:
+            title = "Camp — Wilderness"
         draw_text(surface, title, SCREEN_W // 2 - 120, 8, GOLD, 22, bold=True)
 
         # Leave button
@@ -155,7 +160,10 @@ class CampUI:
     def _draw_rest(self, surface, mx, my, top):
         from core.classes import get_all_resources
 
-        draw_text(surface, "Set up camp and rest?", SCREEN_W // 2 - 100, top, CREAM, 18)
+        if self.location == "town":
+            draw_text(surface, "Rest at the Inn?", SCREEN_W // 2 - 80, top, CREAM, 18)
+        else:
+            draw_text(surface, "Set up camp and rest?", SCREEN_W // 2 - 100, top, CREAM, 18)
 
         if self.location == "dungeon":
             ambush_pct = 25 + self.dungeon_floor * 5
@@ -168,6 +176,10 @@ class CampUI:
             draw_text(surface, f"Ambush risk: {ambush_pct}%", SCREEN_W // 2 - 70,
                       top + 30, ORANGE, 14)
             draw_text(surface, "Restores 25% HP and SP/MP/Ki",
+                      SCREEN_W // 2 - 115, top + 52, GREY, 13)
+        elif self.location == "town":
+            draw_text(surface, "Ambush risk: None — you are safe in town.", SCREEN_W // 2 - 170, top + 30, GREEN, 14)
+            draw_text(surface, "Restores 50% HP and SP/MP/Ki",
                       SCREEN_W // 2 - 115, top + 52, GREY, 13)
         else:
             draw_text(surface, "Ambush risk: Low", SCREEN_W // 2 - 60, top + 30, GREEN, 14)
@@ -1861,28 +1873,26 @@ class CampUI:
             char.inventory.pop(item_idx)
             self.selected_item = -1
 
-    def _equip_item(self, char, item_idx):
-        """Equip an item from inventory."""
+    def _equip_item(self, char, item_idx, target_slot=None):
+        """Equip an item from inventory using core.equipment logic.
+        target_slot lets the player choose ring1/ring2/ring3 explicitly.
+        Without it, equip_item() auto-routes to the first free ring slot.
+        """
         item = char.inventory[item_idx]
-        slot = item.get("slot")
-        if not slot:
+        if not item.get("slot"):
             return
 
-        if not hasattr(char, "equipment") or char.equipment is None:
-            char.equipment = {}
-
-        # Unequip current
-        old = char.equipment.get(slot)
-        if old:
-            char.inventory.append(old)
-
-        # Equip new
-        char.equipment[slot] = item
-        char.inventory.pop(item_idx)
-        self.selected_item = -1
-
-        name = item.get("name", "item")
-        self._msg(f"{char.name} equipped {name}.", GOLD)
+        from core.equipment import equip_item as _equip
+        success, unequipped, msg = _equip(char, item, target_slot=target_slot)
+        if success:
+            char.inventory.pop(item_idx)
+            self.selected_item = -1
+            if unequipped:
+                char.inventory.append(unequipped)
+            name = item.get("name", "item")
+            self._msg(f"{char.name} equipped {name}.", GOLD)
+        else:
+            self._msg(msg or "Cannot equip that item.", ORANGE)
 
     # ─────────────────────────────────────────────────────────
     #  FORMATION TAB
