@@ -626,9 +626,8 @@ class CampUI:
         y += 14
         try:
             from core.equipment import calc_equipment_defense, calc_equipment_magic_resist
-            eq = getattr(c, "equipment", {}) or {}
-            equip_def = calc_equipment_defense(c.class_name, eq)
-            equip_mr  = calc_equipment_magic_resist(eq)
+            equip_def = calc_equipment_defense(c)
+            equip_mr  = calc_equipment_magic_resist(c)
             dex_bonus = max(0, (eff_stats.get("DEX", 10) - 10) // 2)
             ac = 10 + dex_bonus + equip_def
             total_mr = equip_mr + eff_stats.get("WIS", 0) * 2
