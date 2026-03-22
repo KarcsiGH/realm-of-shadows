@@ -3779,7 +3779,8 @@ class Game:
                         from data.magic_items import get_secret_item
                         floor_num = self.dungeon_state.current_floor + 1
                         total_floors = self.dungeon_state.total_floors
-                        bonus_item = get_secret_item(floor_num, total_floors, random)
+                        _did = getattr(self.dungeon_state, "dungeon_id", None)
+                        bonus_item = get_secret_item(floor_num, total_floors, random, dungeon_id=_did)
                         if bonus_item:
                             bonus_item["identified"] = False
                             bonus_item["_wis_bonus"] = True
