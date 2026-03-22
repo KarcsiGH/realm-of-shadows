@@ -41,6 +41,7 @@ PARTY_SIZE = 6
 
 # States
 S_TITLE       = 0
+S_SPLASH      = 30   # company logo + title intro sequence
 S_MODE        = 1
 S_NAME        = 2
 S_RACE        = 16  # race selection (new)
@@ -76,7 +77,7 @@ class Game:
         self.running = True
         sfx.init()  # Initialize sound system
         sfx.load_settings()  # Apply saved volume settings
-        self.state = S_TITLE
+        # state set above
         self.party = []
         self.current_char = None
         self.char_index = 0
@@ -96,6 +97,10 @@ class Game:
         self.quick = False
         self.fade = 255
         self.title_t = 0
+        # Intro sequence — company splash → title art → menu
+        from ui.intro_screen import IntroScreen
+        self.intro = IntroScreen()
+        self.state = S_SPLASH   # start with splash, not S_TITLE
         # Combat
         self.combat_state = None
         self.combat_ui = None
@@ -176,6 +181,8 @@ class Game:
         while self.running:
             dt = self.clock.tick(FPS)
             self.title_t += dt
+            if self.state == S_SPLASH:
+                self.intro.update(dt)
             self.blink += dt
             self.timer += dt
             mx, my = pygame.mouse.get_pos()
@@ -333,6 +340,20 @@ class Game:
                 return
             if self._handle_journal_event(e, mx, my):
                 return
+
+        if self.state == S_SPLASH:
+            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                result = self.intro.handle_click(mx, my)
+                if result == 'new_game':
+                    self.party = []; self.char_index = 0
+                    self.world_state = None; self.dungeon_cache = {}
+                    self.current_char = None
+                    self.go(S_MODE)
+                elif result == 'continue':
+                    from ui.save_load_ui import SaveLoadUI
+                    self.save_load_ui = SaveLoadUI("load", dungeon_cache=self.dungeon_cache)
+                    self.go(S_SAVE_LOAD)
+            return
 
         if self.state == S_TITLE:
             if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
@@ -1542,7 +1563,8 @@ class Game:
 
 
     def draw_state(self, mx, my):
-        if self.state == S_TITLE:      self.draw_title(mx, my)
+        if self.state == S_SPLASH:     self._draw_splash_intro(mx, my)
+        elif self.state == S_TITLE:      self.draw_title(mx, my)
         elif self.state == S_MODE:     self.draw_mode(mx, my)
         elif self.state == S_NAME:     self.draw_name()
         elif self.state == S_RACE:     self.draw_race(mx, my)
@@ -1568,6 +1590,17 @@ class Game:
         elif self.state == S_SETTINGS:         self._draw_settings(mx, my)
         elif self.state == S_GAME_OVER:        self._draw_game_over(mx, my)
         elif self.state == S_SAVE_LOAD:        self._draw_save_load(mx, my)
+
+    # ── Splash / Intro sequence ───────────────────────────────
+
+    def _draw_splash_intro(self, mx=0, my=0):
+        """Delegate drawing to the IntroScreen object.
+        Advances to S_TITLE (legacy) when intro is done, but the
+        intro itself handles transitioning to menu via its own state.
+        """
+        self.intro.draw(self.screen, mx, my)
+        # Also update title_t so legacy draw_title still works if reached
+        self.title_t += 0
 
     # ── Title Screen ──────────────────────────────────────────
 
