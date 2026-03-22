@@ -4,6 +4,12 @@ All sounds generated procedurally at startup — no audio files needed.
 Gracefully handles missing/failed audio initialization.
 """
 import math, array, random
+try:
+    import numpy as _np
+    from scipy import signal as _signal
+    _HAS_NUMPY = True
+except ImportError:
+    _HAS_NUMPY = False
 
 _enabled        = False
 _mixer          = None
@@ -13,7 +19,7 @@ _ambient_channel= None
 _master_vol     = 0.6
 _sfx_vol        = 0.7
 _music_vol      = 0.35
-_ambient_vol    = 0.25
+_ambient_vol    = 0.65  # raised to match combat SFX level
 
 try:
     import pygame.mixer as _mixer
@@ -138,6 +144,174 @@ def _make_sound(samples):
         return _mixer.Sound(buffer=array.array('h', samples))
     except Exception:
         return None
+
+
+
+# ═══════════════════════════════════════════════════════════════
+#  NUMPY BIOME HELPERS  (used only if numpy/scipy available)
+# ═══════════════════════════════════════════════════════════════
+
+def _np_make_sound(sig):
+    """Convert a numpy float32 array [-1,1] to a pygame Sound."""
+    if not _mixer or not _HAS_NUMPY:
+        return None
+    try:
+        d = (_np.clip(sig, -1.0, 1.0) * 32767).astype(_np.int16)
+        return _mixer.Sound(buffer=array.array('h', d.tolist()))
+    except Exception:
+        return None
+
+def _np_sine(n, freq, vol=0.4, phase=0.0):
+    t = _np.arange(n, dtype=_np.float32) / SR
+    return (vol * _np.sin(2 * _np.pi * freq * t + phase))
+
+def _np_bandpass(n, cf, bw, vol=0.5, seed=0):
+    rng = _np.random.default_rng(seed)
+    noise = rng.standard_normal(n).astype(_np.float64)
+    b, a = _signal.iirfilter(4,
+        [max(20.0, cf - bw/2), min(float(SR)/2 - 1, cf + bw/2)],
+        btype='band', fs=SR, ftype='butter')
+    filtered = _signal.lfilter(b, a, noise)
+    peak = _np.max(_np.abs(filtered)) or 1.0
+    return (filtered / peak * vol).astype(_np.float32)
+
+def _np_swell(n, period, phase=0.0, depth=0.55):
+    t = _np.arange(n, dtype=_np.float32) / SR
+    return (1.0 - depth + depth * (0.5 + 0.5 * _np.sin(2*_np.pi*t/period + phase)))
+
+def _np_fade(sig, attack=0.05, release=0.1):
+    out = sig.copy(); n = len(sig)
+    a = min(int(SR*attack), n//2); r = min(int(SR*release), n//2)
+    if a: out[:a] *= _np.linspace(0, 1, a, dtype=_np.float32)
+    if r: out[-r:] *= _np.linspace(1, 0, r, dtype=_np.float32)
+    return out
+
+def _np_mix(*arrays):
+    n = max(len(a) for a in arrays)
+    out = _np.zeros(n, _np.float32)
+    for a in arrays: out[:len(a)] += a
+    return _np.clip(out, -1.0, 1.0)
+
+def _np_place(buf, onset_s, chunk):
+    s = int(SR * onset_s); e = min(len(buf), s + len(chunk))
+    buf[s:e] += chunk[:e-s]
+
+def _np_seamless(sig, fade=0.08):
+    n = len(sig); f = int(SR * fade); out = sig.copy()
+    ramp = _np.linspace(0, 1, f, dtype=_np.float32)
+    out[:f]  += sig[-f:] * (1 - ramp)
+    out[-f:] += sig[:f]  * (1 - ramp[::-1])
+    return _np.clip(out, -1.0, 1.0)
+
+def _make_biome(fn):
+    """Generate a biome sound using numpy (if available) or return silence."""
+    if not _HAS_NUMPY:
+        return _make_sound([0] * int(SR * 4.0))
+    return _np_make_sound(_np_seamless(fn()))
+
+def _biome_grassland():
+    N = int(SR * 8.0)
+    wind1 = _np_bandpass(N, 280, 160, .22, 11) * _np_swell(N, 2.8, 0.0, .6)
+    wind2 = _np_bandpass(N, 180,  80, .12, 22) * _np_swell(N, 4.1, 1.2, .5)
+    rustle= _np_bandpass(N, 600, 350, .07, 33) * _np_swell(N, 1.3, 0.5, .7)
+    gust_n= _np_bandpass(N, 320, 200, .18, 44)
+    gust_e= _np.zeros(N, _np.float32)
+    gs, ge = int(SR*2.8), int(SR*4.2)
+    gust_e[gs:ge] = _np.hanning(ge-gs)
+    birds = _np.zeros(N, _np.float32)
+    for onset, freq, dur in [(1.2,3800,.08),(1.31,4200,.07),(1.42,3600,.09),(5.5,4000,.08),(5.61,4400,.07)]:
+        n2 = int(SR*dur)
+        _np_place(birds, onset, _np_fade(_np_sine(n2,freq,.08),.01,.03))
+    return _np_mix(wind1, wind2, rustle, gust_n*gust_e, birds)
+
+def _biome_forest():
+    N = int(SR * 8.0)
+    canopy = _np_bandpass(N, 400, 200, .18, 21) * _np_swell(N, 2.1, 0.0, .65)
+    foliage= _np_bandpass(N, 160,  70, .14, 31) * _np_swell(N, 3.7, 2.0, .5)
+    hum    = _np_sine(N, 55, .05)              * _np_swell(N, 5.0, 0.0, .4)
+    birds  = _np.zeros(N, _np.float32)
+    for onset, freq in [(0.8,2200),(0.95,2600),(1.1,3100),(1.25,3600)]:
+        n2=int(SR*.12); _np_place(birds, onset, _np_fade(_np_sine(n2,freq,.07),.01,.04))
+    for onset in [4.2,4.32,4.44,4.56]:
+        n2=int(SR*.09); _np_place(birds, onset, _np_fade(_np_sine(n2,3200,.05),.01,.02))
+    drips  = _np.zeros(N, _np.float32)
+    rng = _np.random.default_rng(41)
+    for _ in range(6):
+        t = float(rng.uniform(0.5, 7.7)); n2=int(SR*.04)
+        _np_place(drips, t, _np_fade(_np_bandpass(n2,1800,800,.04,int(t*100)),.002,.02))
+    return _np_mix(canopy, foliage, hum, birds, drips)
+
+def _biome_hills():
+    N = int(SR * 8.0)
+    wind_hi = _np_bandpass(N, 350, 200, .25, 41) * _np_swell(N, 2.4, 0.0, .55)
+    wind_lo = _np_bandpass(N, 100,  50, .15, 51) * _np_swell(N, 3.8, 1.5, .5)
+    moan    = _np_sine(N, 95, .06)               * _np_swell(N, 4.5, 0.8, .7)
+    gusts   = _np.zeros(N, _np.float32)
+    for gs_t, ge_t in [(0.5,2.0),(5.5,7.5)]:
+        gs, ge = int(SR*gs_t), int(SR*ge_t); n2 = ge-gs
+        bump = _np_bandpass(n2, 380, 220, .22, int(gs_t*10)) * _np.hanning(n2).astype(_np.float32)
+        gusts[gs:ge] += bump
+    whistle = _np.zeros(N, _np.float32)
+    _np_place(whistle, 3.2, _np_fade(_np_sine(int(SR*.7),680,.06),.15,.25))
+    return _np_mix(wind_hi, wind_lo, moan, gusts, whistle)
+
+def _biome_swamp():
+    N = int(SR * 8.0)
+    d1   = _np_sine(N, 58, .10) * _np_swell(N, 4.2, 0.0, .4)
+    d2   = _np_sine(N, 87, .06) * _np_swell(N, 6.1, 2.1, .5)
+    murk = _np_bandpass(N, 130, 60, .10, 61) * _np_swell(N, 3.0, 0.5, .5)
+    bugs = _np_bandpass(N, 3500, 1500, .06, 71) * _np_swell(N, 0.4, 0.0, .8) * _np_swell(N, 2.5, 1.0, .6)
+    frogs = _np.zeros(N, _np.float32)
+    for onset, freq in [(1.4,280),(1.55,260),(4.2,300),(4.35,285)]:
+        n2=int(SR*.18); _np_place(frogs, onset, _np_fade(_np_bandpass(n2,freq,80,.12,int(onset*100)),.02,.06))
+    bubbles = _np.zeros(N, _np.float32)
+    for onset in [2.3,6.1]:
+        n2=int(SR*.06); _np_place(bubbles, onset, _np_fade(_np_bandpass(n2,400,200,.08,int(onset*50)),.005,.04))
+    return _np_mix(d1, d2, murk, bugs, frogs, bubbles)
+
+def _biome_coast():
+    N = int(SR * 8.0)
+    deep  = _np_bandpass(N, 80, 50, .22, 81)   * _np_swell(N, 3.5, 0.0, .65)
+    crash = _np_bandpass(N, 350, 300, .18, 91)
+    crash_e = _np.zeros(N, _np.float32)
+    for pt in [1.2, 4.3, 7.1]:
+        s,e = int(SR*max(0,pt-1.0)), int(SR*min(8.0,pt+0.8))
+        if e>s: crash_e[s:e] += _np.hanning(e-s)**0.7
+    spray   = _np_bandpass(N, 2000, 1200, .06, 12)
+    spray_e = _np.zeros(N, _np.float32)
+    for pt in [1.2,4.3,7.1]:
+        s,e = int(SR*max(0,pt-.2)), int(SR*min(8.0,pt+.4))
+        if e>s: spray_e[s:e] += _np.hanning(e-s)
+    gulls = _np.zeros(N, _np.float32)
+    for onset, freq in [(2.5,1800),(2.7,1950),(2.9,1800),(6.0,1700),(6.2,1900)]:
+        n2=int(SR*.16)
+        cry = _np_sine(n2,freq,.07) + _np_sine(n2,int(freq*1.5),.03)
+        _np_place(gulls, onset, _np_fade(cry,.03,.06))
+    wind = _np_bandpass(N, 250, 130, .10, 92) * _np_swell(N, 3.1, 1.0, .4)
+    return _np_mix(deep, crash*crash_e, spray*spray_e, gulls, wind)
+
+def _biome_desert():
+    """Arid, sparse — sustained hot wind, sand hiss, no birds, eerie emptiness."""
+    N = int(SR * 8.0)
+    # Hot dry wind: narrow high-mid bandpass, very slow swell
+    wind_hot = _np_bandpass(N, 320, 100, .20, 14) * _np_swell(N, 5.2, 0.0, .5)
+    # Low sand rumble: sub-bass hiss
+    sand_lo  = _np_bandpass(N, 90, 40, .12, 24) * _np_swell(N, 3.8, 1.6, .55)
+    # Blowing sand: high-freq sibilant hiss that gusts
+    sand_hi  = _np_bandpass(N, 4000, 2000, .05, 34) * _np_swell(N, 1.8, 0.4, .7)
+    # Gust event: one strong blast midway
+    gust_n = _np_bandpass(N, 380, 180, .22, 54)
+    gust_e = _np.zeros(N, _np.float32)
+    gs, ge = int(SR*3.0), int(SR*5.5)
+    gust_e[gs:ge] = _np.hanning(ge-gs)
+    # Occasional lone sand devil (brief high-freq swirl)
+    devil = _np.zeros(N, _np.float32)
+    n2 = int(SR*.35)
+    swirl = _np_bandpass(n2, 1800, 800, .07, 74) * _np.hanning(n2).astype(_np.float32)
+    _np_place(devil, 6.2, swirl)
+    # Subtle low resonant tone (heat shimmer effect)
+    shimmer = _np_sine(N, 62, .03) * _np_swell(N, 7.0, 0.0, .6)
+    return _np_mix(wind_hot, sand_lo, sand_hi, gust_n*gust_e, devil, shimmer)
 
 
 def _sine(freq, duration, volume=0.5, fade_out=True):
@@ -667,38 +841,13 @@ def _generate_all_sounds():
     _sounds["world_ambient"] = _make_sound(
         _bandpass_noise(3.0, 180, 80, volume=0.08, seed=88))
 
-    # ── Biome ambient sounds ─────────────────────────────────
-    # Grassland / road / scrubland: open wind, sparse
-    _sounds["ambient_grassland"] = _make_sound(_mix(
-        _bandpass_noise(4.0, 220, 90, volume=0.07, seed=11),
-        _sine(180, 3.8, 0.02, fade_out=False),
-        _bandpass_noise(4.0, 80, 35, volume=0.03, seed=77)))
-
-    # Forest / dense forest: birds, leaves, deeper wind
-    _sounds["ambient_forest"] = _make_sound(_mix(
-        _bandpass_noise(4.0, 300, 120, volume=0.06, seed=22),  # canopy rustle
-        _bandpass_noise(4.0, 140, 55,  volume=0.04, seed=33),  # low undertone
-        _sine(440, 3.8, 0.015, fade_out=False),               # distant bird
-        _sine(660, 3.6, 0.010, fade_out=False)))
-
-    # Hills / mountain: strong wind, exposed elevation
-    _sounds["ambient_hills"] = _make_sound(_mix(
-        _bandpass_noise(4.0, 280, 130, volume=0.09, seed=44),  # gusting wind
-        _bandpass_noise(4.0, 100, 45,  volume=0.04, seed=55),  # low moan
-        _sine(120, 3.8, 0.025, fade_out=False)))
-
-    # Swamp: low drone, murky, damp
-    _sounds["ambient_swamp"] = _make_sound(_mix(
-        _sine(80,  3.8, 0.06, fade_out=False),                 # deep drone
-        _sine(160, 3.8, 0.03, fade_out=False),                 # harmonic
-        _bandpass_noise(4.0, 120, 50, volume=0.04, seed=66),  # wet noise
-        _bandpass_noise(4.0, 600, 200, volume=0.02, seed=99))) # frog-like highs
-
-    # Coast / shore / water: waves, seabirds
-    _sounds["ambient_coast"] = _make_sound(_mix(
-        _bandpass_noise(4.0, 200, 180, volume=0.08, seed=11),  # wave crash
-        _bandpass_noise(4.0, 60,  40,  volume=0.05, seed=88),  # deep water roll
-        _sine(800, 3.5, 0.008, fade_out=False)))
+    # ── Biome ambient sounds (layered, numpy-based) ──────────
+    _sounds["ambient_grassland"] = _make_biome(_biome_grassland)
+    _sounds["ambient_forest"]    = _make_biome(_biome_forest)
+    _sounds["ambient_hills"]     = _make_biome(_biome_hills)
+    _sounds["ambient_swamp"]     = _make_biome(_biome_swamp)
+    _sounds["ambient_coast"]     = _make_biome(_biome_coast)
+    _sounds["ambient_desert"]    = _make_biome(_biome_desert)
 
     # Dungeon: low resonant drone
     _sounds["dungeon_ambient"] = _make_sound(_mix(

@@ -3349,7 +3349,7 @@ class Game:
         "grass":        "ambient_grassland",
         "road":         "ambient_grassland",
         "scrubland":    "ambient_grassland",
-        "desert":       "ambient_grassland",
+        "desert":       "ambient_desert",
         "bridge":       "ambient_grassland",
         "forest":       "ambient_forest",
         "dense_forest": "ambient_forest",
