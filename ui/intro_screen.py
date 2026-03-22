@@ -56,33 +56,48 @@ PIXEL_BLOCK = 5   # 5×5 real pixels per "retro pixel"
 
 def _make_retro_logo(original_surf, block=PIXEL_BLOCK):
     """
-    Downscale the original to a tiny grid then upscale back with chunky pixels.
-    Keeps the neon-green / black colour scheme from the source image.
-    Result: a Surface that looks like it came out of an Apple IIe.
+    Downscale → quantise to neon green/transparent → scale back up with big pixels.
+    Black and near-black pixels become TRANSPARENT so the logo floats over any BG.
+    Bright pixels become neon green (0, lum*1.2, 0).
     """
+    import numpy as np
+
     w, h = original_surf.get_size()
     tiny_w = max(1, w // block)
     tiny_h = max(1, h // block)
 
-    # Downscale
-    tiny = pygame.transform.smoothscale(original_surf, (tiny_w, tiny_h))
+    # Downscale (keep SRCALPHA so we see what's transparent in the source)
+    tiny = pygame.transform.smoothscale(
+        original_surf.convert_alpha(), (tiny_w, tiny_h)
+    )
 
-    # Quantise colours: black → black, anything else → bright neon green
-    pa = pygame.PixelArray(tiny)
-    for px in range(tiny_w):
-        for py in range(tiny_h):
-            c = tiny.unmap_rgb(pa[px, py])
-            # If luminance is low, make it black; otherwise neon green
-            lum = 0.299*c[0] + 0.587*c[1] + 0.114*c[2]
-            if lum < 40:
-                pa[px, py] = tiny.map_rgb(0, 0, 0)
-            else:
-                # Boost toward bright green
-                pa[px, py] = tiny.map_rgb(0, min(255, int(lum * 1.2)), 0)
-    del pa
+    # Pull RGB + alpha separately (array4d not available in all pygame builds)
+    rgb  = pygame.surfarray.array3d(tiny).astype(float)    # [w, h, 3]
+    alph = pygame.surfarray.array_alpha(tiny).astype(float) # [w, h]
+    R, G, B = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
 
-    # Scale back up with nearest-neighbour (chunky pixels)
-    retro = pygame.transform.scale(tiny, (tiny_w * block, tiny_h * block))
+    # Luminance weighted by source alpha
+    lum = (0.299*R + 0.587*G + 0.114*B) * (alph / 255.0)
+
+    # Threshold: bright → neon green opaque, dark → transparent
+    bright = lum > 35
+    green_vals = np.clip(lum * 1.3, 0, 255).astype(np.uint8)
+
+    # Build result surface with SRCALPHA
+    result_tiny = pygame.Surface((tiny_w, tiny_h), pygame.SRCALPHA)
+    result_tiny.fill((0, 0, 0, 0))   # start fully transparent
+
+    # Write green channel and alpha using surfarray
+    rgb_view   = pygame.surfarray.pixels3d(result_tiny)
+    alpha_view = pygame.surfarray.pixels_alpha(result_tiny)
+    rgb_view[:,:,0] = 0
+    rgb_view[:,:,1] = np.where(bright, green_vals, 0)
+    rgb_view[:,:,2] = 0
+    alpha_view[:,:] = np.where(bright, 255, 0).astype(np.uint8)
+    del rgb_view, alpha_view
+
+    # Scale up with nearest-neighbour for chunky retro pixels
+    retro = pygame.transform.scale(result_tiny, (tiny_w * block, tiny_h * block))
     return retro
 
 
@@ -335,22 +350,43 @@ class IntroScreen:
         logo_a = self._splash_alpha()
         pres_a = self._presents_alpha()
 
-        # Dark vignette
-        vign = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        vign.fill((0, 0, 0, 200))
-        surf.blit(vign, (0, 0))
+        surf.fill((0, 0, 0))
+
+        # Dim green phosphor glow backdrop — makes the retro logo pop
+        if logo_a > 0:
+            glow_w, glow_h = 760, 260
+            glow_x = SCREEN_W // 2 - glow_w // 2
+            glow_y = SCREEN_H // 2 - glow_h // 2 - 30
+            glow_surf = pygame.Surface((glow_w, glow_h), pygame.SRCALPHA)
+            ga = int(logo_a * 0.18)
+            # Radial gradient: dark center glow
+            for r in range(0, min(glow_w, glow_h) // 2, 4):
+                frac = 1.0 - r / (min(glow_w, glow_h) // 2)
+                a = int(ga * frac ** 2)
+                pygame.draw.ellipse(glow_surf, (0, 40, 0, a),
+                    (glow_w//2 - r*2, glow_h//2 - r, r*4, r*2))
+            surf.blit(glow_surf, (glow_x, glow_y))
 
         # Logo
         if self._logo_retro and logo_a > 0:
-            logo = self._logo_retro.copy()
-            # Scale to fit nicely
-            lw, lh = logo.get_size()
-            scale = min(0.7, 700 / lw)
+            lw, lh = self._logo_retro.get_size()
+            # Scale to fit — max 700px wide, max 55% of screen height
+            scale = min(0.85, 700 / lw, (SCREEN_H * 0.55) / lh)
             nw, nh = int(lw * scale), int(lh * scale)
-            logo = pygame.transform.scale(logo, (nw, nh))
-            logo.set_alpha(logo_a)
-            # Tint green
-            surf.blit(logo, (SCREEN_W // 2 - nw // 2, SCREEN_H // 2 - nh // 2 - 40))
+            logo_scaled = pygame.transform.scale(self._logo_retro, (nw, nh))
+            lx = SCREEN_W // 2 - nw // 2
+            ly = SCREEN_H // 2 - nh // 2 - 30
+
+            # Fade: composite via an alpha-multiplied copy
+            # Since logo_scaled is SRCALPHA, we use a temp surface
+            faded = pygame.Surface((nw, nh), pygame.SRCALPHA)
+            faded.blit(logo_scaled, (0, 0))
+            # Multiply per-pixel alpha by logo_a/255
+            alpha_arr = pygame.surfarray.pixels_alpha(faded)
+            import numpy as np
+            alpha_arr[:] = (alpha_arr.astype(np.float32) * logo_a / 255).astype(np.uint8)
+            del alpha_arr
+            surf.blit(faded, (lx, ly))
         else:
             # Fallback text logo
             f_big = pygame.font.SysFont("monospace", 52, bold=True)
