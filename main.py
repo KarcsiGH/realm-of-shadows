@@ -628,9 +628,10 @@ class Game:
                         if r.collidepoint(mx, my):
                             if self.dungeon_state:
                                 self.go_fade(S_DUNGEON)
-                            elif self.world_state:
-                                self.go_fade(S_WORLD_MAP)
                             else:
+                                # Always call _init_world_map so world_map_ui is
+                                # created/refreshed — it guards against recreating
+                                # world_state if one already exists.
                                 self._init_world_map()
                                 self.go_fade(S_WORLD_MAP)
 
