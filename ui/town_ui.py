@@ -29,6 +29,13 @@ BUY_COL      = (80, 220, 120)
 SELL_COL     = (220, 180, 80)
 HEAL_COL     = (80, 255, 180)
 RUMOR_COL    = (180, 160, 220)
+# Shared stat/bar colors (mirrors camp_ui.py values)
+STAT_LABEL   = (160, 150, 180)
+STAT_VAL     = (220, 220, 200)
+HP_BAR       = (50, 180, 80)
+HP_BAR_BG    = (30, 40, 30)
+MP_BAR       = (60, 100, 200)
+SP_BAR       = (200, 160, 60)
 
 # Town display info
 TOWN_DISPLAY = {
