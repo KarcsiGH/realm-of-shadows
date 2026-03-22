@@ -663,9 +663,43 @@ def _generate_all_sounds():
         town_env_samples[env_n-1-i]  = int(town_env_samples[env_n-1-i]  * frac)
     _sounds["town_env"] = _make_sound(town_env_samples)
 
-    # World map: open wind-like sweep
+    # World map: open wind-like sweep (kept as fallback)
     _sounds["world_ambient"] = _make_sound(
         _bandpass_noise(3.0, 180, 80, volume=0.08, seed=88))
+
+    # ── Biome ambient sounds ─────────────────────────────────
+    # Grassland / road / scrubland: open wind, sparse
+    _sounds["ambient_grassland"] = _make_sound(_mix(
+        _bandpass_noise(4.0, 220, 90, volume=0.07, seed=11),
+        _sine(180, 3.8, 0.02, fade_out=False),
+        _bandpass_noise(4.0, 80, 35, volume=0.03, seed=77)))
+
+    # Forest / dense forest: birds, leaves, deeper wind
+    _sounds["ambient_forest"] = _make_sound(_mix(
+        _bandpass_noise(4.0, 300, 120, volume=0.06, seed=22),  # canopy rustle
+        _bandpass_noise(4.0, 140, 55,  volume=0.04, seed=33),  # low undertone
+        _sine(440, 3.8, 0.015, fade_out=False),               # distant bird
+        _sine(660, 3.6, 0.010, fade_out=False)))
+
+    # Hills / mountain: strong wind, exposed elevation
+    _sounds["ambient_hills"] = _make_sound(_mix(
+        _bandpass_noise(4.0, 280, 130, volume=0.09, seed=44),  # gusting wind
+        _bandpass_noise(4.0, 100, 45,  volume=0.04, seed=55),  # low moan
+        _sine(120, 3.8, 0.025, fade_out=False)))
+
+    # Swamp: low drone, murky, damp
+    _sounds["ambient_swamp"] = _make_sound(_mix(
+        _sine(80,  3.8, 0.06, fade_out=False),                 # deep drone
+        _sine(160, 3.8, 0.03, fade_out=False),                 # harmonic
+        _bandpass_noise(4.0, 120, 50, volume=0.04, seed=66),  # wet noise
+        _bandpass_noise(4.0, 600, 200, volume=0.02, seed=99))) # frog-like highs
+
+    # Coast / shore / water: waves, seabirds
+    _sounds["ambient_coast"] = _make_sound(_mix(
+        _bandpass_noise(4.0, 200, 180, volume=0.08, seed=11),  # wave crash
+        _bandpass_noise(4.0, 60,  40,  volume=0.05, seed=88),  # deep water roll
+        _sine(800, 3.5, 0.008, fade_out=False)))
+
     # Dungeon: low resonant drone
     _sounds["dungeon_ambient"] = _make_sound(_mix(
         _sine(65, 2.5, 0.08, fade_out=False),

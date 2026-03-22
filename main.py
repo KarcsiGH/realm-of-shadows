@@ -270,9 +270,10 @@ class Game:
         elif state == S_WORLD_MAP:
             sfx.stop_music()
             sfx.stop_ambient()
-            sfx.play_ambient("world_ambient")
+            self._update_world_biome_sound()
             self._sync_flag_keys()
         elif state == S_DUNGEON:
+            self._current_biome_sound = None  # reset so re-entry picks fresh biome
             sfx.stop_music()
             sfx.stop_ambient()
             sfx.play_ambient("dungeon_ambient")
@@ -3313,9 +3314,51 @@ class Game:
             self.world_state = WorldState(self.party)
         self.world_map_ui = WorldMapUI(self.world_state)
 
+    # ─────────────────────────────────────────────────────────
+    #  BIOME AMBIENT SOUND
+    # ─────────────────────────────────────────────────────────
+    _TERRAIN_TO_BIOME = {
+        "grass":        "ambient_grassland",
+        "road":         "ambient_grassland",
+        "scrubland":    "ambient_grassland",
+        "desert":       "ambient_grassland",
+        "bridge":       "ambient_grassland",
+        "forest":       "ambient_forest",
+        "dense_forest": "ambient_forest",
+        "hill":         "ambient_hills",
+        "mountain":     "ambient_hills",
+        "swamp":        "ambient_swamp",
+        "water":        "ambient_coast",
+        "lake":         "ambient_coast",
+        "river":        "ambient_coast",
+        "shore":        "ambient_coast",
+    }
+
+    def _update_world_biome_sound(self):
+        """Switch ambient sound to match current terrain biome.
+        Only restarts the ambient if the biome has actually changed."""
+        if not self.world_state:
+            sfx.play_ambient("world_ambient")
+            return
+        try:
+            tile = self.world_state.tiles[self.world_state.party_y][self.world_state.party_x]
+            terrain = tile.get("terrain", "grass")
+        except Exception:
+            terrain = "grass"
+        biome_sound = self._TERRAIN_TO_BIOME.get(terrain, "ambient_grassland")
+        # Only switch if the biome changed — avoids restarting the same loop
+        if getattr(self, "_current_biome_sound", None) != biome_sound:
+            self._current_biome_sound = biome_sound
+            sfx.stop_ambient()
+            sfx.play_ambient(biome_sound)
+
     def _process_world_event(self, event):
         """Handle events from the world map."""
         if event is None:
+            # Even on None events (plain move with no special result),
+            # update the biome ambient in case terrain changed.
+            if self.state == S_WORLD_MAP:
+                self._update_world_biome_sound()
             return
 
         if event["type"] == "encounter":
