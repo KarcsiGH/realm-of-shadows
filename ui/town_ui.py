@@ -100,6 +100,8 @@ class TownUI:
     VIEW_FORGE_REPAIR  = "forge_repair"
     VIEW_GUILD = "guild"
     VIEW_GUILD_TRANSITION = "guild_transition"
+    VIEW_INN_TRAINER   = "inn_trainer"       # skill/ability training
+    VIEW_INN_CHARSHEET = "inn_charsheet"     # consolidated character sheet
 
     def __init__(self, party, town_id="briarhollow"):
         self.party = party
@@ -131,6 +133,11 @@ class TownUI:
         self.branch_hover_idx = -1       # hovered option index
         # Class tree viewer
         self.classtree_char_idx = 0  # which party member to show
+        # Trainer state
+        self.trainer_char_idx = 0    # which character is training
+        self.trainer_scroll = 0      # scroll offset for ability list
+        # Character sheet state
+        self.charsheet_idx = 0       # which character is shown
 
         # Tavern state
         self.tavern_drinks = {}      # patron_name -> drinks bought (int)
@@ -235,6 +242,10 @@ class TownUI:
             self._draw_jobboard(surface, mx, my)
         elif self.view in (self.VIEW_GUILD, self.VIEW_GUILD_TRANSITION):
             self._draw_guild(surface, mx, my)
+        elif self.view == self.VIEW_INN_TRAINER:
+            self._draw_inn_trainer(surface, mx, my)
+        elif self.view == self.VIEW_INN_CHARSHEET:
+            self._draw_inn_charsheet(surface, mx, my)
 
         # Message bar
         if self.message and self.msg_timer > 0:
@@ -1631,6 +1642,12 @@ class TownUI:
         # Party management button — opens inventory/equip/stats/transfer
         party_btn = pygame.Rect(SCREEN_W - 420, 20, 130, 34)
         draw_button(surface, party_btn, "👥 Party", hover=party_btn.collidepoint(mx, my), size=13)
+        # Train skills button
+        train_btn = pygame.Rect(SCREEN_W - 570, 20, 138, 34)
+        draw_button(surface, train_btn, "⚔ Train Skills", hover=train_btn.collidepoint(mx, my), size=12)
+        # Character sheet button
+        sheet_btn = pygame.Rect(SCREEN_W - 722, 20, 140, 34)
+        draw_button(surface, sheet_btn, "📋 Characters", hover=sheet_btn.collidepoint(mx, my), size=12)
         # Save feedback label
         if getattr(self, "_inn_save_msg", "") and getattr(self, "_inn_save_timer", 0) > 0:
             smsg_col = (120, 220, 120) if self._inn_save_ok else (220, 80, 80)
@@ -1702,6 +1719,308 @@ class TownUI:
             draw_text(surface, self.inn_result, rp.x + 15, rp.y + 10, GREEN, 14, max_width=470)
 
         self._draw_party_bar(surface, mx, my)
+
+    # ─────────────────────────────────────────────────────────
+    #  SKILL TRAINER
+    # ─────────────────────────────────────────────────────────
+
+    def _draw_inn_trainer(self, surface, mx, my):
+        """Skill trainer view — learn unlearned abilities for gold."""
+        from core.abilities import get_unlearned_abilities
+
+        bld_name = self.current_bld_name or "The Inn"
+        self._draw_bld_npc_header(surface, bld_name,
+            "Train your skills — spend gold to master new abilities.", mx, my)
+
+        back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
+        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+
+        total_gold = sum(c.gold for c in self.party)
+        draw_text(surface, f"Party Gold: {total_gold}g", SCREEN_W // 2 - 60, 80, DIM_GOLD, 14)
+
+        # Character tabs
+        tab_area_w = SCREEN_W - 170
+        tw = tab_area_w // len(self.party)
+        for i, c in enumerate(self.party):
+            cls = CLASSES[c.class_name]
+            tr = pygame.Rect(20 + i * tw, 108, tw - 4, 28)
+            is_sel = (i == self.trainer_char_idx)
+            hover = tr.collidepoint(mx, my)
+            bg = (50, 40, 85) if is_sel else (35, 30, 60) if hover else (20, 18, 36)
+            border = cls["color"] if is_sel else HIGHLIGHT if hover else PANEL_BORDER
+            pygame.draw.rect(surface, bg, tr, border_radius=3)
+            pygame.draw.rect(surface, border, tr, 2, border_radius=3)
+            draw_text(surface, c.name, tr.x + 8, tr.y + 5,
+                      cls["color"] if is_sel else GREY, 13, bold=is_sel)
+
+        char = self.party[self.trainer_char_idx]
+        unlearned = get_unlearned_abilities(char)
+
+        y = 150
+        if not unlearned:
+            draw_text(surface,
+                f"{char.name} has learned all available abilities for their current level.",
+                40, y + 20, GREY, 14)
+            draw_text(surface, "Level up at the inn to unlock more skills.",
+                      40, y + 44, STAT_LABEL, 12)
+            return
+
+        draw_text(surface,
+            f"Available to learn — {char.name} (Level {char.level}):",
+            40, y, GOLD, 14, bold=True)
+        y += 24
+
+        VISIBLE = 7
+        start = self.trainer_scroll
+        visible_abs = unlearned[start:start + VISIBLE]
+        self._trainer_rects = []
+
+        TYPE_COL = {
+            "spell": (140, 100, 255), "heal": (80, 220, 140),
+            "aoe_heal": (80, 220, 140), "buff": (80, 180, 255),
+            "attack": (220, 120, 80), "aoe": (255, 160, 60),
+            "debuff": (200, 80, 120),
+        }
+
+        for i, ab in enumerate(visible_abs):
+            ab_level = ab.get("level", 1)
+            cost = ab_level * 20   # 20g per ability level — affordable but meaningful
+            can_afford = total_gold >= cost
+
+            row = pygame.Rect(40, y + i * 74, SCREEN_W - 80, 68)
+            hover = row.collidepoint(mx, my)
+            bg = (45, 35, 25) if (hover and can_afford) else (25, 20, 35)
+            border = (220, 180, 80) if (hover and can_afford) else PANEL_BORDER
+            pygame.draw.rect(surface, bg, row, border_radius=5)
+            pygame.draw.rect(surface, border, row, 1, border_radius=5)
+
+            ab_type = ab.get("type", "skill")
+            type_col = TYPE_COL.get(ab_type, CREAM)
+            draw_text(surface, ab["name"], row.x + 14, row.y + 8,
+                      GOLD if can_afford else GREY, 16, bold=True)
+            draw_text(surface, f"[{ab_type.title()}]",
+                      row.x + 14, row.y + 30, type_col, 11)
+            draw_text(surface, f"Unlocks at Level {ab_level}",
+                      row.x + 120, row.y + 30, STAT_LABEL, 11)
+            desc = ab.get("desc", ab.get("description", ""))[:70]
+            draw_text(surface, desc, row.x + 14, row.y + 48, STAT_LABEL, 11)
+
+            cost_col = DIM_GOLD if can_afford else (120, 60, 60)
+            draw_text(surface, f"Cost: {cost}g",
+                      row.x + row.width - 200, row.y + 10, cost_col, 13)
+            btn = pygame.Rect(row.x + row.width - 130, row.y + 16, 100, 32)
+            draw_button(surface, btn, "Learn",
+                        hover=(btn.collidepoint(mx, my) and can_afford),
+                        size=13)
+
+            self._trainer_rects.append((row, btn, ab, cost, can_afford))
+
+        if start > 0:
+            draw_text(surface, "▲ More above", SCREEN_W // 2 - 40, 148, GREY, 11)
+        if start + VISIBLE < len(unlearned):
+            draw_text(surface, "▼ More below",
+                      SCREEN_W // 2 - 40, y + VISIBLE * 74 + 2, GREY, 11)
+
+    # ─────────────────────────────────────────────────────────
+    #  CHARACTER SHEET
+    # ─────────────────────────────────────────────────────────
+
+    def _draw_inn_charsheet(self, surface, mx, my):
+        """Consolidated single-character sheet — all info on one screen."""
+        from core.classes import get_all_resources, STAT_NAMES
+        from core.equipment import (SLOT_ORDER, SLOT_NAMES,
+                                    calc_equipment_defense,
+                                    calc_equipment_magic_resist)
+        from core.progression import PLANAR_TIERS, get_party_tier
+        from core.identification import get_item_display_name
+
+        if not self.party:
+            return
+
+        # Back button
+        back = pygame.Rect(SCREEN_W - 140, 14, 120, 34)
+        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+
+        # Character navigation arrows
+        n = len(self.party)
+        if n > 1:
+            larr = pygame.Rect(10, SCREEN_H // 2 - 22, 34, 44)
+            rarr = pygame.Rect(SCREEN_W - 44, SCREEN_H // 2 - 22, 34, 44)
+            for arr in (larr, rarr):
+                pygame.draw.rect(surface, (40, 35, 60), arr, border_radius=4)
+                pygame.draw.rect(surface, PANEL_BORDER, arr, 1, border_radius=4)
+            draw_text(surface, "◀", larr.x + 8, larr.y + 12, GREY, 18)
+            draw_text(surface, "▶", rarr.x + 8, rarr.y + 12, GREY, 18)
+
+        c = self.party[self.charsheet_idx]
+        cls = CLASSES.get(c.class_name, {})
+        cls_col = cls.get("color", CREAM)
+
+        # Header
+        draw_class_badge(surface, c.class_name, 48, 14, 16)
+        draw_text(surface, c.name, 90, 16, cls_col, 22, bold=True)
+        race_str = getattr(c, "race_name", "Human")
+        draw_text(surface, f"Level {c.level}  {race_str} {c.class_name}",
+                  90, 42, CREAM, 14)
+        draw_text(surface, f"[{self.charsheet_idx + 1}/{n}]", 90, 60, GREY, 11)
+
+        # Tier badge
+        try:
+            from core.story_flags import _flags as _sf
+            flags = dict(_sf)
+        except Exception:
+            flags = {}
+        min_lvl = min(cc.level for cc in self.party) if self.party else 1
+        tier_idx = get_party_tier(flags, min_lvl)
+        tier_data = PLANAR_TIERS.get(tier_idx, PLANAR_TIERS[0])
+        draw_text(surface,
+                  f"{tier_data['symbol']} {tier_data['name']}",
+                  SCREEN_W // 2 - 60, 20, tier_data["color"], 14, bold=True)
+
+        eff = c.effective_stats() if hasattr(c, "effective_stats") else c.stats
+
+        # Three columns
+        L1 = 48   # Left: stats + resources
+        L2 = 390  # Middle: abilities
+        L3 = 760  # Right: equipment
+        COL_Y = 90
+
+        # ── LEFT COLUMN: Stats ────────────────────────────────
+        pygame.draw.line(surface, (60, 50, 80), (L1, COL_Y), (L1 + 300, COL_Y))
+        draw_text(surface, "ATTRIBUTES", L1, COL_Y + 4, STAT_LABEL, 10, bold=True)
+        sy = COL_Y + 20
+        FULL_NAMES = {"STR": "Strength", "DEX": "Dexterity", "CON": "Constitution",
+                      "INT": "Intelligence", "WIS": "Wisdom", "PIE": "Piety"}
+        for i, stat in enumerate(STAT_NAMES):
+            base = c.stats.get(stat, 0)
+            effective = eff.get(stat, base)
+            col_v = (100, 200, 120) if effective > base else \
+                    (200, 80, 80) if effective < base else STAT_VAL
+            sx = L1 + (i % 2) * 155
+            sdy = sy + (i // 2) * 20
+            draw_text(surface, f"{FULL_NAMES.get(stat, stat)[:3]}:", sx, sdy, STAT_LABEL, 12)
+            draw_text(surface, str(effective), sx + 36, sdy, col_v, 12, bold=True)
+            if effective != base:
+                diff = effective - base
+                draw_text(surface,
+                          f"({'+' if diff > 0 else ''}{diff})",
+                          sx + 58, sdy, col_v, 10)
+        sy += ((len(STAT_NAMES) + 1) // 2) * 20 + 8
+
+        # Combat stats
+        pygame.draw.line(surface, (60, 50, 80), (L1, sy), (L1 + 300, sy))
+        draw_text(surface, "COMBAT", L1, sy + 4, STAT_LABEL, 10, bold=True)
+        sy += 20
+        try:
+            equip_def = calc_equipment_defense(c)
+            equip_mr  = calc_equipment_magic_resist(c)
+            dex_bonus = max(0, (eff.get("DEX", 10) - 10) // 2)
+            ac = 10 + dex_bonus + equip_def
+            total_mr = equip_mr + eff.get("WIS", 0) * 2
+            draw_text(surface,
+                      f"AC: {ac}  (DEX {dex_bonus:+d} + Equip {equip_def})",
+                      L1, sy, STAT_VAL, 11)
+            sy += 16
+            draw_text(surface,
+                      f"MR: {total_mr}  (WIS {eff.get('WIS',0)*2} + Equip {equip_mr})",
+                      L1, sy, STAT_VAL, 11)
+            sy += 16
+        except Exception:
+            pass
+
+        # Resources
+        pygame.draw.line(surface, (60, 50, 80), (L1, sy), (L1 + 300, sy))
+        draw_text(surface, "RESOURCES", L1, sy + 4, STAT_LABEL, 10, bold=True)
+        sy += 20
+        max_res = get_all_resources(c.class_name, eff, c.level)
+        for rk, mval in max_res.items():
+            cur = c.resources.get(rk, 0)
+            pct = cur / mval if mval > 0 else 0
+            draw_text(surface, f"{rk}:", L1, sy, STAT_LABEL, 12)
+            bar = pygame.Rect(L1 + 70, sy + 3, 160, 9)
+            pygame.draw.rect(surface, HP_BAR_BG, bar, border_radius=2)
+            fc = HP_BAR if rk == "HP" else MP_BAR if "MP" in rk else SP_BAR
+            fill = pygame.Rect(bar.x, bar.y, int(bar.width * pct), bar.height)
+            pygame.draw.rect(surface, fc, fill, border_radius=2)
+            draw_text(surface, f"{cur}/{mval}", bar.x + bar.width + 6, sy, GREY, 11)
+            sy += 18
+
+        # XP bar
+        from core.progression import xp_for_level
+        xp_this = xp_for_level(c.level)
+        xp_next = xp_for_level(c.level + 1)
+        xp_pct = min(1.0, (c.xp - xp_this) / max(1, xp_next - xp_this))
+        sy += 4
+        draw_text(surface, f"XP: {c.xp:,}", L1, sy, DIM_GOLD, 11)
+        xpbar = pygame.Rect(L1 + 70, sy + 3, 160, 9)
+        pygame.draw.rect(surface, (30, 25, 45), xpbar, border_radius=2)
+        xpfill = pygame.Rect(xpbar.x, xpbar.y, int(xpbar.width * xp_pct), xpbar.height)
+        pygame.draw.rect(surface, DIM_GOLD, xpfill, border_radius=2)
+
+        # ── MIDDLE COLUMN: Abilities ──────────────────────────
+        pygame.draw.line(surface, (60, 50, 80), (L2, COL_Y), (L2 + 330, COL_Y))
+        draw_text(surface, "ABILITIES KNOWN", L2, COL_Y + 4, STAT_LABEL, 10, bold=True)
+        ay = COL_Y + 20
+        AB_TYPE_COL = {
+            "spell": (160, 120, 255), "heal": (80, 200, 130),
+            "aoe_heal": (80, 200, 130), "attack": (220, 120, 80),
+            "buff": (80, 180, 255), "aoe": (255, 160, 60),
+            "debuff": (200, 80, 120),
+        }
+        if c.abilities:
+            for ab in c.abilities:
+                ab_col = AB_TYPE_COL.get(ab.get("type", ""), CREAM)
+                draw_text(surface, f"• {ab['name']}", L2, ay, ab_col, 12)
+                rk = ab.get("resource", "")
+                cost = ab.get("cost", 0)
+                if cost and rk:
+                    short = rk.split("-")[-1]
+                    draw_text(surface, f"[{cost} {short}]",
+                              L2 + 190, ay, STAT_LABEL, 11)
+                ay += 17
+                if ay > SCREEN_H - 80:
+                    draw_text(surface, "…", L2, ay, GREY, 11)
+                    break
+        else:
+            draw_text(surface, "No abilities learned.", L2, ay, GREY, 12)
+
+        # ── RIGHT COLUMN: Equipment ───────────────────────────
+        pygame.draw.line(surface, (60, 50, 80), (L3, COL_Y), (L3 + 650, COL_Y))
+        draw_text(surface, "EQUIPMENT", L3, COL_Y + 4, STAT_LABEL, 10, bold=True)
+        ey = COL_Y + 20
+        equip = getattr(c, "equipment", {}) or {}
+        RARITY_COLORS = {
+            "common": CREAM, "uncommon": (80, 200, 140),
+            "rare": (100, 150, 255), "epic": (200, 80, 220),
+            "legendary": (255, 180, 40),
+        }
+        for slot in SLOT_ORDER:
+            item = equip.get(slot)
+            slot_label = SLOT_NAMES.get(slot, slot.replace("_", " ").title())
+            draw_text(surface, f"{slot_label}:", L3, ey, STAT_LABEL, 11)
+            if item:
+                identified = item.get("identified", True)
+                name = get_item_display_name(item) if identified \
+                       else item.get("unidentified_name", "???")
+                rarity = item.get("rarity", "common")
+                name_col = RARITY_COLORS.get(rarity, CREAM) if identified else GREY
+                draw_text(surface, name[:28], L3 + 110, ey, name_col, 11)
+                # Key stat summary
+                stat_parts = []
+                if item.get("damage"):    stat_parts.append(f"dmg {item['damage']}")
+                if item.get("defense"):   stat_parts.append(f"def {item['defense']}")
+                if item.get("spell_bonus"): stat_parts.append(f"sp+{item['spell_bonus']}")
+                eff_dict = item.get("effect", {})
+                if isinstance(eff_dict, dict):
+                    for k, v in eff_dict.items():
+                        if v:
+                            stat_parts.append(f"{k.replace('_bonus','')[0].upper()}{abs(v)}")
+                if stat_parts:
+                    draw_text(surface, "  ".join(stat_parts[:4]),
+                              L3 + 390, ey, STAT_LABEL, 10)
+            else:
+                draw_text(surface, "—", L3 + 110, ey, (50, 45, 65), 11)
+            ey += 17
 
     def _draw_inn_levelup(self, surface, mx, my):
         """
@@ -2732,10 +3051,25 @@ class TownUI:
                 self._inn_save_timer = 3000
                 return None
 
-            # Party management button — opens CampUI (equip/stats/transfer/etc.)
+            # Party management button
             party_btn = pygame.Rect(SCREEN_W - 420, 20, 130, 34)
             if party_btn.collidepoint(mx, my):
                 return "open_party_review"
+
+            # Train skills button
+            train_btn = pygame.Rect(SCREEN_W - 570, 20, 138, 34)
+            if train_btn.collidepoint(mx, my):
+                self.trainer_char_idx = 0
+                self.trainer_scroll = 0
+                self.view = self.VIEW_INN_TRAINER
+                return None
+
+            # Character sheet button
+            sheet_btn = pygame.Rect(SCREEN_W - 722, 20, 140, 34)
+            if sheet_btn.collidepoint(mx, my):
+                self.charsheet_idx = 0
+                self.view = self.VIEW_INN_CHARSHEET
+                return None
 
             by = 110
             for i, tier_key in enumerate(INN_TIER_ORDER):
@@ -2759,6 +3093,68 @@ class TownUI:
                         return "inn_save"  # signal to main.py to auto-save
                     else:
                         self._msg(f"Not enough gold! Need {total_cost}g.", RED)
+                    return None
+
+        # ── Inn Trainer ──
+        elif self.view == self.VIEW_INN_TRAINER:
+            from core.abilities import get_unlearned_abilities, learn_ability
+
+            back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
+            if back.collidepoint(mx, my):
+                self.view = self.VIEW_INN
+                return None
+
+            # Character tabs (match draw: tab_area_w = SCREEN_W - 170)
+            tab_area_w = SCREEN_W - 170
+            tw = tab_area_w // len(self.party)
+            for i, c in enumerate(self.party):
+                tr = pygame.Rect(20 + i * tw, 108, tw - 4, 28)
+                if tr.collidepoint(mx, my):
+                    self.trainer_char_idx = i
+                    self.trainer_scroll = 0
+                    return None
+
+            char = self.party[self.trainer_char_idx]
+
+            # Learn button clicks
+            for _row, btn, ab, cost, can_afford in getattr(self, "_trainer_rects", []):
+                if btn.collidepoint(mx, my):
+                    if not can_afford:
+                        self._msg(f"Need {cost}g to learn {ab['name']}.", RED)
+                        return None
+                    learned = learn_ability(char, ab["name"])
+                    if learned:
+                        remaining = cost
+                        for pc in self.party:
+                            take = min(pc.gold, remaining)
+                            pc.gold -= take
+                            remaining -= take
+                            if remaining <= 0:
+                                break
+                        sfx.play("quest_complete")
+                        self._msg(f"{char.name} learned {ab['name']}!  (-{cost}g)", GOLD)
+                        self.trainer_scroll = 0
+                    else:
+                        self._msg(f"{char.name} already knows {ab['name']}.", GREY)
+                    return None
+
+        # ── Inn Character Sheet ──
+        elif self.view == self.VIEW_INN_CHARSHEET:
+            n = len(self.party)
+
+            back = pygame.Rect(SCREEN_W - 140, 14, 120, 34)
+            if back.collidepoint(mx, my):
+                self.view = self.VIEW_INN
+                return None
+
+            if n > 1:
+                larr = pygame.Rect(10, SCREEN_H // 2 - 22, 34, 44)
+                rarr = pygame.Rect(SCREEN_W - 44, SCREEN_H // 2 - 22, 34, 44)
+                if larr.collidepoint(mx, my):
+                    self.charsheet_idx = (self.charsheet_idx - 1) % n
+                    return None
+                if rarr.collidepoint(mx, my):
+                    self.charsheet_idx = (self.charsheet_idx + 1) % n
                     return None
 
         # ── Inn Level Up ──
