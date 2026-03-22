@@ -265,7 +265,9 @@ class Game:
         if state == S_TOWN:
             sfx.stop_music()
             sfx.stop_ambient()
-            sfx.play_music("town_ambient")   # town music on main music channel
+            # Per-town music — town_ui is always created before go(S_TOWN)
+            _tid = getattr(getattr(self, "town_ui", None), "town_id", None) or getattr(self, "current_town_id", "briarhollow")
+            sfx.play_town_music(_tid)
             sfx.play_ambient("town_env")     # soft crowd/bell ambience layer
         elif state == S_WORLD_MAP:
             sfx.stop_music()
