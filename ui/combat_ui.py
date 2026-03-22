@@ -845,10 +845,11 @@ class CombatUI:
                     res_name = "MP" if is_spell else (resource.split("-")[-1] if resource else "SP")
                     cost = f" [{res_cost} {res_name}]" if res_cost else ""
                     # Check if character can afford this ability
+                    # Actor resources are stored as full compound keys e.g. "INT-MP",
+                    # "STR-SP", "Ki" — use the full resource string as the lookup key.
                     can_afford = True
                     if res_cost and resource:
-                        res_key = resource.split("-")[-1] if "-" in resource else resource
-                        cur_res = actor_resources.get(res_key, 0)
+                        cur_res = actor_resources.get(resource, 0)
                         can_afford = cur_res >= res_cost
                     items.append((f"{ab['name']}{cost}",
                                   {"type": "ability", "ability": ab,
