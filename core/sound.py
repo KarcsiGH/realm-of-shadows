@@ -475,6 +475,423 @@ def _silence(duration):
 
 
 # ═══════════════════════════════════════════════════════════════
+#  NUMPY COMBAT + DUNGEON GENERATORS
+# ═══════════════════════════════════════════════════════════════
+
+def _np_bp(n, cf, bw, seed=0):
+    if not _HAS_NUMPY: return [0]*n
+    from scipy import signal as _sci
+    x = _np.random.default_rng(seed).standard_normal(n).astype(_np.float64)
+    lo = max(20.0, cf-bw/2); hi = min(float(SR)/2-1, cf+bw/2)
+    b, a = _sci.iirfilter(4, [lo, hi], btype='band', fs=SR, ftype='butter')
+    r = _sci.lfilter(b, a, x).astype(_np.float32)
+    pk = _np.max(_np.abs(r)) or 1.0
+    return r / pk
+
+def _np_lp(sig, cutoff):
+    if not _HAS_NUMPY: return sig
+    from scipy import signal as _sci
+    b, a = _sci.iirfilter(2, min(cutoff, SR//2-1), btype='low', fs=SR, ftype='butter')
+    return _sci.lfilter(b, a, sig).astype(_np.float32)
+
+def _np_hp_filt(sig, cutoff):
+    if not _HAS_NUMPY: return sig
+    from scipy import signal as _sci
+    b, a = _sci.iirfilter(2, max(cutoff, 20), btype='high', fs=SR, ftype='butter')
+    return _sci.lfilter(b, a, sig).astype(_np.float32)
+
+def _np_exp(n, tau): return _np.exp(-_np.arange(n)/(SR*tau)).astype(_np.float32)
+def _np_norm(sig, t=0.88): pk = _np.max(_np.abs(sig)) or 1; return sig/pk*t
+def _np_sil(d): return _np.zeros(int(SR*d), _np.float32)
+def _np_fade2(sig, attack=0.003, release=0.12):
+    out = sig.copy(); n = len(sig)
+    a = min(int(SR*attack), n//2); r = min(int(SR*release), n//2)
+    if a: out[:a] *= _np.linspace(0,1,a).astype(_np.float32)
+    if r: out[-r:] *= _np.linspace(1,0,r).astype(_np.float32)
+    return out
+def _np_mix2(*arrs):
+    n = max(len(a) for a in arrs); out = _np.zeros(n, _np.float32)
+    for a in arrs: out[:len(a)] += a
+    return _np.clip(out, -1, 1)
+def _np_place2(buf, t_s, chunk):
+    s = int(SR*t_s)
+    if s >= len(buf): return
+    e = min(len(buf), s+len(chunk)); buf[s:e] += chunk[:e-s]
+def _np_sinev(n, freq, vol=1.0):
+    return (vol * _np.sin(2*_np.pi*(freq/SR)*_np.arange(n))).astype(_np.float32)
+def _np_seamless2(sig, fade=0.12):
+    n = len(sig); f = int(SR*fade); out = sig.copy()
+    ramp = _np.linspace(0,1,f).astype(_np.float32)
+    out[:f] += sig[-f:]*(1-ramp); out[-f:] += sig[:f]*(1-ramp[::-1])
+    return _np.clip(out,-1,1)
+def _np_swell2(n, period, phase=0.0, depth=0.5):
+    t = _np.arange(n)/_np.float32(SR)
+    return (1-depth + depth*(0.5+0.5*_np.sin(2*_np.pi*t/period+phase))).astype(_np.float32)
+def _np_note(freq, dur, vol=0.3, tau=0.12):
+    n = int(SR*dur); sig = _np_sinev(n,freq,vol)
+    env = _np_exp(n,tau); env[:min(int(SR*.02),n//4)] *= _np.linspace(0,1,min(int(SR*.02),n//4))
+    return (sig*env).astype(_np.float32)
+
+def _make_np_sound(fn):
+    if not _HAS_NUMPY: return None
+    try:
+        sig = fn()
+        d = (_np.clip(sig,-1,1)*32767).astype(_np.int16)
+        return _make_sound(list(d))
+    except Exception:
+        return None
+
+# ── Element hit sounds ────────────────────────────────────────
+def _gen_hit_fire():
+    n=int(SR*.28); crack=_np_bp(n,1200,800,1)*_np_exp(n,.025); crackle=_np_bp(n,2800,1500,2)*_np_exp(n,.08)*.4; whomp=_np_bp(n,180,80,3)*_np_exp(n,.04)*.5
+    return _np_norm(_np_mix2(crack,crackle,whomp))
+def _gen_hit_ice():
+    n=int(SR*.35); n2=int(SR*.04); shatter=_np_hp_filt(_np.random.default_rng(4).standard_normal(n2).astype(_np.float32)*_np_exp(n2,.01),.2000)*.7
+    ring=_np.zeros(n,_np.float32)
+    for f,v in [(3200,.30),(4100,.22),(5300,.14),(6800,.09),(2600,.18)]: ring+=_np_sinev(n,f,v)*_np_exp(n,.06)
+    ring=_np_lp(ring,7000)*.5; base=_np.zeros(n,_np.float32); base[:n2]+=shatter[:n]
+    return _np_norm(_np_mix2(base,ring))
+def _gen_hit_lightning():
+    n=int(SR*.22); snap=_np_hp_filt(_np.random.default_rng(5).standard_normal(int(SR*.008)).astype(_np.float32),3000)*1.5
+    buzz=_np_bp(int(SR*.06),1800,900,6)*_np_exp(int(SR*.06),.02); body=_np_bp(n,300,200,7)*_np_exp(n,.035)*.35
+    base=_np.zeros(n,_np.float32); ns=len(snap); nb=len(buzz)
+    base[:min(ns,n)]+=snap[:min(ns,n)]; base[:nb]+=buzz
+    env=_np.ones(n,_np.float32); r=int(SR*.10); env[-r:]=_np.linspace(1,0,r)
+    return _np_norm(_np_mix2(base*env,body))
+def _gen_hit_shadow():
+    n=int(SR*.32); thud=_np_bp(n,220,90,8)*_np_exp(n,.05); dark=_np_sinev(n,95,.3)*_np_exp(n,.09); hollow=_np_bp(n,550,200,9)*_np_exp(n,.025)*.35
+    e=_np.ones(n,_np.float32); e[:int(SR*.01)]=_np.linspace(0,1,int(SR*.01))
+    return _np_norm(_np_mix2(thud*e,dark*e,hollow*e)*.9)
+def _gen_hit_divine():
+    n=int(SR*.40); bell=_np.zeros(n,_np.float32)
+    for f,v,tau in [(880,.5,.20),(2637,.3,.12),(4400,.15,.08),(1320,.2,.15)]: bell+=_np_sinev(n,f,v)*_np_exp(n,tau)
+    n_c=int(SR*.005); click=_np_hp_filt(_np.random.default_rng(11).standard_normal(n_c).astype(_np.float32)*.6,4000)
+    base=_np.zeros(n,_np.float32); base[:n_c]+=click
+    r=int(SR*.22); env=_np.ones(n,_np.float32); env[-r:]=_np.linspace(1,0,r)
+    return _np_norm(_np_mix2(base*.4,bell*env))
+def _gen_hit_nature():
+    n=int(SR*.26); thunk=_np_bp(n,320,120,12)*_np_exp(n,.04); earth=_np_sinev(n,78,.25)*_np_exp(n,.07); rustle=_np_bp(n,2200,1400,13)*_np_exp(n,.025)*.22
+    return _np_norm(_np_mix2(thunk,earth,rustle))
+def _gen_hit_arcane():
+    n=int(SR*.30); sweep=_np.zeros(n,_np.float32); phase=0.0
+    for i in range(n):
+        frac=i/n; freq=800+1600*frac*(1-frac)*4; phase+=2*_np.pi*freq/SR; sweep[i]=_np.sin(phase)
+    sweep=sweep*_np_fade2(sweep,.005,.12)*.5; shimmer=_np_bp(n,1400,600,15)*_np_exp(n,.05)*.4
+    cryst=_np.zeros(n,_np.float32)
+    for f in [1760,2640,3520]: cryst+=_np_sinev(n,f,.12)*_np_exp(n,.04)
+    return _np_norm(_np_mix2(sweep,shimmer,cryst))
+
+# ── Physical hit variants ─────────────────────────────────────
+def _gen_hit_light():
+    n=int(SR*.14); tick=_np_bp(n,900,400,30)*_np_exp(n,.025); flesh=_np_bp(n,320,120,31)*_np_exp(n,.018)*.4
+    return _np_norm(_np_mix2(tick,flesh)*_np_fade2(_np.ones(n,_np.float32),.001,.06))
+def _gen_hit_medium():
+    n=int(SR*.20); thwack=_np_bp(n,450,200,33)*_np_exp(n,.04); low=_np_bp(n,140,60,34)*_np_exp(n,.055)*.45
+    nc=int(SR*.015); crack=_np_hp_filt(_np.random.default_rng(35).standard_normal(nc).astype(_np.float32)*.6,1800)*_np_exp(nc,.008)
+    base=_np.zeros(n,_np.float32); base[:nc]+=crack
+    return _np_norm(_np_mix2(thwack,low,base)*_np_fade2(_np.ones(n,_np.float32),.001,.09))
+def _gen_hit_heavy():
+    n=int(SR*.32); boom=_np_bp(n,120,55,37)*_np_exp(n,.08); sub=_np_sinev(n,55,.35)*_np_exp(n,.10)
+    crack=_np_bp(n,280,120,38)*_np_exp(n,.04)*.5; stone=_np_bp(n,700,300,39)*_np_exp(n,.02)*.25
+    return _np_norm(_np_mix2(boom,sub,crack,stone)*_np_fade2(_np.ones(n,_np.float32),.002,.15))
+def _gen_hit_critical():
+    n1=int(SR*.05); crack_hi=_np_hp_filt(_np.random.default_rng(20).standard_normal(n1).astype(_np.float32),2000)*_np_exp(n1,.008)*1.2
+    crack_lo=_np_bp(n1,200,100,21)*_np_exp(n1,.015)*.8; sub_hit=_np_sinev(n1,60,.6)*_np_exp(n1,.02)
+    impact=_np_norm(_np_mix2(crack_hi,crack_lo,sub_hit),.95)
+    gap=_np_sil(.028); n3=int(SR*.42)
+    ring_lo=_np_sinev(n3,140,.45)*_np_exp(n3,.12); ring_mid=_np_sinev(n3,220,.30)*_np_exp(n3,.09)
+    ring_hi=_np_sinev(n3,380,.15)*_np_exp(n3,.06); rumble=_np_sinev(n3,55,.35)*_np_exp(n3,.15)
+    shimmer=_np_bp(n3,800,350,22)*_np_exp(n3,.04)*.18
+    tail=_np_norm(_np_mix2(ring_lo,ring_mid,ring_hi,rumble,shimmer),.80)
+    full=_np.concatenate([impact,gap,tail])
+    return _np_norm(_np_fade2(full,.001,.18))
+def _gen_hit_skill_fast():
+    def strike(seed):
+        n=int(SR*.08)
+        return _np_norm(_np_mix2(_np_bp(n,600,250,seed)*_np_exp(n,.018),_np_bp(n,200,80,seed+1)*_np_exp(n,.025)*.4),.65)
+    s1=strike(70); s2=strike(72); s3=strike(74); gap=int(SR*.07)
+    n_t=len(s1)+gap+len(s2)+gap+len(s3); out=_np.zeros(n_t,_np.float32)
+    o=0; out[o:o+len(s1)]+=s1; o+=len(s1)+gap; out[o:o+len(s2)]+=s2*.88; o+=len(s2)+gap; out[o:o+len(s3)]+=s3*.78
+    return _np_norm(out)
+
+# ── Miss sounds ───────────────────────────────────────────────
+def _gen_miss_physical():
+    n=int(SR*.22); swing=_np_bp(n,350,200,40)*_np_exp(n,.06)
+    swing*=(_np.linspace(.4,1.0,n)**.5*_np.linspace(1.0,0.0,n)**.3).astype(_np.float32)
+    n2=int(SR*.06); s=int(SR*.16); stumble=_np_bp(n2,180,80,41)*_np_exp(n2,.03)*.3
+    base=_np.zeros(n,_np.float32); e=min(n,s+n2); base[s:e]+=stumble[:e-s]
+    return _np_norm(_np_fade2(_np_mix2(swing,base),.005,.08))
+def _gen_miss_magic():
+    build=_np_bp(int(SR*.08),1400,600,42)*_np.linspace(0,1,int(SR*.08)).astype(_np.float32)**.5*.5
+    n_f=int(SR*.20); fizzle=_np_bp(n_f,900,500,43)*_np_exp(n_f,.06)*.4+_np_sinev(n_f,320,.15)*_np_exp(n_f,.08)
+    return _np_norm(_np_fade2(_np.concatenate([build,fizzle]),.005,.10))
+def _gen_miss_elemental():
+    surge=_np_bp(int(SR*.06),1600,900,44)*_np_exp(int(SR*.06),.015)*.7
+    n2=int(SR*.18); die=_np_bp(n2,800,400,45)*_np_exp(n2,.04)*.35+_np_sinev(n2,280,.12)*_np_exp(n2,.07)
+    return _np_norm(_np_fade2(_np.concatenate([surge,die]),.002,.09))
+
+# ── Heal / Revive ─────────────────────────────────────────────
+def _gen_heal():
+    def nn(freq,dur,vol=.35):
+        n=int(SR*dur); t=_np.arange(n)/SR; env=_np.sin(_np.pi*t/dur)**.5
+        return vol*env*(_np_sinev(n,freq,1.0)+_np_sinev(n,freq*2,.12))
+    return _np_norm(_np.concatenate([nn(523,.16),nn(659,.16),nn(784,.22)]))
+def _gen_revive():
+    n_r=int(SR*.5); hum=_np.zeros(n_r,_np.float32)
+    for i in range(n_r):
+        frac=i/n_r; freq=180+320*frac**2; hum[i]=_np.sin(2*_np.pi*freq*i/SR)*(frac**1.5)*.3
+    hum=_np_lp(hum,800)
+    n_p=int(SR*.45); chords=_np.zeros(n_p,_np.float32)
+    for freq,vol in [(523,.28),(659,.22),(784,.18),(1047,.14),(1318,.10)]:
+        chords+=_np_sinev(n_p,freq,vol)*_np.hanning(n_p).astype(_np.float32)
+    shimmer=_np_bp(n_p,3500,1500,60)*_np_exp(n_p,.05)*.12
+    peak=_np_norm(_np_mix2(chords,shimmer),.8)
+    full=_np.concatenate([hum,_np_sil(.04),peak])
+    return _np_norm(_np_fade2(full,.01,.20))
+
+# ── Status ticks ──────────────────────────────────────────────
+def _gen_poison_tick():
+    n=int(SR*.18); bubble=_np_bp(n,160,70,80)*_np_exp(n,.04); sour=_np_bp(n,620,220,81)*_np_exp(n,.025)*.3; sub=_np_sinev(n,62,.2)*_np_exp(n,.05)
+    return _np_norm(_np_mix2(bubble,sour,sub)*_np_fade2(_np.ones(n,_np.float32),.003,.08))
+def _gen_burning_tick():
+    n=int(SR*.15); crack=_np_bp(n,1600,900,82)*_np_exp(n,.015); whomp=_np_bp(n,300,130,83)*_np_exp(n,.03)*.45
+    return _np_norm(_np_mix2(crack,whomp)*_np_fade2(_np.ones(n,_np.float32),.001,.06))
+
+# ── Buff variants ─────────────────────────────────────────────
+def _gen_buff_physical():
+    n=int(SR*.55); t=_np.arange(n)/SR
+    brs=_np.zeros(n,_np.float32)
+    for f,v in [(110,.30),(165,.18),(220,.12),(330,.08)]:
+        brs+=_np_sinev(n,f,v)*(_np.sin(_np.pi*t/t[-1])**.6).astype(_np.float32)
+    punch=_np_bp(n,400,160,90)*_np_exp(n,.08)*.2
+    return _np_norm(_np_mix2(brs,punch)*_np_fade2(_np.ones(n,_np.float32),.02,.18))
+def _gen_buff_magic():
+    n=int(SR*.48); sweep=_np.zeros(n,_np.float32); phase=0.0
+    for i in range(n):
+        freq=400+1000*(i/n)**1.5; phase+=2*_np.pi*freq/SR; sweep[i]=_np.sin(phase)*.35
+    cryst=_np.zeros(n,_np.float32)
+    for f in [880,1320,1760,2640]: cryst+=_np_sinev(n,f,.12)*_np_exp(n,.08)
+    return _np_norm(_np_mix2(sweep,cryst)*_np_fade2(_np.ones(n,_np.float32),.015,.20))
+def _gen_buff_divine():
+    n=int(SR*.50); bell=_np.zeros(n,_np.float32)
+    for f,v,tau in [(880,.4,.18),(2200,.25,.10),(3300,.15,.07),(1320,.2,.14)]: bell+=_np_sinev(n,f,v)*_np_exp(n,tau)
+    soft=_np_bp(n,3000,1200,94)*_np_exp(n,.03)*.06
+    n_c=int(SR*.004); click=_np_hp_filt(_np.random.default_rng(95).standard_normal(n_c).astype(_np.float32)*.5,5000)
+    base=_np.zeros(n,_np.float32); base[:n_c]+=click
+    r=int(SR*.22); env=_np.ones(n,_np.float32); env[-r:]=_np.linspace(1,0,r)
+    return _np_norm(_np_mix2(base*.3,bell*env,soft))
+def _gen_buff_nature():
+    n=int(SR*.45); root=_np_sinev(n,110,.28)*_np_exp(n,.12); fifth=_np_sinev(n,165,.15)*_np_exp(n,.10)
+    rustle=_np_bp(n,2400,1200,96)*_np_exp(n,.04)*.15; thud=_np_bp(n,200,80,97)*_np_exp(n,.05)*.22
+    return _np_norm(_np_mix2(root,fifth,rustle,thud)*_np_fade2(_np.ones(n,_np.float32),.01,.18))
+
+# ── Debuff variants ───────────────────────────────────────────
+def _gen_debuff_physical():
+    n=int(SR*.48); grind=_np_bp(n,280,120,100)*_np_exp(n,.10)
+    sweep=_np.zeros(n,_np.float32); phase=0.0
+    for i in range(n):
+        freq=600-450*(i/n)**.7; phase+=2*_np.pi*freq/SR; sweep[i]=_np.sin(phase)*.3*(1-i/n)**.4
+    return _np_norm(_np_mix2(grind,sweep)*_np_fade2(_np.ones(n,_np.float32),.005,.15))
+def _gen_debuff_magic():
+    n=int(SR*.50); dark=_np_sinev(n,82,.25)*_np_exp(n,.12); clash=_np_sinev(n,87,.15)*_np_exp(n,.10)
+    hiss=_np_bp(n,800,400,102)*_np_exp(n,.06)*.18; sub=_np_sinev(n,41,.2)*_np_exp(n,.14)
+    return _np_norm(_np_mix2(dark,clash,hiss,sub)*_np_fade2(_np.ones(n,_np.float32),.005,.18))
+def _gen_debuff_divine():
+    n=int(SR*.55); toll=_np_sinev(n,440,.4)*_np_exp(n,.15); clash=_np_sinev(n,466,.3)*_np_exp(n,.12)
+    low=_np_sinev(n,110,.2)*_np_exp(n,.12); ne=_np_bp(n,2000,800,103)*_np_exp(n,.03)*.10
+    return _np_norm(_np_mix2(toll,clash,low,ne)*_np_fade2(_np.ones(n,_np.float32),.003,.22))
+
+# ── Dungeon music tracks ──────────────────────────────────────
+def _gen_dungeon(fn):
+    if not _HAS_NUMPY: return None
+    try:
+        sig = fn()
+        d = (_np.clip(sig,-1,1)*32767).astype(_np.int16)
+        return _make_sound(list(d))
+    except Exception:
+        return None
+
+def _dungeon_goblin_warren():
+    N=int(SR*16.0); drums=_np.zeros(N,_np.float32)
+    hits=[0.0,.18,.36,.75,.90,1.13,1.50,1.65,1.88,2.25,2.40,2.63,3.0,3.15,3.38,3.75,3.88,4.13,4.50,4.65,4.88,5.25,5.40,5.63,6.0,6.13,6.38,6.75,6.88,7.13,7.50,7.63,7.88,8.25,8.40,8.63,9.0,9.13,9.36,9.75,9.88,10.13,10.5,10.63,10.88,11.25,11.38,11.63,12.0,12.13,12.38,12.75,12.88,13.13,13.5,13.63,13.88,14.25,14.38,14.63,15.0,15.13,15.38,15.75]
+    for i,t in enumerate(hits):
+        if i%3==0:
+            n_h=int(SR*.18); h=_np_sinev(n_h,80+(i%5)*15,.45)*_np_exp(n_h,.04)+_np_bp(n_h,300,150,i)*_np_exp(n_h,.02)*.2
+        else:
+            n_h=int(SR*.10); h=_np_bp(n_h,600+i*30,250,i+50)*_np_exp(n_h,.025)*.3
+        _np_place2(drums,t,h)
+    drums=_np_lp(drums,1200)
+    horn_notes=[(110,.5),(147,.4),(165,.4),(147,.3),(130,.5),(110,.8)]; horn_times=[0.0,2.0,2.4,2.8,4.0,4.5]
+    horn=_np.zeros(N,_np.float32)
+    for rep in range(2):
+        for (freq,dur),t in zip(horn_notes,horn_times):
+            if rep*8.0+t<16.0: _np_place2(horn,rep*8.0+t,_np_note(freq,dur,.22,.08))
+    horn=_np_lp(horn,500)
+    drone=_np_sinev(N,55,.08)*_np_swell2(N,7.0,0,.4)+_np_bp(N,130,50,5)*_np_swell2(N,4.5,2,.5)*.05
+    scurry=_np_bp(N,2400,1200,6)*_np_swell2(N,1.1,.3,.8)*.04
+    return _np_seamless2(_np_norm(_np_mix2(drums*.8,horn*.7,drone,scurry)))
+
+def _dungeon_spiders_nest():
+    N=int(SR*20.0); mel_freqs=[880,622,740,554,880,831,622,740]; mel_times=[0.0,1.8,3.2,5.0,7.5,9.0,11.5,14.0]
+    mel=_np.zeros(N,_np.float32)
+    for freq,t in zip(mel_freqs,mel_times):
+        if t<20.0: _np_place2(mel,t,_np_note(freq,1.2,.12,.4))
+    mel=_np_lp(mel,2000)
+    skitter=_np.zeros(N,_np.float32); rng=_np.random.default_rng(99); t_s=0.0
+    while t_s<19.5:
+        gap=float(rng.uniform(.08,.55)); n_s=int(SR*.025)
+        s=_np_hp_filt(_np.random.default_rng(int(t_s*100)).standard_normal(n_s).astype(_np.float32),3000)*_np_exp(n_s,.008)*float(rng.uniform(.1,.25))
+        _np_place2(skitter,t_s,s); t_s+=gap
+    web=_np_sinev(N,62,.10)*_np_swell2(N,12.0,0,.35)+_np_sinev(N,93,.05)*_np_swell2(N,8.0,3.0,.45)
+    fading=_np_bp(N,3500,1500,7)*_np_swell2(N,6.0,1.5,.7)*.04*_np_swell2(N,2.2,0,.85)
+    snaps=_np.zeros(N,_np.float32)
+    for snap_t in [3.5,7.2,11.8,16.4]:
+        n_sn=int(SR*.06); sn=_np_bp(n_sn,1200,600,int(snap_t*10))*_np_exp(n_sn,.015)*.15
+        _np_place2(snaps,snap_t,sn)
+    return _np_seamless2(_np_norm(_np_mix2(mel,skitter*.6,web,fading,snaps)))
+
+def _dungeon_abandoned_mine():
+    N=int(SR*18.0); beat=60.0/72; picks=_np.zeros(N,_np.float32)
+    for i in range(int(18.0/beat)):
+        t=i*beat; vol=.28 if i%4==0 else (.18 if i%2==0 else .10); n_p=int(SR*.15)
+        strike=_np_bp(n_p,800,400,i)*_np_exp(n_p,.04)*vol+_np_bp(n_p,2200,800,i+100)*_np_exp(n_p,.02)*vol*.3
+        _np_place2(picks,t,strike)
+    stone=_np.zeros(N,_np.float32)
+    for (freq,dur),t in zip([(65,.30),(55,.30),(49,.30),(58,.30)],[0.0,4.5,9.0,13.5]):
+        n_st=min(int(SR*dur*4),N-int(SR*t)); n_st=max(0,n_st)
+        if n_st>0:
+            s=(_np_sinev(n_st,freq,.25)+_np_sinev(n_st,freq*2,.25*.3))*_np.minimum(_np.arange(n_st)/(SR*.15),1.0).astype(_np.float32)*_np_exp(n_st,.8)
+            _np_place2(stone,t,s)
+    stone=_np_lp(stone,200)
+    corrupt=_np.zeros(N,_np.float32)
+    for t in [2.0,5.5,8.0,11.5,14.5,17.0]:
+        n_c=int(SR*.5); c=(_np_sinev(n_c,110,.15)+_np_sinev(n_c,116,.10))*_np_exp(n_c,.12); _np_place2(corrupt,t,c)
+    creak=_np_bp(N,280,100,8)*_np_swell2(N,9.0,0,.6)*.06; sub=_np_sinev(N,42,.06)*_np_swell2(N,15.0,0,.4)
+    return _np_seamless2(_np_norm(_np_mix2(picks*.7,stone,corrupt,creak,sub)))
+
+def _dungeon_ruins_ashenmoor():
+    N=int(SR*22.0)
+    heat=_np_lp(_np_sinev(N,87,.16)*_np_swell2(N,11.0,0,.45)+_np_sinev(N,92,.10)*_np_swell2(N,8.0,4,.50)+_np_sinev(N,58,.12)*_np_swell2(N,15.0,2,.35),300)
+    ash=_np_bp(N,650,250,10)*_np_swell2(N,7.0,0,.6)*.10+_np_bp(N,1400,600,11)*_np_swell2(N,4.5,2.5,.7)*.05
+    flares=_np.zeros(N,_np.float32)
+    for t in [3.5,8.0,13.5,19.0]:
+        n_f=int(SR*1.2); f=(_np_sinev(n_f,65,.20)+_np_bp(n_f,500,200,int(t*10))*.12)*_np.hanning(n_f).astype(_np.float32)**.5*.8
+        _np_place2(flares,t,_np_lp(f,400))
+    shadow=_np.zeros(N,_np.float32)
+    for t,freq in [(1.0,196),(5.5,185),(11.0,175),(16.5,196)]:
+        n_sh=int(SR*2.5); sh=(_np_sinev(n_sh,freq,.14)*_np_exp(n_sh,.6)+_np_sinev(n_sh,freq*1.5,.07)*_np_exp(n_sh,.4))
+        _np_place2(shadow,t,sh)
+    wail=_np_bp(N,1800,400,12)*_np_swell2(N,18.0,0,.75)*.06
+    return _np_seamless2(_np_norm(_np_mix2(heat,ash,flares,shadow,wail)))
+
+def _dungeon_sunken_crypt():
+    N=int(SR*20.0); drips=_np.zeros(N,_np.float32)
+    drip_times=[0.0,1.35,2.1,3.7,4.8,5.55,7.2,8.3,9.0,10.5,11.6,12.35,14.0,15.1,15.85,17.5,18.6,19.35]
+    rng_d=_np.random.default_rng(33)
+    for i,t in enumerate(drip_times):
+        freq=float(rng_d.uniform(900,2400)); n_d=int(SR*.05)
+        d=_np_bp(n_d,freq,400,i+200)*_np_exp(n_d,.012)*float(rng_d.uniform(.12,.22)); _np_place2(drips,t,d)
+    crypt=_np_lp(_np_sinev(N,73,.14)*_np_swell2(N,13.0,0,.40)+_np_sinev(N,55,.10)*_np_swell2(N,9.0,3,.45),250)
+    moan=_np.zeros(N,_np.float32)
+    for t,freq in [(2.5,165),(7.0,147),(13.5,155),(18.0,165)]:
+        n_m=int(SR*2.0); m=(_np_sinev(n_m,freq,.08)+_np_sinev(n_m,freq*1.5,.04))*_np.hanning(n_m).astype(_np.float32)
+        _np_place2(moan,t,_np_lp(m,500))
+    water=_np_bp(N,180,80,14)*_np_swell2(N,6.0,0,.5)*.08+_np_bp(N,80,35,15)*_np_swell2(N,8.5,2,.55)*.06
+    groans=_np.zeros(N,_np.float32)
+    for t in [5.0,12.0,18.5]:
+        n_g=int(SR*.8); g=_np_bp(n_g,200,80,int(t*5))*_np_exp(n_g,.2)*.18; _np_place2(groans,t,g)
+    return _np_seamless2(_np_norm(_np_mix2(drips*.8,crypt,moan,water,groans)))
+
+def _dungeon_pale_coast():
+    N=int(SR*24.0); mel_data=[(293,1.5),(329,1.0),(349,1.5),(329,.8),(293,2.0),(261,1.5),(293,1.0),(329,2.5),(293,1.5),(261,1.0),(220,1.5),(247,1.0),(293,2.5)]
+    mel_t=[0.0]
+    for _,d in mel_data[:-1]: mel_t.append(mel_t[-1]+d)
+    melody=_np.zeros(N,_np.float32)
+    for (freq,dur),t in zip(mel_data,mel_t):
+        if t<24.0: _np_place2(melody,t,_np_note(freq,dur*1.1,.18,.5))
+    melody=_np_lp(melody,600)
+    ocean=_np_lp(_np_bp(N,85,45,16)*_np_swell2(N,8.5,0,.55)*.18+_np_bp(N,55,25,17)*_np_swell2(N,12.0,4,.50)*.12,250)
+    drips=_np.zeros(N,_np.float32)
+    for i,t in enumerate([1.5,4.2,6.8,9.1,11.7,14.3,16.9,19.4,21.8]):
+        n_d=int(SR*.06); d=_np_bp(n_d,600+i*80,200,i+300)*_np_exp(n_d,.018)*.15; _np_place2(drips,t,d)
+    presence=_np_sinev(N,293,.06)*_np_swell2(N,20.0,0,.6)+_np_sinev(N,440,.03)*_np_swell2(N,15.0,6,.7)
+    return _np_seamless2(_np_norm(_np_mix2(melody*.75,ocean,drips,presence)))
+
+def _dungeon_windswept_isle():
+    N=int(SR*22.0); harm_data=[(165,3.0),(175,2.0),(196,2.5),(175,1.5),(165,3.5),(147,2.0),(165,3.0),(196,4.5)]
+    harm_t=[0.0]
+    for _,d in harm_data[:-1]: harm_t.append(harm_t[-1]+d)
+    harmony=_np.zeros(N,_np.float32)
+    for (freq,dur),t in zip(harm_data,harm_t):
+        if t<22.0:
+            n_h=int(SR*dur); h=(_np_sinev(n_h,freq,.20)+_np_sinev(n_h,freq*2,.10)+_np_sinev(n_h,freq*3,.05))
+            env=_np.minimum(_np.arange(n_h)/(SR*.1),1.0).astype(_np.float32)*_np_exp(n_h,.8)
+            _np_place2(harmony,t,(h*env).astype(_np.float32))
+    wind_int=_np_bp(N,380,200,18)*_np_swell2(N,5.0,0,.6)*.14+_np_bp(N,180,80,19)*_np_swell2(N,7.5,2.5,.5)*.08
+    stone_hum=_np_sinev(N,82,.10)*_np_swell2(N,18.0,0,.4)+_np_sinev(N,123,.06)*_np_swell2(N,11.0,5,.5)
+    guardian=_np.zeros(N,_np.float32)
+    for t,freq in [(0.0,55),(11.0,49),(0.0,73),(11.0,67)]:
+        n_g=int(SR*11.0); g=_np_sinev(n_g,freq,.08)*_np_exp(n_g,4.0); _np_place2(guardian,t,g)
+    guardian=_np_lp(guardian,150)
+    return _np_seamless2(_np_norm(_np_mix2(harmony*.70,wind_int,stone_hum,guardian)))
+
+def _dungeon_dragons_tooth():
+    N=int(SR*20.0)
+    seismic=_np_lp(_np_sinev(N,28,.22)*_np_swell2(N,9.0,0,.50)+_np_sinev(N,42,.14)*_np_swell2(N,6.5,3,.55),100)
+    heat=_np_bp(N,220,90,20)*_np_swell2(N,4.5,0,.6)*.14+_np_bp(N,120,55,21)*_np_swell2(N,7.0,2.5,.55)*.10
+    breath=_np.zeros(N,_np.float32)
+    for t,vol in [(0.0,.22),(5.0,.18),(10.0,.25),(15.5,.20)]:
+        n_b=int(SR*3.5); b=_np_bp(n_b,95,45,int(t*5))*_np_swell2(n_b,3.5,0,.6)*vol*_np.hanning(n_b).astype(_np.float32)**.6
+        _np_place2(breath,t,_np_lp(b,300))
+    stones=_np.zeros(N,_np.float32)
+    for t,vol in [(1.5,.35),(4.2,.28),(7.8,.40),(11.3,.32),(14.0,.38),(17.5,.30)]:
+        n_s=int(SR*.45); s=(_np_sinev(n_s,55,.5)+_np_bp(n_s,300,150,int(t*20))*.3)*_np_exp(n_s,.08)*vol
+        _np_place2(stones,t,s)
+    stones=_np_lp(stones,400)
+    karreth=_np.zeros(N,_np.float32)
+    for t,freq in [(2.0,98),(6.5,87),(11.0,98),(15.5,73)]:
+        _np_place2(karreth,t,_np_note(freq,2.0,.22,.35))
+    karreth=_np_lp(karreth,400)
+    return _np_seamless2(_np_norm(_np_mix2(seismic,heat,breath,stones,karreth*.8)))
+
+def _dungeon_valdris_spire():
+    N=int(SR*28.0)
+    foundation=_np_lp(_np_sinev(N,36,.20)*_np_swell2(N,14.0,0,.40)+_np_sinev(N,54,.12)*_np_swell2(N,9.5,5,.45)+_np_sinev(N,27,.10)*_np_swell2(N,20.0,0,.35),180)
+    valdris_mel=[(123,2.5),(147,2.0),(165,2.5),(185,3.0),(196,2.0),(220,2.5),(196,1.5),(185,2.0),(165,2.5),(147,2.0),(123,3.5)]
+    vm_t=[0.0]
+    for _,d in valdris_mel[:-1]: vm_t.append(vm_t[-1]+d)
+    v_mel=_np.zeros(N,_np.float32); dark_h=_np.zeros(N,_np.float32)
+    for (freq,dur),t in zip(valdris_mel,vm_t):
+        if t<28.0:
+            _np_place2(v_mel,t,_np_note(freq,dur*1.2,.20,.6))
+            _np_place2(dark_h,t,_np_note(freq*1.414,dur*1.2,.10,.5))
+        t2=t+14.0
+        if t2<28.0: _np_place2(v_mel,t2,_np_note(freq*2,dur*1.2,.14,.5))
+    v_mel=_np_lp(v_mel,800); dark_h=_np_lp(dark_h,600)
+    beat=60.0/65; drums=_np.zeros(N,_np.float32)
+    for i in range(int(28.0/beat)):
+        t=i*beat; vol=.32 if i%4==0 else (.20 if i%2==0 else .12); n_d=int(SR*.35)
+        d=_np_sinev(n_d,45,.5)*_np_exp(n_d,.06)*vol+_np_bp(n_d,250,120,i*7)*_np_exp(n_d,.03)*vol*.4
+        _np_place2(drums,t,d)
+    drums=_np_lp(drums,300)
+    fading_hiss=_np_bp(N,4000,2000,22)*_np_swell2(N,7.0,0,.8)*.05*_np_swell2(N,3.5,1.5,.7)
+    ascend=_np_bp(N,550,200,23)*_np_swell2(N,28.0,_np.pi,.70)*.10+_np_bp(N,380,150,24)*_np_swell2(N,28.0,_np.pi*.7,.65)*.07
+    return _np_seamless2(_np_norm(_np_mix2(foundation,v_mel*.75,dark_h*.6,drums*.7,fading_hiss,ascend)))
+
+# ── Public helper ─────────────────────────────────────────────
+def play_dungeon_music(dungeon_id):
+    """Play the matching dungeon track, falling back to dungeon_ambient."""
+    if not _enabled: return
+    name = f"dungeon_{dungeon_id}"
+    snd = _sounds.get(name)
+    if not snd:
+        snd = _sounds.get("dungeon_ambient")
+    if snd:
+        snd.set_volume(_master_vol * _music_vol)
+        if _music_channel:
+            _music_channel.play(snd, loops=-1)
+
+# ═══════════════════════════════════════════════════════════════
 #  SOUND DEFINITIONS
 # ═══════════════════════════════════════════════════════════════
 
@@ -489,43 +906,48 @@ def _generate_all_sounds():
     _sounds["ui_close"]   = _make_sound(_sweep(820,  380, 0.22, 0.22))
 
     # ── Combat ──────────────────────────────────────────────────
-    _sounds["hit_physical"] = _make_sound(_mix(
-        _noise(0.18, 0.38), _sine(160, 0.20, 0.28)))
-    # Skill attack: heavier, deeper impact — used for STR-SP/DEX-SP/Ki abilities
-    # hit_skill: heavy physical blow — meaty crack, bone-deep impact, low rumble
-    # Completely different frequency profile from hit_magic (low vs high)
-    _sounds["hit_skill"] = _make_sound(_concat(
-        _mix(_noise(0.55, 0.07), _sine(80, 0.60, 0.09)),   # deep bone crack
-        _mix(_sine(55, 0.65, 0.20), _noise(0.40, 0.12)),   # body thud resonance
-        _sweep(100, 40, 0.50, 0.14),                        # low decay rumble
-        _silence(0.03),
-        _sine(45, 0.30, 0.06),                              # sub-bass tail
-    ))
-    _sounds["hit_critical"] = _make_sound(_mix(
-        _noise(0.22, 0.48), _sine(130, 0.26, 0.38), _sine(260, 0.18, 0.22)))
-    # hit_magic: bright high-frequency burst — clearly magical, short and sharp
-    _sounds["hit_magic"] = _make_sound(_concat(
-        _mix(_sine(1200, 0.06, 0.35), _sine(800, 0.08, 0.28)),  # sharp bright crack
-        _mix(_sweep(700, 300, 0.20, 0.22), _sine(440, 0.22, 0.14)),  # magical shimmer
-        _silence(0.02),
-        _sine(220, 0.12, 0.08),   # brief low resonance
-    ))
-    _sounds["miss"]         = _make_sound(_concat(
-        _sweep(800, 200, 0.18, 0.22),   # fast whoosh sweep
-        _noise(0.08, 0.08)))              # brief thud of miss
-    # No resource: dry buzzing click — "nope, can't do that"
-    _sounds["no_resource"]  = _make_sound(_mix(
+    # Physical hits (weight-class variants)
+    _sounds["hit_light"]      = _make_np_sound(_gen_hit_light)
+    _sounds["hit_medium"]     = _make_np_sound(_gen_hit_medium)
+    _sounds["hit_heavy"]      = _make_np_sound(_gen_hit_heavy)
+    _sounds["hit_physical"]   = _sounds["hit_medium"]   # legacy alias
+    _sounds["hit_skill"]      = _sounds["hit_heavy"]    # power skill = heavy
+    _sounds["hit_skill_fast"] = _make_np_sound(_gen_hit_skill_fast)
+    _sounds["hit_critical"]   = _make_np_sound(_gen_hit_critical)
+    # Element magic hits
+    _sounds["hit_fire"]       = _make_np_sound(_gen_hit_fire)
+    _sounds["hit_ice"]        = _make_np_sound(_gen_hit_ice)
+    _sounds["hit_lightning"]  = _make_np_sound(_gen_hit_lightning)
+    _sounds["hit_shadow"]     = _make_np_sound(_gen_hit_shadow)
+    _sounds["hit_divine"]     = _make_np_sound(_gen_hit_divine)
+    _sounds["hit_nature"]     = _make_np_sound(_gen_hit_nature)
+    _sounds["hit_arcane"]     = _make_np_sound(_gen_hit_arcane)
+    _sounds["hit_wind"]       = _sounds["hit_nature"]   # wind maps to nature
+    _sounds["hit_piercing"]   = _sounds["hit_medium"]   # piercing = physical
+    _sounds["hit_magic"]      = _sounds["hit_arcane"]   # default magic = arcane
+    # Miss sounds
+    _sounds["miss_physical"]  = _make_np_sound(_gen_miss_physical)
+    _sounds["miss_magic"]     = _make_np_sound(_gen_miss_magic)
+    _sounds["miss_elemental"] = _make_np_sound(_gen_miss_elemental)
+    _sounds["miss"]           = _sounds["miss_physical"]  # legacy alias
+    _sounds["spell_miss"]     = _sounds["miss_magic"]     # legacy alias
+    # No resource: dry buzzing click
+    _sounds["no_resource"]    = _make_sound(_mix(
         _sine(180, 0.28, 0.16), _noise(0.10, 0.08)))
-    # Spell miss/resist: magic whoosh that dissipates without impact
-    _sounds["spell_miss"]   = _make_sound(_concat(
-        _sweep(1200, 400, 0.22, 0.16),  # high magical rise
-        _silence(0.03),
-        _sweep(400, 150, 0.28, 0.18),   # fizzle descend
-        _noise(0.06, 0.10)))              # dissipation noise
-    _sounds["heal"]         = _make_sound(_concat(
-        _sine(523, 0.18, 0.28), _sine(659, 0.18, 0.28), _sine(784, 0.24, 0.32)))
-    _sounds["buff"]         = _make_sound(_sweep(280, 940, 0.50, 0.22))
-    _sounds["debuff"]       = _make_sound(_sweep(720, 180, 0.55, 0.26))
+    # Heal / revive
+    _sounds["heal"]    = _make_np_sound(_gen_heal)
+    _sounds["revive"]  = _make_np_sound(_gen_revive)
+    # Buffs
+    _sounds["buff_physical"] = _make_np_sound(_gen_buff_physical)
+    _sounds["buff_magic"]    = _make_np_sound(_gen_buff_magic)
+    _sounds["buff_divine"]   = _make_np_sound(_gen_buff_divine)
+    _sounds["buff_nature"]   = _make_np_sound(_gen_buff_nature)
+    _sounds["buff"]          = _sounds["buff_physical"]  # legacy alias
+    # Debuffs
+    _sounds["debuff_physical"] = _make_np_sound(_gen_debuff_physical)
+    _sounds["debuff_magic"]    = _make_np_sound(_gen_debuff_magic)
+    _sounds["debuff_divine"]   = _make_np_sound(_gen_debuff_divine)
+    _sounds["debuff"]          = _sounds["debuff_physical"]  # legacy alias
     _sounds["death"]        = _make_sound(_mix(
         _sweep(380, 65, 0.80, 0.32), _noise(0.50, 0.16)))
     # Enemy death: sharp impact crack → low tumble → silence — distinctive & satisfying

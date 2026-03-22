@@ -600,6 +600,8 @@ def resolve_basic_attack(attacker, defender, enemies=None):
         "is_crit": False,
         "crit_data": None,
         "messages": [],
+        "enchant_element": weapon.get("enchant_element", "") if weapon else "",
+        "weight_class": weapon.get("weight_class", "medium") if weapon else "medium",
     }
 
     if not hit:
