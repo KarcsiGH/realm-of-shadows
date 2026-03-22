@@ -638,7 +638,7 @@ class CampUI:
             y += 18
             draw_text(surface, "Magic Resist:", LEFT_X, y, STAT_LABEL, 12)
             draw_text(surface, str(total_mr), LEFT_X + 95, y, STAT_VAL, 12, bold=True)
-            draw_text(surface, f"  (WIS:{eff_stats.get("WIS",0)*2}  Equip:{equip_mr})", LEFT_X + 115, y, GREY, 11)
+            draw_text(surface, f"  (WIS:{eff_stats.get('WIS',0)*2}  Equip:{equip_mr})", LEFT_X + 115, y, GREY, 11)
             y += 18
         except Exception:
             pass
