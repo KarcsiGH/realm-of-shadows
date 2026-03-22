@@ -318,15 +318,24 @@ def _generate_all_sounds():
     _sounds["hit_physical"] = _make_sound(_mix(
         _noise(0.18, 0.38), _sine(160, 0.20, 0.28)))
     # Skill attack: heavier, deeper impact — used for STR-SP/DEX-SP/Ki abilities
+    # hit_skill: heavy physical blow — meaty crack, bone-deep impact, low rumble
+    # Completely different frequency profile from hit_magic (low vs high)
     _sounds["hit_skill"] = _make_sound(_concat(
-        _mix(_noise(0.38, 0.08), _sine(110, 0.50, 0.08)),  # heavy impact crack
-        _mix(_sine(75, 0.55, 0.22), _noise(0.28, 0.14)),   # low body thud
-        _sweep(130, 60, 0.40, 0.18),                        # brief decay rumble
+        _mix(_noise(0.55, 0.07), _sine(80, 0.60, 0.09)),   # deep bone crack
+        _mix(_sine(55, 0.65, 0.20), _noise(0.40, 0.12)),   # body thud resonance
+        _sweep(100, 40, 0.50, 0.14),                        # low decay rumble
+        _silence(0.03),
+        _sine(45, 0.30, 0.06),                              # sub-bass tail
     ))
     _sounds["hit_critical"] = _make_sound(_mix(
         _noise(0.22, 0.48), _sine(130, 0.26, 0.38), _sine(260, 0.18, 0.22)))
-    _sounds["hit_magic"]    = _make_sound(_mix(
-        _sweep(900, 180, 0.40, 0.32), _sine(440, 0.35, 0.18)))
+    # hit_magic: bright high-frequency burst — clearly magical, short and sharp
+    _sounds["hit_magic"] = _make_sound(_concat(
+        _mix(_sine(1200, 0.06, 0.35), _sine(800, 0.08, 0.28)),  # sharp bright crack
+        _mix(_sweep(700, 300, 0.20, 0.22), _sine(440, 0.22, 0.14)),  # magical shimmer
+        _silence(0.02),
+        _sine(220, 0.12, 0.08),   # brief low resonance
+    ))
     _sounds["miss"]         = _make_sound(_concat(
         _sweep(800, 200, 0.18, 0.22),   # fast whoosh sweep
         _noise(0.08, 0.08)))              # brief thud of miss
@@ -346,15 +355,17 @@ def _generate_all_sounds():
     _sounds["death"]        = _make_sound(_mix(
         _sweep(380, 65, 0.80, 0.32), _noise(0.50, 0.16)))
     # Enemy death: sharp impact crack → low tumble → silence — distinctive & satisfying
+    # enemy_death: unmistakable kill sound — 3 distinct stages
+    # Stage 1: sharp impact (the killing blow lands)
+    # Stage 2: slow dramatic descend (enemy falling)
+    # Stage 3: deep bass thud + silence (final stillness)
     _sounds["enemy_death"] = _make_sound(_concat(
-        # Sharp impact crack
-        _mix(_noise(0.40, 0.05), _sine(180, 0.45, 0.05)),
-        # Descending dramatic fall — clearly different from hit_magic
-        _sweep(380, 60, 0.55, 0.25),
-        _mix(_sine(60, 0.35, 0.18), _noise(0.20, 0.14)),
-        # Low rumble fadeout
-        _sweep(160, 35, 0.70, 0.28),
-        _silence(0.04),
+        _mix(_noise(0.55, 0.06), _sine(220, 0.55, 0.06)),  # killing impact
+        _silence(0.04),                                      # breath before fall
+        _sweep(500, 40, 0.70, 0.32),                        # long dramatic descend
+        _mix(_sine(40, 0.50, 0.22), _noise(0.25, 0.16)),   # ground impact thud
+        _sweep(80, 20, 0.80, 0.18),                         # low bass decay
+        _silence(0.06),                                      # final silence
     ))
     _sounds["victory"]      = _make_sound(_concat(
         _sine(523, 0.18, 0.32), _sine(659, 0.18, 0.32),

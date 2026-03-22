@@ -271,6 +271,8 @@ class TownUI:
              (100, 60, 100), RUMOR_COL),
             ("Job Board", "Browse available quests and contracts",
              (40, 80, 60), (80, 200, 120)),
+            ("Party Camp", "View characters, equip items, trade, and rest",
+             (40, 60, 80), (80, 160, 220)),
             ("Leave Town", "Return to the wilds",
              (80, 40, 40), RED),
         ]
@@ -2540,7 +2542,7 @@ class TownUI:
 
         # ── Hub view ──
         if self.view == self.VIEW_HUB:
-            locations = ["inn", "shop", "forge", "temple", "tavern", "jobboard", "exit"]
+            locations = ["inn", "shop", "forge", "temple", "tavern", "jobboard", "camp", "exit"]
             by = 140
             for i, loc in enumerate(locations):
                 btn = pygame.Rect(SCREEN_W // 2 - 300, by + i * 90, 420, 78)
@@ -2564,6 +2566,9 @@ class TownUI:
                         self.view = self.VIEW_INN
                     elif loc == "jobboard":
                         self.view = self.VIEW_JOBBOARD
+                    elif loc == "camp":
+                        # Signal main.py to open CampUI for party management
+                        return "open_camp"
                     return None
 
             # NPC clicks

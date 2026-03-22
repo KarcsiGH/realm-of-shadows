@@ -825,6 +825,9 @@ class CombatUI:
 
         elif label in ("spell", "skill"):
             abilities = actor.get("abilities", [])
+            # Get actor's current resources to check affordability
+            char_ref = actor.get("character_ref")
+            actor_resources = actor.get("resources", {})
             for ab in abilities:
                 resource = ab.get("resource", "")
                 ab_type  = ab.get("type", "skill")
@@ -841,7 +844,15 @@ class CombatUI:
                     res_cost = ab.get("cost", ab.get("mp_cost", 0))
                     res_name = "MP" if is_spell else (resource.split("-")[-1] if resource else "SP")
                     cost = f" [{res_cost} {res_name}]" if res_cost else ""
-                    items.append((f"{ab['name']}{cost}", {"type": "ability", "ability": ab}))
+                    # Check if character can afford this ability
+                    can_afford = True
+                    if res_cost and resource:
+                        res_key = resource.split("-")[-1] if "-" in resource else resource
+                        cur_res = actor_resources.get(res_key, 0)
+                        can_afford = cur_res >= res_cost
+                    items.append((f"{ab['name']}{cost}",
+                                  {"type": "ability", "ability": ab,
+                                   "can_afford": can_afford}))
 
         elif label == "item":
             ref = actor.get("character_ref")
@@ -943,10 +954,16 @@ class CombatUI:
             bg = POP_HOVER if is_h else POP_BG
             _draw_panel(surface, ir, bg, (100, 80, 150) if is_h else LOG_BORDER)
 
-            # Item description color
-            item_col = GOLD if is_h else CREAM
-            if data.get("type") in ("use_item",):
+            # Item description color — grey out if can't afford
+            cant_afford = (data.get("type") == "ability" and
+                           data.get("can_afford") is False)
+            if cant_afford:
+                item_col = (90, 80, 90)   # greyed out
+                bg = POP_BG               # no hover highlight for unaffordable
+            elif data.get("type") in ("use_item",):
                 item_col = HEAL_COLOR if is_h else (100, 220, 140)
+            else:
+                item_col = GOLD if is_h else CREAM
 
             # Attack items: split "WeaponName  [detail]" into two lines
             if data.get("type") == "attack_select" and "  [" in lbl:
@@ -1089,6 +1106,9 @@ class CombatUI:
             # Click inside popover — select item
             if self.hover_pop_item >= 0 and self.hover_pop_item < len(self._popover_items):
                 _, data = self._popover_items[self.hover_pop_item]
+                # Block selection of unaffordable abilities (they are greyed out)
+                if data.get("type") == "ability" and data.get("can_afford") is False:
+                    return None  # silently ignore click on greyed-out ability
                 self.popover = None
                 return self._resolve_popover_item(data, actor)
             return None

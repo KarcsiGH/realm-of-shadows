@@ -569,13 +569,7 @@ class Game:
                         from ui.quest_log_ui import QuestLogUI
                         self.quest_log_ui = QuestLogUI()
                         return
-                    # Town button (only if not in dungeon)
-                    if not self.dungeon_state:
-                        town_btn = pygame.Rect(SCREEN_W - 400, 40, 180, 40)
-                        if town_btn.collidepoint(mx, my) and self.party:
-                            self.town_ui = TownUI(self.party, town_id=self.current_town_id)
-                            self.go_fade(S_TOWN)
-                            return
+                    # Town button removed — navigate via world map
                     # Save button
                     save_btn = pygame.Rect(20, 40, 120, 40)
                     if save_btn.collidepoint(mx, my) and self.party:
@@ -632,8 +626,13 @@ class Game:
                     else:
                         r = pygame.Rect(SCREEN_W//2 - 150, SCREEN_H - 65, 300, 45)
                         if r.collidepoint(mx, my):
-                            self._init_world_map()
-                            self.go_fade(S_WORLD_MAP)
+                            if self.dungeon_state:
+                                self.go_fade(S_DUNGEON)
+                            elif self.world_state:
+                                self.go_fade(S_WORLD_MAP)
+                            else:
+                                self._init_world_map()
+                                self.go_fade(S_WORLD_MAP)
 
         elif self.state == S_INVENTORY:
             # Pass keyboard events (ESC)
@@ -711,6 +710,9 @@ class Game:
                             self.add_toast(toast_msg, toast_col)
                         except Exception:
                             pass  # save is best-effort
+                    elif result == "open_camp":
+                        # Party Camp from town — open CampUI, return to town
+                        self.start_camp(location="town", return_state=S_TOWN)
                 elif e.button == 4:
                     self.town_ui.handle_scroll(-1)
                 elif e.button == 5:
@@ -2202,7 +2204,15 @@ class Game:
                           bx + 215, by + 14, diff_col, 11)
         else:
             r = pygame.Rect(SCREEN_W//2 - 150, SCREEN_H - 65, 300, 45)
-            draw_button(self.screen, r, "Begin Adventure!",
+            # Context-aware label: dungeon → return to dungeon;
+            # played before → continue; fresh start → begin
+            if self.dungeon_state:
+                _adv_label = "Return to Dungeon"
+            elif self.world_state:
+                _adv_label = "Continue Adventure"
+            else:
+                _adv_label = "Begin Adventure!"
+            draw_button(self.screen, r, _adv_label,
                         hover=r.collidepoint(mx, my), size=18)
 
         # Top buttons (always visible)
@@ -2214,10 +2224,8 @@ class Game:
             journal_btn = pygame.Rect(SCREEN_W - 200, 85, 180, 34)
             draw_button(self.screen, journal_btn, "Journal",
                         hover=journal_btn.collidepoint(mx, my), size=14)
-            if not self.dungeon_state:
-                town_btn = pygame.Rect(SCREEN_W - 400, 40, 180, 40)
-                draw_button(self.screen, town_btn, "Town",
-                            hover=town_btn.collidepoint(mx, my), size=16)
+            # Town button removed from party/menu screen —
+            # players navigate to towns via the world map
             save_btn = pygame.Rect(20, 40, 120, 40)
             draw_button(self.screen, save_btn, "Save",
                         hover=save_btn.collidepoint(mx, my), size=16)

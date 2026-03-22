@@ -619,6 +619,31 @@ class CampUI:
             y += 18
         y += 4
 
+        # ── Combat stats (AC + Magic Resist) ──────────────────────────────
+        pygame.draw.line(surface, (60,50,80), (LEFT_X, y), (LEFT_X+380, y))
+        y += 6
+        draw_text(surface, "COMBAT", LEFT_X, y, STAT_LABEL, 10, bold=True)
+        y += 14
+        try:
+            from core.equipment import calc_equipment_defense, calc_equipment_magic_resist
+            eq = getattr(c, "equipment", {}) or {}
+            equip_def = calc_equipment_defense(c.class_name, eq)
+            equip_mr  = calc_equipment_magic_resist(eq)
+            dex_bonus = max(0, (eff_stats.get("DEX", 10) - 10) // 2)
+            ac = 10 + dex_bonus + equip_def
+            total_mr = equip_mr + eff_stats.get("WIS", 0) * 2
+            draw_text(surface, "Armor Class:", LEFT_X, y, STAT_LABEL, 12)
+            draw_text(surface, str(ac), LEFT_X + 95, y, STAT_VAL, 12, bold=True)
+            draw_text(surface, f"  (DEX:{dex_bonus:+d}  Equip:{equip_def})", LEFT_X + 115, y, GREY, 11)
+            y += 18
+            draw_text(surface, "Magic Resist:", LEFT_X, y, STAT_LABEL, 12)
+            draw_text(surface, str(total_mr), LEFT_X + 95, y, STAT_VAL, 12, bold=True)
+            draw_text(surface, f"  (WIS:{eff_stats.get("WIS",0)*2}  Equip:{equip_mr})", LEFT_X + 115, y, GREY, 11)
+            y += 18
+        except Exception:
+            pass
+        y += 4
+
         # ── Resistances ───────────────────────────────────────────────────
         pygame.draw.line(surface, (60,50,80), (LEFT_X, y), (LEFT_X+380, y))
         y += 6

@@ -67,7 +67,7 @@ CLASS_ABILITIES = {
         {"name": "Smite",            "cost": 12, "resource": "PIE-MP", "type": "spell",
          "level": 1, "power": 1.4, "element": "divine", "desc": "Holy damage. Bonus vs undead."},
         {"name": "Bless",            "cost": 8,  "resource": "PIE-MP", "type": "buff",
-         "level": 1, "buff": "blessed", "duration": 3, "target": "ally",
+         "level": 1, "buff": "blessed", "duration": 3, "targets": "ally",
          "desc": "Bless one ally. +10% accuracy and +10% to all saves for 3 turns."},
         {"name": "Cure Poison",      "cost": 8,  "resource": "PIE-MP", "type": "cure",
          "level": 3, "cures": "poison", "desc": "Remove poison from one ally."},

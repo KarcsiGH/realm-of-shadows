@@ -1423,7 +1423,10 @@ class DungeonUI:
                 hw = max(0, int((cur_hp/max_hp)*bar_w))
                 pygame.draw.rect(surface, (55,12,12),  (text_x, cy_h, bar_w, 7))
                 pygame.draw.rect(surface, (185,38,38), (text_x, cy_h, hw, 7))
-                surface.blit(fs.render(f"{cur_hp}/{max_hp}", True, (190,150,145)), (text_x, cy_h+8))
+                _hp_surf = fs.render(f"{cur_hp}/{max_hp}", True, (190,150,145))
+                # Right-align text to bar end so all cards look uniform
+                _hp_tx = text_x + bar_w - _hp_surf.get_width()
+                surface.blit(_hp_surf, (max(text_x, _hp_tx), cy_h+8))
                 # All secondary resources (MP, SP, Ki, etc.) — each with bar + cur/max
                 res_keys = [k for k in ch.resources if k != "HP"]
                 RES_COLORS = {
@@ -1440,7 +1443,9 @@ class DungeonUI:
                     bg_c, fill_c, text_c = RES_COLORS.get(rk, ((20,20,20),(100,100,200),(160,160,220)))
                     pygame.draw.rect(surface, bg_c,   (text_x, cy_h, bar_w, 7))
                     pygame.draw.rect(surface, fill_c, (text_x, cy_h, mw, 7))
-                    surface.blit(fs.render(f"{rk}: {cur_r}/{max_r}", True, text_c), (text_x, cy_h+8))
+                    _rs_surf = fs.render(f"{rk}: {cur_r}/{max_r}", True, text_c)
+                    _rs_tx = text_x + bar_w - _rs_surf.get_width()
+                    surface.blit(_rs_surf, (max(text_x, _rs_tx), cy_h+8))
 
         # Buttons — vertical stack in right panel (x=MM_X), below minimap
         # This keeps them completely clear of the character card area (x=0-1100)
@@ -1458,7 +1463,7 @@ class DungeonUI:
             pygame.draw.rect(surface, GOLD if hov else (75,60,38), r, 1, border_radius=3)
             surface.blit(fb.render(lbl, True, GOLD if hov else CREAM), (r.x+6, r.y+5))
 
-        info_text = f"{self.dungeon.dungeon_id.replace('_',' ').title()}  ·  Floor {self.dungeon.current_floor}/{self.dungeon.total_floors}"
+        info_text = f"{self.dungeon.dungeon_id.replace('_',' ').title()}  ·  Floor {self.dungeon.current_floor}"
         # Add tier badge if party has advanced beyond Bronze
         if self.dungeon.party:
             from core.progression import PLANAR_TIERS
@@ -1922,6 +1927,12 @@ class DungeonUI:
 
         if moved:
             self._step_cooldown = COOLDOWN
+            # Play footstep sound on any movement (move or turn)
+            try:
+                import core.sound as _sfx
+                _sfx.play("step")
+            except Exception:
+                pass
 
     def handle_key(self, key):
         movement_keys = (
@@ -2093,6 +2104,12 @@ class DungeonUI:
                     m["disarm_roll"]    = roll
                     m["disarm_needed"]  = needed
                     m["disarmer_name"]  = ch.name
+                    # Play sound based on outcome
+                    try:
+                        import core.sound as _sfx
+                        _sfx.play("ui_confirm" if success else "trap_trigger")
+                    except Exception:
+                        pass
                     return None
 
         # ── DISARM RESULT ──────────────────────────────────────
@@ -2120,6 +2137,10 @@ class DungeonUI:
                 if ev.get("detected") and not ev.get("disarmed"):
                     if self.dungeon.disarm_trap(px+ddx, py+ddy):
                         self.show_event("Trap disarmed!", (100,255,100))
+                        try:
+                            import core.sound as _sfx; _sfx.play("ui_confirm")
+                        except Exception:
+                            pass
                     else:
                         return {"type":"trap","data":ev}
                     return None
