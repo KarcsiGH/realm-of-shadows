@@ -87,6 +87,7 @@ class CampUI:
         self._stats_inv_rects   = []   # list of (Rect, inv_idx) (set in _draw_stats)
         self._stats_cast_rects  = []   # list of (Rect, ability) (set in _draw_stats)
         self._stats_inv_scroll  = 0    # scroll offset for inventory section
+        self._stats_inv_visible = 6    # updated each draw frame
         self._stats_give_idx    = -1   # >= 0 means give-overlay is open
         self._stats_give_rects  = []   # list of (Rect, char_idx) for give overlay
 
@@ -989,6 +990,7 @@ class CampUI:
 
         INV_ROW_H = 26
         INV_VISIBLE = max(1, (BODY_BOT - ey) // INV_ROW_H)
+        self._stats_inv_visible = INV_VISIBLE  # stored for scroll handler
         inv_start = max(0, min(getattr(self, "_stats_inv_scroll", 0),
                                max(0, inv_count - INV_VISIBLE)))
         self._stats_inv_scroll = inv_start
@@ -1408,16 +1410,17 @@ class CampUI:
     def handle_scroll(self, direction):
         """Handle mousewheel scrolling."""
         if self.tab == TAB_STATS:
-            # Scroll right column (inventory) if mouse is to the right
+            # Scroll abilities list (left/middle) or inventory (right).
+            # Use stored INV_VISIBLE from last draw to compute the correct cap.
             from pygame import mouse as _mouse
             mx_now, _ = _mouse.get_pos()
-            if mx_now > 840:  # RIGHT_X = 850
-                c = self.party[self.selected_char] if self.party else None
-                if c:
-                    max_inv = max(0, len(c.inventory) - 8)
-                    self._stats_inv_scroll = max(0, min(max_inv,
-                        getattr(self, "_stats_inv_scroll", 0) + direction))
-            else:
+            c = self.party[self.selected_char] if self.party else None
+            if mx_now > 840 and c:  # RIGHT_X threshold — inventory column
+                inv_visible = getattr(self, "_stats_inv_visible", 6)
+                max_inv = max(0, len(c.inventory) - inv_visible)
+                self._stats_inv_scroll = max(0, min(max_inv,
+                    getattr(self, "_stats_inv_scroll", 0) + direction))
+            else:  # abilities/spells column
                 cur = getattr(self, "_stats_scroll", 0)
                 self._stats_scroll = max(0, cur + direction * 24)
         elif self.tab == TAB_EQUIP:
