@@ -491,7 +491,7 @@ def _place_secret_room(tiles, rooms, width, height, floor_num, total_floors, rng
             if rng.random() < 0.08:
                 magic_item = get_cursed_item(floor_num, total_floors, rng)
             else:
-                magic_item = get_secret_item(floor_num, total_floors, rng)
+                magic_item = get_secret_item(floor_num, total_floors, rng, dungeon_id=dungeon_id)
             gold_bonus = rng.randint(30, 80) * floor_num
             tiles[cy_center][cx_center]["type"] = DT_TREASURE
             tiles[cy_center][cx_center]["event"] = {
@@ -704,7 +704,7 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             ty = room[1] + rng.randint(1, room[3] - 2)
             if tiles[ty][tx]["type"] == DT_FLOOR:
                 tiles[ty][tx]["type"] = DT_TREASURE
-                tiles[ty][tx]["event"] = _make_treasure_event(floor_num, rng, total_floors)
+                tiles[ty][tx]["event"] = _make_treasure_event(floor_num, rng, total_floors, dungeon_id=dungeon_id)
                 placed_treasure += 1
 
         # ── Place traps (floor 1: 3 traps, scales up) ──
@@ -805,14 +805,19 @@ def _carve_v_corridor(tiles, y1, y2, x, max_h):
                 tiles[y][x]["type"] = DT_CORRIDOR
 
 
-def _make_treasure_event(floor_num, rng, total_floors=5):
+def _make_treasure_event(floor_num, rng, total_floors=5, dungeon_id=None):
     """Generate chest loot scaled to dungeon depth.
 
     Floor 1-2 : mostly consumables, rare chance of a common magic item
     Floor 3-4 : consumables + uncommon magic items (~20%)
     Floor 5+  : good consumables + rare magic items (~30%), small legendary chance
     """
-    gold = rng.randint(15, 35) * floor_num
+    # Gold scales with floor but Act 1 dungeons keep amounts modest
+    _ACT1_DIDS = {"goblin_warren", "spiders_nest"}
+    if dungeon_id in _ACT1_DIDS:
+        gold = rng.randint(8, 20) * floor_num   # 8-20g/floor in Act 1
+    else:
+        gold = rng.randint(15, 45) * floor_num  # more in later acts
     items = []
     depth = floor_num / max(total_floors, 1)
 
@@ -863,7 +868,7 @@ def _make_treasure_event(floor_num, rng, total_floors=5):
             if depth >= 0.6 and rng.random() < 0.06:
                 magic = get_cursed_item(floor_num, total_floors, rng)
             else:
-                magic = get_secret_item(floor_num, total_floors, rng)
+                magic = get_secret_item(floor_num, total_floors, rng, dungeon_id=dungeon_id)
             if magic:
                 items.append(magic)
         except Exception:

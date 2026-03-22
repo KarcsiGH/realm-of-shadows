@@ -8,6 +8,79 @@ Organized by tier (1=early, 2=mid, 3=late).
 #  SECRET ROOM ITEMS — Found in hidden chests
 # ══════════════════════════════════════════════════════════
 
+
+# ═══════════════════════════════════════════════════════════════
+#  DUNGEON ACT 1 LOOT (DA1)
+#  Found in Goblin Warren and Spider's Nest only.
+#  Balanced for level 1-3 characters — exciting to find but not
+#  game-breaking. One item per class category.
+# ═══════════════════════════════════════════════════════════════
+
+SECRET_ITEMS_DA1 = [
+    # Fighter / Knight — modest weapon upgrade
+    {"name": "Sharpened Short Sword", "appraised_name": "Sharpened Short Sword",
+     "type": "weapon", "slot": "weapon", "subtype": "Short Sword",
+     "rarity": "common", "damage": 14, "phys_type": "slashing", "range": "melee",
+     "description": "A well-honed blade. Nothing magical, but a cut above the standard issue.",
+     "identified": True, "estimated_value": 35},
+
+    # Mage — tiny spell boost focus
+    {"name": "Carved Oak Wand", "appraised_name": "Carved Oak Wand",
+     "type": "weapon", "slot": "weapon", "subtype": "Wand",
+     "rarity": "uncommon", "damage": 5, "phys_type": "blunt", "range": "melee",
+     "spell_bonus": 2,
+     "description": "A wand carved with simple runes. Slightly enhances spell focus. +2 spell power.",
+     "identified": False, "estimated_value": 40},
+
+    # Cleric — modest holy symbol
+    {"name": "Polished Silver Symbol", "appraised_name": "Polished Silver Symbol",
+     "type": "accessory", "slot": "ring1", "subtype": "amulet",
+     "rarity": "uncommon",
+     "effect": {"pie_bonus": 1},
+     "magic_resist": 2,
+     "description": "A well-crafted holy symbol. +1 PIE, +2 magic resist.",
+     "identified": False, "estimated_value": 45},
+
+    # Thief — light quick boots
+    {"name": "Soft Leather Shoes", "appraised_name": "Soft Leather Shoes",
+     "type": "armor", "slot": "feet", "subtype": "boots",
+     "rarity": "common", "defense": 1,
+     "effect": {"dex_bonus": 1},
+     "description": "Supple leather shoes that make little noise. +1 DEX.",
+     "identified": False, "estimated_value": 30},
+
+    # Ranger — carved hunting bow
+    {"name": "Carved Hunting Bow", "appraised_name": "Carved Hunting Bow",
+     "type": "weapon", "slot": "weapon", "subtype": "Shortbow",
+     "rarity": "common", "damage": 14, "phys_type": "piercing", "range": "ranged",
+     "description": "Carved from a single stave of yew. Balanced and true.",
+     "identified": True, "estimated_value": 30},
+
+    # Monk — meditation beads
+    {"name": "Iron Ki Beads", "appraised_name": "Iron Ki Beads",
+     "type": "accessory", "slot": "ring1", "subtype": "amulet",
+     "rarity": "uncommon",
+     "effect": {"wis_bonus": 1},
+     "magic_resist": 1,
+     "description": "Simple iron beads worn during meditation. Steadies the Ki. +1 WIS.",
+     "identified": False, "estimated_value": 28},
+
+    # General — minor fortitude ring (fits anyone)
+    {"name": "Copper Ring of Endurance", "appraised_name": "Copper Ring of Endurance",
+     "type": "accessory", "slot": "ring1", "subtype": "ring",
+     "rarity": "common",
+     "effect": {"con_bonus": 1, "max_hp_bonus": 5},
+     "description": "A plain copper ring. Wearers feel a little tougher. +1 CON, +5 max HP.",
+     "identified": False, "estimated_value": 25},
+
+    # General — light protective wrap
+    {"name": "Padded Arm Guards", "appraised_name": "Padded Arm Guards",
+     "type": "armor", "slot": "hands", "subtype": "bracers",
+     "rarity": "common", "defense": 2,
+     "description": "Thick leather wrapped around the forearms. Simple protection.",
+     "identified": True, "estimated_value": 18},
+]
+
 SECRET_ITEMS_T1 = [
     {"name": "Ring of Minor Fortitude", "appraised_name": "Ring of Minor Fortitude", "type": "accessory", "slot": "ring1",
      "subtype": "ring", "rarity": "uncommon",
@@ -202,12 +275,47 @@ BOSS_BONUS_LOOT = {
 }
 
 
-def get_secret_item(floor_num, total_floors, rng, party=None):
-    """Pick a random magic item appropriate to dungeon depth.
-    Deep rooms (floor 3+) have a 12% chance to contain a unique item."""
+# Act-to-dungeon mapping for loot gating
+_ACT1_DUNGEONS = frozenset({"goblin_warren", "spiders_nest"})
+_ACT2_DUNGEONS = frozenset({"abandoned_mine", "sunken_crypt", "ruins_ashenmoor", "dragons_tooth"})
+# Act 3 dungeons use T2/T3 — everything else falls through to default
+
+
+def get_secret_item(floor_num, total_floors, rng, party=None, dungeon_id=None):
+    """Pick a random magic item appropriate to dungeon act and depth.
+
+    Act 1 dungeons (Goblin Warren, Spider's Nest):
+      - All floors: DA1 pool (weak, appropriate for level 1-3)
+      - Final floor: small chance of T1 item (exciting boss chest reward)
+
+    Act 2 dungeons:
+      - Early floors: T1 pool
+      - Mid/deep floors: T2 pool
+
+    Act 3 dungeons:
+      - T2/T3 full range
+    """
     depth_ratio = floor_num / max(total_floors, 1)
 
-    # Deep secret rooms: chance for unique items seeded into the world
+    # ── Act 1 dungeons: keep loot weak ─────────────────────────
+    if dungeon_id in _ACT1_DUNGEONS:
+        # Only the final floor gets a small chance at a T1 item
+        if floor_num >= total_floors and rng.random() < 0.35:
+            return dict(rng.choice(SECRET_ITEMS_T1))
+        return dict(rng.choice(SECRET_ITEMS_DA1))
+
+    # ── Act 2 dungeons ─────────────────────────────────────────
+    if dungeon_id in _ACT2_DUNGEONS:
+        if depth_ratio >= 0.75:
+            pool = SECRET_ITEMS_T2
+        elif depth_ratio >= 0.4:
+            pool = SECRET_ITEMS_T1 + SECRET_ITEMS_T2[:3]
+        else:
+            pool = SECRET_ITEMS_T1
+        return dict(rng.choice(pool))
+
+    # ── Act 3 dungeons (default: full range) ───────────────────
+    # Deep secret rooms: chance for unique items
     if depth_ratio >= 0.6 and rng.random() < 0.12:
         secret_uniques = ["shadowwalker_boots", "hearthwarden_helm"]
         rng.shuffle(secret_uniques)
@@ -218,7 +326,7 @@ def get_secret_item(floor_num, total_floors, rng, party=None):
 
     if depth_ratio >= 0.8 and rng.random() < 0.3:
         pool = SECRET_ITEMS_T3
-    elif depth_ratio >= 0.4 or floor_num >= 2:
+    elif depth_ratio >= 0.4:
         pool = SECRET_ITEMS_T2
     else:
         pool = SECRET_ITEMS_T1

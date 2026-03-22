@@ -33,7 +33,7 @@ NEW_ENEMIES = {
     "Goblin Scout": _e("Goblin Scout",45,3,1,S(4,14,3,3,6,1),20,12,"melee","piercing",
         acc=3,xp=10,gold=(2,6),        loot=[
             {"drop_chance": 0.14, "item": {"name": 'Crude Knife', "type": 'material', "subtype": 'blade_scrap', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Rusty Blade', "unidentified_desc": 'A short rusty knife.', "appraised_name": "Scout's Crude Knife", "material_desc": 'Poor-grade iron.', "magic_desc": 'No magical properties.', "estimated_value": 3, "description": "A goblin scout's knife.", "identified": False}},
-            {"drop_chance": 0.1, "item": {"name": 'Goblin Ear', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Severed Ear', "unidentified_desc": 'A small pointed ear.', "appraised_name": 'Goblin Ear', "material_desc": 'A goblin trophy.', "magic_desc": 'No magical properties.', "estimated_value": 2, "description": 'A goblin ear.', "identified": False}},
+            {"drop_chance": 0.30, "item": {"name": 'Goblin Ear', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Severed Ear', "unidentified_desc": 'A small pointed ear.', "appraised_name": 'Goblin Ear', "material_desc": 'A goblin trophy.', "magic_desc": 'No magical properties.', "estimated_value": 2, "description": 'A goblin ear.', "identified": False}},
         ],
 
         desc={0:"A scrawny goblin with a rusty knife.",1:"Goblin Scout",
@@ -51,7 +51,7 @@ NEW_ENEMIES = {
         ab=[{"name":"Caltrops","type":"debuff","target":"single_enemy",
              "effect":{"speed_penalty":0.5,"duration":2},"description":"Slows an enemy."}],             loot=[
                  {"drop_chance": 0.15, "item": {"name": 'Crude Snare Wire', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Twisted Wire', "unidentified_desc": 'A coil of badly twisted wire.', "appraised_name": 'Goblin Snare Wire', "material_desc": 'Low-grade wire from goblin traps.', "magic_desc": 'No magical properties.', "estimated_value": 4, "description": 'Wire from a goblin trap.', "identified": False}},
-                 {"drop_chance": 0.1, "item": {"name": 'Goblin Ear', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Severed Ear', "unidentified_desc": 'A small pointed ear.', "appraised_name": 'Goblin Ear', "material_desc": 'A goblin trophy.', "magic_desc": 'No magical properties.', "estimated_value": 2, "description": 'A goblin ear.', "identified": False}},
+                 {"drop_chance": 0.30, "item": {"name": 'Goblin Ear', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Severed Ear', "unidentified_desc": 'A small pointed ear.', "appraised_name": 'Goblin Ear', "material_desc": 'A goblin trophy.', "magic_desc": 'No magical properties.', "estimated_value": 2, "description": 'A goblin ear.', "identified": False}},
              ],
 
         desc={0:"A goblin fiddling with strange devices.",1:"Goblin Trapper",
@@ -320,7 +320,7 @@ NEW_ENEMIES = {
         ab=[{"name":"War Drums","type":"buff","target":"all_allies",
              "effect":{"speed_boost":1.2,"duration":2},"description":"Drums speed allies up."}],             loot=[
                  {"drop_chance": 0.12, "item": {"name": 'Drum Membrane', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Stretched Hide', "unidentified_desc": 'A rough circle of dried skin.', "appraised_name": 'Goblin War-Drum Membrane', "material_desc": 'Stretched hide from goblin drums.', "magic_desc": 'Faint resonant quality.', "estimated_value": 6, "description": 'A drum membrane that vibrates oddly.', "identified": False}},
-                 {"drop_chance": 0.08, "item": {"name": 'Goblin Ear', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Severed Ear', "unidentified_desc": 'A small pointed ear.', "appraised_name": 'Goblin Ear', "material_desc": 'Bounty material.', "magic_desc": 'No magical properties.', "estimated_value": 2, "description": 'A goblin ear.', "identified": False}},
+                 {"drop_chance": 0.25, "item": {"name": 'Goblin Ear', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Severed Ear', "unidentified_desc": 'A small pointed ear.', "appraised_name": 'Goblin Ear', "material_desc": 'Bounty material.', "magic_desc": 'No magical properties.', "estimated_value": 2, "description": 'A goblin ear.', "identified": False}},
              ],
 
         desc={0:"A goblin beating a crude drum.",1:"Goblin Drummer",

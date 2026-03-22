@@ -48,7 +48,7 @@ ENEMIES = {
                 "estimated_value": 4,
                 "description": "A goblin-forged shiv. Crude but sharp enough to draw blood.",
             }},
-            {"drop_chance": 0.12, "item": {
+            {"drop_chance": 0.35, "item": {
                 "name": "Goblin Ear", "type": "material",
                 "subtype": "trophy", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -154,7 +154,7 @@ ENEMIES = {
                 "estimated_value": 12,
                 "description": "A well-used blade with nicks along the edge. Carried by a bandit who won't need it anymore.",
             }},
-            {"drop_chance": 0.12, "item": {
+            {"drop_chance": 0.30, "item": {
                 "name": "Leather Scraps", "type": "material",
                 "subtype": "leather", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -193,7 +193,7 @@ ENEMIES = {
         "status_immunities": [],
         "abilities": [],
         "loot_table": [
-            {"drop_chance": 0.15, "item": {
+            {"drop_chance": 0.38, "item": {
                 "name": "Wolf Pelt", "type": "material",
                 "subtype": "leather", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -205,7 +205,7 @@ ENEMIES = {
                 "estimated_value": 15,
                 "description": "A thick grey pelt, still warm. Useful for crafting leather armor.",
             }},
-            {"drop_chance": 0.08, "item": {
+            {"drop_chance": 0.22, "item": {
                 "name": "Wolf Fang", "type": "material",
                 "subtype": "reagent", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -395,7 +395,7 @@ ENEMIES = {
                 "estimated_value": 15,
                 "description": "A crude but heavy iron blade favored by orc warriors.",
             }},
-            {"drop_chance": 0.05, "item": {
+            {"drop_chance": 0.25, "item": {
                 "name": "Orc Hide Scraps", "type": "material",
                 "subtype": "leather", "rarity": "common", "tier": 1,
                 "identify_difficulty": 1,
@@ -812,7 +812,7 @@ ENEMIES = {
         "status_immunities": [],
         "abilities": [],
         "loot_table": [
-            {"drop_chance": 0.12, "item": {
+            {"drop_chance": 0.35, "item": {
                 "name": "Spider Silk", "type": "material", "subtype": "cloth",
                 "rarity": "common", "tier": 1, "estimated_value": 12, "identified": True,
                 "description": "Tough, lightweight silk from a giant spider.",
