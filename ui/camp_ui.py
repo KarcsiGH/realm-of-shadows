@@ -338,6 +338,28 @@ class CampUI:
             draw_text(surface, f"Bonuses: {bonuses}", x, dy, (140, 220, 160), 12)
             dy += 16
 
+        # Effect dict (stat bonuses from magic items)
+        EFFECT_LABELS = {
+            "str_bonus": "STR", "dex_bonus": "DEX", "con_bonus": "CON",
+            "int_bonus": "INT", "wis_bonus": "WIS", "pie_bonus": "PIE",
+            "max_hp_bonus": "Max HP",
+        }
+        effect = item.get("effect", {})
+        if isinstance(effect, dict) and effect:
+            parts = []
+            for k, v in effect.items():
+                label = EFFECT_LABELS.get(k, k.replace("_", " ").title())
+                sign = "+" if v > 0 else ""
+                parts.append(f"{sign}{v} {label}")
+            if parts:
+                draw_text(surface, "Effect: " + "  |  ".join(parts), x, dy, (140, 220, 160), 12)
+                dy += 16
+
+        # Magic resist
+        if item.get("magic_resist"):
+            draw_text(surface, f"+{item["magic_resist"]} Magic Resist", x, dy, (120, 180, 255), 12)
+            dy += 16
+
         # Enchant
         if item.get("enchant_element"):
             draw_text(surface, f"Enchant: {item['enchant_element'].title()} +{item.get('enchant_bonus',0)}",
@@ -348,6 +370,73 @@ class CampUI:
         rarity = item.get("rarity", "").title()
         value  = item.get("estimated_value", item.get("sell_price", 0))
         draw_text(surface, f"{rarity}  |  Value: ~{value}g", x, dy, DIM_GOLD, 11)
+
+        # Equipment compare: show current item in slot vs this item
+        if item.get("slot") and hasattr(self, "party") and 0 <= self.selected_char < len(self.party):
+            self._draw_equip_compare(surface, item, panel.x, panel.y + panel.height + 6, panel.width)
+
+    def _draw_equip_compare(self, surface, new_item, px, py, pw):
+        """Show a compact comparison between new_item and what's currently equipped
+        in the same slot for the selected character."""
+        from core.equipment import get_item_slot
+        from core.identification import get_item_display_name
+
+        c = self.party[self.selected_char]
+        equip = getattr(c, "equipment", {}) or {}
+
+        # Resolve which slot this item goes to
+        slot = get_item_slot(new_item)
+        if not slot:
+            return
+
+        cur = equip.get(slot)
+        panel = pygame.Rect(px, py, pw, 70)
+        pygame.draw.rect(surface, (15, 20, 35), panel, border_radius=4)
+        pygame.draw.rect(surface, (60, 80, 120), panel, 1, border_radius=4)
+
+        cx, cy = panel.x + 10, panel.y + 8
+        draw_text(surface, f"Compare — slot: {slot}", cx, cy, (100, 140, 200), 11, bold=True)
+        cy += 16
+
+        if cur:
+            # Compute deltas
+            def_delta  = new_item.get("defense", 0) - cur.get("defense", 0)
+            dmg_delta  = new_item.get("damage",  0) - cur.get("damage",  0)
+            mr_delta   = new_item.get("magic_resist", 0) - cur.get("magic_resist", 0)
+            sp_delta   = new_item.get("spell_bonus",  0) - cur.get("spell_bonus",  0)
+            deltas = []
+            if def_delta: deltas.append(("Def", def_delta))
+            if dmg_delta: deltas.append(("Dmg", dmg_delta))
+            if mr_delta:  deltas.append(("MR",  mr_delta))
+            if sp_delta:  deltas.append(("Spl", sp_delta))
+            # Stat bonus deltas from effect dict
+            EFFECT_LABELS = {"str_bonus":"STR","dex_bonus":"DEX","con_bonus":"CON",
+                             "int_bonus":"INT","wis_bonus":"WIS","pie_bonus":"PIE","max_hp_bonus":"HP"}
+            new_eff = new_item.get("effect", {}) if isinstance(new_item.get("effect"), dict) else {}
+            cur_eff = cur.get("effect", {}) if isinstance(cur.get("effect"), dict) else {}
+            all_keys = set(new_eff) | set(cur_eff)
+            for k in all_keys:
+                d = new_eff.get(k, 0) - cur_eff.get(k, 0)
+                if d: deltas.append((EFFECT_LABELS.get(k, k[:4]), d))
+
+            cur_name = get_item_display_name(cur)[:22]
+            draw_text(surface, f"Replacing: {cur_name}", cx, cy, (160, 140, 100), 11)
+            cy += 14
+            if deltas:
+                parts = []
+                for lbl, d in deltas:
+                    col_str = f"+{d}" if d > 0 else str(d)
+                    parts.append(f"{lbl}: {col_str}")
+                delta_text = "  ".join(parts[:6])
+                # Color: mostly positive = green, mostly negative = red, mixed = yellow
+                pos = sum(1 for _,d in deltas if d > 0)
+                neg = sum(1 for _,d in deltas if d < 0)
+                col = (120, 220, 120) if pos > neg else (220, 120, 120) if neg > pos else (220, 200, 80)
+                draw_text(surface, delta_text, cx, cy, col, 11)
+            else:
+                draw_text(surface, "No stat difference", cx, cy, GREY, 11)
+        else:
+            draw_text(surface, f"Nothing equipped in {slot} — this is an upgrade!", cx, cy, (120, 220, 120), 11)
 
     # ──────────────────────────────────────────────────────────
     #  EQUIPMENT TAB

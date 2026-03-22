@@ -1628,6 +1628,9 @@ class TownUI:
         # Save button — top right, next to Back
         save_btn = pygame.Rect(SCREEN_W - 280, 20, 128, 34)
         draw_button(surface, save_btn, "💾 Save Game", hover=save_btn.collidepoint(mx, my), size=13)
+        # Party management button — opens inventory/equip/stats/transfer
+        party_btn = pygame.Rect(SCREEN_W - 420, 20, 130, 34)
+        draw_button(surface, party_btn, "👥 Party", hover=party_btn.collidepoint(mx, my), size=13)
         # Save feedback label
         if getattr(self, "_inn_save_msg", "") and getattr(self, "_inn_save_timer", 0) > 0:
             smsg_col = (120, 220, 120) if self._inn_save_ok else (220, 80, 80)
@@ -2728,6 +2731,11 @@ class TownUI:
                 self._inn_save_ok  = ok
                 self._inn_save_timer = 3000
                 return None
+
+            # Party management button — opens CampUI (equip/stats/transfer/etc.)
+            party_btn = pygame.Rect(SCREEN_W - 420, 20, 130, 34)
+            if party_btn.collidepoint(mx, my):
+                return "open_party_review"
 
             by = 110
             for i, tier_key in enumerate(INN_TIER_ORDER):
