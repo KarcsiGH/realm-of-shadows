@@ -906,6 +906,10 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             )
             return result
         attacker["resources"][resource_key] -= cost
+        # Sync back to Character object immediately so camp/menu show current values
+        _char_ref = attacker.get("character_ref")
+        if _char_ref:
+            _char_ref.resources[resource_key] = attacker["resources"][resource_key]
         # Log the resource spend so the player can see it clearly
         result["_resource_spent"] = (resource_key, cost, attacker["resources"][resource_key])
 

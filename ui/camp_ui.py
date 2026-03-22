@@ -199,7 +199,8 @@ class CampUI:
         # Party status preview
         cy = top + 90
         for c in self.party:
-            max_res = get_all_resources(c.class_name, c.stats, c.level)
+            _eff = c.effective_stats() if hasattr(c, "effective_stats") else c.stats
+            max_res = get_all_resources(c.class_name, _eff, c.level)
             max_hp = max_res.get("HP", 1)
             cur_hp = c.resources.get("HP", 0)
             pct = cur_hp / max_hp if max_hp else 0

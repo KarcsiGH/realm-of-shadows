@@ -3881,9 +3881,9 @@ class TownUI:
         from core.crafting import can_afford_recipe, count_material
         visible = recipes[self.forge_scroll:self.forge_scroll + 7]
         for i, recipe in enumerate(visible):
-            ry = y + i * 72
+            ry = y + i * 76
             can = can_afford_recipe(self.party, recipe)
-            box = pygame.Rect(20, ry, SCREEN_W - 40, 66)
+            box = pygame.Rect(20, ry, SCREEN_W - 40, 70)
             bc = (50, 40, 30) if can else (35, 30, 25)
             pygame.draw.rect(surface, bc, box, 0, 6)
             pygame.draw.rect(surface, accent if can else (60, 50, 40), box, 1, 6)
@@ -3894,14 +3894,17 @@ class TownUI:
             desc = res.get("description", "")[:70]
             draw_text(surface, desc, 30, ry + 24, CREAM if can else (80, 70, 60), 12)
 
-            # Cost
-            cost_parts = [f"{recipe['gold']}g"]
+            # Cost — gold + per-material have/need with color coding
+            total_gold = sum(c.gold for c in self.party)
+            gold_col = (200, 180, 80) if total_gold >= recipe["gold"] else (220, 80, 80)
+            cx = 30
+            draw_text(surface, f"Cost: {recipe['gold']}g", cx, ry + 44, gold_col, 12, bold=True)
+            cx += 90
             for mat, ct in recipe["materials"].items():
                 have = count_material(self.party, mat)
-                col_str = f"{mat}:{have}/{ct}"
-                cost_parts.append(col_str)
-            cost_text = "  |  ".join(cost_parts)
-            draw_text(surface, cost_text, 30, ry + 44, (140, 120, 80) if can else (70, 60, 50), 11)
+                mat_col = (100, 220, 100) if have >= ct else (220, 100, 100)
+                draw_text(surface, f"{mat}: {have}/{ct}", cx, ry + 44, mat_col, 12)
+                cx += len(mat) * 7 + 70
 
             # Craft button
             if can:
@@ -3927,7 +3930,7 @@ class TownUI:
             total_mats = sum(avail_mats.values())
             can = total_gold >= cost["gold"] and total_mats >= cost["material_count"]
 
-            box = pygame.Rect(20, ry, SCREEN_W - 40, 56)
+            box = pygame.Rect(20, ry, SCREEN_W - 40, 58)
             bc = (50, 40, 30) if can else (35, 30, 25)
             pygame.draw.rect(surface, bc, box, 0, 6)
             pygame.draw.rect(surface, accent if can else (60, 50, 40), box, 1, 6)
@@ -3935,8 +3938,12 @@ class TownUI:
             lvl = item.get("upgrade_level", 0)
             draw_text(surface, f"{item['name']}", 30, ry + 4, GOLD if can else GREY, 15, bold=True)
             draw_text(surface, f"{char.name} ({loc})  |  +{lvl} → +{lvl+1}", 30, ry + 24, CREAM if can else (80,70,60), 12)
-            draw_text(surface, f"Cost: {cost['gold']}g + {cost['material_count']} tier-{cost['min_material_tier']}+ materials (have {total_mats})",
-                      30, ry + 40, (140,120,80) if can else (70,60,50), 11)
+            gold_col2 = (200, 180, 80) if total_gold >= cost["gold"] else (220, 80, 80)
+            mat_col2 = (100, 220, 100) if total_mats >= cost["material_count"] else (220, 100, 100)
+            draw_text(surface, f"Gold: {cost['gold']}g", 30, ry + 40, gold_col2, 12, bold=True)
+            draw_text(surface,
+                f"Materials: need {cost['material_count']}× tier-{cost['min_material_tier']}+  (have {total_mats})",
+                175, ry + 40, mat_col2, 12)
 
             if can:
                 btn = pygame.Rect(SCREEN_W - 130, ry + 12, 90, 30)
@@ -3997,7 +4004,15 @@ class TownUI:
                 for mat, ct in ench["materials"].items():
                     have = count_material(self.party, mat)
                     cost_parts.append(f"{mat}:{have}/{ct}")
-                draw_text(surface, "  |  ".join(cost_parts), 30, ry + 26, (140,120,80) if can else (70,60,50), 11)
+                enc_cx = 30
+                enc_gold_col = (200, 180, 80) if total_gold >= ench["gold"] else (220, 80, 80)
+                draw_text(surface, f"{ench['gold']}g", enc_cx, ry + 26, enc_gold_col, 12, bold=True)
+                enc_cx += 55
+                for mat, ct in ench["materials"].items():
+                    have2 = count_material(self.party, mat)
+                    mc = (100, 220, 100) if have2 >= ct else (220, 100, 100)
+                    draw_text(surface, f"{mat}: {have2}/{ct}", enc_cx, ry + 26, mc, 12)
+                    enc_cx += len(mat) * 7 + 65
 
                 if can:
                     btn = pygame.Rect(SCREEN_W - 130, ry + 8, 90, 28)
@@ -4025,11 +4040,11 @@ class TownUI:
             self.forge_selected_item = None
             return None
 
-        # Tab clicks
+        # Tab clicks — y=78 matches _draw_forge tab bar
         tabs = [(self.VIEW_FORGE_CRAFT, 20), (self.VIEW_FORGE_UPGRADE, 160),
                 (self.VIEW_FORGE_ENCHANT, 300), (self.VIEW_FORGE_REPAIR, 440)]
         for view, tx in tabs:
-            tr = pygame.Rect(tx, 50, 130, 32)
+            tr = pygame.Rect(tx, 78, 130, 32)
             if tr.collidepoint(mx, my):
                 self.view = view
                 self.forge_scroll = 0
@@ -4072,7 +4087,7 @@ class TownUI:
         if active_view == self.VIEW_FORGE_CRAFT:
             visible = RECIPES[self.forge_scroll:self.forge_scroll + 7]
             for i, recipe in enumerate(visible):
-                ry = y + i * 72
+                ry = y + i * 76
                 if can_afford_recipe(self.party, recipe):
                     btn = pygame.Rect(SCREEN_W - 120, ry + 16, 80, 30)
                     if btn.collidepoint(mx, my):
