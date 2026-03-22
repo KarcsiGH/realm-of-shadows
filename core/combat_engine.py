@@ -2183,6 +2183,9 @@ class CombatState:
                 self.advance_turn()
             return  # early return — advance_turn already called or skipped
 
+        elif action_type == "bolt_attack":
+            result = self._exec_bolt_attack(actor, target, ability)
+
         elif action_type == "switch_weapon":
             result = self._exec_switch_weapon(actor, item)
 
@@ -2223,6 +2226,47 @@ class CombatState:
         actor["weapon"] = dict(item)
         char_ref.equipment["weapon"] = dict(item)
         return {"messages": [f"{actor['name']} switches to {item.get('name', 'a weapon')}!"]}
+
+    def _exec_bolt_attack(self, actor, target, ability):
+        """Fire a magical bolt from a wand/rod/orb. Uses INT + spell_bonus.
+        Bypasses physical defense; uses magic resist instead.
+        Deals the bolt_dmg pre-calculated from INT and spell_bonus.
+        """
+        if not target:
+            return {"messages": ["No target."]}
+        name = actor["name"]
+        tgt_name = target.get("name", "target")
+        bolt_dmg = ability.get("_bolt_dmg", 5)
+        element  = ability.get("_bolt_element", "arcane")
+        weapon   = ability.get("_weapon", {})
+
+        # Accuracy: INT-based, ranged
+        int_stat = actor.get("stats", {}).get("INT", 10)
+        base_acc = 65 + max(0, (int_stat - 10) * 2)
+        # Defender magic resist
+        mr = target.get("magic_resist", 0)
+        hit_chance = max(20, min(95, base_acc - mr // 2))
+        import random
+        hit = random.randint(1, 100) <= hit_chance
+
+        if not hit:
+            return {"messages": [f"{name} fires a bolt — RESISTED!"], "action": "bolt_attack", "hit": False}
+
+        # Apply magic resist reduction
+        actual_dmg = max(1, bolt_dmg - mr // 4)
+        target["hp"] = max(0, target["hp"] - actual_dmg)
+        if target["hp"] <= 0:
+            target["alive"] = False
+
+        return {
+            "action": "bolt_attack",
+            "hit": True,
+            "damage": actual_dmg,
+            "element": element,
+            "attacker": actor,
+            "defender": target,
+            "messages": [f"{name} fires a {element} bolt at {tgt_name} — {actual_dmg} damage!"],
+        }
 
     def _exec_use_consumable(self, actor, item, target=None):
         """Use a consumable item in combat. Costs action."""

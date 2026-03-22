@@ -822,6 +822,17 @@ class CombatUI:
             acc_str = f" +{w_acc}% acc" if w_acc > 0 else (f" {w_acc}% acc" if w_acc < 0 else "")
             item_lbl = f"{w_name}  [{w_dmg} dmg · {w_type} · {w_range}{acc_str}]"
             items = [(item_lbl, {"type": "attack_select", "weapon": weapon})]
+            # Wands/Rods/Orbs: offer a ranged bolt attack in addition to the melee prod
+            w_subtype = weapon.get("subtype", weapon.get("type", ""))
+            if w_subtype in ("Wand", "Rod", "Orb", "wand", "rod", "orb"):
+                sp_bonus = weapon.get("spell_bonus", 0)
+                int_stat = actor.get("stats", {}).get("INT", 10)
+                bolt_dmg = w_dmg + sp_bonus + max(0, (int_stat - 10) // 2)
+                enchant  = weapon.get("enchant_element", "arcane").capitalize()
+                bolt_lbl = f"Bolt: {w_name}  [{bolt_dmg} dmg · {enchant} · Ranged]"
+                items.append((bolt_lbl, {"type": "attack_select", "weapon": weapon,
+                                          "is_bolt": True, "bolt_dmg": bolt_dmg,
+                                          "bolt_element": enchant.lower()}))
 
         elif label in ("spell", "skill"):
             abilities = actor.get("abilities", [])
@@ -1199,7 +1210,18 @@ class CombatUI:
         """
         t = data.get("type")
         if t == "attack_select":
-            self.action_mode = "target_attack"
+            if data.get("is_bolt"):
+                # Bolt attack from wand/rod/orb — ranged, INT-based
+                self.selected_ability = {
+                    "name": f"Bolt ({data["weapon"].get("name", "Wand")})",
+                    "_is_bolt": True,
+                    "_bolt_dmg": data["bolt_dmg"],
+                    "_bolt_element": data.get("bolt_element", "arcane"),
+                    "_weapon": data["weapon"],
+                }
+                self.action_mode = "target_ability"
+            else:
+                self.action_mode = "target_attack"
             return None
         if t == "ability":
             ab      = data["ability"]

@@ -4216,11 +4216,33 @@ class Game:
             self.combat_state.execute_player_action("defend")
             sfx.play("block")
         elif action["type"] == "ability":
-            result = self.combat_state.execute_player_action(
-                "ability", target=action["target"], ability=action["ability"]
-            )
+            ab_check = action.get("ability", {})
+            if isinstance(ab_check, dict) and ab_check.get("_is_bolt"):
+                # Wand/rod/orb bolt attack — resolved as a ranged magic hit
+                result = self.combat_state.execute_player_action(
+                    "bolt_attack", target=action["target"], ability=ab_check
+                )
+            else:
+                result = self.combat_state.execute_player_action(
+                    "ability", target=action["target"], ability=action["ability"]
+                )
+            # Handle bolt_attack result separately
+            if isinstance(ab_check, dict) and ab_check.get("_is_bolt") and result:
+                if result.get("hit"):
+                    sfx.play("hit_magic")
+                    element = result.get("element", "arcane")
+                    dmg = result.get("damage", 0)
+                    _BOLT_COL = {"fire":(255,110,30),"ice":(80,210,255),"lightning":(255,255,80),
+                                 "arcane":(200,160,255),"shadow":(150,80,200)}
+                    col = _BOLT_COL.get(element, (200,160,255))
+                    self.combat_ui.add_flash(f"◈ Bolt {dmg}", col)
+                    if result.get("defender", {}).get("alive") is False:
+                        sfx.play("enemy_death")
+                else:
+                    sfx.play("spell_miss")
+                    self.combat_ui.add_flash("◈ Bolt — RESISTED!", (150,120,180))
             # Show resource cost flash so player can see MP/SP being spent
-            if result:
+            elif result:
                 rsrc = result.get("_resource_spent")
                 if rsrc:
                     rk, cost, remaining = rsrc

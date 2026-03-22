@@ -27,9 +27,9 @@ SECRET_ITEMS_DA1 = [
     # Mage — tiny spell boost focus
     {"name": "Carved Oak Wand", "appraised_name": "Carved Oak Wand",
      "type": "weapon", "slot": "weapon", "subtype": "Wand",
-     "rarity": "uncommon", "damage": 5, "phys_type": "blunt", "range": "melee",
+     "rarity": "uncommon", "damage": 5, "phys_type": "blunt", "range": "ranged",
      "spell_bonus": 2,
-     "description": "A wand carved with simple runes. Slightly enhances spell focus. +2 spell power.",
+     "description": "A wand carved with simple runes. Can fire arcane bolts. +2 spell power.",
      "identified": False, "estimated_value": 40},
 
     # Cleric — modest holy symbol
@@ -104,10 +104,10 @@ SECRET_ITEMS_T1 = [
 
     {"name": "Wand of Sparks", "appraised_name": "Wand of Sparks", "type": "weapon", "slot": "weapon",
      "subtype": "Wand", "rarity": "uncommon", "damage": 6,
-     "phys_type": "blunt", "range": "melee",
+     "phys_type": "blunt", "range": "ranged",
      "spell_bonus": 3,
      "enchant_element": "lightning", "enchant_bonus": 3,
-     "description": "A wand crackling with static. +3 spell power, deals lightning damage.",
+     "description": "A wand crackling with static. Fires lightning bolts. +3 spell power.",
      "identified": False, "estimated_value": 65},
 
     {"name": "Amulet of the Owl", "appraised_name": "Amulet of the Owl", "type": "accessory", "slot": "ring1",
