@@ -271,7 +271,7 @@ class TownUI:
              (100, 60, 100), RUMOR_COL),
             ("Job Board", "Browse available quests and contracts",
              (40, 80, 60), (80, 200, 120)),
-            ("Party Camp", "View characters, equip items, trade, and rest",
+            ("Party", "View and manage your characters — equip items, trade, check stats",
              (40, 60, 80), (80, 160, 220)),
             ("Leave Town", "Return to the wilds",
              (80, 40, 40), RED),
@@ -2542,7 +2542,7 @@ class TownUI:
 
         # ── Hub view ──
         if self.view == self.VIEW_HUB:
-            locations = ["inn", "shop", "forge", "temple", "tavern", "jobboard", "camp", "exit"]
+            locations = ["inn", "shop", "forge", "temple", "tavern", "jobboard", "party", "exit"]
             by = 140
             for i, loc in enumerate(locations):
                 btn = pygame.Rect(SCREEN_W // 2 - 300, by + i * 90, 420, 78)
@@ -2566,9 +2566,9 @@ class TownUI:
                         self.view = self.VIEW_INN
                     elif loc == "jobboard":
                         self.view = self.VIEW_JOBBOARD
-                    elif loc == "camp":
-                        # Signal main.py to open CampUI for party management
-                        return "open_camp"
+                    elif loc == "party":
+                        # Signal main.py to open the party management screen
+                        return "open_party_review"
                     return None
 
             # NPC clicks
@@ -2647,9 +2647,10 @@ class TownUI:
                 self.view = self.VIEW_SHOP
                 return None
 
-            # Character tabs
+            # Character tabs — match _draw_shop_sell tab_area_w = SCREEN_W - 170
             for i in range(len(self.party)):
-                tw = (SCREEN_W - 40) // len(self.party)
+                tab_area_w = SCREEN_W - 170
+                tw = tab_area_w // len(self.party)
                 tr = pygame.Rect(20 + i * tw, 50, tw - 4, 32)
                 if tr.collidepoint(mx, my):
                     self.sell_char = i
@@ -2677,8 +2678,12 @@ class TownUI:
                 return None
 
             # Service buttons
+            # by must match _draw_temple: starts at 120, bumps to 132 for PIE>=15
             services = list(TEMPLE["services"].keys())
             by = 120
+            max_pie = max((c.stats.get("PIE", 0) for c in self.party), default=0)
+            if max_pie >= 15:
+                by = 132  # matches _draw_temple PIE discount banner bump
             for i, svc_key in enumerate(services):
                 btn = pygame.Rect(SCREEN_W // 2 - 250, by + i * 80, 500, 68)
                 if btn.collidepoint(mx, my):
@@ -2686,6 +2691,7 @@ class TownUI:
                     return None
 
             # Identify item clicks
+            # uy must match _draw_temple: by + len(services)*80 + 20 (+25 for label)
             svc_count = len(services)
             unid_items = []
             for ci, c in enumerate(self.party):
@@ -2695,7 +2701,7 @@ class TownUI:
                         unid_items.append((ci, ii, item, c))
 
             if unid_items:
-                uy = by + svc_count * 80 + 45
+                uy = by + svc_count * 80 + 20 + 25  # +20 header gap, +25 label height
                 for ui_idx, (ci, ii, item, char) in enumerate(unid_items[:5]):
                     row = pygame.Rect(SCREEN_W // 2 - 250, uy, 500, 40)
                     if row.collidepoint(mx, my):
@@ -3152,6 +3158,11 @@ class TownUI:
         if item_idx >= len(char.inventory):
             return
         item = char.inventory[item_idx]
+        # Quest items cannot be sold — they are story-critical
+        if item.get("quest_item") or item.get("type") == "quest_item":
+            from ui.renderer import draw_text
+            self._msg(f"{item.get('name', 'This item')} cannot be sold — it is a quest item.", (220, 80, 80))
+            return
         sell_price = get_sell_price(item)
         char.inventory.pop(item_idx)
         char.gold += sell_price

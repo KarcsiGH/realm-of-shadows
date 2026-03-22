@@ -712,9 +712,9 @@ class Game:
                             self.add_toast(toast_msg, toast_col)
                         except Exception:
                             pass  # save is best-effort
-                    elif result == "open_camp":
-                        # Party Camp from town — open CampUI, return to town
-                        self.start_camp(location="town", return_state=S_TOWN)
+                    elif result == "open_party_review":
+                        # Party Review from town — open CampUI without rest option
+                        self.start_camp(location="town_review", return_state=S_TOWN)
                 elif e.button == 4:
                     self.town_ui.handle_scroll(-1)
                 elif e.button == 5:
@@ -2521,6 +2521,18 @@ class Game:
         if boss_npc:
             defeat_boss(boss_npc)
 
+        # Set dungeon lore flags — same ones required by Maren dialogue.
+        # Must be set here (peaceful path) AND in _grant_boss_rewards (combat path).
+        _PEACEFUL_LORE_FLAGS = {
+            "goblin_warren":   "lore.grak_truth",
+            "abandoned_mine":  "lore.korrath_truth",
+            "ruins_ashenmoor": "lore.ashvar_truth",
+            "dragons_tooth":   "lore.karreth_truth",
+        }
+        lore_flag = _PEACEFUL_LORE_FLAGS.get(dungeon_id)
+        if lore_flag:
+            set_flag(lore_flag, True)
+
         # 4. Unlock next dungeon key
         world_key = res.get("world_key")
         if world_key and self.world_state and not self.world_state.has_key(world_key):
@@ -2651,22 +2663,7 @@ class Game:
             elif return_state == S_WORLD_MAP:
                 self._process_world_event({"type": "camp"})
             elif return_state == S_TOWN:
-                # Resting at a town inn — restore 50% HP/resources, no ambush risk
-                from core.classes import get_all_resources
-                healed = {}
-                for c in self.party:
-                    max_res = get_all_resources(c.class_name, c.stats, c.level)
-                    for rk, mval in max_res.items():
-                        cur = c.resources.get(rk, 0)
-                        restore = int(mval * 0.50)
-                        new_val = min(mval, cur + restore)
-                        if rk == "HP":
-                            healed[c.name] = new_val - cur
-                        c.resources[rk] = new_val
-                sfx.play("camp_rest")
-                parts = [f"{n} +{hp}HP" for n, hp in healed.items() if hp > 0]
-                msg = "Rested at the inn. " + ", ".join(parts) if parts else "Rested at the inn."
-                self.add_toast(msg, GREEN)
+                pass  # just return to town, no special rest handling
         else:
             # Cancel — just go back
             self.go(return_state)

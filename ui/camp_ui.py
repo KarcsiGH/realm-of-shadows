@@ -92,28 +92,36 @@ class CampUI:
     def draw(self, surface, mx, my, dt=16):
         surface.fill(CAMP_BG)
 
+        # For town_review: redirect Rest tab to Inventory if user lands on Rest
+        if self.location == "town_review" and self.tab == TAB_REST:
+            self.tab = TAB_INVENTORY
+
         # Title
         if self.location == "dungeon":
             title = "Camp — Dungeon"
-        elif self.location == "town":
-            title = "Camp — Town"
+        elif self.location == "town_review":
+            title = "Party Management"
         else:
             title = "Camp — Wilderness"
         draw_text(surface, title, SCREEN_W // 2 - 120, 8, GOLD, 22, bold=True)
 
         # Leave button
         leave = pygame.Rect(SCREEN_W - 130, 8, 110, 30)
-        draw_button(surface, leave, "Break Camp", hover=leave.collidepoint(mx, my), size=12)
+        leave_lbl = "Back to Town" if self.location == "town_review" else "Break Camp"
+        draw_button(surface, leave, leave_lbl, hover=leave.collidepoint(mx, my), size=12)
 
         # Tabs
         tw = SCREEN_W // TAB_COUNT
         for i, name in enumerate(TAB_NAMES):
             r = pygame.Rect(i * tw, 42, tw, 32)
+            # In town_review: Rest tab is hidden/disabled
+            is_disabled = (self.location == "town_review" and i == TAB_REST)
             bg = TAB_ACTIVE if i == self.tab else TAB_BG
             pygame.draw.rect(surface, bg, r)
             pygame.draw.rect(surface, TAB_BORDER if i == self.tab else PANEL_BORDER, r, 1)
-            col = GOLD if i == self.tab else GREY
-            draw_text(surface, name, r.x + tw // 2 - len(name) * 4, r.y + 7, col, 14,
+            col = GOLD if i == self.tab else (40, 38, 50) if is_disabled else GREY
+            draw_text(surface, name if not is_disabled else "——",
+                      r.x + tw // 2 - len(name) * 4, r.y + 7, col, 14,
                       bold=(i == self.tab))
 
         # Tab content
@@ -160,10 +168,7 @@ class CampUI:
     def _draw_rest(self, surface, mx, my, top):
         from core.classes import get_all_resources
 
-        if self.location == "town":
-            draw_text(surface, "Rest at the Inn?", SCREEN_W // 2 - 80, top, CREAM, 18)
-        else:
-            draw_text(surface, "Set up camp and rest?", SCREEN_W // 2 - 100, top, CREAM, 18)
+        draw_text(surface, "Set up camp and rest?", SCREEN_W // 2 - 100, top, CREAM, 18)
 
         if self.location == "dungeon":
             ambush_pct = 25 + self.dungeon_floor * 5
@@ -176,10 +181,6 @@ class CampUI:
             draw_text(surface, f"Ambush risk: {ambush_pct}%", SCREEN_W // 2 - 70,
                       top + 30, ORANGE, 14)
             draw_text(surface, "Restores 25% HP and SP/MP/Ki",
-                      SCREEN_W // 2 - 115, top + 52, GREY, 13)
-        elif self.location == "town":
-            draw_text(surface, "Ambush risk: None — you are safe in town.", SCREEN_W // 2 - 170, top + 30, GREEN, 14)
-            draw_text(surface, "Restores 50% HP and SP/MP/Ki",
                       SCREEN_W // 2 - 115, top + 52, GREY, 13)
         else:
             draw_text(surface, "Ambush risk: Low", SCREEN_W // 2 - 60, top + 30, GREEN, 14)
