@@ -60,7 +60,7 @@ def _make_retro_logo(original_surf, block=PIXEL_BLOCK):
     Black and near-black pixels become TRANSPARENT so the logo floats over any BG.
     Bright pixels become neon green (0, lum*1.2, 0).
     """
-    import numpy as np
+    import numpy as np  # noqa — used for array ops
 
     w, h = original_surf.get_size()
     tiny_w = max(1, w // block)
@@ -71,17 +71,15 @@ def _make_retro_logo(original_surf, block=PIXEL_BLOCK):
         original_surf.convert_alpha(), (tiny_w, tiny_h)
     )
 
-    # Pull RGB + alpha separately (array4d not available in all pygame builds)
-    rgb  = pygame.surfarray.array3d(tiny).astype(float)    # [w, h, 3]
-    alph = pygame.surfarray.array_alpha(tiny).astype(float) # [w, h]
+    # Pull RGB as numpy — image has black bg + neon green logo (all alpha=255)
+    rgb  = pygame.surfarray.array3d(tiny).astype(np.float32)  # [w, h, 3]
     R, G, B = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
 
-    # Luminance weighted by source alpha
-    lum = (0.299*R + 0.587*G + 0.114*B) * (alph / 255.0)
-
-    # Threshold: bright → neon green opaque, dark → transparent
-    bright = lum > 35
-    green_vals = np.clip(lum * 1.3, 0, 255).astype(np.uint8)
+    # Detect green pixels directly: G channel dominant over R and B
+    # This is more reliable than luminance for neon-green-on-black logos
+    is_green = (G > 20) & (G > R * 1.5) & (G > B * 1.5)
+    bright = is_green
+    green_vals = np.clip(G * 1.4, 0, 255).astype(np.uint8)
 
     # Build result surface with SRCALPHA
     result_tiny = pygame.Surface((tiny_w, tiny_h), pygame.SRCALPHA)
