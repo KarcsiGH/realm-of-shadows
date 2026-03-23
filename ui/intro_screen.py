@@ -51,11 +51,17 @@ def _load_hires():
         if os.path.exists(path):
             try:
                 raw = pygame.image.load(path).convert()
-                # Stamp onto a clean black surface to eliminate JPEG edge artifacts
-                clean = pygame.Surface(raw.get_size())
-                clean.fill((0, 0, 0))
-                clean.blit(raw, (0, 0))
-                return clean
+                # Zero out the outermost 2px on all sides — the JPEG has a
+                # 1px grey border (130-208 grey) that smoothscale blurs into
+                # a visible halo when downscaled.  Zeroing 2px ensures it is
+                # fully eliminated after bilinear interpolation.
+                arr = pygame.surfarray.pixels3d(raw)
+                arr[:, :2, :]  = 0   # top 2 rows
+                arr[:, -2:, :] = 0   # bottom 2 rows
+                arr[:2, :, :]  = 0   # left 2 cols
+                arr[-2:, :, :] = 0   # right 2 cols
+                del arr
+                return raw
             except Exception:
                 pass
     return None
