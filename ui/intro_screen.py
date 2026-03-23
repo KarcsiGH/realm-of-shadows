@@ -1,22 +1,28 @@
 """
 Realm of Shadows — Intro / Splash sequence
-Three phases:
-  Phase 0 (SPLASH):  Bad Bat Enterprises retro-pixelated logo fades in,
-                     holds, then "PRESENTS" appears beneath it, then fades out.
-  Phase 1 (TITLE):   Game title screen with retro dungeon-crawl artwork,
-                     animated starfield, title text, tagline — plays title music.
-  Phase 2 (MENU):    "New Game" and "Continue" click-buttons appear.
-                     No keypress navigation — mouse only.
 
-The caller checks .done (bool) and .action ('new_game' | 'continue' | None).
+Phase 0 (SPLASH):  Bad Bat Enterprises logo fades in as a retro pixel-art
+                   version, holds, "PRESENTS" appears beneath, then fades out.
+Phase 1 (TITLE):   Game title screen — retro dungeon-crawl art, animated
+                   starfield, game title text, tagline, title music.
+Phase 2 (MENU):    "New Game" and "Continue" click-buttons appear.
+                   Mouse-click only — no keypress navigation.
+
+Public API:
+    intro = IntroScreen()
+    intro.update(dt_ms)          # call each frame
+    intro.draw(surf, mx, my)     # call each frame
+    result = intro.handle_click(mx, my)   # returns 'new_game' / 'continue' / None
+    intro.done   -> bool
+    intro.action -> 'new_game' | 'continue' | None
 """
 
 import pygame
 import math
 import random
 import os
+import numpy as np
 
-# ── constants pulled from renderer ────────────────────────────────────────────
 try:
     from ui.renderer import SCREEN_W, SCREEN_H, draw_text, BG_COLOR
 except ImportError:
@@ -25,550 +31,389 @@ except ImportError:
         f = pygame.font.SysFont("monospace", size, bold=bold)
         surf.blit(f.render(text, True, color), (x, y))
 
-BLACK  = (0,   0,   0)
-WHITE  = (255, 255, 255)
-GREEN  = (0,   255, 0)
-DKGREEN= (0,   160, 0)
-GOLD   = (220, 180, 40)
-DIM_GOLD=(160, 130, 30)
-GREY   = (120, 110, 130)
-CREAM  = (220, 210, 190)
+BLACK   = (0,   0,   0)
+NEON_G  = (0,   255, 0)
+DIM_G   = (0,   160, 0)
 
-# ── logo path ─────────────────────────────────────────────────────────────────
+# ── Logo path ─────────────────────────────────────────────────────────────────
 _LOGO_PATH = os.path.join(
     os.path.dirname(os.path.dirname(__file__)),
-    "assets", "bad_bat_logo.png"
+    "assets", "bad_bat_logo.jpg"
 )
 
-# ── timing (ms) ───────────────────────────────────────────────────────────────
-SPLASH_FADE_IN   = 1200
-SPLASH_HOLD      = 1600
-PRESENTS_FADE    =  700
+# ── Timing (ms) ───────────────────────────────────────────────────────────────
+SPLASH_FADE_IN   = 1400
+SPLASH_HOLD      = 1800
+PRESENTS_FADE    =  600
 PRESENTS_HOLD    = 1000
 SPLASH_FADE_OUT  =  900
-TITLE_FADE_IN    =  800
-TITLE_HOLD_MIN   = 2000   # min time on title before menu appears
-MENU_APPEAR_DUR  =  600
+TITLE_HOLD_MIN   = 2000   # min ms on title before menu fades in
+MENU_APPEAR_DUR  =  700
 
-# ── pixel block size for retro effect ────────────────────────────────────────
-PIXEL_BLOCK = 5   # 5×5 real pixels per "retro pixel"
+PIXEL_BLOCK = 5   # retro pixel size
 
 
-def _make_retro_logo(original_surf, block=PIXEL_BLOCK):
+# ═══════════════════════════════════════════════════════════════════════════════
+#  RETRO LOGO BUILDER
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _make_retro_logo(surf):
     """
-    Convert logo to chunky retro-pixel art using max-pooling (preserves thin strokes).
-    Dark green pixels are boosted to bright neon green.
-    Black text ("BAD" / "BAT") is invisible in the source; we draw it separately.
+    Convert logo to chunky retro pixels (SRCALPHA, black→transparent).
+    Uses max-pooling per block so thin strokes are preserved.
+    Green channel is boosted to neon.
     """
-    import numpy as np
-    from PIL import Image as _PILImage
+    w, h = surf.get_size()
+    arr = pygame.surfarray.array3d(surf).astype(np.float32)  # (w, h, 3)
+    G = arr[:,:,1]; R = arr[:,:,0]; B = arr[:,:,2]
 
-    # Load via PIL for accurate (h, w, 4) numpy access
-    w, h = original_surf.get_size()
-    raw = pygame.surfarray.array3d(original_surf)  # pygame: (w, h, 3)
-    # Transpose to PIL convention (h, w, 3)
-    arr = raw.transpose(1, 0, 2).astype(np.float32)
+    tw = w // PIXEL_BLOCK
+    th = h // PIXEL_BLOCK
 
-    tiny_h = h // block
-    tiny_w = w // block
+    # Max-pool: for each block keep the maximum green value
+    Gp = G[:tw*PIXEL_BLOCK, :th*PIXEL_BLOCK].reshape(tw, PIXEL_BLOCK, th, PIXEL_BLOCK).max(axis=(1,3))
+    Rp = R[:tw*PIXEL_BLOCK, :th*PIXEL_BLOCK].reshape(tw, PIXEL_BLOCK, th, PIXEL_BLOCK).max(axis=(1,3))
+    Bp = B[:tw*PIXEL_BLOCK, :th*PIXEL_BLOCK].reshape(tw, PIXEL_BLOCK, th, PIXEL_BLOCK).max(axis=(1,3))
 
-    G = arr[:, :, 1]
-    R = arr[:, :, 0]
-    B = arr[:, :, 2]
+    # Logo pixel = green dominant and bright enough
+    logo = (Gp > 40) & (Gp >= Rp * 1.3) & (Gp >= Bp * 1.3)
+    neon = np.clip(Gp * 1.2, 80, 255).astype(np.uint8)
 
-    # Max-pool: in each block take the maximum green value
-    # This preserves thin strokes that smoothscale would blur away
-    G_pool = G[:tiny_h*block, :tiny_w*block].reshape(
-        tiny_h, block, tiny_w, block).max(axis=(1, 3))
-    R_pool = R[:tiny_h*block, :tiny_w*block].reshape(
-        tiny_h, block, tiny_w, block).max(axis=(1, 3))
-    B_pool = B[:tiny_h*block, :tiny_w*block].reshape(
-        tiny_h, block, tiny_w, block).max(axis=(1, 3))
+    # Build transparent SRCALPHA surface (pygame coord: w×h)
+    result = pygame.Surface((tw, th), pygame.SRCALPHA)
+    result.fill((0, 0, 0, 0))
+    rgb_v   = pygame.surfarray.pixels3d(result)
+    alph_v  = pygame.surfarray.pixels_alpha(result)
+    rgb_v[:,:,0] = 0
+    rgb_v[:,:,1] = np.where(logo, neon, 0)
+    rgb_v[:,:,2] = 0
+    alph_v[:,:] = np.where(logo, 255, 0).astype(np.uint8)
+    del rgb_v, alph_v
 
-    # Detect logo pixels: green channel dominant, above low threshold
-    # Threshold is low because the source uses dark green (not bright neon)
-    is_logo = (G_pool > 5) & (G_pool >= R_pool) & (G_pool >= B_pool)
-
-    # Boost dark green → bright neon green
-    neon = np.clip(G_pool * 4.0, 60, 255).astype(np.uint8)
-
-    # Build SRCALPHA surface — transparent bg, neon green logo
-    result_tiny = pygame.Surface((tiny_w, tiny_h), pygame.SRCALPHA)
-    result_tiny.fill((0, 0, 0, 0))
-
-    # Transpose back to pygame's (w, h) convention
-    is_T = is_logo.T
-    n_T  = neon.T
-
-    rgb_v   = pygame.surfarray.pixels3d(result_tiny)
-    alpha_v = pygame.surfarray.pixels_alpha(result_tiny)
-    rgb_v[:, :, 0] = 0
-    rgb_v[:, :, 1] = np.where(is_T, n_T, 0)
-    rgb_v[:, :, 2] = 0
-    alpha_v[:, :] = np.where(is_T, 255, 0).astype(np.uint8)
-    del rgb_v, alpha_v
-
-    retro = pygame.transform.scale(result_tiny, (tiny_w * block, tiny_h * block))
+    retro = pygame.transform.scale(result, (tw * PIXEL_BLOCK, th * PIXEL_BLOCK))
     return retro
 
 
-def _draw_retro_text(surf, text, x, y, size, block=PIXEL_BLOCK):
-    """
-    Draw pixelated (block-pixel) green text — simulates a chunky retro font.
-    Used to render 'BAD' and 'BAT' that are pure-black (invisible) in the source logo.
-    """
+def _load_logo():
+    """Load the logo and return (original, retro). Returns (None, None) on failure."""
     try:
-        font = pygame.font.SysFont("monospace", size, bold=True)
-        txt_surf = font.render(text, False, (0, 255, 0))  # aliased green
-        tw, th = txt_surf.get_size()
-        # Pixelate: scale down then back up
-        tiny = pygame.transform.scale(txt_surf, (max(1, tw // block), max(1, th // block)))
-        chunky = pygame.transform.scale(tiny, (tw, th))
-        # Make transparent bg (black bg → transparent)
-        chunky.set_colorkey((0, 0, 0))
-        surf.blit(chunky, (x, y))
-    except Exception:
-        pass
-
-def _build_logo_surface():
-    """Load the logo from the assets folder, return (original, retro) or (None, None)."""
-    try:
-        orig = pygame.image.load(_LOGO_PATH).convert_alpha()
+        orig  = pygame.image.load(_LOGO_PATH).convert()
         retro = _make_retro_logo(orig)
         return orig, retro
     except Exception:
         return None, None
 
 
-def _draw_scanlines(surf, alpha=35):
-    """Overlay CRT scanlines for extra retro feel."""
+# ═══════════════════════════════════════════════════════════════════════════════
+#  CRT OVERLAY
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _scanlines(surf, alpha=28):
     sl = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
     for y in range(0, SCREEN_H, 2):
         pygame.draw.line(sl, (0, 0, 0, alpha), (0, y), (SCREEN_W, y))
     surf.blit(sl, (0, 0))
 
 
-def _draw_retro_dungeon_art(surf, t):
-    """
-    Draw a Wizardry/Ultima-style first-person dungeon corridor in low-res ASCII-art-ish
-    pixels — all procedural, no image files needed.
-    t: time in seconds for subtle animation
-    """
-    cx = SCREEN_W // 2
-    art_y = 120          # top of art area
-    art_h = 420          # height of art area
-    art_w = 640
+# ═══════════════════════════════════════════════════════════════════════════════
+#  RETRO DUNGEON ART
+# ═══════════════════════════════════════════════════════════════════════════════
 
-    # Dark vignette background for the art
-    art_rect = pygame.Rect(cx - art_w//2, art_y, art_w, art_h)
-    pygame.draw.rect(surf, (4, 3, 8), art_rect)
+def _draw_dungeon_art(surf, t):
+    """Wizardry/Ultima-style first-person corridor — pure geometry."""
+    cx   = SCREEN_W // 2
+    AY   = 118          # top of art panel
+    AH   = 430
+    AW   = 660
+    art  = pygame.Rect(cx - AW//2, AY, AW, AH)
+    pygame.draw.rect(surf, (3, 2, 7), art)
 
-    # ── Draw 1st-person corridor in pure geometry ────────────────────────
-    # Floor/ceiling using converging lines (perspective)
-    def corridor_rect(depth, shade):
-        shrink = 1.0 / (depth + 1)
-        w = int(art_w * shrink * 0.9)
-        h = int(art_h * shrink * 0.85)
-        x = cx - w // 2
-        y = art_y + (art_h - h) // 2
-        return pygame.Rect(x, y, w, h), shade
+    for depth in [6, 5, 4, 3, 2, 1]:
+        s = 1.0 / (depth + 1)
+        rw = int(AW * s * 0.92); rh = int(AH * s * 0.88)
+        rx = cx - rw//2;         ry = AY + (AH - rh)//2
+        sh = int(22 + depth * 17)
+        wc = (sh, sh//2, sh//3)
+        pygame.draw.rect(surf, wc, (rx, ry, rw, rh))
+        fc = (sh+10, sh//3, sh//5)
+        fh = rh//3
+        pygame.draw.rect(surf, fc,     (rx, ry+rh-fh, rw, fh))
+        pygame.draw.rect(surf, (sh//2, sh//4, sh//6), (rx, ry, rw, fh))
+        pygame.draw.rect(surf, (sh+18, sh//2+8, sh//3+6), (rx, ry, rw, rh), 1)
 
-    # Draw corridors back-to-front (far to near)
-    for depth in [5, 4, 3, 2, 1]:
-        r, shade = corridor_rect(depth, int(30 + depth * 18))
-        # Wall fill
-        wall_col = (shade, shade // 2, shade // 3)
-        pygame.draw.rect(surf, wall_col, r)
+    # Glowing doorway
+    dw, dh = 52, 78
+    dx = cx - dw//2;  dy = AY + AH//2 - dh//2
+    ga = int(70 + 35*math.sin(t*1.3))
+    g = pygame.Surface((dw+24, dh+24), pygame.SRCALPHA)
+    g.fill((35, 0, 70, ga))
+    surf.blit(g, (dx-12, dy-12))
+    pygame.draw.rect(surf, (6, 0, 18), (dx, dy, dw, dh))
+    pygame.draw.rect(surf, (110, 55, 175), (dx, dy, dw, dh), 2)
 
-        # Floor strip (slightly lighter)
-        floor_h = r.height // 3
-        floor_r = pygame.Rect(r.x, r.bottom - floor_h, r.width, floor_h)
-        fc = (shade + 10, shade // 3, shade // 4)
-        pygame.draw.rect(surf, fc, floor_r)
+    # Torches
+    tf = 0.65 + 0.35*math.sin(t*7.8)
+    for tx, ty in [(cx-185, AY+AH//2-22), (cx+145, AY+AH//2-22)]:
+        pygame.draw.rect(surf, (90, 55, 25), (tx-3, ty, 6, 22))
+        fh2 = int(20*tf)
+        fc2 = (int(255*tf), int(130*tf), 18)
+        pygame.draw.ellipse(surf, fc2, (tx-5, ty-fh2, 10, fh2+4))
+        halo = pygame.Surface((64, 64), pygame.SRCALPHA)
+        pygame.draw.circle(halo, (190, 90, 18, int(32*tf)), (32, 32), 30)
+        surf.blit(halo, (tx-32, ty-32))
 
-        # Ceiling strip (darker)
-        ceil_r = pygame.Rect(r.x, r.y, r.width, floor_h)
-        pygame.draw.rect(surf, (shade // 2, shade // 4, shade // 5), ceil_r)
+    # Shadow figure
+    fa = int(50 + 25*math.sin(t*0.55))
+    fig = pygame.Surface((18, 38), pygame.SRCALPHA)
+    fig.fill((25, 0, 45, fa))
+    surf.blit(fig, (cx-9, dy+16))
 
-        # Wall outline
-        pygame.draw.rect(surf, (shade + 20, shade // 2 + 10, shade // 3 + 8), r, 1)
+    # Art border
+    pygame.draw.rect(surf, (55, 28, 95), art, 3)
+    pygame.draw.rect(surf, (28, 14, 48), art.inflate(8, 8), 2)
 
-    # ── Doorway at the end ───────────────────────────────────────────────
-    door_w, door_h = 48, 72
-    door_x = cx - door_w // 2
-    door_y = art_y + art_h // 2 - door_h // 2
-    # Glowing void beyond
-    glow_alpha = int(80 + 40 * math.sin(t * 1.2))
-    glow = pygame.Surface((door_w + 20, door_h + 20), pygame.SRCALPHA)
-    glow.fill((40, 0, 80, glow_alpha))
-    surf.blit(glow, (door_x - 10, door_y - 10))
-    pygame.draw.rect(surf, (8, 0, 20), (door_x, door_y, door_w, door_h))
-    pygame.draw.rect(surf, (120, 60, 180), (door_x, door_y, door_w, door_h), 2)
 
-    # ── Torches on the nearest walls ─────────────────────────────────────
-    torch_flicker = 0.7 + 0.3 * math.sin(t * 8.3)
-    for tx, ty in [(cx - 180, art_y + art_h // 2 - 20),
-                   (cx + 140, art_y + art_h // 2 - 20)]:
-        # Torch body
-        pygame.draw.rect(surf, (100, 60, 30), (tx - 3, ty, 6, 20))
-        # Flame
-        flame_h = int(18 * torch_flicker)
-        flame_col = (int(255 * torch_flicker), int(140 * torch_flicker), 20)
-        pygame.draw.ellipse(surf, flame_col,
-                            (tx - 5, ty - flame_h, 10, flame_h + 4))
-        # Torch glow halo
-        halo = pygame.Surface((60, 60), pygame.SRCALPHA)
-        ha = int(35 * torch_flicker)
-        pygame.draw.circle(halo, (200, 100, 20, ha), (30, 30), 28)
-        surf.blit(halo, (tx - 30, ty - 30))
-
-    # ── Shadowy figure in the doorway ────────────────────────────────────
-    fig_alpha = int(60 + 30 * math.sin(t * 0.6))
-    fig_surf = pygame.Surface((20, 40), pygame.SRCALPHA)
-    fig_surf.fill((30, 0, 50, fig_alpha))
-    surf.blit(fig_surf, (cx - 10, door_y + 14))
-
-    # ── Floating rune text (retro ASCII art feel) ─────────────────────────
-    rune_chars = ["◆", "◇", "○", "×", "✦"]
-    rng = random.Random(99)
-    for _ in range(8):
-        rx = rng.randint(art_rect.left + 20, art_rect.right - 20)
-        ry = rng.randint(art_rect.top + 20, art_rect.bottom - 40)
-        ra = int(30 + 25 * math.sin(t * rng.uniform(0.5, 1.5) + rng.random() * 6))
-        rc = rng.choice(rune_chars)
-        rs = pygame.Surface((16, 16), pygame.SRCALPHA)
-        try:
-            f = pygame.font.SysFont("monospace", 12)
-            txt = f.render(rc, True, (180, 100, 255, ra))
-            surf.blit(txt, (rx, ry))
-        except Exception:
-            pass
-
-    # Art border — chunky CRT pixel-art look
-    pygame.draw.rect(surf, (60, 30, 100), art_rect, 3)
-    pygame.draw.rect(surf, (30, 15, 50), art_rect.inflate(6, 6), 2)
-
+# ═══════════════════════════════════════════════════════════════════════════════
+#  INTRO SCREEN CLASS
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class IntroScreen:
-    """
-    Manages the full intro sequence.
-
-    States:
-      'splash'   — company logo
-      'title'    — game title art
-      'menu'     — New Game / Continue buttons
-    """
 
     def __init__(self):
-        self.t = 0             # ms elapsed in current phase
-        self.phase = 'splash'
-        self.done = False
-        self.action = None     # 'new_game' | 'continue'
+        self.t      = 0        # ms in current phase
+        self.phase  = 'splash'
+        self.done   = False
+        self.action = None
 
-        # Derived splash timing thresholds
-        self._splash_presents_start = SPLASH_FADE_IN + SPLASH_HOLD
-        self._splash_out_start      = (SPLASH_FADE_IN + SPLASH_HOLD
-                                       + PRESENTS_FADE + PRESENTS_HOLD)
-        self._splash_total          = self._splash_out_start + SPLASH_FADE_OUT
+        # Splash timing thresholds
+        self._t_presents = SPLASH_FADE_IN + SPLASH_HOLD
+        self._t_out      = self._t_presents + PRESENTS_FADE + PRESENTS_HOLD
+        self._t_end      = self._t_out + SPLASH_FADE_OUT
 
-        # Load and retro-ify the logo
-        self._logo_orig, self._logo_retro = _build_logo_surface()
+        # Logo
+        self._orig, self._retro = _load_logo()
 
-        # Starfield for title screen
+        # Title screen
+        self._title_t  = 0.0
+        self._menu_a   = 0
+
+        # Button rects
+        self._new_r  = None
+        self._cont_r = None
+
+        # Starfield
         rng = random.Random(77)
-        self._stars = [
-            (rng.randint(0, SCREEN_W),
-             rng.randint(0, SCREEN_H),
-             rng.randint(1, 2),
-             rng.uniform(0.3, 1.2),
-             rng.random() * 6.28)
-            for _ in range(120)
-        ]
+        self._stars = [(rng.randint(0,SCREEN_W), rng.randint(0,SCREEN_H),
+                        rng.randint(1,2), rng.uniform(.3,1.2), rng.random()*6.28)
+                       for _ in range(120)]
 
-        # Title screen state
-        self._title_t = 0.0
-        self._menu_alpha = 0
+        self._music_started = False
 
-        # Button rects (set in draw)
-        self._new_rect  = None
-        self._cont_rect = None
+    # ── public ────────────────────────────────────────────────────────────────
 
-        # Sound — play title music when we reach the title phase
-        self._title_music_started = False
-
-    # ── public API ────────────────────────────────────────────────────────────
-
-    def update(self, dt_ms):
-        """Call once per frame with millisecond delta."""
-        self.t += dt_ms
-        if self.phase == 'splash' and self.t >= self._splash_total:
-            self._transition_to_title()
-        elif self.phase == 'title':
-            self._title_t += dt_ms / 1000.0
+    def update(self, dt):
+        self.t += dt
+        if self.phase == 'splash' and self.t >= self._t_end:
+            self._go_title()
+        elif self.phase in ('title', 'menu'):
+            self._title_t += dt / 1000.0
             if self._title_t * 1000 > TITLE_HOLD_MIN:
-                self._menu_alpha = min(255,
-                    self._menu_alpha + int(dt_ms * 255 / MENU_APPEAR_DUR))
+                self._menu_a = min(255, self._menu_a + int(dt * 255 / MENU_APPEAR_DUR))
 
     def handle_click(self, mx, my):
-        """Return 'new_game', 'continue', or None."""
         if self.phase != 'menu':
             return None
-        if self._new_rect and self._new_rect.collidepoint(mx, my):
-            self.done = True
-            self.action = 'new_game'
-            return 'new_game'
-        if self._cont_rect and self._cont_rect.collidepoint(mx, my):
-            self.done = True
-            self.action = 'continue'
-            return 'continue'
+        if self._new_r and self._new_r.collidepoint(mx, my):
+            self.done = True; self.action = 'new_game'; return 'new_game'
+        if self._cont_r and self._cont_r.collidepoint(mx, my):
+            self.done = True; self.action = 'continue'; return 'continue'
         return None
 
     def draw(self, surf, mx, my):
         surf.fill(BLACK)
         if self.phase == 'splash':
             self._draw_splash(surf)
-        elif self.phase in ('title', 'menu'):
+        else:
             self._draw_title(surf, mx, my)
-        _draw_scanlines(surf)
+        _scanlines(surf)
 
-    # ── internal ─────────────────────────────────────────────────────────────
+    # ── internal ──────────────────────────────────────────────────────────────
 
-    def _transition_to_title(self):
-        self.phase = 'title'
-        self.t = 0
-        self._title_t = 0.0
-        # Start title music
-        if not self._title_music_started:
-            self._title_music_started = True
+    def _go_title(self):
+        self.phase = 'title'; self.t = 0; self._title_t = 0.0
+        if not self._music_started:
+            self._music_started = True
             try:
                 from core import sound as sfx
-                sfx.stop_music()
-                sfx.stop_ambient()
-                # Use town_briarhollow as the title theme (warm, folk, adventure-inviting)
+                sfx.stop_music(); sfx.stop_ambient()
                 sfx.play_music("town_briarhollow")
             except Exception:
                 pass
 
-    def _splash_alpha(self):
-        """Return current alpha (0-255) for the logo."""
+    def _logo_a(self):
         t = self.t
         if t < SPLASH_FADE_IN:
             return int(255 * t / SPLASH_FADE_IN)
-        elif t < SPLASH_FADE_IN + SPLASH_HOLD:
+        if t < self._t_presents:
             return 255
-        elif t < self._splash_out_start:
+        if t < self._t_out:
             return 255
-        else:
-            elapsed = t - self._splash_out_start
-            return max(0, int(255 * (1 - elapsed / SPLASH_FADE_OUT)))
+        return max(0, int(255 * (1 - (t - self._t_out) / SPLASH_FADE_OUT)))
 
-    def _presents_alpha(self):
+    def _pres_a(self):
         t = self.t
-        start = self._splash_presents_start
-        if t < start:
+        if t < self._t_presents:
             return 0
-        elif t < start + PRESENTS_FADE:
-            return int(255 * (t - start) / PRESENTS_FADE)
-        elif t < self._splash_out_start:
+        if t < self._t_presents + PRESENTS_FADE:
+            return int(255 * (t - self._t_presents) / PRESENTS_FADE)
+        if t < self._t_out:
             return 255
-        else:
-            elapsed = t - self._splash_out_start
-            return max(0, int(255 * (1 - elapsed / SPLASH_FADE_OUT)))
+        return max(0, int(255 * (1 - (t - self._t_out) / SPLASH_FADE_OUT)))
+
+    # ── splash ────────────────────────────────────────────────────────────────
 
     def _draw_splash(self, surf):
-        logo_a = self._splash_alpha()
-        pres_a = self._presents_alpha()
+        la = self._logo_a()
+        pa = self._pres_a()
 
-        surf.fill((0, 0, 0))
+        if self._retro and la > 0:
+            # Scale retro logo to fit — square source, limit to 680px wide or 70% screen height
+            lw, lh = self._retro.get_size()
+            scale  = min(680 / lw, SCREEN_H * 0.70 / lh)
+            nw     = int(lw * scale)
+            nh     = int(lh * scale)
+            lx     = SCREEN_W // 2 - nw // 2
+            ly     = SCREEN_H // 2 - nh // 2 - 50
 
-        # Dim green phosphor glow backdrop — makes the retro logo pop
-        if logo_a > 0:
-            glow_w, glow_h = 760, 260
-            glow_x = SCREEN_W // 2 - glow_w // 2
-            glow_y = SCREEN_H // 2 - glow_h // 2 - 30
-            glow_surf = pygame.Surface((glow_w, glow_h), pygame.SRCALPHA)
-            ga = int(logo_a * 0.18)
-            # Radial gradient: dark center glow
-            for r in range(0, min(glow_w, glow_h) // 2, 4):
-                frac = 1.0 - r / (min(glow_w, glow_h) // 2)
-                a = int(ga * frac ** 2)
-                pygame.draw.ellipse(glow_surf, (0, 40, 0, a),
-                    (glow_w//2 - r*2, glow_h//2 - r, r*4, r*2))
-            surf.blit(glow_surf, (glow_x, glow_y))
+            scaled = pygame.transform.scale(self._retro, (nw, nh))
 
-        # Logo
-        if self._logo_retro and logo_a > 0:
-            lw, lh = self._logo_retro.get_size()
-            # Scale to fit — max 700px wide, max 55% of screen height
-            scale = min(0.85, 700 / lw, (SCREEN_H * 0.55) / lh)
-            nw, nh = int(lw * scale), int(lh * scale)
-            logo_scaled = pygame.transform.scale(self._logo_retro, (nw, nh))
-            lx = SCREEN_W // 2 - nw // 2
-            ly = SCREEN_H // 2 - nh // 2 - 30
+            # Apply fade by multiplying per-pixel alpha
+            faded      = scaled.copy()
+            alpha_view = pygame.surfarray.pixels_alpha(faded)
+            alpha_view[:] = (alpha_view.astype(np.float32) * la / 255).astype(np.uint8)
+            del alpha_view
 
-            # Fade: composite via an alpha-multiplied copy
-            # Since logo_scaled is SRCALPHA, we use a temp surface
-            faded = pygame.Surface((nw, nh), pygame.SRCALPHA)
-            faded.blit(logo_scaled, (0, 0))
-            # Multiply per-pixel alpha by logo_a/255
-            alpha_arr = pygame.surfarray.pixels_alpha(faded)
-            import numpy as np
-            alpha_arr[:] = (alpha_arr.astype(np.float32) * logo_a / 255).astype(np.uint8)
-            del alpha_arr
             surf.blit(faded, (lx, ly))
 
-            # Draw "BAD" and "BAT" in pixelated green text
-            # These are pure black in the source logo (invisible on black bg)
-            # Position: vertically centred in the logo, left and right of the bat
-            # Logo occupies lx..lx+nw, roughly top third is the bat face
-            text_y = ly + int(nh * 0.18)   # align with upper part of bat
-            text_size = max(18, int(nh * 0.22))
-            # "BAD" — left of bat (roughly first 35% of logo width)
-            bad_x = lx + int(nw * 0.01)
-            # "BAT" — right of bat (roughly last 35% of logo width)
-            bat_x = lx + int(nw * 0.65)
-            # Only draw at opacity tied to logo_a
-            if logo_a >= 40:
-                alpha_txt = pygame.Surface((int(nw*0.34), text_size + 8), pygame.SRCALPHA)
-                _draw_retro_text(alpha_txt, "BAD", 0, 0, text_size)
-                alpha_txt.set_alpha(logo_a)
-                surf.blit(alpha_txt, (bad_x, text_y))
-
-                alpha_txt2 = pygame.Surface((int(nw*0.34), text_size + 8), pygame.SRCALPHA)
-                _draw_retro_text(alpha_txt2, "BAT", 0, 0, text_size)
-                alpha_txt2.set_alpha(logo_a)
-                surf.blit(alpha_txt2, (bat_x, text_y))
         else:
             # Fallback text logo
-            f_big = pygame.font.SysFont("monospace", 52, bold=True)
-            f_sub = pygame.font.SysFont("monospace", 28, bold=True)
-            txt1 = f_big.render("BAD BAT", True, (0, 220, 0))
-            txt2 = f_sub.render("ENTERPRISES", True, (0, 180, 0))
-            alpha_surf = pygame.Surface(txt1.get_size(), pygame.SRCALPHA)
-            alpha_surf.blit(txt1, (0, 0))
-            alpha_surf.set_alpha(logo_a)
-            surf.blit(alpha_surf, (SCREEN_W // 2 - txt1.get_width() // 2,
-                                   SCREEN_H // 2 - 80))
-            alpha_surf2 = pygame.Surface(txt2.get_size(), pygame.SRCALPHA)
-            alpha_surf2.blit(txt2, (0, 0))
-            alpha_surf2.set_alpha(logo_a)
-            surf.blit(alpha_surf2, (SCREEN_W // 2 - txt2.get_width() // 2,
-                                    SCREEN_H // 2 - 10))
+            if la > 0:
+                f1 = pygame.font.SysFont("monospace", 56, bold=True)
+                f2 = pygame.font.SysFont("monospace", 30, bold=True)
+                t1 = f1.render("BAD BAT", True, NEON_G)
+                t2 = f2.render("ENTERPRISES", True, DIM_G)
+                for txt, y in [(t1, SCREEN_H//2 - 60), (t2, SCREEN_H//2 + 10)]:
+                    s = pygame.Surface(txt.get_size(), pygame.SRCALPHA)
+                    s.blit(txt, (0,0)); s.set_alpha(la)
+                    surf.blit(s, (SCREEN_W//2 - txt.get_width()//2, y))
 
-        # "PRESENTS" text
-        if pres_a > 0:
-            f_pres = pygame.font.SysFont("monospace", 22, bold=False)
-            txt = f_pres.render("P R E S E N T S", True, (0, 200, 0))
-            ps = pygame.Surface(txt.get_size(), pygame.SRCALPHA)
-            ps.blit(txt, (0, 0))
-            ps.set_alpha(pres_a)
-            if self._logo_retro:
-                lw, lh = self._logo_retro.get_size()
-                scale = min(0.7, 700 / lw)
-                nh = int(lh * scale)
-                pres_y = SCREEN_H // 2 - nh // 2 - 40 + nh + 20
+        if pa > 0:
+            fp  = pygame.font.SysFont("monospace", 22)
+            txt = fp.render("P R E S E N T S", True, NEON_G)
+            ts  = pygame.Surface(txt.get_size(), pygame.SRCALPHA)
+            ts.blit(txt, (0,0)); ts.set_alpha(pa)
+            # Position below the logo
+            if self._retro and la > 0:
+                lw2, lh2 = self._retro.get_size()
+                sc2      = min(680/lw2, SCREEN_H*0.70/lh2)
+                nh2      = int(lh2 * sc2)
+                py       = SCREEN_H//2 - nh2//2 - 50 + nh2 + 18
             else:
-                pres_y = SCREEN_H // 2 + 60
-            surf.blit(ps, (SCREEN_W // 2 - txt.get_width() // 2, pres_y))
+                py = SCREEN_H // 2 + 70
+            surf.blit(ts, (SCREEN_W//2 - txt.get_width()//2, py))
+
+    # ── title ─────────────────────────────────────────────────────────────────
 
     def _draw_title(self, surf, mx, my):
         t = self._title_t
 
-        # ── Starfield ────────────────────────────────────────────────────────
-        for sx, sy, sr, speed, phase in self._stars:
-            alpha = int(55 + 45 * math.sin(t * speed + phase))
-            s = pygame.Surface((sr * 2, sr * 2), pygame.SRCALPHA)
-            pygame.draw.circle(s, (200, 180, 255, alpha), (sr, sr), sr)
-            surf.blit(s, (sx - sr, sy - sr))
+        # Starfield
+        for sx, sy, sr, sp, ph in self._stars:
+            a = int(55 + 45*math.sin(t*sp+ph))
+            s = pygame.Surface((sr*2, sr*2), pygame.SRCALPHA)
+            pygame.draw.circle(s, (200,180,255,a), (sr,sr), sr)
+            surf.blit(s, (sx-sr, sy-sr))
 
-        # ── Shadow tendrils ───────────────────────────────────────────────────
-        rng2 = random.Random(int(t * 1.5))
-        tend = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-        for i in range(10):
-            ox = rng2.randint(0, SCREEN_W)
-            ln = rng2.randint(80, 180)
-            px, py = float(ox), 0.0
+        # Tendrils
+        rng2 = random.Random(int(t*1.5))
+        td = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        for _ in range(10):
+            ox = rng2.randint(0, SCREEN_W); ln = rng2.randint(80, 180)
+            px, py2 = float(ox), 0.0
             for step in range(ln):
-                nx = px + rng2.uniform(-5, 5)
-                ny = py + 1
-                a = max(0, int(70 * (1 - step / ln)))
-                pygame.draw.line(tend, (60, 0, 100, a),
-                                 (int(px), int(py)), (int(nx), int(ny)), 2)
-                px, py = nx, ny
-        surf.blit(tend, (0, 0))
+                nx = px + rng2.uniform(-5,5); ny = py2+1
+                a  = max(0, int(70*(1-step/ln)))
+                pygame.draw.line(td,(60,0,100,a),(int(px),int(py2)),(int(nx),int(ny)),2)
+                px, py2 = nx, ny
+        surf.blit(td, (0,0))
 
-        # ── Retro dungeon art ─────────────────────────────────────────────────
-        _draw_retro_dungeon_art(surf, t)
+        # Dungeon art
+        _draw_dungeon_art(surf, t)
 
-        # ── Title text ────────────────────────────────────────────────────────
-        pulse = abs(math.sin(t * 1.05))
-        r_col = (int(210 + 45 * pulse), int(180 + 30 * pulse), int(20 * pulse))
-        s_col = (int(140 + 60 * pulse), int(110 + 50 * pulse), int(180 + 40 * pulse))
-
-        # Glow behind REALM
-        gw = pygame.Surface((380, 80), pygame.SRCALPHA)
-        gw.fill((80, 20, 140, int(40 + 30 * pulse)))
-        surf.blit(gw, (SCREEN_W // 2 - 190, 30))
-
-        draw_text(surf, "REALM",   SCREEN_W // 2 - 125, 36,   r_col, 52, bold=True)
-        draw_text(surf, "of",      SCREEN_W // 2 - 22,  94,   (180, 160, 220), 22)
-        draw_text(surf, "SHADOWS", SCREEN_W // 2 - 165, 118,  s_col, 52, bold=True)
-
+        # Title text
+        pulse = abs(math.sin(t*1.05))
+        rc = (int(210+45*pulse), int(180+30*pulse), int(20*pulse))
+        sc = (int(140+60*pulse), int(110+50*pulse), int(180+40*pulse))
+        gw = pygame.Surface((390,82), pygame.SRCALPHA)
+        gw.fill((80,20,140, int(40+30*pulse)))
+        surf.blit(gw, (SCREEN_W//2-195, 28))
+        draw_text(surf, "REALM",   SCREEN_W//2-128, 34,  rc, 52, bold=True)
+        draw_text(surf, "of",      SCREEN_W//2-22,  93,  (180,160,220), 22)
+        draw_text(surf, "SHADOWS", SCREEN_W//2-168, 116, sc, 52, bold=True)
         draw_text(surf, "The Fading comes for all things.",
-                  SCREEN_W // 2 - 178, 180, (140, 110, 180), 15)
+                  SCREEN_W//2-180, 178, (140,110,180), 15)
 
-        # ── Company credit line ───────────────────────────────────────────────
+        # Company credit
         draw_text(surf, "A Bad Bat Enterprises Game",
-                  SCREEN_W // 2 - 148, SCREEN_H - 38, (0, 130, 0), 14)
+                  SCREEN_W//2-150, SCREEN_H-38, DIM_G, 14)
 
-        # ── Menu buttons (fade in) ────────────────────────────────────────────
-        if self._menu_alpha > 10:
-            self._draw_menu(surf, mx, my, self._menu_alpha)
-            if self._menu_alpha >= 255:
+        # Menu
+        if self._menu_a > 10:
+            self._draw_menu(surf, mx, my, self._menu_a)
+            if self._menu_a >= 255:
                 self.phase = 'menu'
+
+    # ── menu ──────────────────────────────────────────────────────────────────
 
     def _draw_menu(self, surf, mx, my, alpha):
         from core.save_load import list_saves
         has_saves = bool(list_saves())
 
-        btn_y = SCREEN_H // 2 + 230
-        new_r  = pygame.Rect(SCREEN_W // 2 - 220, btn_y,       200, 52)
-        cont_r = pygame.Rect(SCREEN_W // 2 + 20,  btn_y,       200, 52)
-        self._new_rect  = new_r
-        self._cont_rect = cont_r if has_saves else None
+        btn_y  = SCREEN_H // 2 + 238
+        new_r  = pygame.Rect(SCREEN_W//2 - 225, btn_y, 205, 54)
+        cont_r = pygame.Rect(SCREEN_W//2 + 20,  btn_y, 205, 54)
+        self._new_r  = new_r
+        self._cont_r = cont_r if has_saves else None
 
-        # Draw buttons with alpha
-        def draw_btn(rect, label, enabled, hovered):
-            btn_surf = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
-            bg_col = (40, 80, 140, int(alpha * 0.85)) if enabled else (40, 40, 60, int(alpha * 0.5))
-            if hovered and enabled:
-                bg_col = (60, 110, 200, int(alpha * 0.9))
-            pygame.draw.rect(btn_surf, bg_col, (0, 0, rect.width, rect.height), border_radius=6)
-            border_col = (100, 160, 255, alpha) if (enabled and hovered) else (70, 100, 180, alpha)
-            pygame.draw.rect(btn_surf, border_col, (0, 0, rect.width, rect.height), 2, border_radius=6)
-            surf.blit(btn_surf, rect.topleft)
+        def btn(rect, label, enabled, hovered):
+            bs = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
+            if enabled and hovered:
+                bg = (60, 110, 200, int(alpha * .92))
+            elif enabled:
+                bg = (38, 78, 140, int(alpha * .85))
+            else:
+                bg = (36, 36, 56, int(alpha * .50))
+            pygame.draw.rect(bs, bg, (0,0,rect.width,rect.height), border_radius=6)
+            bc = (100,160,255,alpha) if (enabled and hovered) else (68,98,178,alpha)
+            pygame.draw.rect(bs, bc, (0,0,rect.width,rect.height), 2, border_radius=6)
+            surf.blit(bs, rect.topleft)
+            tc = (255,255,255) if (enabled and hovered) else ((215,215,250) if enabled else (75,75,95))
+            f  = pygame.font.SysFont("monospace", 18, bold=True)
+            txt = f.render(label, True, tc)
+            ts = pygame.Surface(txt.get_size(), pygame.SRCALPHA)
+            ts.blit(txt, (0,0)); ts.set_alpha(alpha)
+            surf.blit(ts, (rect.x + rect.width//2 - txt.get_width()//2,
+                           rect.y + rect.height//2 - txt.get_height()//2))
 
-            text_col = (220, 220, 255) if enabled else (80, 80, 100)
-            if hovered and enabled:
-                text_col = (255, 255, 255)
-            f = pygame.font.SysFont("monospace", 17, bold=True)
-            txt = f.render(label, True, text_col)
-            # Alpha-blend text
-            ta = pygame.Surface(txt.get_size(), pygame.SRCALPHA)
-            ta.blit(txt, (0, 0))
-            ta.set_alpha(alpha)
-            surf.blit(ta, (rect.x + rect.width // 2 - txt.get_width() // 2,
-                           rect.y + rect.height // 2 - txt.get_height() // 2))
-
-        draw_btn(new_r, "New Game", True,
-                 new_r.collidepoint(mx, my) if alpha >= 200 else False)
-        draw_btn(cont_r, "Continue", has_saves,
-                 cont_r.collidepoint(mx, my) if (has_saves and alpha >= 200) else False)
+        btn(new_r,  "New Game", True,
+            new_r.collidepoint(mx, my) if alpha >= 200 else False)
+        btn(cont_r, "Continue", has_saves,
+            cont_r.collidepoint(mx, my) if (has_saves and alpha >= 200) else False)
 
         if not has_saves:
-            f_hint = pygame.font.SysFont("monospace", 11)
-            hint = f_hint.render("(no saves found)", True, (80, 80, 100))
+            fh = pygame.font.SysFont("monospace", 11)
+            hint = fh.render("(no saves found)", True, (75,75,90))
             hs = pygame.Surface(hint.get_size(), pygame.SRCALPHA)
-            hs.blit(hint, (0, 0)); hs.set_alpha(alpha)
-            surf.blit(hs, (cont_r.x + cont_r.width // 2 - hint.get_width() // 2,
-                           cont_r.bottom + 6))
+            hs.blit(hint, (0,0)); hs.set_alpha(alpha)
+            surf.blit(hs, (cont_r.x + cont_r.width//2 - hint.get_width()//2,
+                           cont_r.bottom + 5))
