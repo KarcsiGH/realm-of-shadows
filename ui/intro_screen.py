@@ -50,7 +50,12 @@ def _load_hires():
     for path in (_LOGO_JPG, _LOGO_PNG):
         if os.path.exists(path):
             try:
-                return pygame.image.load(path).convert()
+                raw = pygame.image.load(path).convert()
+                # Stamp onto a clean black surface to eliminate JPEG edge artifacts
+                clean = pygame.Surface(raw.get_size())
+                clean.fill((0, 0, 0))
+                clean.blit(raw, (0, 0))
+                return clean
             except Exception:
                 pass
     return None
@@ -278,9 +283,7 @@ def _dungeon_art(surf, t, art_rect):
         pygame.draw.circle(hl, (220, 110, 20, ha), (25,25), 22)
         surf.blit(hl, (tx+4-25, torch_y-11))
 
-    # Art border
-    pygame.draw.rect(surf, (55, 28, 90), art_rect, 3)
-    pygame.draw.rect(surf, (28, 14, 45), art_rect.inflate(6,6), 2)
+    # (no border — art bleeds into the screen)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -542,26 +545,42 @@ class IntroScreen:
                 px,py=nx,ny
         surf.blit(tend,(0,0))
 
-        # ── Title text (clearly at top, well above art) ───────────────────────
+        # ── Title text ────────────────────────────────────────────────────────
         pulse=abs(math.sin(t*1.05))
         rc=(int(210+45*pulse),int(180+30*pulse),int(20*pulse))
         sc=(int(140+60*pulse),int(110+50*pulse),int(180+40*pulse))
-        gw_s=pygame.Surface((400,110),pygame.SRCALPHA)
-        gw_s.fill((80,20,140,int(35+25*pulse))); surf.blit(gw_s,(SCREEN_W//2-200,16))
-        draw_text(surf,"REALM",  SCREEN_W//2-130,20, rc,52,bold=True)
-        draw_text(surf,"of",     SCREEN_W//2-20, 78, (180,160,220),22)
-        draw_text(surf,"SHADOWS",SCREEN_W//2-170,102,sc,52,bold=True)
 
-        # ── Dungeon art — starts y=172, height=360 → ends y=532 ──────────────
-        ART_Y=172; ART_W=600; ART_H=360
-        art_rect=pygame.Rect(SCREEN_W//2-ART_W//2, ART_Y, ART_W, ART_H)
+        # Measure "REALM" and "SHADOWS" widths to perfectly centre "of"
+        try:
+            f52 = pygame.font.SysFont("monospace", 52, bold=True)
+            realm_w   = f52.size("REALM")[0]
+            shadows_w = f52.size("SHADOWS")[0]
+        except Exception:
+            realm_w = 260; shadows_w = 340
+        realm_x   = SCREEN_W//2 - realm_w//2
+        shadows_x = SCREEN_W//2 - shadows_w//2
+        try:
+            f22   = pygame.font.SysFont("monospace", 22)
+            of_w  = f22.size("of")[0]
+        except Exception:
+            of_w = 30
+        of_x = SCREEN_W//2 - of_w//2
+
+        draw_text(surf,"REALM",  realm_x,   20, rc, 52, bold=True)
+        draw_text(surf,"of",     of_x,       78, (180,160,220), 22)
+        draw_text(surf,"SHADOWS",shadows_x, 102, sc, 52, bold=True)
+
+        # ── Dungeon art — full-width, no border box ──────────────────────────
+        # Starts just below title text, fills to just above tagline
+        ART_Y=160; ART_W=SCREEN_W; ART_H=530
+        art_rect=pygame.Rect(0, ART_Y, ART_W, ART_H)
         _dungeon_art(surf, t, art_rect)
 
         # ── Below-art text ────────────────────────────────────────────────────
         draw_text(surf,"The Fading comes for all things.",
-                  SCREEN_W//2-178, ART_Y+ART_H+10,(140,110,180),15)
+                  SCREEN_W//2-178, ART_Y+ART_H+8,(140,110,180),15)
         draw_text(surf,"A Bad Bat Enterprises Game",
-                  SCREEN_W//2-148,SCREEN_H-32,(0,120,0),13)
+                  SCREEN_W//2-148,SCREEN_H-28,(0,120,0),13)
 
         if self._menu_alpha>10:
             self._draw_menu(surf,mx,my,self._menu_alpha)
@@ -569,7 +588,7 @@ class IntroScreen:
     def _draw_menu(self, surf, mx, my, alpha):
         from core.save_load import list_saves
         has_saves=bool(list_saves())
-        btn_y=172+360+52
+        btn_y=160+530+42
         new_r =pygame.Rect(SCREEN_W//2-220,btn_y,200,52)
         cont_r=pygame.Rect(SCREEN_W//2+20, btn_y,200,52)
         self._new_rect =new_r
