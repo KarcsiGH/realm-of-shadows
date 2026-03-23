@@ -50,7 +50,7 @@ SPLASH_FADE_OUT  =  900
 TITLE_HOLD_MIN   = 2000   # min ms on title before menu fades in
 MENU_APPEAR_DUR  =  700
 
-PIXEL_BLOCK = 5   # retro pixel size
+PIXEL_BLOCK = 6   # retro pixel size
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -76,8 +76,8 @@ def _make_retro_logo(surf):
     Bp = B[:tw*PIXEL_BLOCK, :th*PIXEL_BLOCK].reshape(tw, PIXEL_BLOCK, th, PIXEL_BLOCK).max(axis=(1,3))
 
     # Logo pixel = green dominant and bright enough
-    logo = (Gp > 40) & (Gp >= Rp * 1.3) & (Gp >= Bp * 1.3)
-    neon = np.clip(Gp * 1.2, 80, 255).astype(np.uint8)
+    logo = (Gp > 60) & (Gp > Rp * 1.5) & (Gp > Bp * 1.5)
+    neon = np.clip(Gp * 1.05, 120, 255).astype(np.uint8)
 
     # Build transparent SRCALPHA surface (pygame coord: w×h)
     result = pygame.Surface((tw, th), pygame.SRCALPHA)
