@@ -1050,6 +1050,8 @@ def _build_gen_queues():
     # Each entry is a label + callable. The callable generates and registers one sound.
 
     _gen_batch2 = [
+        # town_briarhollow FIRST so music can start during loading screen
+        ("Briarhollow music",         lambda: _sounds.update({"town_briarhollow": _gen_dungeon(_town_briarhollow)})),
         ("World ambient",             lambda: _generate_world_ambient()),
         ("Town ambient music",        lambda: _generate_town_ambient()),
         ("Town crowd ambience",       lambda: _generate_town_env()),
@@ -1069,7 +1071,6 @@ def _build_gen_queues():
         ("Windswept Isle music",      lambda: _sounds.update({"dungeon_windswept_isle": _gen_dungeon(_dungeon_windswept_isle)})),
         ("Dragon\'s Tooth music",    lambda: _sounds.update({"dungeon_dragons_tooth": _gen_dungeon(_dungeon_dragons_tooth)})),
         ("Valdris\' Spire music",    lambda: _sounds.update({"dungeon_valdris_spire": _gen_dungeon(_dungeon_valdris_spire)})),
-        ("Briarhollow music",         lambda: _sounds.update({"town_briarhollow": _gen_dungeon(_town_briarhollow)})),
         ("Woodhaven music",           lambda: _sounds.update({"town_woodhaven": _gen_dungeon(_town_woodhaven)})),
         ("Ironhearth music",          lambda: _sounds.update({"town_ironhearth": _gen_dungeon(_town_ironhearth)})),
         ("Greenwood music",           lambda: _sounds.update({"town_greenwood": _gen_dungeon(_town_greenwood)})),
