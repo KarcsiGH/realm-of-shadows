@@ -1,38 +1,38 @@
 {
   "version": 4,
-  "timestamp": "2026-03-15T17:58:42.696743",
+  "timestamp": "2026-03-21T21:57:10.251028",
   "slot_name": "save1",
   "metadata": {
     "party_summary": [
-      "Karcsi Lv.1 Elf Fighter",
-      "Vesna Lv.1 Gnome Mage",
-      "Wulf Lv.1 Half-Orc Cleric",
-      "Cade Lv.1 Half-Orc Ranger",
-      "Syla Lv.1 Halfling Monk",
-      "Shael Lv.1 Fading-Touched Thief"
+      "Edgar Lv.3 Human Fighter",
+      "Cade Lv.3 Gnome Monk",
+      "Wulf Lv.3 Human Cleric",
+      "Syla Lv.3 Gnome Thief",
+      "Shael Lv.3 Elf Ranger",
+      "Renn Lv.3 Fading-Touched Mage"
     ],
-    "total_gold": 0
+    "total_gold": 1184
   },
   "party": [
     {
-      "name": "Karcsi",
+      "name": "Edgar",
       "class_name": "Fighter",
-      "race_name": "Elf",
-      "level": 1,
-      "xp": 8,
+      "race_name": "Human",
+      "level": 3,
+      "xp": 953,
       "gold": 0,
       "stats": {
-        "STR": 16,
-        "DEX": 8,
-        "CON": 12,
-        "INT": 12,
-        "WIS": 9,
-        "PIE": 9
+        "STR": 17,
+        "DEX": 15,
+        "CON": 16,
+        "INT": 6,
+        "WIS": 8,
+        "PIE": 4
       },
       "resources": {
-        "HP": 87,
-        "Ki": 126,
-        "STR-SP": 36
+        "HP": 105,
+        "Ki": 179,
+        "STR-SP": 50
       },
       "abilities": [
         {
@@ -54,46 +54,130 @@
           "duration": 2,
           "self_only": true,
           "desc": "Reduce incoming damage for 2 turns."
+        },
+        {
+          "name": "Shield Bash",
+          "cost": 12,
+          "resource": "STR-SP",
+          "type": "attack",
+          "level": 3,
+          "power": 1.3,
+          "stun_chance": 0.35,
+          "desc": "Bash with your shield. 35% chance to stun the target.",
+          "branch_label": "Defender",
+          "branch_desc": "Master of defense and crowd control."
         }
       ],
-      "inventory": [],
-      "equipment": {
-        "weapon": {
-          "name": "Worn Longsword",
-          "type": "Longsword",
-          "damage": 15,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "range": "melee",
-          "speed_mod": 0,
-          "accuracy_mod": 0,
-          "crit_mod": 0,
-          "weight_class": "medium",
-          "phys_type": "slashing",
-          "requirements": {
-            "STR": 10
-          },
-          "spell_bonus": 0,
-          "special": {},
-          "identified": true,
-          "slot": "weapon"
+      "inventory": [
+        {
+          "name": "Antidote",
+          "type": "consumable",
+          "subtype": "potion",
+          "rarity": "common",
+          "cures": [
+            "Poison"
+          ],
+          "description": "Cures poison.",
+          "identified": true
         },
+        {
+          "name": "Healing Potion",
+          "type": "consumable",
+          "subtype": "potion",
+          "rarity": "common",
+          "heal_amount": 50,
+          "description": "Restores 50 HP to one character.",
+          "identified": true
+        },
+        {
+          "name": "Shadowbind Gauntlets",
+          "type": "armor",
+          "subtype": "gloves",
+          "armor_slot": "hands",
+          "slot": "hands",
+          "rarity": "rare",
+          "tier": 2,
+          "cursed": true,
+          "identified": true,
+          "defense": 12,
+          "estimated_value": 220,
+          "enchant_element": "shadow",
+          "enchant_bonus": 6,
+          "stat_penalty": {
+            "speed_mod": -4
+          },
+          "description": "Gauntlets that crackle with shadow energy. Powerful, but they slow the wearer's reactions as shadow seeps into the blood. \u2605 CURSED \u2014 cannot be removed without Remove Curse.",
+          "lore": "Used by Valdris's early followers \u2014 gifts that became chains.",
+          "stat_bonus": {
+            "speed_mod": -4
+          },
+          "magic_identified": true,
+          "material_identified": true
+        },
+        {
+          "name": "Ring of Minor Fortitude",
+          "appraised_name": "Ring of Minor Fortitude",
+          "type": "accessory",
+          "slot": "ring1",
+          "subtype": "ring",
+          "rarity": "uncommon",
+          "effect": {
+            "con_bonus": 2,
+            "max_hp_bonus": 10
+          },
+          "description": "A plain iron ring that makes the wearer feel hardier. +2 CON, +10 max HP.",
+          "identified": true,
+          "estimated_value": 60,
+          "_wis_bonus": true,
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Hearthstone Fragment (Warren)",
+          "type": "quest_item",
+          "description": "A warm, faintly glowing stone fragment. Part of the Hearthstone of Aldenmere.",
+          "identified": true,
+          "quest_item": true,
+          "rarity": "legendary",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        }
+      ],
+      "equipment": {
         "off_hand": {
-          "name": "Wooden Shield",
+          "name": "Shield of the Sentinel",
+          "appraised_name": "Shield of the Sentinel",
+          "type": "armor",
           "slot": "off_hand",
-          "armor_tier": "shield",
-          "defense": 3,
+          "subtype": "shield",
+          "rarity": "rare",
+          "defense": 6,
+          "magic_resist": 4,
+          "effect": {
+            "con_bonus": 1
+          },
+          "description": "An ancient shield that still hums with protective magic. +1 CON.",
+          "identified": true,
+          "estimated_value": 180,
+          "magic_identified": true,
+          "material_identified": true
+        },
+        "head": {
+          "name": "Chain Coif",
+          "slot": "head",
+          "armor_tier": "medium",
+          "defense": 4,
           "magic_resist": 0,
           "speed_mod": 0,
           "stat_bonuses": {},
           "rarity": "common",
-          "value": 10,
-          "description": "A simple round wooden shield.",
+          "value": 30,
+          "description": "A head covering of chainmail. Deflects glancing blows.",
+          "type": "head",
           "identified": true
         },
-        "head": null,
         "crown": null,
         "body": {
           "name": "Leather Vest",
@@ -108,117 +192,311 @@
           "description": "Basic leather protection.",
           "identified": true
         },
-        "hands": null,
-        "feet": null,
-        "neck": null,
+        "hands": {
+          "name": "Gauntlets",
+          "slot": "hands",
+          "armor_tier": "heavy",
+          "defense": 3,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {
+            "STR": 1
+          },
+          "rarity": "uncommon",
+          "value": 45,
+          "description": "Steel gauntlets that add force to your strikes.",
+          "type": "hands",
+          "identified": true
+        },
+        "feet": {
+          "name": "Heavy Boots",
+          "slot": "feet",
+          "armor_tier": "medium",
+          "defense": 4,
+          "magic_resist": 0,
+          "speed_mod": -1,
+          "stat_bonuses": {
+            "STR": 1
+          },
+          "rarity": "common",
+          "value": 25,
+          "description": "Iron-capped work boots that double as weapons. +1 STR.",
+          "type": "feet",
+          "identified": true
+        },
+        "neck": {
+          "name": "Copper Chain",
+          "slot": "neck",
+          "subtype": "necklace",
+          "armor_tier": "clothing",
+          "defense": 0,
+          "magic_resist": 1,
+          "speed_mod": 0,
+          "stat_bonuses": {
+            "CON": 1
+          },
+          "rarity": "common",
+          "value": 18,
+          "description": "A plain copper chain. Nothing fancy, but solid. +1 CON.",
+          "type": "neck",
+          "identified": true
+        },
         "ring1": null,
         "ring2": null,
-        "ring3": null
+        "ring3": null,
+        "weapon": {
+          "name": "Firebrand Blade",
+          "appraised_name": "Firebrand Blade",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Longsword",
+          "rarity": "rare",
+          "damage": 24,
+          "phys_type": "slashing",
+          "range": "melee",
+          "enchant_element": "fire",
+          "enchant_bonus": 5,
+          "enchant_name": "Flame",
+          "description": "A longsword wreathed in faint flames. Deals bonus fire damage.",
+          "identified": true,
+          "estimated_value": 160,
+          "_wis_bonus": true,
+          "magic_identified": true,
+          "damage_stat": {
+            "STR": 0.3,
+            "DEX": 0.12
+          }
+        }
       },
       "life_path": [],
-      "backstory_parts": [
-        "Raised in a borderlands garrison town,",
-        "an old veteran's stories filled your imagination,",
-        "When raiders attacked the garrison, you stood your ground despite your fear.",
-        "You formally enlisted and endured the rigors of cadet training.",
-        "You survived your first real battle, shaken but unbroken.",
-        "You earned a battlefield promotion through decisive leadership.",
-        "You served at sea as a naval officer, learning discipline and navigation.",
-        "You led a squad through a mission no one expected you to survive.",
-        "A classified mission from high command sent you into the shadows."
-      ],
-      "quick_rolled": false,
-      "human_bonus_stat": null,
+      "backstory_parts": [],
+      "quick_rolled": true,
+      "human_bonus_stat": "DEX",
       "planar_tier": 0,
       "combat_row": "front"
     },
     {
-      "name": "Vesna",
-      "class_name": "Mage",
+      "name": "Cade",
+      "class_name": "Monk",
       "race_name": "Gnome",
-      "level": 1,
-      "xp": 8,
+      "level": 3,
+      "xp": 936,
       "gold": 0,
       "stats": {
-        "STR": 4,
-        "DEX": 9,
-        "CON": 6,
-        "INT": 19,
-        "WIS": 16,
-        "PIE": 7
+        "STR": 13,
+        "DEX": 17,
+        "CON": 13,
+        "INT": 10,
+        "WIS": 22,
+        "PIE": 11
       },
       "resources": {
-        "HP": 45,
-        "Ki": 153,
-        "INT-MP": 42,
-        "WIS-MP": 36
+        "HP": 89,
+        "Ki": 79,
+        "WIS-MP": 66,
+        "DEX-SP": 50
       },
       "abilities": [
         {
-          "name": "Magic Missile",
+          "name": "Flurry of Blows",
           "cost": 8,
-          "resource": "INT-MP",
-          "type": "spell",
+          "resource": "Ki",
+          "type": "attack",
           "level": 1,
-          "power": 1.0,
-          "element": "arcane",
-          "bonus_accuracy": 30,
-          "desc": "Unerring arcane bolt. Very high hit chance."
+          "power": 0.6,
+          "hits": 3,
+          "desc": "Three rapid strikes at reduced power each."
         },
         {
-          "name": "Arcane Shield",
+          "name": "Iron Skin",
           "cost": 10,
-          "resource": "INT-MP",
+          "resource": "Ki",
           "type": "buff",
           "level": 1,
-          "buff": "magic_shield",
+          "buff": "iron_skin",
           "duration": 3,
           "self_only": true,
-          "desc": "Erect a personal arcane barrier. Reduces all damage taken for 3 turns."
+          "desc": "Harden the body. Reduces physical damage taken for 3 turns (self only)."
+        },
+        {
+          "name": "Stunning Fist",
+          "cost": 12,
+          "resource": "Ki",
+          "type": "attack",
+          "level": 3,
+          "power": 1.3,
+          "stun_chance": 0.45,
+          "desc": "Precise nerve strike. 45% chance to stun.",
+          "branch_label": "Striker",
+          "branch_desc": "Disable foes with precision nerve attacks."
         }
       ],
-      "inventory": [],
+      "inventory": [
+        {
+          "name": "Silk Robes",
+          "slot": "body",
+          "armor_tier": "clothing",
+          "defense": 2,
+          "magic_resist": 4,
+          "speed_mod": 1,
+          "stat_bonuses": {
+            "INT": 1,
+            "WIS": 1
+          },
+          "rarity": "uncommon",
+          "value": 45,
+          "description": "Fine silk that shimmers with subtle enchantment. +1 INT, +1 WIS.",
+          "type": "armor",
+          "identified": true
+        },
+        {
+          "name": "Monk's Hood",
+          "slot": "head",
+          "armor_tier": "clothing",
+          "defense": 0,
+          "magic_resist": 2,
+          "speed_mod": 1,
+          "stat_bonuses": {
+            "WIS": 2
+          },
+          "rarity": "uncommon",
+          "value": 38,
+          "description": "A meditative hood that aids Ki focus. +2 WIS.",
+          "type": "head",
+          "identified": true
+        },
+        {
+          "name": "Iron Ki Beads",
+          "appraised_name": "Iron Ki Beads",
+          "type": "accessory",
+          "slot": "ring1",
+          "subtype": "amulet",
+          "rarity": "uncommon",
+          "effect": {
+            "wis_bonus": 1
+          },
+          "magic_resist": 1,
+          "description": "Simple iron beads worn during meditation. Steadies the Ki. +1 WIS.",
+          "identified": true,
+          "estimated_value": 28,
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Ring of Minor Fortitude",
+          "appraised_name": "Ring of Minor Fortitude",
+          "type": "accessory",
+          "slot": "ring1",
+          "subtype": "ring",
+          "rarity": "uncommon",
+          "effect": {
+            "con_bonus": 2,
+            "max_hp_bonus": 10
+          },
+          "description": "A plain iron ring that makes the wearer feel hardier. +2 CON, +10 max HP.",
+          "identified": true,
+          "estimated_value": 60,
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        }
+      ],
       "equipment": {
         "weapon": {
-          "name": "Walking Stick",
-          "type": "Staff",
-          "damage": 11,
+          "name": "Unarmed (Monk)",
+          "type": "Fists",
+          "damage": 9,
           "damage_stat": {
-            "STR": 0.16,
-            "INT": 0.25
+            "WIS": 0.3,
+            "DEX": 0.2
           },
           "range": "melee",
-          "speed_mod": 0,
-          "accuracy_mod": 0,
-          "crit_mod": 0,
-          "weight_class": "medium",
+          "speed_mod": 2,
+          "accuracy_mod": 5,
+          "crit_mod": 5,
+          "weight_class": "light",
           "phys_type": "blunt",
           "requirements": {},
-          "spell_bonus": 2,
-          "special": {},
+          "spell_bonus": 0,
+          "special": {
+            "monk_scaling": true
+          },
           "identified": true,
           "slot": "weapon"
         },
         "off_hand": null,
-        "head": null,
+        "head": {
+          "name": "Monk's Training Band",
+          "slot": "head",
+          "armor_tier": "clothing",
+          "defense": 0,
+          "magic_resist": 2,
+          "speed_mod": 0,
+          "stat_bonuses": {
+            "WIS": 2,
+            "DEX": 1
+          },
+          "rarity": "uncommon",
+          "value": 35,
+          "description": "A cloth band worn across the brow during Ki training. +2 WIS, +1 DEX.",
+          "type": "head",
+          "identified": true
+        },
         "crown": null,
         "body": {
-          "name": "Traveler's Clothes",
+          "name": "Monk's Wraps",
           "slot": "body",
           "armor_tier": "clothing",
-          "defense": 1,
-          "magic_resist": 0,
-          "speed_mod": 0,
-          "stat_bonuses": {},
-          "rarity": "common",
-          "value": 5,
-          "description": "Simple clothing. Offers minimal protection.",
+          "defense": 2,
+          "magic_resist": 2,
+          "speed_mod": 1,
+          "stat_bonuses": {
+            "WIS": 1
+          },
+          "rarity": "uncommon",
+          "value": 25,
+          "description": "Light wraps that don't interfere with Ki flow.",
+          "type": "armor",
           "identified": true
         },
         "hands": null,
-        "feet": null,
+        "feet": {
+          "name": "Monk's Sandals",
+          "slot": "feet",
+          "armor_tier": "clothing",
+          "defense": 0,
+          "magic_resist": 1,
+          "speed_mod": 2,
+          "stat_bonuses": {
+            "WIS": 2,
+            "DEX": 1
+          },
+          "rarity": "uncommon",
+          "value": 42,
+          "description": "Straw sandals tied with blessing-cords. Allow Ki to flow through the earth. +2 WIS, +1 DEX.",
+          "type": "feet",
+          "identified": true
+        },
         "neck": null,
-        "ring1": null,
+        "ring1": {
+          "name": "Ring of Minor Fortitude",
+          "appraised_name": "Ring of Minor Fortitude",
+          "type": "accessory",
+          "slot": "ring1",
+          "subtype": "ring",
+          "rarity": "uncommon",
+          "effect": {
+            "con_bonus": 2,
+            "max_hp_bonus": 10
+          },
+          "description": "A plain iron ring that makes the wearer feel hardier. +2 CON, +10 max HP.",
+          "identified": true,
+          "estimated_value": 60,
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
         "ring2": null,
         "ring3": null
       },
@@ -232,23 +510,23 @@
     {
       "name": "Wulf",
       "class_name": "Cleric",
-      "race_name": "Half-Orc",
-      "level": 1,
-      "xp": 8,
-      "gold": 0,
+      "race_name": "Human",
+      "level": 3,
+      "xp": 938,
+      "gold": 143,
       "stats": {
-        "STR": 11,
+        "STR": 9,
         "DEX": 9,
-        "CON": 12,
-        "INT": 10,
-        "WIS": 13,
-        "PIE": 16
+        "CON": 13,
+        "INT": 11,
+        "WIS": 17,
+        "PIE": 21
       },
       "resources": {
-        "HP": 72,
-        "Ki": 129,
-        "WIS-MP": 30,
-        "PIE-MP": 36
+        "HP": 82,
+        "Ki": 195,
+        "WIS-MP": 52,
+        "PIE-MP": 54
       },
       "abilities": [
         {
@@ -269,9 +547,90 @@
           "power": 1.4,
           "element": "divine",
           "desc": "Holy damage. Bonus vs undead."
+        },
+        {
+          "name": "Bless",
+          "cost": 8,
+          "resource": "PIE-MP",
+          "type": "buff",
+          "level": 1,
+          "buff": "blessed",
+          "duration": 3,
+          "targets": "ally",
+          "desc": "Bless one ally. +10% accuracy and +10% to all saves for 3 turns."
+        },
+        {
+          "name": "Cure Poison",
+          "cost": 8,
+          "resource": "PIE-MP",
+          "type": "cure",
+          "level": 3,
+          "cures": "poison",
+          "desc": "Purge poison from any ally. Removes all poison stacks.",
+          "branch_label": "Healer",
+          "branch_desc": "Cleanse and protect your allies."
         }
       ],
-      "inventory": [],
+      "inventory": [
+        {
+          "name": "Minor Healing Potion",
+          "type": "consumable",
+          "subtype": "potion",
+          "heal_amount": 25,
+          "identified": true,
+          "estimated_value": 15,
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 2
+        },
+        {
+          "name": "Scroll of Remove Curse",
+          "appraised_name": "Scroll of Remove Curse",
+          "type": "consumable",
+          "subtype": "scroll",
+          "effect": "remove_curse",
+          "rarity": "uncommon",
+          "description": "Lifts all curses from one character, freeing any cursed equipment.",
+          "identified": true,
+          "estimated_value": 75,
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Healing Potion",
+          "type": "consumable",
+          "subtype": "potion",
+          "heal_amount": 50,
+          "identified": true,
+          "estimated_value": 30,
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 2
+        },
+        {
+          "name": "Healing Potion",
+          "type": "consumable",
+          "subtype": "potion",
+          "rarity": "common",
+          "heal_amount": 50,
+          "description": "Restores 50 HP to one character.",
+          "identified": true
+        },
+        {
+          "name": "Antidote",
+          "type": "consumable",
+          "subtype": "potion",
+          "cures": [
+            "Poison"
+          ],
+          "identified": true,
+          "estimated_value": 20,
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 2
+        }
+      ],
       "equipment": {
         "weapon": {
           "name": "Wooden Club",
@@ -309,7 +668,23 @@
           "description": "A simple round wooden shield.",
           "identified": true
         },
-        "head": null,
+        "head": {
+          "name": "Crown of Clarity",
+          "appraised_name": "Crown of Clarity",
+          "type": "armor",
+          "slot": "head",
+          "subtype": "circlet",
+          "rarity": "rare",
+          "defense": 2,
+          "magic_resist": 6,
+          "effect": {
+            "wis_bonus": 3
+          },
+          "description": "A silver circlet that clears the mind. +3 WIS, +6 magic resist.",
+          "identified": true,
+          "estimated_value": 190,
+          "magic_identified": true
+        },
         "crown": null,
         "body": {
           "name": "Chain Shirt",
@@ -324,106 +699,38 @@
           "description": "A shirt of interlocking metal rings.",
           "identified": true
         },
-        "hands": null,
-        "feet": null,
-        "neck": null,
-        "ring1": null,
-        "ring2": null,
-        "ring3": null
-      },
-      "life_path": [],
-      "backstory_parts": [],
-      "quick_rolled": true,
-      "human_bonus_stat": null,
-      "planar_tier": 0,
-      "combat_row": "front"
-    },
-    {
-      "name": "Cade",
-      "class_name": "Ranger",
-      "race_name": "Half-Orc",
-      "level": 1,
-      "xp": 8,
-      "gold": 0,
-      "stats": {
-        "STR": 16,
-        "DEX": 14,
-        "CON": 11,
-        "INT": 10,
-        "WIS": 16,
-        "PIE": 7
-      },
-      "resources": {
-        "HP": 75,
-        "Ki": 132,
-        "WIS-MP": 36,
-        "DEX-SP": 32
-      },
-      "abilities": [
-        {
-          "name": "Aimed Shot",
-          "cost": 10,
-          "resource": "DEX-SP",
-          "type": "attack",
-          "level": 1,
-          "power": 1.5,
-          "bonus_accuracy": 20,
-          "desc": "Carefully aimed ranged attack. +20% accuracy."
-        },
-        {
-          "name": "Splitting Arrow",
-          "cost": 8,
-          "resource": "DEX-SP",
-          "type": "attack",
-          "level": 1,
-          "power": 0.8,
-          "pierce_rows": true,
-          "desc": "Arrow pierces front row, hitting back row too. Reduced damage."
-        }
-      ],
-      "inventory": [],
-      "equipment": {
-        "weapon": {
-          "name": "Short Bow",
-          "type": "Bow",
-          "damage": 14,
-          "damage_stat": {
-            "DEX": 0.35,
-            "STR": 0.08
-          },
-          "range": "ranged",
+        "hands": {
+          "name": "Silk Gloves",
+          "slot": "hands",
+          "armor_tier": "clothing",
+          "defense": 0,
+          "magic_resist": 2,
           "speed_mod": 0,
-          "accuracy_mod": 5,
-          "crit_mod": 3,
-          "weight_class": "medium",
-          "phys_type": "piercing",
-          "requirements": {
-            "DEX": 10,
-            "STR": 8
+          "stat_bonuses": {
+            "INT": 1
           },
-          "spell_bonus": 0,
-          "special": {},
-          "identified": true,
-          "slot": "weapon"
-        },
-        "off_hand": null,
-        "head": null,
-        "crown": null,
-        "body": {
-          "name": "Leather Vest",
-          "slot": "body",
-          "armor_tier": "light",
-          "defense": 4,
-          "magic_resist": 0,
-          "speed_mod": 0,
-          "stat_bonuses": {},
-          "rarity": "common",
-          "value": 20,
-          "description": "Basic leather protection.",
+          "rarity": "uncommon",
+          "value": 30,
+          "description": "Silk gloves threaded with arcane sigils. +1 INT.",
+          "type": "hands",
           "identified": true
         },
-        "hands": null,
-        "feet": null,
+        "feet": {
+          "name": "Pilgrim's Boots",
+          "slot": "feet",
+          "armor_tier": "light",
+          "defense": 1,
+          "magic_resist": 0,
+          "speed_mod": 1,
+          "stat_bonuses": {
+            "CON": 1
+          },
+          "rarity": "common",
+          "value": 12,
+          "description": "Well-worn boots of a long-road traveller. +1 CON.",
+          "type": "feet",
+          "identified": true
+        },
         "neck": null,
         "ring1": null,
         "ring2": null,
@@ -438,121 +745,23 @@
     },
     {
       "name": "Syla",
-      "class_name": "Monk",
-      "race_name": "Halfling",
-      "level": 1,
-      "xp": 8,
-      "gold": 0,
-      "stats": {
-        "STR": 12,
-        "DEX": 16,
-        "CON": 12,
-        "INT": 8,
-        "WIS": 18,
-        "PIE": 10
-      },
-      "resources": {
-        "HP": 77,
-        "Ki": 54,
-        "WIS-MP": 40,
-        "DEX-SP": 36
-      },
-      "abilities": [
-        {
-          "name": "Flurry of Blows",
-          "cost": 8,
-          "resource": "Ki",
-          "type": "attack",
-          "level": 1,
-          "power": 0.6,
-          "hits": 3,
-          "desc": "Three rapid strikes at reduced power each."
-        },
-        {
-          "name": "Iron Skin",
-          "cost": 10,
-          "resource": "Ki",
-          "type": "buff",
-          "level": 1,
-          "buff": "iron_skin",
-          "duration": 3,
-          "self_only": true,
-          "desc": "Harden the body. Reduces physical damage taken for 3 turns (self only)."
-        }
-      ],
-      "inventory": [],
-      "equipment": {
-        "weapon": {
-          "name": "Unarmed (Monk)",
-          "type": "Fists",
-          "damage": 9,
-          "damage_stat": {
-            "WIS": 0.3,
-            "DEX": 0.2
-          },
-          "range": "melee",
-          "speed_mod": 2,
-          "accuracy_mod": 5,
-          "crit_mod": 5,
-          "weight_class": "light",
-          "phys_type": "blunt",
-          "requirements": {},
-          "spell_bonus": 0,
-          "special": {
-            "monk_scaling": true
-          },
-          "identified": true,
-          "slot": "weapon"
-        },
-        "off_hand": null,
-        "head": null,
-        "crown": null,
-        "body": {
-          "name": "Traveler's Clothes",
-          "slot": "body",
-          "armor_tier": "clothing",
-          "defense": 1,
-          "magic_resist": 0,
-          "speed_mod": 0,
-          "stat_bonuses": {},
-          "rarity": "common",
-          "value": 5,
-          "description": "Simple clothing. Offers minimal protection.",
-          "identified": true
-        },
-        "hands": null,
-        "feet": null,
-        "neck": null,
-        "ring1": null,
-        "ring2": null,
-        "ring3": null
-      },
-      "life_path": [],
-      "backstory_parts": [],
-      "quick_rolled": true,
-      "human_bonus_stat": null,
-      "planar_tier": 0,
-      "combat_row": "front"
-    },
-    {
-      "name": "Shael",
       "class_name": "Thief",
-      "race_name": "Fading-Touched",
-      "level": 1,
-      "xp": 8,
-      "gold": 0,
+      "race_name": "Gnome",
+      "level": 3,
+      "xp": 944,
+      "gold": 310,
       "stats": {
-        "STR": 12,
-        "DEX": 17,
-        "CON": 7,
-        "INT": 12,
-        "WIS": 9,
-        "PIE": 6
+        "STR": 13,
+        "DEX": 19,
+        "CON": 9,
+        "INT": 13,
+        "WIS": 13,
+        "PIE": 5
       },
       "resources": {
-        "HP": 57,
-        "Ki": 131,
-        "DEX-SP": 38
+        "HP": 67,
+        "Ki": 179,
+        "DEX-SP": 56
       },
       "abilities": [
         {
@@ -575,31 +784,91 @@
           "duration": 2,
           "self_only": true,
           "desc": "Greatly increase dodge chance for 2 turns."
+        },
+        {
+          "name": "Cripple",
+          "cost": 10,
+          "resource": "DEX-SP",
+          "type": "debuff",
+          "level": 3,
+          "slow_duration": 3,
+          "armor_shred": 2,
+          "desc": "Slash tendons to slow and weaken a target for 3 turns.",
+          "branch_label": "Saboteur",
+          "branch_desc": "Disable and weaken before moving in for the kill."
         }
       ],
-      "inventory": [],
+      "inventory": [
+        {
+          "name": "Healing Potion",
+          "type": "consumable",
+          "subtype": "potion",
+          "rarity": "common",
+          "heal_amount": 50,
+          "description": "Restores 50 HP to one character.",
+          "identified": true
+        }
+      ],
       "equipment": {
         "weapon": {
-          "name": "Rusty Knife",
-          "type": "Dagger",
-          "damage": 12,
+          "name": "Warden's Oath",
+          "appraised_name": "Warden's Oath",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Longsword",
+          "rarity": "epic",
+          "damage": 25,
           "damage_stat": {
-            "DEX": 0.4
+            "STR": 0.3,
+            "DEX": 0.12
           },
+          "phys_type": "slashing",
           "range": "melee",
-          "speed_mod": 2,
-          "accuracy_mod": 5,
-          "crit_mod": 5,
-          "weight_class": "light",
-          "phys_type": "piercing",
-          "requirements": {},
-          "spell_bonus": 0,
-          "special": {},
+          "enchant_element": "divine",
+          "enchant_bonus": 6,
+          "enchant_name": "Holy",
+          "effect": {
+            "str_bonus": 2,
+            "pie_bonus": 2
+          },
+          "description": "A holy blade of the old Wardens. +2 STR, +2 PIE, divine damage.",
           "identified": true,
-          "slot": "weapon"
+          "estimated_value": 350,
+          "_wis_bonus": true,
+          "magic_identified": true
         },
-        "off_hand": null,
-        "head": null,
+        "off_hand": {
+          "name": "Buckler",
+          "slot": "off_hand",
+          "armor_tier": "shield",
+          "defense": 2,
+          "magic_resist": 0,
+          "speed_mod": 1,
+          "stat_bonuses": {
+            "DEX": 1
+          },
+          "rarity": "common",
+          "value": 15,
+          "description": "A small round shield worn on the fist. Fast parrying. +1 DEX.",
+          "type": "off_hand",
+          "identified": true
+        },
+        "head": {
+          "name": "Leather Hood",
+          "slot": "head",
+          "armor_tier": "light",
+          "defense": 2,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {
+            "DEX": 1
+          },
+          "rarity": "common",
+          "value": 12,
+          "description": "A hooded leather coif that conceals the face. +1 DEX.",
+          "type": "head",
+          "identified": true
+        },
         "crown": null,
         "body": {
           "name": "Leather Vest",
@@ -614,10 +883,574 @@
           "description": "Basic leather protection.",
           "identified": true
         },
-        "hands": null,
-        "feet": null,
+        "hands": {
+          "name": "Padded Arm Guards",
+          "appraised_name": "Padded Arm Guards",
+          "type": "armor",
+          "slot": "hands",
+          "subtype": "bracers",
+          "rarity": "common",
+          "defense": 2,
+          "description": "Thick leather wrapped around the forearms. Simple protection.",
+          "identified": true,
+          "estimated_value": 18,
+          "magic_identified": true,
+          "material_identified": true
+        },
+        "feet": {
+          "name": "Soft Leather Shoes",
+          "appraised_name": "Soft Leather Shoes",
+          "type": "armor",
+          "slot": "feet",
+          "subtype": "boots",
+          "rarity": "common",
+          "defense": 1,
+          "effect": {
+            "dex_bonus": 1
+          },
+          "description": "Supple leather shoes that make little noise. +1 DEX.",
+          "identified": true,
+          "estimated_value": 30,
+          "_wis_bonus": true,
+          "magic_identified": true,
+          "material_identified": true
+        },
         "neck": null,
         "ring1": null,
+        "ring2": null,
+        "ring3": null
+      },
+      "life_path": [],
+      "backstory_parts": [],
+      "quick_rolled": true,
+      "human_bonus_stat": null,
+      "planar_tier": 0,
+      "combat_row": "front"
+    },
+    {
+      "name": "Shael",
+      "class_name": "Ranger",
+      "race_name": "Elf",
+      "level": 3,
+      "xp": 944,
+      "gold": 327,
+      "stats": {
+        "STR": 12,
+        "DEX": 20,
+        "CON": 11,
+        "INT": 12,
+        "WIS": 19,
+        "PIE": 7
+      },
+      "resources": {
+        "HP": 81,
+        "Ki": 207,
+        "WIS-MP": 54,
+        "DEX-SP": 60
+      },
+      "abilities": [
+        {
+          "name": "Aimed Shot",
+          "cost": 10,
+          "resource": "DEX-SP",
+          "type": "attack",
+          "level": 1,
+          "power": 1.5,
+          "bonus_accuracy": 20,
+          "desc": "Carefully aimed ranged attack. +20% accuracy."
+        },
+        {
+          "name": "Splitting Arrow",
+          "cost": 8,
+          "resource": "DEX-SP",
+          "type": "attack",
+          "level": 1,
+          "power": 0.8,
+          "pierce_rows": true,
+          "desc": "Arrow pierces front row, hitting back row too. Reduced damage."
+        },
+        {
+          "name": "Twin Shot",
+          "cost": 12,
+          "resource": "DEX-SP",
+          "type": "attack",
+          "level": 3,
+          "power": 0.9,
+          "hits": 2,
+          "desc": "Loose two arrows in quick succession. Hits twice at 90% power each.",
+          "branch_label": "Sharpshooter",
+          "branch_desc": "Double your arrow output for maximum damage."
+        }
+      ],
+      "inventory": [
+        {
+          "name": "Fading-Touched Pelt",
+          "type": "material",
+          "subtype": "leather",
+          "rarity": "uncommon",
+          "identify_difficulty": 2,
+          "unidentified_name": "Diseased Pelt",
+          "unidentified_desc": "A pelt that seems to absorb light.",
+          "appraised_name": "Tier 1 Fading Pelt",
+          "material_desc": "Leather infused with Fading corruption. Tier 1.",
+          "magic_desc": "Fading resonance \u2014 not magical but deeply wrong.",
+          "estimated_value": 12,
+          "description": "A pelt from a creature touched by the Fading. Useful for corruption-resistant gear.",
+          "identified": true,
+          "source": "Fading Wolf",
+          "material_identified": true,
+          "magic_identified": true,
+          "stack": 14
+        },
+        {
+          "name": "Healing Potion",
+          "type": "consumable",
+          "subtype": "potion",
+          "rarity": "common",
+          "heal_amount": 50,
+          "description": "Restores 50 HP to one character.",
+          "identified": true
+        },
+        {
+          "name": "Wolf Fang (Corrupted)",
+          "type": "material",
+          "subtype": "bone",
+          "rarity": "uncommon",
+          "identify_difficulty": 2,
+          "unidentified_name": "Dark Fang",
+          "unidentified_desc": "A blackened fang that refuses to break.",
+          "appraised_name": "Corrupted Wolf Fang",
+          "material_desc": "Bone infused with shadow energy.",
+          "magic_desc": "Shadow resonance.",
+          "estimated_value": "12",
+          "description": "A fang from a Fading-touched wolf. Used in shadow-resistance crafting.",
+          "identified": true,
+          "source": "Fading Wolf",
+          "material_identified": true,
+          "magic_identified": true,
+          "stack": 2
+        },
+        {
+          "name": "Fading Antler Fragment",
+          "type": "material",
+          "subtype": "arcane",
+          "rarity": "uncommon",
+          "identify_difficulty": 3,
+          "unidentified_name": "Strange Horn",
+          "unidentified_desc": "A fragment of antler that feels hollow.",
+          "appraised_name": "Fading Antler Shard",
+          "material_desc": "Bone that channels the Fading.",
+          "magic_desc": "Moderate Fading resonance \u2014 arcane dampening.",
+          "estimated_value": 20,
+          "description": "A shard of antler from a Fading Stag. Drains nearby arcane energy.",
+          "identified": true,
+          "source": "Fading Stag",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        }
+      ],
+      "equipment": {
+        "weapon": {
+          "name": "Longbow",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Longbow",
+          "rarity": "common",
+          "damage": 20,
+          "damage_stat": {
+            "DEX": 0.35,
+            "STR": 0.08
+          },
+          "phys_type": "piercing",
+          "range": "ranged",
+          "description": "A proper longbow with good range and power.",
+          "identified": true
+        },
+        "off_hand": null,
+        "head": null,
+        "crown": {
+          "name": "Ranger's Brow Band",
+          "slot": "crown",
+          "subtype": "circlet",
+          "armor_tier": "clothing",
+          "defense": 0,
+          "magic_resist": 2,
+          "speed_mod": 1,
+          "stat_bonuses": {
+            "WIS": 1,
+            "DEX": 1
+          },
+          "rarity": "uncommon",
+          "value": 45,
+          "description": "A leather brow band worn by forest scouts. +1 WIS, +1 DEX.",
+          "type": "crown",
+          "identified": true
+        },
+        "body": {
+          "name": "Leather Vest",
+          "slot": "body",
+          "armor_tier": "light",
+          "defense": 4,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {},
+          "rarity": "common",
+          "value": 20,
+          "description": "Basic leather protection.",
+          "identified": true
+        },
+        "hands": {
+          "name": "Archer's Glove",
+          "slot": "hands",
+          "armor_tier": "light",
+          "defense": 1,
+          "magic_resist": 0,
+          "speed_mod": 0,
+          "stat_bonuses": {
+            "DEX": 2
+          },
+          "rarity": "uncommon",
+          "value": 50,
+          "description": "A single bracer-glove protecting the draw hand. +2 DEX.",
+          "type": "hands",
+          "identified": true
+        },
+        "feet": null,
+        "neck": {
+          "name": "Hunter's Totem",
+          "slot": "neck",
+          "subtype": "pendant",
+          "armor_tier": "clothing",
+          "defense": 0,
+          "magic_resist": 1,
+          "speed_mod": 0,
+          "stat_bonuses": {
+            "DEX": 1,
+            "WIS": 1
+          },
+          "rarity": "common",
+          "value": 22,
+          "description": "A carved wooden pendant bearing a hunting beast. +1 DEX, +1 WIS.",
+          "type": "neck",
+          "identified": true
+        },
+        "ring1": null,
+        "ring2": null,
+        "ring3": null
+      },
+      "life_path": [],
+      "backstory_parts": [],
+      "quick_rolled": true,
+      "human_bonus_stat": null,
+      "planar_tier": 0,
+      "combat_row": "front"
+    },
+    {
+      "name": "Renn",
+      "class_name": "Mage",
+      "race_name": "Fading-Touched",
+      "level": 3,
+      "xp": 908,
+      "gold": 404,
+      "stats": {
+        "STR": 6,
+        "DEX": 10,
+        "CON": 6,
+        "INT": 21,
+        "WIS": 17,
+        "PIE": 7
+      },
+      "resources": {
+        "HP": 51,
+        "Ki": 227,
+        "INT-MP": 68,
+        "WIS-MP": 50
+      },
+      "abilities": [
+        {
+          "name": "Magic Missile",
+          "cost": 8,
+          "resource": "INT-MP",
+          "type": "spell",
+          "level": 1,
+          "power": 1.0,
+          "element": "arcane",
+          "bonus_accuracy": 30,
+          "desc": "Unerring arcane bolt. Very high hit chance."
+        },
+        {
+          "name": "Arcane Shield",
+          "cost": 10,
+          "resource": "INT-MP",
+          "type": "buff",
+          "level": 1,
+          "buff": "magic_shield",
+          "duration": 3,
+          "self_only": true,
+          "desc": "Erect a personal arcane barrier. Reduces all damage taken for 3 turns."
+        },
+        {
+          "name": "Shock",
+          "cost": 9,
+          "resource": "INT-MP",
+          "type": "spell",
+          "level": 1,
+          "power": 1.1,
+          "element": "lightning",
+          "stun_chance": 0.15,
+          "desc": "Lightning strike. 15% chance to stun the target for 1 turn."
+        },
+        {
+          "name": "Firebolt",
+          "cost": 10,
+          "resource": "INT-MP",
+          "type": "spell",
+          "level": 3,
+          "power": 1.3,
+          "element": "fire",
+          "dot": "burning",
+          "dot_duration": 2,
+          "desc": "Fire bolt that ignites the target, dealing burn damage for 2 turns.",
+          "branch_label": "Pyromancer",
+          "branch_desc": "Burning DoTs and explosive fire magic."
+        }
+      ],
+      "inventory": [
+        {
+          "name": "Fading Antler Fragment",
+          "type": "material",
+          "subtype": "arcane",
+          "rarity": "uncommon",
+          "identify_difficulty": 3,
+          "unidentified_name": "Strange Horn",
+          "unidentified_desc": "A fragment of antler that feels hollow.",
+          "appraised_name": "Fading Antler Shard",
+          "material_desc": "Bone that channels the Fading.",
+          "magic_desc": "Moderate Fading resonance \u2014 arcane dampening.",
+          "estimated_value": 20,
+          "description": "A shard of antler from a Fading Stag. Drains nearby arcane energy.",
+          "identified": true,
+          "source": "Fading Stag",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 2
+        },
+        {
+          "name": "Silk Robes",
+          "slot": "body",
+          "armor_tier": "clothing",
+          "defense": 2,
+          "magic_resist": 4,
+          "speed_mod": 1,
+          "stat_bonuses": {
+            "INT": 1,
+            "WIS": 1
+          },
+          "rarity": "uncommon",
+          "value": 45,
+          "description": "Fine silk that shimmers with subtle enchantment. +1 INT, +1 WIS.",
+          "type": "armor",
+          "identified": true
+        },
+        {
+          "name": "Torch",
+          "type": "consumable",
+          "subtype": "light",
+          "rarity": "common",
+          "description": "Lights dark areas. Lasts one floor.",
+          "identified": true
+        },
+        {
+          "name": "Polished Silver Symbol",
+          "appraised_name": "Polished Silver Symbol",
+          "type": "accessory",
+          "slot": "ring1",
+          "subtype": "amulet",
+          "rarity": "uncommon",
+          "effect": {
+            "pie_bonus": 1
+          },
+          "magic_resist": 2,
+          "description": "A well-crafted holy symbol. +1 PIE, +2 magic resist.",
+          "identified": true,
+          "estimated_value": 45,
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Battle Rod",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Rod",
+          "rarity": "uncommon",
+          "damage": 18,
+          "damage_stat": {
+            "INT": 0.3,
+            "STR": 0.1
+          },
+          "phys_type": "blunt",
+          "range": "melee",
+          "is_focus": true,
+          "speed_mod": 0,
+          "stat_bonuses": {
+            "INT": 2
+          },
+          "identify_difficulty": 2,
+          "unidentified_name": "Metal Rod",
+          "unidentified_desc": "A heavy metal rod with runes.",
+          "appraised_name": "Battle Rod",
+          "material_desc": "Iron shaft inscribed with combat sigils.",
+          "magic_desc": "Enhances INT and can be used in melee or as focus.",
+          "estimated_value": 90,
+          "description": "An iron rod infused with battle magic. Viable in melee.",
+          "identified": true
+        },
+        {
+          "name": "Mana Crystal",
+          "type": "consumable",
+          "subtype": "crystal",
+          "restore_mp": 30,
+          "identified": true,
+          "estimated_value": 35,
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        }
+      ],
+      "equipment": {
+        "weapon": {
+          "name": "Wand of Sparks",
+          "appraised_name": "Wand of Sparks",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Wand",
+          "rarity": "uncommon",
+          "damage": 6,
+          "phys_type": "blunt",
+          "range": "melee",
+          "spell_bonus": 3,
+          "enchant_element": "lightning",
+          "enchant_bonus": 3,
+          "description": "A wand crackling with static. +3 spell power, deals lightning damage.",
+          "identified": true,
+          "estimated_value": 65,
+          "_wis_bonus": true,
+          "magic_identified": true
+        },
+        "off_hand": {
+          "name": "Thought Orb",
+          "type": "off_hand",
+          "slot": "off_hand",
+          "subtype": "Orb",
+          "rarity": "uncommon",
+          "damage": 14,
+          "damage_stat": {
+            "INT": 0.28,
+            "WIS": 0.12
+          },
+          "phys_type": "arcane",
+          "range": "ranged",
+          "is_focus": true,
+          "speed_mod": 0,
+          "stat_bonuses": {
+            "INT": 1,
+            "WIS": 1
+          },
+          "identify_difficulty": 2,
+          "unidentified_name": "Crystal Sphere",
+          "unidentified_desc": "A glowing sphere.",
+          "appraised_name": "Thought Orb",
+          "material_desc": "Polished crystal that resonates with thought.",
+          "magic_desc": "Held in the off-hand; amplifies magical attacks.",
+          "estimated_value": 80,
+          "description": "An off-hand focus orb. Boosts magical damage when held.",
+          "identified": true
+        },
+        "head": {
+          "name": "Witch's Hat",
+          "slot": "head",
+          "armor_tier": "clothing",
+          "defense": 0,
+          "magic_resist": 3,
+          "speed_mod": 0,
+          "stat_bonuses": {
+            "INT": 1,
+            "WIS": 1
+          },
+          "rarity": "uncommon",
+          "value": 40,
+          "description": "A peaked hat that focuses arcane thought. +1 INT, +1 WIS.",
+          "type": "head",
+          "identified": true
+        },
+        "crown": null,
+        "body": {
+          "name": "Mage's Robes",
+          "slot": "body",
+          "armor_tier": "clothing",
+          "defense": 2,
+          "magic_resist": 3,
+          "speed_mod": 0,
+          "stat_bonuses": {
+            "INT": 1
+          },
+          "rarity": "uncommon",
+          "value": 30,
+          "description": "Enchanted robes that enhance magical focus.",
+          "type": "armor",
+          "identified": true
+        },
+        "hands": {
+          "name": "Padded Arm Guards",
+          "appraised_name": "Padded Arm Guards",
+          "type": "armor",
+          "slot": "hands",
+          "subtype": "bracers",
+          "rarity": "common",
+          "defense": 2,
+          "description": "Thick leather wrapped around the forearms. Simple protection.",
+          "identified": true,
+          "estimated_value": 18,
+          "magic_identified": true,
+          "material_identified": true
+        },
+        "feet": {
+          "name": "Mage's Slippers",
+          "slot": "feet",
+          "armor_tier": "clothing",
+          "defense": 0,
+          "magic_resist": 2,
+          "speed_mod": 1,
+          "stat_bonuses": {
+            "INT": 1
+          },
+          "rarity": "uncommon",
+          "value": 35,
+          "description": "Enchanted slippers that glide silently. +1 INT.",
+          "type": "feet",
+          "identified": true
+        },
+        "neck": null,
+        "ring1": {
+          "name": "Ring of the Battlemage",
+          "appraised_name": "Ring of the Battlemage",
+          "type": "accessory",
+          "slot": "ring1",
+          "subtype": "ring",
+          "rarity": "rare",
+          "effect": {
+            "int_bonus": 3,
+            "str_bonus": 1
+          },
+          "description": "Worn by warrior-mages of the old Wardens. +3 INT, +1 STR.",
+          "identified": true,
+          "estimated_value": 140,
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
         "ring2": null,
         "ring3": null
       },
@@ -631,48 +1464,134 @@
   ],
   "knowledge": {
     "identified_items": [
-      "Wooden Shield",
-      "Wooden Club",
+      "Goblin Hide Scraps",
+      "Battle Rod",
       "Short Bow",
-      "Traveler's Clothes",
-      "Monk Unarmed",
+      "Fading-Touched Pelt",
+      "Ranger's Brow Band",
+      "Rat Tail",
+      "Witch's Hat",
+      "Polished Silver Symbol",
+      "Torch",
+      "Padded Gloves",
+      "Mage's Slippers",
+      "Hunter's Totem",
+      "Archer's Glove",
       "Rusty Knife",
+      "Thought Orb",
+      "Bat Wing",
+      "Longbow",
+      "Pilgrim's Boots",
+      "Ring of the Battlemage",
+      "Shield of the Sentinel",
+      "Orcish Blade",
       "Chain Shirt",
+      "Ring of Minor Fortitude",
+      "Fading Antler Fragment",
+      "Monk's Training Band",
+      "Crude Knife",
+      "Initiate's Scepter",
+      "Copper Chain",
+      "Monk's Hood",
+      "Padded Arm Guards",
+      "Shadowbind Gauntlets",
+      "Crude Shortbow",
+      "Wolf Fang (Corrupted)",
+      "Healing Potion",
+      "Bundle of Crude Arrows",
+      "Wooden Club",
+      "Monk's Wraps",
       "Walking Stick",
+      "Apprentice Rod",
+      "Gauntlets",
+      "Chain Coif",
+      "Crude Snare Wire",
+      "Heavy Boots",
+      "Crude Club",
+      "Goblin Shiv",
+      "Buckler",
+      "Shaman's Herb Pouch",
+      "Silk Robes",
       "Worn Longsword",
-      "Leather Vest"
+      "Silk Gloves",
+      "Minor Healing Potion",
+      "Scroll of Remove Curse",
+      "Goblin Ear",
+      "Mage's Robes",
+      "Leather Hood",
+      "Iron Ki Beads",
+      "Wooden Shield",
+      "Leather Vest",
+      "Traveler's Clothes",
+      "Antidote",
+      "Monk's Sandals",
+      "Wrappings of Focus",
+      "Mana Crystal",
+      "Monk Unarmed"
     ],
-    "known_enemies": {}
+    "known_enemies": {
+      "Goblin Warrior": 2,
+      "Goblin Scout": 2,
+      "Rabid Rat": 2,
+      "Fading Wolf": 2,
+      "Fading Hound": 2,
+      "Cave Bat": 2,
+      "Tunnel Lurker": 2,
+      "Goblin Archer": 2,
+      "Goblin Shaman": 2,
+      "Goblin Trapper": 2,
+      "Goblin Brute": 2,
+      "Fading Stag": 2,
+      "Orc Fighter": 2,
+      "Goblin Drummer": 2,
+      "Fading Bear": 2
+    }
   },
   "story_flags": {
-    "act": 1,
     "intro_seen": true,
     "quest.main_meet_maren.state": -2,
     "town.briarhollow.visited": true,
-    "quest.side_wolf_pelts.state": 1,
-    "quest.side_missing_patrol.state": 1,
-    "npc.bess.met": true,
-    "npc.forgemaster_dunn.met": true,
-    "npc.merchant_kira.met": true,
-    "npc.old_petra.met": true,
-    "quest.main_spiders_nest.state": 1,
     "job.bh_goblin_ears.state": 1,
     "job.bh_goblin_ears.progress": 0,
     "job.bh_wolf_pelts.state": 1,
     "job.bh_wolf_pelts.progress": 0,
-    "job.bh_warren_scout.state": 1,
+    "job.bh_warren_scout.state": -2,
     "job.bh_warren_scout.progress": 0,
     "job.bh_rat_problem.state": 1,
     "job.bh_rat_problem.progress": 0,
     "job.bh_bat_wings.state": 1,
     "job.bh_bat_wings.progress": 0,
-    "npc.elder_thom.met": true,
-    "npc.priestess_alia.met": true,
+    "quest.side_wolf_pelts.state": 1,
+    "quest.side_missing_patrol.state": -2,
     "npc.maren.met": true,
     "lore.wardens_history": true,
     "lore.hearthstones": true,
-    "quest.main_goblin_warren.state": 1,
-    "quest.main_meet_maren.rewarded": true
+    "quest.main_goblin_warren.state": 3,
+    "quest.main_meet_maren.rewarded": true,
+    "act": 1,
+    "explored.goblin_warren.floor1": true,
+    "hint.shown.move_keys": true,
+    "hint.shown.camp_key": true,
+    "hint.shown.combat_rows": true,
+    "hint.shown.combat_defend": true,
+    "wolf_pelts_quest.count": 22,
+    "hint.shown.trap_disarm": true,
+    "explored.goblin_warren.floor2": true,
+    "hint.shown.back_row": true,
+    "hint.shown.identification": true,
+    "explored.goblin_warren.floor3": true,
+    "guild_trial.complete": true,
+    "quest.side_missing_patrol.rewarded": true,
+    "hint.shown.flee_tip": true,
+    "lore.grak_truth": true,
+    "choice.grak_spared": true,
+    "boss.grak.defeated": true,
+    "goblin_peace": true,
+    "hearthstone.goblin_warren": true,
+    "item.hearthstone.1": true,
+    "boss_defeated.goblin_warren": true,
+    "npc.merchant_kira.met": true
   },
-  "world_state": null
+  "world_state": null,
+  "dungeon_explored": {}
 }
