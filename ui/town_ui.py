@@ -377,11 +377,16 @@ class TownUI:
         )
 
         td = self.town_data
-        ts = self.walk_tile_size
+        map_area_h = SCREEN_H - 110  # leave room for UI bar at bottom
         tw, th = td["width"], td["height"]
 
-        # Camera centered on player
-        map_area_h = SCREEN_H - 110  # leave room for UI bar at bottom
+        # Scale tile size so the map fills the available screen area,
+        # but cap at 52 (too large looks bad) and floor at 24.
+        ts_from_w = SCREEN_W // max(1, tw)
+        ts_from_h = map_area_h // max(1, th)
+        ts = max(24, min(ts_from_w, ts_from_h, 52))
+        self.walk_tile_size = ts  # keep in sync so minimap uses same scale
+
         cam_x = self.walk_x - (SCREEN_W // ts) // 2
         cam_y = self.walk_y - (map_area_h // ts) // 2
         cam_x = max(0, min(tw - SCREEN_W // ts, cam_x))
@@ -393,19 +398,11 @@ class TownUI:
         from data.town_maps import (
             TILE_COLORS, TILE_TOP_COLORS, TT_GRASS, TT_WALL, TT_DOOR,
             TT_TREE, TT_FENCE, TT_PATH, TT_EXIT, TT_SIGN, TT_WATER,
-            TT_BRIDGE, get_tile, get_building_at, get_npc_at,
-            get_sign_at,
+            TT_BRIDGE, BLD_INN, BLD_FORGE, BLD_TAVERN, BLD_TEMPLE,
+            get_tile, get_building_at, get_npc_at, get_sign_at,
         )
 
-        td = self.town_data
-        ts = self.walk_tile_size
-        tw, th = td["width"], td["height"]
-
-        map_area_h = SCREEN_H - 110
-        cam_x = self.walk_x - (SCREEN_W // ts) // 2
-        cam_y = self.walk_y - (map_area_h // ts) // 2
-        cam_x = max(0, min(tw - SCREEN_W // ts, cam_x))
-        cam_y = max(0, min(th - map_area_h // ts, cam_y))
+        # td, ts, tw, th, cam_x, cam_y already computed above
 
         # pre-build building-to-wall-tile map for fast facade lookup
         bld_col_map = {}
@@ -1649,11 +1646,8 @@ class TownUI:
         # Party management button — opens inventory/equip/stats/transfer
         party_btn = pygame.Rect(SCREEN_W - 420, 20, 130, 34)
         draw_button(surface, party_btn, "👥 Party", hover=party_btn.collidepoint(mx, my), size=13)
-        # Train skills button
-        train_btn = pygame.Rect(SCREEN_W - 570, 20, 138, 34)
-        draw_button(surface, train_btn, "⚔ Train Skills", hover=train_btn.collidepoint(mx, my), size=12)
         # Character sheet button
-        sheet_btn = pygame.Rect(SCREEN_W - 722, 20, 140, 34)
+        sheet_btn = pygame.Rect(SCREEN_W - 570, 20, 140, 34)
         draw_button(surface, sheet_btn, "📋 Characters", hover=sheet_btn.collidepoint(mx, my), size=12)
         # Save feedback label
         if getattr(self, "_inn_save_msg", "") and getattr(self, "_inn_save_timer", 0) > 0:
@@ -3063,16 +3057,8 @@ class TownUI:
             if party_btn.collidepoint(mx, my):
                 return "open_party_review"
 
-            # Train skills button
-            train_btn = pygame.Rect(SCREEN_W - 570, 20, 138, 34)
-            if train_btn.collidepoint(mx, my):
-                self.trainer_char_idx = 0
-                self.trainer_scroll = 0
-                self.view = self.VIEW_INN_TRAINER
-                return None
-
             # Character sheet button
-            sheet_btn = pygame.Rect(SCREEN_W - 722, 20, 140, 34)
+            sheet_btn = pygame.Rect(SCREEN_W - 570, 20, 140, 34)
             if sheet_btn.collidepoint(mx, my):
                 self.charsheet_idx = 0
                 self.view = self.VIEW_INN_CHARSHEET

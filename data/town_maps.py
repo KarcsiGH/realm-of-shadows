@@ -123,12 +123,12 @@ BRIARHOLLOW_MAP_RAW = [
     "TT..T.P.....T.........P.........T..........P......T....T..TT",  # 16  scattered trees + door paths
     "TT....P...............P..............######D########......TT",  # 17  Temple door col 43
     "TT....P...............P..............###############......TT",  # 18
-    "TT####D#####..........P..............###############......TT",  # 19  Forge door col 6
-    "TT##########.....#####D######........###############......TT",  # 20  Tavern door col 22
-    "TT##########.....############........###############......TT",  # 21
-    "TT##########.....############........###############......TT",  # 22
-    "TT##########.....############........###############......TT",  # 23
-    "TT##########.....############........###############......TT",  # 24
+    "TT####D#####..........P..............###############......TT",  #  19  Forge door col 6
+    "TT##########.....#####D######.##D###.###############......TT",  # 20  Tavern door(22) | Guild door(32)
+    "TT##########.....############.######.###############......TT",  # 21
+    "TT##########.....############.######.###############......TT",  # 22
+    "TT##########.....############.######.###############......TT",  # 23
+    "TT##########.....############.######.###############......TT",  # 24
     "TT##########.....############.............................TT",  # 25
     "TT##########.....############.............................TT",  # 26
     "TT...T.........T...................T............T.........TT",  # 27  south common with trees
@@ -227,6 +227,19 @@ BRIARHOLLOW_BUILDINGS = {
         "indoor_npc": {"name": "Barkeep Sylla", "npc_type": "barkeep", "title": "Barkeep",
                        "description": "A sharp-eyed woman who misses nothing.",
                        "color": (185, 135, 80), "dialogue_id": "sylla"},
+    },
+    # Guild — between the tavern and temple. Where adventurers train and advance.
+    "guild": {
+        "name": "Adventurers' Guild",
+        "type": BLD_GUILD,
+        "door": (32, 20),
+        "color": (100, 130, 165),
+        "label_pos": (30, 19),
+        "wall_cols": (30, 35), "wall_rows": (20, 24),
+        "npc_name": "Guildmaster Oren",
+        "indoor_npc": {"name": "Guildmaster Oren", "npc_type": "guildmaster", "title": "Guildmaster",
+                       "description": "A veteran adventurer who has seen what the Fading does to the unprepared.",
+                       "color": (100, 140, 80), "dialogue_id": "trainer_briarhollow"},
     },
 }
 
@@ -410,7 +423,7 @@ WOODHAVEN_BUILDINGS = {
     },
     "guild": {
         "name": "Ranger's Guild",
-        "type": BLD_HOUSE,
+        "type": BLD_GUILD,
         "door": (23, 5),
         "color": (80, 120, 70),
         "label_pos": (22, 3),
@@ -575,7 +588,7 @@ IRONHEARTH_BUILDINGS = {
     },
     "guild": {
         "name": "Miners' Guild",
-        "type": BLD_HOUSE,
+        "type": BLD_GUILD,
         "door": (9, 19),
         "color": (110, 100, 80),
         "label_pos": (5, 17),
@@ -666,10 +679,10 @@ IRONHEARTH_EXIT = [(10, 23), (11, 23)]
 
 GREENWOOD_MAP_RAW = [
     "TTTTTTTTTTTTTTTTTTTTTTTT",  # 0
-    "TTTT................TTTT",  # 1
-    "TTT..TT..####.....TTTTT",  # 2
-    "TT...TT..#..#......TTTT",  # 3
-    "TT...TT..#..D......TTTT",  # 4  inn(9,4)
+    "TTTT..........####..TTTT",  # 1  Guild top wall cols 14-17
+    "TTT..TT..####.#..#TTTTT",  # 2  Inn(cols 9-12) | Guild(cols 14-17)
+    "TT...TT..#..#.#..#.TTTT",  # 3
+    "TT...TT..#..D.#.D#.TTTT",  # 4  Inn door(12) | Guild door(16)
     "TT...TT..####..TT..TTTT",  # 5
     "TT....PPPPP..TTTT..TTTT",  # 6
     "TT....P.....TT.....TTTT",  # 7
@@ -720,11 +733,23 @@ GREENWOOD_BUILDINGS = {
     "temple": {
         "name": "Grove Sanctuary",
         "type": BLD_TEMPLE,
-        "door": (17, 16),       # D added to map at (17,16) — bottom wall of temple
+        "door": (17, 16),
         "color": (70, 140, 80),
         "label_pos": (15, 14),
         "wall_cols": (15, 18), "wall_rows": (14, 16),
         "npc_name": "Warden Sylk",
+    },
+    "guild": {
+        "name": "Warden Outpost",
+        "type": BLD_GUILD,
+        "door": (16, 4),
+        "color": (90, 120, 155),
+        "label_pos": (14, 1),
+        "wall_cols": (14, 17), "wall_rows": (1, 4),
+        "npc_name": "Ranger Warden",
+        "indoor_npc": {"name": "Ranger Warden", "npc_type": "guildmaster", "title": "Warden",
+                       "description": "A weathered ranger who trains those who walk the path of the Warden order.",
+                       "color": (100, 155, 90), "dialogue_id": "trainer_greenwood"},
     },
 }
 
@@ -832,7 +857,7 @@ SALTMERE_BUILDINGS = {
     },
     "thieves_den": {
         "name": "Thieves' Guild",
-        "type": BLD_HOUSE,
+        "type": BLD_GUILD,
         "door": (8, 13),        # fixed from (11,13)
         "color": (60, 50, 80),
         "label_pos": (5, 11),
@@ -919,10 +944,10 @@ SANCTUM_MAP_RAW = [
     "#..########P.########........#",  # 6  stub connecting cathedral_l(11) to path
     "#....PPPPPPPPPPPPPPPPPP......#",  # 7  main nave path
     "#....P..................P....#",  # 8
-    "#....P..####......####..P...#",  # 9
-    "#....P..#..#......#..#..P...#",  # 10
-    "#....P..#..D......D..#..P...#",  # 11 inn(9,11)   shop(18,11)
-    "#....P..####......####..P...#",  # 12
+    "#....P..####......####..P####",  # 9  Inn(9,11) | Shop(18,11) | Guild(26,11)
+    "#....P..#..#......#..#..P#.##",  # 10
+    "#....P..#..D......D..#..P#D##",  # 11 Inn door(11) | Shop door(18) | Guild door(26)
+    "#....P..####......####..P####",  # 12
     "#....P..................P....#",  # 13
     "#..S.PPPPPPPPPPPPPPPPPPPP...#",  # 14
     "#....P..................P....#",  # 15
@@ -996,11 +1021,23 @@ SANCTUM_BUILDINGS = {
     "reliquary": {
         "name": "Reliquary",
         "type": BLD_HOUSE,
-        "door": (11, 22),       # fixed from (10,22)
+        "door": (11, 22),
         "color": (210, 200, 150),
         "label_pos": (8, 21),
         "wall_cols": (8, 11), "wall_rows": (21, 22),
         "npc_name": "Keeper Voss",
+    },
+    "guild": {
+        "name": "Order of Light — Chapter House",
+        "type": BLD_GUILD,
+        "door": (26, 11),
+        "color": (200, 195, 140),
+        "label_pos": (25, 9),
+        "wall_cols": (25, 27), "wall_rows": (9, 12),
+        "npc_name": "Chapter Master Aldren",
+        "indoor_npc": {"name": "Chapter Master Aldren", "npc_type": "guildmaster", "title": "Chapter Master",
+                       "description": "A devout warrior-scholar who trains those who serve the Light.",
+                       "color": (220, 220, 170), "dialogue_id": "trainer_sanctum"},
     },
 }
 
@@ -1070,10 +1107,10 @@ CRYSTALSPIRE_MAP_RAW = [
     "T......P.....P.......P.P...P...T",  # 14
     "T......PPPPPP.P.PPP.PPPPPP.....T",  # 15 teleport circle at (16,15)
     "T......P......P..P..P..........T",  # 16
-    "T......P..####...P.####........T",  # 17
-    "T......P..#..#...P.#..#........T",  # 18
-    "T......P..#..D.....D..#........T",  # 19 tavern(10,19)   temple(17,19)
-    "T......P..####...P.####........T",  # 20
+    "T......P..####...P.####.#####..T",  # 17  Tavern(10,19) | Temple(17,19) | Guild(26,19)
+    "T......P..#..#...P.#..#.#...#..T",  # 18
+    "T......P..#..D.....D..#.#.D.#..T",  # 19  Tavern door(13) | Temple door(19) | Guild door(26)
+    "T......P..####...P.####.#####..T",  # 20
     "T......P........P..........P...T",  # 21
     "T......P..S.....P..........P...T",  # 22
     "TPPPPPPPPEEPPPPPPPPPPPPPPPPPPPPPT",  # 23 exits(9,23)(10,23)
@@ -1130,11 +1167,23 @@ CRYSTALSPIRE_BUILDINGS = {
     "temple": {
         "name": "Shrine of Arcane Truth",
         "type": BLD_TEMPLE,
-        "door": (19, 19),       # fixed from (17,19)
+        "door": (19, 19),
         "color": (180, 160, 220),
         "label_pos": (17, 17),
         "wall_cols": (19, 22), "wall_rows": (17, 20),
         "npc_name": "Priest Sael",
+    },
+    "guild": {
+        "name": "Mages' Conclave",
+        "type": BLD_GUILD,
+        "door": (26, 19),
+        "color": (155, 145, 210),
+        "label_pos": (24, 17),
+        "wall_cols": (24, 28), "wall_rows": (17, 20),
+        "npc_name": "Arcanist Veleth",
+        "indoor_npc": {"name": "Arcanist Veleth", "npc_type": "guildmaster", "title": "Arcanist",
+                       "description": "A precise mage who teaches the deeper arts to those ready to receive them.",
+                       "color": (180, 170, 240), "dialogue_id": "trainer_crystalspire"},
     },
 }
 
@@ -1248,7 +1297,7 @@ THORNHAVEN_BUILDINGS = {
     },
     "guild": {
         "name": "Adventurers' Guild",
-        "type": BLD_HOUSE,
+        "type": BLD_GUILD,
         "door": (18, 4),        # fixed from (14,4) — actual D on map is at col 18
         "color": (120, 130, 160),
         "label_pos": (13, 2),
