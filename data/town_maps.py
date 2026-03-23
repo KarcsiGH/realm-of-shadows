@@ -252,7 +252,7 @@ BRIARHOLLOW_NPCS = [
     # Guildmaster Oren can also be found near the guild door giving transition advice.
     {
         "name": "Guildmaster Oren",
-        "x": 22, "y": 6,
+        "x": 24, "y": 9,
         "dialogue_id": "trainer_briarhollow",
         "description": "The guild's veteran master. He speaks of paths beyond the first calling.",
         "color": (100, 140, 80),
@@ -364,6 +364,7 @@ WOODHAVEN_BUILDINGS = {
         "door": (6, 4),
         "color": (120, 100, 70),
         "label_pos": (3, 2),
+        "wall_cols": (3, 6), "wall_rows": (2, 5),
         "npc_name": "Innkeeper Jessa",
         "indoor_npc": {"name": "Innkeeper Jessa", "npc_type": "innkeeper", "title": "Innkeeper", "description": "A quiet woman who keeps the inn spotless.", "color": (180, 160, 120), "dialogue_id": None},
     },
@@ -373,6 +374,7 @@ WOODHAVEN_BUILDINGS = {
         "door": (9, 4),
         "color": (100, 130, 80),
         "label_pos": (7, 2),
+        "wall_cols": (9, 12), "wall_rows": (2, 5),
         "npc_name": "Trader Finn",
         "indoor_npc": {"name": "Trader Finn", "npc_type": "merchant", "title": "Merchant", "description": "A well-traveled merchant with ranger supplies.", "color": (120, 180, 100), "dialogue_id": None},
     },
@@ -382,6 +384,7 @@ WOODHAVEN_BUILDINGS = {
         "door": (9, 12),
         "color": (80, 150, 80),
         "label_pos": (5, 10),
+        "wall_cols": (6, 9), "wall_rows": (10, 13),
         "npc_name": "Druid Rowan",
         "indoor_npc": {"name": "Druid Rowan", "npc_type": "priestess", "title": "Druid", "description": "A druid who tends the forest shrine.", "color": (80, 200, 100), "dialogue_id": None},
     },
@@ -391,6 +394,7 @@ WOODHAVEN_BUILDINGS = {
         "door": (13, 10),
         "color": (130, 100, 60),
         "label_pos": (12, 8),
+        "wall_cols": (13, 16), "wall_rows": (8, 11),
         "npc_name": "Barkeep Holt",
         "indoor_npc": {"name": "Barkeep Holt", "npc_type": "barkeep", "title": "Barkeep", "description": "A burly hunter who runs the tavern between seasons.", "color": (180, 140, 80), "dialogue_id": None},
     },
@@ -400,6 +404,7 @@ WOODHAVEN_BUILDINGS = {
         "door": (18, 16),
         "color": (160, 100, 50),
         "label_pos": (17, 14),
+        "wall_cols": (18, 21), "wall_rows": (14, 17),
         "npc_name": "Smith Wren",
         "indoor_npc": {"name": "Smith Wren", "npc_type": "forger", "title": "Smith", "description": "A wiry woman who crafts bows and arrowheads.", "color": (200, 130, 60), "dialogue_id": None},
     },
@@ -409,6 +414,7 @@ WOODHAVEN_BUILDINGS = {
         "door": (23, 5),
         "color": (80, 120, 70),
         "label_pos": (22, 3),
+        "wall_cols": (23, 27), "wall_rows": (3, 6),
         "npc_name": "Guildmaster Oren",
         "indoor_npc": {"name": "Guildmaster Oren", "npc_type": "guildmaster", "title": "Guildmaster", "description": "A grizzled ranger who runs the guild.", "color": (100, 140, 80), "dialogue_id": "guildmaster_oren"},
     },
@@ -418,6 +424,7 @@ WOODHAVEN_BUILDINGS = {
         "door": (9, 20),
         "color": (90, 110, 70),
         "label_pos": (5, 19),
+        "wall_cols": (6, 9), "wall_rows": (19, 20),
     },
 }
 
@@ -512,6 +519,7 @@ IRONHEARTH_BUILDINGS = {
         "door": (6, 4),
         "color": (100, 90, 80),
         "label_pos": (3, 2),
+        "wall_cols": (3, 6), "wall_rows": (2, 5),
         "npc_name": "Innkeeper Bron",
         "indoor_npc": {"name": "Innkeeper Bron", "npc_type": "innkeeper", "title": "Innkeeper", "description": "A stout dwarf who pours strong ale.", "color": (160, 130, 90), "dialogue_id": None},
     },
@@ -521,6 +529,7 @@ IRONHEARTH_BUILDINGS = {
         "door": (9, 4),
         "color": (130, 110, 80),
         "label_pos": (7, 2),
+        "wall_cols": (9, 12), "wall_rows": (2, 5),
         "npc_name": "Merchant Gilda",
         "indoor_npc": {"name": "Merchant Gilda", "npc_type": "merchant", "title": "Merchant", "description": "A sharp-tongued merchant with the finest goods.", "color": (180, 160, 100), "dialogue_id": None},
     },
@@ -530,6 +539,7 @@ IRONHEARTH_BUILDINGS = {
         "door": (18, 4),
         "color": (120, 120, 160),
         "label_pos": (15, 2),
+        "wall_cols": (15, 18), "wall_rows": (2, 5),
         "npc_name": "Priest Korvan",
         "indoor_npc": {"name": "Priest Korvan", "npc_type": "priestess", "title": "Priest", "description": "A solemn priest of the deep stone.", "color": (140, 140, 200), "dialogue_id": None},
     },
@@ -539,6 +549,7 @@ IRONHEARTH_BUILDINGS = {
         "door": (21, 4),
         "color": (160, 100, 50),
         "label_pos": (19, 2),
+        "wall_cols": (21, 24), "wall_rows": (2, 5),
         "npc_name": "Barkeep Magda",
         "indoor_npc": {"name": "Barkeep Magda", "npc_type": "barkeep", "title": "Barkeep", "description": "A boisterous dwarven woman who loves a good story.", "color": (200, 140, 80), "dialogue_id": None},
     },
@@ -548,6 +559,7 @@ IRONHEARTH_BUILDINGS = {
         "door": (13, 11),
         "color": (200, 120, 40),
         "label_pos": (7, 9),
+        "wall_cols": (6, 13), "wall_rows": (9, 13),
         "npc_name": "Master Smith Thardin",
         "indoor_npc": {"name": "Master Smith Thardin", "npc_type": "forger", "title": "Master Smith", "description": "The finest weaponsmith in the region.", "color": (220, 140, 40), "dialogue_id": None},
     },
@@ -557,6 +569,7 @@ IRONHEARTH_BUILDINGS = {
         "door": (16, 11),
         "color": (140, 140, 150),
         "label_pos": (15, 9),
+        "wall_cols": (16, 23), "wall_rows": (9, 13),
         "npc_name": "Quartermaster Helga",
         "indoor_npc": {"name": "Quartermaster Helga", "npc_type": "merchant", "title": "Quartermaster", "description": "A no-nonsense quartermaster.", "color": (160, 150, 120), "dialogue_id": None},
     },
@@ -566,6 +579,7 @@ IRONHEARTH_BUILDINGS = {
         "door": (9, 19),
         "color": (110, 100, 80),
         "label_pos": (5, 17),
+        "wall_cols": (6, 9), "wall_rows": (17, 20),
         "npc_name": "Guildmaster Dorric",
         "indoor_npc": {"name": "Guildmaster Dorric", "npc_type": "guildmaster", "title": "Guildmaster", "description": "A weathered veteran who runs the guild with iron discipline.", "color": (140, 160, 180), "dialogue_id": None},
     },
@@ -575,13 +589,14 @@ IRONHEARTH_BUILDINGS = {
         "door": (16, 19),
         "color": (100, 100, 110),
         "label_pos": (14, 17),
+        "wall_cols": (16, 19), "wall_rows": (17, 20),
     },
 }
 
 IRONHEARTH_NPCS = [
     {
         "name": "Warden Liaison",
-        "x": 11, "y": 9,
+        "x": 11, "y": 8,
         "dialogue_id": "warden_liaison",
         "description": "A representative of the old Warden order. Weathered but watchful.",
         "color": (100, 175, 130),
@@ -605,7 +620,7 @@ IRONHEARTH_NPCS = [
     # Guildmaster Dorric outside guild — offers transition guidance
     {
         "name": "Guildmaster Dorric",
-        "x": 9, "y": 18,
+        "x": 10, "y": 18,
         "dialogue_id": "trainer_ironhearth",
         "description": "The guild's weathered master. He speaks of warriors who walked two paths.",
         "color": (140, 160, 180),
@@ -666,7 +681,7 @@ GREENWOOD_MAP_RAW = [
     "TT....P..####......TTTT",  # 13
     "TT....P..#..#..####TTT",   # 14
     "TT....P..#..D..#..#TTT",   # 15 shop(11,15)  temple(15,15)
-    "TT....P..####..####TTT",   # 16
+    "TT....P..####..##D#TTT",   # 16  temple door at col 17
     "TT....P............TTTT",  # 17
     "TT....P............TTTT",  # 18
     "TTTTPPPPEEPPPPTTTTTTTTT",  # 19 exits(8,19)(9,19)
@@ -678,33 +693,37 @@ GREENWOOD_BUILDINGS = {
     "inn": {
         "name": "The Hollow Log Inn",
         "type": BLD_INN,
-        "door": (12, 4),        # D is at col 12 on row 4
+        "door": (12, 4),
         "color": (110, 90, 60),
         "label_pos": (9, 2),
+        "wall_cols": (9, 12), "wall_rows": (2, 5),
         "npc_name": "Innkeeper Petra",
     },
     "tavern": {
         "name": "The Muddy Boot",
         "type": BLD_TAVERN,
-        "door": (10, 10),       # D at col 10 row 10 (col 8='#', 9='.', 10='D')
+        "door": (11, 10),       # D is at col 11 row 10 (fixed from 10,10)
         "color": (120, 100, 65),
         "label_pos": (8, 8),
+        "wall_cols": (8, 11), "wall_rows": (8, 11),
         "npc_name": "Barkeep Oswin",
     },
     "shop": {
         "name": "Ranger Supplies",
         "type": BLD_SHOP,
-        "door": (12, 15),       # D at col 12 on row 15
+        "door": (12, 15),
         "color": (90, 120, 70),
         "label_pos": (9, 13),
+        "wall_cols": (9, 12), "wall_rows": (13, 16),
         "npc_name": "Trader Fen",
     },
     "temple": {
         "name": "Grove Sanctuary",
         "type": BLD_TEMPLE,
-        "door": (12, 15),       # shares row 15 — temple uses same door row, different building side
+        "door": (17, 16),       # D added to map at (17,16) — bottom wall of temple
         "color": (70, 140, 80),
-        "label_pos": (14, 13),
+        "label_pos": (15, 14),
+        "wall_cols": (15, 18), "wall_rows": (14, 16),
         "npc_name": "Warden Sylk",
     },
 }
@@ -712,7 +731,7 @@ GREENWOOD_BUILDINGS = {
 GREENWOOD_NPCS = [
     {
         "name": "Warden Liaison",
-        "x": 8, "y": 8,
+        "x": 6, "y": 8,
         "dialogue_id": "warden_liaison",
         "description": "A representative of the old Warden order. Weathered but watchful.",
         "color": (100, 175, 130),
@@ -787,57 +806,64 @@ SALTMERE_BUILDINGS = {
     "inn": {
         "name": "The Barnacle",
         "type": BLD_INN,
-        "door": (5, 4),
+        "door": (6, 4),         # fixed from (5,4)
         "color": (100, 110, 80),
         "label_pos": (3, 2),
+        "wall_cols": (3, 6), "wall_rows": (2, 5),
         "npc_name": "Innkeeper Cressa",
     },
     "shop": {
         "name": "Saltmere Trader",
         "type": BLD_SHOP,
-        "door": (8, 4),
+        "door": (9, 4),         # fixed from (8,4)
         "color": (90, 120, 90),
         "label_pos": (7, 2),
+        "wall_cols": (9, 12), "wall_rows": (2, 5),
         "npc_name": "Merchant Dova",
     },
     "black_market": {
         "name": "The Back Room",
         "type": BLD_SHOP,
-        "door": (20, 5),        # D is at col 20 on row 5
+        "door": (20, 5),
         "color": (80, 60, 90),
         "label_pos": (15, 3),
+        "wall_cols": (17, 20), "wall_rows": (3, 6),
         "npc_name": "Fence Rael",
     },
     "thieves_den": {
         "name": "Thieves' Guild",
         "type": BLD_HOUSE,
-        "door": (11, 13),
+        "door": (8, 13),        # fixed from (11,13)
         "color": (60, 50, 80),
-        "label_pos": (8, 11),
+        "label_pos": (5, 11),
+        "wall_cols": (5, 8), "wall_rows": (11, 14),
         "npc_name": "Guildmaster Sable",
     },
     "tavern": {
         "name": "The Drowned Anchor",
         "type": BLD_TAVERN,
-        "door": (20, 11),
+        "door": (22, 11),       # fixed from (20,11)
         "color": (110, 90, 70),
         "label_pos": (18, 9),
+        "wall_cols": (19, 22), "wall_rows": (9, 12),
         "npc_name": "Barkeep Mick",
     },
     "temple": {
         "name": "Shrine of the Tides",
         "type": BLD_TEMPLE,
-        "door": (7, 18),
+        "door": (8, 18),        # fixed from (7,18)
         "color": (70, 100, 140),
-        "label_pos": (4, 16),
+        "label_pos": (5, 16),
+        "wall_cols": (5, 8), "wall_rows": (16, 19),
         "npc_name": "Tide Priest Oran",
     },
     "forge": {
         "name": "Harbor Forge",
         "type": BLD_FORGE,
-        "door": (20, 16),
+        "door": (22, 16),       # fixed from (20,16)
         "color": (160, 100, 50),
         "label_pos": (18, 14),
+        "wall_cols": (19, 22), "wall_rows": (14, 17),
         "npc_name": "Smith Crag",
     },
 }
@@ -916,25 +942,28 @@ SANCTUM_BUILDINGS = {
     "cathedral_l": {
         "name": "Grand Cathedral of Light",
         "type": BLD_TEMPLE,
-        "door": (11, 5),
+        "door": (10, 5),        # fixed from (11,5)
         "color": (220, 220, 160),
         "label_pos": (3, 2),
+        "wall_cols": (3, 10), "wall_rows": (2, 6),
         "npc_name": "High Priest Aldara",
     },
     "cathedral_r": {
         "name": "Grand Cathedral of Light",
         "type": BLD_TEMPLE,
-        "door": (14, 5),
+        "door": (13, 5),        # fixed from (14,5)
         "color": (220, 220, 160),
         "label_pos": (15, 2),
+        "wall_cols": (13, 20), "wall_rows": (2, 6),
         "npc_name": "High Priest Aldara",
     },
     "inn": {
         "name": "The Pilgrim's Rest",
         "type": BLD_INN,
-        "door": (9, 11),
+        "door": (11, 11),       # fixed from (9,11)
         "color": (180, 170, 130),
-        "label_pos": (6, 9),
+        "label_pos": (7, 9),
+        "wall_cols": (8, 11), "wall_rows": (9, 12),
         "npc_name": "Innkeeper Mala",
     },
     "shop": {
@@ -943,14 +972,16 @@ SANCTUM_BUILDINGS = {
         "door": (18, 11),
         "color": (160, 180, 140),
         "label_pos": (17, 9),
+        "wall_cols": (18, 21), "wall_rows": (9, 12),
         "npc_name": "Merchant Brin",
     },
     "temple": {
         "name": "Shrine of Healing",
         "type": BLD_TEMPLE,
-        "door": (9, 18),
+        "door": (11, 18),       # fixed from (9,18)
         "color": (200, 210, 180),
-        "label_pos": (6, 16),
+        "label_pos": (7, 16),
+        "wall_cols": (8, 11), "wall_rows": (16, 19),
         "npc_name": "Healer Thessa",
     },
     "tavern": {
@@ -959,14 +990,16 @@ SANCTUM_BUILDINGS = {
         "door": (18, 18),
         "color": (180, 160, 120),
         "label_pos": (17, 16),
+        "wall_cols": (18, 21), "wall_rows": (16, 19),
         "npc_name": "Barkeep Pell",
     },
     "reliquary": {
         "name": "Reliquary",
         "type": BLD_HOUSE,
-        "door": (10, 22),
+        "door": (11, 22),       # fixed from (10,22)
         "color": (210, 200, 150),
         "label_pos": (8, 21),
+        "wall_cols": (8, 11), "wall_rows": (21, 22),
         "npc_name": "Keeper Voss",
     },
 }
@@ -1052,9 +1085,10 @@ CRYSTALSPIRE_BUILDINGS = {
     "academy": {
         "name": "Mage Academy",
         "type": BLD_HOUSE,
-        "door": (11, 5),
+        "door": (12, 5),        # fixed from (11,5)
         "color": (140, 160, 220),
         "label_pos": (3, 2),
+        "wall_cols": (3, 12), "wall_rows": (2, 7),
         "npc_name": "Archmage Solen",
     },
     "library": {
@@ -1063,38 +1097,43 @@ CRYSTALSPIRE_BUILDINGS = {
         "door": (15, 5),
         "color": (120, 140, 200),
         "label_pos": (13, 2),
+        "wall_cols": (15, 18), "wall_rows": (2, 6),
         "npc_name": "Librarian Vex",
     },
     "inn": {
         "name": "The Floating Lantern",
         "type": BLD_INN,
-        "door": (12, 12),
+        "door": (14, 12),       # fixed from (12,12)
         "color": (160, 140, 200),
-        "label_pos": (9, 10),
+        "label_pos": (10, 10),
+        "wall_cols": (11, 14), "wall_rows": (10, 13),
         "npc_name": "Innkeeper Zara",
     },
     "shop": {
         "name": "Components & Curios",
         "type": BLD_SHOP,
-        "door": (21, 12),
+        "door": (23, 12),       # fixed from (21,12)
         "color": (140, 160, 180),
-        "label_pos": (19, 10),
+        "label_pos": (20, 10),
+        "wall_cols": (23, 26), "wall_rows": (10, 13),
         "npc_name": "Merchant Pell",
     },
     "tavern": {
         "name": "The Alembic",
         "type": BLD_TAVERN,
-        "door": (13, 19),       # D is at col 13 on row 19
+        "door": (13, 19),
         "color": (160, 120, 180),
-        "label_pos": (8, 17),
+        "label_pos": (9, 17),
+        "wall_cols": (10, 13), "wall_rows": (17, 20),
         "npc_name": "Barkeep Nim",
     },
     "temple": {
         "name": "Shrine of Arcane Truth",
         "type": BLD_TEMPLE,
-        "door": (17, 19),
+        "door": (19, 19),       # fixed from (17,19)
         "color": (180, 160, 220),
-        "label_pos": (16, 17),
+        "label_pos": (17, 17),
+        "wall_cols": (19, 22), "wall_rows": (17, 20),
         "npc_name": "Priest Sael",
     },
 }
@@ -1102,7 +1141,7 @@ CRYSTALSPIRE_BUILDINGS = {
 CRYSTALSPIRE_NPCS = [
     {
         "name": "Warden Liaison",
-        "x": 13, "y": 10,
+        "x": 15, "y": 9,
         "dialogue_id": "warden_liaison",
         "description": "A representative of the old Warden order. Weathered but watchful.",
         "color": (100, 175, 130),
@@ -1192,25 +1231,28 @@ THORNHAVEN_BUILDINGS = {
     "inn": {
         "name": "The Imperial Rest",
         "type": BLD_INN,
-        "door": (5, 4),
+        "door": (6, 4),         # fixed from (5,4)
         "color": (160, 140, 100),
         "label_pos": (3, 2),
+        "wall_cols": (3, 6), "wall_rows": (2, 5),
         "npc_name": "Innkeeper Vance",
     },
     "shop": {
         "name": "Imperial Marketplace",
         "type": BLD_SHOP,
-        "door": (8, 4),
+        "door": (9, 4),         # fixed from (8,4)
         "color": (140, 160, 120),
-        "label_pos": (6, 2),
+        "label_pos": (7, 2),
+        "wall_cols": (9, 12), "wall_rows": (2, 5),
         "npc_name": "Chief Merchant Ora",
     },
     "guild": {
         "name": "Adventurers' Guild",
         "type": BLD_HOUSE,
-        "door": (14, 4),
+        "door": (18, 4),        # fixed from (14,4) — actual D on map is at col 18
         "color": (120, 130, 160),
-        "label_pos": (12, 2),
+        "label_pos": (13, 2),
+        "wall_cols": (15, 18), "wall_rows": (2, 5),
         "npc_name": "Guild Commander Varek",
     },
     "castle_gate": {
@@ -1218,7 +1260,8 @@ THORNHAVEN_BUILDINGS = {
         "type": BLD_HOUSE,
         "door": (33, 4),
         "color": (100, 100, 120),
-        "label_pos": (27, 2),
+        "label_pos": (28, 2),
+        "wall_cols": (30, 37), "wall_rows": (0, 5),   # right wing of the outer wall
         "npc_name": "Gate Captain Brynn",
     },
     "temple": {
@@ -1226,7 +1269,8 @@ THORNHAVEN_BUILDINGS = {
         "type": BLD_TEMPLE,
         "door": (9, 11),
         "color": (200, 200, 160),
-        "label_pos": (7, 9),
+        "label_pos": (6, 9),
+        "wall_cols": (6, 9), "wall_rows": (9, 12),
         "npc_name": "Archpriest Davan",
     },
     "tavern": {
@@ -1235,22 +1279,25 @@ THORNHAVEN_BUILDINGS = {
         "door": (12, 11),
         "color": (180, 140, 80),
         "label_pos": (10, 9),
+        "wall_cols": (12, 15), "wall_rows": (9, 12),
         "npc_name": "Barkeep Lissa",
     },
     "marketplace": {
         "name": "Grand Bazaar",
         "type": BLD_SHOP,
-        "door": (13, 19),
+        "door": (15, 19),       # fixed from (13,19)
         "color": (160, 150, 110),
-        "label_pos": (5, 16),
+        "label_pos": (6, 16),
+        "wall_cols": (6, 15), "wall_rows": (16, 20),
         "npc_name": "Bazaar Master Tren",
     },
     "forge": {
         "name": "Royal Forge",
         "type": BLD_FORGE,
-        "door": (17, 19),
+        "door": (18, 19),       # fixed from (17,19)
         "color": (200, 130, 50),
-        "label_pos": (16, 17),
+        "label_pos": (17, 16),
+        "wall_cols": (18, 21), "wall_rows": (16, 20),
         "npc_name": "Royal Smith Hadra",
     },
     "barracks": {
@@ -1259,6 +1306,7 @@ THORNHAVEN_BUILDINGS = {
         "door": (9, 24),
         "color": (120, 130, 150),
         "label_pos": (6, 22),
+        "wall_cols": (6, 9), "wall_rows": (22, 25),
         "npc_name": "Captain of the Guard",
     },
     "mages_hall": {
@@ -1267,6 +1315,7 @@ THORNHAVEN_BUILDINGS = {
         "door": (12, 24),
         "color": (130, 120, 180),
         "label_pos": (10, 22),
+        "wall_cols": (12, 15), "wall_rows": (22, 25),
         "npc_name": "Court Mage Sira",
     },
 }

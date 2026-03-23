@@ -486,26 +486,31 @@ def _silence(duration):
 # ═══════════════════════════════════════════════════════════════
 
 def _np_bp(n, cf, bw, seed=0):
-    if not _HAS_NUMPY: return [0]*n
+    if not _HAS_NUMPY: return _np.zeros(n, _np.float32)
     from scipy import signal as _sci
     x = _np.random.default_rng(seed).standard_normal(n).astype(_np.float64)
-    lo = max(20.0, cf-bw/2); hi = min(float(SR)/2-1, cf+bw/2)
+    lo = max(20.0, cf - bw / 2); hi = min(float(SR) / 2 - 1, cf + bw / 2)
     b, a = _sci.iirfilter(4, [lo, hi], btype='band', fs=SR, ftype='butter')
-    r = _sci.lfilter(b, a, x).astype(_np.float32)
-    pk = _np.max(_np.abs(r)) or 1.0
-    return r / pk
+    r = _sci.lfilter(b, a, x)           # keep float64 — no overflow
+    r = _np.nan_to_num(r, nan=0.0, posinf=0.0, neginf=0.0)
+    pk = _np.max(_np.abs(r))
+    if pk > 0:
+        r = r / pk
+    return r.astype(_np.float32)
 
 def _np_lp(sig, cutoff):
     if not _HAS_NUMPY: return sig
     from scipy import signal as _sci
-    b, a = _sci.iirfilter(2, min(cutoff, SR//2-1), btype='low', fs=SR, ftype='butter')
-    return _sci.lfilter(b, a, sig).astype(_np.float32)
+    b, a = _sci.iirfilter(2, min(cutoff, SR // 2 - 1), btype='low', fs=SR, ftype='butter')
+    r = _sci.lfilter(b, a, sig.astype(_np.float64))
+    return _np.nan_to_num(r, nan=0.0, posinf=0.0, neginf=0.0).astype(_np.float32)
 
 def _np_hp_filt(sig, cutoff):
     if not _HAS_NUMPY: return sig
     from scipy import signal as _sci
     b, a = _sci.iirfilter(2, max(cutoff, 20), btype='high', fs=SR, ftype='butter')
-    return _sci.lfilter(b, a, sig).astype(_np.float32)
+    r = _sci.lfilter(b, a, sig.astype(_np.float64))
+    return _np.nan_to_num(r, nan=0.0, posinf=0.0, neginf=0.0).astype(_np.float32)
 
 def _np_exp(n, tau): return _np.exp(-_np.arange(n)/(SR*tau)).astype(_np.float32)
 def _np_norm(sig, t=0.88): pk = _np.max(_np.abs(sig)) or 1; return sig/pk*t
@@ -713,7 +718,8 @@ def _gen_dungeon(fn):
     if not _HAS_NUMPY: return None
     try:
         sig = fn()
-        d = (_np.clip(sig,-1,1)*32767).astype(_np.int16)
+        sig = _np.nan_to_num(sig, nan=0.0, posinf=0.0, neginf=0.0)
+        d = (_np.clip(sig, -1, 1) * 32767).astype(_np.int16)
         return _make_sound(list(d))
     except Exception:
         return None

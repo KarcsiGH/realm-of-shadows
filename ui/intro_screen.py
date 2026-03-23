@@ -29,13 +29,17 @@ _LOGO_PNG = _ASSETS + "bad_bat_logo.png"
 # ── timing (ms) ──────────────────────────────────────────────────────────────
 T_HIRES_FADE_IN   =  900
 T_HIRES_HOLD      = 3000
-T_CROSS_FADE      = 1100   # hires → retro
-T_RETRO_HOLD      = 1400
-T_RETRO_OUT       =  700
+T_FADE_TO_BLACK   =  700   # hires fades out to black
+T_BLACK_HOLD      =  350   # pure black pause between logos
+T_RETRO_FADE_IN   =  900   # retro fades in from black
+T_RETRO_HOLD      = 2200   # retro logo fully visible
+T_RETRO_OUT       =  700   # retro fades out before load screen
+# legacy alias used in update()
+T_CROSS_FADE      = T_FADE_TO_BLACK + T_BLACK_HOLD + T_RETRO_FADE_IN
 
 T_LOAD_FADE_IN    =  500
-T_LOAD_MIN_HOLD   = 2500
-T_LOAD_FADE_OUT   =  700
+T_LOAD_MIN_HOLD   = 6500   # long enough to read the quote fully
+T_LOAD_FADE_OUT   =  900
 
 T_TITLE_FADE_IN   =  600
 T_TITLE_MIN_HOLD  = 2500
@@ -306,7 +310,7 @@ class IntroScreen:
 
         # Splash timing
         self._hires_total = T_HIRES_FADE_IN + T_HIRES_HOLD
-        self._cross_total = T_CROSS_FADE + T_RETRO_HOLD + T_RETRO_OUT
+        self._cross_total = T_FADE_TO_BLACK + T_BLACK_HOLD + T_RETRO_FADE_IN + T_RETRO_HOLD + T_RETRO_OUT
 
         # Batch state
         self._b1_done  = False
@@ -404,47 +408,77 @@ class IntroScreen:
         t = self.t
         max_w = int(SCREEN_W * 0.68); max_h = int(SCREEN_H * 0.72)
 
-        # Cross-fade timing
-        if t < T_CROSS_FADE:
-            frac = t / T_CROSS_FADE
-            hi_a = int(255*(1-frac)); re_a = int(255*frac); pr_a = 0
-        elif t < T_CROSS_FADE + T_RETRO_HOLD:
-            hi_a = 0; re_a = 255
-            pr_a = min(255, int(255*(t-T_CROSS_FADE)/450))
-        else:
-            frac_out = (t - T_CROSS_FADE - T_RETRO_HOLD) / T_RETRO_OUT
-            hi_a = 0; re_a = max(0,int(255*(1-frac_out))); pr_a = re_a
+        # ── Phase breakdown ──────────────────────────────────────────────────
+        # [0 … T_FADE_TO_BLACK]           hires fades out to black
+        # [T_FADE_TO_BLACK … +T_BLACK_HOLD]  pure black
+        # [+T_BLACK_HOLD … +T_RETRO_FADE_IN]  retro fades in
+        # [+T_RETRO_FADE_IN … +T_RETRO_HOLD]  retro holds, "PRESENTS" appears
+        # [+T_RETRO_HOLD … +T_RETRO_OUT]   retro fades out
 
-        # Hires layer
+        t1 = T_FADE_TO_BLACK
+        t2 = t1 + T_BLACK_HOLD
+        t3 = t2 + T_RETRO_FADE_IN
+        t4 = t3 + T_RETRO_HOLD
+        # t5 = t4 + T_RETRO_OUT  (end)
+
+        # Hires alpha — fades out during first segment
+        if t < t1:
+            hi_a = max(0, int(255 * (1 - t / t1)))
+        else:
+            hi_a = 0
+
+        # Retro alpha — fades in during third segment, holds, then fades out
+        if t < t2:
+            re_a = 0
+        elif t < t3:
+            re_a = int(255 * (t - t2) / T_RETRO_FADE_IN)
+        elif t < t4:
+            re_a = 255
+        else:
+            frac_out = (t - t4) / max(1, T_RETRO_OUT)
+            re_a = max(0, int(255 * (1 - frac_out)))
+
+        # "PRESENTS" alpha — fades in once retro is fully up
+        if t < t3:
+            pr_a = 0
+        elif t < t4:
+            pr_a = min(255, int(255 * (t - t3) / 600))
+        else:
+            pr_a = re_a   # fade out with the logo
+
+        # ── Draw ─────────────────────────────────────────────────────────────
+
+        # Hires layer (fading out)
         if hi_a > 0 and self._hires:
-            ls,nw,nh = _scale_logo(self._hires, max_w, max_h)
-            _blit_alpha(surf, ls, (SCREEN_W//2-nw//2, SCREEN_H//2-nh//2), hi_a)
+            ls, nw, nh = _scale_logo(self._hires, max_w, max_h)
+            _blit_alpha(surf, ls, (SCREEN_W // 2 - nw // 2, SCREEN_H // 2 - nh // 2), hi_a)
 
         # Retro layer
         if re_a > 0 and self._retro:
-            # Subtle green phosphor glow
-            rs,nw,nh = _scale_logo(self._retro, max_w, max_h)
-            lx = SCREEN_W//2-nw//2; ly = SCREEN_H//2-nh//2
+            rs, nw, nh = _scale_logo(self._retro, max_w, max_h)
+            lx = SCREEN_W // 2 - nw // 2; ly = SCREEN_H // 2 - nh // 2
 
-            gw,gh = int(nw*1.04), int(nh*1.04)
-            gl = pygame.Surface((gw,gh), pygame.SRCALPHA)
-            for r2 in range(0, min(gw,gh)//2, 4):
-                frac2=1-r2/(min(gw,gh)//2)
-                a=int(re_a*0.12*frac2**2)
-                if a>0:
-                    pygame.draw.ellipse(gl,(0,40,0,a),(gw//2-r2*2,gh//2-r2,r2*4,r2*2))
-            surf.blit(gl,(lx-int(nw*.02), ly-int(nh*.02)))
+            # Phosphor glow halo
+            gw, gh = int(nw * 1.04), int(nh * 1.04)
+            gl = pygame.Surface((gw, gh), pygame.SRCALPHA)
+            for r2 in range(0, min(gw, gh) // 2, 4):
+                frac2 = 1 - r2 / (min(gw, gh) // 2)
+                a = int(re_a * 0.12 * frac2 ** 2)
+                if a > 0:
+                    pygame.draw.ellipse(gl, (0, 40, 0, a),
+                                        (gw // 2 - r2 * 2, gh // 2 - r2, r2 * 4, r2 * 2))
+            surf.blit(gl, (lx - int(nw * .02), ly - int(nh * .02)))
             _blit_alpha(surf, rs, (lx, ly), re_a)
 
         # "P R E S E N T S"
         if pr_a > 0 and self._retro:
-            rs2,nw2,nh2 = _scale_logo(self._retro, max_w, max_h)
-            pres_y = SCREEN_H//2 + nh2//2 + 20
+            rs2, nw2, nh2 = _scale_logo(self._retro, max_w, max_h)
+            pres_y = SCREEN_H // 2 + nh2 // 2 + 20
             fp = pygame.font.SysFont("monospace", 20)
-            pt = fp.render("P R E S E N T S", True, (0,210,0))
+            pt = fp.render("P R E S E N T S", True, (0, 210, 0))
             ps = pygame.Surface(pt.get_size(), pygame.SRCALPHA)
-            ps.blit(pt,(0,0)); ps.set_alpha(pr_a)
-            surf.blit(ps,(SCREEN_W//2-pt.get_width()//2, pres_y))
+            ps.blit(pt, (0, 0)); ps.set_alpha(pr_a)
+            surf.blit(ps, (SCREEN_W // 2 - pt.get_width() // 2, pres_y))
 
     # ── PHASE 3: loading ──────────────────────────────────────────────────────
 
