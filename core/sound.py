@@ -21,6 +21,13 @@ _sfx_vol        = 0.7
 _music_vol      = 0.35
 _ambient_vol    = 0.65  # raised to match combat SFX level
 
+# ── Incremental generation queues ─────────────────────────────────────────
+_gen_batch1     = []   # (name, callable) — fast SFX, generates during Splash 1
+_gen_batch2     = []   # (name, callable) — music/ambient, generates during Splash 2
+_b1_idx         = 0    # next batch1 item to generate
+_b2_idx         = 0    # next batch2 item to generate
+_gen_ready      = False  # True when all sounds generated
+
 try:
     import pygame.mixer as _mixer
 except ImportError:
@@ -47,7 +54,7 @@ def init():
         _mixer.set_num_channels(12)
         _music_channel   = _mixer.Channel(10)
         _ambient_channel = _mixer.Channel(11)
-        _generate_all_sounds()
+        _build_gen_queues()   # populate queues; generation happens incrementally
         _enabled = True
     except Exception:
         _enabled = False
@@ -897,692 +904,259 @@ def play_dungeon_music(dungeon_id):
 
 
 
-def _generate_all_sounds():
-    # ── UI ──────────────────────────────────────────────────────
-    _sounds["ui_click"]   = _make_sound(_sine(800, 0.10, 0.22))
-    _sounds["ui_confirm"] = _make_sound(_concat(_sine(600, 0.10, 0.28), _sine(900, 0.14, 0.28)))
-    _sounds["ui_cancel"]  = _make_sound(_sine(280, 0.22, 0.22))
-    _sounds["ui_open"]    = _make_sound(_sweep(400,  820, 0.28, 0.22))
-    _sounds["ui_close"]   = _make_sound(_sweep(820,  380, 0.22, 0.22))
+def _build_gen_queues():
+    """Populate batch1 (fast SFX) and batch2 (music/ambient) generation queues."""
+    global _gen_batch1, _gen_batch2
 
-    # ── Combat ──────────────────────────────────────────────────
-    # Physical hits (weight-class variants)
-    _sounds["hit_light"]      = _make_np_sound(_gen_hit_light)
-    _sounds["hit_medium"]     = _make_np_sound(_gen_hit_medium)
-    _sounds["hit_heavy"]      = _make_np_sound(_gen_hit_heavy)
-    _sounds["hit_physical"]   = _sounds["hit_medium"]   # legacy alias
-    _sounds["hit_skill"]      = _sounds["hit_heavy"]    # power skill = heavy
-    _sounds["hit_skill_fast"] = _make_np_sound(_gen_hit_skill_fast)
-    _sounds["hit_critical"]   = _make_np_sound(_gen_hit_critical)
-    # Element magic hits
-    _sounds["hit_fire"]       = _make_np_sound(_gen_hit_fire)
-    _sounds["hit_ice"]        = _make_np_sound(_gen_hit_ice)
-    _sounds["hit_lightning"]  = _make_np_sound(_gen_hit_lightning)
-    _sounds["hit_shadow"]     = _make_np_sound(_gen_hit_shadow)
-    _sounds["hit_divine"]     = _make_np_sound(_gen_hit_divine)
-    _sounds["hit_nature"]     = _make_np_sound(_gen_hit_nature)
-    _sounds["hit_arcane"]     = _make_np_sound(_gen_hit_arcane)
-    _sounds["hit_wind"]       = _sounds["hit_nature"]   # wind maps to nature
-    _sounds["hit_piercing"]   = _sounds["hit_medium"]   # piercing = physical
-    _sounds["hit_magic"]      = _sounds["hit_arcane"]   # default magic = arcane
-    # Miss sounds
-    _sounds["miss_physical"]  = _make_np_sound(_gen_miss_physical)
-    _sounds["miss_magic"]     = _make_np_sound(_gen_miss_magic)
-    _sounds["miss_elemental"] = _make_np_sound(_gen_miss_elemental)
-    _sounds["miss"]           = _sounds["miss_physical"]  # legacy alias
-    _sounds["spell_miss"]     = _sounds["miss_magic"]     # legacy alias
-    # No resource: dry buzzing click
-    _sounds["no_resource"]    = _make_sound(_mix(
-        _sine(180, 0.28, 0.16), _noise(0.10, 0.08)))
-    # Heal / revive
-    _sounds["heal"]    = _make_np_sound(_gen_heal)
-    _sounds["revive"]  = _make_np_sound(_gen_revive)
-    # Buffs
-    _sounds["buff_physical"] = _make_np_sound(_gen_buff_physical)
-    _sounds["buff_magic"]    = _make_np_sound(_gen_buff_magic)
-    _sounds["buff_divine"]   = _make_np_sound(_gen_buff_divine)
-    _sounds["buff_nature"]   = _make_np_sound(_gen_buff_nature)
-    _sounds["buff"]          = _sounds["buff_physical"]  # legacy alias
-    # Debuffs
-    _sounds["debuff_physical"] = _make_np_sound(_gen_debuff_physical)
-    _sounds["debuff_magic"]    = _make_np_sound(_gen_debuff_magic)
-    _sounds["debuff_divine"]   = _make_np_sound(_gen_debuff_divine)
-    _sounds["debuff"]          = _sounds["debuff_physical"]  # legacy alias
-    _sounds["death"]        = _make_sound(_mix(
-        _sweep(380, 65, 0.80, 0.32), _noise(0.50, 0.16)))
-    # Enemy death: sharp impact crack → low tumble → silence — distinctive & satisfying
-    # enemy_death: unmistakable kill sound — 3 distinct stages
-    # Stage 1: sharp impact (the killing blow lands)
-    # Stage 2: slow dramatic descend (enemy falling)
-    # Stage 3: deep bass thud + silence (final stillness)
-    _sounds["enemy_death"] = _make_sound(_concat(
-        _mix(_noise(0.55, 0.06), _sine(220, 0.55, 0.06)),  # killing impact
-        _silence(0.04),                                      # breath before fall
-        _sweep(500, 40, 0.70, 0.32),                        # long dramatic descend
-        _mix(_sine(40, 0.50, 0.22), _noise(0.25, 0.16)),   # ground impact thud
-        _sweep(80, 20, 0.80, 0.18),                         # low bass decay
-        _silence(0.06),                                      # final silence
-    ))
-    _sounds["victory"]      = _make_sound(_concat(
-        _sine(523, 0.18, 0.32), _sine(659, 0.18, 0.32),
-        _sine(784, 0.18, 0.32), _sine(1047, 0.40, 0.38)))
-    _sounds["defeat"]       = _make_sound(_concat(
-        _sine(400, 0.28, 0.30), _sine(350, 0.28, 0.30),
-        _sine(300, 0.28, 0.30), _sine(200, 0.55, 0.30)))
-    _sounds["combat_start"] = _make_sound(_mix(
-        _noise(0.25, 0.32),
-        _concat(_sine(220, 0.14, 0.32), _sine(330, 0.14, 0.32), _sine(440, 0.20, 0.38))))
-    _sounds["block"]        = _make_sound(_mix(_noise(0.12, 0.32), _sine(170, 0.16, 0.22)))
-    _sounds["poison"]       = _make_sound(_mix(_sweep(520, 280, 0.38, 0.18), _noise(0.20, 0.10)))
+    # ── BATCH 1: Fast SFX — UI, combat, dungeon, town, exploration ─────────
+    # All of these are simple math or short numpy operations (<5ms each).
+    # Generated during Splash 1 (Bad Bat logo screen).
 
-    # ── Dungeon ─────────────────────────────────────────────────
-    _sounds["door_open"] = _make_sound(_concat(
-        # Quick wooden creak (0.18s) — the hinge, not a long scrape
-        _creak(0.18, 280, 80, volume=0.30, slip_count=4, seed=7),
-        # Brief mid-frequency wood-on-wood grind as door moves (0.14s)
-        _mix(
-            _creak(0.14, 180, 60, volume=0.18, slip_count=3, seed=23),
-            _bandpass_noise(0.14, 220, 80, volume=0.05, seed=31),
-        ),
-        # Door settles: low thud as it opens fully
-        _silence(0.04), _thud(0.12, 0.18),
-    ))
-    _sounds["treasure_open"] = _make_sound(_concat(
-        _creak(0.45, 620, 140, volume=0.25, slip_count=7, seed=33),
-        _silence(0.05),
-        _creak(0.55, 480, 110, volume=0.20, slip_count=8, seed=44),
-        _silence(0.07), _thud(0.10, 0.10),
-    ))
-    _sounds["stairs"]       = _make_sound(_concat(
-        _sine(300, 0.16, 0.22), _sine(350, 0.16, 0.22), _sine(420, 0.22, 0.28)))
-    _sounds["trap_trigger"] = _make_sound(_mix(
-        _noise(0.35, 0.42), _sweep(900, 80, 0.40, 0.32)))
-    _sounds["journal_find"] = _make_sound(_concat(
-        _sine(440, 0.16, 0.22), _sine(554, 0.16, 0.22), _sine(659, 0.24, 0.28)))
+    def _b1_ui():
+        _sounds["ui_click"]   = _make_sound(_sine(800, 0.10, 0.22))
+        _sounds["ui_confirm"] = _make_sound(_concat(_sine(600, 0.10, 0.28), _sine(900, 0.14, 0.28)))
+        _sounds["ui_cancel"]  = _make_sound(_sine(280, 0.22, 0.22))
+        _sounds["ui_open"]    = _make_sound(_sweep(400,  820, 0.28, 0.22))
+        _sounds["ui_close"]   = _make_sound(_sweep(820,  380, 0.22, 0.22))
 
-    # ── Town ────────────────────────────────────────────────────
-    _sounds["shop_buy"]       = _make_sound(_coin_scatter(num_coins=6, seed=7))
-    _sounds["shop_sell"]      = _make_sound(_coin_scatter(num_coins=4, seed=13))
-    _sounds["npc_talk"]       = _make_sound(_peanuts_talk(num_syllables=5, seed=99))
-    _sounds["quest_accept"]   = _make_sound(_concat(
-        _sine(440, 0.12, 0.22), _sine(554, 0.12, 0.22),
-        _sine(659, 0.14, 0.28), _sine(880, 0.26, 0.34)))
-    _sounds["quest_complete"] = _make_sound(_concat(
-        _sine(523,  0.16, 0.32), _sine(659, 0.16, 0.32),
-        _sine(784,  0.16, 0.32), _sine(1047, 0.18, 0.38),
-        _silence(0.08), _sine(1047, 0.32, 0.38)))
-    _sounds["level_up"]       = _make_sound(_concat(
-        _sine(392,  0.16, 0.32), _sine(523, 0.16, 0.32),
-        _sine(659,  0.16, 0.32), _sine(784, 0.16, 0.32),
-        _sine(1047, 0.38, 0.42)))
-    _sounds["item_pickup"]    = _make_sound(_concat(
-        _sine(700, 0.10, 0.22), _sine(900, 0.14, 0.28)))
+    def _b1_combat_physical():
+        _sounds["hit_light"]      = _make_np_sound(_gen_hit_light)
+        _sounds["hit_medium"]     = _make_np_sound(_gen_hit_medium)
+        _sounds["hit_heavy"]      = _make_np_sound(_gen_hit_heavy)
+        _sounds["hit_physical"]   = _sounds["hit_medium"]
+        _sounds["hit_skill"]      = _sounds["hit_heavy"]
+        _sounds["hit_skill_fast"] = _make_np_sound(_gen_hit_skill_fast)
+        _sounds["hit_critical"]   = _make_np_sound(_gen_hit_critical)
 
-    # ── Exploration ─────────────────────────────────────────────
-    _sounds["encounter"]  = _make_sound(_mix(               # random combat starts
-        _noise(0.20, 0.40),
-        _concat(_sine(180, 0.10, 0.28), _sine(240, 0.10, 0.32), _sine(320, 0.18, 0.38))))
-    _sounds["discovery"]  = _make_sound(_concat(            # new area / secret found
-        _sine(523, 0.14, 0.22), _sine(659, 0.14, 0.26),
-        _sine(784, 0.14, 0.28), _sine(1047, 0.32, 0.36)))
-    _sounds["camp_rest"]  = _make_sound(_concat(            # resting at camp or inn
-        _sine(330, 0.30, 0.18), _silence(0.10),
-        _sine(370, 0.30, 0.18), _silence(0.10),
-        _sine(440, 0.50, 0.20)))
-    _sounds["trap"]       = _make_sound(_mix(               # trap detected / stepped on
-        _noise(0.28, 0.36), _sweep(700, 120, 0.32, 0.28)))
-    _sounds["step"]       = _make_sound(                    # footstep in dungeon
-        _mix(_noise(0.08, 0.12, seed=17), _sine(90, 0.08, 0.10)))
+    def _b1_combat_elemental():
+        _sounds["hit_fire"]       = _make_np_sound(_gen_hit_fire)
+        _sounds["hit_ice"]        = _make_np_sound(_gen_hit_ice)
+        _sounds["hit_lightning"]  = _make_np_sound(_gen_hit_lightning)
+        _sounds["hit_shadow"]     = _make_np_sound(_gen_hit_shadow)
+        _sounds["hit_divine"]     = _make_np_sound(_gen_hit_divine)
+        _sounds["hit_nature"]     = _make_np_sound(_gen_hit_nature)
+        _sounds["hit_arcane"]     = _make_np_sound(_gen_hit_arcane)
+        _sounds["hit_wind"]       = _sounds["hit_nature"]
+        _sounds["hit_piercing"]   = _sounds["hit_medium"]
+        _sounds["hit_magic"]      = _sounds["hit_arcane"]
 
-    # ── Ambient loops (kept short; play() on loop channel) ──────
-    # Town music: ~32-bar looping folk piece in G major (3/4 waltz, 100 BPM)
-    # Four phrases (A/B/C/B), four layers: melody, counter-melody, bass, pad.
-    # Softer harmonics, gentle vibrato, smoother loop seam than old version.
-    def _flute(freq, dur, vol=0.16):
-        """Soft flute with gentle vibrato and smooth attack/release."""
-        n = int(SR * dur)
-        out = []
-        for i in range(n):
-            t   = i / SR
-            env = math.sin(math.pi * t / dur) ** 0.6
-            vib = 1.0 + 0.012 * math.sin(2 * math.pi * 5.5 * t)   # 5.5 Hz vibrato
-            v   = (math.sin(2*math.pi*freq*vib*t)
-                   + math.sin(2*math.pi*freq*2*t) * 0.14   # softer 2nd harmonic
-                   + math.sin(2*math.pi*freq*3*t) * 0.04)
-            out.append(max(-32767, min(32767, int(32000 * vol * env * v))))
-        return out
+    def _b1_combat_miss():
+        _sounds["miss_physical"]  = _make_np_sound(_gen_miss_physical)
+        _sounds["miss_magic"]     = _make_np_sound(_gen_miss_magic)
+        _sounds["miss_elemental"] = _make_np_sound(_gen_miss_elemental)
+        _sounds["miss"]           = _sounds["miss_physical"]
+        _sounds["spell_miss"]     = _sounds["miss_magic"]
 
-    def _flute2(freq, dur, vol=0.10):
-        """Slightly breathy counter-melody flute — weaker, higher register."""
-        n = int(SR * dur)
-        out = []
-        rng2 = random.Random(freq)
-        for i in range(n):
-            t   = i / SR
-            env = math.sin(math.pi * t / dur) ** 0.5
-            breath = rng2.gauss(0, 0.04)   # subtle breathiness
-            v = math.sin(2*math.pi*freq*t) + math.sin(2*math.pi*freq*2*t)*0.08 + breath
-            out.append(max(-32767, min(32767, int(32000 * vol * env * v))))
-        return out
+    def _b1_combat_support():
+        _sounds["no_resource"]    = _make_sound(_mix(_sine(180, 0.28, 0.16), _noise(0.10, 0.08)))
+        _sounds["heal"]    = _make_np_sound(_gen_heal)
+        _sounds["revive"]  = _make_np_sound(_gen_revive)
+        _sounds["buff_physical"] = _make_np_sound(_gen_buff_physical)
+        _sounds["buff_magic"]    = _make_np_sound(_gen_buff_magic)
+        _sounds["buff_divine"]   = _make_np_sound(_gen_buff_divine)
+        _sounds["buff_nature"]   = _make_np_sound(_gen_buff_nature)
+        _sounds["buff"]          = _sounds["buff_physical"]
+        _sounds["debuff_physical"] = _make_np_sound(_gen_debuff_physical)
+        _sounds["debuff_magic"]    = _make_np_sound(_gen_debuff_magic)
+        _sounds["debuff_divine"]   = _make_np_sound(_gen_debuff_divine)
+        _sounds["debuff"]          = _sounds["debuff_physical"]
+        _sounds["poison_tick"]   = _make_np_sound(_gen_poison_tick)
+        _sounds["burning_tick"]  = _make_np_sound(_gen_burning_tick)
 
-    def _plk(freq, dur, vol=0.11):
-        """Plucked lute — warmer decay, gentle 2nd harmonic."""
-        n   = int(SR * dur)
-        tau = SR * 0.22    # slower decay → warmer
-        out = []
-        for i in range(n):
-            env = math.exp(-i / tau)
-            v   = (math.sin(2*math.pi*freq*i/SR)
-                   + math.sin(2*math.pi*freq*2*i/SR)*0.28
-                   + math.sin(2*math.pi*freq*3*i/SR)*0.08)
-            out.append(max(-32767, min(32767, int(32000 * vol * env * v))))
-        return out
+    def _b1_combat_core():
+        _sounds["death"]        = _make_sound(_mix(_sweep(380, 65, 0.80, 0.32), _noise(0.50, 0.16)))
+        _sounds["enemy_death"] = _make_sound(_concat(
+            _mix(_noise(0.55, 0.06), _sine(220, 0.55, 0.06)), _silence(0.04),
+            _sweep(500, 40, 0.70, 0.32),
+            _mix(_sine(40, 0.50, 0.22), _noise(0.25, 0.16)),
+            _sweep(80, 20, 0.80, 0.18), _silence(0.06)))
+        _sounds["victory"]      = _make_sound(_concat(
+            _sine(523, 0.18, 0.32), _sine(659, 0.18, 0.32),
+            _sine(784, 0.18, 0.32), _sine(1047, 0.40, 0.38)))
+        _sounds["defeat"]       = _make_sound(_concat(
+            _sine(400, 0.28, 0.30), _sine(350, 0.28, 0.30),
+            _sine(300, 0.28, 0.30), _sine(200, 0.55, 0.30)))
+        _sounds["combat_start"] = _make_sound(_mix(
+            _noise(0.25, 0.32),
+            _concat(_sine(220, 0.14, 0.32), _sine(330, 0.14, 0.32), _sine(440, 0.20, 0.38))))
+        _sounds["block"]        = _make_sound(_mix(_noise(0.12, 0.32), _sine(170, 0.16, 0.22)))
+        _sounds["poison"]       = _make_sound(_mix(_sweep(520, 280, 0.38, 0.18), _noise(0.20, 0.10)))
 
-    def _chd(freqs, dur, vol=0.055):
-        """Warm pad chord with slow attack and fade."""
-        n   = int(SR * dur)
-        out = [0.0] * n
-        for freq in freqs:
-            for i in range(n):
-                t   = i / SR
-                env = min(1.0, t * 4.0) * math.sin(math.pi * t / dur) ** 0.35
-                v   = math.sin(2*math.pi*freq*t) + math.sin(2*math.pi*freq*2*t)*0.10
-                out[i] += vol * env * v / len(freqs)
-        return [max(-32767, min(32767, int(32000 * v))) for v in out]
+    def _b1_dungeon_sfx():
+        _sounds["door_open"] = _make_sound(_concat(
+            _creak(0.18, 280, 80, volume=0.30, slip_count=4, seed=7),
+            _mix(_creak(0.14, 180, 60, volume=0.18, slip_count=3, seed=23),
+                 _bandpass_noise(0.14, 220, 80, volume=0.05, seed=31)),
+            _silence(0.04), _thud(0.12, 0.18)))
+        _sounds["treasure_open"] = _make_sound(_concat(
+            _creak(0.45, 620, 140, volume=0.25, slip_count=7, seed=33),
+            _silence(0.05),
+            _creak(0.55, 480, 110, volume=0.20, slip_count=8, seed=44),
+            _silence(0.07), _thud(0.10, 0.10)))
+        _sounds["stairs"]       = _make_sound(_concat(
+            _sine(300, 0.16, 0.22), _sine(350, 0.16, 0.22), _sine(420, 0.22, 0.28)))
+        _sounds["trap_trigger"] = _make_sound(_mix(
+            _noise(0.35, 0.42), _sweep(900, 80, 0.40, 0.32)))
+        _sounds["journal_find"] = _make_sound(_concat(
+            _sine(440, 0.16, 0.22), _sine(554, 0.16, 0.22), _sine(659, 0.24, 0.28)))
 
-    def _sil(d): return [0] * int(SR * d)
+    def _b1_town_sfx():
+        _sounds["shop_buy"]       = _make_sound(_coin_scatter(num_coins=6, seed=7))
+        _sounds["shop_sell"]      = _make_sound(_coin_scatter(num_coins=4, seed=13))
+        _sounds["npc_talk"]       = _make_sound(_peanuts_talk(num_syllables=5, seed=99))
+        _sounds["quest_accept"]   = _make_sound(_concat(
+            _sine(440, 0.12, 0.22), _sine(554, 0.12, 0.22),
+            _sine(659, 0.14, 0.28), _sine(880, 0.26, 0.34)))
+        _sounds["quest_complete"] = _make_sound(_concat(
+            _sine(523,  0.16, 0.32), _sine(659, 0.16, 0.32),
+            _sine(784,  0.16, 0.32), _sine(1047, 0.18, 0.38),
+            _silence(0.08), _sine(1047, 0.32, 0.38)))
+        _sounds["level_up"]       = _make_sound(_concat(
+            _sine(392,  0.16, 0.32), _sine(523, 0.16, 0.32),
+            _sine(659,  0.16, 0.32), _sine(784, 0.16, 0.32),
+            _sine(1047, 0.38, 0.42)))
+        _sounds["item_pickup"]    = _make_sound(_concat(
+            _sine(700, 0.10, 0.22), _sine(900, 0.14, 0.28)))
 
-    # Note frequencies (Hz) — G major pentatonic core
-    G3,D3,C3,E3 = 196.0, 146.8, 130.8, 164.8
-    G4,A4,B4    = 392.0, 440.0, 493.9
-    C5,D5,E5,F5 = 523.3, 587.3, 659.3, 698.5
+    def _b1_exploration():
+        _sounds["encounter"]  = _make_sound(_mix(
+            _noise(0.20, 0.40),
+            _concat(_sine(180, 0.10, 0.28), _sine(240, 0.10, 0.32), _sine(320, 0.18, 0.38))))
+        _sounds["discovery"]  = _make_sound(_concat(
+            _sine(523, 0.14, 0.22), _sine(659, 0.14, 0.26),
+            _sine(784, 0.14, 0.28), _sine(1047, 0.32, 0.36)))
+        _sounds["camp_rest"]  = _make_sound(_concat(
+            _sine(330, 0.30, 0.18), _silence(0.10),
+            _sine(370, 0.30, 0.18), _silence(0.10),
+            _sine(440, 0.50, 0.20)))
+        _sounds["trap"]       = _make_sound(_mix(
+            _noise(0.28, 0.36), _sweep(700, 120, 0.32, 0.28)))
+        _sounds["step"]       = _make_sound(
+            _mix(_noise(0.08, 0.12, seed=17), _sine(90, 0.08, 0.10)))
 
-    BPM  = 100
-    beat = 60.0 / BPM       # 3/4 waltz
-    bar  = beat * 3
-
-    # ── Melody: 4 phrases × 8 bars = 32 bars ──────────────────
-    #  Phrase A — rises and settles (bars 1-8)
-    phA = (
-        _flute(G4,beat)+_flute(A4,beat)+_flute(B4,beat) +          # bar 1
-        _flute(C5,beat)+_flute(C5,beat)+_flute(B4,beat) +          # bar 2
-        _flute(G4,beat*0.5)+_flute(E5,beat*0.5)+_flute(D5,beat)+_flute(B4,beat) +  # bar 3
-        _flute(G4,bar) +                                            # bar 4 (held)
-        _flute(D5,beat)+_flute(C5,beat)+_flute(B4,beat) +          # bar 5
-        _flute(A4,beat)+_flute(G4,beat)+_flute(A4,beat) +          # bar 6
-        _flute(B4,beat)+_flute(D5,beat)+_flute(G4,beat*2) +        # bar 7
-        _flute(G4,bar)                                              # bar 8
-    )
-    #  Phrase B — wandering middle (bars 9-16)
-    phB = (
-        _flute(C5,beat)+_flute(D5,beat)+_flute(E5,beat) +          # bar 9
-        _flute(E5,beat)+_flute(D5,beat)+_flute(C5,beat) +          # bar 10
-        _flute(B4,beat*0.5)+_flute(G4,beat*0.5)+_flute(B4,beat)+_flute(D5,beat)+  # bar 11
-        _flute(G4,bar) +                                            # bar 12
-        _flute(E5,beat)+_flute(D5,beat)+_flute(C5,beat) +          # bar 13
-        _flute(B4,beat)+_flute(A4,beat)+_flute(G4,beat) +          # bar 14
-        _flute(A4,beat)+_flute(C5,beat)+_flute(B4,beat) +          # bar 15
-        _flute(G4,bar)                                              # bar 16
-    )
-    #  Phrase C — higher register excursion (bars 17-24)
-    phC = (
-        _flute(E5,beat)+_flute(F5,beat*0.5)+_flute(E5,beat*0.5)+_flute(D5,beat) +  # bar 17
-        _flute(C5,beat)+_flute(D5,beat)+_flute(E5,beat) +          # bar 18
-        _flute(D5,bar) +                                            # bar 19
-        _flute(C5,beat)+_flute(B4,beat)+_flute(A4,beat) +          # bar 20
-        _flute(G4,beat)+_flute(A4,beat)+_flute(B4,beat) +          # bar 21
-        _flute(C5,beat)+_flute(B4,beat)+_flute(A4,beat) +          # bar 22
-        _flute(B4,beat)+_flute(G4,beat*2) +                        # bar 23
-        _flute(G4,bar)                                              # bar 24
-    )
-    #  Phrase B (reprise, bars 25-32) — resolves loop back to A
-    phB2 = (
-        _flute(C5,beat)+_flute(D5,beat)+_flute(E5,beat) +          # bar 25
-        _flute(D5,beat)+_flute(C5,beat)+_flute(B4,beat) +          # bar 26
-        _flute(A4,beat*0.5)+_flute(G4,beat*0.5)+_flute(A4,beat)+_flute(B4,beat) +  # bar 27
-        _flute(G4,bar) +                                            # bar 28
-        _flute(B4,beat)+_flute(A4,beat)+_flute(G4,beat) +          # bar 29
-        _flute(G4,beat)+_flute(A4,beat)+_flute(B4,beat) +          # bar 30
-        _flute(D5,beat)+_flute(B4,beat)+_flute(G4,beat) +          # bar 31
-        _flute(G4,bar)                                              # bar 32 → loops to bar 1
-    )
-    mel = phA + phB + phC + phB2
-
-    # ── Counter-melody: low harmony below the melody ───────────
-    # Stays in the lower register (G3–D4) so it warms the sound
-    # rather than adding shrillness. Sparse — rests on most bars.
-    def _rest(d): return _sil(d)
-    # Use the plucked lute for a rounder tone in the harmony voice
-    def _hmny(freq, dur, vol=0.07):
-        """Soft held harmony note — sine with gentle envelope."""
-        n = int(SR * dur)
-        out = []
-        for i in range(n):
-            t   = i / SR
-            env = math.sin(math.pi * t / dur) ** 0.55
-            v   = math.sin(2 * math.pi * freq * t) + math.sin(2 * math.pi * freq * 2 * t) * 0.12
-            out.append(max(-32767, min(32767, int(32000 * vol * env * v))))
-        return out
-    D4 = D3 * 2    # 293.7 Hz
-    E4 = E3 * 2    # 329.6 Hz
-    B3 = 246.9
-    ctr = (
-        # Phrase A — soft low harmony on key bars only
-        _rest(bar)+_hmny(D4,bar)+_rest(bar)+_hmny(B3,bar) +         # bars 1-4
-        _rest(bar)+_hmny(E4,bar)+_rest(bar)+_rest(bar) +             # bars 5-8
-        # Phrase B — sparse root support
-        _hmny(E4,bar)+_rest(bar)+_hmny(D4,bar)+_rest(bar) +         # bars 9-12
-        _hmny(E4,bar)+_rest(bar)+_hmny(D4,bar)+_rest(bar) +         # bars 13-16
-        # Phrase C — stay low, no high register
-        _hmny(D4,bar)+_rest(bar)+_hmny(E4,bar)+_rest(bar) +         # bars 17-20
-        _hmny(D4,bar)+_rest(bar)+_hmny(E4,bar)+_rest(bar) +         # bars 21-24
-        # Phrase B2 — mirror of B
-        _hmny(E4,bar)+_rest(bar)+_hmny(D4,bar)+_rest(bar) +         # bars 25-28
-        _hmny(D4,bar)+_rest(bar)+_hmny(B3,bar)+_rest(bar)           # bars 29-32
-    )
-
-    # ── Bass: root on 1, fifth on 3 of each bar × 32 bars ─────
-    bass_prog = [
-        G3,G3,G3,G3, C3,C3,G3,G3,  # A (bars 1-8)
-        C3,C3,G3,G3, C3,G3,G3,G3,  # B (bars 9-16)
-        C3,C3,G3,G3, G3,G3,C3,G3,  # C (bars 17-24)
-        C3,C3,G3,G3, G3,G3,G3,G3,  # B2 (bars 25-32)
+    _gen_batch1 = [
+        ("UI sounds",           _b1_ui),
+        ("Physical hits",       _b1_combat_physical),
+        ("Elemental hits",      _b1_combat_elemental),
+        ("Miss sounds",         _b1_combat_miss),
+        ("Support sounds",      _b1_combat_support),
+        ("Core combat",         _b1_combat_core),
+        ("Dungeon SFX",         _b1_dungeon_sfx),
+        ("Town SFX",            _b1_town_sfx),
+        ("Exploration sounds",  _b1_exploration),
     ]
-    B3 = 246.9
-    fifth_map = {G3:D3, C3:G3, E3:B3}
-    bas = []
-    for rt in bass_prog:
-        fi = fifth_map.get(rt, D3)
-        bas += (_plk(rt, beat*0.85)+_sil(beat*0.15) +
-                _sil(beat) +
-                _plk(fi, beat*0.85)+_sil(beat*0.15))
 
-    # ── Chord pad × 32 bars ────────────────────────────────────
-    chord_prog = [
-        [G3*2,392.0,493.9],[G3*2,392.0,493.9],[G3*2,392.0,493.9],[G3*2,392.0,493.9],  # A
-        [C3*2,329.6,392.0],[C3*2,329.6,392.0],[G3*2,392.0,493.9],[G3*2,392.0,493.9],
-        [C3*2,329.6,392.0],[C3*2,329.6,392.0],[G3*2,392.0,493.9],[G3*2,392.0,493.9],  # B
-        [C3*2,329.6,392.0],[G3*2,392.0,493.9],[G3*2,392.0,493.9],[G3*2,392.0,493.9],
-        [C3*2,329.6,392.0],[C3*2,329.6,392.0],[G3*2,392.0,493.9],[G3*2,392.0,493.9],  # C
-        [G3*2,392.0,493.9],[G3*2,392.0,493.9],[C3*2,329.6,392.0],[G3*2,392.0,493.9],
-        [C3*2,329.6,392.0],[C3*2,329.6,392.0],[G3*2,392.0,493.9],[G3*2,392.0,493.9],  # B2
-        [G3*2,392.0,493.9],[G3*2,392.0,493.9],[G3*2,392.0,493.9],[G3*2,392.0,493.9],
+    # ── BATCH 2: Music and ambient — generated one per frame during Splash 2 ──
+    # Each entry is a label + callable. The callable generates and registers one sound.
+
+    _gen_batch2 = [
+        ("World ambient",             lambda: _generate_world_ambient()),
+        ("Town ambient music",        lambda: _generate_town_ambient()),
+        ("Town crowd ambience",       lambda: _generate_town_env()),
+        ("Grassland sounds",          lambda: _sounds.update({"ambient_grassland": _make_biome(_biome_grassland)})),
+        ("Forest sounds",             lambda: _sounds.update({"ambient_forest": _make_biome(_biome_forest)})),
+        ("Hills sounds",              lambda: _sounds.update({"ambient_hills": _make_biome(_biome_hills)})),
+        ("Swamp sounds",              lambda: _sounds.update({"ambient_swamp": _make_biome(_biome_swamp)})),
+        ("Coast sounds",              lambda: _sounds.update({"ambient_coast": _make_biome(_biome_coast)})),
+        ("Desert sounds",             lambda: _sounds.update({"ambient_desert": _make_biome(_biome_desert)})),
+        ("Dungeon ambience",          lambda: _sounds.update({"dungeon_ambient": _make_sound(_mix(_sine(65, 2.5, 0.08, fade_out=False), _bandpass_noise(2.5, 110, 40, volume=0.05, seed=66)))})),
+        ("Goblin Warren music",       lambda: _sounds.update({"dungeon_goblin_warren": _gen_dungeon(_dungeon_goblin_warren)})),
+        ("Spider\'s Nest music",     lambda: _sounds.update({"dungeon_spiders_nest": _gen_dungeon(_dungeon_spiders_nest)})),
+        ("Abandoned Mine music",      lambda: _sounds.update({"dungeon_abandoned_mine": _gen_dungeon(_dungeon_abandoned_mine)})),
+        ("Ruins of Ashenmoor music",  lambda: _sounds.update({"dungeon_ruins_ashenmoor": _gen_dungeon(_dungeon_ruins_ashenmoor)})),
+        ("Sunken Crypt music",        lambda: _sounds.update({"dungeon_sunken_crypt": _gen_dungeon(_dungeon_sunken_crypt)})),
+        ("Pale Coast music",          lambda: _sounds.update({"dungeon_pale_coast": _gen_dungeon(_dungeon_pale_coast)})),
+        ("Windswept Isle music",      lambda: _sounds.update({"dungeon_windswept_isle": _gen_dungeon(_dungeon_windswept_isle)})),
+        ("Dragon\'s Tooth music",    lambda: _sounds.update({"dungeon_dragons_tooth": _gen_dungeon(_dungeon_dragons_tooth)})),
+        ("Valdris\' Spire music",    lambda: _sounds.update({"dungeon_valdris_spire": _gen_dungeon(_dungeon_valdris_spire)})),
+        ("Briarhollow music",         lambda: _sounds.update({"town_briarhollow": _gen_dungeon(_town_briarhollow)})),
+        ("Woodhaven music",           lambda: _sounds.update({"town_woodhaven": _gen_dungeon(_town_woodhaven)})),
+        ("Ironhearth music",          lambda: _sounds.update({"town_ironhearth": _gen_dungeon(_town_ironhearth)})),
+        ("Greenwood music",           lambda: _sounds.update({"town_greenwood": _gen_dungeon(_town_greenwood)})),
+        ("Saltmere music",            lambda: _sounds.update({"town_saltmere": _gen_dungeon(_town_saltmere)})),
+        ("Sanctum music",             lambda: _sounds.update({"town_sanctum": _gen_dungeon(_town_sanctum)})),
+        ("Crystalspire music",        lambda: _sounds.update({"town_crystalspire": _gen_dungeon(_town_crystalspire)})),
+        ("Thornhaven music",          lambda: _sounds.update({"town_thornhaven": _gen_dungeon(_town_thornhaven)})),
     ]
-    pad = []
-    for ch in chord_prog:
-        pad += _chd(ch, bar)
 
-    # Mix all layers to shortest length
-    total = min(len(mel), len(ctr), len(bas), len(pad))
-    town_music_samples = []
-    for i in range(total):
-        v = mel[i] + ctr[i] + bas[i] + pad[i]
-        town_music_samples.append(max(-32767, min(32767, v)))
 
-    # Longer fade-in/out (150 ms) to hide the loop seam more cleanly
-    fade = int(SR * 0.15)
-    for i in range(min(fade, total)):
-        frac = i / fade
-        town_music_samples[i]         = int(town_music_samples[i]         * frac)
-        town_music_samples[total-1-i] = int(town_music_samples[total-1-i] * frac)
+def _generate_world_ambient():
+    _sounds["world_ambient"] = _make_sound(_bandpass_noise(3.0, 180, 80, volume=0.08, seed=88))
 
-    _sounds["town_ambient"] = _make_sound(town_music_samples)
 
-    # Town environment ambience: soft crowd hum + distant bell dings
-    # Layered onto the ambient channel (separate from music channel).
-    # ~8-second loop: low bandpass murmur + occasional light bell tones.
+def _generate_town_ambient():
+    """Town ambient — warm Briarhollow-style loop (fallback for all towns)."""
+    _sounds["town_ambient"] = _gen_dungeon(_town_briarhollow)
+
+
+def _generate_town_env():
+    """Crowd murmur + distant bell dings — ambient layer played over town music."""
     env_dur = 8.0
     env_n   = int(SR * env_dur)
-    # Low crowd murmur: narrow bandpass around 250 Hz
     crowd   = _bandpass_noise(env_dur, 250, 60, volume=0.025, seed=71)
-    # Distant wind sweep (very soft)
     wind    = _bandpass_noise(env_dur, 380, 120, volume=0.018, seed=99)
-    # Occasional bell dings at 2 s and 5 s marks
-    bell_rng = random.Random(42)
-    bell = [0] * env_n
+    bell    = [0] * env_n
     for t_hit in (1.8, 4.6, 7.1):
-        pos   = int(t_hit * SR)
-        freq  = 880.0     # high bell tone
-        bdur  = int(SR * 0.8)
+        pos = int(t_hit * SR); freq = 880.0; bdur = int(SR * 0.8)
         for j in range(min(bdur, env_n - pos)):
             env_bell = math.exp(-j / (SR * 0.25))
             bell[pos + j] += int(3500 * env_bell * math.sin(2*math.pi*freq*j/SR))
-    town_env_samples = [
-        max(-32767, min(32767, crowd[i] + wind[i] + bell[i]))
-        for i in range(env_n)
-    ]
-    # Fade edges
+    samp = [max(-32767, min(32767, crowd[i] + wind[i] + bell[i])) for i in range(env_n)]
     fade_e = int(SR * 0.12)
     for i in range(min(fade_e, env_n)):
-        frac = i / fade_e
-        town_env_samples[i]          = int(town_env_samples[i]          * frac)
-        town_env_samples[env_n-1-i]  = int(town_env_samples[env_n-1-i]  * frac)
-    _sounds["town_env"] = _make_sound(town_env_samples)
-
-    # World map: open wind-like sweep (kept as fallback)
-    _sounds["world_ambient"] = _make_sound(
-        _bandpass_noise(3.0, 180, 80, volume=0.08, seed=88))
-
-    # ── Biome ambient sounds (layered, numpy-based) ──────────
-    _sounds["ambient_grassland"] = _make_biome(_biome_grassland)
-    _sounds["ambient_forest"]    = _make_biome(_biome_forest)
-    _sounds["ambient_hills"]     = _make_biome(_biome_hills)
-    _sounds["ambient_swamp"]     = _make_biome(_biome_swamp)
-    _sounds["ambient_coast"]     = _make_biome(_biome_coast)
-    _sounds["ambient_desert"]    = _make_biome(_biome_desert)
-
-    # Dungeon: low resonant drone (fallback)
-    _sounds["dungeon_ambient"] = _make_sound(_mix(
-        _sine(65, 2.5, 0.08, fade_out=False),
-        _bandpass_noise(2.5, 110, 40, volume=0.05, seed=66)))
-    # combat_music removed — dungeons have per-dungeon music; combat uses SFX only
-
-    # ── Per-dungeon music tracks ─────────────────────────────────────
-    _sounds["dungeon_goblin_warren"]   = _gen_dungeon(_dungeon_goblin_warren)
-    _sounds["dungeon_spiders_nest"]    = _gen_dungeon(_dungeon_spiders_nest)
-    _sounds["dungeon_abandoned_mine"]  = _gen_dungeon(_dungeon_abandoned_mine)
-    _sounds["dungeon_ruins_ashenmoor"] = _gen_dungeon(_dungeon_ruins_ashenmoor)
-    _sounds["dungeon_sunken_crypt"]    = _gen_dungeon(_dungeon_sunken_crypt)
-    _sounds["dungeon_pale_coast"]      = _gen_dungeon(_dungeon_pale_coast)
-    _sounds["dungeon_windswept_isle"]  = _gen_dungeon(_dungeon_windswept_isle)
-    _sounds["dungeon_dragons_tooth"]   = _gen_dungeon(_dungeon_dragons_tooth)
-    _sounds["dungeon_valdris_spire"]   = _gen_dungeon(_dungeon_valdris_spire)
-
-    # ── Per-town music tracks ────────────────────────────────────────
-    _sounds["town_briarhollow"]  = _gen_dungeon(_town_briarhollow)
-    _sounds["town_woodhaven"]    = _gen_dungeon(_town_woodhaven)
-    _sounds["town_ironhearth"]   = _gen_dungeon(_town_ironhearth)
-    _sounds["town_greenwood"]    = _gen_dungeon(_town_greenwood)
-    _sounds["town_saltmere"]     = _gen_dungeon(_town_saltmere)
-    _sounds["town_sanctum"]      = _gen_dungeon(_town_sanctum)
-    _sounds["town_crystalspire"] = _gen_dungeon(_town_crystalspire)
-    _sounds["town_thornhaven"]   = _gen_dungeon(_town_thornhaven)
+        f = i / fade_e
+        samp[i] = int(samp[i] * f)
+        samp[env_n-1-i] = int(samp[env_n-1-i] * f)
+    _sounds["town_env"] = _make_sound(samp)
 
 
-
-def _np_note2(freq, dur, vol=0.25, shape='sine', tau=0.25, attack=0.02):
-    """Town music note generator — sine/pluck/organ/brass/bell/tri shapes."""
-    n = int(SR * dur)
-    if n <= 0: return _np.zeros(1, _np.float32)
-    fv = freq  # avoid shadowing
-    if shape == 'sine':
-        sig = _np_sinev(n, fv, vol)
-    elif shape == 'tri':
-        t = _np.arange(n) / SR * fv
-        sig = (vol * (2 * _np.abs(2 * (t - _np.floor(t + 0.5))) - 1)).astype(_np.float32)
-    elif shape == 'pluck':
-        sig = _np_lp(_np_sinev(n,fv,vol) + _np_sinev(n,fv*2,vol*.35) + _np_sinev(n,fv*3,vol*.12), fv*4)
-    elif shape == 'organ':
-        sig = _np_lp(_np_sinev(n,fv,vol) + _np_sinev(n,fv*2,vol*.4) + _np_sinev(n,fv*3,vol*.2) + _np_sinev(n,fv*4,vol*.1), fv*5)
-    elif shape == 'brass':
-        sig = _np_lp(_np_sinev(n,fv,vol) + _np_sinev(n,fv*2,vol*.5) + _np_sinev(n,fv*3,vol*.25) + _np_sinev(n,fv*4,vol*.12), fv*6)
-    elif shape == 'bell':
-        sig = _np_sinev(n,fv,vol) + _np_sinev(n,fv*2.76,vol*.35) + _np_sinev(n,fv*5.4,vol*.12)
-    else:
-        sig = _np_sinev(n, fv, vol)
-    env = _np_exp(n, tau)
-    a = min(int(SR * attack), n // 4)
-    env[:a] *= _np.linspace(0, 1, a)
-    return (sig * env).astype(_np.float32)
-
-def _np_lp2(sig, c):
-    if not _HAS_NUMPY: return sig
-    from scipy import signal as _sci
-    b, a = _sci.iirfilter(2, min(float(c), SR/2-1), btype='low', fs=SR, ftype='butter')
-    return _sci.lfilter(b, a, sig).astype(_np.float32)
-
-def _np_bp2(n, cf, bw, seed=0):
-    if not _HAS_NUMPY: return _np.zeros(n, _np.float32)
-    from scipy import signal as _sci
-    x = _np.random.default_rng(seed).standard_normal(n).astype(_np.float64)
-    lo = max(20.0, cf-bw/2); hi = min(float(SR)/2-1, cf+bw/2)
-    b, a = _sci.iirfilter(4, [lo, hi], btype='band', fs=SR, ftype='butter')
-    return _sci.lfilter(b, a, x).astype(_np.float32)
-
-def _np_hp2(sig, c):
-    if not _HAS_NUMPY: return sig
-    from scipy import signal as _sci
-    b, a = _sci.iirfilter(2, max(float(c), 20.0), btype='high', fs=SR, ftype='butter')
-    return _sci.lfilter(b, a, sig).astype(_np.float32)
-
-def _np_tri(n, freq, vol=1.0):
-    t = _np.arange(n) / SR * freq
-    return (vol * (2 * _np.abs(2 * (t - _np.floor(t + 0.5))) - 1)).astype(_np.float32)
-
-# ── Town music generators ─────────────────────────────────────
-
-def _town_briarhollow():
-    N=int(SR*20.0)
-    G4,A4,B4,C5,D5,E4,D4,G3,D3 = 392,440,494,523,587,330,294,196,147
-    beat=60/88; bar=beat*3
-    mel_seq=[(G4,.9),(A4,.9),(B4,.9),(C5,1.2),(B4,.6),(A4,.9),(G4,.9),(E4,.9),(D4,.9),(G4,bar*1.2),(D5,.9),(C5,.9),(B4,.9),(A4,1.2),(G4,.6),(A4,.9),(B4,.9),(A4,.9),(G4,.9),(D4,bar*1.2),(G4,.9),(B4,.9),(D5,.9),(C5,1.2),(B4,.6),(A4,.9),(G4,.9),(A4,.9),(B4,.9),(G4,bar*1.5)]
-    mel_arr = _np.concatenate([_np_note2(f,d,.30,'pluck',tau=.18) if f>0 else _np.zeros(int(SR*d),_np.float32) for f,d in mel_seq])
-    bass_parts = []
-    for _ in range(7):
-        bass_parts += [_np_note2(G3,bar*.8,.20,'pluck',tau=.14), _np.zeros(int(SR*bar*.1),_np.float32), _np_note2(D4*0.5,bar*.8,.14,'pluck',tau=.12), _np.zeros(int(SR*bar*.1),_np.float32)]
-    bass = _np_lp2(_np.concatenate(bass_parts), 300)
-    pad = _np.zeros(N, _np.float32)
-    for f in [G3*2, 247, 294]:
-        pad += _np_sinev(N,f,.04)*_np_swell2(N,8.,0.,.4)
-    pad = _np_lp2(pad, 600)
-    murmur = _np_bp2(N,280,80,1)*_np_swell2(N,6.,0.,.5)*.04
-    wind = _np_bp2(N,450,180,2)*_np_swell2(N,11.,2.,.55)*.03
-    bells = _np.zeros(N, _np.float32)
-    for t,f in [(5.2,1046),(12.8,1174),(17.5,1046)]:
-        _np_place2(bells, t, _np_note2(f,.5,.08,'bell',tau=.15))
-    base = _np.zeros(N, _np.float32)
-    base[:len(mel_arr)] += mel_arr[:N]; base[:len(bass)] += bass[:N]
-    return _np_seamless2(_np_norm(_np_mix2(base, pad, murmur, wind, bells)))
-
-def _town_woodhaven():
-    N=int(SR*22.0)
-    D3,F3,G3,A3 = 147,175,196,220
-    D4,E4,F4,G4,A4,C5 = 294,330,349,392,440,523
-    def fn(freq,dur,vol=.22,tau=.35):
-        n=int(SR*dur); sig=_np_sinev(n,freq,vol)+_np_sinev(n,freq*2,vol*.08)
-        breath=_np_bp2(n,freq*3,freq*2,int(freq))*.03; env=_np_exp(n,tau)
-        env[:min(int(SR*.04),n//4)]*=_np.linspace(0,1,min(int(SR*.04),n//4))
-        return _np_lp2((sig+breath)*env, freq*3)
-    mel_times=[0,2.,3.5,5.5,7.5,9.,10.5,12.,14.5,16.5,18.]
-    mel_notes=[D4,F4,A4,G4,A4,C5,494,A4,G4,F4,D4]
-    mel_durs=[2.,1.5,2.,2.,1.5,1.5,2.,2.5,2.,1.5,3.5]
-    melody=_np.zeros(N,_np.float32)
-    for t,f,d in zip(mel_times,mel_notes,mel_durs):
-        if t<22.: _np_place2(melody,t,fn(f,d,.24,.40))
-    forest=_np_lp2(_np_sinev(N,D3,.10)*_np_swell2(N,11.,0.,.4)+_np_sinev(N,A3,.06)*_np_swell2(N,8.,3.5,.45),250)
-    bass=_np.zeros(N,_np.float32)
-    for t,f in [(0,D3*2),(4,G3*2),(8,A3*2),(12,F3*2),(16,D3*2),(20,G3*2)]:
-        _np_place2(bass,t,_np_note2(f,1.5,.18,'pluck',tau=.20))
-    bass=_np_lp2(bass,350)
-    leaves=_np_bp2(N,2800,1400,3)*_np_swell2(N,3.5,0.,.7)*.04
-    wind=_np_bp2(N,350,150,4)*_np_swell2(N,9.,2.,.55)*.06
-    bird=_np.zeros(N,_np.float32)
-    for t,f in [(6.5,2637),(6.7,3136),(6.9,2637),(14.2,2794),(14.4,3136)]:
-        n_b=int(SR*.14); b=_np_sinev(n_b,f,.06)*_np_exp(n_b,.04)
-        b[:int(SR*.01)]*=_np.linspace(0,1,int(SR*.01)); _np_place2(bird,t,b)
-    return _np_seamless2(_np_norm(_np_mix2(melody,forest,bass,leaves,wind,bird)))
-
-def _town_ironhearth():
-    N=int(SR*18.0)
-    E2,E3,F3,G3,A3,B3,C4,D4 = 82,165,175,196,220,247,261,294
-    beat=60/100
-    forge=_np.zeros(N,_np.float32)
-    for i in range(int(18./beat)):
-        t=i*beat
-        if i%4==0:
-            n_h=int(SR*.22); h=(_np_sinev(n_h,55,.5)+_np_bp2(n_h,600,300,i)*.3)*_np_exp(n_h,.05)
-            _np_place2(forge,t,h)
-        elif i%4==2:
-            n_h=int(SR*.14); h=(_np_bp2(n_h,800,400,i+100)*.4+_np_sinev(n_h,65,.3))*_np_exp(n_h,.03)
-            _np_place2(forge,t,h)
-        elif i%2==1:
-            n_h=int(SR*.06); h=_np_hp2(_np.random.default_rng(i+200).standard_normal(n_h).astype(_np.float32),3000)*_np_exp(n_h,.008)*.15
-            _np_place2(forge,t,h)
-    forge=_np_lp2(forge,2000)
-    bt=[0,beat*2,beat*4,beat*6,beat*8,beat*12,beat*14,beat*16]
-    bn=[E3,F3,E3,D4,C4,B3,C4,E3]; bd=[beat*2]*8
-    brass=_np.zeros(N,_np.float32)
-    for t,f,d in zip(bt,bn,bd):
-        for rep in range(2):
-            if t+rep*beat*18<18.: _np_place2(brass,t+rep*beat*18,_np_note2(f,d,.28,'brass',tau=.15))
-    brass=_np_lp2(brass,600)
-    mountain=_np_lp2(_np_sinev(N,E2,.12)*_np_swell2(N,9.,0.,.35)+_np_sinev(N,B3,.06)*_np_swell2(N,7.,2.,.40),200)
-    clangs=_np.zeros(N,_np.float32)
-    for t,f in [(2.4,1760),(5.8,2093),(9.6,1760),(13.2,1975),(16.4,2093)]:
-        _np_place2(clangs,t,_np_note2(f,.3,.10,'bell',tau=.06))
-    stone=_np_bp2(N,180,70,5)*_np_swell2(N,8.,0.,.4)*.05
-    return _np_seamless2(_np_norm(_np_mix2(forge*.8,brass*.75,mountain,clangs*.6,stone)))
-
-def _town_greenwood():
-    N=int(SR*24.0)
-    A2,A3,E4,F4,G4,A4,D4 = 110,220,330,349,392,440,294
-    mel_data=[(0.,A4,3.5),(5.,G4,2.8),(9.,F4,2.0),(12.5,E4,3.0),(17.,D4,2.5),(21.,A3,2.8)]
-    melody=_np.zeros(N,_np.float32)
-    for t,f,d in mel_data:
-        n_n=int(SR*d); sig=_np_sinev(n_n,f,.18)+_np_sinev(n_n,f*2,.06)
-        env=_np_exp(n_n,.8); a=int(SR*.25); env[:a]*=_np.linspace(0,1,a)
-        r=int(SR*.5); env[-r:]*=_np.linspace(1,0,r)
-        _np_place2(melody,t,_np_lp2(sig*env,f*3))
-    wind1=_np_lp2(_np_bp2(N,320,140,6)*_np_swell2(N,7.5,0.,.65)*.14,600)
-    wind2=_np_bp2(N,180,80,7)*_np_swell2(N,11.,3.5,.55)*.08
-    drone=_np_lp2(_np_sinev(N,A2,.08)*_np_swell2(N,18.,0.,.45)+_np_sinev(N,E4*.5,.04)*_np_swell2(N,12.,6.,.5),300)
-    owl=_np.zeros(N,_np.float32)
-    for t,f in [(8.5,392),(8.8,330),(18.2,370),(18.5,311)]:
-        n_o=int(SR*.5); o=_np_sinev(n_o,f,.08)*_np_exp(n_o,.15)
-        o[:int(SR*.05)]*=_np.linspace(0,1,int(SR*.05)); _np_place2(owl,t,o)
-    hawk=_np.zeros(N,_np.float32)
-    n_h=int(SR*1.2); h=_np_bp2(n_h,2400,600,8)*_np.hanning(n_h).astype(_np.float32)*.06
-    _np_place2(hawk,14.,h)
-    return _np_seamless2(_np_norm(_np_mix2(melody,wind1,wind2,drone,owl,hawk)))
-
-def _town_saltmere():
-    N=int(SR*20.0)
-    A2,E3,A3,B3,C4,D4,E4,F4,G4,A4 = 110,165,220,247,261,294,330,349,392,440
-    BPM=118; beat=60/BPM; period=beat*12
-    drums=_np.zeros(N,_np.float32)
-    pat=[1.0,0,.4,.7,0,.3,1.0,0,.4,.6,0,.2]
-    rng=_np.random.default_rng(20)
-    for rep in range(int(20./period)+2):
-        for i,vol in enumerate(pat):
-            t=rep*period+i*beat+float(rng.uniform(-.01,.01))
-            if t<0 or t>=20. or vol==0: continue
-            if i%6==0:
-                n_d=int(SR*.20); h=(_np_sinev(n_d,60,.45)+_np_bp2(n_d,300,150,i)*.25)*_np_exp(n_d,.04)*vol
-            else:
-                n_d=int(SR*.08); h=_np_bp2(n_d,500+i*50,250,i+30)*_np_exp(n_d,.02)*vol*.4
-            _np_place2(drums,t,h)
-    drums=_np_lp2(drums,1500)
-    mel_t=[0,beat*2,beat*3,beat*4,beat*6,beat*8,beat*10,beat*12,beat*14,beat*16,beat*18,beat*20]
-    mel_n=[A4,G4,F4,E4,D4,E4,F4,G4,A4,G4,F4,E4]; mel_d=[beat*2,beat,beat,beat*2,beat*2,beat*2,beat,beat,beat*2,beat,beat,beat*2]
-    fiddle=_np.zeros(N,_np.float32)
-    for rep in range(3):
-        for t,f,d in zip(mel_t,mel_n,mel_d):
-            at=t+rep*beat*24
-            if at>=20.: continue
-            n_n=int(SR*d); sig=_np_tri(n_n,f,.22)+_np_bp2(n_n,f*3,f,int(f))*.08
-            env=_np_exp(n_n,d*.6); env[:int(SR*.01)]*=_np.linspace(0,1,int(SR*.01))
-            _np_place2(fiddle,at,_np_lp2(sig*env,f*4))
-    sea=_np_lp2(_np_sinev(N,A2,.14)*_np_swell2(N,5.5,0.,.5)+_np_sinev(N,E3,.08)*_np_swell2(N,3.8,1.5,.55),200)
-    waves=_np_bp2(N,120,60,9)*_np_swell2(N,6.,0.,.55)*.10
-    spray=_np_bp2(N,2200,900,10)*_np_swell2(N,2.5,.5,.7)*.03
-    clanks=_np.zeros(N,_np.float32)
-    for t in [3.2,7.5,11.8,15.3,18.7]:
-        _np_place2(clanks,t,_np_bp2(int(SR*.18),1600,700,int(t*10))*_np_exp(int(SR*.18),.04)*.10)
-    return _np_seamless2(_np_norm(_np_mix2(drums*.7,fiddle*.75,sea,waves,spray,clanks*.6)))
-
-def _town_sanctum():
-    N=int(SR*26.0)
-    C3,F3,G3=131,175,196
-    C4,D4,E4,F4,G4,A4=261,294,330,349,392,440
-    hymn=[(0,C4,2.5),(2.5,E4,2.),(4.5,G4,2.5),(7,A4,2.),(9,G4,2.5),(11.5,F4,2.),(13.5,E4,3.5),(17,C4,2.5),(19.5,D4,2.),(21.5,F4,2.5),(24,E4,2.)]
-    om=_np.zeros(N,_np.float32)
-    for t,f,d in hymn:
-        if t<26.: _np_place2(om,t,_np_note2(f,d,.22,'organ',tau=.8))
-    harm=[(0,G3,4.5),(4.5,C4,4.5),(9,F3,4.5),(13.5,C4,4.5),(18,G3,4.5),(22.5,C4,3.5)]
-    oh=_np.zeros(N,_np.float32)
-    for t,f,d in harm:
-        if t<26.: _np_place2(oh,t,_np_note2(f,d,.16,'organ',tau=1.))
-    ob=_np.zeros(N,_np.float32)
-    for t,f in [(0,C3),(6.5,F3),(13,C3),(19.5,F3)]:
-        dur=min(6.5,(N/SR)-t); _np_place2(ob,t,_np_note2(f,dur,.20,'organ',tau=2.)) if dur>0 else None
-    ob=_np_lp2(ob,300)
-    rp=_np.zeros(N,_np.float32)
-    for f,v in [(C4,.06),(E4,.04),(G4,.03)]: rp+=_np_sinev(N,f,v)*_np_swell2(N,13.,0.,.5)
-    rp=_np_lp2(rp,800)
-    bells=_np.zeros(N,_np.float32)
-    for t,f in [(3.5,1047),(8.,1175),(13.,1047),(21.,1319),(25.,1047)]:
-        _np_place2(bells,t,_np_note2(f,.5,.14,'bell',tau=.35))
-    pilgrim=_np_bp2(N,300,100,11)*_np_swell2(N,12.,0.,.4)*.025
-    return _np_seamless2(_np_norm(_np_mix2(om*.85,oh*.75,ob*.80,rp,bells*.70,pilgrim)))
-
-def _town_crystalspire():
-    N=int(SR*22.0)
-    F3,G3,A3,B3n,C4 = 175,196,220,247,261
-    F4,G4,A4,B4n,C5,D5,E5,F5,E4 = 349,392,440,494,523,587,659,698,330
-    arp_freqs=[F4,A4,C5,F5,E5,C5,B4n,A4,G4,B4n,D5,F5,E5,D5,C5,B4n]
-    arp_dur=0.22; arp=_np.zeros(N,_np.float32)
-    for rep in range(int(22./(arp_dur*len(arp_freqs)))+2):
-        for i,f in enumerate(arp_freqs):
-            t=rep*arp_dur*len(arp_freqs)+i*arp_dur
-            if t>=22.: break
-            _np_place2(arp,t,_np_note2(f,arp_dur*1.2,.12,'bell',tau=.18))
-    harm_data=[(0.,[(F3,.12),(A3,.09),(C4,.07),(B3n,.07)],5.5),(5.5,[(G3,.10),(B3n,.08),(D5*.5,.06),(F4,.05)],5.5),(11.,[(A3,.11),(C4,.08),(E4*.5,.06),(G4,.05)],5.5),(16.5,[(F3,.12),(A3,.09),(C4,.07),(B3n,.07)],5.5)]
-    harm=_np.zeros(N,_np.float32)
-    for t,chord,dur in harm_data:
-        for f,v in chord:
-            if t<22.: _np_place2(harm,t,_np_note2(f,dur,v,'organ',tau=1.2))
-    ley=_np_lp2(_np_sinev(N,F3,.10)*_np_swell2(N,8.,0.,.4)+_np_sinev(N,B3n,.07)*_np_swell2(N,6.,3.,.45),350)
-    shimmer=_np_bp2(N,4500,2000,12)*_np_swell2(N,3.,0.,.75)*.04*_np_swell2(N,11.,1.5,.6)
-    sparks=_np.zeros(N,_np.float32)
-    for t in [2.5,5.,8.5,11.,14.5,17.,20.5]:
-        _np_place2(sparks,t,_np_hp2(_np.random.default_rng(int(t*100)).standard_normal(int(SR*.08)).astype(_np.float32),5000)*_np_exp(int(SR*.08),.015)*.08)
-    return _np_seamless2(_np_norm(_np_mix2(arp*.65,harm*.70,ley,shimmer,sparks*.5)))
-
-def _town_thornhaven():
-    N=int(SR*24.0)
-    D2,D3,F3,A3 = 73,147,175,220
-    D4,E4,F4,G4,A4,Bb4 = 294,330,349,392,440,466
-    BPM=76; beat=60/BPM
-    march=[(0,D4,beat*2),(beat*2,F4,beat*2),(beat*4,A4,beat*3),(beat*7,G4,beat),(beat*8,F4,beat*2),(beat*10,E4,beat*2),(beat*12,D4,beat*4),(beat*16,A4,beat*2),(beat*18,Bb4,beat*2),(beat*20,A4,beat*3),(beat*23,G4,beat),(beat*24,F4,beat*2),(beat*26,E4,beat*2),(beat*28,D4,beat*4)]
-    bm=_np.zeros(N,_np.float32)
-    for t,f,d in march:
-        for rep in range(2):
-            at=t+rep*beat*32
-            if at<24.: _np_place2(bm,at,_np_note2(f,d,.26,'brass',tau=.18,attack=.01))
-    bm=_np_lp2(bm,800)
-    strings=_np.zeros(N,_np.float32)
-    for t,f,d in [(0,D3,4),(4,A3,4),(8,F3,4),(12,D3*2*.5,4),(16,D3,4),(20,A3,4)]:
-        n_s=int(SR*d); s=_np_lp2(_np_sinev(n_s,f,.18)+_np_sinev(n_s,f*2,.10),400)
-        env=_np.minimum(_np.arange(n_s)/(SR*.15),1.).astype(_np.float32)*_np_exp(n_s,1.2)
-        _np_place2(strings,t,s*env)
-    unease=_np_lp2(_np_sinev(N,D2,.10)*_np_swell2(N,12.,0.,.40)+_np_sinev(N,D2*1.06,.06)*_np_swell2(N,9.,5.,.45),150)
-    mp=_np.zeros(N,_np.float32)
-    for i in range(int(24./beat)):
-        t=i*beat
-        if i%4 in (1,3):
-            n_s=int(SR*.18); s=_np_hp2(_np.random.default_rng(i+400).standard_normal(n_s).astype(_np.float32),1200)*_np_exp(n_s,.04)*.35
-            _np_place2(mp,t,s)
-        elif i%4==0:
-            n_k=int(SR*.25); k=(_np_sinev(n_k,50,.4)+_np_sinev(n_k,40,.3))*_np_exp(n_k,.06)
-            _np_place2(mp,t,k)
-    mp=_np_lp2(mp,2000)
-    city=_np_bp2(N,400,150,13)*_np_swell2(N,7.,0.,.45)*.05
-    herald=_np.zeros(N,_np.float32)
-    for t,f in [(4.5,587),(4.9,660),(5.3,587),(15.5,587),(15.9,660),(16.3,523)]:
-        _np_place2(herald,t,_np_note2(f,.45,.16,'brass',tau=.20))
-    return _np_seamless2(_np_norm(_np_mix2(bm*.80,strings*.70,unease,mp*.65,city,herald*.60)))
+def step_batch1():
+    """Generate ALL batch1 items (fast SFX). Call once during Splash 1."""
+    global _b1_idx
+    for name, fn in _gen_batch1:
+        try:
+            fn()
+        except Exception:
+            pass
+    _b1_idx = len(_gen_batch1)
 
 
-def play_town_music(town_id):
-    """Play the matching town track; fall back to town_ambient."""
-    if not _enabled: return
-    name = f"town_{town_id}"
-    snd = _sounds.get(name) or _sounds.get("town_ambient")
-    if snd:
-        snd.set_volume(_master_vol * _music_vol)
-        if _music_channel:
-            _music_channel.play(snd, loops=-1)
+def step_batch2():
+    """Generate ONE batch2 item. Call once per frame during Splash 2.
+    Returns (is_done, items_done, items_total, current_item_name).
+    """
+    global _b2_idx, _gen_ready
+    total = len(_gen_batch2)
+    if _b2_idx >= total:
+        _gen_ready = True
+        return True, total, total, "Done"
+    name, fn = _gen_batch2[_b2_idx]
+    try:
+        fn()
+    except Exception:
+        pass
+    _b2_idx += 1
+    done = _b2_idx >= total
+    if done:
+        _gen_ready = True
+    return done, _b2_idx, total, name
 
+
+def is_ready():
+    """True when all sounds (batch1 + batch2) have been generated."""
+    return _gen_ready
+
+
+def _generate_all_sounds():
+    """Legacy: generate everything synchronously (used if incremental path skipped)."""
+    global _gen_ready
+    _build_gen_queues()
+    step_batch1()
+    while True:
+        done, _, _, _ = step_batch2()
+        if done:
+            break
+    _gen_ready = True
 
 
 # ═══════════════════════════════════════════════════════════════
