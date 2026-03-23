@@ -749,12 +749,17 @@ def resolve_enemy_attack(attacker, defender):
 
     # Enemy damage: attack_damage + STR scaling + variance - defense
     ad = attacker.get("attack_damage", 5)
-    if isinstance(ad, (list, tuple)):
-        base_dmg = random.randint(int(ad[0]), max(int(ad[0]), int(ad[1])))
-    else:
-        base_dmg = int(ad)
+    try:
+        if isinstance(ad, (list, tuple)) and len(ad) >= 2:
+            base_dmg = random.randint(int(ad[0]), max(int(ad[0]), int(ad[1])))
+        elif isinstance(ad, (list, tuple)):
+            base_dmg = int(ad[0])
+        else:
+            base_dmg = int(ad)
+    except (TypeError, ValueError):
+        base_dmg = 5
     str_bonus = attacker["stats"].get("STR", 0) * 0.3
-    raw = (base_dmg + str_bonus) * pos_dmg
+    raw = (base_dmg + int(str_bonus)) * pos_dmg
     raw *= random.uniform(DAMAGE_VARIANCE_MIN, DAMAGE_VARIANCE_MAX)
 
     # War Cry damage buff

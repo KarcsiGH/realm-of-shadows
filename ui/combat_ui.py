@@ -1040,7 +1040,7 @@ class CombatUI:
             x = RIGHT_X + RIGHT_W // 2 - ts.get_width() // 2
             y = SCREEN_H // 2 - 60 + i * 28
             bg = pygame.Surface((ts.get_width() + 10, ts.get_height() + 4), pygame.SRCALPHA)
-            bg.fill((0, 0, 0, min(160, alpha)))
+            bg.fill((0, 0, 0, max(1, min(160, alpha))))
             surface.blit(bg, (x - 5, y - 2))
             surface.blit(ts, (x, y))
 

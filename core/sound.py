@@ -898,6 +898,18 @@ def play_dungeon_music(dungeon_id):
         if _music_channel:
             _music_channel.play(snd, loops=-1)
 
+def play_town_music(town_id):
+    """Play the matching town track, falling back to town_ambient."""
+    if not _enabled: return
+    name = f"town_{town_id}"
+    snd = _sounds.get(name)
+    if not snd:
+        snd = _sounds.get("town_ambient")
+    if snd:
+        snd.set_volume(_master_vol * _music_vol)
+        if _music_channel:
+            _music_channel.play(snd, loops=-1)
+
 # ═══════════════════════════════════════════════════════════════
 #  SOUND DEFINITIONS
 # ═══════════════════════════════════════════════════════════════
