@@ -565,6 +565,7 @@ class DungeonUI:
         # Chest interaction modal
         self.chest_modal         = None   # None or dict with modal state
         self.interactable_modal  = None   # fountain/shrine/altar modal state
+        self.scroll_modal        = None   # None or {title, text, lines} for note/journal display
 
         self.fading_intensity = 0.0
         self._update_fading()
@@ -796,7 +797,8 @@ class DungeonUI:
             self._draw_chest_modal(surface, mx, my)
         if self.interactable_modal:
             self._draw_interactable_modal(surface, mx, my)
-
+        if self.scroll_modal:
+            self._draw_scroll_modal(surface, mx, my)
 
         if (self.event_message and self.event_timer > 0) or self.event_queue:
             self._draw_events(surface)
@@ -1812,6 +1814,107 @@ class DungeonUI:
             bt = fb.render(lbl, True, GOLD)
             surface.blit(bt, (btn.x+btn.w//2-bt.get_width()//2, btn.y+btn.h//2-bt.get_height()//2))
 
+    def _draw_scroll_modal(self, surface, mx, my):
+        """Draw a parchment/stone scroll overlay when the party finds a note."""
+        import math as _m
+        m = self.scroll_modal
+        title = m.get("title", "")
+        lines = m.get("lines", [])
+        is_wall = m.get("wall_inscription", False)
+
+        # ── Modal geometry — centred in the 3D viewport ──────────────────
+        PAD   = 28
+        MW    = min(640, VP_W - 80)
+        MH    = min(480, VP_H - 60)
+        MX    = VP_X + VP_W // 2 - MW // 2
+        MY    = VP_Y + VP_H // 2 - MH // 2
+
+        # ── Dim the viewport behind the scroll ───────────────────────────
+        dim = pygame.Surface((VP_W, VP_H), pygame.SRCALPHA)
+        dim.fill((0, 0, 0, 160))
+        surface.blit(dim, (VP_X, VP_Y))
+
+        if is_wall:
+            # Stone wall inscription look
+            bg_col    = (42, 35, 28)
+            border1   = (90, 75, 55)
+            border2   = (60, 50, 38)
+            title_col = (200, 175, 120)
+            text_col  = (175, 155, 110)
+            hint_col  = (100, 88, 65)
+            # Stone texture — horizontal score lines
+            pygame.draw.rect(surface, bg_col,  (MX, MY, MW, MH), border_radius=4)
+            pygame.draw.rect(surface, border1, (MX, MY, MW, MH), 3, border_radius=4)
+            pygame.draw.rect(surface, border2, (MX+3, MY+3, MW-6, MH-6), 1, border_radius=3)
+            for sy2 in range(MY + 12, MY + MH - 12, 14):
+                pygame.draw.line(surface, (50, 42, 33), (MX+8, sy2), (MX+MW-8, sy2))
+            # Chisel-mark icon top-centre
+            icon_x = MX + MW // 2 - 10
+            pygame.draw.line(surface, border1, (icon_x, MY+8), (icon_x+20, MY+8), 2)
+            pygame.draw.line(surface, border1, (icon_x+10, MY+6), (icon_x+10, MY+14), 2)
+        else:
+            # Parchment scroll look
+            bg_col    = (58, 46, 28)
+            scroll_bg = (220, 195, 145)
+            edge_col  = (175, 140, 85)
+            title_col = (55, 35, 12)
+            text_col  = (45, 30, 10)
+            hint_col  = (120, 95, 55)
+            # Outer shadow
+            shd = pygame.Surface((MW+6, MH+6), pygame.SRCALPHA)
+            shd.fill((0,0,0,80))
+            surface.blit(shd, (MX-3, MY-3))
+            # Parchment body
+            pygame.draw.rect(surface, scroll_bg, (MX, MY, MW, MH), border_radius=6)
+            pygame.draw.rect(surface, edge_col,  (MX, MY, MW, MH), 2, border_radius=6)
+            # Rolled-edge bars top and bottom
+            for bar_y, shade in [(MY, 0.80), (MY+MH-18, 0.85)]:
+                bar_col = tuple(int(c*shade) for c in scroll_bg)
+                pygame.draw.rect(surface, bar_col, (MX, bar_y, MW, 18), border_radius=6)
+                pygame.draw.rect(surface, edge_col, (MX, bar_y, MW, 18), 1, border_radius=6)
+            # Parchment grain lines
+            for sy2 in range(MY+22, MY+MH-22, 18):
+                a = 18 + int(10 * abs(_m.sin(sy2 * 0.3)))
+                grain_c = tuple(max(0, int(c*0.88)) for c in scroll_bg)
+                pygame.draw.line(surface, grain_c, (MX+12, sy2), (MX+MW-12, sy2))
+            # Wax-seal decoration centre-top (red circle with ❧)
+            seal_x, seal_y = MX + MW//2, MY + 18
+            pygame.draw.circle(surface, (160, 40, 40), (seal_x, seal_y), 14)
+            pygame.draw.circle(surface, (200, 60, 60), (seal_x, seal_y), 14, 2)
+            pygame.draw.circle(surface, (220, 80, 80), (seal_x-3, seal_y-3), 5)
+
+        # ── Title ────────────────────────────────────────────────────────
+        font_title = pygame.font.SysFont("serif,georgia", 17, bold=True)
+        font_body  = pygame.font.SysFont("serif,georgia", 14)
+        font_hint  = pygame.font.SysFont("monospace", 11)
+
+        ty = MY + PAD + (8 if not is_wall else 4)
+        if title:
+            ts = font_title.render(title, True, title_col)
+            surface.blit(ts, (MX + MW//2 - ts.get_width()//2, ty))
+            ty += ts.get_height() + 6
+            # Divider
+            div_col = border1 if is_wall else edge_col
+            pygame.draw.line(surface, div_col, (MX+PAD, ty), (MX+MW-PAD, ty), 1)
+            ty += 10
+
+        # ── Body text ────────────────────────────────────────────────────
+        max_text_h = MY + MH - PAD - 30
+        for line in lines:
+            if ty >= max_text_h:
+                break
+            if line == "":
+                ty += 8
+                continue
+            ts = font_body.render(line, True, text_col)
+            surface.blit(ts, (MX + PAD, ty))
+            ty += ts.get_height() + 4
+
+        # ── Dismiss hint ─────────────────────────────────────────────────
+        hint = "[ SPACE / ENTER / CLICK  to close ]"
+        hs = font_hint.render(hint, True, hint_col)
+        surface.blit(hs, (MX + MW//2 - hs.get_width()//2, MY + MH - 22))
+
     def _draw_events(self, surface):
         font   = pygame.font.SysFont("courier,monospace", 15, bold=True)
         base_y = VP_Y + VP_H - 70
@@ -1835,7 +1938,7 @@ class DungeonUI:
 
     def _process_held_keys(self, ds):
         """Animate in-progress move/turn. Called every frame."""
-        if self.show_camp_confirm or self.show_stairs_confirm or self.chest_modal:
+        if self.show_camp_confirm or self.show_stairs_confirm or self.chest_modal or self.scroll_modal:
             return
 
         MOVE_DUR = 0.12   # seconds to slide one tile
@@ -1866,7 +1969,7 @@ class DungeonUI:
 
     def _grid_step(self, key):
         """Handle a single discrete movement or turn keypress."""
-        if self.show_camp_confirm or self.show_stairs_confirm or self.chest_modal:
+        if self.show_camp_confirm or self.show_stairs_confirm or self.chest_modal or self.scroll_modal:
             return
         if self._step_cooldown > 0:
             return
@@ -1949,6 +2052,9 @@ class DungeonUI:
 
         # ESC dismisses any active modal/confirm first
         if key == pygame.K_ESCAPE:
+            if self.scroll_modal:
+                self.scroll_modal = None
+                return None
             if self.show_stairs_confirm:
                 self.show_stairs_confirm = False
                 return None
@@ -1968,10 +2074,13 @@ class DungeonUI:
                 return None
             return None
 
-        if self.show_camp_confirm or self.show_stairs_confirm or self.chest_modal:
+        if self.show_camp_confirm or self.show_stairs_confirm or self.chest_modal or self.scroll_modal:
             return None
 
         if key == pygame.K_RETURN:
+            if self.scroll_modal:
+                self.scroll_modal = None
+                return None
             tile = self.dungeon.get_tile(self.dungeon.party_x, self.dungeon.party_y)
             if tile:
                 tt = tile["type"]
@@ -1980,6 +2089,11 @@ class DungeonUI:
                 elif tt in (DT_STAIRS_UP, DT_ENTRANCE):
                     self.show_stairs_confirm = True
                     self.stairs_direction = "exit" if self.dungeon.current_floor == 1 else "up"
+            return None
+        if key == pygame.K_SPACE:
+            if self.scroll_modal:
+                self.scroll_modal = None
+                return None
             return None
         if key == pygame.K_c:
             self.show_camp_confirm = True; return None
@@ -1994,6 +2108,11 @@ class DungeonUI:
         self._keys.discard(key)
 
     def handle_click(self, mx, my):
+        # Scroll modal intercepts all clicks
+        if self.scroll_modal:
+            self.scroll_modal = None
+            return None
+
         dw, dh = 400, 160
         dx = SCREEN_W//2 - dw//2
         dy = SCREEN_H//2 - dh//2

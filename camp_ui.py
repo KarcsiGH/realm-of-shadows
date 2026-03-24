@@ -972,8 +972,36 @@ class CampUI:
         surface.set_clip(None)
 
     def _handle_stats_click(self, mx, my):
-        """Handle clicks on the stats tab (ability scroll, manual)."""
-        pass  # scroll handled by handle_scroll
+        """Handle clicks on the stats tab — unequip from equipment summary, char selector."""
+        c = self.party[self.selected_char]
+        if not hasattr(c, "equipment") or not c.equipment:
+            return None
+
+        EQUIP_DISPLAY = [
+            ("weapon","Weapon"), ("off_hand","Off-Hand"),
+            ("head","Head"), ("crown","Crown"), ("body","Body"),
+            ("hands","Hands"), ("feet","Feet"), ("neck","Neck"),
+            ("ring1","Ring 1"), ("ring2","Ring 2"), ("ring3","Ring 3"),
+        ]
+
+        RIGHT_X  = 850
+        BODY_TOP = 80 + 52   # content_y=80 + char selector
+
+        ey = BODY_TOP + 4 + 16   # past "EQUIPPED" header
+        for slot_key, _ in EQUIP_DISPLAY:
+            item = c.equipment.get(slot_key)
+            row_h = 28 if (item and item.get("stat_bonuses")) else 16
+            row = pygame.Rect(RIGHT_X, ey, 350, row_h + 4)
+            if item and row.collidepoint(mx, my):
+                if item.get("cursed") and not item.get("curse_lifted"):
+                    self._msg(f"{item.get('name','item')} is cursed — cannot unequip!", RED)
+                else:
+                    c.equipment[slot_key] = None
+                    c.inventory.append(item)
+                    self._msg(f"Unequipped {item.get('name','item')}.", DIM_GOLD)
+                return None
+            ey += row_h
+        return None
 
     def handle_scroll(self, direction):
         """Handle mousewheel scrolling."""
@@ -1523,6 +1551,8 @@ class CampUI:
             return self._handle_equip_click(mx, my)
         elif self.tab == TAB_IDENTIFY:
             return self._handle_identify_click(mx, my)
+        elif self.tab == TAB_STATS:
+            return self._handle_stats_click(mx, my)
         elif self.tab == TAB_TRANSFER:
             return self._handle_transfer_click(mx, my)
         elif self.tab == TAB_FORMATION:

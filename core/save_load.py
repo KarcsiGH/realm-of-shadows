@@ -272,6 +272,14 @@ def save_game(party, world_state=None, slot_name="save1", metadata=None, dungeon
     from core.story_flags import get_save_data as get_story_data
     story = get_story_data()
 
+    # Runtime lore entries (notes found in dungeons without a static lore_id)
+    from data.story_data import LORE_ENTRIES as _LE
+    from core.story_flags import has_lore as _hl
+    runtime_lore = {
+        lid: ld for lid, ld in _LE.items()
+        if lid.startswith("note_") and _hl(lid)
+    }
+
     save_data = {
         "version": 4,
         "timestamp": datetime.now().isoformat(),
@@ -280,6 +288,7 @@ def save_game(party, world_state=None, slot_name="save1", metadata=None, dungeon
         "party": [],
         "knowledge": knowledge,
         "story_flags": story,
+        "runtime_lore": runtime_lore,
         "world_state": serialize_world_state(world_state),
         "dungeon_explored": _serialize_dungeon_explored(dungeon_cache),
     }
@@ -332,6 +341,14 @@ def load_game(slot_name="save1"):
         if story:
             from core.story_flags import load_save_data as load_story
             load_story(story)
+
+        # Restore runtime lore entries (notes found in dungeons)
+        runtime_lore = save_data.get("runtime_lore", {})
+        if runtime_lore:
+            from data.story_data import LORE_ENTRIES as _LE
+            for lid, ld in runtime_lore.items():
+                if lid not in _LE:
+                    _LE[lid] = ld
 
         # Restore world state (v4+ saves only)
         world_state = deserialize_world_state(save_data.get("world_state"), party)

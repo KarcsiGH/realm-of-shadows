@@ -965,6 +965,23 @@ class Game:
         from ui.renderer import GOLD
         self._toasts.append([message, color or GOLD, 3500, 3500])
 
+    @staticmethod
+    def _wrap_msg(text, width=55):
+        """Word-wrap text to a list of strings, each at most `width` chars."""
+        words = text.split()
+        lines, cur = [], ""
+        for w in words:
+            test = (cur + " " + w).strip()
+            if len(test) > width:
+                if cur:
+                    lines.append(cur)
+                cur = w
+            else:
+                cur = test
+        if cur:
+            lines.append(cur)
+        return lines
+
     def _draw_toasts(self, surface):
         """Draw all active toasts; called at the very end of every draw."""
         import pygame
@@ -3547,11 +3564,15 @@ class Game:
                         auto_advance_quests = __import__("core.story_flags", fromlist=["auto_advance_quests"]).auto_advance_quests
                         _done = auto_advance_quests(self.party)
                         self._notify_quests_done(_done)
-                        # Show floor 1 story message
+                        # Show floor 1 story message as scroll modal
                         from data.story_data import get_dungeon_floor_message
                         msg = get_dungeon_floor_message(dungeon_id, 1)
                         if msg:
-                            self.dungeon_ui.show_event(msg, (180, 160, 120))
+                            self.dungeon_ui.scroll_modal = {
+                                "title": None,
+                                "lines": self._wrap_msg(msg, 55),
+                                "wall_inscription": True,
+                            }
                         # Tutorial hints — first dungeon floor
                         from core.tutorial import fire_dungeon_hints
                         fire_dungeon_hints("first_floor", self.dungeon_ui)
@@ -3648,20 +3669,40 @@ class Game:
         elif event["type"] == "journal":
             data = event["data"]
             title = data.get("title", "Journal Entry")
-            text = data.get("text", "")
+            text  = data.get("text", "")
             lore_id = data.get("lore_id")
             on_find = data.get("on_find", [])
             sfx.play("journal_find")
             from core.dialogue import _execute_action
             for action in on_find:
                 _execute_action(action)
-            # Discover lore if specified
-            if lore_id:
-                from core.story_flags import discover_lore
-                discover_lore(lore_id)
-            # Show journal text as dungeon event
-            self.dungeon_ui.show_event(f"📜 {title}", GOLD)
-            self.dungeon_ui.show_event(text, (180, 160, 120))
+
+            # ── Store in journal ─────────────────────────────────────────
+            from core.story_flags import discover_lore, has_lore
+            from data.story_data import LORE_ENTRIES
+
+            # Use lore_id if given, else synthesise one from the title
+            if not lore_id:
+                lore_id = "note_" + title.lower().replace(" ", "_")[:40]
+
+            # Register in LORE_ENTRIES if not already there
+            if lore_id not in LORE_ENTRIES:
+                LORE_ENTRIES[lore_id] = {"title": title, "text": text}
+
+            # Mark as discovered (no-op if already known)
+            discover_lore(lore_id)
+
+            # ── Word-wrap text for the scroll modal ──────────────────────
+            lines = self._wrap_msg(text, 55)
+
+            # ── Open the scroll modal ────────────────────────────────────
+            is_wall = data.get("type") == "inscription"
+            self.dungeon_ui.scroll_modal = {
+                "title": title,
+                "lines": lines,
+                "wall_inscription": is_wall,
+            }
+
             # Mark the tile as read so the book icon clears
             t = self.dungeon_state.get_tile(self.dungeon_state.party_x,
                                             self.dungeon_state.party_y)
@@ -3773,7 +3814,11 @@ class Game:
                 from data.story_data import get_dungeon_floor_message
                 msg = get_dungeon_floor_message(self.dungeon_state.dungeon_id, floor)
                 if msg:
-                    self.dungeon_ui.show_event(msg, (180, 160, 120))
+                    self.dungeon_ui.scroll_modal = {
+                        "title": None,
+                        "lines": self._wrap_msg(msg, 55),
+                        "wall_inscription": True,
+                    }
                 # Tutorial hint — back row tip fires on second floor first visit
                 if floor == 2:
                     from core.tutorial import fire_dungeon_hints
