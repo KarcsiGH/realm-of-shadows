@@ -724,546 +724,908 @@ def _gen_dungeon(fn):
     except Exception:
         return None
 
+
 def _dungeon_goblin_warren():
-    N=int(SR*16.0); drums=_np.zeros(N,_np.float32)
-    hits=[0.0,.18,.36,.75,.90,1.13,1.50,1.65,1.88,2.25,2.40,2.63,3.0,3.15,3.38,3.75,3.88,4.13,4.50,4.65,4.88,5.25,5.40,5.63,6.0,6.13,6.38,6.75,6.88,7.13,7.50,7.63,7.88,8.25,8.40,8.63,9.0,9.13,9.36,9.75,9.88,10.13,10.5,10.63,10.88,11.25,11.38,11.63,12.0,12.13,12.38,12.75,12.88,13.13,13.5,13.63,13.88,14.25,14.38,14.63,15.0,15.13,15.38,15.75]
-    for i,t in enumerate(hits):
-        if i%3==0:
-            n_h=int(SR*.18); h=_np_sinev(n_h,80+(i%5)*15,.45)*_np_exp(n_h,.04)+_np_bp(n_h,300,150,i)*_np_exp(n_h,.02)*.2
-        else:
-            n_h=int(SR*.10); h=_np_bp(n_h,600+i*30,250,i+50)*_np_exp(n_h,.025)*.3
-        _np_place2(drums,t,h)
-    drums=_np_lp(drums,1200)
-    horn_notes=[(110,.5),(147,.4),(165,.4),(147,.3),(130,.5),(110,.8)]; horn_times=[0.0,2.0,2.4,2.8,4.0,4.5]
-    horn=_np.zeros(N,_np.float32)
-    for rep in range(2):
-        for (freq,dur),t in zip(horn_notes,horn_times):
-            if rep*8.0+t<16.0: _np_place2(horn,rep*8.0+t,_np_note(freq,dur,.22,.08))
-    horn=_np_lp(horn,500)
-    drone=_np_sinev(N,55,.08)*_np_swell2(N,7.0,0,.4)+_np_bp(N,130,50,5)*_np_swell2(N,4.5,2,.5)*.05
-    scurry=_np_bp(N,2400,1200,6)*_np_swell2(N,1.1,.3,.8)*.04
-    return _np_seamless2(_np_norm(_np_mix2(drums*.8,horn*.7,drone,scurry)))
+    """Goblin Warren — 48s A-B-A'. Frantic drums + wailing horn + skittering noise."""
+    N = int(SR * 48.0)
+    # ── Drum pattern (runs full length, variations at 16s and 32s) ──────
+    drums = _np.zeros(N, _np.float32)
+    hits_a = [0.0,.18,.36,.75,.90,1.13,1.50,1.65,1.88,2.25,2.40,2.63,
+               3.0,3.15,3.38,3.75,3.88,4.13,4.50,4.65,4.88,5.25,5.40,5.63,
+               6.0,6.13,6.38,6.75,6.88,7.13,7.50,7.63,7.88]
+    for rep in range(6):
+        for i, dt in enumerate(hits_a):
+            t = rep * 8.0 + dt
+            if t >= 48.0: break
+            # B-section (16-32s): heavier, slower hits
+            if 16.0 <= t < 32.0:
+                if i % 4 == 0:
+                    n_h = int(SR*.22); h = _np_sinev(n_h,65,.55)*_np_exp(n_h,.05)
+                elif i % 2 == 0:
+                    n_h = int(SR*.12); h = _np_bp(n_h,500+i*20,200,i+30)*_np_exp(n_h,.03)*.35
+                else: continue
+            else:
+                if i % 3 == 0:
+                    n_h=int(SR*.18); h=_np_sinev(n_h,80+(i%5)*15,.45)*_np_exp(n_h,.04)+_np_bp(n_h,300,150,i)*_np_exp(n_h,.02)*.2
+                else:
+                    n_h=int(SR*.10); h=_np_bp(n_h,600+i*30,250,i+50)*_np_exp(n_h,.025)*.3
+            _np_place2(drums, t, h)
+    drums = _np_lp(drums, 1200)
+    # ── Horn melody A (0-16s): short threatening phrase ──────────────────
+    horn_a = [(110,.5),(147,.4),(165,.4),(147,.3),(130,.5),(110,.8),(98,.4),(110,1.0)]
+    horn_ta = [0.0]; [horn_ta.append(horn_ta[-1]+d) for _,d in horn_a[:-1]]
+    # ── Horn melody B (16-32s): answering phrase in different register ───
+    horn_b = [(165,.6),(185,.5),(196,.5),(220,.8),(196,.4),(185,.5),(165,.6),(147,.4),(130,.8)]
+    horn_tb = [0.0]; [horn_tb.append(horn_tb[-1]+d) for _,d in horn_b[:-1]]
+    # ── Horn melody A' (32-48s): original phrase + harmony ───────────────
+    horn = _np.zeros(N, _np.float32)
+    for (freq, dur), t in zip(horn_a, horn_ta):
+        for rep, offset in [(0, 0.0), (1, 8.0)]:
+            nt = rep * 8.0 + t
+            if nt < 16.0: _np_place2(horn, nt, _np_note(freq, dur, .22, .08))
+    for (freq, dur), t in zip(horn_b, horn_tb):
+        nt = 16.0 + t
+        if nt < 32.0: _np_place2(horn, nt, _np_note(freq, dur, .20, .10))
+    for (freq, dur), t in zip(horn_a, horn_ta):
+        for rep, offset in [(0, 0.0), (1, 8.0)]:
+            nt = 32.0 + rep * 8.0 + t
+            if nt < 48.0:
+                _np_place2(horn, nt, _np_note(freq, dur, .22, .08))
+                if freq > 100:  # add rough harmony
+                    _np_place2(horn, nt, _np_note(freq * 1.33, dur, .10, .10))
+    horn = _np_lp(horn, 500)
+    # ── Drone + scurry ───────────────────────────────────────────────────
+    drone = (_np_sinev(N,55,.08)*_np_swell2(N,7.0,0,.4) +
+             _np_bp(N,130,50,5)*_np_swell2(N,4.5,2,.5)*.05 +
+             _np_sinev(N,41,.05)*_np_swell2(N,11.0,3,.35))   # deeper sub in B
+    scurry = (_np_bp(N,2400,1200,6)*_np_swell2(N,1.1,.3,.8)*.04 +
+              _np_bp(N,1800,800,7)*_np_swell2(N,1.6,.8,.7)*.03)
+    return _np_seamless2(_np_norm(_np_mix2(drums*.8, horn*.7, drone, scurry)))
+
 
 def _dungeon_spiders_nest():
-    N=int(SR*20.0); mel_freqs=[880,622,740,554,880,831,622,740]; mel_times=[0.0,1.8,3.2,5.0,7.5,9.0,11.5,14.0]
-    mel=_np.zeros(N,_np.float32)
-    for freq,t in zip(mel_freqs,mel_times):
-        if t<20.0: _np_place2(mel,t,_np_note(freq,1.2,.12,.4))
-    mel=_np_lp(mel,2000)
-    skitter=_np.zeros(N,_np.float32); rng=_np.random.default_rng(99); t_s=0.0
-    while t_s<19.5:
-        gap=float(rng.uniform(.08,.55)); n_s=int(SR*.025)
-        s=_np_hp_filt(_np.random.default_rng(int(t_s*100)).standard_normal(n_s).astype(_np.float32),3000)*_np_exp(n_s,.008)*float(rng.uniform(.1,.25))
-        _np_place2(skitter,t_s,s); t_s+=gap
-    web=_np_sinev(N,62,.10)*_np_swell2(N,12.0,0,.35)+_np_sinev(N,93,.05)*_np_swell2(N,8.0,3.0,.45)
-    fading=_np_bp(N,3500,1500,7)*_np_swell2(N,6.0,1.5,.7)*.04*_np_swell2(N,2.2,0,.85)
-    snaps=_np.zeros(N,_np.float32)
-    for snap_t in [3.5,7.2,11.8,16.4]:
-        n_sn=int(SR*.06); sn=_np_bp(n_sn,1200,600,int(snap_t*10))*_np_exp(n_sn,.015)*.15
-        _np_place2(snaps,snap_t,sn)
-    return _np_seamless2(_np_norm(_np_mix2(mel,skitter*.6,web,fading,snaps)))
+    """Spider's Nest — 60s. Eerie overtone melody, relentless skittering, web hum."""
+    N = int(SR * 60.0)
+    # ── A-section melody (0-20s): high sparse tones ──────────────────────
+    mel_a = [(880,1.2,.12),(622,1.0,.10),(740,1.4,.11),(554,1.0,.09),
+             (880,1.0,.12),(831,.8,.10),(622,1.2,.09),(740,1.6,.11)]
+    mel_ta = [0.0,1.8,3.2,5.0,7.5,9.0,11.5,14.0]
+    # ── B-section melody (20-40s): drops an octave, darker ──────────────
+    mel_b = [(440,1.8,.10),(311,1.4,.09),(370,1.8,.10),(277,1.2,.08),
+             (440,1.2,.10),(415,1.0,.09),(311,1.5,.08),(370,2.0,.10)]
+    mel_tb = [0.0,2.0,3.8,6.0,9.0,10.5,12.5,15.0]
+    # ── A'-section (40-60s): both registers combined softly ──────────────
+    mel = _np.zeros(N, _np.float32)
+    for (freq, dur, vol), t in zip(mel_a, mel_ta):
+        _np_place2(mel, t,       _np_note(freq, dur, vol, .4))
+        _np_place2(mel, t+20.0, _np_note(freq*0.5, dur, vol*.7, .4))  # octave below in B
+        _np_place2(mel, t+40.0, _np_note(freq, dur, vol*.85, .4))
+        _np_place2(mel, t+40.0, _np_note(freq*0.5, dur, vol*.35, .4))
+    mel = _np_lp(mel, 2000)
+    # ── Skittering (full length, varies density) ─────────────────────────
+    skitter = _np.zeros(N, _np.float32)
+    rng = _np.random.default_rng(99)
+    t_s = 0.0
+    while t_s < 59.5:
+        # Denser in B-section
+        density = 0.25 if 20.0 <= t_s < 40.0 else 0.45
+        gap = float(rng.uniform(0.04, density))
+        n_s = int(SR * .025)
+        s = _np_hp_filt(_np.random.default_rng(int(t_s*100)).standard_normal(n_s).astype(_np.float32), 3000)*_np_exp(n_s,.008)*float(rng.uniform(.1,.28))
+        _np_place2(skitter, t_s, s)
+        t_s += gap
+    # ── Web drone (A/A': 62Hz, B: 52Hz) ──────────────────────────────────
+    web_lo = _np_sinev(N,52,.08)*_np_swell2(N,14.0,0,.40)
+    web_hi = _np_sinev(N,62,.10)*_np_swell2(N,12.0,0,.35)
+    # fade web_hi out in B, back in A'
+    env_web = _np.ones(N, _np.float32)
+    b_start, b_end = int(SR*20), int(SR*40)
+    env_web[b_start:b_end] = _np.linspace(1.0, 0.3, b_end-b_start)
+    env_web[b_end:int(SR*48)] = _np.linspace(0.3, 1.0, int(SR*48)-b_end)
+    web = (web_lo + web_hi * env_web)*_np_swell2(N,8.0,3.0,.45)
+    # ── Snap events scattered throughout ─────────────────────────────────
+    snaps = _np.zeros(N, _np.float32)
+    for snap_t in [3.5,7.2,11.8,16.4,22.0,27.5,33.0,38.5,43.0,48.5,54.2,58.8]:
+        n_sn = int(SR*.06)
+        sn = _np_bp(n_sn,1200,600,int(snap_t*10))*_np_exp(n_sn,.015)*.15
+        _np_place2(snaps, snap_t, sn)
+    fading = _np_bp(N,3500,1500,7)*_np_swell2(N,6.0,1.5,.7)*.04*_np_swell2(N,2.2,0,.85)
+    return _np_seamless2(_np_norm(_np_mix2(mel, skitter*.6, web, fading, snaps)))
+
 
 def _dungeon_abandoned_mine():
-    N=int(SR*18.0); beat=60.0/72; picks=_np.zeros(N,_np.float32)
-    for i in range(int(18.0/beat)):
-        t=i*beat; vol=.28 if i%4==0 else (.18 if i%2==0 else .10); n_p=int(SR*.15)
-        strike=_np_bp(n_p,800,400,i)*_np_exp(n_p,.04)*vol+_np_bp(n_p,2200,800,i+100)*_np_exp(n_p,.02)*vol*.3
-        _np_place2(picks,t,strike)
-    stone=_np.zeros(N,_np.float32)
-    for (freq,dur),t in zip([(65,.30),(55,.30),(49,.30),(58,.30)],[0.0,4.5,9.0,13.5]):
-        n_st=min(int(SR*dur*4),N-int(SR*t)); n_st=max(0,n_st)
+    """Abandoned Mine — 54s. Pick rhythm, stone resonance, corrupt harmonic drift."""
+    N = int(SR * 54.0)
+    beat = 60.0 / 72
+    picks = _np.zeros(N, _np.float32)
+    for i in range(int(54.0 / beat)):
+        t = i * beat
+        # B-section (18-36s): slower, heavier strikes
+        if 18.0 <= t < 36.0:
+            if i % 8 == 0:
+                vol = .38; n_p = int(SR*.20)
+                strike = (_np_sinev(n_p,70,.50)+_np_bp(n_p,600,300,i)*_np_exp(n_p,.05)*.30)*_np_exp(n_p,.07)
+            elif i % 4 == 0:
+                vol = .24; n_p = int(SR*.15)
+                strike = _np_bp(n_p,900,450,i+100)*_np_exp(n_p,.04)*vol
+            else: continue
+        else:
+            vol = .28 if i%4==0 else (.18 if i%2==0 else .10)
+            n_p = int(SR*.15)
+            strike = _np_bp(n_p,800,400,i)*_np_exp(n_p,.04)*vol + _np_bp(n_p,2200,800,i+100)*_np_exp(n_p,.02)*vol*.3
+        _np_place2(picks, t, strike)
+    # ── Stone resonance: three chord zones ──────────────────────────────
+    stone = _np.zeros(N, _np.float32)
+    # A: E bass (65Hz) family
+    for (freq,dur), t in zip([(65,.30),(55,.30),(49,.30),(58,.30)],[0.0,4.5,9.0,13.5]):
+        n_st = min(int(SR*dur*4), N-int(SR*t)); n_st = max(0,n_st)
         if n_st>0:
-            s=(_np_sinev(n_st,freq,.25)+_np_sinev(n_st,freq*2,.25*.3))*_np.minimum(_np.arange(n_st)/(SR*.15),1.0).astype(_np.float32)*_np_exp(n_st,.8)
-            _np_place2(stone,t,s)
-    stone=_np_lp(stone,200)
-    corrupt=_np.zeros(N,_np.float32)
-    for t in [2.0,5.5,8.0,11.5,14.5,17.0]:
-        n_c=int(SR*.5); c=(_np_sinev(n_c,110,.15)+_np_sinev(n_c,116,.10))*_np_exp(n_c,.12); _np_place2(corrupt,t,c)
-    creak=_np_bp(N,280,100,8)*_np_swell2(N,9.0,0,.6)*.06; sub=_np_sinev(N,42,.06)*_np_swell2(N,15.0,0,.4)
-    return _np_seamless2(_np_norm(_np_mix2(picks*.7,stone,corrupt,creak,sub)))
+            s = (_np_sinev(n_st,freq,.28)+_np_sinev(n_st,freq*2,.28*.3))*_np.minimum(_np.arange(n_st)/(SR*.15),1.0).astype(_np.float32)*_np_exp(n_st,.8)
+            _np_place2(stone, t, s)
+    # B: D bass (37Hz) — deeper, more ominous
+    for (freq,dur), t in zip([(37,.40),(44,.30),(37,.40),(41,.30)],[18.0,22.5,27.0,31.5]):
+        n_st = min(int(SR*dur*4), N-int(SR*t)); n_st = max(0,n_st)
+        if n_st>0:
+            s = (_np_sinev(n_st,freq,.32)+_np_sinev(n_st,freq*2,.32*.3))*_np.minimum(_np.arange(n_st)/(SR*.15),1.0).astype(_np.float32)*_np_exp(n_st,1.0)
+            _np_place2(stone, t, s)
+    # A': return to E, now with added dissonance (tritone Bb)
+    for (freq,dur), t in zip([(65,.30),(55,.30),(49,.30),(58,.30)],[36.0,40.5,45.0,49.5]):
+        n_st = min(int(SR*dur*4), N-int(SR*t)); n_st = max(0,n_st)
+        if n_st>0:
+            s = (_np_sinev(n_st,freq,.28)+_np_sinev(n_st,freq*2,.28*.3)+_np_sinev(n_st,freq*1.414,.10))*_np.minimum(_np.arange(n_st)/(SR*.15),1.0).astype(_np.float32)*_np_exp(n_st,.8)
+            _np_place2(stone, t, s)
+    stone = _np_lp(stone, 200)
+    # ── Corrupt detuned tones (throughout) ───────────────────────────────
+    corrupt = _np.zeros(N, _np.float32)
+    for t in [2.0,5.5,8.0,11.5,14.5,17.0,19.5,23.0,26.5,30.0,33.5,
+              37.0,40.5,44.0,47.5,50.5,53.0]:
+        n_c = int(SR*.5)
+        c = (_np_sinev(n_c,110,.15)+_np_sinev(n_c,116,.10))*_np_exp(n_c,.12)
+        _np_place2(corrupt, t, c)
+    creak = _np_bp(N,280,100,8)*_np_swell2(N,9.0,0,.6)*.06
+    sub   = (_np_sinev(N,42,.06)*_np_swell2(N,15.0,0,.4) +
+             _np_sinev(N,37,.04)*_np_swell2(N,20.0,5,.45))
+    return _np_seamless2(_np_norm(_np_mix2(picks*.7, stone, corrupt, creak, sub)))
+
 
 def _dungeon_ruins_ashenmoor():
-    N=int(SR*22.0)
-    heat=_np_lp(_np_sinev(N,87,.16)*_np_swell2(N,11.0,0,.45)+_np_sinev(N,92,.10)*_np_swell2(N,8.0,4,.50)+_np_sinev(N,58,.12)*_np_swell2(N,15.0,2,.35),300)
-    ash=_np_bp(N,650,250,10)*_np_swell2(N,7.0,0,.6)*.10+_np_bp(N,1400,600,11)*_np_swell2(N,4.5,2.5,.7)*.05
-    flares=_np.zeros(N,_np.float32)
-    for t in [3.5,8.0,13.5,19.0]:
-        n_f=int(SR*1.2); f=(_np_sinev(n_f,65,.20)+_np_bp(n_f,500,200,int(t*10))*.12)*_np.hanning(n_f).astype(_np.float32)**.5*.8
-        _np_place2(flares,t,_np_lp(f,400))
-    shadow=_np.zeros(N,_np.float32)
-    for t,freq in [(1.0,196),(5.5,185),(11.0,175),(16.5,196)]:
+    """Ruins of Ashenmoor — 66s. Heat shimmer, ash wind, rising shadow choir."""
+    N = int(SR * 66.0)
+    # ── Heat foundation (three oscillator clusters, evolving over 66s) ───
+    heat = _np_lp(
+        _np_sinev(N,87,.16)*_np_swell2(N,11.0,0,.45) +
+        _np_sinev(N,92,.10)*_np_swell2(N,8.0,4,.50) +
+        _np_sinev(N,58,.12)*_np_swell2(N,15.0,2,.35) +
+        _np_sinev(N,78,.08)*_np_swell2(N,22.0,7,.40),  # slow pulse new
+        300)
+    ash = (_np_bp(N,650,250,10)*_np_swell2(N,7.0,0,.6)*.10 +
+           _np_bp(N,1400,600,11)*_np_swell2(N,4.5,2.5,.7)*.05 +
+           _np_bp(N,350,140,12)*_np_swell2(N,9.5,3,.55)*.07)
+    # ── Flares — appear more frequently in B-section ────────────────────
+    flares = _np.zeros(N, _np.float32)
+    for t in [3.5,8.0,13.5,19.0, 23.5,27.0,31.5,36.0,40.5, 45.0,50.5,56.0,62.0]:
+        n_f = int(SR*1.2)
+        f = (_np_sinev(n_f,65,.20)+_np_bp(n_f,500,200,int(t*10))*.12)*_np.hanning(n_f).astype(_np.float32)**.5*.8
+        _np_place2(flares, t, _np_lp(f, 400))
+    # ── Shadow choir: A (0-22s) E-area, B (22-44s) Bb-area, A'(44-66s) both
+    shadow = _np.zeros(N, _np.float32)
+    for t,freq in [(1.0,196),(5.5,185),(11.0,175),(16.5,196)]:           # A
         n_sh=int(SR*2.5); sh=(_np_sinev(n_sh,freq,.14)*_np_exp(n_sh,.6)+_np_sinev(n_sh,freq*1.5,.07)*_np_exp(n_sh,.4))
-        _np_place2(shadow,t,sh)
-    wail=_np_bp(N,1800,400,12)*_np_swell2(N,18.0,0,.75)*.06
-    return _np_seamless2(_np_norm(_np_mix2(heat,ash,flares,shadow,wail)))
+        _np_place2(shadow, t, sh)
+    for t,freq in [(23.0,233),(28.5,220),(34.0,207),(40.5,233)]:         # B: Bb area
+        n_sh=int(SR*3.0); sh=(_np_sinev(n_sh,freq,.16)*_np_exp(n_sh,.7)+_np_sinev(n_sh,freq*1.5,.08)*_np_exp(n_sh,.5))
+        _np_place2(shadow, t, sh)
+    for t,freq in [(45.0,196),(50.5,185),(56.0,175),(61.5,233)]:         # A': E+Bb
+        n_sh=int(SR*2.5); sh=(_np_sinev(n_sh,freq,.14)*_np_exp(n_sh,.6)+_np_sinev(n_sh,freq*1.5,.07)*_np_exp(n_sh,.4)+_np_sinev(n_sh,freq*2.76,.05)*_np_exp(n_sh,.3))
+        _np_place2(shadow, t, sh)
+    wail = (_np_bp(N,1800,400,12)*_np_swell2(N,18.0,0,.75)*.06 +
+            _np_bp(N,2400,500,13)*_np_swell2(N,14.0,8,.65)*.04)
+    return _np_seamless2(_np_norm(_np_mix2(heat, ash, flares, shadow, wail)))
+
 
 def _dungeon_sunken_crypt():
-    N=int(SR*20.0); drips=_np.zeros(N,_np.float32)
-    drip_times=[0.0,1.35,2.1,3.7,4.8,5.55,7.2,8.3,9.0,10.5,11.6,12.35,14.0,15.1,15.85,17.5,18.6,19.35]
-    rng_d=_np.random.default_rng(33)
-    for i,t in enumerate(drip_times):
-        freq=float(rng_d.uniform(900,2400)); n_d=int(SR*.05)
-        d=_np_bp(n_d,freq,400,i+200)*_np_exp(n_d,.012)*float(rng_d.uniform(.12,.22)); _np_place2(drips,t,d)
-    crypt=_np_lp(_np_sinev(N,73,.14)*_np_swell2(N,13.0,0,.40)+_np_sinev(N,55,.10)*_np_swell2(N,9.0,3,.45),250)
-    moan=_np.zeros(N,_np.float32)
-    for t,freq in [(2.5,165),(7.0,147),(13.5,155),(18.0,165)]:
-        n_m=int(SR*2.0); m=(_np_sinev(n_m,freq,.08)+_np_sinev(n_m,freq*1.5,.04))*_np.hanning(n_m).astype(_np.float32)
-        _np_place2(moan,t,_np_lp(m,500))
-    water=_np_bp(N,180,80,14)*_np_swell2(N,6.0,0,.5)*.08+_np_bp(N,80,35,15)*_np_swell2(N,8.5,2,.55)*.06
-    groans=_np.zeros(N,_np.float32)
-    for t in [5.0,12.0,18.5]:
-        n_g=int(SR*.8); g=_np_bp(n_g,200,80,int(t*5))*_np_exp(n_g,.2)*.18; _np_place2(groans,t,g)
-    return _np_seamless2(_np_norm(_np_mix2(drips*.8,crypt,moan,water,groans)))
+    """Sunken Crypt — 60s. Dripping water, stone resonance, undead moans."""
+    N = int(SR * 60.0)
+    # ── Water drips — irregular, throughout ──────────────────────────────
+    drips = _np.zeros(N, _np.float32)
+    rng_d = _np.random.default_rng(33)
+    drip_t = 0.0
+    while drip_t < 59.5:
+        freq = float(rng_d.uniform(700, 2800))
+        gap  = float(rng_d.uniform(0.8, 3.5))
+        n_d  = int(SR * .05)
+        d = _np_bp(n_d,freq,400,int(drip_t*10))*_np_exp(n_d,.012)*float(rng_d.uniform(.10,.24))
+        _np_place2(drips, drip_t, d)
+        drip_t += gap
+    # ── Crypt resonance: A (C# bass), B (B bass), A' (C# + chorus) ───────
+    crypt = _np_lp(
+        _np_sinev(N,73,.14)*_np_swell2(N,13.0,0,.40) +
+        _np_sinev(N,55,.10)*_np_swell2(N,9.0,3,.45) +
+        _np_sinev(N,61,.07)*_np_swell2(N,17.0,6,.38),   # 5th harmonic
+        250)
+    # ── Moaning voices: three separate events per section ─────────────────
+    moan = _np.zeros(N, _np.float32)
+    moan_events = [
+        # A: 0-20s
+        (2.5,165), (7.0,147), (13.5,155), (18.0,165),
+        # B: 20-40s — lower and slower
+        (22.0,130), (28.0,123), (33.5,138), (38.5,130),
+        # A': 40-60s — both registers layered
+        (42.5,165), (47.0,147), (52.5,155), (57.0,165),
+        (43.0,123), (48.0,130), (53.5,138),
+    ]
+    for t,freq in moan_events:
+        if t < 60.0:
+            n_m = int(SR*2.5)
+            m = (_np_sinev(n_m,freq,.09)+_np_sinev(n_m,freq*1.5,.04))*_np.hanning(n_m).astype(_np.float32)
+            _np_place2(moan, t, _np_lp(m, 500))
+    water = (_np_bp(N,180,80,14)*_np_swell2(N,6.0,0,.5)*.08 +
+             _np_bp(N,80,35,15)*_np_swell2(N,8.5,2,.55)*.06 +
+             _np_bp(N,240,90,16)*_np_swell2(N,11.0,4,.45)*.05)
+    groans = _np.zeros(N, _np.float32)
+    for t in [5.0,12.0,18.5,25.0,32.0,39.0,45.0,52.0,58.0]:
+        n_g = int(SR*.9)
+        g = _np_bp(n_g,200,80,int(t*5))*_np_exp(n_g,.2)*.18
+        _np_place2(groans, t, g)
+    return _np_seamless2(_np_norm(_np_mix2(drips*.8, crypt, moan, water, groans)))
+
 
 def _dungeon_pale_coast():
-    N=int(SR*24.0); mel_data=[(293,1.5),(329,1.0),(349,1.5),(329,.8),(293,2.0),(261,1.5),(293,1.0),(329,2.5),(293,1.5),(261,1.0),(220,1.5),(247,1.0),(293,2.5)]
-    mel_t=[0.0]
-    for _,d in mel_data[:-1]: mel_t.append(mel_t[-1]+d)
-    melody=_np.zeros(N,_np.float32)
-    for (freq,dur),t in zip(mel_data,mel_t):
-        if t<24.0: _np_place2(melody,t,_np_note(freq,dur*1.1,.18,.5))
-    melody=_np_lp(melody,600)
-    ocean=_np_lp(_np_bp(N,85,45,16)*_np_swell2(N,8.5,0,.55)*.18+_np_bp(N,55,25,17)*_np_swell2(N,12.0,4,.50)*.12,250)
-    drips=_np.zeros(N,_np.float32)
-    for i,t in enumerate([1.5,4.2,6.8,9.1,11.7,14.3,16.9,19.4,21.8]):
-        n_d=int(SR*.06); d=_np_bp(n_d,600+i*80,200,i+300)*_np_exp(n_d,.018)*.15; _np_place2(drips,t,d)
-    presence=_np_sinev(N,293,.06)*_np_swell2(N,20.0,0,.6)+_np_sinev(N,440,.03)*_np_swell2(N,15.0,6,.7)
-    return _np_seamless2(_np_norm(_np_mix2(melody*.75,ocean,drips,presence)))
+    """Pale Coast — 72s. Haunted sea cave — D minor melody, crashing surf, echo."""
+    N = int(SR * 72.0)
+    # ── Melody A (0-24s): D minor descending ─────────────────────────────
+    mel_a = [(293,1.5),(329,1.0),(349,1.5),(329,.8),(293,2.0),
+             (261,1.5),(293,1.0),(329,2.5),(293,1.5),(261,1.0),
+             (220,1.5),(247,1.0),(293,2.5)]
+    mel_ta = [0.0]; [mel_ta.append(mel_ta[-1]+d) for _,d in mel_a[:-1]]
+    # ── Melody B (24-48s): F major colour — brighter, wave-like ─────────
+    mel_b = [(349,1.2),(392,1.0),(440,1.5),(392,.8),(349,1.5),
+             (329,1.2),(349,1.0),(392,2.0),(349,1.5),(329,1.0),
+             (293,2.0),(329,1.5),(349,3.0)]
+    mel_tb = [0.0]; [mel_tb.append(mel_tb[-1]+d) for _,d in mel_b[:-1]]
+    melody = _np.zeros(N, _np.float32)
+    for (freq,dur),t in zip(mel_a, mel_ta):
+        if t < 24.0: _np_place2(melody, t, _np_note(freq, dur*1.1, .18, .5))
+    for (freq,dur),t in zip(mel_b, mel_tb):
+        nt = 24.0 + t
+        if nt < 48.0: _np_place2(melody, nt, _np_note(freq, dur*1.1, .16, .5))
+    # A' (48-72s): original melody + soft harmony a 3rd above
+    for (freq,dur),t in zip(mel_a, mel_ta):
+        nt = 48.0 + t
+        if nt < 72.0:
+            _np_place2(melody, nt, _np_note(freq, dur*1.1, .18, .5))
+            _np_place2(melody, nt, _np_note(freq*1.189, dur*1.1, .08, .5))  # minor 3rd
+    melody = _np_lp(melody, 600)
+    ocean = _np_lp(
+        _np_bp(N,85,45,16)*_np_swell2(N,8.5,0,.55)*.18 +
+        _np_bp(N,55,25,17)*_np_swell2(N,12.0,4,.50)*.12 +
+        _np_bp(N,120,50,18)*_np_swell2(N,6.0,9,.45)*.09,
+        250)
+    drips = _np.zeros(N, _np.float32)
+    for i,t in enumerate([1.5,4.2,6.8,9.1,11.7,14.3,16.9,19.4,21.8,
+                           25.0,28.5,32.0,35.5,39.0,42.5,46.0,
+                           50.0,53.5,57.0,60.5,64.0,67.5,71.0]):
+        n_d = int(SR*.06)
+        d = _np_bp(n_d,500+i*60,200,i+300)*_np_exp(n_d,.018)*.14
+        _np_place2(drips, t, d)
+    presence = (_np_sinev(N,293,.06)*_np_swell2(N,20.0,0,.6) +
+                _np_sinev(N,440,.03)*_np_swell2(N,15.0,6,.7) +
+                _np_sinev(N,220,.04)*_np_swell2(N,25.0,10,.5))
+    return _np_seamless2(_np_norm(_np_mix2(melody*.75, ocean, drips, presence)))
+
 
 def _dungeon_windswept_isle():
-    N=int(SR*22.0); harm_data=[(165,3.0),(175,2.0),(196,2.5),(175,1.5),(165,3.5),(147,2.0),(165,3.0),(196,4.5)]
-    harm_t=[0.0]
-    for _,d in harm_data[:-1]: harm_t.append(harm_t[-1]+d)
-    harmony=_np.zeros(N,_np.float32)
-    for (freq,dur),t in zip(harm_data,harm_t):
-        if t<22.0:
-            n_h=int(SR*dur); h=(_np_sinev(n_h,freq,.20)+_np_sinev(n_h,freq*2,.10)+_np_sinev(n_h,freq*3,.05))
-            env=_np.minimum(_np.arange(n_h)/(SR*.1),1.0).astype(_np.float32)*_np_exp(n_h,.8)
-            _np_place2(harmony,t,(h*env).astype(_np.float32))
-    wind_int=_np_bp(N,380,200,18)*_np_swell2(N,5.0,0,.6)*.14+_np_bp(N,180,80,19)*_np_swell2(N,7.5,2.5,.5)*.08
-    stone_hum=_np_sinev(N,82,.10)*_np_swell2(N,18.0,0,.4)+_np_sinev(N,123,.06)*_np_swell2(N,11.0,5,.5)
-    guardian=_np.zeros(N,_np.float32)
-    for t,freq in [(0.0,55),(11.0,49),(0.0,73),(11.0,67)]:
-        n_g=int(SR*11.0); g=_np_sinev(n_g,freq,.08)*_np_exp(n_g,4.0); _np_place2(guardian,t,g)
-    guardian=_np_lp(guardian,150)
-    return _np_seamless2(_np_norm(_np_mix2(harmony*.70,wind_int,stone_hum,guardian)))
+    """Windswept Isle — 66s. Aeolian harmonics, stone guardian hum, howling wind."""
+    N = int(SR * 66.0)
+    # ── Harmony A (0-22s): E Aeolian long tones ──────────────────────────
+    harm_a = [(165,3.0),(175,2.0),(196,2.5),(175,1.5),(165,3.5),(147,2.0),(165,3.0),(196,4.5)]
+    harm_ta = [0.0]; [harm_ta.append(harm_ta[-1]+d) for _,d in harm_a[:-1]]
+    # ── Harmony B (22-44s): shifts to G — slightly warmer, then back ─────
+    harm_b = [(196,3.0),(220,2.5),(247,3.0),(220,2.0),(196,3.5),(175,2.5),(196,3.0),(220,4.0)]
+    harm_tb = [0.0]; [harm_tb.append(harm_tb[-1]+d) for _,d in harm_b[:-1]]
+    harmony = _np.zeros(N, _np.float32)
+    for section_t, harm_data, harm_times in [
+        (0.0, harm_a, harm_ta), (22.0, harm_b, harm_tb), (44.0, harm_a, harm_ta)
+    ]:
+        for (freq,dur),t in zip(harm_data, harm_times):
+            nt = section_t + t
+            if nt < 66.0:
+                n_h = int(SR*dur)
+                h = (_np_sinev(n_h,freq,.20)+_np_sinev(n_h,freq*2,.10)+_np_sinev(n_h,freq*3,.05))
+                env = _np.minimum(_np.arange(n_h)/(SR*.1),1.0).astype(_np.float32)*_np_exp(n_h,.8)
+                _np_place2(harmony, nt, (h*env).astype(_np.float32))
+    wind_int = (_np_bp(N,380,200,18)*_np_swell2(N,5.0,0,.6)*.14 +
+                _np_bp(N,180,80,19)*_np_swell2(N,7.5,2.5,.5)*.08 +
+                _np_bp(N,600,250,20)*_np_swell2(N,3.5,4,.55)*.06)
+    stone_hum = (_np_sinev(N,82,.10)*_np_swell2(N,18.0,0,.4) +
+                 _np_sinev(N,123,.06)*_np_swell2(N,11.0,5,.5) +
+                 _np_sinev(N,61,.07)*_np_swell2(N,22.0,8,.45))
+    # ── Guardian low drones — shift register in B ────────────────────────
+    guardian = _np.zeros(N, _np.float32)
+    for t,freq in [(0.0,55),(22.0,49),(44.0,55)]:
+        n_g = int(SR*22.0)
+        if int(SR*t)+n_g <= N:
+            g = _np_sinev(n_g,freq,.09)*_np_exp(n_g,4.0)
+            _np_place2(guardian, t, g)
+    for t,freq in [(0.0,73),(22.0,67),(44.0,73)]:
+        n_g = int(SR*22.0)
+        if int(SR*t)+n_g <= N:
+            g = _np_sinev(n_g,freq,.06)*_np_exp(n_g,5.0)
+            _np_place2(guardian, t, g)
+    guardian = _np_lp(guardian, 150)
+    return _np_seamless2(_np_norm(_np_mix2(harmony*.70, wind_int, stone_hum, guardian)))
+
 
 def _dungeon_dragons_tooth():
-    N=int(SR*20.0)
-    seismic=_np_lp(_np_sinev(N,28,.22)*_np_swell2(N,9.0,0,.50)+_np_sinev(N,42,.14)*_np_swell2(N,6.5,3,.55),100)
-    heat=_np_bp(N,220,90,20)*_np_swell2(N,4.5,0,.6)*.14+_np_bp(N,120,55,21)*_np_swell2(N,7.0,2.5,.55)*.10
-    breath=_np.zeros(N,_np.float32)
-    for t,vol in [(0.0,.22),(5.0,.18),(10.0,.25),(15.5,.20)]:
-        n_b=int(SR*3.5); b=_np_bp(n_b,95,45,int(t*5))*_np_swell2(n_b,3.5,0,.6)*vol*_np.hanning(n_b).astype(_np.float32)**.6
-        _np_place2(breath,t,_np_lp(b,300))
-    stones=_np.zeros(N,_np.float32)
-    for t,vol in [(1.5,.35),(4.2,.28),(7.8,.40),(11.3,.32),(14.0,.38),(17.5,.30)]:
-        n_s=int(SR*.45); s=(_np_sinev(n_s,55,.5)+_np_bp(n_s,300,150,int(t*20))*.3)*_np_exp(n_s,.08)*vol
-        _np_place2(stones,t,s)
-    stones=_np_lp(stones,400)
-    karreth=_np.zeros(N,_np.float32)
-    for t,freq in [(2.0,98),(6.5,87),(11.0,98),(15.5,73)]:
-        _np_place2(karreth,t,_np_note(freq,2.0,.22,.35))
-    karreth=_np_lp(karreth,400)
-    return _np_seamless2(_np_norm(_np_mix2(seismic,heat,breath,stones,karreth*.8)))
+    """Dragon's Tooth — 60s. Seismic bass, superheated air, deep dragon breath."""
+    N = int(SR * 60.0)
+    seismic = _np_lp(
+        _np_sinev(N,28,.22)*_np_swell2(N,9.0,0,.50) +
+        _np_sinev(N,42,.14)*_np_swell2(N,6.5,3,.55) +
+        _np_sinev(N,21,.10)*_np_swell2(N,13.0,5,.42),   # sub-bass undertone
+        100)
+    heat = (_np_bp(N,220,90,20)*_np_swell2(N,4.5,0,.6)*.14 +
+            _np_bp(N,120,55,21)*_np_swell2(N,7.0,2.5,.55)*.10 +
+            _np_bp(N,340,130,22)*_np_swell2(N,5.5,6,.50)*.08)
+    # ── Dragon breath events — one per ~10s ──────────────────────────────
+    breath = _np.zeros(N, _np.float32)
+    for t,vol in [(0.0,.22),(10.0,.26),(20.0,.20),(30.0,.28),(40.0,.22),(50.0,.24)]:
+        n_b = int(SR*4.0)
+        b = _np_bp(n_b,95,45,int(t*5))*_np_swell2(n_b,4.0,0,.6)*vol*_np.hanning(n_b).astype(_np.float32)**.6
+        _np_place2(breath, t, _np_lp(b, 300))
+    # ── Stone collapse events ─────────────────────────────────────────────
+    stones = _np.zeros(N, _np.float32)
+    for t,vol in [(1.5,.35),(4.2,.28),(7.8,.40),(11.3,.32),(14.0,.38),(17.5,.30),
+                  (21.5,.36),(25.0,.30),(29.0,.42),(33.5,.34),(38.0,.38),
+                  (42.5,.36),(46.0,.30),(50.5,.40),(54.0,.34),(57.5,.32)]:
+        n_s = int(SR*.45)
+        s = (_np_sinev(n_s,55,.5)+_np_bp(n_s,300,150,int(t*20))*.3)*_np_exp(n_s,.08)*vol
+        _np_place2(stones, t, s)
+    stones = _np_lp(stones, 400)
+    # ── Karreth thematic motif: A (B2), B-section (G2), A' (B2+harmony) ─
+    karreth = _np.zeros(N, _np.float32)
+    for t,freq in [(2.0,98),(6.5,87),(11.0,98),(15.5,73)]:            # A
+        _np_place2(karreth, t, _np_note(freq, 2.0, .22, .35))
+    for t,freq in [(22.0,82),(27.5,73),(32.0,82),(37.5,61)]:           # B: lower
+        _np_place2(karreth, t, _np_note(freq, 2.5, .24, .40))
+    for t,freq in [(42.0,98),(46.5,87),(51.0,98),(55.5,73)]:           # A'
+        _np_place2(karreth, t, _np_note(freq, 2.0, .22, .35))
+        _np_place2(karreth, t, _np_note(freq*1.5, 2.0, .10, .35))     # harmony
+    karreth = _np_lp(karreth, 400)
+    return _np_seamless2(_np_norm(_np_mix2(seismic, heat, breath, stones, karreth*.8)))
+
 
 def _dungeon_valdris_spire():
-    N=int(SR*28.0)
-    foundation=_np_lp(_np_sinev(N,36,.20)*_np_swell2(N,14.0,0,.40)+_np_sinev(N,54,.12)*_np_swell2(N,9.5,5,.45)+_np_sinev(N,27,.10)*_np_swell2(N,20.0,0,.35),180)
-    valdris_mel=[(123,2.5),(147,2.0),(165,2.5),(185,3.0),(196,2.0),(220,2.5),(196,1.5),(185,2.0),(165,2.5),(147,2.0),(123,3.5)]
-    vm_t=[0.0]
-    for _,d in valdris_mel[:-1]: vm_t.append(vm_t[-1]+d)
-    v_mel=_np.zeros(N,_np.float32); dark_h=_np.zeros(N,_np.float32)
-    for (freq,dur),t in zip(valdris_mel,vm_t):
-        if t<28.0:
-            _np_place2(v_mel,t,_np_note(freq,dur*1.2,.20,.6))
-            _np_place2(dark_h,t,_np_note(freq*1.414,dur*1.2,.10,.5))
-        t2=t+14.0
-        if t2<28.0: _np_place2(v_mel,t2,_np_note(freq*2,dur*1.2,.14,.5))
-    v_mel=_np_lp(v_mel,800); dark_h=_np_lp(dark_h,600)
-    beat=60.0/65; drums=_np.zeros(N,_np.float32)
-    for i in range(int(28.0/beat)):
-        t=i*beat; vol=.32 if i%4==0 else (.20 if i%2==0 else .12); n_d=int(SR*.35)
-        d=_np_sinev(n_d,45,.5)*_np_exp(n_d,.06)*vol+_np_bp(n_d,250,120,i*7)*_np_exp(n_d,.03)*vol*.4
-        _np_place2(drums,t,d)
-    drums=_np_lp(drums,300)
-    fading_hiss=_np_bp(N,4000,2000,22)*_np_swell2(N,7.0,0,.8)*.05*_np_swell2(N,3.5,1.5,.7)
-    ascend=_np_bp(N,550,200,23)*_np_swell2(N,28.0,_np.pi,.70)*.10+_np_bp(N,380,150,24)*_np_swell2(N,28.0,_np.pi*.7,.65)*.07
-    return _np_seamless2(_np_norm(_np_mix2(foundation,v_mel*.75,dark_h*.6,drums*.7,fading_hiss,ascend)))
+    """Valdris' Spire — 84s. Imperial march decays into Fading corruption. Full arc."""
+    N = int(SR * 84.0)
+    # ── Foundation: slow swell drones throughout ─────────────────────────
+    foundation = _np_lp(
+        _np_sinev(N,36,.20)*_np_swell2(N,14.0,0,.40) +
+        _np_sinev(N,54,.12)*_np_swell2(N,9.5,5,.45) +
+        _np_sinev(N,27,.10)*_np_swell2(N,20.0,0,.35) +
+        _np_sinev(N,48,.07)*_np_swell2(N,28.0,8,.38),
+        180)
+    # ── Melody: A (0-28s), B/development (28-56s), A' climax (56-84s) ───
+    mel_a = [(123,2.5),(147,2.0),(165,2.5),(185,3.0),(196,2.0),(220,2.5),(196,1.5),(185,2.0),(165,2.5),(147,2.0),(123,3.5)]
+    mel_b = [(185,2.0),(220,2.5),(247,2.0),(277,3.0),(247,1.5),(220,2.5),(185,2.0),(165,3.0),(147,2.5),(165,2.0),(185,3.5)]
+    v_mel = _np.zeros(N, _np.float32)
+    dark_h = _np.zeros(N, _np.float32)
+    for mel, t_offset in [(mel_a, 0.0), (mel_b, 28.0), (mel_a, 56.0)]:
+        mt = [0.0]; [mt.append(mt[-1]+d) for _,d in mel[:-1]]
+        for (freq,dur),t in zip(mel, mt):
+            nt = t_offset + t
+            if nt < 84.0:
+                _np_place2(v_mel, nt, _np_note(freq, dur*1.2, .20, .6))
+                _np_place2(dark_h, nt, _np_note(freq*1.414, dur*1.2, .10, .5))
+                # A' gets upper octave too
+                if t_offset == 56.0:
+                    _np_place2(v_mel, nt, _np_note(freq*2, dur*1.2, .12, .5))
+    v_mel  = _np_lp(v_mel,  800)
+    dark_h = _np_lp(dark_h, 600)
+    # ── Drums: enter at bar 2, more complex in B, thundering in A' ───────
+    beat = 60.0 / 65
+    drums = _np.zeros(N, _np.float32)
+    for i in range(int(84.0 / beat)):
+        t = i * beat
+        if t < 4.0: continue   # silence before drums enter
+        if t >= 56.0:           # A': double-time feel
+            vol = .40 if i%4==0 else (.26 if i%2==0 else .16)
+        else:
+            vol = .32 if i%4==0 else (.20 if i%2==0 else .12)
+        n_d = int(SR*.35)
+        d = _np_sinev(n_d,45,.5)*_np_exp(n_d,.06)*vol + _np_bp(n_d,250,120,i*7)*_np_exp(n_d,.03)*vol*.4
+        _np_place2(drums, t, d)
+    drums = _np_lp(drums, 300)
+    fading_hiss = (_np_bp(N,4000,2000,22)*_np_swell2(N,7.0,0,.8)*.05*_np_swell2(N,3.5,1.5,.7) +
+                   _np_bp(N,6000,3000,23)*_np_swell2(N,4.5,12,.75)*.03)
+    ascend = (_np_bp(N,550,200,23)*_np_swell2(N,28.0,_np.pi,.70)*.10 +
+              _np_bp(N,380,150,24)*_np_swell2(N,28.0,_np.pi*.7,.65)*.07 +
+              _np_bp(N,750,200,25)*_np_swell2(N,42.0,_np.pi*1.2,.60)*.06)
+    return _np_seamless2(_np_norm(_np_mix2(foundation, v_mel*.75, dark_h*.6, drums*.7, fading_hiss, ascend)))
+
 
 # ── Town music generators ──────────────────────────────────────
 
 def _town_briarhollow():
-    """Warm G-major folk — hearth fire, lute melody, gentle drum, tavern hum."""
-    N = int(SR * 20.0)
-    # Melody: G major folk phrase (G D E G A B G A D repeat)
-    mel_notes = [(196,.50),(293,.38),(329,.38),(392,.50),(440,.38),(494,.38),
-                 (392,.75),(440,.38),(293,.75),(196,.50),(247,.38),(293,.38),
-                 (329,.50),(293,.38),(247,.38),(196,1.00),
-                 (220,.38),(247,.38),(293,.50),(329,.38),(392,.50),(440,.38),
-                 (392,.75),(329,.38),(293,.50),(247,.75),(196,1.25)]
-    mel_t = [0.0]
-    for _,d in mel_notes[:-1]: mel_t.append(mel_t[-1]+d)
+    """Briarhollow — 60s warm G-major folk. A (lute melody) B (counter-melody) A'."""
+    N = int(SR * 60.0)
+    # ── Melody: two full passes + variation ──────────────────────────────
+    mel_a = [(196,.50),(293,.38),(329,.38),(392,.50),(440,.38),(494,.38),
+             (392,.75),(440,.38),(293,.75),(196,.50),(247,.38),(293,.38),
+             (329,.50),(293,.38),(247,.38),(196,1.00),
+             (220,.38),(247,.38),(293,.50),(329,.38),(392,.50),(440,.38),
+             (392,.75),(329,.38),(293,.50),(247,.75),(196,1.25)]
+    mel_ta = [0.0]; [mel_ta.append(mel_ta[-1]+d) for _,d in mel_a[:-1]]
+    # ── B-section melody: higher register, more ornate ───────────────────
+    mel_b = [(392,.50),(440,.38),(494,.50),(523,.75),(494,.38),(440,.50),
+             (392,.75),(440,.38),(392,.38),(349,.50),(392,.38),(329,.75),
+             (293,.50),(329,.38),(349,.50),(392,.75),(329,.38),(293,.50),(247,1.25)]
+    mel_tb = [0.0]; [mel_tb.append(mel_tb[-1]+d) for _,d in mel_b[:-1]]
     melody = _np.zeros(N, _np.float32)
-    for (freq,dur),t in zip(mel_notes, mel_t):
+    # Pass A (0-20s)
+    for (freq,dur),t in zip(mel_a, mel_ta):
         if t < 20.0: _np_place2(melody, t, _np_note(freq, dur*1.1, .22, .18))
+    # Pass B (20-40s): high register
+    for (freq,dur),t in zip(mel_b, mel_tb):
+        nt = 20.0 + t
+        if nt < 40.0: _np_place2(melody, nt, _np_note(freq, dur*1.1, .20, .18))
+    # Pass A' (40-60s): original + lower harmony
+    for (freq,dur),t in zip(mel_a, mel_ta):
+        nt = 40.0 + t
+        if nt < 60.0:
+            _np_place2(melody, nt, _np_note(freq, dur*1.1, .22, .18))
+            _np_place2(melody, nt, _np_note(freq*0.75, dur*1.1, .10, .20))
     melody = _np_lp(melody, 1200)
-    # Counter-melody (lower, softer, starts at bar 2)
-    cnt_notes = [(98,.75),(123,.50),(147,.75),(130,.50),(98,1.0),(110,.50),(123,.75),(98,1.0)]
-    cnt_t = [2.0]
-    for _,d in cnt_notes[:-1]: cnt_t.append(cnt_t[-1]+d)
+    # ── Counter-melody (enters at 10s, richer in A') ──────────────────────
+    cnt = [(98,.75),(123,.50),(147,.75),(130,.50),(98,1.0),(110,.50),(123,.75),(98,1.0),
+           (110,.75),(130,.50),(147,.75),(130,.50),(123,1.0),(110,.50),(98,.75),(87,1.25)]
+    cnt_t = [0.0]; [cnt_t.append(cnt_t[-1]+d) for _,d in cnt[:-1]]
     counter = _np.zeros(N, _np.float32)
-    for (freq,dur),t in zip(cnt_notes, cnt_t):
-        if t < 20.0: _np_place2(counter, t, _np_note(freq, dur*1.3, .14, .25))
+    for (freq,dur),t in zip(cnt, cnt_t):
+        for t_off in [10.0, 30.0, 50.0]:
+            nt = t_off + t
+            if nt < 60.0:
+                vol = .16 if t_off < 40.0 else .20
+                _np_place2(counter, nt, _np_note(freq, dur*1.3, vol, .25))
     counter = _np_lp(counter, 600)
-    # Light folk drum — 120bpm 4/4, beat + off-beat
-    beat = 60.0/120
+    # ── Drums: 120bpm throughout, B-section adds hi-hat fills ────────────
+    beat = 60.0 / 120
     drum = _np.zeros(N, _np.float32)
-    for i in range(int(20.0/beat)):
+    for i in range(int(60.0 / beat)):
         t = i * beat
-        if i % 4 == 0:        # downbeat — thud
+        if i % 4 == 0:
             n_d = int(SR*.14); d = _np_sinev(n_d,120,.40)*_np_exp(n_d,.04)+_np_bp(n_d,300,150,i)*_np_exp(n_d,.02)*.2
-        elif i % 2 == 0:      # backbeat — softer tap
+        elif i % 2 == 0:
             n_d = int(SR*.10); d = _np_bp(n_d,800,350,i+40)*_np_exp(n_d,.025)*.28
-        else:                  # hi-hat ghost
+        elif 20.0 <= t < 40.0:   # B-section hi-hat fills
+            n_d = int(SR*.05); d = _np_bp(n_d,4000,2000,i+80)*_np_exp(n_d,.010)*.16
+        else:
             n_d = int(SR*.06); d = _np_bp(n_d,3500,1500,i+80)*_np_exp(n_d,.012)*.14
         _np_place2(drum, t, d)
     drum = _np_lp(drum, 2000)
-    # Warm low drone — G (98 Hz) with gentle swell
-    drone = _np_sinev(N,98,.10)*_np_swell2(N,10.0,0,.5) + _np_sinev(N,196,.06)*_np_swell2(N,7.0,3,.4)
+    drone = (_np_sinev(N,98,.10)*_np_swell2(N,10.0,0,.5) +
+             _np_sinev(N,196,.06)*_np_swell2(N,7.0,3,.4) +
+             _np_sinev(N,147,.04)*_np_swell2(N,14.0,5,.38))
     drone = _np_lp(drone, 400)
-    # Tavern murmur — very soft bandpass noise
-    murmur = _np_bp(N,350,180,42)*_np_swell2(N,4.5,0,.7)*.04 + _np_bp(N,600,200,43)*_np_swell2(N,3.0,2,.6)*.02
+    murmur = (_np_bp(N,350,180,42)*_np_swell2(N,4.5,0,.7)*.04 +
+              _np_bp(N,600,200,43)*_np_swell2(N,3.0,2,.6)*.02)
     return _np_seamless2(_np_norm(_np_mix2(melody*.75, counter*.55, drum*.55, drone, murmur)))
 
 
 def _town_woodhaven():
-    """D-Dorian pan flute + birdsong — forest village at dawn."""
-    N = int(SR * 22.0)
-    # D Dorian melody (D E F G A B C D) — flute-like, flowing
-    mel_notes = [(293,.60),(329,.40),(349,.60),(392,.80),(440,.60),(494,.40),
-                 (523,.80),(494,.40),(440,.60),(392,.80),(349,.40),(329,.60),(293,1.20),
-                 (246,.40),(261,.60),(293,.80),(329,.60),(392,.40),(440,.80),
-                 (392,.60),(349,.40),(329,.60),(293,.80),(246,.40),(220,1.20)]
-    mel_t = [0.0]
-    for _,d in mel_notes[:-1]: mel_t.append(mel_t[-1]+d)
+    """Woodhaven — 66s D-Dorian pan flute. A (flowing), B (rhythmic), A' (full)."""
+    N = int(SR * 66.0)
+    # ── Melody A: D Dorian pan flute flowing ─────────────────────────────
+    mel_a = [(293,.60),(329,.40),(349,.60),(392,.80),(440,.60),(494,.40),
+             (523,.80),(494,.40),(440,.60),(392,.80),(349,.40),(329,.60),(293,1.20),
+             (246,.40),(261,.60),(293,.80),(329,.60),(392,.40),(440,.80),
+             (392,.60),(349,.40),(329,.60),(293,.80),(246,.40),(220,1.20)]
+    mel_ta = [0.0]; [mel_ta.append(mel_ta[-1]+d) for _,d in mel_a[:-1]]
+    # ── Melody B (22-44s): same scale, more rhythmic short notes ─────────
+    mel_b = [(293,.30),(329,.30),(392,.40),(440,.30),(392,.30),(349,.30),(329,.40),
+             (293,.60),(261,.30),(293,.30),(329,.40),(392,.30),(440,.60),(494,.30),
+             (523,.40),(494,.30),(440,.40),(392,.30),(349,.60),(329,.30),(293,.80)]
+    mel_tb = [0.0]; [mel_tb.append(mel_tb[-1]+d) for _,d in mel_b[:-1]]
     melody = _np.zeros(N, _np.float32)
-    for (freq,dur),t in zip(mel_notes, mel_t):
+    for (freq,dur),t in zip(mel_a, mel_ta):
         if t < 22.0:
             n = int(SR*dur*1.2)
-            # Pan flute: sine + gentle third harmonic, fast attack, slow release
-            env = _np.minimum(_np.arange(n)/(SR*.03), 1.0).astype(_np.float32) * _np_exp(n, .5)
-            s = (_np_sinev(n,freq,.28) + _np_sinev(n,freq*3,.06)) * env
+            env = _np.minimum(_np.arange(n)/(SR*.03),1.0).astype(_np.float32)*_np_exp(n,.5)
+            s = (_np_sinev(n,freq,.28)+_np_sinev(n,freq*3,.06))*env
             _np_place2(melody, t, _np_lp(s, 1800))
-    # Birdsong — short chirp clusters at naturalistic times
-    bird_events = [(1.2,1800,.04),(1.28,2200,.05),(1.36,2600,.03),
-                   (4.5,2400,.05),(4.6,2000,.04),(4.72,2800,.03),
-                   (8.1,1600,.04),(8.2,2000,.05),(8.32,2400,.03),(8.44,1800,.04),
-                   (12.0,2200,.05),(12.14,2800,.04),(12.26,2400,.03),
-                   (15.8,1800,.04),(15.9,2200,.05),(16.04,2600,.03),
-                   (18.5,2000,.04),(18.64,2400,.05),(18.76,1600,.03)]
+    for (freq,dur),t in zip(mel_b, mel_tb):
+        nt = 22.0 + t
+        if nt < 44.0:
+            n = int(SR*dur*1.1)
+            env = _np.minimum(_np.arange(n)/(SR*.02),1.0).astype(_np.float32)*_np_exp(n,.3)
+            s = (_np_sinev(n,freq,.24)+_np_sinev(n,freq*2,.08))*env
+            _np_place2(melody, nt, _np_lp(s, 2000))
+    # A' (44-66s): A melody + harmony a 5th above
+    for (freq,dur),t in zip(mel_a, mel_ta):
+        nt = 44.0 + t
+        if nt < 66.0:
+            n = int(SR*dur*1.2)
+            env = _np.minimum(_np.arange(n)/(SR*.03),1.0).astype(_np.float32)*_np_exp(n,.5)
+            s = (_np_sinev(n,freq,.28)+_np_sinev(n,freq*3,.06))*env
+            _np_place2(melody, nt, _np_lp(s, 1800))
+            # 5th harmony
+            s2 = _np_sinev(n,freq*1.5,.12)*env
+            _np_place2(melody, nt, _np_lp(s2, 1600))
+    # ── Birdsong (naturalistic, throughout) ──────────────────────────────
+    bird_events = []
+    for base_t in [1.2, 4.5, 8.1, 12.0, 15.8, 18.5,
+                   23.0, 27.5, 31.0, 35.5, 39.0, 42.5,
+                   45.0, 49.5, 53.0, 57.5, 61.0, 64.5]:
+        bird_events += [(base_t, 1800,.04),(base_t+.1,2200,.05),(base_t+.22,2600,.03)]
     birds = _np.zeros(N, _np.float32)
-    for t, freq, vol in bird_events:
-        n_b = int(SR*.04)
-        b = _np_bp(n_b,freq,300,int(t*100))*_np_exp(n_b,.008)*vol
-        _np_place2(birds, t, b)
-    # Breeze through leaves
-    breeze = _np_bp(N,800,400,55)*_np_swell2(N,5.5,0,.7)*.06 + _np_bp(N,1600,600,56)*_np_swell2(N,3.5,2,.6)*.03
-    # Low D drone (73 Hz) with slow swell
-    drone = _np_sinev(N,73,.09)*_np_swell2(N,11.0,0,.5) + _np_sinev(N,146,.05)*_np_swell2(N,8.0,4,.4)
+    for t,freq,vol in bird_events:
+        if t < 66.0:
+            n_b = int(SR*.04)
+            b = _np_bp(n_b,freq,300,int(t*100))*_np_exp(n_b,.008)*vol
+            _np_place2(birds, t, b)
+    breeze = (_np_bp(N,800,400,55)*_np_swell2(N,5.5,0,.7)*.06 +
+              _np_bp(N,1600,600,56)*_np_swell2(N,3.5,2,.6)*.03)
+    drone = (_np_sinev(N,73,.09)*_np_swell2(N,11.0,0,.5) +
+             _np_sinev(N,146,.05)*_np_swell2(N,8.0,4,.4) +
+             _np_sinev(N,109,.04)*_np_swell2(N,15.0,6,.38))
     drone = _np_lp(drone, 350)
-    # Gentle water (stream nearby) — very low rumble
     water = _np_bp(N,120,60,57)*_np_swell2(N,7.0,1,.6)*.05
     return _np_seamless2(_np_norm(_np_mix2(melody*.80, birds*.9, breeze, drone, water)))
 
 
 def _town_ironhearth():
-    """E-Phrygian forge town — hammer rhythm, bellows, metallic resonance."""
-    N = int(SR * 18.0)
-    # Forge rhythm — heavy on beats, metallic ring on off-beats, 95bpm
-    beat = 60.0/95
+    """Ironhearth — 54s E-Phrygian forge town. A (forge work) B (horn march) A'."""
+    N = int(SR * 54.0)
+    beat = 60.0 / 95
     forge = _np.zeros(N, _np.float32)
-    for i in range(int(18.0/beat)):
+    for i in range(int(54.0 / beat)):
         t = i * beat
-        if i % 4 == 0:       # heavy hammer strike
-            n_h = int(SR*.22)
-            h = (_np_sinev(n_h,82,.55)+_np_bp(n_h,1800,900,i)*_np_exp(n_h,.015)*.30)*_np_exp(n_h,.06)
-        elif i % 4 == 2:     # second hammer (slightly lighter)
-            n_h = int(SR*.18)
-            h = (_np_sinev(n_h,73,.40)+_np_bp(n_h,2400,1000,i+20)*_np_exp(n_h,.012)*.22)*_np_exp(n_h,.05)
-        elif i % 2 == 1:     # anvil ring
-            n_h = int(SR*.35)
-            h = (_np_sinev(n_h,1047,.18)+_np_sinev(n_h,1318,.10)+_np_sinev(n_h,880,.08))*_np_exp(n_h,.20)
+        # B-section (18-36s): forge goes quiet, fewer hits, more space
+        if 18.0 <= t < 36.0:
+            if i % 8 == 0:
+                n_h = int(SR*.22); h = (_np_sinev(n_h,82,.55)+_np_bp(n_h,1800,900,i)*_np_exp(n_h,.015)*.30)*_np_exp(n_h,.06)
+            elif i % 4 == 2:
+                n_h = int(SR*.18); h = (_np_sinev(n_h,73,.30))*_np_exp(n_h,.05)
+            else: continue
         else:
-            continue
+            if i % 4 == 0:
+                n_h = int(SR*.22); h = (_np_sinev(n_h,82,.55)+_np_bp(n_h,1800,900,i)*_np_exp(n_h,.015)*.30)*_np_exp(n_h,.06)
+            elif i % 4 == 2:
+                n_h = int(SR*.18); h = (_np_sinev(n_h,73,.40)+_np_bp(n_h,2400,1000,i+20)*_np_exp(n_h,.012)*.22)*_np_exp(n_h,.05)
+            elif i % 2 == 1:
+                n_h = int(SR*.35); h = (_np_sinev(n_h,1047,.18)+_np_sinev(n_h,1318,.10)+_np_sinev(n_h,880,.08))*_np_exp(n_h,.20)
+            else: continue
         _np_place2(forge, t, h)
     forge = _np_lp(forge, 3000)
-    # E Phrygian horn melody (E F G A B) — gruff, low brass-ish
-    mel_notes = [(164,.50),(174,.38),(196,.50),(220,.75),(246,.38),
-                 (220,.50),(196,.75),(174,.38),(164,1.00),
-                 (196,.50),(220,.38),(246,.50),(220,.38),(196,.38),(174,.75),(164,1.25)]
-    mel_t = [0.0]
-    for _,d in mel_notes[:-1]: mel_t.append(mel_t[-1]+d)
+    # ── Horn melody: A (0-18s), B march (18-36s), A' with harmony ────────
+    mel_a = [(164,.50),(174,.38),(196,.50),(220,.75),(246,.38),(220,.50),(196,.75),(174,.38),(164,1.00),(196,.50),(220,.38),(246,.50),(220,.38),(196,.38),(174,.75),(164,1.25)]
+    mel_b = [(164,.75),(196,.50),(246,.75),(220,.50),(196,.75),(164,.50),(174,.75),(164,1.00),(196,.50),(220,.75),(246,.50),(220,.75),(196,.50),(174,.75),(164,1.50)]
+    mel_ta = [0.0]; [mel_ta.append(mel_ta[-1]+d) for _,d in mel_a[:-1]]
+    mel_tb = [0.0]; [mel_tb.append(mel_tb[-1]+d) for _,d in mel_b[:-1]]
     horn = _np.zeros(N, _np.float32)
-    for (freq,dur),t in zip(mel_notes, mel_t):
-        if t < 18.0:
-            n = int(SR*dur*1.1)
-            env = _np.minimum(_np.arange(n)/(SR*.06), 1.0).astype(_np.float32)*_np_exp(n,.35)
-            s = (_np_sinev(n,freq,.22)+_np_sinev(n,freq*2,.11)+_np_sinev(n,freq*3,.05))*env
-            _np_place2(horn, t, _np_lp(s, 900))
-    # Bellows — low whoosh
+    for mel, t_off in [(mel_a, 0.0), (mel_b, 18.0), (mel_a, 36.0)]:
+        mt = [0.0]; [mt.append(mt[-1]+d) for _,d in mel[:-1]]
+        for (freq,dur),t in zip(mel, mt):
+            nt = t_off + t
+            if nt < 54.0:
+                n = int(SR*dur*1.1)
+                env = _np.minimum(_np.arange(n)/(SR*.06),1.0).astype(_np.float32)*_np_exp(n,.35)
+                s = (_np_sinev(n,freq,.22)+_np_sinev(n,freq*2,.11)+_np_sinev(n,freq*3,.05))*env
+                _np_place2(horn, nt, _np_lp(s, 900))
+                if t_off == 36.0 and freq > 170:  # A' harmony
+                    s2 = (_np_sinev(n,freq*1.33,.10))*env
+                    _np_place2(horn, nt, _np_lp(s2, 800))
     bellows = _np.zeros(N, _np.float32)
-    for t in [0.0, 3.2, 6.4, 9.6, 12.8, 16.0]:
+    for t in [0.0,3.2,6.4,9.6,12.8,16.0,19.5,23.0,26.5,30.0,33.5,
+              36.5,39.7,42.9,46.1,49.3,52.5]:
         n_b = int(SR*1.8)
         b = _np_bp(n_b,160,80,int(t*10))*_np_swell2(n_b,1.8,0,.8)*.18*_np.hanning(n_b).astype(_np.float32)**.5
         _np_place2(bellows, t, _np_lp(b, 400))
-    # Low E drone (82 Hz)
-    drone = _np_sinev(N,82,.12)*_np_swell2(N,9.0,0,.5) + _np_sinev(N,164,.06)*_np_swell2(N,6.0,2,.4)
+    drone = (_np_sinev(N,82,.12)*_np_swell2(N,9.0,0,.5) +
+             _np_sinev(N,164,.06)*_np_swell2(N,6.0,2,.4) +
+             _np_sinev(N,123,.05)*_np_swell2(N,12.0,4,.38))
     drone = _np_lp(drone, 500)
-    # Distant fire crackle
     crackle = _np_bp(N,3000,2000,60)*_np_swell2(N,2.5,0,.9)*.03
     return _np_seamless2(_np_norm(_np_mix2(forge*.70, horn*.65, bellows*.80, drone, crackle)))
 
 
 def _town_greenwood():
-    """Sparse A-Phrygian — frontier village, owl calls, night wind."""
-    N = int(SR * 24.0)
-    # Sparse A Phrygian melody — wide gaps, mysterious (A Bb C D E F G)
-    mel_notes = [(220,1.00),(233,.60),(261,.80),(293,1.20),
-                 (329,.60),(349,.80),(329,.60),(293,1.00),(261,.80),(233,.60),(220,1.50),
-                 (246,.60),(261,.80),(293,.60),(329,1.00),(293,.80),(261,.60),(246,.80),(220,2.00)]
-    mel_t = [0.0]
-    for _,d in mel_notes[:-1]: mel_t.append(mel_t[-1]+d)
+    """Greenwood — 72s A-Phrygian. A (sparse night), B (dawn strings), A' (full)."""
+    N = int(SR * 72.0)
+    # ── Melody A (0-24s): sparse, mysterious ─────────────────────────────
+    mel_a = [(220,1.00),(233,.60),(261,.80),(293,1.20),(329,.60),(349,.80),
+             (329,.60),(293,1.00),(261,.80),(233,.60),(220,1.50),
+             (246,.60),(261,.80),(293,.60),(329,1.00),(293,.80),(261,.60),(246,.80),(220,2.00)]
+    mel_ta = [0.0]; [mel_ta.append(mel_ta[-1]+d) for _,d in mel_a[:-1]]
+    # ── Melody B (24-48s): adds a drone strings layer + slight movement ──
+    mel_b = [(233,.80),(261,.60),(293,.80),(329,1.00),(349,.60),(393,.80),
+             (349,.60),(329,.80),(293,1.00),(261,.60),(233,1.20),
+             (220,.60),(246,.80),(261,.60),(293,.80),(261,.60),(246,.80),(220,2.20)]
+    mel_tb = [0.0]; [mel_tb.append(mel_tb[-1]+d) for _,d in mel_b[:-1]]
     melody = _np.zeros(N, _np.float32)
-    for (freq,dur),t in zip(mel_notes, mel_t):
-        if t < 24.0:
-            n = int(SR*dur*1.4)
-            env = _np.minimum(_np.arange(n)/(SR*.08), 1.0).astype(_np.float32)*_np_exp(n,.55)
-            s = (_np_sinev(n,freq,.20)+_np_sinev(n,freq*2,.07))*env
-            _np_place2(melody, t, _np_lp(s, 1000))
-    # Owl hoots — "who-WHO" pattern at intervals
-    owl_times = [2.0, 6.5, 11.0, 15.5, 20.0]
+    for mel, t_off in [(mel_a, 0.0), (mel_b, 24.0), (mel_a, 48.0)]:
+        mt = [0.0]; [mt.append(mt[-1]+d) for _,d in mel[:-1]]
+        for (freq,dur),t in zip(mel, mt):
+            nt = t_off + t
+            if nt < 72.0:
+                n = int(SR*dur*1.4)
+                vol = .22 if t_off == 48.0 else .20
+                env = _np.minimum(_np.arange(n)/(SR*.08),1.0).astype(_np.float32)*_np_exp(n,.55)
+                s = (_np_sinev(n,freq,vol)+_np_sinev(n,freq*2,.07))*env
+                _np_place2(melody, nt, _np_lp(s, 1000))
+                if t_off == 48.0 and freq > 250:  # A' harmony
+                    s2 = _np_sinev(n,freq*0.75,.08)*env
+                    _np_place2(melody, nt, _np_lp(s2, 800))
+    # ── Owls throughout ──────────────────────────────────────────────────
     owls = _np.zeros(N, _np.float32)
-    for ot in owl_times:
-        # Low hoot
+    for ot in [2.0,6.5,11.0,15.5,20.0,25.5,30.5,35.0,40.5,46.0,51.5,56.0,61.5,67.0]:
         n_o1 = int(SR*.45)
         o1 = (_np_sinev(n_o1,220,.20)+_np_sinev(n_o1,330,.08))*_np_exp(n_o1,.18)*_np.hanning(n_o1).astype(_np.float32)**.4
         _np_place2(owls, ot, _np_lp(o1, 600))
-        # High hoot response (0.55s later)
         n_o2 = int(SR*.55)
         o2 = (_np_sinev(n_o2,293,.22)+_np_sinev(n_o2,440,.09))*_np_exp(n_o2,.22)*_np.hanning(n_o2).astype(_np.float32)**.4
-        if ot+0.6 < 24.0: _np_place2(owls, ot+0.6, _np_lp(o2, 700))
-    # Night wind — layered bandpass swells
+        if ot+0.6 < 72.0: _np_place2(owls, ot+0.6, _np_lp(o2, 700))
     wind = (_np_bp(N,300,150,65)*_np_swell2(N,8.0,0,.65)*.10 +
             _np_bp(N,700,300,66)*_np_swell2(N,5.5,3,.70)*.06 +
             _np_bp(N,150,70,67)*_np_swell2(N,12.0,2,.55)*.08)
-    # Low A drone (55 Hz + 110 Hz)
-    drone = _np_sinev(N,55,.10)*_np_swell2(N,12.0,0,.5) + _np_sinev(N,110,.05)*_np_swell2(N,9.0,5,.4)
+    drone = (_np_sinev(N,55,.10)*_np_swell2(N,12.0,0,.5) +
+             _np_sinev(N,110,.05)*_np_swell2(N,9.0,5,.4) +
+             _np_sinev(N,82,.04)*_np_swell2(N,16.0,7,.38))
     drone = _np_lp(drone, 300)
-    # Cricket chirps — very soft, high frequency
     crickets = _np_bp(N,5500,2000,68)*_np_swell2(N,1.2,0,.95)*.025
     return _np_seamless2(_np_norm(_np_mix2(melody*.75, owls*.85, wind, drone, crickets)))
 
 
 def _town_saltmere():
-    """6/8 sea shanty — swagger, waves, rope-and-timber port town."""
-    N = int(SR * 20.0)
-    # 6/8 at 84bpm dotted-quarter — eighth note = 0.238s
-    eighth = 60.0/84/1.5   # ~0.238s
-    # Shanty melody — D major, starts on A (220), bouncy phrasing
-    # Note durations in eighths, pitches in Hz
+    """Saltmere — 60s 6/8 shanty. A (verse), B (chorus full band), A' (reprise)."""
+    N = int(SR * 60.0)
+    eighth = 60.0 / 84 / 1.5
+    dotted_q = eighth * 3
+    # ── Shanty melody sequence (played three times with variation) ────────
     mel_seq = [(293,2),(329,1),(349,2),(392,1),(440,3),(392,1),(349,2),(329,1),
                (293,3),(247,1),(261,2),(293,1),(329,2),(293,1),(247,3),
                (220,1),(247,2),(293,1),(329,2),(392,1),(440,3),(494,1),(523,2),(494,1),
                (440,3),(392,1),(349,2),(329,1),(293,4)]
-    mel_t = [0.0]
-    for _,eighths in mel_seq[:-1]: mel_t.append(mel_t[-1]+eighths*eighth)
+    mel_t = [0.0]; [mel_t.append(mel_t[-1]+e*eighth) for _,e in mel_seq[:-1]]
+    one_pass = mel_t[-1] + mel_seq[-1][1]*eighth  # duration of one full pass
     melody = _np.zeros(N, _np.float32)
-    for (freq,eighths),t in zip(mel_seq, mel_t):
-        if t < 20.0:
+    for pass_n, t_off in enumerate([0.0, one_pass, one_pass*2]):
+        for (freq,eighths),t in zip(mel_seq, mel_t):
+            nt = t_off + t
+            if nt >= 60.0: break
             dur = eighths * eighth * 0.88
             n = int(SR*dur)
+            # B-section (pass 2): add harmony a 5th below
             env = _np.minimum(_np.arange(n)/(SR*.04),1.0).astype(_np.float32)*_np_exp(n,.28)
             s = (_np_sinev(n,freq,.24)+_np_sinev(n,freq*2,.10)+_np_sinev(n,freq*3,.04))*env
-            _np_place2(melody, t, _np_lp(s, 1600))
-    # Bass line — D (73 Hz) on dotted-quarter beats
-    dotted_q = eighth * 3
+            _np_place2(melody, nt, _np_lp(s, 1600))
+            if pass_n == 1 and freq > 280:  # chorus harmony
+                s2 = (_np_sinev(n,freq*0.667,.12))*env
+                _np_place2(melody, nt, _np_lp(s2, 1200))
+    # ── Bass (full length) ────────────────────────────────────────────────
     bass = _np.zeros(N, _np.float32)
-    bass_notes = [73, 73, 98, 98, 73, 87, 73, 73, 98, 87, 73, 73, 98, 98, 73, 87, 73, 73]
-    for i, freq in enumerate(bass_notes):
+    bass_cycle = [73,73,98,98,73,87,73,73,98,87]
+    for i in range(int(60.0 / dotted_q)):
         t = i * dotted_q
-        if t < 20.0:
-            n_b = int(SR*.28)
-            b = (_np_sinev(n_b,freq,.40)+_np_sinev(n_b,freq*2,.15))*_np_exp(n_b,.12)
-            _np_place2(bass, t, _np_lp(b, 500))
-    # Shanty drum — stomp on 1 and 4, clap on 2,3,5,6 of 6/8
+        freq = bass_cycle[i % len(bass_cycle)]
+        n_b = int(SR*.28)
+        b = (_np_sinev(n_b,freq,.40)+_np_sinev(n_b,freq*2,.15))*_np_exp(n_b,.12)
+        _np_place2(bass, t, _np_lp(b, 500))
+    # ── Drum (full length, B chorus adds hand-clap layer) ─────────────────
     drum = _np.zeros(N, _np.float32)
-    for bar in range(int(20.0/dotted_q/2)):
+    for bar in range(int(60.0 / (dotted_q * 2))):
         t0 = bar * dotted_q * 2
-        # Stomp: beats 1 & 4
         for beat_idx in [0, 3]:
             t = t0 + beat_idx * eighth
-            if t < 20.0:
-                n_s = int(SR*.18); s = _np_sinev(n_s,90,.48)*_np_exp(n_s,.05)+_np_bp(n_s,400,200,bar)*_np_exp(n_s,.03)*.25
-                _np_place2(drum, t, s)
-        # Clap: beats 2,3,5,6
-        for beat_idx in [1, 2, 4, 5]:
+            if t >= 60.0: break
+            n_s = int(SR*.18)
+            s = _np_sinev(n_s,90,.48)*_np_exp(n_s,.05)+_np_bp(n_s,400,200,bar)*_np_exp(n_s,.03)*.25
+            _np_place2(drum, t, s)
+        for beat_idx in [1,2,4,5]:
             t = t0 + beat_idx * eighth
-            if t < 20.0:
-                n_c = int(SR*.08); c = _np_bp(n_c,2000,1200,bar+beat_idx)*_np_exp(n_c,.018)*.22
-                _np_place2(drum, t, c)
+            if t >= 60.0: break
+            n_c = int(SR*.08)
+            vol = .28 if (one_pass <= t0 < one_pass*2) else .22   # louder in B
+            c = _np_bp(n_c,2000,1200,bar+beat_idx)*_np_exp(n_c,.018)*vol
+            _np_place2(drum, t, c)
     drum = _np_lp(drum, 3000)
-    # Sea swell — low bandpass
     sea = (_np_bp(N,80,40,70)*_np_swell2(N,6.5,0,.6)*.14 +
-           _np_bp(N,55,25,71)*_np_swell2(N,9.0,3,.5)*.10)
-    # Creaking wood / rope
+           _np_bp(N,55,25,71)*_np_swell2(N,9.0,3,.5)*.10 +
+           _np_bp(N,110,50,72)*_np_swell2(N,11.0,6,.45)*.07)
     creak = _np_bp(N,500,200,72)*_np_swell2(N,4.0,1,.8)*.04
     return _np_seamless2(_np_norm(_np_mix2(melody*.80, bass*.70, drum*.55, sea, creak)))
 
 
 def _town_sanctum():
-    """Cathedral organ hymn — no percussion, slow chord swells, choir shimmer."""
-    N = int(SR * 28.0)
-    # D minor → F major → A minor → G major → D minor progression
-    # Each chord held for ~7 seconds, organ timbre (fundamental + harmonics)
-    chords = [
-        # D minor: D(146) F(174) A(220)
-        [(146,.20),(174,.16),(220,.13),(293,.09),(349,.06)],
-        # F major: F(174) A(220) C(261)
-        [(174,.20),(220,.16),(261,.13),(349,.09),(440,.06)],
-        # A minor: A(220) C(261) E(329)
-        [(220,.20),(261,.16),(329,.13),(440,.09),(523,.06)],
-        # G major: G(196) B(247) D(293)
-        [(196,.20),(247,.16),(293,.13),(392,.09),(494,.06)],
-        # D minor resolve
-        [(146,.20),(174,.16),(220,.13),(293,.09),(349,.06)],
+    """Sanctum — 84s cathedral organ. A (D minor), B (F major ascent), A' (resolve)."""
+    N = int(SR * 84.0)
+    # ── Three harmonic sections, 28s each ────────────────────────────────
+    # A (0-28s): D minor — D(146) F(174) A(220), slow swell
+    # B (28-56s): F major → A minor ascending arc
+    # A' (56-84s): D minor resolve with fuller organ texture
+    chords_A = [
+        [(146,.20),(174,.16),(220,.13),(293,.09),(349,.06)],   # Dm
+        [(174,.20),(220,.16),(261,.13),(349,.09),(440,.06)],   # F
+        [(220,.20),(261,.16),(329,.13),(440,.09),(523,.06)],   # Am
+        [(196,.20),(247,.16),(293,.13),(392,.09),(494,.06)],   # G
     ]
-    chord_dur = 28.0 / len(chords)
+    chords_B = [
+        [(174,.20),(220,.16),(261,.13),(349,.09),(440,.06)],   # F
+        [(220,.20),(261,.16),(329,.13),(440,.09),(523,.06)],   # Am
+        [(261,.20),(329,.16),(392,.13),(523,.09),(659,.06)],   # C
+        [(220,.20),(261,.16),(329,.13),(440,.09),(523,.06)],   # Am back
+    ]
+    chords_Ap = [
+        [(146,.22),(174,.18),(220,.15),(293,.11),(349,.08)],   # Dm richer
+        [(174,.22),(220,.18),(261,.15),(349,.11),(440,.08)],   # F richer
+        [(220,.22),(261,.18),(329,.15),(440,.11),(523,.08)],   # Am richer
+        [(146,.22),(174,.18),(220,.15),(261,.11),(293,.08)],   # Dm resolve
+    ]
     organ = _np.zeros(N, _np.float32)
     choir = _np.zeros(N, _np.float32)
-    for ci, chord in enumerate(chords):
-        t0 = ci * chord_dur
-        n_c = int(SR * chord_dur)
-        env = _np.hanning(n_c).astype(_np.float32) ** .5
-        for freq, vol in chord:
-            # Organ: fundamental + 2nd + 3rd + 5th harmonic
-            seg = (_np_sinev(n_c,freq,vol) +
-                   _np_sinev(n_c,freq*2,vol*.45) +
-                   _np_sinev(n_c,freq*3,vol*.25) +
-                   _np_sinev(n_c,freq*5,vol*.10)) * env
-            _np_place2(organ, t0, seg)
-            # Choir shimmer — frequency slightly raised, softer, higher harmonics
-            choir_seg = (_np_sinev(n_c,freq*4,vol*.08) +
-                         _np_sinev(n_c,freq*6,vol*.05))*env*_np_swell2(n_c,chord_dur*.5,0,.6)
-            _np_place2(choir, t0, choir_seg)
+    for section_t, chords in [(0.0, chords_A), (28.0, chords_B), (56.0, chords_Ap)]:
+        n_chord = int(SR * 7.0)   # 7s per chord
+        env = _np.hanning(n_chord).astype(_np.float32) ** .5
+        for ci, chord in enumerate(chords):
+            t0 = section_t + ci * 7.0
+            if t0 >= 84.0: break
+            for freq,vol in chord:
+                seg = (_np_sinev(n_chord,freq,vol)+_np_sinev(n_chord,freq*2,vol*.45)+_np_sinev(n_chord,freq*3,vol*.25)+_np_sinev(n_chord,freq*5,vol*.10))*env
+                _np_place2(organ, t0, seg)
+                choir_seg = (_np_sinev(n_chord,freq*4,vol*.08)+_np_sinev(n_chord,freq*6,vol*.05))*env*_np_swell2(n_chord,7.0*.5,0,.6)
+                _np_place2(choir, t0, choir_seg)
     organ = _np_lp(organ, 2500)
     choir = _np_hp_filt(choir, 800)
-    # Slow sub bass — D (36 Hz) with very long swell
-    sub = _np_sinev(N,36,.12)*_np_swell2(N,14.0,0,.45) + _np_sinev(N,73,.07)*_np_swell2(N,10.0,5,.40)
+    # ── Sustained melody line enters in B-section ─────────────────────────
+    mel = _np.zeros(N, _np.float32)
+    mel_notes = [(349,4.5),(392,3.5),(440,4.0),(392,3.0),(349,4.5),(329,3.5),(349,5.5),
+                 (392,4.0),(440,4.5),(494,3.5),(440,4.0),(392,3.5),(349,6.0)]
+    mel_t = [0.0]; [mel_t.append(mel_t[-1]+d) for _,d in mel_notes[:-1]]
+    for (freq,dur),t in zip(mel_notes, mel_t):
+        nt = 28.0 + t
+        if nt < 56.0:
+            n_m = int(SR*dur)
+            env_m = _np.minimum(_np.arange(n_m)/(SR*.3),1.0).astype(_np.float32)*_np_exp(n_m,.6)
+            s = (_np_sinev(n_m,freq,.14)+_np_sinev(n_m,freq*2,.06))*env_m
+            _np_place2(mel, nt, _np_lp(s, 1500))
+    sub = (_np_sinev(N,36,.12)*_np_swell2(N,14.0,0,.45) +
+           _np_sinev(N,73,.07)*_np_swell2(N,10.0,5,.40) +
+           _np_sinev(N,54,.05)*_np_swell2(N,18.0,8,.38))
     sub = _np_lp(sub, 200)
-    # Stone resonance — narrow bandpass sweep
     stone = _np_bp(N,280,60,75)*_np_swell2(N,22.0,0,.55)*.06
-    return _np_seamless2(_np_norm(_np_mix2(organ*.85, choir*.65, sub, stone)))
+    return _np_seamless2(_np_norm(_np_mix2(organ*.85, choir*.65, mel*.70, sub, stone)))
 
 
 def _town_crystalspire():
-    """F-Lydian arpeggios — magical academy, crystalline shimmer, ascending wonder."""
-    N = int(SR * 20.0)
-    # F Lydian (F G A B C D E) — raised 4th gives bright, wonder-ful feel
-    # Arpeggios: ascending and descending patterns, 130bpm triplet feel
-    arp_seq = [349,392,440,494,523,587,659,587,523,494,440,392,
-               349,392,440,494,587,659,784,659,587,494,440,392,
-               523,587,659,784,880,784,659,587,523,440,392,349,
-               440,494,523,659,784,659,523,494,440,392,349,392]
-    note_dur = 0.155   # triplet feel at 130bpm
+    """Crystalspire — 60s F-Lydian. A (arpeggios), B (slower chords), A' (climax)."""
+    N = int(SR * 60.0)
+    # ── Arpeggio sequence: A passes at 0s and 40s, slow B at 20-40s ──────
+    arp_A = [349,392,440,494,523,587,659,587,523,494,440,392,
+             349,392,440,494,587,659,784,659,587,494,440,392,
+             523,587,659,784,880,784,659,587,523,440,392,349,
+             440,494,523,659,784,659,523,494,440,392,349,392]
+    note_dur = 0.155
     arps = _np.zeros(N, _np.float32)
-    for i, freq in enumerate(arp_seq):
-        t = i * note_dur
-        if t < 20.0:
+    # A arpeggios (0-20s and 40-60s)
+    for pass_t in [0.0, 40.0]:
+        for i,freq in enumerate(arp_A):
+            t = pass_t + i * note_dur
+            if t >= pass_t + 20.0 or t >= 60.0: break
             n = int(SR*note_dur*.92)
-            # Crystalline: pure sine + sharp attack, medium decay
             env = _np.minimum(_np.arange(n)/(SR*.008),1.0).astype(_np.float32)*_np_exp(n,.12)
             s = (_np_sinev(n,freq,.18)+_np_sinev(n,freq*2,.07)+_np_sinev(n,freq*4,.03))*env
-            _np_place2(arps, t, s)
-    # Slow sustained harmony beneath — F major chord with B natural (Lydian colour)
+            # A' louder and adds octave
+            vol_mult = 1.2 if pass_t == 40.0 else 1.0
+            _np_place2(arps, t, s * vol_mult)
+            if pass_t == 40.0:
+                s2 = _np_sinev(n,freq*2,.09)*env
+                _np_place2(arps, t, s2)
+    # B-section (20-40s): slower chord-based texture
+    b_chords = [(349,440,659),(392,523,784),(440,587,880),(523,659,988),(440,587,880),(392,523,784)]
+    b_dur = 20.0 / len(b_chords)
+    for ci,(f1,f2,f3) in enumerate(b_chords):
+        t0 = 20.0 + ci * b_dur
+        n_c = int(SR * b_dur)
+        env_c = _np.hanning(n_c).astype(_np.float32)**.5
+        for freq,vol in [(f1,.16),(f2,.12),(f3,.09)]:
+            seg = (_np_sinev(n_c,freq,vol)+_np_sinev(n_c,freq*2,vol*.4))*env_c
+            _np_place2(arps, t0, seg)
+    # ── Sustained harmony throughout ─────────────────────────────────────
     harmony = _np.zeros(N, _np.float32)
     harm_notes = [(174,.14),(220,.11),(261,.09),(349,.08),(494,.06),(659,.04)]
-    n_h = int(SR*20.0)
-    for freq, vol in harm_notes:
+    n_h = int(SR * 60.0)
+    for freq,vol in harm_notes:
         seg = _np_sinev(n_h,freq,vol)*_np_swell2(n_h,10.0,0,.5)
         harmony += seg
     harmony = _np_lp(harmony, 1500)
-    # Shimmer — high bandpass glitter
+    # ── Bell accents (more frequent in A') ───────────────────────────────
+    bells = _np.zeros(N, _np.float32)
+    for t,freq in [(0.0,1047),(4.96,1319),(9.92,1568),(14.88,1047),(19.84,1319),
+                   (21.0,1568),(23.5,2093),(26.5,1760),(29.5,1568),(33.0,1319),(37.5,1568),
+                   (40.0,1047),(44.96,1319),(49.92,1568),(54.88,2093),(59.0,1319)]:
+        if t < 60.0:
+            n_b = int(SR*.8)
+            b = (_np_sinev(n_b,freq,.14)+_np_sinev(n_b,freq*2.76,.07))*_np_exp(n_b,.35)
+            _np_place2(bells, t, b)
     shimmer = (_np_bp(N,8000,3000,80)*_np_swell2(N,2.5,0,.9)*.04 +
                _np_bp(N,5000,2000,81)*_np_swell2(N,3.5,1.2,.85)*.03)
-    # Magic drone — F (87 Hz) with fast swell modulation
-    drone = (_np_sinev(N,87,.10)*_np_swell2(N,5.0,0,.6) +
-             _np_sinev(N,174,.06)*_np_swell2(N,3.5,1.5,.7) +
-             _np_sinev(N,349,.04)*_np_swell2(N,2.5,0.5,.8))
+    drone = (_np_sinev(N,87,.10)*_np_swell2(N,5.0,0,.6)+_np_sinev(N,174,.06)*_np_swell2(N,3.5,1.5,.7)+_np_sinev(N,349,.04)*_np_swell2(N,2.5,0.5,.8))
     drone = _np_lp(drone, 600)
-    # Bell-like accent tones at phrase starts
-    bells = _np.zeros(N, _np.float32)
-    for t, freq in [(0.0,1047),(4.96,1319),(9.92,1568),(14.88,1047),(19.84,1319)]:
-        n_b = int(SR*.8)
-        b = (_np_sinev(n_b,freq,.14)+_np_sinev(n_b,freq*2.76,.07))*_np_exp(n_b,.35)
-        if t < 20.0: _np_place2(bells, t, b)
     return _np_seamless2(_np_norm(_np_mix2(arps*.75, harmony*.60, shimmer, drone, bells*.80)))
 
 
 def _town_thornhaven():
-    """D-minor imperial march — garrison city, detuned unease under authority."""
-    N = int(SR * 20.0)
-    # March at 88bpm
-    beat = 60.0/88
-    # Side drum — snare-like on 2 and 4, low thud on 1 and 3
+    """Thornhaven — 60s D-minor imperial. A (march), B (desolate strings), A' (full)."""
+    N = int(SR * 60.0)
+    beat = 60.0 / 88
+    # ── March drum: A (0-20s) full, B (20-40s) sparse, A' (40-60s) full ─
     march_drum = _np.zeros(N, _np.float32)
-    for i in range(int(20.0/beat)):
+    for i in range(int(60.0 / beat)):
         t = i * beat
-        if i % 4 in (0, 2):   # march thud
-            n_d = int(SR*.20)
-            d = (_np_sinev(n_d,65,.50)+_np_bp(n_d,200,100,i)*_np_exp(n_d,.03)*.20)*_np_exp(n_d,.06)
-        else:                   # side drum crack
-            n_d = int(SR*.12)
-            d = (_np_bp(n_d,2500,1500,i+60)*_np_exp(n_d,.022) +
-                 _np_bp(n_d,800,400,i+61)*_np_exp(n_d,.030))*.30
+        if 20.0 <= t < 40.0:
+            # B-section: only downbeats
+            if i % 4 != 0: continue
+            n_d = int(SR*.22)
+            d = (_np_sinev(n_d,65,.40))*_np_exp(n_d,.07)
+        else:
+            if i % 4 in (0, 2):
+                n_d = int(SR*.20)
+                d = (_np_sinev(n_d,65,.50)+_np_bp(n_d,200,100,i)*_np_exp(n_d,.03)*.20)*_np_exp(n_d,.06)
+            else:
+                n_d = int(SR*.12)
+                d = (_np_bp(n_d,2500,1500,i+60)*_np_exp(n_d,.022)+_np_bp(n_d,800,400,i+61)*_np_exp(n_d,.030))*.30
         _np_place2(march_drum, t, d)
     march_drum = _np_lp(march_drum, 3500)
-    # D minor melody — authoritative, brass-like
-    mel_notes = [(293,.50),(261,.38),(293,.50),(311,.75),
-                 (349,.38),(329,.50),(311,.38),(293,.75),
-                 (261,.50),(293,.38),(311,.50),(329,.38),(293,.38),(261,.75),(220,1.00),
-                 (220,.38),(246,.50),(261,.38),(293,.75),(329,.50),(349,.38),
-                 (329,.50),(311,.38),(293,.50),(261,.38),(220,.75),(174,1.25)]
-    mel_t = [0.0]
-    for _,d in mel_notes[:-1]: mel_t.append(mel_t[-1]+d)
+    # ── Brass melody: A and A' (authoritative), absent in B ──────────────
+    mel = [(293,.50),(261,.38),(293,.50),(311,.75),(349,.38),(329,.50),(311,.38),(293,.75),
+           (261,.50),(293,.38),(311,.50),(329,.38),(293,.38),(261,.75),(220,1.00),
+           (220,.38),(246,.50),(261,.38),(293,.75),(329,.50),(349,.38),(329,.50),(311,.38),(293,.50),(261,.38),(220,.75),(174,1.25)]
+    mel_t = [0.0]; [mel_t.append(mel_t[-1]+d) for _,d in mel[:-1]]
     brass = _np.zeros(N, _np.float32)
-    for (freq,dur),t in zip(mel_notes, mel_t):
-        if t < 20.0:
+    for t_off in [0.0, 40.0]:
+        for (freq,dur),t in zip(mel, mel_t):
+            nt = t_off + t
+            if nt >= t_off + 20.0 or nt >= 60.0: break
             n = int(SR*dur*1.05)
             env = _np.minimum(_np.arange(n)/(SR*.04),1.0).astype(_np.float32)*_np_exp(n,.30)
             s = (_np_sinev(n,freq,.24)+_np_sinev(n,freq*2,.14)+_np_sinev(n,freq*3,.07)+_np_sinev(n,freq*4,.03))*env
-            _np_place2(brass, t, _np_lp(s, 1200))
-    # Detuned shadow layer — same melody, +8 cents (freq * 1.0046), softer, offset
+            _np_place2(brass, nt, _np_lp(s, 1200))
+            if t_off == 40.0:   # A' adds harmony
+                s2 = (_np_sinev(n,freq*1.33,.12))*env
+                _np_place2(brass, nt, _np_lp(s2, 1000))
+    # ── B-section strings (20-40s): slow D minor chord swells ────────────
+    strings = _np.zeros(N, _np.float32)
+    b_chords = [(146,220,293),(174,220,261),(146,196,293),(123,196,246),(146,220,293),(174,261,329)]
+    b_dur = 20.0 / len(b_chords)
+    for ci,(f1,f2,f3) in enumerate(b_chords):
+        t0 = 20.0 + ci * b_dur
+        n_c = int(SR * b_dur)
+        env_c = _np.hanning(n_c).astype(_np.float32)**.6
+        for freq,vol in [(f1,.14),(f2,.10),(f3,.08)]:
+            seg = (_np_sinev(n_c,freq,vol)+_np_sinev(n_c,freq*2,vol*.4))*env_c
+            _np_place2(strings, t0, seg)
+    strings = _np_lp(strings, 1000)
     shadow = _np.zeros(N, _np.float32)
-    for (freq,dur),t in zip(mel_notes, mel_t):
-        t_off = t + 0.04    # slight delay adds unease
-        if t_off < 20.0:
+    for (freq,dur),t in zip(mel, mel_t):
+        for t_off in [0.0, 40.0]:
+            nt = t_off + t + 0.04
+            if nt >= t_off + 20.0 or nt >= 60.0: break
             n = int(SR*dur*1.05)
             env = _np.minimum(_np.arange(n)/(SR*.06),1.0).astype(_np.float32)*_np_exp(n,.40)
             s = (_np_sinev(n,freq*1.0046,.10)+_np_sinev(n,freq*2.0092,.05))*env
-            _np_place2(shadow, t_off, _np_lp(s, 900))
-    # Low D drone (73 Hz) — steady, unmoving
+            _np_place2(shadow, nt, _np_lp(s, 900))
     drone = (_np_sinev(N,73,.14)*_np_swell2(N,10.0,0,.45) +
              _np_sinev(N,146,.07)*_np_swell2(N,7.0,2,.40) +
              _np_sinev(N,36,.08)*_np_swell2(N,20.0,0,.35))
     drone = _np_lp(drone, 500)
-    # Distant bell tower — three-note toll at phrase boundaries
     bells = _np.zeros(N, _np.float32)
-    for t, freq in [(0.0,220),(9.5,196),(0.0,293),(9.5,261)]:
-        n_b = int(SR*2.5)
-        b = (_np_sinev(n_b,freq,.16)+_np_sinev(n_b,freq*2.76,.08))*_np_exp(n_b,.80)
-        if t < 20.0: _np_place2(bells, t, b)
-    return _np_seamless2(_np_norm(_np_mix2(march_drum*.65, brass*.80, shadow*.45, drone, bells*.70)))
+    for t,freq in [(0.0,220),(9.5,196),(0.0,293),(9.5,261),(40.0,220),(49.5,196),(40.0,293),(49.5,261)]:
+        if t < 60.0:
+            n_b = int(SR*2.5)
+            b = (_np_sinev(n_b,freq,.16)+_np_sinev(n_b,freq*2.76,.08))*_np_exp(n_b,.80)
+            _np_place2(bells, t, b)
+    return _np_seamless2(_np_norm(_np_mix2(march_drum*.65, brass*.80, strings*.75, shadow*.45, drone, bells*.70)))
+
 
 
 # ── Public helper ─────────────────────────────────────────────
