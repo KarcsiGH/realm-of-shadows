@@ -481,6 +481,47 @@ WOODHAVEN_NPCS = [
         "description": "A grizzled ranger who runs the guild. He eyes you appraisingly.",
         "color": (100, 140, 80),
     },
+    # Ambient NPCs
+    {
+        "name": "Fletching Merchant",
+        "x": 16, "y": 6,
+        "dialogue_id": None,
+        "description": "A wiry woman with arrow-stained fingers sorting bundles of fletched shafts.",
+        "color": (150, 130, 90),
+        "npc_type": "merchant",
+    },
+    {
+        "name": "Forest Child",
+        "x": 15, "y": 7,
+        "dialogue_id": None,
+        "description": "A small child watching you with wide eyes from behind a tree root.",
+        "color": (190, 175, 140),
+        "npc_type": "youth",
+    },
+    {
+        "name": "Patrol Scout",
+        "x": 11, "y": 10,
+        "dialogue_id": None,
+        "description": "An off-duty scout stretching out trail-sore legs near the river.",
+        "color": (80, 140, 65),
+        "npc_type": "guard",
+    },
+    {
+        "name": "Herb Trader",
+        "x": 14, "y": 13,
+        "dialogue_id": None,
+        "description": "A travelling herbalist laying out dried bundles on a cloth.",
+        "color": (130, 170, 100),
+        "npc_type": "merchant",
+    },
+    {
+        "name": "Old Woodcarver",
+        "x": 3, "y": 16,
+        "dialogue_id": None,
+        "description": "An elderly craftsman whittling a figure from pale birchwood.",
+        "color": (170, 155, 120),
+        "npc_type": "elder",
+    },
 ]
 
 WOODHAVEN_SIGNS = {
@@ -660,6 +701,38 @@ IRONHEARTH_NPCS = [
         "dialogue_id": "apprentice_tova",
         "description": "A young dwarven apprentice running errands between the forge and armory.",
         "color": (200, 160, 80),
+    },
+    # Additional ambient NPCs
+    {
+        "name": "Ore Counter",
+        "x": 19, "y": 10,
+        "dialogue_id": None,
+        "description": "A stocky dwarf tallying ore deliveries on a battered ledger.",
+        "color": (160, 130, 85),
+        "npc_type": "merchant",
+    },
+    {
+        "name": "Off-Duty Guard",
+        "x": 26, "y": 12,
+        "dialogue_id": None,
+        "description": "A guard in half-armour, eating a meat pasty near the city wall.",
+        "color": (140, 145, 165),
+        "npc_type": "guard",
+    },
+    {
+        "name": "Stonecutter",
+        "x": 7, "y": 16,
+        "dialogue_id": None,
+        "description": "A broad-shouldered dwarf chiselling mortar from a cracked paving stone.",
+        "color": (170, 145, 100),
+    },
+    {
+        "name": "Merchant Courier",
+        "x": 3, "y": 17,
+        "dialogue_id": None,
+        "description": "A young human hurrying between the armory and the city gate with a satchel of papers.",
+        "color": (180, 165, 130),
+        "npc_type": "merchant",
     },
     # Service NPCs
 ]

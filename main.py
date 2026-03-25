@@ -150,6 +150,7 @@ class Game:
         # Quest log
         self.quest_log_ui = None
         self._toasts = []   # [(message, color, timer_ms, max_timer_ms)]
+        self._sfx_pending = []  # [(delay_ms, sound_key), ...] two-phase combat sounds
         self._quest_notifications = []  # queue of {name, gold, xp, timer, max_timer}
         # Track current/last town for shortcuts
         self.current_town_id = "briarhollow"
@@ -180,6 +181,19 @@ class Game:
     def run(self):
         while self.running:
             dt = self.clock.tick(FPS)
+            self.title_t += dt
+            # ── Two-phase sound queue ──────────────────────────────
+            if self._sfx_pending:
+                fired, remaining = [], []
+                for delay, key in self._sfx_pending:
+                    delay -= dt
+                    if delay <= 0:
+                        fired.append(key)
+                    else:
+                        remaining.append((delay, key))
+                self._sfx_pending = remaining
+                for key in fired:
+                    sfx.play(key)
             self.title_t += dt
             if self.state == S_SPLASH:
                 self.intro.update(dt)
@@ -964,6 +978,12 @@ class Game:
         """Queue a toast notification (e.g. 'New Quest: …')."""
         from ui.renderer import GOLD
         self._toasts.append([message, color or GOLD, 3500, 3500])
+
+    def _sfx2(self, windup_key, resolve_key, delay_ms=260):
+        """Play wind-up immediately, queue resolution sound after delay_ms."""
+        sfx.play(windup_key)
+        if resolve_key:
+            self._sfx_pending.append((delay_ms, resolve_key))
 
     @staticmethod
     def _wrap_msg(text, width=55):
@@ -2777,25 +2797,36 @@ class Game:
                 _is_spell = _eact == "enemy_ability"
                 _e_elem = result.get("enchant_element", "")
                 _e_wc   = result.get("weight_class", "medium")
-                _e_wc_snd = {"light":"hit_light","heavy":"hit_heavy"}.get(_e_wc,"hit_medium")
+                _e_swing = {"light":"swing_light","heavy":"swing_heavy"}.get(_e_wc,"swing_medium")
+                _e_hit   = {"light":"hit_light",  "heavy":"hit_heavy"  }.get(_e_wc,"hit_medium")
                 if result.get("hit") is False:
-                    sfx.play("miss_magic" if _is_spell else ("miss_elemental" if _e_elem else "miss_physical"))
+                    _e_miss = "miss_magic" if _is_spell else ("miss_elemental" if _e_elem else "miss_physical")
+                    _e_windup = "cast_attack" if _is_spell else _e_swing
+                    self._sfx2(_e_windup, _e_miss, delay_ms=240)
                 elif result.get("is_crit"):
-                    if _e_elem: sfx.play(f"hit_{_e_elem}")
-                    sfx.play(_e_wc_snd if not _is_spell else "hit_magic")
-                    sfx.play("hit_critical")
+                    if _is_spell:
+                        sfx.play("cast_attack")
+                        if _e_elem: self._sfx_pending.append((280, f"hit_{_e_elem}"))
+                        self._sfx_pending.append((300, "hit_magic"))
+                        self._sfx_pending.append((320, "hit_critical"))
+                    else:
+                        sfx.play(_e_swing)
+                        if _e_elem: self._sfx_pending.append((240, f"hit_{_e_elem}"))
+                        self._sfx_pending.append((260, _e_hit))
+                        self._sfx_pending.append((280, "hit_critical"))
                 elif _is_spell:
-                    sfx.play("hit_magic")
+                    sfx.play("cast_attack")
+                    self._sfx_pending.append((300, "hit_magic"))
                 elif _eact == "enemy_attack":
-                    if _e_elem: sfx.play(f"hit_{_e_elem}")
-                    sfx.play(_e_wc_snd)
-                # Play kill sound if something died
+                    sfx.play(_e_swing)
+                    if _e_elem: self._sfx_pending.append((240, f"hit_{_e_elem}"))
+                    self._sfx_pending.append((260, _e_hit))
+                # Kill sounds
                 if result.get("defender", {}).get("alive") is False:
                     tgt2 = result.get("defender", {})
-                    if tgt2.get("type") == "enemy":
-                        sfx.play("enemy_death")
-                    else:
-                        sfx.play("death")
+                    delay = 420 if result.get("is_crit") else 360
+                    snd = "enemy_death" if tgt2.get("type") == "enemy" else "death"
+                    self._sfx_pending.append((delay, snd))
                 self.enemy_turn_delay = 0
                 self.combat_ui.enemy_anim_timer = 0
 
@@ -4289,28 +4320,33 @@ class Game:
 
         if action["type"] == "attack":
             result = self.combat_state.execute_player_action("attack", target=action["target"])
-            # Pick sound from what actually happened
             _elem = result.get("enchant_element", "") if result else ""
             _wc   = result.get("weight_class", "medium") if result else "medium"
-            _wc_sound = {"light": "hit_light", "heavy": "hit_heavy"}.get(_wc, "hit_medium")
+            _swing = {"light": "swing_light", "heavy": "swing_heavy"}.get(_wc, "swing_medium")
+            _hit   = {"light": "hit_light",   "heavy": "hit_heavy"  }.get(_wc, "hit_medium")
             if result and result.get("hit") is False:
-                sfx.play("miss_elemental" if _elem else "miss_physical")
+                # Miss: swing winds up, then a deflect/whiff
+                _miss = "miss_elemental" if _elem else "miss_physical"
+                self._sfx2(_swing, _miss, delay_ms=240)
             elif result and result.get("is_crit"):
+                # Crit: swing → element → weight impact + critical ring
+                sfx.play(_swing)
                 if _elem:
-                    sfx.play(f"hit_{_elem}")  # element fires first
-                sfx.play(_wc_sound)           # physical weight thud
-                sfx.play("hit_critical")      # crit ring on top
+                    self._sfx_pending.append((240, f"hit_{_elem}"))
+                self._sfx_pending.append((260, _hit))
+                self._sfx_pending.append((280, "hit_critical"))
             else:
+                # Normal hit: swing → element overlay → weight impact
+                sfx.play(_swing)
                 if _elem:
-                    sfx.play(f"hit_{_elem}")
-                sfx.play(_wc_sound)
-            # Enemy killed?
+                    self._sfx_pending.append((240, f"hit_{_elem}"))
+                self._sfx_pending.append((260, _hit))
+            # Kill sound — plays after the hit resolves
             if result and result.get("defender", {}).get("alive") is False:
                 tgt = result.get("defender", {})
-                if tgt.get("type") == "enemy":
-                    sfx.play("enemy_death")
-                else:
-                    sfx.play("death")
+                delay = 420 if result.get("is_crit") else 360
+                snd = "enemy_death" if tgt.get("type") == "enemy" else "death"
+                self._sfx_pending.append((delay, snd))
         elif action["type"] == "defend":
             self.combat_state.execute_player_action("defend")
             sfx.play("block")
@@ -4328,17 +4364,19 @@ class Game:
             # Handle bolt_attack result separately
             if isinstance(ab_check, dict) and ab_check.get("_is_bolt") and result:
                 if result.get("hit"):
-                    sfx.play("hit_magic")
                     element = result.get("element", "arcane")
                     dmg = result.get("damage", 0)
                     _BOLT_COL = {"fire":(255,110,30),"ice":(80,210,255),"lightning":(255,255,80),
                                  "arcane":(200,160,255),"shadow":(150,80,200)}
                     col = _BOLT_COL.get(element, (200,160,255))
+                    sfx.play("cast_attack")
+                    self._sfx_pending.append((280, f"hit_{element}"))
+                    self._sfx_pending.append((300, "hit_magic"))
                     self.combat_ui.add_flash(f"◈ Bolt {dmg}", col)
                     if result.get("defender", {}).get("alive") is False:
-                        sfx.play("enemy_death")
+                        self._sfx_pending.append((380, "enemy_death"))
                 else:
-                    sfx.play("miss_elemental")
+                    self._sfx2("cast_attack", "miss_elemental", delay_ms=260)
                     self.combat_ui.add_flash("◈ Bolt — RESISTED!", (150,120,180))
             # Show resource cost flash so player can see MP/SP being spent
             elif result:
@@ -4371,62 +4409,92 @@ class Game:
                 self.combat_ui.add_flash(
                     f"✗ Not enough {rk} for {ab_name} (need {cost})", (200, 80, 80))
 
-            # ── Priority 2: buff/heal/debuff (self or ally) ──────────
+            # ── Priority 2: revive ───────────────────────────────────
             elif ab_type == "revive":
-                sfx.play("revive")
+                self._sfx2("cast_buff_spell", "revive", delay_ms=300)
                 if result:
                     amt = result.get("healing", 0)
                     self.combat_ui.add_flash(f"✦ {ab_name} — REVIVED! +{amt} HP", (180, 255, 200))
+
+            # ── Priority 3: heal ─────────────────────────────────────
             elif ab_type in ("heal", "aoe_heal"):
                 if result and result.get("hit") is False:
-                    sfx.play("miss_magic")
+                    self._sfx2("cast_buff_spell", "miss_magic", delay_ms=280)
                     self.combat_ui.add_flash(f"{ab_name} — no effect!", (150, 120, 180))
                 else:
-                    sfx.play("heal")
+                    self._sfx2("cast_buff_spell", "heal", delay_ms=300)
                     if result:
                         amt = result.get("healing", 0)
                         self.combat_ui.add_flash(f"♥ {ab_name} +{amt} HP", (100, 255, 140))
+
+            # ── Priority 4: buff (self/ally) ─────────────────────────
             elif ab_type == "buff":
-                _ab_elem = ab.get("element","") if isinstance(ab,dict) else ""
-                _ab_res  = ab.get("resource","") if isinstance(ab,dict) else ""
-                if _ab_elem == "divine":              sfx.play("buff_divine")
-                elif _ab_elem in ("nature","wind"):   sfx.play("buff_nature")
-                elif _ab_res in ("STR-SP","DEX-SP","Ki"): sfx.play("buff_physical")
-                elif _ab_elem:                         sfx.play("buff_magic")
-                else:                                  sfx.play("buff_physical")
+                _ab_elem = ab.get("element", "") if isinstance(ab, dict) else ""
+                _ab_res  = ab.get("resource", "") if isinstance(ab, dict) else ""
+                # Wind-up: physical exertion vs. spell channelling
+                if _ab_res in ("STR-SP", "DEX-SP", "Ki"):
+                    _windup = "cast_buff_self"
+                else:
+                    _windup = "cast_buff_spell"
+                # Resolution: which buff flavour
+                if _ab_elem == "divine":
+                    _resolve = "buff_divine"
+                elif _ab_elem in ("nature", "wind"):
+                    _resolve = "buff_nature"
+                elif _ab_res in ("STR-SP", "DEX-SP", "Ki"):
+                    _resolve = "buff_physical"
+                elif _ab_elem:
+                    _resolve = "buff_magic"
+                else:
+                    _resolve = "buff_physical"
+                self._sfx2(_windup, _resolve, delay_ms=280)
                 buff_name = ab.get("buff", ab_name) if isinstance(ab, dict) else ab_name
                 self.combat_ui.add_flash(f"✦ {buff_name.upper()} active!", (100, 220, 130))
+
+            # ── Priority 5: debuff (enemy target) ────────────────────
             elif ab_type == "debuff":
                 if result and result.get("hit") is False:
-                    sfx.play("miss_magic")
+                    self._sfx2("cast_debuff", "miss_magic", delay_ms=260)
                     self.combat_ui.add_flash(f"{ab_name} — resisted!", (150, 120, 180))
                 else:
-                    _db_elem = ab.get("element","") if isinstance(ab,dict) else ""
-                    _db_res  = ab.get("resource","") if isinstance(ab,dict) else ""
-                    if _db_elem == "divine":               sfx.play("debuff_divine")
-                    elif _db_res in ("STR-SP","DEX-SP","Ki"): sfx.play("debuff_physical")
-                    elif _db_elem:                          sfx.play("debuff_magic")
-                    else:                                   sfx.play("debuff_physical")
+                    _db_elem = ab.get("element", "") if isinstance(ab, dict) else ""
+                    _db_res  = ab.get("resource", "") if isinstance(ab, dict) else ""
+                    if _db_elem == "divine":
+                        _db_resolve = "debuff_divine"
+                    elif _db_res in ("STR-SP", "DEX-SP", "Ki"):
+                        _db_resolve = "debuff_physical"
+                    elif _db_elem:
+                        _db_resolve = "debuff_magic"
+                    else:
+                        _db_resolve = "debuff_physical"
+                    self._sfx2("cast_debuff", _db_resolve, delay_ms=260)
                     self.combat_ui.add_flash(f"↓ {ab_name}!", (220, 160, 60))
 
-            # ── Priority 3: offensive abilities ──────────────────────
+            # ── Priority 6: offensive abilities ──────────────────────
             else:
                 if result and result.get("hit") is False:
-                    # Miss or resist — use distinct sound, NOT the hit sound
                     if is_physical_skill:
-                        sfx.play("miss_physical")
+                        self._sfx2("swing_medium", "miss_physical", delay_ms=240)
                     else:
-                        sfx.play("miss_magic")
+                        self._sfx2("cast_attack", "miss_magic", delay_ms=280)
                     self.combat_ui.add_flash(f"{ab_name} — RESISTED!", (150, 120, 180))
                 else:
-                    # Hit — now play the appropriate hit sound
+                    is_crit = result.get("is_crit", False) if result else False
                     if is_physical_skill:
-                        sfx.play("hit_skill")
+                        sfx.play("swing_medium")
+                        self._sfx_pending.append((250, "hit_skill"))
+                        if is_crit:
+                            self._sfx_pending.append((280, "hit_critical"))
                     else:
-                        sfx.play("hit_magic")
+                        _ab_elem_sfx = ab_elem or ""
+                        sfx.play("cast_attack")
+                        if _ab_elem_sfx:
+                            self._sfx_pending.append((280, f"hit_{_ab_elem_sfx}"))
+                        self._sfx_pending.append((300, "hit_magic"))
+                        if is_crit:
+                            self._sfx_pending.append((330, "hit_critical"))
                     if result:
                         dmg = result.get("damage", 0)
-                        is_crit = result.get("is_crit", False)
                         col = _ELEM_COL.get(ab_elem, (200, 160, 255)) if not is_physical_skill else (220, 180, 80)
                         if is_crit:
                             self.combat_ui.add_flash(f"✦ CRITICAL! {ab_name} {dmg}", (255, 215, 40))
@@ -4434,13 +4502,12 @@ class Game:
                             self.combat_ui.add_flash(f"◈ {ab_name} hits all! {dmg}", col)
                         else:
                             self.combat_ui.add_flash(f"◆ {ab_name} {dmg}", col)
-                # Play kill sound when ability finishes an enemy — distinct from the hit sound
+                # Kill sound — after the hit resolves
                 if result and result.get("defender", {}).get("alive") is False:
                     tgt = result.get("defender", {})
-                    if tgt.get("type") == "enemy":
-                        sfx.play("enemy_death")
-                    else:
-                        sfx.play("death")
+                    delay = 440 if result.get("is_crit") else 380
+                    snd = "enemy_death" if tgt.get("type") == "enemy" else "death"
+                    self._sfx_pending.append((delay, snd))
         elif action["type"] == "move":
             self.combat_state.execute_player_action("move", target=action["direction"])
         elif action["type"] == "switch_weapon":

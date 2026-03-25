@@ -220,6 +220,28 @@ def _execute_action(action):
         discover_lore(action["lore"])
     elif act == "meet_npc":
         meet_npc(action["npc"])
+    elif act == "give_item":
+        # Give an item to every party member (or first member only if target="leader")
+        # Requires party context — stored on a thread-local when dialogue runs in town_ui
+        item_data = action.get("item", {})
+        target = action.get("target", "all")
+        try:
+            from core._dialogue_party import get_party
+            party = get_party()
+            if party:
+                recipients = party[:1] if target == "leader" else party
+                for char in recipients:
+                    # Don't give duplicates — check by item flag if set
+                    flag = action.get("once_flag")
+                    if flag:
+                        from core.story_flags import get_flag
+                        if get_flag(flag):
+                            continue
+                    char.inventory.append(dict(item_data))
+                if flag:
+                    set_flag(flag, True)
+        except Exception:
+            pass
 
 
 # ═══════════════════════════════════════════════════════════════

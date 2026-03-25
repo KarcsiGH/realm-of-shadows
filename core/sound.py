@@ -555,92 +555,224 @@ def _make_np_sound(fn):
 
 # ── Element hit sounds ────────────────────────────────────────
 def _gen_hit_fire():
-    n=int(SR*.28); crack=_np_bp(n,1200,800,1)*_np_exp(n,.025); crackle=_np_bp(n,2800,1500,2)*_np_exp(n,.08)*.4; whomp=_np_bp(n,180,80,3)*_np_exp(n,.04)*.5
-    return _np_norm(_np_mix2(crack,crackle,whomp))
+    """Fire hit: deep whomp → crackling tail. Low-end first, then scatter."""
+    n=int(SR*.38)
+    whomp=_np_sinev(n,68,.50)*_np_exp(n,.06)             # deep ignition thud
+    body=_np_bp(n,160,70,3)*_np_exp(n,.05)*.55           # fire body
+    crackle=_np_bp(n,1400,700,2)*_np_exp(n,.09)*.38      # crackle burst
+    hiss=_np_bp(n,3200,1800,1)*_np_exp(n,.03)*.18        # hiss tail
+    env=_np_fade2(_np.ones(n,_np.float32),.001,.15)
+    return _np_norm(_np_mix2(whomp,body,crackle,hiss)*env)
+
 def _gen_hit_ice():
-    n=int(SR*.35); n2=int(SR*.04); shatter=_np_hp_filt(_np.random.default_rng(4).standard_normal(n2).astype(_np.float32)*_np_exp(n2,.01),.2000)*.7
+    """Ice hit: crystalline crack → ringing freeze. Sharp attack, pure tones."""
+    n=int(SR*.45)
+    # Shatter transient
+    n2=int(SR*.03)
+    shatter=_np_hp_filt(_np.random.default_rng(4).standard_normal(n2).astype(_np.float32)*_np_exp(n2,.008),2500)*.80
+    # Pure crystal ring tones (long decay)
     ring=_np.zeros(n,_np.float32)
-    for f,v in [(3200,.30),(4100,.22),(5300,.14),(6800,.09),(2600,.18)]: ring+=_np_sinev(n,f,v)*_np_exp(n,.06)
-    ring=_np_lp(ring,7000)*.5; base=_np.zeros(n,_np.float32); base[:n2]+=shatter[:n]
-    return _np_norm(_np_mix2(base,ring))
+    for f,v,tau in [(2800,.32,.20),(3600,.24,.16),(4800,.14,.12),(1800,.20,.22)]:
+        ring+=_np_sinev(n,f,v)*_np_exp(n,tau)
+    ring=_np_lp(ring,6000)*.65
+    # Cold sub body
+    cold=_np_sinev(n,120,.18)*_np_exp(n,.10)
+    base=_np.zeros(n,_np.float32); base[:n2]+=shatter
+    env=_np_fade2(_np.ones(n,_np.float32),.001,.20)
+    return _np_norm(_np_mix2(base,ring,cold)*env)
+
 def _gen_hit_lightning():
-    n=int(SR*.22); snap=_np_hp_filt(_np.random.default_rng(5).standard_normal(int(SR*.008)).astype(_np.float32),3000)*1.5
-    buzz=_np_bp(int(SR*.06),1800,900,6)*_np_exp(int(SR*.06),.02); body=_np_bp(n,300,200,7)*_np_exp(n,.035)*.35
-    base=_np.zeros(n,_np.float32); ns=len(snap); nb=len(buzz)
-    base[:min(ns,n)]+=snap[:min(ns,n)]; base[:nb]+=buzz
-    env=_np.ones(n,_np.float32); r=int(SR*.10); env[-r:]=_np.linspace(1,0,r)
-    return _np_norm(_np_mix2(base*env,body))
+    """Lightning hit: instant crack → buzzing aftershock → deep thunder."""
+    n=int(SR*.30)
+    # Instant electric snap
+    ns=int(SR*.006)
+    snap=_np_hp_filt(_np.random.default_rng(5).standard_normal(ns).astype(_np.float32),4000)*1.8
+    # Buzzing arc discharge
+    nb=int(SR*.08)
+    buzz=_np_bp(nb,2200,1100,6)*_np_exp(nb,.018)*.70
+    # Deep thunder body
+    body=_np_sinev(n,75,.38)*_np_exp(n,.045)
+    body2=_np_bp(n,220,100,7)*_np_exp(n,.040)*.40
+    base=_np.zeros(n,_np.float32)
+    base[:min(ns,n)]+=snap; base[:nb]+=buzz
+    env=_np.ones(n,_np.float32); r=int(SR*.12); env[-r:]=_np.linspace(1,0,r)
+    return _np_norm(_np_mix2(base*env,body,body2))
+
 def _gen_hit_shadow():
-    n=int(SR*.32); thud=_np_bp(n,220,90,8)*_np_exp(n,.05); dark=_np_sinev(n,95,.3)*_np_exp(n,.09); hollow=_np_bp(n,550,200,9)*_np_exp(n,.025)*.35
-    e=_np.ones(n,_np.float32); e[:int(SR*.01)]=_np.linspace(0,1,int(SR*.01))
-    return _np_norm(_np_mix2(thud*e,dark*e,hollow*e)*.9)
+    """Shadow hit: silent approach → hollow thud → dark resonance."""
+    n=int(SR*.40)
+    # Soft attack ramp (shadow creeps in)
+    thud=_np_bp(n,180,75,8)*_np_exp(n,.06)
+    dark=_np_sinev(n,78,.38)*_np_exp(n,.11)
+    low=_np_sinev(n,52,.28)*_np_exp(n,.14)
+    hollow=_np_bp(n,420,160,9)*_np_exp(n,.030)*.30
+    e=_np.ones(n,_np.float32)
+    e[:int(SR*.015)]=_np.linspace(0,1,int(SR*.015))   # slow shadow attack
+    env=_np_fade2(_np.ones(n,_np.float32),.015,.18)
+    return _np_norm(_np_mix2(thud,dark,low,hollow)*e*env)
+
 def _gen_hit_divine():
-    n=int(SR*.40); bell=_np.zeros(n,_np.float32)
-    for f,v,tau in [(880,.5,.20),(2637,.3,.12),(4400,.15,.08),(1320,.2,.15)]: bell+=_np_sinev(n,f,v)*_np_exp(n,tau)
-    n_c=int(SR*.005); click=_np_hp_filt(_np.random.default_rng(11).standard_normal(n_c).astype(_np.float32)*.6,4000)
+    """Divine hit: bright click → sustaining bell chord. Light and ringing."""
+    n=int(SR*.55)
+    # Bright transient click
+    n_c=int(SR*.004)
+    click=_np_hp_filt(_np.random.default_rng(11).standard_normal(n_c).astype(_np.float32)*.8,5000)
+    # Rich bell chord — fundamental + harmonics
+    bell=_np.zeros(n,_np.float32)
+    for f,v,tau in [(880,.45,.22),(1760,.28,.14),(2637,.18,.10),(3520,.10,.07),(1320,.22,.18)]:
+        bell+=_np_sinev(n,f,v)*_np_exp(n,tau)
+    # Soft shimmer
+    shimmer=_np_bp(n,4500,1800,12)*_np_exp(n,.04)*.08
     base=_np.zeros(n,_np.float32); base[:n_c]+=click
-    r=int(SR*.22); env=_np.ones(n,_np.float32); env[-r:]=_np.linspace(1,0,r)
-    return _np_norm(_np_mix2(base*.4,bell*env))
+    r=int(SR*.28); env=_np.ones(n,_np.float32); env[-r:]=_np.linspace(1,0,r)
+    return _np_norm(_np_mix2(base*.5,bell*env,shimmer))
+
 def _gen_hit_nature():
-    n=int(SR*.26); thunk=_np_bp(n,320,120,12)*_np_exp(n,.04); earth=_np_sinev(n,78,.25)*_np_exp(n,.07); rustle=_np_bp(n,2200,1400,13)*_np_exp(n,.025)*.22
-    return _np_norm(_np_mix2(thunk,earth,rustle))
+    """Nature hit: earthy thunk → wood resonance → leaf rustle."""
+    n=int(SR*.35)
+    thunk=_np_bp(n,260,100,12)*_np_exp(n,.05)           # earthy thunk
+    earth=_np_sinev(n,68,.32)*_np_exp(n,.09)            # deep earth body
+    wood=_np_sinev(n,140,.20)*_np_exp(n,.07)            # wood resonance
+    rustle=_np_bp(n,2800,1600,13)*_np_exp(n,.030)*.20   # leaf rustle tail
+    env=_np_fade2(_np.ones(n,_np.float32),.001,.14)
+    return _np_norm(_np_mix2(thunk,earth,wood,rustle)*env)
+
 def _gen_hit_arcane():
-    n=int(SR*.30); sweep=_np.zeros(n,_np.float32); phase=0.0
+    """Arcane hit: rising sweep → crystalline shimmer → echo decay."""
+    n=int(SR*.38)
+    # Frequency sweep (low→high)
+    sweep=_np.zeros(n,_np.float32); phase=0.0
     for i in range(n):
-        frac=i/n; freq=800+1600*frac*(1-frac)*4; phase+=2*_np.pi*freq/SR; sweep[i]=_np.sin(phase)
-    sweep=sweep*_np_fade2(sweep,.005,.12)*.5; shimmer=_np_bp(n,1400,600,15)*_np_exp(n,.05)*.4
+        frac=i/n; freq=400+2000*frac*(1-frac*0.5); phase+=2*_np.pi*freq/SR
+        sweep[i]=_np.sin(phase)*(frac**0.4)*((1-frac)**0.6)
+    sweep=_np_lp(sweep*0.55, 4000)
+    # Crystal resonance
     cryst=_np.zeros(n,_np.float32)
-    for f in [1760,2640,3520]: cryst+=_np_sinev(n,f,.12)*_np_exp(n,.04)
-    return _np_norm(_np_mix2(sweep,shimmer,cryst))
+    for f,tau in [(1320,.10),(1980,.07),(2640,.05)]: cryst+=_np_sinev(n,f,.14)*_np_exp(n,tau)
+    shimmer=_np_bp(n,1800,800,15)*_np_exp(n,.06)*.35
+    env=_np_fade2(_np.ones(n,_np.float32),.001,.16)
+    return _np_norm(_np_mix2(sweep,cryst,shimmer)*env)
 
 # ── Physical hit variants ─────────────────────────────────────
 def _gen_hit_light():
-    n=int(SR*.14); tick=_np_bp(n,900,400,30)*_np_exp(n,.025); flesh=_np_bp(n,320,120,31)*_np_exp(n,.018)*.4
-    return _np_norm(_np_mix2(tick,flesh)*_np_fade2(_np.ones(n,_np.float32),.001,.06))
+    """Light hit: quick snap with flesh impact — dagger, fist, glancing blow."""
+    n=int(SR*.18)
+    snap=_np_bp(n,600,300,30)*_np_exp(n,.020)            # primary snap
+    body=_np_sinev(n,140,.28)*_np_exp(n,.030)            # body resonance
+    flesh=_np_bp(n,240,100,31)*_np_exp(n,.025)*.35       # flesh impact
+    hiss=_np_bp(n,1800,800,32)*_np_exp(n,.012)*.18       # edge hiss
+    env=_np_fade2(_np.ones(n,_np.float32),.001,.07)
+    return _np_norm(_np_mix2(snap,body,flesh,hiss)*env)
+
 def _gen_hit_medium():
-    n=int(SR*.20); thwack=_np_bp(n,450,200,33)*_np_exp(n,.04); low=_np_bp(n,140,60,34)*_np_exp(n,.055)*.45
-    nc=int(SR*.015); crack=_np_hp_filt(_np.random.default_rng(35).standard_normal(nc).astype(_np.float32)*.6,1800)*_np_exp(nc,.008)
-    base=_np.zeros(n,_np.float32); base[:nc]+=crack
-    return _np_norm(_np_mix2(thwack,low,base)*_np_fade2(_np.ones(n,_np.float32),.001,.09))
+    """Medium hit: thwack with clear mid impact — sword, mace, staff."""
+    n=int(SR*.26)
+    thwack=_np_bp(n,380,160,33)*_np_exp(n,.045)          # primary thwack
+    low=_np_sinev(n,95,.38)*_np_exp(n,.060)              # sub weight
+    mid=_np_bp(n,190,80,34)*_np_exp(n,.050)*.55          # mid body
+    crack=_np_bp(n,900,400,35)*_np_exp(n,.018)*.28       # crack transient
+    env=_np_fade2(_np.ones(n,_np.float32),.001,.11)
+    return _np_norm(_np_mix2(thwack,low,mid,crack)*env)
+
 def _gen_hit_heavy():
-    n=int(SR*.32); boom=_np_bp(n,120,55,37)*_np_exp(n,.08); sub=_np_sinev(n,55,.35)*_np_exp(n,.10)
-    crack=_np_bp(n,280,120,38)*_np_exp(n,.04)*.5; stone=_np_bp(n,700,300,39)*_np_exp(n,.02)*.25
-    return _np_norm(_np_mix2(boom,sub,crack,stone)*_np_fade2(_np.ones(n,_np.float32),.002,.15))
+    """Heavy hit: deep boom with ground-shaking sub — greataxe, hammer, crushing blow."""
+    n=int(SR*.40)
+    boom=_np_bp(n,95,45,37)*_np_exp(n,.10)               # deep boom
+    sub=_np_sinev(n,48,.50)*_np_exp(n,.12)               # sub-bass thud
+    body=_np_sinev(n,82,.32)*_np_exp(n,.09)              # body resonance
+    crack=_np_bp(n,240,100,38)*_np_exp(n,.045)*.45       # impact crack
+    rumble=_np_bp(n,140,60,39)*_np_exp(n,.08)*.35        # rumble tail
+    env=_np_fade2(_np.ones(n,_np.float32),.002,.18)
+    return _np_norm(_np_mix2(boom,sub,body,crack,rumble)*env)
+
 def _gen_hit_critical():
-    n1=int(SR*.05); crack_hi=_np_hp_filt(_np.random.default_rng(20).standard_normal(n1).astype(_np.float32),2000)*_np_exp(n1,.008)*1.2
-    crack_lo=_np_bp(n1,200,100,21)*_np_exp(n1,.015)*.8; sub_hit=_np_sinev(n1,60,.6)*_np_exp(n1,.02)
-    impact=_np_norm(_np_mix2(crack_hi,crack_lo,sub_hit),.95)
-    gap=_np_sil(.028); n3=int(SR*.42)
-    ring_lo=_np_sinev(n3,140,.45)*_np_exp(n3,.12); ring_mid=_np_sinev(n3,220,.30)*_np_exp(n3,.09)
-    ring_hi=_np_sinev(n3,380,.15)*_np_exp(n3,.06); rumble=_np_sinev(n3,55,.35)*_np_exp(n3,.15)
-    shimmer=_np_bp(n3,800,350,22)*_np_exp(n3,.04)*.18
-    tail=_np_norm(_np_mix2(ring_lo,ring_mid,ring_hi,rumble,shimmer),.80)
+    """Critical hit: massive crack → sustained metallic ring. Unmistakable."""
+    # Impact transient — big crack with sub thud
+    n1=int(SR*.07)
+    crack=_np_bp(n1,320,160,20)*_np_exp(n1,.020)*1.0
+    sub_hit=_np_sinev(n1,58,.70)*_np_exp(n1,.025)
+    body=_np_bp(n1,140,65,21)*_np_exp(n1,.022)*.70
+    impact=_np_norm(_np_mix2(crack,sub_hit,body),.95)
+    # Gap
+    gap=_np_sil(.022)
+    # Ringing tail — layered harmonics, slow decay
+    n3=int(SR*.55)
+    ring_lo=_np_sinev(n3,98,.50)*_np_exp(n3,.20)
+    ring_mid=_np_sinev(n3,164,.35)*_np_exp(n3,.14)
+    ring_hi=_np_sinev(n3,246,.20)*_np_exp(n3,.10)
+    rumble=_np_sinev(n3,49,.40)*_np_exp(n3,.22)
+    shimmer=_np_bp(n3,600,260,22)*_np_exp(n3,.06)*.22
+    tail=_np_norm(_np_mix2(ring_lo,ring_mid,ring_hi,rumble,shimmer),.85)
     full=_np.concatenate([impact,gap,tail])
-    return _np_norm(_np_fade2(full,.001,.18))
+    return _np_norm(_np_fade2(full,.001,.22))
+
 def _gen_hit_skill_fast():
-    def strike(seed):
-        n=int(SR*.08)
-        return _np_norm(_np_mix2(_np_bp(n,600,250,seed)*_np_exp(n,.018),_np_bp(n,200,80,seed+1)*_np_exp(n,.025)*.4),.65)
-    s1=strike(70); s2=strike(72); s3=strike(74); gap=int(SR*.07)
+    """Three-hit skill: distinct rapid strikes, each with its own character."""
+    def strike(seed, pitch=1.0):
+        n=int(SR*.10)
+        thwack=_np_bp(n,int(420*pitch),int(180*pitch),seed)*_np_exp(n,.025)
+        body=_np_sinev(n,int(110*pitch),.32)*_np_exp(n,.035)
+        env=_np_fade2(_np.ones(n,_np.float32),.001,.05)
+        return _np_norm(_np_mix2(thwack,body)*env,.70)
+    s1=strike(70,1.0); s2=strike(72,1.15); s3=strike(74,0.90); gap=int(SR*.065)
     n_t=len(s1)+gap+len(s2)+gap+len(s3); out=_np.zeros(n_t,_np.float32)
-    o=0; out[o:o+len(s1)]+=s1; o+=len(s1)+gap; out[o:o+len(s2)]+=s2*.88; o+=len(s2)+gap; out[o:o+len(s3)]+=s3*.78
+    o=0; out[o:o+len(s1)]+=s1; o+=len(s1)+gap
+    out[o:o+len(s2)]+=s2*.92; o+=len(s2)+gap
+    out[o:o+len(s3)]+=s3*.85
     return _np_norm(out)
 
-# ── Miss sounds ───────────────────────────────────────────────
+# ── Miss sounds (deeper, longer, distinct from hits) ─────────
 def _gen_miss_physical():
-    n=int(SR*.22); swing=_np_bp(n,350,200,40)*_np_exp(n,.06)
-    swing*=(_np.linspace(.4,1.0,n)**.5*_np.linspace(1.0,0.0,n)**.3).astype(_np.float32)
-    n2=int(SR*.06); s=int(SR*.16); stumble=_np_bp(n2,180,80,41)*_np_exp(n2,.03)*.3
-    base=_np.zeros(n,_np.float32); e=min(n,s+n2); base[s:e]+=stumble[:e-s]
-    return _np_norm(_np_fade2(_np_mix2(swing,base),.005,.08))
+    """Weapon whiffs through air — whoosh that dissipates, no impact."""
+    n = int(SR * 0.38)
+    # Air displacement with no contact — peaks then trails off
+    env = _np.zeros(n, _np.float32)
+    pk = int(n * 0.45)
+    env[:pk] = _np.linspace(0.0, 1.0, pk) ** 0.6
+    env[pk:] = _np.linspace(1.0, 0.0, n - pk) ** 0.8
+    body  = _np_bp(n, 220, 90, 40) * env * 0.60     # air body
+    deep  = _np_sinev(n, 78, 0.30) * env * _np_exp(n, 0.20) * 0.55  # low miss weight
+    # Slight stumble/recovery thud at end
+    n2 = int(SR * 0.10); t2 = int(SR * 0.28)
+    stumble = _np_bp(n2, 150, 65, 41) * _np_exp(n2, 0.04) * 0.35
+    out = _np_mix2(body, deep)
+    out[t2:t2+n2] += stumble
+    return _np_norm(_np_fade2(out, .002, .14))
+
 def _gen_miss_magic():
-    build=_np_bp(int(SR*.08),1400,600,42)*_np.linspace(0,1,int(SR*.08)).astype(_np.float32)**.5*.5
-    n_f=int(SR*.20); fizzle=_np_bp(n_f,900,500,43)*_np_exp(n_f,.06)*.4+_np_sinev(n_f,320,.15)*_np_exp(n_f,.08)
-    return _np_norm(_np_fade2(_np.concatenate([build,fizzle]),.005,.10))
+    """Spell fizzles out — energy that built up but didn't release. Low thump."""
+    n = int(SR * 0.45)
+    # Energy that was building suddenly dissipates — low collapse
+    charge = _np.zeros(n, _np.float32)
+    phase = 0.0
+    for i in range(n):
+        frac = i / n
+        # Builds then collapses
+        freq = 80 + 120 * frac * (1 - frac) * 4
+        phase += 2 * _np.pi * freq / SR
+        charge[i] = _np.sin(phase) * min(frac * 4, 1.0) * max(1 - frac * 1.5, 0) * 0.40
+    charge = _np_lp(charge, 500)
+    # Low hollow thud when it collapses
+    n3 = int(SR * 0.15); t3 = int(SR * 0.28)
+    fizzle = (_np_sinev(n3, 68, 0.35) + _np_bp(n3, 130, 60, 42) * 0.30) * _np_exp(n3, 0.06)
+    out = _np.zeros(n, _np.float32)
+    out += charge
+    out[t3:t3+n3] += fizzle
+    return _np_norm(_np_fade2(out, .005, .18))
+
 def _gen_miss_elemental():
-    surge=_np_bp(int(SR*.06),1600,900,44)*_np_exp(int(SR*.06),.015)*.7
-    n2=int(SR*.18); die=_np_bp(n2,800,400,45)*_np_exp(n2,.04)*.35+_np_sinev(n2,280,.12)*_np_exp(n2,.07)
-    return _np_norm(_np_fade2(_np.concatenate([surge,die]),.002,.09))
+    """Elemental attack dissipates — surge of energy that hits nothing and fades."""
+    n = int(SR * 0.40)
+    # Quick surge then low resonant decay
+    n_surge = int(SR * 0.08)
+    surge = _np_bp(n_surge, 180, 80, 44) * _np_exp(n_surge, 0.015) * 0.65
+    # Resonant fade — the element dissipating
+    n_die = int(SR * 0.32); t_die = int(SR * 0.06)
+    die = (_np_sinev(n_die, 95, 0.28) + _np_bp(n_die, 160, 70, 45) * 0.35) * _np_exp(n_die, 0.10)
+    out = _np.zeros(n, _np.float32)
+    out[:n_surge] += surge
+    out[t_die:t_die+n_die] += die
+    return _np_norm(_np_fade2(out, .002, .16))
 
 # ── Heal / Revive ─────────────────────────────────────────────
 def _gen_heal():
@@ -671,47 +803,100 @@ def _gen_burning_tick():
 
 # ── Buff variants ─────────────────────────────────────────────
 def _gen_buff_physical():
-    n=int(SR*.55); t=_np.arange(n)/SR
-    brs=_np.zeros(n,_np.float32)
-    for f,v in [(110,.30),(165,.18),(220,.12),(330,.08)]:
-        brs+=_np_sinev(n,f,v)*(_np.sin(_np.pi*t/t[-1])**.6).astype(_np.float32)
-    punch=_np_bp(n,400,160,90)*_np_exp(n,.08)*.2
-    return _np_norm(_np_mix2(brs,punch)*_np_fade2(_np.ones(n,_np.float32),.02,.18))
-def _gen_buff_magic():
-    n=int(SR*.48); sweep=_np.zeros(n,_np.float32); phase=0.0
-    for i in range(n):
-        freq=400+1000*(i/n)**1.5; phase+=2*_np.pi*freq/SR; sweep[i]=_np.sin(phase)*.35
-    cryst=_np.zeros(n,_np.float32)
-    for f in [880,1320,1760,2640]: cryst+=_np_sinev(n,f,.12)*_np_exp(n,.08)
-    return _np_norm(_np_mix2(sweep,cryst)*_np_fade2(_np.ones(n,_np.float32),.015,.20))
-def _gen_buff_divine():
-    n=int(SR*.50); bell=_np.zeros(n,_np.float32)
-    for f,v,tau in [(880,.4,.18),(2200,.25,.10),(3300,.15,.07),(1320,.2,.14)]: bell+=_np_sinev(n,f,v)*_np_exp(n,tau)
-    soft=_np_bp(n,3000,1200,94)*_np_exp(n,.03)*.06
-    n_c=int(SR*.004); click=_np_hp_filt(_np.random.default_rng(95).standard_normal(n_c).astype(_np.float32)*.5,5000)
-    base=_np.zeros(n,_np.float32); base[:n_c]+=click
-    r=int(SR*.22); env=_np.ones(n,_np.float32); env[-r:]=_np.linspace(1,0,r)
-    return _np_norm(_np_mix2(base*.3,bell*env,soft))
-def _gen_buff_nature():
-    n=int(SR*.45); root=_np_sinev(n,110,.28)*_np_exp(n,.12); fifth=_np_sinev(n,165,.15)*_np_exp(n,.10)
-    rustle=_np_bp(n,2400,1200,96)*_np_exp(n,.04)*.15; thud=_np_bp(n,200,80,97)*_np_exp(n,.05)*.22
-    return _np_norm(_np_mix2(root,fifth,rustle,thud)*_np_fade2(_np.ones(n,_np.float32),.01,.18))
+    """War cry / Shield Bash / Power stance — muscular, deep, empowering surge."""
+    n = int(SR * 0.65)
+    t = _np.arange(n) / SR
+    # Deep brass-like chord swell (low register)
+    brs = _np.zeros(n, _np.float32)
+    for f, v in [(82, 0.38), (110, 0.25), (164, 0.16), (220, 0.10)]:
+        brs += _np_sinev(n, f, v) * (_np.sin(_np.pi * t / t[-1]) ** 0.5).astype(_np.float32)
+    brs = _np_lp(brs, 600)
+    # Percussive chest thump at onset
+    n_t = int(SR * 0.08)
+    thump = (_np_sinev(n_t, 65, 0.55) + _np_bp(n_t, 140, 60, 90) * 0.35) * _np_exp(n_t, 0.04)
+    out = _np.zeros(n, _np.float32)
+    out[:n_t] += thump
+    out += brs * 0.70
+    return _np_norm(_np_fade2(out, .001, .22))
 
-# ── Debuff variants ───────────────────────────────────────────
-def _gen_debuff_physical():
-    n=int(SR*.48); grind=_np_bp(n,280,120,100)*_np_exp(n,.10)
-    sweep=_np.zeros(n,_np.float32); phase=0.0
+def _gen_buff_magic():
+    """Magical self-enhancement — deep shimmer rising from below, not a squeak."""
+    n = int(SR * 0.60)
+    # Frequency sweep stays in low-mid register
+    sweep = _np.zeros(n, _np.float32); phase = 0.0
     for i in range(n):
-        freq=600-450*(i/n)**.7; phase+=2*_np.pi*freq/SR; sweep[i]=_np.sin(phase)*.3*(1-i/n)**.4
-    return _np_norm(_np_mix2(grind,sweep)*_np_fade2(_np.ones(n,_np.float32),.005,.15))
+        freq = 120 + 280 * (i/n) ** 1.3   # 120 → 400 Hz
+        phase += 2 * _np.pi * freq / SR
+        sweep[i] = _np.sin(phase) * (i/n) ** 0.6 * 0.35
+    sweep = _np_lp(sweep, 700)
+    # Low harmonic crystal tones
+    cryst = _np.zeros(n, _np.float32)
+    for f, tau in [(220, 0.18), (330, 0.14), (440, 0.10)]:
+        cryst += _np_sinev(n, f, 0.18) * _np_exp(n, tau)
+    return _np_norm(_np_mix2(sweep, cryst) * _np_fade2(_np.ones(n, _np.float32), .015, .22))
+
+def _gen_buff_divine():
+    """Divine blessing — deep church bell warmth, low fundamental, slow decay."""
+    n = int(SR * 0.70)
+    bell = _np.zeros(n, _np.float32)
+    # Drop all frequencies by ~2 octaves from original
+    for f, v, tau in [(220, 0.45, 0.28), (330, 0.28, 0.20), (440, 0.18, 0.14), (165, 0.25, 0.32)]:
+        bell += _np_sinev(n, f, v) * _np_exp(n, tau)
+    bell = _np_lp(bell, 1200)
+    # Soft initial click (much quieter)
+    n_c = int(SR * 0.005)
+    click = _np_hp_filt(_np.random.default_rng(95).standard_normal(n_c).astype(_np.float32) * 0.3, 2000)
+    base = _np.zeros(n, _np.float32); base[:n_c] += click
+    r = int(SR * 0.30); env = _np.ones(n, _np.float32); env[-r:] = _np.linspace(1, 0, r)
+    return _np_norm(_np_mix2(base * 0.20, bell * env))
+
+def _gen_buff_nature():
+    """Nature growth buff — deep earth rumble, root-like resonance."""
+    n = int(SR * 0.60)
+    root  = _np_sinev(n, 82, 0.38) * _np_exp(n, 0.18)     # deep root note
+    fifth = _np_sinev(n, 123, 0.22) * _np_exp(n, 0.15)    # 5th harmony
+    earth = _np_bp(n, 160, 70, 96) * _np_exp(n, 0.12) * 0.30  # earth body
+    thud  = (_np_sinev(int(SR*0.10), 55, 0.50) * _np_exp(int(SR*0.10), 0.04))
+    out = _np.zeros(n, _np.float32)
+    out[:int(SR*0.10)] += thud
+    out += _np_mix2(root, fifth, earth) * 0.70
+    return _np_norm(_np_fade2(out, .005, .20))
+
+# ── Debuff variants (lower, more threatening, distinct per type) ─
+def _gen_debuff_physical():
+    """Thief mark / physical cripple — scrape and drag, weight being stripped away."""
+    n = int(SR * 0.55)
+    # Descending scrape (higher → lower, like something being stripped)
+    scrape = _np.zeros(n, _np.float32); phase = 0.0
+    for i in range(n):
+        freq = 280 - 180 * (i/n) ** 0.6   # 280 → 100 Hz drop
+        phase += 2 * _np.pi * freq / SR
+        scrape[i] = _np.sin(phase) * (1 - i/n) ** 0.5 * 0.38
+    scrape = _np_lp(scrape, 400)
+    # Low grinding undertone
+    grind = _np_bp(n, 140, 65, 100) * _np_exp(n, 0.14) * 0.45
+    sub   = _np_sinev(n, 52, 0.28) * _np_exp(n, 0.18)
+    return _np_norm(_np_mix2(scrape, grind, sub) * _np_fade2(_np.ones(n, _np.float32), .003, .20))
+
 def _gen_debuff_magic():
-    n=int(SR*.50); dark=_np_sinev(n,82,.25)*_np_exp(n,.12); clash=_np_sinev(n,87,.15)*_np_exp(n,.10)
-    hiss=_np_bp(n,800,400,102)*_np_exp(n,.06)*.18; sub=_np_sinev(n,41,.2)*_np_exp(n,.14)
-    return _np_norm(_np_mix2(dark,clash,hiss,sub)*_np_fade2(_np.ones(n,_np.float32),.005,.18))
+    """Magical weakening curse — dark clashing dissonance, unsettling low tones."""
+    n = int(SR * 0.60)
+    # Two slightly detuned low notes clash — sounds wrong intentionally
+    dark  = _np_sinev(n, 78, 0.32) * _np_exp(n, 0.16)
+    clash = _np_sinev(n, 82, 0.22) * _np_exp(n, 0.13)    # 4Hz beating against dark
+    sub   = _np_sinev(n, 39, 0.28) * _np_exp(n, 0.20)
+    hiss  = _np_bp(n, 280, 110, 102) * _np_exp(n, 0.08) * 0.22
+    return _np_norm(_np_mix2(dark, clash, sub, hiss) * _np_fade2(_np.ones(n, _np.float32), .005, .22))
+
 def _gen_debuff_divine():
-    n=int(SR*.55); toll=_np_sinev(n,440,.4)*_np_exp(n,.15); clash=_np_sinev(n,466,.3)*_np_exp(n,.12)
-    low=_np_sinev(n,110,.2)*_np_exp(n,.12); ne=_np_bp(n,2000,800,103)*_np_exp(n,.03)*.10
-    return _np_norm(_np_mix2(toll,clash,low,ne)*_np_fade2(_np.ones(n,_np.float32),.003,.22))
+    """Divine curse / smite debuff — deep dissonant toll that feels like a judgement."""
+    n = int(SR * 0.65)
+    # Low bell toll — but at an unpleasant tritone interval
+    toll  = _np_sinev(n, 146, 0.42) * _np_exp(n, 0.20)
+    clash = _np_sinev(n, 155, 0.30) * _np_exp(n, 0.16)   # slightly sharp — dissonant
+    low   = _np_sinev(n, 73,  0.25) * _np_exp(n, 0.22)
+    rumble = _np_bp(n, 120, 55, 103) * _np_exp(n, 0.10) * 0.20
+    return _np_norm(_np_mix2(toll, clash, low, rumble) * _np_fade2(_np.ones(n, _np.float32), .003, .25))
 
 # ── Dungeon music tracks ──────────────────────────────────────
 def _gen_dungeon(fn):
@@ -1142,6 +1327,167 @@ def _dungeon_valdris_spire():
               _np_bp(N,380,150,24)*_np_swell2(N,28.0,_np.pi*.7,.65)*.07 +
               _np_bp(N,750,200,25)*_np_swell2(N,42.0,_np.pi*1.2,.60)*.06)
     return _np_seamless2(_np_norm(_np_mix2(foundation, v_mel*.75, dark_h*.6, drums*.7, fading_hiss, ascend)))
+
+
+# ── Wind-up generators (phase 1 of two-phase combat sounds) ───
+
+def _gen_swing_light():
+    """Light weapon wind-up: quick blade hiss through air."""
+    n = int(SR * 0.20)
+    # Directional whoosh: starts quiet, peaks at 60%, dies quickly
+    env = _np.zeros(n, _np.float32)
+    peak = int(n * 0.60)
+    env[:peak] = _np.linspace(0.0, 1.0, peak) ** 0.7
+    env[peak:] = _np.linspace(1.0, 0.0, n - peak) ** 1.5
+    hiss  = _np_bp(n, 1200, 600, 200) * env * 0.55     # blade edge hiss
+    body  = _np_bp(n, 400,  180, 201) * env * 0.35     # displaced air body
+    return _np_norm(_np_mix2(hiss, body) * _np_fade2(_np.ones(n, _np.float32), .001, .06))
+
+def _gen_swing_medium():
+    """Medium weapon wind-up: clear sword whoosh with air displacement."""
+    n = int(SR * 0.32)
+    env = _np.zeros(n, _np.float32)
+    peak = int(n * 0.55)
+    env[:peak] = _np.linspace(0.0, 1.0, peak) ** 0.6
+    env[peak:] = _np.linspace(1.0, 0.0, n - peak) ** 1.2
+    body  = _np_bp(n, 280, 120, 210) * env * 0.55     # air body
+    hiss  = _np_bp(n, 700, 350, 211) * env * 0.35     # blade hiss
+    deep  = _np_sinev(n, 85, 0.25) * env * _np_exp(n, 0.15) * 0.50   # low weight
+    return _np_norm(_np_mix2(body, hiss, deep) * _np_fade2(_np.ones(n, _np.float32), .001, .10))
+
+def _gen_swing_heavy():
+    """Heavy weapon wind-up: massive air displacement, low rumble."""
+    n = int(SR * 0.50)
+    env = _np.zeros(n, _np.float32)
+    peak = int(n * 0.50)
+    env[:peak] = _np.linspace(0.0, 1.0, peak) ** 0.5   # slow build
+    env[peak:] = _np.linspace(1.0, 0.0, n - peak) ** 0.9
+    sub   = _np_sinev(n, 55, 0.45) * env * _np_exp(n, 0.20)           # sub rumble
+    body  = _np_bp(n, 160, 70, 220) * env * 0.60                       # air mass
+    whump = _np_bp(n, 320, 130, 221) * env * 0.40                      # whump body
+    grind = _np_bp(n, 80,  40, 222) * env * 0.35 * _np_exp(n, 0.25)   # low grind
+    return _np_norm(_np_mix2(sub, body, whump, grind) * _np_fade2(_np.ones(n, _np.float32), .005, .18))
+
+def _gen_cast_attack():
+    """Spell attack charge: energy gathering from silence, builds to release.
+    Low resonant hum that rises in pitch and intensity."""
+    n = int(SR * 0.42)
+    # Rising frequency drone — the mage gathering power
+    charge = _np.zeros(n, _np.float32)
+    phase = 0.0
+    for i in range(n):
+        frac = i / n
+        freq = 80 + 180 * (frac ** 1.4)   # 80 → 260 Hz, accelerates toward release
+        phase += 2 * _np.pi * freq / SR
+        charge[i] = _np.sin(phase) * (frac ** 0.8) * 0.45
+    charge = _np_lp(charge, 600)
+    # Low harmonic shimmer
+    shimmer = _np.zeros(n, _np.float32)
+    for f, v in [(120, 0.18), (180, 0.12), (240, 0.08)]:
+        ramp = _np.linspace(0.0, 1.0, n) ** 1.2
+        shimmer += _np_sinev(n, f, v) * ramp.astype(_np.float32)
+    # Subtle rumble underneath
+    rumble = _np_bp(n, 90, 45, 230) * (_np.linspace(0.0, 1.0, n) ** 1.0).astype(_np.float32) * 0.30
+    env = _np_fade2(_np.ones(n, _np.float32), .010, .08)
+    return _np_norm(_np_mix2(charge, shimmer, rumble) * env)
+
+def _gen_cast_buff_self():
+    """Physical self-buff preparation: effort/strain energy, like a warrior's focused breath.
+    No voice — just the physical sensation of muscles coiling, air compression."""
+    n = int(SR * 0.35)
+    # Low grunt-like energy — bandpass filtered noise that suggests effort
+    strain = _np_bp(n, 140, 70, 240) * _np.linspace(0.0, 1.0, n).astype(_np.float32) ** 0.6 * 0.55
+    sub    = _np_sinev(n, 72, 0.38) * _np.linspace(0.5, 1.0, n).astype(_np.float32) * _np_exp(n, 0.25)
+    body   = _np_bp(n, 280, 110, 241) * _np.linspace(0.0, 1.0, n).astype(_np.float32) ** 0.8 * 0.40
+    # Sharp exhale-like transient at the peak
+    n_ex = int(SR * 0.06)
+    exhale = _np_bp(n_ex, 350, 180, 242) * _np_exp(n_ex, 0.015) * 0.50
+    out = _np.zeros(n, _np.float32)
+    out += strain + sub + body
+    t_ex = int(SR * 0.29)
+    out[t_ex:t_ex + n_ex] += exhale[:n - t_ex]
+    return _np_norm(_np_fade2(out, .005, .12))
+
+def _gen_cast_buff_spell():
+    """Spell buff preparation: gentle magical swell — deeper than attack charge.
+    A warm harmonic shimmer that rises slowly, suggests protection/blessing."""
+    n = int(SR * 0.45)
+    ramp = _np.linspace(0.0, 1.0, n).astype(_np.float32) ** 1.2
+    # Warm chord swell — low register
+    chord = _np.zeros(n, _np.float32)
+    for f, v, tau in [(110, 0.28, 0.35), (165, 0.20, 0.30), (220, 0.14, 0.25)]:
+        chord += _np_sinev(n, f, v) * ramp * _np_exp(n, tau)
+    chord = _np_lp(chord, 800)
+    # Gentle shimmer on top (subdued compared to attack)
+    shimmer = _np_bp(n, 600, 250, 250) * ramp * 0.18
+    return _np_norm(_np_fade2(_np_mix2(chord, shimmer), .010, .15))
+
+def _gen_cast_debuff():
+    """Enemy debuff preparation: sinister quiet tension.
+    A thief marking a target, a curse being woven — dark and subtle."""
+    n = int(SR * 0.30)
+    # Very quiet dark hum that descends in pitch
+    dark = _np.zeros(n, _np.float32)
+    phase = 0.0
+    for i in range(n):
+        frac = i / n
+        freq = 180 - 80 * frac   # descends from 180 → 100 Hz
+        phase += 2 * _np.pi * freq / SR
+        dark[i] = _np.sin(phase) * (frac ** 0.5) * 0.35
+    dark = _np_lp(dark, 400)
+    # Low scratch/scrape suggesting dark intent
+    scratch = _np_bp(n, 320, 140, 260) * (_np.linspace(0.0, 0.6, n) ** 0.8).astype(_np.float32) * 0.30
+    sub = _np_sinev(n, 62, 0.22) * _np.linspace(0.0, 1.0, n).astype(_np.float32) * _np_exp(n, 0.30)
+    return _np_norm(_np_fade2(_np_mix2(dark, scratch, sub), .005, .12))
+
+
+# ── Redesigned resolution generators (all lower, longer) ──────
+
+def _gen_death_enemy():
+    """Enemy death: heavy collapse — body weight hitting stone floor.
+    Long, low, unmistakable. Three phases: final blow resonance → crumple → ground thud."""
+    n = int(SR * 1.20)
+    # Phase 1 (0-0.3s): resonance of killing blow
+    n1 = int(SR * 0.30)
+    ring = _np.zeros(n, _np.float32)
+    for f, v, tau in [(78, 0.40, 0.18), (124, 0.25, 0.12), (52, 0.30, 0.22)]:
+        ring[:n1] += _np_sinev(n1, f, v) * _np_exp(n1, tau)
+    # Phase 2 (0.25-0.65s): crumple / armour scrape
+    n2 = int(SR * 0.40); t2 = int(SR * 0.25)
+    crumple = _np_bp(n2, 180, 90, 300) * _np_exp(n2, 0.12) * 0.45
+    scrape  = _np_bp(n2, 380, 160, 301) * _np_exp(n2, 0.08) * 0.28
+    crumple_mix = _np_mix2(crumple, scrape) * _np.hanning(n2).astype(_np.float32) ** 0.4
+    out = _np.zeros(n, _np.float32)
+    out[:n1] += ring
+    out[t2:t2 + n2] += crumple_mix
+    # Phase 3 (0.60-1.2s): heavy floor impact thud
+    t3 = int(SR * 0.60); n3 = int(SR * 0.55)
+    thud = (_np_sinev(n3, 45, 0.55) + _np_sinev(n3, 72, 0.32) +
+            _np_bp(n3, 130, 60, 302) * 0.40) * _np_exp(n3, 0.18)
+    out[t3:t3 + n3] += thud
+    return _np_norm(_np_fade2(out, .001, .35))
+
+def _gen_death_player():
+    """Player death: slower, more anguished — armour collapse over a full second.
+    Deeper and more resonant than enemy death."""
+    n = int(SR * 1.40)
+    out = _np.zeros(n, _np.float32)
+    # Low toll — like a bell struck in a bad way
+    n1 = int(SR * 0.50)
+    toll = _np.zeros(n1, _np.float32)
+    for f, v, tau in [(58, 0.45, 0.30), (87, 0.28, 0.22), (43, 0.35, 0.38)]:
+        toll += _np_sinev(n1, f, v) * _np_exp(n1, tau)
+    out[:n1] += toll
+    # Armour crumple (0.4-0.9s)
+    t2 = int(SR * 0.40); n2 = int(SR * 0.50)
+    crumple = _np_bp(n2, 150, 70, 310) * _np_exp(n2, 0.15) * 0.50
+    scrape  = _np_bp(n2, 280, 120, 311) * _np_exp(n2, 0.10) * 0.30
+    out[t2:t2 + n2] += _np_mix2(crumple, scrape) * _np.hanning(n2).astype(_np.float32) ** 0.5
+    # Final floor thud (0.85-1.4s)
+    t3 = int(SR * 0.85); n3 = int(SR * 0.55)
+    thud = (_np_sinev(n3, 38, 0.60) + _np_bp(n3, 100, 50, 312) * 0.45) * _np_exp(n3, 0.25)
+    out[t3:t3 + n3] += thud
+    return _np_norm(_np_fade2(out, .001, .40))
 
 
 # ── Town music generators ──────────────────────────────────────
@@ -1675,6 +2021,11 @@ def _build_gen_queues():
         _sounds["ui_close"]   = _make_sound(_sweep(820,  380, 0.22, 0.22))
 
     def _b1_combat_physical():
+        # ── Wind-up sounds (phase 1) ──────────────────────────────
+        _sounds["swing_light"]    = _make_np_sound(_gen_swing_light)
+        _sounds["swing_medium"]   = _make_np_sound(_gen_swing_medium)
+        _sounds["swing_heavy"]    = _make_np_sound(_gen_swing_heavy)
+        # ── Impact sounds (phase 2) ──────────────────────────────
         _sounds["hit_light"]      = _make_np_sound(_gen_hit_light)
         _sounds["hit_medium"]     = _make_np_sound(_gen_hit_medium)
         _sounds["hit_heavy"]      = _make_np_sound(_gen_hit_heavy)
@@ -1703,7 +2054,13 @@ def _build_gen_queues():
         _sounds["spell_miss"]     = _sounds["miss_magic"]
 
     def _b1_combat_support():
-        _sounds["no_resource"]    = _make_sound(_mix(_sine(180, 0.28, 0.16), _noise(0.10, 0.08)))
+        # ── Preparation sounds (phase 1 for non-physical) ─────────
+        _sounds["cast_attack"]    = _make_np_sound(_gen_cast_attack)
+        _sounds["cast_buff_self"] = _make_np_sound(_gen_cast_buff_self)
+        _sounds["cast_buff_spell"]= _make_np_sound(_gen_cast_buff_spell)
+        _sounds["cast_debuff"]    = _make_np_sound(_gen_cast_debuff)
+        # ── Resolution sounds (phase 2) ───────────────────────────
+        _sounds["no_resource"]    = _make_sound(_mix(_sine(120, 0.35, 0.18), _noise(0.12, 0.06)))
         _sounds["heal"]    = _make_np_sound(_gen_heal)
         _sounds["revive"]  = _make_np_sound(_gen_revive)
         _sounds["buff_physical"] = _make_np_sound(_gen_buff_physical)
@@ -1719,23 +2076,24 @@ def _build_gen_queues():
         _sounds["burning_tick"]  = _make_np_sound(_gen_burning_tick)
 
     def _b1_combat_core():
-        _sounds["death"]        = _make_sound(_mix(_sweep(380, 65, 0.80, 0.32), _noise(0.50, 0.16)))
-        _sounds["enemy_death"] = _make_sound(_concat(
-            _mix(_noise(0.55, 0.06), _sine(220, 0.55, 0.06)), _silence(0.04),
-            _sweep(500, 40, 0.70, 0.32),
-            _mix(_sine(40, 0.50, 0.22), _noise(0.25, 0.16)),
-            _sweep(80, 20, 0.80, 0.18), _silence(0.06)))
+        # ── Death/kill sounds: long and distinct ─────────────────
+        _sounds["enemy_death"]  = _make_np_sound(_gen_death_enemy)
+        _sounds["death"]        = _make_np_sound(_gen_death_player)
         _sounds["victory"]      = _make_sound(_concat(
-            _sine(523, 0.18, 0.32), _sine(659, 0.18, 0.32),
-            _sine(784, 0.18, 0.32), _sine(1047, 0.40, 0.38)))
+            _sine(392, 0.22, 0.30), _sine(523, 0.22, 0.32),
+            _sine(659, 0.22, 0.34), _sine(784, 0.18, 0.36),
+            _silence(0.06), _sine(784, 0.45, 0.38)))
         _sounds["defeat"]       = _make_sound(_concat(
-            _sine(400, 0.28, 0.30), _sine(350, 0.28, 0.30),
-            _sine(300, 0.28, 0.30), _sine(200, 0.55, 0.30)))
+            _sine(280, 0.35, 0.30), _sine(240, 0.35, 0.30),
+            _sine(200, 0.35, 0.28), _sine(130, 0.70, 0.28)))
         _sounds["combat_start"] = _make_sound(_mix(
-            _noise(0.25, 0.32),
-            _concat(_sine(220, 0.14, 0.32), _sine(330, 0.14, 0.32), _sine(440, 0.20, 0.38))))
-        _sounds["block"]        = _make_sound(_mix(_noise(0.12, 0.32), _sine(170, 0.16, 0.22)))
-        _sounds["poison"]       = _make_sound(_mix(_sweep(520, 280, 0.38, 0.18), _noise(0.20, 0.10)))
+            _noise(0.22, 0.28),
+            _concat(_sine(165, 0.16, 0.30), _sine(220, 0.16, 0.34), _sine(330, 0.22, 0.36))))
+        _sounds["block"]        = _make_sound(_mix(
+            _bandpass_noise(0.18, 140, 70, 0.40),
+            _sine(130, 0.20, 0.26)))
+        _sounds["poison"]       = _make_sound(_mix(
+            _sweep(280, 140, 0.45, 0.20), _noise(0.22, 0.08)))
 
     def _b1_dungeon_sfx():
         _sounds["door_open"] = _make_sound(_concat(
@@ -1786,8 +2144,13 @@ def _build_gen_queues():
             _sine(440, 0.50, 0.20)))
         _sounds["trap"]       = _make_sound(_mix(
             _noise(0.28, 0.36), _sweep(700, 120, 0.32, 0.28)))
-        _sounds["step"]       = _make_sound(
-            _mix(_noise(0.08, 0.12, seed=17), _sine(90, 0.08, 0.10)))
+        # Step: very soft low footfall — just sub weight, no high content
+        _sounds["step"] = _make_sound(
+            _mix(
+                _bandpass_noise(0.14, 60, 40, 0.20, seed=17),   # sub rumble body
+                _sine(52, 0.10, 0.16),                           # deep sub
+                _bandpass_noise(0.08, 110, 45, 0.06, seed=18),  # faint mid presence only
+            ))
 
     _gen_batch1 = [
         ("UI sounds",           _b1_ui),

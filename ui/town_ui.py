@@ -983,6 +983,8 @@ class TownUI:
                 from data.story_data import NPC_DIALOGUES
                 from core.dialogue import select_dialogue
                 from ui.dialogue_ui import DialogueUI
+                from core._dialogue_party import set_party
+                set_party(self.party)   # must be before select_dialogue (on_enter fires in __init__)
                 dialogues = NPC_DIALOGUES.get(did, [])
                 if dialogues:
                     ds = select_dialogue(did, dialogues)
@@ -1069,6 +1071,8 @@ class TownUI:
         from data.story_data import NPC_DIALOGUES
         from core.dialogue import select_dialogue
         from ui.dialogue_ui import DialogueUI
+        from core._dialogue_party import set_party
+        set_party(self.party)   # must be before select_dialogue (on_enter fires in __init__)
         dialogues = NPC_DIALOGUES.get(did, [])
         if dialogues:
             ds = select_dialogue(did, dialogues)
@@ -2897,6 +2901,8 @@ class TownUI:
             # NPC clicks
             from data.story_data import get_town_npcs, NPC_DIALOGUES
             from core.dialogue import select_dialogue
+            from core._dialogue_party import set_party
+            set_party(self.party)   # must be before select_dialogue (on_enter fires in __init__)
             npcs = get_town_npcs(self.town_id)
             npc_x = SCREEN_W // 2 + 150
             for j, (npc_id, npc_data) in enumerate(npcs):

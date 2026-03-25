@@ -788,6 +788,230 @@ NPCS = {
 
 NPC_DIALOGUES = {
     # ─────────────────────────────────────────────────────────
+    #  WARDEN LIAISON — Rank system, guidance, badges
+    #  Five conditional trees, evaluated in order (most advanced first)
+    # ─────────────────────────────────────────────────────────
+    "warden_liaison": [
+        # ── Rank 4: Warden-Commander (endgame cleared) ──────────────
+        {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "warden_rank4",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Warden-Commander. The title sits heavier than it sounds.\nThe Spire is silent. The wards hold. I never thought I'd say that in my lifetime.",
+                        "on_enter": [
+                            {"action": "give_item",
+                             "once_flag": "warden.badge4.given",
+                             "item": {
+                                "name": "Warden-Commander Badge",
+                                "type": "misc", "slot": None,
+                                "identified": True, "stack": 1,
+                                "description": "A silver clasp bearing the crossed wards of the Warden-Commander rank. The highest honour the Order can bestow.",
+                                "rarity": "epic",
+                                "warden_rank": 4
+                             }}
+                        ],
+                        "choices": [
+                            {"text": "What happens to the Order now?", "next": "future"},
+                            {"text": "Any threats I should watch for?", "next": "threats"},
+                            {"text": "Farewell.", "next": None}
+                        ]
+                    },
+                    "future": {
+                        "speaker": "Warden Liaison",
+                        "text": "The Order rebuilds. Slowly. There are six other Liaisons I know of still living — we'll need every one of them.\nYou've bought us time. Use it.",
+                        "choices": [{"text": "We will.", "next": None}]
+                    },
+                    "threats": {
+                        "speaker": "Warden Liaison",
+                        "text": "The Fading recedes, but doesn't vanish overnight. The outer settlements — Thornhaven's eastern roads, the Pale Coast villages — will see echoes for months.\nKeep your weapons sharp.",
+                        "choices": [{"text": "Understood.", "next": None}]
+                    }
+                }
+            }
+        },
+        # ── Rank 3: Senior Warden (5th hearthstone recovered) ───────
+        {
+            "conditions": [{"flag": "item.hearthstone.5", "op": "==", "value": True}],
+            "tree": {
+                "id": "warden_rank3",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Five Hearthstones. All of them.\nI'm authorised to present you with the rank of Senior Warden. Take this.",
+                        "on_enter": [
+                            {"action": "give_item",
+                             "once_flag": "warden.badge3.given",
+                             "item": {
+                                "name": "Senior Warden Badge",
+                                "type": "misc", "slot": None,
+                                "identified": True, "stack": 1,
+                                "description": "A deep green enamel badge bearing three ward-runes. Marks the bearer as a keeper of the deeper wards.",
+                                "rarity": "rare",
+                                "warden_rank": 3
+                             }}
+                        ],
+                        "choices": [
+                            {"text": "What's left?", "next": "valdris"},
+                            {"text": "What does this rank mean?", "next": "rank_meaning"},
+                            {"text": "Thank you.", "next": None}
+                        ]
+                    },
+                    "valdris": {
+                        "speaker": "Warden Liaison",
+                        "text": "Valdris' Spire. That's what's left.\nThe wards are almost restored — but they need someone to seal them from the inside. Valdris knows the ritual. Whether he'll help or fight you, I cannot say.\nThe Spire is north-east of Thornhaven. Find it.",
+                        "choices": [{"text": "We'll go.", "next": None}]
+                    },
+                    "rank_meaning": {
+                        "speaker": "Warden Liaison",
+                        "text": "Four bonus to all attributes, ten percent more health, five percent more damage. The Order's deepest wards augment those who carry its mark.\nMore importantly — it means the Order trusts you with its secrets.",
+                        "choices": [{"text": "We won't waste it.", "next": None}]
+                    }
+                }
+            }
+        },
+        # ── Rank 2: Warden (3rd hearthstone recovered) ──────────────
+        {
+            "conditions": [{"flag": "item.hearthstone.3", "op": "==", "value": True}],
+            "tree": {
+                "id": "warden_rank2",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Three Hearthstones recovered. The old Wardens would be proud — if any of them were still alive to say it.\nI'm raising your designation to Warden. Formally.",
+                        "on_enter": [
+                            {"action": "give_item",
+                             "once_flag": "warden.badge2.given",
+                             "item": {
+                                "name": "Warden Badge",
+                                "type": "misc", "slot": None,
+                                "identified": True, "stack": 1,
+                                "description": "A green-lacquered iron badge bearing the twin ward-runes. Standard issue for a confirmed Warden.",
+                                "rarity": "uncommon",
+                                "warden_rank": 2
+                             }}
+                        ],
+                        "choices": [
+                            {"text": "Where are the remaining Hearthstones?", "next": "remaining"},
+                            {"text": "What should we watch out for?", "next": "dangers"},
+                            {"text": "Thank you.", "next": None}
+                        ]
+                    },
+                    "remaining": {
+                        "speaker": "Warden Liaison",
+                        "text": "Two left. The Windswept Isle, off the Pale Coast — sea travel required, probably from Pale Coast Harbor.\nAnd Valdris' Spire to the north-east, but don't approach that until you've secured the Isle. You'll need the strength.",
+                        "choices": [{"text": "We'll head to the coast.", "next": None}]
+                    },
+                    "dangers": {
+                        "speaker": "Warden Liaison",
+                        "text": "The Governor's men are growing bolder. I've seen Imperial patrols pushing into areas they have no business in — near the Pale Coast, near the old mine roads.\nSomeone is directing them. Be careful who you trust in Thornhaven.",
+                        "choices": [{"text": "Noted.", "next": None}]
+                    }
+                }
+            }
+        },
+        # ── Rank 1: Scout (1st hearthstone recovered) ───────────────
+        {
+            "conditions": [{"flag": "item.hearthstone.1", "op": "==", "value": True}],
+            "tree": {
+                "id": "warden_rank1",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "You recovered the first Hearthstone. I wasn't sure you'd make it back.\nThe Order recognises your service. Scout rank — take this badge.",
+                        "on_enter": [
+                            {"action": "give_item",
+                             "once_flag": "warden.badge1.given",
+                             "item": {
+                                "name": "Scout Badge",
+                                "type": "misc", "slot": None,
+                                "identified": True, "stack": 1,
+                                "description": "A grey iron badge bearing a single ward-rune. Marks the bearer as a recognised Scout of the Warden Order.",
+                                "rarity": "common",
+                                "warden_rank": 1
+                             }}
+                        ],
+                        "choices": [
+                            {"text": "Where should we go next?", "next": "guidance"},
+                            {"text": "What is the Scout rank?", "next": "rank_info"},
+                            {"text": "Thank you.", "next": None}
+                        ]
+                    },
+                    "guidance": {
+                        "speaker": "Warden Liaison",
+                        "text": "Four Hearthstones remain. Maren will know more than I do about their locations.\nWhat I know: the Spider's Nest near Woodhaven, the Ruins of Ashenmoor south-west, and the Sunken Crypt beneath the Pale Coast. Dangerous places — get stronger first.",
+                        "choices": [{"text": "We'll find them.", "next": None}]
+                    },
+                    "rank_info": {
+                        "speaker": "Warden Liaison",
+                        "text": "Scout rank grants one point to all attributes and a small experience bonus. The Order's mark strengthens those who carry it — the deeper your rank, the stronger the effect.\nProve yourself on the remaining Hearthstones.",
+                        "choices": [{"text": "We will.", "next": None}]
+                    }
+                }
+            }
+        },
+        # ── Rank 0: Initiate (first meeting, gives starter badge) ───
+        {
+            "conditions": [],
+            "tree": {
+                "id": "warden_rank0",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "You have the look of people who've answered the old call.\nI'm a Liaison of the Warden Order — we track those who take up the work. If you're serious, take this. It marks you as Initiates.",
+                        "on_enter": [
+                            {"action": "give_item",
+                             "once_flag": "warden.badge0.given",
+                             "item": {
+                                "name": "Warden Initiate Badge",
+                                "type": "misc", "slot": None,
+                                "identified": True, "stack": 1,
+                                "description": "A worn leather badge bearing the Warden mark. Simple, but it opens certain doors.",
+                                "rarity": "common",
+                                "warden_rank": 0
+                             }}
+                        ],
+                        "choices": [
+                            {"text": "What should we do first?", "next": "first_steps"},
+                            {"text": "What is the Warden Order?", "next": "about_order"},
+                            {"text": "What's happening to the land?", "next": "the_fading"},
+                            {"text": "Thanks.", "next": None}
+                        ]
+                    },
+                    "first_steps": {
+                        "speaker": "Warden Liaison",
+                        "text": "There's a scholar named Maren in Briarhollow. She's been studying the land sickness longer than anyone I know of. Find her first.\nThe Abandoned Mine east of town is where the trouble started — but don't go alone and don't go unprepared.",
+                        "choices": [{"text": "We'll find Maren.", "next": None}]
+                    },
+                    "about_order": {
+                        "speaker": "Warden Liaison",
+                        "text": "An old guild. We maintained the wards that kept the Shadow Realm from bleeding into ours.\nWe failed two hundred years ago. Most of the Order died in the collapse. What you see now is what survives — Liaisons like me, spread thin across the settlements, watching.",
+                        "choices": [
+                            {"text": "What do we need to do?", "next": "first_steps"},
+                            {"text": "Understood.", "next": None}
+                        ]
+                    },
+                    "the_fading": {
+                        "speaker": "Warden Liaison",
+                        "text": "The wards that hold the Shadow Realm at bay are failing. When they fail completely, the world dissolves — people, stone, memory, all of it.\nFive Hearthstone fragments once anchored the wards. They were scattered. Recovering them is the only path I know of.",
+                        "choices": [
+                            {"text": "Where do we start?", "next": "first_steps"},
+                            {"text": "That's grim.", "next": None}
+                        ]
+                    }
+                }
+            }
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
     #  MAREN — Main quest giver
     # ─────────────────────────────────────────────────────────
     "maren": [
