@@ -803,64 +803,84 @@ def _gen_burning_tick():
 
 # ── Buff variants ─────────────────────────────────────────────
 def _gen_buff_physical():
-    """War cry / Shield Bash / Power stance — muscular, deep, empowering surge."""
-    n = int(SR * 0.65)
-    t = _np.arange(n) / SR
-    # Deep brass-like chord swell (low register)
-    brs = _np.zeros(n, _np.float32)
-    for f, v in [(82, 0.38), (110, 0.25), (164, 0.16), (220, 0.10)]:
-        brs += _np_sinev(n, f, v) * (_np.sin(_np.pi * t / t[-1]) ** 0.5).astype(_np.float32)
-    brs = _np_lp(brs, 600)
-    # Percussive chest thump at onset
-    n_t = int(SR * 0.08)
-    thump = (_np_sinev(n_t, 65, 0.55) + _np_bp(n_t, 140, 60, 90) * 0.35) * _np_exp(n_t, 0.04)
+    """Power-up resolution: weapon strike sound + rising power chord.
+    Feels like gaining strength — metallic clank then ascending tones.
+    Clear, present, unmistakably 'gained something'. Centroid ~700Hz."""
+    n = int(SR * 0.60)
+    # Sharp metallic strike at onset — the 'activation' sound
+    n_hit = int(SR * 0.06)
+    metal = _np.zeros(n_hit, _np.float32)
+    for f, v, tau in [(1200, 0.40, 0.03), (800, 0.30, 0.04), (400, 0.25, 0.05)]:
+        metal += _np_sinev(n_hit, f, v) * _np_exp(n_hit, tau)
+    # Rising three-note power chord (empowering feeling)
+    notes = [(220, 0.0, 0.32), (330, 0.08, 0.28), (440, 0.16, 0.24), (550, 0.24, 0.18)]
+    chord = _np.zeros(n, _np.float32)
+    for freq, onset_s, vol in notes:
+        onset = int(SR * onset_s)
+        n_note = n - onset
+        env_n = _np.linspace(0.0, 1.0, n_note).astype(_np.float32) ** 0.7 * _np_exp(n_note, 0.28)
+        chord[onset:] += _np_sinev(n_note, freq, vol) * env_n
     out = _np.zeros(n, _np.float32)
-    out[:n_t] += thump
-    out += brs * 0.70
-    return _np_norm(_np_fade2(out, .001, .22))
+    out[:n_hit] += metal * 0.80
+    out += chord * 0.75
+    return _np_norm(_np_fade2(out, .001, .20))
 
 def _gen_buff_magic():
-    """Magical self-enhancement — deep shimmer rising from below, not a squeak."""
-    n = int(SR * 0.60)
-    # Frequency sweep stays in low-mid register
+    """Magical enhancement: sparkling upward sweep + sustained harmonic chord.
+    Feels like power being added — bright shimmer resolving into warmth.
+    Centroid ~800Hz — present and clearly 'magical'."""
+    n = int(SR * 0.65)
+    # Rising frequency sweep — clearly audible upward motion
     sweep = _np.zeros(n, _np.float32); phase = 0.0
     for i in range(n):
-        freq = 120 + 280 * (i/n) ** 1.3   # 120 → 400 Hz
+        freq = 300 + 700 * (i/n) ** 1.0   # 300 → 1000Hz linear rise
         phase += 2 * _np.pi * freq / SR
-        sweep[i] = _np.sin(phase) * (i/n) ** 0.6 * 0.35
-    sweep = _np_lp(sweep, 700)
-    # Low harmonic crystal tones
-    cryst = _np.zeros(n, _np.float32)
-    for f, tau in [(220, 0.18), (330, 0.14), (440, 0.10)]:
-        cryst += _np_sinev(n, f, 0.18) * _np_exp(n, tau)
-    return _np_norm(_np_mix2(sweep, cryst) * _np_fade2(_np.ones(n, _np.float32), .015, .22))
+        sweep[i] = _np.sin(phase) * (i/n) ** 0.5 * (1 - i/n) ** 0.3 * 0.38
+    # Sustaining chord that rings out
+    chord = _np.zeros(n, _np.float32)
+    for f, v, tau in [(330, 0.30, 0.25), (440, 0.22, 0.20), (550, 0.16, 0.16), (660, 0.10, 0.12)]:
+        chord += _np_sinev(n, f, v) * _np_exp(n, tau)
+    # Bright sparkle texture
+    spark = _np_bp(n, 2200, 800, 93) * _np.linspace(0.5, 1.0, n).astype(_np.float32) * 0.20
+    spark *= _np.linspace(1.0, 0.0, n).astype(_np.float32) ** 0.5
+    return _np_norm(_np_mix2(sweep, chord, spark) * _np_fade2(_np.ones(n, _np.float32), .010, .22))
 
 def _gen_buff_divine():
-    """Divine blessing — deep church bell warmth, low fundamental, slow decay."""
+    """Divine blessing resolution: warm mid-register bell chord.
+    Sounds holy but approachable — like a benediction, not a squeak.
+    Centroid ~600Hz — warm, present, clearly 'blessed'."""
     n = int(SR * 0.70)
+    # Bell chord in mid register — not too high, not too low
     bell = _np.zeros(n, _np.float32)
-    # Drop all frequencies by ~2 octaves from original
-    for f, v, tau in [(220, 0.45, 0.28), (330, 0.28, 0.20), (440, 0.18, 0.14), (165, 0.25, 0.32)]:
+    for f, v, tau in [(330, 0.42, 0.28), (440, 0.30, 0.22), (550, 0.20, 0.16),
+                      (660, 0.12, 0.12), (247, 0.25, 0.32)]:
         bell += _np_sinev(n, f, v) * _np_exp(n, tau)
-    bell = _np_lp(bell, 1200)
-    # Soft initial click (much quieter)
-    n_c = int(SR * 0.005)
-    click = _np_hp_filt(_np.random.default_rng(95).standard_normal(n_c).astype(_np.float32) * 0.3, 2000)
+    bell = _np_lp(bell, 1800)
+    # Soft initial transient — not harsh click
+    n_c = int(SR * 0.008)
+    click = _np_bp(n_c, 1000, 500, 95) * _np_exp(n_c, 0.003) * 0.35
     base = _np.zeros(n, _np.float32); base[:n_c] += click
-    r = int(SR * 0.30); env = _np.ones(n, _np.float32); env[-r:] = _np.linspace(1, 0, r)
-    return _np_norm(_np_mix2(base * 0.20, bell * env))
+    r = int(SR * 0.28); env = _np.ones(n, _np.float32); env[-r:] = _np.linspace(1, 0, r)
+    return _np_norm(_np_mix2(base * 0.30, bell * env))
 
 def _gen_buff_nature():
-    """Nature growth buff — deep earth rumble, root-like resonance."""
+    """Nature buff: earthy growth sound — rising wooden resonance.
+    Like roots pulling strength from soil. Centroid ~500Hz — grounded, organic."""
     n = int(SR * 0.60)
-    root  = _np_sinev(n, 82, 0.38) * _np_exp(n, 0.18)     # deep root note
-    fifth = _np_sinev(n, 123, 0.22) * _np_exp(n, 0.15)    # 5th harmony
-    earth = _np_bp(n, 160, 70, 96) * _np_exp(n, 0.12) * 0.30  # earth body
-    thud  = (_np_sinev(int(SR*0.10), 55, 0.50) * _np_exp(int(SR*0.10), 0.04))
+    # Root note + fifth with natural envelope (like a wood instrument)
+    root  = _np_sinev(n, 165, 0.35) * _np.hanning(n).astype(_np.float32) ** 0.4 * _np_exp(n, 0.22)
+    fifth = _np_sinev(n, 247, 0.25) * _np.hanning(n).astype(_np.float32) ** 0.4 * _np_exp(n, 0.18)
+    oct2  = _np_sinev(n, 330, 0.18) * _np.hanning(n).astype(_np.float32) ** 0.4 * _np_exp(n, 0.15)
+    # Woody texture
+    wood  = _np_bp(n, 600, 250, 96) * _np.linspace(0.0, 1.0, n).astype(_np.float32) ** 0.6 * 0.22
+    wood *= _np.linspace(1.0, 0.2, n).astype(_np.float32)
+    # Initial thump — something taking root
+    n_t = int(SR * 0.07)
+    thud = (_np_sinev(n_t, 110, 0.45) + _np_bp(n_t, 220, 90, 97) * 0.30) * _np_exp(n_t, 0.04)
     out = _np.zeros(n, _np.float32)
-    out[:int(SR*0.10)] += thud
-    out += _np_mix2(root, fifth, earth) * 0.70
-    return _np_norm(_np_fade2(out, .005, .20))
+    out[:n_t] += thud
+    out += _np_mix2(root, fifth, oct2, wood) * 0.75
+    return _np_norm(_np_fade2(out, .001, .20))
 
 # ── Debuff variants (lower, more threatening, distinct per type) ─
 def _gen_debuff_physical():
@@ -1329,116 +1349,165 @@ def _dungeon_valdris_spire():
     return _np_seamless2(_np_norm(_np_mix2(foundation, v_mel*.75, dark_h*.6, drums*.7, fading_hiss, ascend)))
 
 
+def _gen_step_footstep():
+    """Footstep on hardwood: short heel-click transient (~800Hz) followed
+    by resonant clomp body (~300Hz). Total ~0.10s. Centroid target ~600Hz."""
+    SR_l = 44100
+    # Phase 1: heel click — very short bright transient (0.015s)
+    n_click = int(SR_l * 0.015)
+    click = _np.zeros(n_click, _np.float32)
+    for f, v in [(800, 0.50), (1200, 0.30), (400, 0.35)]:
+        click += _np_sinev(n_click, f, v) * _np_exp(n_click, 0.004)
+    click *= _np_fade2(_np.ones(n_click, _np.float32), 0.001, 0.004)
+    # Phase 2: clomp body — wood resonance, ~300Hz centroid (0.08s)
+    n_clomp = int(SR_l * 0.085)
+    clomp = (_np_sinev(n_clomp, 280, 0.45) +          # fundamental wood resonance
+             _np_sinev(n_clomp, 380, 0.25) +           # 1st overtone
+             _np_bp(n_clomp, 500, 200, 501) * 0.30     # mid-wood texture
+             ) * _np_exp(n_clomp, 0.04)
+    clomp *= _np_fade2(_np.ones(n_clomp, _np.float32), 0.001, 0.030)
+    # Combine: click sits slightly above clomp in time
+    n_total = n_click + n_clomp
+    out = _np.zeros(n_total, _np.float32)
+    out[:n_click] += click * 0.70     # click quieter than clomp
+    out[n_click:] += clomp * 1.00
+    return _np_norm(out)
+
+
 # ── Wind-up generators (phase 1 of two-phase combat sounds) ───
 
 def _gen_swing_light():
-    """Light weapon wind-up: quick blade hiss through air."""
-    n = int(SR * 0.20)
-    # Directional whoosh: starts quiet, peaks at 60%, dies quickly
+    """Light weapon: quick snapping whoosh — dagger or short blade cutting air.
+    High bright hiss with fast attack, centroid ~2200Hz."""
+    n = int(SR * 0.22)
     env = _np.zeros(n, _np.float32)
-    peak = int(n * 0.60)
-    env[:peak] = _np.linspace(0.0, 1.0, peak) ** 0.7
-    env[peak:] = _np.linspace(1.0, 0.0, n - peak) ** 1.5
-    hiss  = _np_bp(n, 1200, 600, 200) * env * 0.55     # blade edge hiss
-    body  = _np_bp(n, 400,  180, 201) * env * 0.35     # displaced air body
-    return _np_norm(_np_mix2(hiss, body) * _np_fade2(_np.ones(n, _np.float32), .001, .06))
+    peak = int(n * 0.35)   # peaks early — fast snap
+    env[:peak] = _np.linspace(0.0, 1.0, peak) ** 0.5
+    env[peak:] = _np.linspace(1.0, 0.0, n - peak) ** 1.0
+    # Sharp air-cutting hiss — the defining sound of a light blade
+    hiss   = _np_bp(n, 2800, 1400, 200) * env * 0.65   # bright edge hiss
+    mid    = _np_bp(n, 1100, 500,  201) * env * 0.50   # air body
+    body   = _np_bp(n, 420,  180,  202) * env * 0.30   # low presence
+    return _np_norm(_np_mix2(hiss, mid, body) * _np_fade2(_np.ones(n, _np.float32), .001, .05))
 
 def _gen_swing_medium():
-    """Medium weapon wind-up: clear sword whoosh with air displacement."""
-    n = int(SR * 0.32)
+    """Medium weapon: classic sword whoosh — broad air displacement.
+    Clear swooping presence, centroid ~1400Hz."""
+    n = int(SR * 0.34)
     env = _np.zeros(n, _np.float32)
-    peak = int(n * 0.55)
-    env[:peak] = _np.linspace(0.0, 1.0, peak) ** 0.6
-    env[peak:] = _np.linspace(1.0, 0.0, n - peak) ** 1.2
-    body  = _np_bp(n, 280, 120, 210) * env * 0.55     # air body
-    hiss  = _np_bp(n, 700, 350, 211) * env * 0.35     # blade hiss
-    deep  = _np_sinev(n, 85, 0.25) * env * _np_exp(n, 0.15) * 0.50   # low weight
-    return _np_norm(_np_mix2(body, hiss, deep) * _np_fade2(_np.ones(n, _np.float32), .001, .10))
+    peak = int(n * 0.45)
+    env[:peak] = _np.linspace(0.0, 1.0, peak) ** 0.55
+    env[peak:] = _np.linspace(1.0, 0.0, n - peak) ** 0.85
+    # Broad whoosh — air parted by a full blade
+    whoosh = _np_bp(n, 1600, 900, 210) * env * 0.60    # main whoosh band
+    hiss   = _np_bp(n, 3200, 1200, 211) * env * 0.30   # edge brightness
+    body   = _np_bp(n, 500,  200,  212) * env * 0.45   # displaced air mass
+    deep   = _np_sinev(n, 110, 0.18) * env * _np_exp(n, 0.12)  # weapon weight
+    return _np_norm(_np_mix2(whoosh, hiss, body, deep) * _np_fade2(_np.ones(n, _np.float32), .001, .08))
 
 def _gen_swing_heavy():
-    """Heavy weapon wind-up: massive air displacement, low rumble."""
-    n = int(SR * 0.50)
+    """Heavy weapon: powerful labouring whoosh — hammer or greataxe.
+    Deep air displacement with audible weapon mass, centroid ~900Hz."""
+    n = int(SR * 0.48)
     env = _np.zeros(n, _np.float32)
-    peak = int(n * 0.50)
-    env[:peak] = _np.linspace(0.0, 1.0, peak) ** 0.5   # slow build
-    env[peak:] = _np.linspace(1.0, 0.0, n - peak) ** 0.9
-    sub   = _np_sinev(n, 55, 0.45) * env * _np_exp(n, 0.20)           # sub rumble
-    body  = _np_bp(n, 160, 70, 220) * env * 0.60                       # air mass
-    whump = _np_bp(n, 320, 130, 221) * env * 0.40                      # whump body
-    grind = _np_bp(n, 80,  40, 222) * env * 0.35 * _np_exp(n, 0.25)   # low grind
-    return _np_norm(_np_mix2(sub, body, whump, grind) * _np_fade2(_np.ones(n, _np.float32), .005, .18))
+    peak = int(n * 0.45)
+    env[:peak] = _np.linspace(0.0, 1.0, peak) ** 0.45   # slower build (weapon is heavy)
+    env[peak:] = _np.linspace(1.0, 0.0, n - peak) ** 0.75
+    # Broad deep whoosh — massive air displacement
+    whoosh = _np_bp(n, 900,  450, 220) * env * 0.65    # main whoosh
+    hiss   = _np_bp(n, 2200, 900, 221) * env * 0.35    # air hiss still present
+    mass   = _np_bp(n, 350,  150, 222) * env * 0.55    # weapon mass moving
+    rumble = _np_sinev(n, 90, 0.28) * env * _np_exp(n, 0.18)  # sub presence
+    return _np_norm(_np_mix2(whoosh, hiss, mass, rumble) * _np_fade2(_np.ones(n, _np.float32), .003, .14))
 
 def _gen_cast_attack():
-    """Spell attack charge: energy gathering from silence, builds to release.
-    Low resonant hum that rises in pitch and intensity."""
-    n = int(SR * 0.42)
-    # Rising frequency drone — the mage gathering power
+    """Spell attack charge: rising crackle of energy with clear presence.
+    Starts as a low hum, rises through mid frequencies to a bright peak.
+    Centroid target ~600Hz — present and audible, not buried."""
+    n = int(SR * 0.40)
+    ramp = _np.linspace(0.0, 1.0, n).astype(_np.float32)
+    # Rising tone sweep — 150Hz → 600Hz, clearly audible build
     charge = _np.zeros(n, _np.float32)
     phase = 0.0
     for i in range(n):
         frac = i / n
-        freq = 80 + 180 * (frac ** 1.4)   # 80 → 260 Hz, accelerates toward release
+        freq = 150 + 450 * (frac ** 1.2)   # 150 → 600Hz
         phase += 2 * _np.pi * freq / SR
-        charge[i] = _np.sin(phase) * (frac ** 0.8) * 0.45
-    charge = _np_lp(charge, 600)
-    # Low harmonic shimmer
+        charge[i] = _np.sin(phase) * (frac ** 0.6) * 0.40
+    # Harmonic shimmer at mid frequencies — gives "magical" feel
     shimmer = _np.zeros(n, _np.float32)
-    for f, v in [(120, 0.18), (180, 0.12), (240, 0.08)]:
-        ramp = _np.linspace(0.0, 1.0, n) ** 1.2
-        shimmer += _np_sinev(n, f, v) * ramp.astype(_np.float32)
-    # Subtle rumble underneath
-    rumble = _np_bp(n, 90, 45, 230) * (_np.linspace(0.0, 1.0, n) ** 1.0).astype(_np.float32) * 0.30
-    env = _np_fade2(_np.ones(n, _np.float32), .010, .08)
-    return _np_norm(_np_mix2(charge, shimmer, rumble) * env)
+    for f, v in [(320, 0.20), (480, 0.15), (640, 0.10)]:
+        shimmer += _np_sinev(n, f, v) * (ramp ** 1.0)
+    shimmer = _np_lp(shimmer, 1200)
+    # Electrical crackle texture building in
+    crackle = _np_bp(n, 1400, 700, 230) * (ramp ** 1.8) * 0.18
+    env = _np_fade2(_np.ones(n, _np.float32), .008, .06)
+    return _np_norm(_np_mix2(charge, shimmer, crackle) * env)
 
 def _gen_cast_buff_self():
-    """Physical self-buff preparation: effort/strain energy, like a warrior's focused breath.
-    No voice — just the physical sensation of muscles coiling, air compression."""
-    n = int(SR * 0.35)
-    # Low grunt-like energy — bandpass filtered noise that suggests effort
-    strain = _np_bp(n, 140, 70, 240) * _np.linspace(0.0, 1.0, n).astype(_np.float32) ** 0.6 * 0.55
-    sub    = _np_sinev(n, 72, 0.38) * _np.linspace(0.5, 1.0, n).astype(_np.float32) * _np_exp(n, 0.25)
-    body   = _np_bp(n, 280, 110, 241) * _np.linspace(0.0, 1.0, n).astype(_np.float32) ** 0.8 * 0.40
-    # Sharp exhale-like transient at the peak
-    n_ex = int(SR * 0.06)
-    exhale = _np_bp(n_ex, 350, 180, 242) * _np_exp(n_ex, 0.015) * 0.50
+    """Physical self-buff: weapon raised + short metallic ring + power chord.
+    Sounds like a warrior snapping into battle stance — energising, not droning.
+    The 'shing' of metal + a rising two-note power motif."""
+    n = int(SR * 0.40)
+    # Short bright metallic transient at onset — weapon/armor metal
+    n_sting = int(SR * 0.08)
+    sting = _np.zeros(n_sting, _np.float32)
+    for f, v, tau in [(1800, 0.35, 0.04), (2400, 0.22, 0.03), (900, 0.28, 0.05)]:
+        sting += _np_sinev(n_sting, f, v) * _np_exp(n_sting, tau)
+    sting = _np_lp(sting, 3000)
+    # Rising power chord — two notes ascending = gain strength feeling
+    chord = _np.zeros(n, _np.float32)
+    n_note = int(SR * 0.20)
+    note1 = _np_sinev(n_note, 220, 0.32) * _np.hanning(n_note).astype(_np.float32) ** 0.5
+    note2 = _np_sinev(n_note, 330, 0.24) * _np.hanning(n_note).astype(_np.float32) ** 0.5
+    note3 = _np_sinev(n_note, 440, 0.18) * _np.hanning(n_note).astype(_np.float32) ** 0.5
+    chord[:n_note] += note1
+    t2 = int(SR * 0.10)
+    chord[t2:t2+n_note] += note2
+    t3 = int(SR * 0.20)
+    chord[t3:min(t3+n_note,n)] += note3[:max(0,n-t3)]
+    # Add weight — low body under the brightness
+    body = _np_bp(n, 350, 150, 241) * _np.linspace(0.0, 1.0, n).astype(_np.float32) ** 0.8 * 0.35
     out = _np.zeros(n, _np.float32)
-    out += strain + sub + body
-    t_ex = int(SR * 0.29)
-    out[t_ex:t_ex + n_ex] += exhale[:n - t_ex]
-    return _np_norm(_np_fade2(out, .005, .12))
+    out[:n_sting] += sting * 0.80
+    out += chord * 0.70 + body
+    return _np_norm(_np_fade2(out, .001, .14))
 
 def _gen_cast_buff_spell():
-    """Spell buff preparation: gentle magical swell — deeper than attack charge.
-    A warm harmonic shimmer that rises slowly, suggests protection/blessing."""
-    n = int(SR * 0.45)
-    ramp = _np.linspace(0.0, 1.0, n).astype(_np.float32) ** 1.2
-    # Warm chord swell — low register
+    """Spell buff/blessing preparation: ascending shimmer — warm, hopeful, magical.
+    Higher than the attack charge — sounds like protection being woven.
+    Centroid ~700Hz. Three gentle ascending tones with shimmer."""
+    n = int(SR * 0.42)
+    ramp = _np.linspace(0.0, 1.0, n).astype(_np.float32)
+    # Three warm ascending tones — suggest blessing/protection being added
     chord = _np.zeros(n, _np.float32)
-    for f, v, tau in [(110, 0.28, 0.35), (165, 0.20, 0.30), (220, 0.14, 0.25)]:
-        chord += _np_sinev(n, f, v) * ramp * _np_exp(n, tau)
-    chord = _np_lp(chord, 800)
-    # Gentle shimmer on top (subdued compared to attack)
-    shimmer = _np_bp(n, 600, 250, 250) * ramp * 0.18
-    return _np_norm(_np_fade2(_np_mix2(chord, shimmer), .010, .15))
+    for i, (f, v) in enumerate([(330, 0.28), (440, 0.22), (550, 0.16)]):
+        onset = int(SR * i * 0.10)
+        n_note = n - onset
+        env_n = _np.linspace(0.0, 1.0, n_note).astype(_np.float32) ** 0.8
+        chord[onset:] += _np_sinev(n_note, f, v) * env_n
+    # Gentle shimmer overlay
+    shimmer = _np_bp(n, 1200, 500, 250) * (ramp ** 1.4) * 0.22
+    shimmer = _np_lp(shimmer, 2000)
+    return _np_norm(_np_fade2(_np_mix2(chord, shimmer), .005, .14))
 
 def _gen_cast_debuff():
-    """Enemy debuff preparation: sinister quiet tension.
-    A thief marking a target, a curse being woven — dark and subtle."""
-    n = int(SR * 0.30)
-    # Very quiet dark hum that descends in pitch
-    dark = _np.zeros(n, _np.float32)
+    """Enemy debuff: tense descending scrape — knife being drawn across stone.
+    Audible threat. Centroid ~800Hz — present, menacing, not too low."""
+    n = int(SR * 0.32)
+    # Descending sweep — something being pulled down
+    sweep = _np.zeros(n, _np.float32)
     phase = 0.0
     for i in range(n):
         frac = i / n
-        freq = 180 - 80 * frac   # descends from 180 → 100 Hz
+        freq = 1200 - 800 * (frac ** 0.6)   # 1200 → 400Hz descent
         phase += 2 * _np.pi * freq / SR
-        dark[i] = _np.sin(phase) * (frac ** 0.5) * 0.35
-    dark = _np_lp(dark, 400)
-    # Low scratch/scrape suggesting dark intent
-    scratch = _np_bp(n, 320, 140, 260) * (_np.linspace(0.0, 0.6, n) ** 0.8).astype(_np.float32) * 0.30
-    sub = _np_sinev(n, 62, 0.22) * _np.linspace(0.0, 1.0, n).astype(_np.float32) * _np_exp(n, 0.30)
-    return _np_norm(_np_fade2(_np_mix2(dark, scratch, sub), .005, .12))
+        sweep[i] = _np.sin(phase) * min(frac * 5, 1.0) * (1 - frac) ** 0.6 * 0.35
+    # Scratchy noise texture — knife/blade quality
+    scratch = _np_bp(n, 1800, 900, 260) * _np.linspace(0.4, 1.0, n).astype(_np.float32) ** 0.5 * 0.28
+    scratch *= _np.linspace(1.0, 0.2, n).astype(_np.float32)   # fade out
+    body = _np_bp(n, 500, 220, 261) * _np.linspace(0.0, 1.0, n).astype(_np.float32) ** 0.7 * 0.30
+    return _np_norm(_np_fade2(_np_mix2(sweep, scratch, body), .002, .10))
 
 
 # ── Redesigned resolution generators (all lower, longer) ──────
@@ -2144,13 +2213,8 @@ def _build_gen_queues():
             _sine(440, 0.50, 0.20)))
         _sounds["trap"]       = _make_sound(_mix(
             _noise(0.28, 0.36), _sweep(700, 120, 0.32, 0.28)))
-        # Step: very soft low footfall — just sub weight, no high content
-        _sounds["step"] = _make_sound(
-            _mix(
-                _bandpass_noise(0.14, 60, 40, 0.20, seed=17),   # sub rumble body
-                _sine(52, 0.10, 0.16),                           # deep sub
-                _bandpass_noise(0.08, 110, 45, 0.06, seed=18),  # faint mid presence only
-            ))
+        # Step: heel-click (short, ~800Hz) then clomp body (~300Hz wood resonance)
+        _sounds["step"] = _make_np_sound(_gen_step_footstep)
 
     _gen_batch1 = [
         ("UI sounds",           _b1_ui),
