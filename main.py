@@ -4474,17 +4474,17 @@ class Game:
             else:
                 if result and result.get("hit") is False:
                     if is_physical_skill:
-                        self._sfx2("swing_medium", "miss_physical", delay_ms=240)
+                        self._sfx2("swing_skill", "miss_physical", delay_ms=260)
                     else:
                         self._sfx2("cast_attack", "miss_magic", delay_ms=280)
                     self.combat_ui.add_flash(f"{ab_name} — RESISTED!", (150, 120, 180))
                 else:
                     is_crit = result.get("is_crit", False) if result else False
                     if is_physical_skill:
-                        sfx.play("swing_medium")
-                        self._sfx_pending.append((250, "hit_skill"))
+                        sfx.play("swing_skill")
+                        self._sfx_pending.append((280, "hit_skill"))
                         if is_crit:
-                            self._sfx_pending.append((280, "hit_critical"))
+                            self._sfx_pending.append((310, "hit_critical"))
                     else:
                         _ab_elem_sfx = ab_elem or ""
                         sfx.play("cast_attack")

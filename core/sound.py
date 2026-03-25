@@ -1350,27 +1350,33 @@ def _dungeon_valdris_spire():
 
 
 def _gen_step_footstep():
-    """Footstep on hardwood: short heel-click transient (~800Hz) followed
-    by resonant clomp body (~300Hz). Total ~0.10s. Centroid target ~600Hz."""
-    SR_l = 44100
-    # Phase 1: heel click — very short bright transient (0.015s)
-    n_click = int(SR_l * 0.015)
-    click = _np.zeros(n_click, _np.float32)
-    for f, v in [(800, 0.50), (1200, 0.30), (400, 0.35)]:
-        click += _np_sinev(n_click, f, v) * _np_exp(n_click, 0.004)
-    click *= _np_fade2(_np.ones(n_click, _np.float32), 0.001, 0.004)
-    # Phase 2: clomp body — wood resonance, ~300Hz centroid (0.08s)
-    n_clomp = int(SR_l * 0.085)
-    clomp = (_np_sinev(n_clomp, 280, 0.45) +          # fundamental wood resonance
-             _np_sinev(n_clomp, 380, 0.25) +           # 1st overtone
-             _np_bp(n_clomp, 500, 200, 501) * 0.30     # mid-wood texture
-             ) * _np_exp(n_clomp, 0.04)
-    clomp *= _np_fade2(_np.ones(n_clomp, _np.float32), 0.001, 0.030)
-    # Combine: click sits slightly above clomp in time
-    n_total = n_click + n_clomp
+    """Footstep on hardwood/stone floor.
+    A sharp click-tap with a very brief, tight body — no hollow resonance.
+    Think shoe sole striking a hard surface: percussive, present, fast decay.
+    Structure: 4ms sharp click → 35ms tight tap body → silence."""
+    # Sharp click transient: broadband noise burst shaped with a very fast decay.
+    # Not pure sines — those ring too much. Noise + fast exp = natural tap character.
+    n_click = int(SR * 0.004)   # 4ms
+    rng = _np.random.default_rng(17)
+    click_noise = rng.standard_normal(n_click).astype(_np.float32)
+    click_noise = _np_bp(n_click, 2200, 1400, 500)     # focus noise on tap frequency
+    click_noise *= _np_exp(n_click, 0.0008) * 0.90     # very fast decay
+    # Tap body: tight bandpass noise shaped like a struck hard surface
+    # 600-900Hz = the "tack" of a sole — not 280Hz which is boxy/hollow
+    n_body = int(SR * 0.035)   # 35ms
+    body = _np_bp(n_body, 700, 350, 501)               # tap centre frequency
+    body *= _np_exp(n_body, 0.008) * 0.65              # fast but not instant decay
+    body *= _np_fade2(_np.ones(n_body, _np.float32), 0.0005, 0.010)
+    # Very brief low thud (floor gives back a little energy) — kept quiet
+    n_thud = int(SR * 0.025)   # 25ms
+    thud = _np_sinev(n_thud, 420, 0.22) * _np_exp(n_thud, 0.012)
+    thud *= _np_fade2(_np.ones(n_thud, _np.float32), 0.001, 0.008)
+    # Assemble: click → body (overlapping slightly) → quiet thud
+    n_total = n_click + n_body
     out = _np.zeros(n_total, _np.float32)
-    out[:n_click] += click * 0.70     # click quieter than clomp
-    out[n_click:] += clomp * 1.00
+    out[:n_click] += click_noise
+    out[n_click:n_click + n_body] += body
+    out[n_click:n_click + n_thud] += thud * 0.40   # thud under the body
     return _np_norm(out)
 
 
@@ -1419,6 +1425,39 @@ def _gen_swing_heavy():
     mass   = _np_bp(n, 350,  150, 222) * env * 0.55    # weapon mass moving
     rumble = _np_sinev(n, 90, 0.28) * env * _np_exp(n, 0.18)  # sub presence
     return _np_norm(_np_mix2(whoosh, hiss, mass, rumble) * _np_fade2(_np.ones(n, _np.float32), .003, .14))
+
+def _gen_swing_skill():
+    """Physical skill wind-up: deliberate, powerful preparation — NOT a casual whoosh.
+    Sounds like a warrior coiling and releasing focused force.
+    Distinct from regular swings: starts with a low grunt-energy build,
+    then a short controlled blade snap — 0.45s total, heavier character.
+    Regular swing = air movement. Skill swing = focused power being released."""
+    n = int(SR * 0.45)
+    # Low 'coiling' energy builds for first half — weight shifting, muscles loading
+    n_build = int(SR * 0.20)
+    build = _np.zeros(n_build, _np.float32)
+    for f, v in [(180, 0.35), (260, 0.22), (360, 0.14)]:
+        # Each tone rises in volume — energy accumulating
+        ramp = _np.linspace(0.0, 1.0, n_build).astype(_np.float32) ** 0.7
+        build += _np_sinev(n_build, f, v) * ramp
+    build = _np_lp(build, 700)
+    # Sharp controlled release — a single decisive blade snap (shorter than casual swing)
+    n_snap = int(SR * 0.18)
+    env_snap = _np.zeros(n_snap, _np.float32)
+    pk = int(n_snap * 0.25)   # peaks early for snappy attack
+    env_snap[:pk] = _np.linspace(0.0, 1.0, pk) ** 0.4
+    env_snap[pk:] = _np.linspace(1.0, 0.0, n_snap - pk) ** 0.7
+    snap_hiss  = _np_bp(n_snap, 2000, 900, 225) * env_snap * 0.65
+    snap_body  = _np_bp(n_snap, 700,  300, 226) * env_snap * 0.55
+    snap_deep  = _np_sinev(n_snap, 130, 0.25) * env_snap * _np_exp(n_snap, 0.08)
+    snap = _np_mix2(snap_hiss, snap_body, snap_deep)
+    # Combine: build → snap
+    out = _np.zeros(n, _np.float32)
+    t_snap = int(SR * 0.22)
+    out[:n_build] += build * 0.55
+    out[t_snap:t_snap + n_snap] += snap
+    return _np_norm(_np_fade2(out, .002, .12))
+
 
 def _gen_cast_attack():
     """Spell attack charge: rising crackle of energy with clear presence.
@@ -1474,22 +1513,35 @@ def _gen_cast_buff_self():
     return _np_norm(_np_fade2(out, .001, .14))
 
 def _gen_cast_buff_spell():
-    """Spell buff/blessing preparation: ascending shimmer — warm, hopeful, magical.
-    Higher than the attack charge — sounds like protection being woven.
-    Centroid ~700Hz. Three gentle ascending tones with shimmer."""
-    n = int(SR * 0.42)
-    ramp = _np.linspace(0.0, 1.0, n).astype(_np.float32)
-    # Three warm ascending tones — suggest blessing/protection being added
-    chord = _np.zeros(n, _np.float32)
-    for i, (f, v) in enumerate([(330, 0.28), (440, 0.22), (550, 0.16)]):
-        onset = int(SR * i * 0.10)
-        n_note = n - onset
-        env_n = _np.linspace(0.0, 1.0, n_note).astype(_np.float32) ** 0.8
-        chord[onset:] += _np_sinev(n_note, f, v) * env_n
-    # Gentle shimmer overlay
-    shimmer = _np_bp(n, 1200, 500, 250) * (ramp ** 1.4) * 0.22
-    shimmer = _np_lp(shimmer, 2000)
-    return _np_norm(_np_fade2(_np_mix2(chord, shimmer), .005, .14))
+    """Spell buff/blessing preparation: ethereal rising shimmer — unmistakably magical.
+    NO ascending chord tones like cast_buff_self. Instead: pairs of slightly
+    detuned sine waves that shimmer and beat against each other, like a singing bowl
+    or harp harmonic. Feels like magic being woven, not a warrior steeling himself.
+    The beating frequency (4-8Hz) creates a shimmering, alive quality."""
+    n = int(SR * 0.50)
+    ramp = _np.linspace(0.0, 1.0, n).astype(_np.float32) ** 0.9
+    # Three pairs of slightly detuned sines — each pair creates audible beating/shimmer
+    # This is completely unlike any physical sound and clearly 'magical'
+    shimmer = _np.zeros(n, _np.float32)
+    pairs = [
+        (523, 527, 0.28),    # ~4Hz beat at C5
+        (784, 790, 0.20),    # ~6Hz beat at G5
+        (659, 666, 0.14),    # ~7Hz beat at E5
+    ]
+    for f1, f2, vol in pairs:
+        shimmer += (_np_sinev(n, f1, vol) + _np_sinev(n, f2, vol * 0.85)) * ramp
+    # Stagger the onset of upper pair — like notes being plucked in sequence
+    onset2 = int(SR * 0.12)
+    onset3 = int(SR * 0.22)
+    shimmer[onset2:] += (_np_sinev(n - onset2, 784, 0.16) +
+                          _np_sinev(n - onset2, 790, 0.14)) * ramp[:n - onset2]
+    shimmer[onset3:] += (_np_sinev(n - onset3, 1047, 0.10) +
+                          _np_sinev(n - onset3, 1052, 0.09)) * ramp[:n - onset3]
+    # Low warm pad underneath — a cleric's blessing has a grounded quality
+    pad = _np_sinev(n, 261, 0.18) * ramp * _np_exp(n, 0.35)
+    pad = _np_lp(pad, 600)
+    env = _np_fade2(_np.ones(n, _np.float32), .008, .18)
+    return _np_norm(_np_mix2(shimmer, pad) * env)
 
 def _gen_cast_debuff():
     """Enemy debuff: tense descending scrape — knife being drawn across stone.
@@ -2094,6 +2146,7 @@ def _build_gen_queues():
         _sounds["swing_light"]    = _make_np_sound(_gen_swing_light)
         _sounds["swing_medium"]   = _make_np_sound(_gen_swing_medium)
         _sounds["swing_heavy"]    = _make_np_sound(_gen_swing_heavy)
+        _sounds["swing_skill"]    = _make_np_sound(_gen_swing_skill)
         # ── Impact sounds (phase 2) ──────────────────────────────
         _sounds["hit_light"]      = _make_np_sound(_gen_hit_light)
         _sounds["hit_medium"]     = _make_np_sound(_gen_hit_medium)
