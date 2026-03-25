@@ -286,6 +286,7 @@ class Game:
         if state == S_TOWN:
             sfx.stop_music()
             sfx.stop_ambient()
+            self._current_biome_sound = None  # reset so leaving town always restarts ambient
             # Per-town music — town_ui is always created before go(S_TOWN)
             _tid = getattr(getattr(self, "town_ui", None), "town_id", None) or getattr(self, "current_town_id", "briarhollow")
             sfx.play_town_music(_tid)

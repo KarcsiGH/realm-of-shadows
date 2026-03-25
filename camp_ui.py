@@ -1823,6 +1823,12 @@ class CampUI:
 
     def _equip_item(self, char, item_idx):
         """Equip an item from inventory."""
+        # Guard: stale index protection
+        if item_idx < 0 or item_idx >= len(char.inventory):
+            self._msg("Equip failed — stale item reference. Please re-select.", ORANGE)
+            self.selected_item = -1
+            return
+
         item = char.inventory[item_idx]
         slot = item.get("slot")
         if not slot:
@@ -1831,15 +1837,16 @@ class CampUI:
         if not hasattr(char, "equipment") or char.equipment is None:
             char.equipment = {}
 
-        # Unequip current
-        old = char.equipment.get(slot)
-        if old:
-            char.inventory.append(old)
-
-        # Equip new
-        char.equipment[slot] = item
+        # Pop the new item FIRST (preserving its index), then swap old item in
         char.inventory.pop(item_idx)
         self.selected_item = -1
+
+        old = char.equipment.get(slot)
+        char.equipment[slot] = item
+
+        # Put displaced item back at the same position so list stays predictable
+        if old:
+            char.inventory.insert(item_idx, old)
 
         name = item.get("name", "item")
         self._msg(f"{char.name} equipped {name}.", GOLD)

@@ -2050,11 +2050,14 @@ class DungeonUI:
             self._pending_event = None
             return ev
 
+        # ESC, SPACE, RETURN all dismiss scroll_modal — must be before the blanket guard
+        if self.scroll_modal:
+            if key in (pygame.K_ESCAPE, pygame.K_SPACE, pygame.K_RETURN):
+                self.scroll_modal = None
+            return None   # all other keys blocked while modal is open
+
         # ESC dismisses any active modal/confirm first
         if key == pygame.K_ESCAPE:
-            if self.scroll_modal:
-                self.scroll_modal = None
-                return None
             if self.show_stairs_confirm:
                 self.show_stairs_confirm = False
                 return None
@@ -2078,9 +2081,6 @@ class DungeonUI:
             return None
 
         if key == pygame.K_RETURN:
-            if self.scroll_modal:
-                self.scroll_modal = None
-                return None
             tile = self.dungeon.get_tile(self.dungeon.party_x, self.dungeon.party_y)
             if tile:
                 tt = tile["type"]
@@ -2091,9 +2091,6 @@ class DungeonUI:
                     self.stairs_direction = "exit" if self.dungeon.current_floor == 1 else "up"
             return None
         if key == pygame.K_SPACE:
-            if self.scroll_modal:
-                self.scroll_modal = None
-                return None
             return None
         if key == pygame.K_c:
             self.show_camp_confirm = True; return None
