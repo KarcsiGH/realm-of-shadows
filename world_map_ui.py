@@ -70,6 +70,8 @@ class WorldMapUI:
         self.event_timer = 0
         self.event_color = CREAM
         self.show_camp_confirm = False
+        self.port_modal = None      # set by _handle_port in main.py
+        self.port_hover = -1        # which destination row is hovered
 
     def draw(self, surface, mx, my, dt):
         self.event_timer = max(0, self.event_timer - dt)
@@ -91,6 +93,10 @@ class WorldMapUI:
         # ── Camp confirmation dialog ──
         if self.show_camp_confirm:
             self._draw_camp_dialog(surface, mx, my)
+
+        # ── Port destination picker modal ──
+        if self.port_modal:
+            self._draw_port_modal(surface, mx, my)
 
         # ── Fading world corruption overlay ──
         self._draw_fading_overlay(surface)
@@ -585,6 +591,66 @@ class WorldMapUI:
                     pygame.draw.circle(bloom, (30, 0, 55, a), (cx, cy), ring)
             surface.blit(bloom, (0, 0))
 
+    def _draw_port_modal(self, surface, mx, my):
+        """Draw the port destination picker modal."""
+        from data.world_map import LOCATIONS
+
+        overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 140))
+        surface.blit(overlay, (0, 0))
+
+        routes  = self.port_modal["routes"]
+        loc     = self.port_modal["loc"]
+        n       = len(routes)
+
+        ROW_H   = 52
+        DLG_W   = 480
+        DLG_H   = 90 + n * ROW_H + 20
+        dlg_x   = SCREEN_W // 2 - DLG_W // 2
+        dlg_y   = SCREEN_H // 2 - DLG_H // 2
+
+        dlg = pygame.Rect(dlg_x, dlg_y, DLG_W, DLG_H)
+        pygame.draw.rect(surface, (18, 14, 32), dlg, border_radius=6)
+        pygame.draw.rect(surface, LOC_PORT_COL, dlg, 2, border_radius=6)
+
+        # Header
+        draw_text(surface, "⚓  Port Travel", dlg_x + 20, dlg_y + 14,
+                  LOC_PORT_COL, 20, bold=True)
+        draw_text(surface, f"Departing from: {loc['name']}",
+                  dlg_x + 20, dlg_y + 42, GREY, 13)
+
+        # Destination rows
+        self.port_hover = -1
+        for i, dest_id in enumerate(routes):
+            dest = LOCATIONS.get(dest_id, {})
+            dest_name = dest.get("name", dest_id)
+            dest_desc = dest.get("description", "")
+
+            row_rect = pygame.Rect(dlg_x + 16, dlg_y + 70 + i * ROW_H,
+                                   DLG_W - 32, ROW_H - 6)
+            hovered = row_rect.collidepoint(mx, my)
+            if hovered:
+                self.port_hover = i
+
+            row_col = (30, 60, 80) if hovered else (22, 28, 45)
+            border_col = LOC_PORT_COL if hovered else PANEL_BORDER
+            pygame.draw.rect(surface, row_col, row_rect, border_radius=4)
+            pygame.draw.rect(surface, border_col, row_rect, 1, border_radius=4)
+
+            # Number key hint
+            draw_text(surface, f"{i+1}", row_rect.x + 10, row_rect.y + 10,
+                      LOC_PORT_COL, 16, bold=True)
+            draw_text(surface, dest_name, row_rect.x + 34, row_rect.y + 8,
+                      CREAM if hovered else GREY, 15, bold=hovered)
+            if dest_desc:
+                short_desc = dest_desc[:58] + "…" if len(dest_desc) > 58 else dest_desc
+                draw_text(surface, short_desc, row_rect.x + 34, row_rect.y + 28,
+                          DARK_GREY, 11)
+
+        # Footer hint
+        draw_text(surface, "Press 1–9 to travel · ESC to cancel",
+                  dlg_x + 20, dlg_y + DLG_H - 22, DARK_GREY, 12)
+
     def _draw_camp_dialog(self, surface, mx, my):
         """Draw camp confirmation dialog."""
         overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
@@ -620,6 +686,10 @@ class WorldMapUI:
         """Handle keyboard input. Returns event dict or None."""
         if self.show_camp_confirm:
             return None  # handled by click
+
+        # ── Port modal intercepts all keys ──
+        if self.port_modal:
+            return self._handle_port_modal_key(key)
 
         # Movement
         dx, dy = 0, 0
@@ -665,8 +735,55 @@ class WorldMapUI:
 
         return None
 
+    def _handle_port_modal_key(self, key):
+        """Handle keys while the port modal is open."""
+        from data.world_map import LOCATIONS
+        if key == pygame.K_ESCAPE:
+            self.port_modal = None
+            return None
+
+        # Number keys 1–9 select destination
+        number_keys = [
+            pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5,
+            pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9,
+        ]
+        if key in number_keys:
+            idx = number_keys.index(key)
+            routes = self.port_modal["routes"]
+            if idx < len(routes):
+                dest_id = routes[idx]
+                dest = LOCATIONS.get(dest_id, {})
+                self.port_modal = None
+                return {"type": "port_travel", "dest_id": dest_id, "dest": dest}
+        return None
+
     def handle_click(self, mx, my):
         """Handle mouse clicks. Returns event dict or None."""
+        # Port modal — must check before anything else
+        if self.port_modal:
+            from data.world_map import LOCATIONS
+            routes  = self.port_modal["routes"]
+            n       = len(routes)
+            DLG_W   = 480
+            ROW_H   = 52
+            DLG_H   = 90 + n * ROW_H + 20
+            dlg_x   = SCREEN_W // 2 - DLG_W // 2
+            dlg_y   = SCREEN_H // 2 - DLG_H // 2
+
+            for i, dest_id in enumerate(routes):
+                row_rect = pygame.Rect(dlg_x + 16, dlg_y + 70 + i * ROW_H,
+                                       DLG_W - 32, ROW_H - 6)
+                if row_rect.collidepoint(mx, my):
+                    dest = LOCATIONS.get(dest_id, {})
+                    self.port_modal = None
+                    return {"type": "port_travel", "dest_id": dest_id, "dest": dest}
+
+            # Click outside modal = cancel
+            dlg_rect = pygame.Rect(dlg_x, dlg_y, DLG_W, DLG_H)
+            if not dlg_rect.collidepoint(mx, my):
+                self.port_modal = None
+            return None
+
         # Camp dialog
         if self.show_camp_confirm:
             yes_btn = pygame.Rect(SCREEN_W // 2 - 220 + 60, SCREEN_H // 2 - 100 + 140, 140, 40)
