@@ -63,6 +63,8 @@ class CampUI:
         self.selected_item = -1
         self.scroll_offset = 0
         self._stats_scroll = 0
+        self._give_mode    = False
+        self._equip_slot_rects = []
         self._manual_open  = False
         self._manual_page  = 0
         self._manual_scroll = 0
@@ -255,17 +257,31 @@ class CampUI:
             item = c.inventory[self.selected_item]
             by = iy + 10
             if item.get("type") in ("consumable", "potion", "food"):
-                use_btn = pygame.Rect(80, by, 120, 34)
+                use_btn = pygame.Rect(80, by, 100, 34)
                 draw_button(surface, use_btn, "Use", hover=use_btn.collidepoint(mx, my), size=13)
             if item.get("slot"):
-                equip_btn = pygame.Rect(210, by, 120, 34)
+                equip_btn = pygame.Rect(190, by, 100, 34)
                 draw_button(surface, equip_btn, "Equip",
                             hover=equip_btn.collidepoint(mx, my), size=13)
-            drop_btn = pygame.Rect(340, by, 120, 34)
+            drop_btn = pygame.Rect(300, by, 100, 34)
             draw_button(surface, drop_btn, "Drop", hover=drop_btn.collidepoint(mx, my), size=13)
+            # Give button — only when party has more than one member
+            if len(self.party) > 1:
+                give_btn = pygame.Rect(410, by, 100, 34)
+                draw_button(surface, give_btn, "Give", hover=give_btn.collidepoint(mx, my), size=13)
+                # If give mode is active show sub-buttons: one per other party member
+                if getattr(self, "_give_mode", False):
+                    gx = 80
+                    for gi, gchar in enumerate(self.party):
+                        if gi == self.selected_char:
+                            continue
+                        gb = pygame.Rect(gx, by + 44, max(80, len(gchar.name)*8+16), 28)
+                        draw_button(surface, gb, gchar.name,
+                                    hover=gb.collidepoint(mx, my), size=12)
+                        gx += gb.width + 8
 
             # ── Item details panel ──────────────────────────
-            self._draw_item_details(surface, item, by + 50)
+            self._draw_item_details(surface, item, by + (84 if getattr(self,"_give_mode",False) and len(self.party)>1 else 50))
 
     def _draw_item_details(self, surface, item, y):
         """Draw item attribute panel for a selected item."""
@@ -733,12 +749,12 @@ class CampUI:
             ry2 += ROW_H
 
         # ─────────────────────────────────────────────────────────────────
-        #  RIGHT COLUMN: Equipment summary
+        #  RIGHT COLUMN: Equipment summary  (click item row to unequip)
         # ─────────────────────────────────────────────────────────────────
         ex = RIGHT_X
         ey = BODY_TOP + 4
 
-        draw_text(surface, "EQUIPPED", ex, ey, STAT_LABEL, 10, bold=True)
+        draw_text(surface, "EQUIPPED  (click to unequip)", ex, ey, STAT_LABEL, 10, bold=True)
         ey += 16
 
         from core.equipment import SLOT_NAMES
@@ -748,8 +764,18 @@ class CampUI:
             ("hands","Hands"), ("feet","Feet"), ("neck","Neck"),
             ("ring1","Ring 1"), ("ring2","Ring 2"), ("ring3","Ring 3"),
         ]
+        # Store rects for _handle_stats_click (exact positions known at draw time)
+        self._equip_slot_rects = []
         for slot_key, slot_label in EQUIP_DISPLAY:
             item = c.equipment.get(slot_key) if hasattr(c,"equipment") else None
+            row_h = 28 if (item and item.get("stat_bonuses")) else 16
+            row_rect = pygame.Rect(ex, ey, SCREEN_W - ex - 10, row_h + 2)
+
+            # Hover highlight
+            hover = row_rect.collidepoint(mx, my)
+            if item and hover:
+                pygame.draw.rect(surface, (40, 35, 55), row_rect, border_radius=3)
+
             draw_text(surface, f"{slot_label}:", ex, ey, STAT_LABEL, 11)
             if item:
                 iname = item.get("name","?")
@@ -757,14 +783,21 @@ class CampUI:
                 RAR_COL = {"common":CREAM,"uncommon":(140,200,255),
                            "rare":(180,120,255),"epic":(255,180,60)}.get(rar, CREAM)
                 draw_text(surface, iname[:22], ex + 72, ey, RAR_COL, 11)
-                # Show main bonus
+                # Unequip hint
+                if hover:
+                    hint = "cursed" if (item.get("cursed") and not item.get("curse_lifted")) else "× unequip"
+                    hint_col = RED if "cursed" in hint else DIM_GOLD
+                    draw_text(surface, hint, ex + 260, ey, hint_col, 10)
+                # Stat bonus sub-line
                 sb = item.get("stat_bonuses",{})
                 if sb:
                     bonus_str = "  ".join(f"+{v}{k}" for k,v in list(sb.items())[:2])
                     draw_text(surface, bonus_str, ex + 72, ey + 12, (120,180,120), 10)
             else:
                 draw_text(surface, "—", ex + 72, ey, (50,45,65), 11)
-            ey += 28 if item and item.get("stat_bonuses") else 16
+
+            self._equip_slot_rects.append((slot_key, row_rect))
+            ey += row_h
 
         surface.set_clip(None)
 
@@ -972,35 +1005,26 @@ class CampUI:
         surface.set_clip(None)
 
     def _handle_stats_click(self, mx, my):
-        """Handle clicks on the stats tab — unequip from equipment summary, char selector."""
+        """Handle clicks on the stats tab — unequip from equipment summary."""
         c = self.party[self.selected_char]
         if not hasattr(c, "equipment") or not c.equipment:
             return None
 
-        EQUIP_DISPLAY = [
-            ("weapon","Weapon"), ("off_hand","Off-Hand"),
-            ("head","Head"), ("crown","Crown"), ("body","Body"),
-            ("hands","Hands"), ("feet","Feet"), ("neck","Neck"),
-            ("ring1","Ring 1"), ("ring2","Ring 2"), ("ring3","Ring 3"),
-        ]
-
-        RIGHT_X  = 850
-        BODY_TOP = 80 + 52   # content_y=80 + char selector
-
-        ey = BODY_TOP + 4 + 16   # past "EQUIPPED" header
-        for slot_key, _ in EQUIP_DISPLAY:
+        # Use rects stored during the last draw — guaranteed to match pixel positions
+        for slot_key, row_rect in getattr(self, "_equip_slot_rects", []):
+            if not row_rect.collidepoint(mx, my):
+                continue
             item = c.equipment.get(slot_key)
-            row_h = 28 if (item and item.get("stat_bonuses")) else 16
-            row = pygame.Rect(RIGHT_X, ey, 350, row_h + 4)
-            if item and row.collidepoint(mx, my):
-                if item.get("cursed") and not item.get("curse_lifted"):
-                    self._msg(f"{item.get('name','item')} is cursed — cannot unequip!", RED)
-                else:
-                    c.equipment[slot_key] = None
-                    c.inventory.append(item)
-                    self._msg(f"Unequipped {item.get('name','item')}.", DIM_GOLD)
-                return None
-            ey += row_h
+            if not item:
+                return None  # clicked an empty slot
+            if item.get("cursed") and not item.get("curse_lifted"):
+                self._msg(f"{item.get('name','item')} is cursed — cannot unequip!", RED)
+            else:
+                c.equipment[slot_key] = None
+                c.inventory.append(item)
+                self._msg(f"Unequipped {item.get('name','item')}.", DIM_GOLD)
+            return None
+
         return None
 
     def handle_scroll(self, direction):
@@ -1513,6 +1537,7 @@ class CampUI:
                 self.tab = i
                 self.selected_item = -1
                 self.scroll_offset = 0
+                self._give_mode = False
                 return None
 
         # Character reorder arrows (visible on all tabs)
@@ -1539,6 +1564,7 @@ class CampUI:
                     self.selected_char = i
                     self.selected_item = -1
                     self.scroll_offset = 0
+                    self._give_mode = False
                     return None
                 cx += w + 6
 
@@ -1614,32 +1640,60 @@ class CampUI:
             row = pygame.Rect(60, iy + i * 38, SCREEN_W - 120, 34)
             if row.collidepoint(mx, my):
                 self.selected_item = idx
+                self._give_mode = False
                 return None
 
-        # Action buttons
+        # Action buttons (same layout as _draw_inventory: 80/190/300/410)
         if 0 <= self.selected_item < len(c.inventory):
             item = c.inventory[self.selected_item]
             by = iy + min(len(visible), 12) * 38 + 10
 
             if item.get("type") in ("consumable", "potion", "food"):
-                use_btn = pygame.Rect(80, by, 120, 34)
+                use_btn = pygame.Rect(80, by, 100, 34)
                 if use_btn.collidepoint(mx, my):
+                    self._give_mode = False
                     self._use_item(c, self.selected_item)
                     return None
 
             if item.get("slot"):
-                equip_btn = pygame.Rect(210, by, 120, 34)
+                equip_btn = pygame.Rect(190, by, 100, 34)
                 if equip_btn.collidepoint(mx, my):
+                    self._give_mode = False
                     self._equip_item(c, self.selected_item)
                     return None
 
-            drop_btn = pygame.Rect(340, by, 120, 34)
+            drop_btn = pygame.Rect(300, by, 100, 34)
             if drop_btn.collidepoint(mx, my):
+                self._give_mode = False
                 name = item.get("name", "item")
                 c.inventory.pop(self.selected_item)
                 self.selected_item = -1
                 self._msg(f"Dropped {name}.", ORANGE)
                 return None
+
+            # Give button — pass item to another party member
+            if len(self.party) > 1:
+                give_btn = pygame.Rect(410, by, 100, 34)
+                if give_btn.collidepoint(mx, my):
+                    self._give_mode = not getattr(self, "_give_mode", False)
+                    return None
+
+                # Sub-buttons: one per other party member
+                if getattr(self, "_give_mode", False):
+                    gx = 80
+                    for gi, gchar in enumerate(self.party):
+                        if gi == self.selected_char:
+                            continue
+                        gb = pygame.Rect(gx, by + 44, max(80, len(gchar.name)*8+16), 28)
+                        if gb.collidepoint(mx, my):
+                            if 0 <= self.selected_item < len(c.inventory):
+                                xfer = c.inventory.pop(self.selected_item)
+                                gchar.inventory.append(xfer)
+                                self.selected_item = -1
+                                self._give_mode = False
+                                self._msg(f"Gave {xfer.get('name','item')} to {gchar.name}.", GOLD)
+                            return None
+                        gx += gb.width + 8
 
         return None
 
