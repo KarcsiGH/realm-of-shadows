@@ -3561,10 +3561,11 @@ class TownUI:
         if item_idx >= len(char.inventory):
             return
         item = char.inventory[item_idx]
-        # Quest items cannot be sold — they are story-critical
-        if item.get("quest_item") or item.get("type") == "quest_item":
-            from ui.renderer import draw_text
-            self._msg(f"{item.get('name', 'This item')} cannot be sold — it is a quest item.", (220, 80, 80))
+        # Key items, quest items, and Warden badges cannot be sold
+        if (item.get("quest_item") or
+                item.get("type") in ("quest_item", "key_item") or
+                "warden_rank" in item):
+            self._msg(f"{item.get('name', 'This item')} cannot be sold — it is a key item.", (220, 80, 80))
             return
         sell_price = get_sell_price(item)
         char.inventory.pop(item_idx)
