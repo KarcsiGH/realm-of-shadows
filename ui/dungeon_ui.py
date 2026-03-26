@@ -2099,7 +2099,7 @@ class DungeonUI:
         if key == pygame.K_c:
             nearby = self.dungeon.enemies_nearby(threat_radius=6)
             if nearby:
-                self._show_event(
+                self.show_event(
                     f"Cannot camp — {len(nearby)} enem{'y' if len(nearby)==1 else 'ies'} "
                     f"within 6 tiles! Dispatch them first.",
                     (220, 80, 80))
@@ -2157,7 +2157,7 @@ class DungeonUI:
         if pygame.Rect(_btn_x, _btn_y,      _btn_w, 24).collidepoint(mx,my):
             nearby = self.dungeon.enemies_nearby(threat_radius=6)
             if nearby:
-                self._show_event(
+                self.show_event(
                     f"Cannot camp — {len(nearby)} enem{'y' if len(nearby)==1 else 'ies'} "
                     f"within 6 tiles!",
                     (220, 80, 80))
