@@ -308,8 +308,13 @@ class CampUI:
                                     hover=gb.collidepoint(mx, my), size=12)
                         gx += gb.width + 8
 
-            # ── Item details panel ──────────────────────────
-            self._draw_item_details(surface, item, by + (84 if getattr(self,"_give_mode",False) and len(self.party)>1 else 50))
+            # ── Item details + compare panel ──────────────
+            detail_offset = 84 if getattr(self,"_give_mode",False) and len(self.party)>1 else 50
+            detail_y = by + detail_offset
+            self._draw_item_details(surface, item, detail_y)
+            # Show comparison if item is equippable
+            if item.get("slot"):
+                self._draw_equip_compare(surface, item, 80, detail_y + 164, SCREEN_W - 160)
 
     def _draw_item_details(self, surface, item, y):
         """Draw item attribute panel for a selected item."""
@@ -379,6 +384,56 @@ class CampUI:
         value  = item.get("estimated_value", item.get("sell_price", 0))
         draw_text(surface, f"{rarity}  |  Value: ~{value}g", x, dy, DIM_GOLD, 11)
 
+    def _draw_equip_compare(self, surface, new_item, px, py, pw):
+        """Compact comparison: new_item vs what's currently in the same slot."""
+        from core.identification import get_item_display_name
+        if not self.party or self.selected_char >= len(self.party):
+            return
+        c     = self.party[self.selected_char]
+        equip = getattr(c, "equipment", {}) or {}
+        slot  = new_item.get("slot")
+        if not slot:
+            return
+        cur   = equip.get(slot)
+        ph    = 64 if cur else 34
+        panel = pygame.Rect(px, py, pw, ph)
+        pygame.draw.rect(surface, (12, 18, 32), panel, border_radius=4)
+        pygame.draw.rect(surface, (60, 80, 120), panel, 1, border_radius=4)
+        cx, cy = panel.x + 8, panel.y + 6
+        draw_text(surface, f"Compare [{slot}]:", cx, cy, (100,140,200), 10, bold=True)
+        cy += 14
+        if cur:
+            def_d = new_item.get("defense",0)  - cur.get("defense",0)
+            dmg_d = new_item.get("damage",0)   - cur.get("damage",0)
+            mr_d  = new_item.get("magic_resist",0) - cur.get("magic_resist",0)
+            sp_d  = new_item.get("spell_bonus",0)  - cur.get("spell_bonus",0)
+            # stat_bonuses deltas
+            nb = new_item.get("stat_bonuses",{}) or {}
+            cb = cur.get("stat_bonuses",{}) or {}
+            all_keys = set(nb)|set(cb)
+            deltas = []
+            if def_d: deltas.append(("Def", def_d))
+            if dmg_d: deltas.append(("Dmg", dmg_d))
+            if mr_d:  deltas.append(("MR",  mr_d))
+            if sp_d:  deltas.append(("Spl", sp_d))
+            for k in all_keys:
+                d = nb.get(k,0) - cb.get(k,0)
+                if d: deltas.append((k[:3], d))
+            cur_name = get_item_display_name(cur)[:20]
+            draw_text(surface, f"vs {cur_name}", cx, cy, (160,140,100), 10)
+            if deltas:
+                parts = []
+                for lbl, d in deltas[:6]:
+                    parts.append(f"{lbl}:{'+' if d>0 else ''}{d}")
+                pos = sum(1 for _,d in deltas if d>0)
+                neg = sum(1 for _,d in deltas if d<0)
+                col = (100,220,100) if pos>neg else (220,100,100) if neg>pos else (220,200,80)
+                draw_text(surface, "  ".join(parts), cx + 130, cy, col, 10)
+            else:
+                draw_text(surface, "no stat difference", cx + 130, cy, GREY, 10)
+        else:
+            draw_text(surface, f"Nothing in {slot} — equipping is a gain!", cx, cy, (100,220,100), 10)
+
     # ──────────────────────────────────────────────────────────
     #  EQUIPMENT TAB
     # ──────────────────────────────────────────────────────────
@@ -404,10 +459,12 @@ class CampUI:
                 from core.identification import get_item_display_name
                 name = get_item_display_name(equipped)
                 draw_text(surface, name, row.x + 120, row.y + 8, CREAM, 13, bold=True)
-                # Unequip hint on hover
                 if hover:
                     draw_text(surface, "[Click to unequip]", row.x + row.width - 150,
                               row.y + 8, DIM_GOLD, 11)
+                    # Show stat details for equipped item on hover
+                    detail_y = min(row.bottom + 4, SCREEN_H - 170)
+                    self._draw_item_details(surface, equipped, detail_y)
             else:
                 draw_text(surface, "— empty —", row.x + 120, row.y + 8, DARK_GREY, 13)
 
@@ -431,6 +488,10 @@ class CampUI:
             if hover:
                 draw_text(surface, "[Click to equip]", row.x + row.width - 130,
                           row.y + 6, DIM_GOLD, 11)
+                # Show stat details + compare panel on hover
+                detail_y = min(row.bottom + 4, SCREEN_H - 240)
+                self._draw_item_details(surface, item, detail_y)
+                self._draw_equip_compare(surface, item, 80, detail_y + 164, SCREEN_W - 160)
             self._equip_tab_inv_rects.append((i, row))
             ey += 36
             if ey > SCREEN_H - 60:
