@@ -790,204 +790,179 @@ class CampUI:
         #  click handler never recomputes positions independently.
         # ─────────────────────────────────────────────────────────────────
         self._stats_hit_map = {}   # key -> pygame.Rect
-
         ex = RIGHT_X
         ey = BODY_TOP + 4
+        COL_W = SCREEN_W - RIGHT_X - 10
 
-        # ── Status pills ──────────────────────────────────────────────────
+        # ── STATUS PILLS ─────────────────────────────────────────────────
         from core.status_effects import get_status_effects
-        from core.classes import get_all_resources as _gar
-        hp     = c.resources.get("HP", 0)
         try:
+            from core.classes import get_all_resources as _gar
             max_hp = _gar(c.class_name, c.stats, c.level).get("HP", 1)
         except Exception:
-            max_hp = max(1, hp)
+            max_hp = max(1, c.resources.get("HP", 1))
+        hp     = c.resources.get("HP", 0)
         effects = get_status_effects(c)
-        status_pills = []
+        pills = []
         if hp <= 0:
-            status_pills.append(("DEAD",     (180, 40,  40)))
+            pills.append(("DEAD",     (180, 40,  40)))
         elif hp < max_hp * 0.25:
-            status_pills.append(("CRITICAL", (220, 80,  40)))
+            pills.append(("CRITICAL", (220, 80,  40)))
         else:
-            status_pills.append(("OK",       (60,  180, 80)))
-        _SE_COLS = {
-            "poison":   (80,  200, 80),  "disease": (140, 200, 60),
-            "stun":     (220, 200, 60),  "sleep":   (80,  140, 220),
-            "blind":    (160, 100, 180), "paralyze":(200, 80,  200),
-            "burn":     (220, 120, 40),  "curse":   (160, 60,  200),
-            "bleed":    (200, 60,  80),  "slow":    (140, 140, 200),
+            pills.append(("OK",       (60,  180, 80)))
+        _SEC = {
+            "poison":(80,200,80),"disease":(140,200,60),"stun":(220,200,60),
+            "sleep":(80,140,220),"blind":(160,100,180),"paralyze":(200,80,200),
+            "burn":(220,120,40),"curse":(160,60,200),"bleed":(200,60,80),"slow":(140,140,200),
         }
         for s in effects:
-            st  = s.get("type", s.get("name",""))
-            lbl = st.upper()[:10]
-            status_pills.append((lbl, _SE_COLS.get(st, (180,160,100))))
-
-        pill_x = ex
-        for lbl, col in status_pills:
+            st = s.get("type", s.get("name",""))
+            pills.append((st.upper()[:10], _SEC.get(st,(180,160,100))))
+        px = ex
+        for lbl, col in pills:
             pw = get_font(10).size(lbl)[0] + 10
-            pr = pygame.Rect(pill_x, ey, pw, 18)
-            pygame.draw.rect(surface, (int(col[0]*.3),int(col[1]*.3),int(col[2]*.3)), pr, border_radius=4)
-            pygame.draw.rect(surface, col, pr, 1, border_radius=4)
-            draw_text(surface, lbl, pill_x + 5, ey + 3, col, 10, bold=True)
-            pill_x += pw + 4
-            if pill_x > SCREEN_W - 30:
-                pill_x = ex
-                ey += 22
+            pr = pygame.Rect(px, ey, pw, 17)
+            pygame.draw.rect(surface, (int(col[0]*.25),int(col[1]*.25),int(col[2]*.25)), pr, border_radius=3)
+            pygame.draw.rect(surface, col, pr, 1, border_radius=3)
+            draw_text(surface, lbl, px+5, ey+3, col, 10, bold=True)
+            px += pw + 4
+            if px > SCREEN_W - 30:
+                px = ex; ey += 20
+        ey += 21
+        pygame.draw.line(surface, (50,42,65), (ex, ey-3), (SCREEN_W-10, ey-3))
 
-        ey += 26
-        pygame.draw.line(surface, (50,42,65), (ex, ey-4), (SCREEN_W-12, ey-4))
-
-        # ── Equipped items ────────────────────────────────────────────────
-        draw_text(surface, "EQUIPPED  (click item to unequip)", ex, ey, STAT_LABEL, 10, bold=True)
-        ey += 16
-
+        # ── EQUIPPED ITEMS (compact — 15px per slot) ─────────────────────
+        draw_text(surface, "EQUIPPED  (click to unequip)", ex, ey, STAT_LABEL, 10, bold=True)
+        ey += 14
         EQUIP_DISPLAY = [
-            ("weapon","Weapon"),("off_hand","Off-Hand"),
-            ("head","Head"),("crown","Crown"),("body","Body"),
-            ("hands","Hands"),("feet","Feet"),("neck","Neck"),
+            ("weapon","Weapon"),("off_hand","Off-Hand"),("head","Head"),("crown","Crown"),
+            ("body","Body"),("hands","Hands"),("feet","Feet"),("neck","Neck"),
             ("ring1","Ring 1"),("ring2","Ring 2"),("ring3","Ring 3"),
         ]
         equipment = c.equipment if hasattr(c,"equipment") and c.equipment else {}
-        hovered_equipped = None
+        hover_item = None
         for slot_key, slot_label in EQUIP_DISPLAY:
-            if ey > BODY_BOT - 20:
-                break
-            item    = equipment.get(slot_key)
-            row_h   = 28 if (item and item.get("stat_bonuses")) else 16
-            row_r   = pygame.Rect(ex, ey, SCREEN_W - ex - 10, row_h + 2)
-            hover   = row_r.collidepoint(mx, my)
+            item = equipment.get(slot_key)
+            row_r = pygame.Rect(ex, ey, COL_W, 15)
+            hover = row_r.collidepoint(mx, my)
             if item:
-                # Store for click handler
                 self._stats_hit_map[f"unequip:{slot_key}"] = row_r
                 if hover:
-                    pygame.draw.rect(surface, (45,35,60), row_r, border_radius=3)
-                    pygame.draw.rect(surface, DIM_GOLD, row_r, 1, border_radius=3)
-                    hovered_equipped = item
-            draw_text(surface, f"{slot_label}:", ex, ey, STAT_LABEL, 11)
+                    pygame.draw.rect(surface, (45,35,60), row_r, border_radius=2)
+                    hover_item = item
+            draw_text(surface, f"{slot_label}:", ex, ey, STAT_LABEL, 10)
             if item:
-                iname   = item.get("name","?")
-                rar_col = {"common":CREAM,"uncommon":(140,200,255),
-                           "rare":(180,120,255),"epic":(255,180,60)}.get(item.get("rarity",""), CREAM)
-                draw_text(surface, iname[:20], ex+72, ey, rar_col, 11)
+                rar_col = {"uncommon":(140,200,255),"rare":(180,120,255),"epic":(255,180,60)}.get(
+                    item.get("rarity",""), CREAM)
+                draw_text(surface, item.get("name","?")[:18], ex+60, ey, rar_col, 10)
                 if hover:
                     cursed = item.get("cursed") and not item.get("curse_lifted")
                     draw_text(surface, "CURSED" if cursed else "× unequip",
-                              ex+260, ey, RED if cursed else DIM_GOLD, 10)
-                if item.get("stat_bonuses"):
-                    bs = "  ".join(f"+{v}{k}" for k,v in list(item["stat_bonuses"].items())[:2])
-                    draw_text(surface, bs, ex+72, ey+12, (120,180,120), 10)
+                              ex+210, ey, RED if cursed else DIM_GOLD, 9)
             else:
-                draw_text(surface, "—", ex+72, ey, (50,45,65), 11)
-            ey += row_h
+                draw_text(surface, "—", ex+60, ey, (50,45,65), 10)
+            ey += 15
 
-        # Inline hover preview for equipped item
-        if hovered_equipped and ey + 4 < BODY_BOT - 120:
-            panel = pygame.Rect(ex, ey+4, SCREEN_W-ex-12, 120)
-            pygame.draw.rect(surface, (14,11,26), panel, border_radius=5)
-            pygame.draw.rect(surface, DIM_GOLD, panel, 1, border_radius=5)
-            self._draw_item_details(surface, hovered_equipped, ey+8)
-            ey += 128
+        # Hover preview (compact — only show name + bonuses, not full panel)
+        if hover_item:
+            sb = hover_item.get("stat_bonuses",{})
+            if sb:
+                bs = "  ".join(f"+{v}{k}" for k,v in list(sb.items())[:3])
+                draw_text(surface, bs, ex, ey, (120,200,120), 10)
+                ey += 13
 
-        # ── Inventory list ────────────────────────────────────────────────
-        ey += 6
-        if ey < BODY_BOT - 80:
-            pygame.draw.line(surface, (50,42,65), (ex, ey-2), (SCREEN_W-12, ey-2))
-            draw_text(surface, "INVENTORY  (click item · then act)", ex, ey, STAT_LABEL, 10, bold=True)
-            ey += 14
+        ey += 5
+        pygame.draw.line(surface, (50,42,65), (ex, ey-2), (SCREEN_W-10, ey-2))
 
-            sel_ii = getattr(self, "_stats_inv_sel", -1)
-            for ii, it in enumerate(c.inventory):
-                if ey > BODY_BOT - 60:
-                    break
-                it_r  = pygame.Rect(ex, ey, SCREEN_W-ex-14, 17)
-                self._stats_hit_map[f"inv:{ii}"] = it_r
-                sel  = (sel_ii == ii)
-                hov  = it_r.collidepoint(mx, my)
-                if sel:
-                    pygame.draw.rect(surface, (50,38,72), it_r, border_radius=3)
-                    pygame.draw.rect(surface, DIM_GOLD, it_r, 1, border_radius=3)
-                elif hov:
-                    pygame.draw.rect(surface, (32,26,50), it_r, border_radius=3)
-                rc = {"uncommon":(140,200,255),"rare":(180,120,255),"epic":(255,180,60)}.get(
-                    it.get("rarity",""), CREAM)
-                draw_text(surface, it.get("name","?")[:28], ex+4, ey+2, rc, 11)
-                # Type badge on right
-                draw_text(surface, it.get("type","misc")[:8], SCREEN_W-80, ey+2, STAT_LABEL, 10)
-                ey += 18
+        # ── INVENTORY (capped at 5 items to leave room for spells) ────────
+        draw_text(surface, "INVENTORY  (click item · then act)", ex, ey, STAT_LABEL, 10, bold=True)
+        ey += 13
+        sel_ii = getattr(self, "_stats_inv_sel", -1)
+        shown  = 0
+        for ii, it in enumerate(c.inventory):
+            if shown >= 5:
+                remaining = len(c.inventory) - 5
+                draw_text(surface, f"  +{remaining} more (use Inventory tab)",
+                          ex, ey, STAT_LABEL, 10)
+                ey += 13
+                break
+            it_r = pygame.Rect(ex, ey, COL_W, 15)
+            self._stats_hit_map[f"inv:{ii}"] = it_r
+            sel = (sel_ii == ii)
+            hov = it_r.collidepoint(mx, my)
+            if sel:
+                pygame.draw.rect(surface, (50,38,72), it_r, border_radius=2)
+                pygame.draw.rect(surface, DIM_GOLD, it_r, 1, border_radius=2)
+            elif hov:
+                pygame.draw.rect(surface, (32,26,50), it_r, border_radius=2)
+            rc = {"uncommon":(140,200,255),"rare":(180,120,255),"epic":(255,180,60)}.get(
+                it.get("rarity",""), CREAM)
+            draw_text(surface, it.get("name","?")[:22], ex+3, ey+2, rc, 10)
+            draw_text(surface, it.get("type","")[:6], SCREEN_W-70, ey+2, STAT_LABEL, 9)
+            ey += 15
+            shown += 1
 
-            # Action buttons for selected inventory item
-            if 0 <= sel_ii < len(c.inventory) and ey < BODY_BOT - 32:
-                sel_it   = c.inventory[sel_ii]
-                protected = sel_it.get("type") in ("key_item","quest_item") or "warden_rank" in sel_it
-                bx       = ex
-                # Use
-                if sel_it.get("type") in ("consumable","potion","food"):
-                    r = pygame.Rect(bx, ey, 65, 26)
-                    self._stats_hit_map["act:use"] = r
-                    draw_button(surface, r, "Use", hover=r.collidepoint(mx,my), size=11)
-                    bx += 70
-                # Equip
-                if sel_it.get("slot"):
-                    r = pygame.Rect(bx, ey, 72, 26)
-                    self._stats_hit_map["act:equip"] = r
-                    draw_button(surface, r, "Equip", hover=r.collidepoint(mx,my), size=11)
-                    bx += 78
-                # Drop
-                if not protected:
-                    r = pygame.Rect(bx, ey, 65, 26)
-                    self._stats_hit_map["act:drop"] = r
-                    draw_button(surface, r, "Drop", hover=r.collidepoint(mx,my), size=11)
-                    bx += 70
-                # Give
-                if len(self.party) > 1:
-                    r = pygame.Rect(bx, ey, 65, 26)
-                    self._stats_hit_map["act:give"] = r
-                    draw_button(surface, r, "Give", hover=r.collidepoint(mx,my), size=11)
-                    bx += 70
-                ey += 30
+        # Action buttons for selected item
+        if 0 <= sel_ii < len(c.inventory):
+            sel_it   = c.inventory[sel_ii]
+            protected = sel_it.get("type") in ("key_item","quest_item") or "warden_rank" in sel_it
+            bx = ex
+            if sel_it.get("type") in ("consumable","potion","food"):
+                r = pygame.Rect(bx, ey, 55, 22); self._stats_hit_map["act:use"] = r
+                draw_button(surface, r, "Use", hover=r.collidepoint(mx,my), size=10); bx += 60
+            if sel_it.get("slot"):
+                r = pygame.Rect(bx, ey, 60, 22); self._stats_hit_map["act:equip"] = r
+                draw_button(surface, r, "Equip", hover=r.collidepoint(mx,my), size=10); bx += 65
+            if not protected:
+                r = pygame.Rect(bx, ey, 55, 22); self._stats_hit_map["act:drop"] = r
+                draw_button(surface, r, "Drop", hover=r.collidepoint(mx,my), size=10); bx += 60
+            if len(self.party) > 1:
+                r = pygame.Rect(bx, ey, 55, 22); self._stats_hit_map["act:give"] = r
+                draw_button(surface, r, "Give", hover=r.collidepoint(mx,my), size=10)
+            ey += 26
+            if getattr(self,"_give_mode",False):
+                bx = ex
+                for gi, gch in enumerate(self.party):
+                    if gi == self.selected_char: continue
+                    gw = max(55, len(gch.name)*7+10)
+                    r  = pygame.Rect(bx, ey, gw, 20)
+                    self._stats_hit_map[f"act:give_to:{gi}"] = r
+                    draw_button(surface, r, gch.name, hover=r.collidepoint(mx,my), size=10)
+                    bx += gw + 5
+                ey += 24
 
-                # Give sub-buttons
-                if getattr(self,"_give_mode",False) and "act:give" in self._stats_hit_map:
-                    for gi, gch in enumerate(self.party):
-                        if gi == self.selected_char or ey > BODY_BOT - 20:
-                            continue
-                        gw = max(70, len(gch.name)*8+12)
-                        r  = pygame.Rect(ex, ey, gw, 22)
-                        self._stats_hit_map[f"act:give_to:{gi}"] = r
-                        draw_button(surface, r, gch.name, hover=r.collidepoint(mx,my), size=11)
-                        ex += gw + 6
-                    ey += 26
-                    ex = RIGHT_X
+        ey += 5
+        pygame.draw.line(surface, (50,42,65), (ex, ey-2), (SCREEN_W-10, ey-2))
 
-        # ── Heal/cure spells ─────────────────────────────────────────────
-        ey += 6
+        # ── CAMP SPELLS (always shown if character has them) ─────────────
         CAMP_TYPES = ("heal","aoe_heal","cure","revive")
         camp_abs = [a for a in c.abilities if a.get("type") in CAMP_TYPES]
-        if camp_abs and ey < BODY_BOT - 40:
-            pygame.draw.line(surface, (50,42,65), (RIGHT_X, ey-2), (SCREEN_W-12, ey-2))
-            draw_text(surface, "CAMP SPELLS", RIGHT_X, ey, STAT_LABEL, 10, bold=True)
-            ey += 14
+        if camp_abs:
+            draw_text(surface, "CAMP SPELLS  (click to cast)", ex, ey, STAT_LABEL, 10, bold=True)
+            ey += 13
             for ai, ab in enumerate(camp_abs):
-                if ey > BODY_BOT - 24:
-                    break
                 rk   = ab.get("resource","")
                 cost = ab.get("cost",0)
                 can  = c.resources.get(rk, 0) >= cost if cost else True
-                ab_r = pygame.Rect(RIGHT_X, ey, SCREEN_W-RIGHT_X-14, 22)
+                ab_r = pygame.Rect(ex, ey, COL_W, 20)
                 self._stats_hit_map[f"spell:{ai}"] = ab_r
                 hov = ab_r.collidepoint(mx,my)
-                bg  = (50,40,70) if hov and can else (30,24,44)
-                bc  = DIM_GOLD if hov and can else (60,50,80)
-                pygame.draw.rect(surface, bg, ab_r, border_radius=4)
-                pygame.draw.rect(surface, bc, ab_r, 1, border_radius=4)
-                col = CREAM if can else (80,70,90)
+                bg  = (50,40,70) if (hov and can) else (28,22,42)
+                bc  = DIM_GOLD  if (hov and can) else (55,48,75)
+                pygame.draw.rect(surface, bg, ab_r, border_radius=3)
+                pygame.draw.rect(surface, bc, ab_r, 1, border_radius=3)
+                col = CREAM if can else (70,65,80)
                 cost_str = f"  [{cost} {rk}]" if cost else ""
-                draw_text(surface, f"{ab.get('name','?')}{cost_str}", RIGHT_X+6, ey+4, col, 11)
+                draw_text(surface, f"{ab.get('name','?')}{cost_str}", ex+5, ey+4, col, 10)
                 if not can:
-                    draw_text(surface, "no MP", SCREEN_W-56, ey+4, (150,80,80), 10)
-                ey += 25
+                    draw_text(surface, "no MP", SCREEN_W-52, ey+4, (150,80,80), 9)
+                ey += 22
+        else:
+            draw_text(surface, "No camp spells", ex, ey, (60,55,75), 10)
 
         surface.set_clip(None)
+
+
 
 
     # ─────────────────────────────────────────────────────────────────
