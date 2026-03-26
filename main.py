@@ -367,6 +367,7 @@ class Game:
                 elif result == 'continue':
                     from ui.save_load_ui import SaveLoadUI
                     self.save_load_ui = SaveLoadUI("load", dungeon_cache=self.dungeon_cache)
+                    self._save_load_return_state = S_TITLE
                     self.go(S_SAVE_LOAD)
             return
 
@@ -921,6 +922,12 @@ class Game:
                         self.go_fade(S_PARTY)
                     else:
                         sfx.play("ui_cancel")
+                        # If cancelling back to the title, reset party so New Game
+                        # always starts fresh regardless of previous session state.
+                        if self._save_load_return_state == S_TITLE:
+                            self.party = []
+                            self.char_index = 0
+                            self.current_char = None
                         self.go(self._save_load_return_state)
 
     # ══════════════════════════════════════════════════════════
