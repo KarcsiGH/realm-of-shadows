@@ -2091,9 +2091,21 @@ class DungeonUI:
                     self.stairs_direction = "exit" if self.dungeon.current_floor == 1 else "up"
             return None
         if key == pygame.K_SPACE:
+            # Skip turn — costs a turn, enemies may move
+            ev = self.dungeon.wait()
+            if ev and ev.get("type") != "waited":
+                return ev
             return None
         if key == pygame.K_c:
-            self.show_camp_confirm = True; return None
+            nearby = self.dungeon.enemies_nearby(threat_radius=6)
+            if nearby:
+                self._show_event(
+                    f"Cannot camp — {len(nearby)} enem{'y' if len(nearby)==1 else 'ies'} "
+                    f"within 6 tiles! Dispatch them first.",
+                    (220, 80, 80))
+            else:
+                self.show_camp_confirm = True
+            return None
         if key == pygame.K_t:
             return self._try_disarm()
         return None
@@ -2143,6 +2155,13 @@ class DungeonUI:
         _btn_w = SCREEN_W - MM_X - 8
         _btn_y = by + 4
         if pygame.Rect(_btn_x, _btn_y,      _btn_w, 24).collidepoint(mx,my):
+            nearby = self.dungeon.enemies_nearby(threat_radius=6)
+            if nearby:
+                self._show_event(
+                    f"Cannot camp — {len(nearby)} enem{'y' if len(nearby)==1 else 'ies'} "
+                    f"within 6 tiles!",
+                    (220, 80, 80))
+                return None
             return {"type": "camp"}
         if pygame.Rect(_btn_x, _btn_y + 30, _btn_w, 24).collidepoint(mx,my):
             return {"type": "menu"}

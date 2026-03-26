@@ -4222,6 +4222,12 @@ class Game:
                 rest_msg = "Rested in the dungeon."
                 if poison_msgs:
                     rest_msg += "  " + "  ".join(poison_msgs[:3])
+                # Enemies don't stand still while the party sleeps — move them closer
+                if self.dungeon_state:
+                    self.dungeon_state.move_enemies_toward_party()
+                    nearby = self.dungeon_state.enemies_nearby(threat_radius=4)
+                    if nearby:
+                        rest_msg += f"  {len(nearby)} enem{'y' if len(nearby)==1 else 'ies'} closing in!"
                 self.dungeon_ui.show_event(rest_msg, GREEN if not poison_msgs else ORANGE)
 
         elif event["type"] == "menu":

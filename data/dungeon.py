@@ -928,6 +928,88 @@ class DungeonState:
         self.party_x, self.party_y = floor["entrance"]
         self._update_fog()
 
+    def enemies_nearby(self, threat_radius=6):
+        """Return list of alive, non-dead enemies within threat_radius tiles
+        of the party on the current floor. Used to restrict camping."""
+        import math
+        floor = self.floors.get(self.current_floor, {})
+        nearby = []
+        for e in floor.get("enemies", []):
+            if e.get("state") == "dead":
+                continue
+            dist = math.sqrt((e["x"] - self.party_x)**2 + (e["y"] - self.party_y)**2)
+            if dist <= threat_radius:
+                nearby.append(e)
+        return nearby
+
+    def move_enemies_toward_party(self):
+        """Move each visible enemy one step closer — called when party camps
+        under threat.  Uses simple Manhattan step, respects walls."""
+        floor = self.floors.get(self.current_floor, {})
+        tiles = floor.get("tiles", [])
+        fh = len(tiles)
+        fw = len(tiles[0]) if fh > 0 else 0
+        for e in floor.get("enemies", []):
+            if e.get("state") == "dead":
+                continue
+            ex, ey_e = e["x"], e["y"]
+            dx = self.party_x - ex
+            dy = self.party_y - ey_e
+            # Try to step in the dominant direction
+            steps = []
+            if abs(dx) >= abs(dy):
+                steps = [(int(dx/abs(dx)) if dx else 0, 0), (0, int(dy/abs(dy)) if dy else 0)]
+            else:
+                steps = [(0, int(dy/abs(dy)) if dy else 0), (int(dx/abs(dx)) if dx else 0, 0)]
+            for sdx, sdy in steps:
+                nx, ny = ex + sdx, ey_e + sdy
+                if 0 <= nx < fw and 0 <= ny < fh:
+                    t = tiles[ny][nx]["type"]
+                    if t in PASSABLE_TILES and not (nx == self.party_x and ny == self.party_y):
+                        e["x"], e["y"] = nx, ny
+                        break
+
+
+    def wait(self):
+        """Party waits in place — costs a turn. Triggers status effects,
+        resource regen, and enemy movement (enemies may close in).
+        Returns encounter event or None."""
+
+        # Per-step resource trickle
+        from core.progression import apply_step_regen
+        from core.classes import get_all_resources
+        for c in self.party:
+            max_res = get_all_resources(c.class_name, c.stats, c.level)
+            apply_step_regen(c, max_res)
+
+        # Status effect ticking
+        from core.status_effects import tick_step
+        step_messages = []
+        for c in self.party:
+            msgs = tick_step(c)
+            step_messages.extend(msgs)
+        if step_messages:
+            self._last_step_messages = step_messages
+
+        # Enemy movement — enemies still get their turn
+        contact = self._move_enemies()
+        if contact:
+            if self.dungeon_id == "goblin_warren":
+                from core.story_flags import get_flag
+                if get_flag("choice.grak_spared"):
+                    return None
+            self._last_contact_enemy = (contact["x"], contact["y"])
+            return {
+                "type": "random_encounter",
+                "dungeon_id": self.dungeon_id,
+                "floor": self.current_floor,
+                "total_floors": self.total_floors,
+                "is_boss": contact.get("is_boss", False),
+                "_enc_key": contact["enc_key"],
+            }
+        return {"type": "waited"}   # explicit waited event for any UI feedback
+
+
     def _ensure_floor(self, floor_num):
         if floor_num not in self.floors:
             rng = random.Random(hash((self.dungeon_id, floor_num)))
