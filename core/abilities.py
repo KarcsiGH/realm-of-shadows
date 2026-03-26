@@ -282,6 +282,7 @@ CLASS_ABILITIES = {
 }
 
 
+
 # ═══════════════════════════════════════════════════════════════
 #  ABILITY LEARNING
 # ═══════════════════════════════════════════════════════════════
@@ -807,30 +808,15 @@ ABILITY_BRANCHES = {
 
 
 def get_branch_at_level(class_name, level):
-    """
-    Returns [option_A, option_B] if there's a branch choice at this level,
-    or None if it's a normal auto-learn level.
-    """
-    branches = ABILITY_BRANCHES.get(class_name, {})
-    return branches.get(level, None)
+    """Branches removed — all abilities are freely trainable at the guild.
+    Always returns None so no branch-choice UI is triggered."""
+    return None
 
 
 def has_branch_choice_pending(character):
-    """
-    Returns the branch options if the character has reached a branch level
-    but hasn't yet chosen (i.e. neither option is in their abilities).
-    Returns None if no pending choice.
-    """
-    next_lvl = character.level
-    branch = get_branch_at_level(character.class_name, next_lvl)
-    if not branch:
-        return None
-    known_names = {a["name"] for a in character.abilities}
-    # If they already know one of the options, they've already chosen
-    if any(opt["name"] in known_names for opt in branch):
-        return None
-    # Check if neither is known (pending choice)
-    return branch
+    """Branches removed — all abilities are freely trainable at the guild.
+    Always returns None."""
+    return None
 
 
 def choose_branch(character, chosen_ability):
@@ -842,3 +828,17 @@ def choose_branch(character, chosen_ability):
     if chosen_ability["name"] not in known_names:
         character.abilities.append(chosen_ability.copy())
     return True
+# ── Merge branch abilities into CLASS_ABILITIES ──────────────────────────────
+# Since branching is removed, all branch-choice abilities are now regular
+# trainable abilities available at the guild at the appropriate level.
+for _cls, _branch_levels in ABILITY_BRANCHES.items():
+    _existing_names = {a["name"] for a in CLASS_ABILITIES.get(_cls, [])}
+    for _level, _opts in _branch_levels.items():
+        for _opt in _opts:
+            if _opt["name"] not in _existing_names:
+                _ab = dict(_opt)
+                _ab.setdefault("level", _level)
+                CLASS_ABILITIES.setdefault(_cls, []).append(_ab)
+                _existing_names.add(_opt["name"])
+
+

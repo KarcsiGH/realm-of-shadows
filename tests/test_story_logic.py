@@ -761,48 +761,34 @@ try:
           "Defensive Stance" in summary["new_abilities"])
     check("Fighter L2 has no branch choice", summary["branch_choice"] is None)
 
-    # Level up Fighter 2→3: should present Shield Bash vs Reckless Charge branch
-    c.xp = 900   # XP_TABLE[3] = 900
+    # Level up Fighter 2→3: branching removed — Shield Bash and Reckless Charge
+    # both appear as trainable abilities, no forced choice
+    c.xp = 900
     summary3 = apply_level_up(c, free_stat="STR")
-    check("Fighter L3 presents branch choice",
-          summary3["branch_choice"] is not None and len(summary3["branch_choice"]) == 2)
-    branch_names_l3 = {opt["name"] for opt in summary3["branch_choice"]}
-    check("Fighter L3 branch offers Shield Bash",
-          "Shield Bash" in branch_names_l3)
-    check("Fighter L3 branch offers Reckless Charge",
-          "Reckless Charge" in branch_names_l3)
+    check("Fighter L3 has no branch choice (branching removed)",
+          summary3["branch_choice"] is None)
+    check("Shield Bash available to train at L3",
+          "Shield Bash" in summary3["new_abilities"])
+    check("Reckless Charge available to train at L3",
+          "Reckless Charge" in summary3["new_abilities"])
 
-    # Branch abilities must NOT have been auto-learned
-    known_names = {a["name"] for a in c.abilities}
-    check("Cleave NOT auto-learned before branch level",
-          "Cleave" not in known_names)
-    check("War Cry NOT auto-learned before branch level",
-          "War Cry" not in known_names)
-    check("Executioner NOT auto-learned before branch level",
-          "Executioner" not in known_names)
-
-    # Mage L3 branch: Firebolt vs Frostbolt
+    # Mage L3: Firebolt and Frostbolt both available (no forced branch)
     m = Character("Mira", "Mage")
     m.xp = 400; apply_level_up(m, "INT")
     m.xp = 900
     sm3 = apply_level_up(m, "INT")
-    check("Mage L3 presents Firebolt/Frostbolt branch",
-          sm3["branch_choice"] is not None and
-          {"Firebolt", "Frostbolt"} == {o["name"] for o in sm3["branch_choice"]})
+    check("Mage L3 has no branch choice (branching removed)",
+          sm3["branch_choice"] is None)
 
-    # Hybrid class (Knight) auto-learns all its abilities (no branches defined)
+    # ABILITY_BRANCHES data still exists (used for merging abilities into CLASS_ABILITIES)
     from core.abilities import ABILITY_BRANCHES as AB
-    check("Knight has no branch definitions (auto-learns all)",
-          "Knight" not in AB)
-
-    # All base classes have branch definitions
     base_classes = ["Fighter", "Mage", "Cleric", "Thief", "Ranger", "Monk"]
-    check("All base classes have ABILITY_BRANCHES defined",
+    check("ABILITY_BRANCHES data intact for all base classes",
           all(cls in AB for cls in base_classes))
-
-    # Each base class has exactly 3 branch levels
-    check("All base classes have branches at 3 levels",
-          all(len(AB[cls]) == 3 for cls in base_classes))
+    check("Branch abilities merged into CLASS_ABILITIES for all classes",
+          all("Shield Bash" in [a["name"] for a in __import__("core.abilities",
+              fromlist=["CLASS_ABILITIES"]).CLASS_ABILITIES.get("Fighter", [])]
+              for _ in [None]))
 
 except Exception as e:
     check("Ability progression check", False, str(e))
@@ -1227,10 +1213,9 @@ try:
             "name": "Cleave", "type": "aoe", "target": "aoe_enemy",
             "power": 1.0, "resource": "", "cost": 0
         }
-        actor7["abilities"] = [aoe_ability]
-        cui7.action_mode = "choose_ability"
-        cui7.hover_action = 0
-        result7 = cui7.handle_click(0, 0)
+        # Test _resolve_popover_item directly — correct unit for AoE routing
+        data7 = {"type": "ability", "ability": aoe_ability}
+        result7 = cui7._resolve_popover_item(data7, actor7)
         check("AoE ability auto-targets (no target selection)",
               result7 is not None and result7.get("type") == "ability")
         check("AoE does not enter target_ability mode",

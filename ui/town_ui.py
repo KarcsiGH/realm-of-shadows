@@ -1091,23 +1091,10 @@ class TownUI:
         self._guild_building_name = bld_name
         self._guild_hover = -1
 
-        # Check for pending branch choices across the whole party
-        from core.abilities import has_branch_choice_pending
-        for c in self.party:
-            pending = has_branch_choice_pending(c)
-            if pending:
-                self.branch_pending_char = c
-                self.branch_pending_opts = pending
-                self.branch_hover_idx = -1
-                self._guild_branch_origin = True   # so Back returns to guild, not inn
-                self.view = self.VIEW_BRANCH_CHOICE
-                return
-
         self.view = self.VIEW_GUILD
 
     def _draw_guild(self, surface, mx, my):
         """Draw the Guild hub menu."""
-        from core.abilities import has_branch_choice_pending
         surface.fill(TOWN_BG)
 
         W, H = SCREEN_W, SCREEN_H
@@ -1258,7 +1245,7 @@ class TownUI:
         self._guild_back_btn = back
 
         # ── Pending badge ───────────────────────────────────────────
-        pending_chars = [c for c in self.party if has_branch_choice_pending(c)]
+        pending_chars = []  # branching removed
 
         # ── Menu options ────────────────────────────────────────────
         options = [
@@ -1637,9 +1624,9 @@ class TownUI:
     # ─────────────────────────────────────────────────────────
 
     def _draw_inn(self, surface, mx, my):
-        from core.progression import INN_TIERS, INN_TIER_ORDER, can_level_up, training_cost
+        from core.progression import INN_TIERS, INN_TIER_ORDER, can_level_up
         bld_name = self.current_bld_name or "The Inn"
-        self._draw_bld_npc_header(surface, bld_name, "Rest your bones, train your skills, save your progress.", mx, my)
+        self._draw_bld_npc_header(surface, bld_name, "Rest your weary bones, save your progress.", mx, my)
 
         back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
         draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
@@ -1670,16 +1657,7 @@ class TownUI:
             tier = INN_TIERS[tier_key]
             room_cost = tier["cost_per_char"] * party_size
 
-            # Training cost is INCLUDED in room cost, not separate
-            # Higher tier rooms include training as part of the service
-            train_cost = 0
-            train_count = 0
-            if tier["allows_level_up"] and lvl_ready:
-                for c in lvl_ready:
-                    train_cost += training_cost(c.level + 1)
-                train_count = len(lvl_ready)
-
-            total_cost = room_cost + train_cost
+            total_cost = room_cost
 
             btn = pygame.Rect(SCREEN_W // 2 - 280, by + i * 95, 560, 85)
             hover = btn.collidepoint(mx, my)
@@ -1696,9 +1674,7 @@ class TownUI:
             name_col = GOLD if can_afford else DARK_GREY
             draw_text(surface, tier["name"], btn.x + 15, btn.y + 8, name_col, 18, bold=True)
 
-            if train_cost > 0:
-                cost_str = f"Room: {room_cost}g + Training: {train_cost}g = {total_cost}g total"
-            elif room_cost > 0:
+            if room_cost > 0:
                 cost_str = f"{room_cost}g ({tier['cost_per_char']}g × {party_size})"
             else:
                 cost_str = "Free"
@@ -1706,11 +1682,9 @@ class TownUI:
 
             draw_text(surface, tier["description"], btn.x + 15, btn.y + 35, GREY, 12)
 
-            if tier["allows_level_up"] and lvl_ready:
-                draw_text(surface, f"{train_count} character(s) ready to level up!",
+            if lvl_ready:
+                draw_text(surface, f"{len(lvl_ready)} character(s) ready to level up at guild!",
                           btn.x + 15, btn.y + 55, (180, 220, 120), 12)
-            elif not tier["allows_level_up"] and lvl_ready:
-                draw_text(surface, "No training available at this tier", btn.x + 15, btn.y + 55, DARK_GREY, 11)
 
             if tier.get("buff"):
                 draw_text(surface, f"Bonus: {tier['buff']['name']} (+{tier['buff']['hp_bonus_pct']}% HP next dungeon)",
@@ -3082,13 +3056,7 @@ class TownUI:
                     from core.progression import can_level_up, training_cost
                     tier = INN_TIERS[tier_key]
                     room_cost = tier["cost_per_char"] * len(self.party)
-                    # Include training cost upfront
-                    train_cost = 0
-                    if tier["allows_level_up"]:
-                        for c in self.party:
-                            if can_level_up(c):
-                                train_cost += training_cost(c.level + 1)
-                    total_cost = room_cost + train_cost
+                    total_cost = room_cost
                     total_gold = sum(c.gold for c in self.party)
                     if total_gold >= total_cost:
                         success = self._rest_at_inn(tier_key, total_cost)
@@ -3208,15 +3176,6 @@ class TownUI:
                                       f"{gains}, +{summary['hp_gain']} base HP{ab_str}")
                     sfx.play("level_up")
 
-                    # If there's a branch choice pending, show that screen first
-                    if summary.get("branch_choice"):
-                        self.branch_pending_char = c
-                        self.branch_pending_opts  = summary["branch_choice"]
-                        self.branch_hover_idx     = -1
-                        self.levelup_current += 1
-                        self.levelup_free_stat = None
-                        self.view = self.VIEW_BRANCH_CHOICE
-                        return None
 
                 self.levelup_current += 1
                 self.levelup_free_stat = None
@@ -3456,22 +3415,11 @@ class TownUI:
                     if action == "jobboard":
                         self.view = self.VIEW_JOBBOARD
                     elif action == "train":
-                        from core.abilities import has_branch_choice_pending
-                        # Route to branch choice if anyone has a pending decision
-                        pending_chars = [c for c in self.party if has_branch_choice_pending(c)]
-                        if pending_chars:
-                            c = pending_chars[0]
-                            self.branch_pending_char = c
-                            self.branch_pending_opts = has_branch_choice_pending(c)
-                            self.branch_hover_idx = -1
-                            self._guild_branch_origin = True
-                            self.view = self.VIEW_BRANCH_CHOICE
-                        else:
-                            # Open the ability trainer shop so players can purchase training
-                            self.trainer_char_idx = 0
-                            self.trainer_scroll = 0
-                            self._trainer_origin = "guild"   # back button returns here
-                            self.view = self.VIEW_INN_TRAINER
+                        # Open the ability trainer shop (guild only)
+                        self.trainer_char_idx = 0
+                        self.trainer_scroll = 0
+                        self._trainer_origin = "guild"
+                        self.view = self.VIEW_INN_TRAINER
                     elif action == "classtree":
                         self.classtree_char_idx = 0
                         self._guild_classtree_origin = True

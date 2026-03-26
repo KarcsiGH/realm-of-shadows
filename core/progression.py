@@ -334,36 +334,18 @@ def apply_level_up(character, free_stat=None):
     hp_gain = gains["hp_base"] + random.randint(0, gains["hp_random"])
     summary["hp_gain"] = hp_gain
 
-    # Learn new abilities for this level
-    from core.abilities import CLASS_ABILITIES, get_branch_at_level, ABILITY_BRANCHES
+    # Report newly trainable abilities (available to purchase at guild)
+    from core.abilities import CLASS_ABILITIES
     class_abilities = CLASS_ABILITIES.get(cls, [])
     known_names = {a["name"] for a in character.abilities}
     new_abilities = []
 
-    # Collect ALL branch ability names for this class (across every branch level),
-    # not just the current level — prevents early auto-learn of future branch choices.
-    all_branch_names = {
-        opt["name"]
-        for level_opts in ABILITY_BRANCHES.get(cls, {}).values()
-        for opt in level_opts
-    }
-
-    # Get branch options exactly at this level (if any) — player must choose one
-    branch_opts = get_branch_at_level(cls, new_level)
-
     for ab in class_abilities:
         if ab["name"] not in known_names and ab.get("level", 1) <= new_level:
-            # Skip ALL branch abilities — player picks these at the right branch level
-            if ab["name"] in all_branch_names:
-                continue
-            # DO NOT auto-grant abilities — player must purchase training at the guild.
-            # Just report them as newly available so the UI can prompt the player.
+            # All abilities are freely trainable at the guild — no branches
             new_abilities.append(ab["name"])
-    summary["new_abilities"] = new_abilities      # available to train, not yet learned
-    summary["branch_choice"] = branch_opts        # None or [opt_A, opt_B]
-
-    # Recalculate all resources to new maxes (but don't heal — inn rest does that)
-    # The caller should recalculate resources after this
+    summary["new_abilities"] = new_abilities   # available to train, not yet learned
+    summary["branch_choice"] = None            # branches removed
 
     return summary
 
