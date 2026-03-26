@@ -15,7 +15,7 @@ Public interface (unchanged from v2):
 """
 
 import pygame, math, random
-from ui.renderer import SCREEN_W, SCREEN_H, CREAM, GOLD
+from ui.renderer import SCREEN_W, SCREEN_H, CREAM, GOLD, get_font
 from ui.pixel_art import draw_dungeon_object
 from data.dungeon import (
     DungeonState, PASSABLE_TILES,
@@ -1003,7 +1003,7 @@ class DungeonUI:
 
         sprites.sort(key=lambda s: -s[0])
 
-        font = pygame.font.SysFont("segoeuisymbol,symbola,unifont,dejavusans", 32)
+        font = get_font(32)
         for dist, sx, sy, icon_key, enc_key in sprites:
             inv = 1.0 / (self.cx * self.dy - self.dx * self.cy)
             tx_ = inv * (self.dy * sx - self.dx * sy)
@@ -1376,7 +1376,7 @@ class DungeonUI:
         pygame.draw.rect(bg, (100,90,72,200), (0,0,cols*ts,rows*ts), 1)
 
         surface.blit(bg, (MM_X, MM_Y))
-        font = pygame.font.SysFont("courier,monospace", 14)
+        font = get_font(14)
         lbl  = font.render(f"Floor {self.dungeon.current_floor}", True, (170,160,130))
         surface.blit(lbl, (MM_X+2, MM_Y+rows*ts+2))
 
@@ -1389,8 +1389,8 @@ class DungeonUI:
         pygame.draw.rect(surface, (14,11,8), (0, by, SCREEN_W, HUD_H))
         pygame.draw.line(surface, GOLD, (0, by), (SCREEN_W, by), 2)
 
-        fb = pygame.font.SysFont("courier,consolas,monospace", 16, bold=True)
-        fs = pygame.font.SysFont("courier,consolas,monospace", 14)
+        fb = get_font(16, bold=True)
+        fs = get_font(14)
 
         party = self.dungeon.party
         if party:
@@ -1578,9 +1578,9 @@ class DungeonUI:
         pygame.draw.rect(surface, (20, 14, 8), (dx, dy, dw, dh), border_radius=6)
         pygame.draw.rect(surface, GOLD, (dx, dy, dw, dh), 2, border_radius=6)
 
-        ft  = pygame.font.SysFont("courier,monospace", 18, bold=True)
-        fm  = pygame.font.SysFont("courier,monospace", 14)
-        fsm = pygame.font.SysFont("courier,monospace", 12)
+        ft  = get_font(18, bold=True)
+        fm  = get_font(14)
+        fsm = get_font(12)
 
         def btn_rect(col, row, n_cols=2):
             bw = (dw - 60) // n_cols - 8
@@ -1799,8 +1799,8 @@ class DungeonUI:
         dy = SCREEN_H//2 - dh//2
         pygame.draw.rect(surface, (20,16,10), (dx,dy,dw,dh), border_radius=6)
         pygame.draw.rect(surface, GOLD, (dx,dy,dw,dh), 2, border_radius=6)
-        ft = pygame.font.SysFont("courier,monospace", 18, bold=True)
-        fb = pygame.font.SysFont("courier,monospace", 13)
+        ft = get_font(18, bold=True)
+        fb = get_font(13)
         t  = ft.render(title, True, GOLD)
         surface.blit(t, (dx+dw//2-t.get_width()//2, dy+12))
         m  = fb.render(msg, True, CREAM)
@@ -1884,9 +1884,9 @@ class DungeonUI:
             pygame.draw.circle(surface, (220, 80, 80), (seal_x-3, seal_y-3), 5)
 
         # ── Title ────────────────────────────────────────────────────────
-        font_title = pygame.font.SysFont("serif,georgia", 17, bold=True)
-        font_body  = pygame.font.SysFont("serif,georgia", 14)
-        font_hint  = pygame.font.SysFont("monospace", 11)
+        font_title = get_font(17, bold=True)
+        font_body  = get_font(14)
+        font_hint  = get_font(11)
 
         ty = MY + PAD + (8 if not is_wall else 4)
         if title:

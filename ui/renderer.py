@@ -45,7 +45,24 @@ _font_cache = {}
 def get_font(size, bold=False):
     key = (size, bold)
     if key not in _font_cache:
-        font = pygame.font.SysFont("consolas,courier,monospace", size, bold=bold)
+        # Use pygame's built-in font to avoid fc-list timeout on Mac
+        # SysFont triggers a slow system font scan that can crash on some configs
+        try:
+            import threading, queue
+            result = queue.Queue()
+            def _try_sysfont():
+                try:
+                    result.put(pygame.font.SysFont("consolas,courier,monospace", size, bold=bold))
+                except Exception:
+                    result.put(None)
+            t = threading.Thread(target=_try_sysfont, daemon=True)
+            t.start()
+            t.join(timeout=0.5)   # give SysFont 500ms before falling back
+            font = result.get_nowait() if not result.empty() else None
+        except Exception:
+            font = None
+        if font is None:
+            font = pygame.font.Font(None, max(8, size + 4))   # built-in fallback
         _font_cache[key] = font
     return _font_cache[key]
 
