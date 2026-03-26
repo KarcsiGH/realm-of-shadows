@@ -73,7 +73,7 @@ RIGHT_X      = LEFT_W
 RIGHT_W      = SCREEN_W - LEFT_W
 RIGHT_Y      = TURN_H
 
-ENEMY_H      = int((ACTION_Y - TURN_H) * 0.62)   # ~62% of middle area
+ENEMY_H      = int((ACTION_Y - TURN_H) * 0.58)   # ~58% — gives log 4 more lines
 LOG_Y        = TURN_H + ENEMY_H
 LOG_H        = ACTION_Y - LOG_Y
 
@@ -291,7 +291,7 @@ class CombatUI:
                 r = pygame.Rect(LEFT_X + 3, cy + 2, LEFT_W - 6, card_h - 4)
                 is_cur  = (p is cur)
                 is_dead = not p.get("alive", True)
-                is_target = (self.action_mode == "target_heal") and not is_dead
+                is_target = (self.action_mode == "target_heal")  # all allies targetable, including fallen
 
                 bg     = PLAYER_ACTIVE_BG if is_cur else PLAYER_BG
                 border = GOLD if is_cur else ((200, 200, 80) if (is_target and r.collidepoint(mx, my))
@@ -529,9 +529,10 @@ class CombatUI:
                 display_name = get_enemy_display_name(rep)
                 font_s = get_font(10)
                 max_name_w = card_w - 8
-                while font_s.size(display_name)[0] > max_name_w and len(display_name) > 6:
-                    display_name = display_name[:-4] + "…"
-                    break
+                while font_s.size(display_name)[0] > max_name_w and len(display_name) > 4:
+                    display_name = display_name[:-1]
+                if len(display_name) < font_s.size(display_name + "…")[0] and display_name:
+                    display_name = display_name[:-1] + "…"
                 name_col = DEAD_COLOR if not alive else (CREAM if not is_hover else GOLD)
                 draw_text(surface, display_name, cx + 4, name_y, name_col, 13)
 
@@ -544,14 +545,16 @@ class CombatUI:
                         _draw_resource_bar(surface, cx + 4, bar_y,
                                            card_w - 8, 7, total_hp, total_mhp,
                                            (HP_BG, _hp_color(total_hp, total_mhp), (190,150,145)))
-                        draw_text(surface, f"{total_hp} HP total",
+                        _hp_lbl = f"{total_hp} HP" if card_w < 80 else f"{total_hp} HP total"
+                        draw_text(surface, _hp_lbl,
                                   cx + 4, bar_y + 9, _hp_color(total_hp, total_mhp), 9)
                     else:
                         hp, mhp = rep.get("hp", 0), rep.get("max_hp", 1)
                         _draw_resource_bar(surface, cx + 4, bar_y,
                                            card_w - 8, 7, hp, mhp,
                                            (HP_BG, _hp_color(hp, mhp), (190,150,145)))
-                        draw_text(surface, f"{hp}/{mhp}",
+                        _hp_lbl2 = f"{hp}/{mhp}" if card_w >= 70 else str(hp)
+                        draw_text(surface, _hp_lbl2,
                                   cx + 4, bar_y + 9, _hp_color(hp, mhp), 9)
                         # Row badge
                         rc2 = ROW_COLORS[rep.get("row", FRONT)]
@@ -1110,16 +1113,11 @@ class CombatUI:
                         return None
 
         elif self.action_mode == "target_heal":
-            if self.hover_player and self.hover_player.get("alive"):
+            if self.hover_player:
+                # Allow healing/curing/reviving fallen allies (HP=0)
                 self.action_mode = "main"
                 return {"type": "ability", "ability": self.selected_ability,
                         "target": self.hover_player}
-            # Also allow targeting downed allies for revival
-            if self.hover_player:
-                ab = self.selected_ability
-                if ab and "revive" in ab.get("name", "").lower():
-                    self.action_mode = "main"
-                    return {"type": "ability", "ability": ab, "target": self.hover_player}
 
         # Cancel targeting on ESC / clicking void
         if self.action_mode != "main":
