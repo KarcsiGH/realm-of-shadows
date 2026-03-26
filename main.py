@@ -4527,6 +4527,21 @@ class Game:
         elif action["type"] == "switch_weapon":
             self.combat_state.execute_player_action("switch_weapon", item=action["item"])
 
+        elif action["type"] == "bolt_attack":
+            result = self.combat_state.execute_player_action(
+                "bolt_attack",
+                target=action.get("target"),
+                ability=action.get("ability", {}))
+            if result:
+                bolt_elem = action.get("ability", {}).get("_bolt_element", "arcane")
+                ELEM_SOUNDS = {
+                    "fire": "cast_attack", "ice": "cast_attack", "frost": "cast_attack",
+                    "lightning": "cast_attack", "shadow": "cast_attack",
+                }
+                sfx.play(ELEM_SOUNDS.get(bolt_elem, "cast_attack"))
+                for msg in result.get("messages", []):
+                    self.combat_ui.add_flash(msg, (140, 200, 255))
+
         elif action["type"] == "use_consumable":
             self.combat_state.execute_player_action(
                 "use_consumable", item=action["item"],

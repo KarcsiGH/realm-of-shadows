@@ -177,6 +177,7 @@ class CombatUI:
         # Hover tracking
         self.hover_enemy    = None         # enemy dict under cursor
         self.hover_player   = None         # player dict under cursor
+        self._pending_bolt  = None         # {_bolt_dmg, _bolt_element, _weapon} when targeting
         self.hover_action   = -1
         self.hover_pop_item = -1
 
@@ -410,7 +411,7 @@ class CombatUI:
         zone_r = pygame.Rect(RIGHT_X, RIGHT_Y, RIGHT_W, ENEMY_H)
         pygame.draw.rect(surface, (10, 8, 18), zone_r)
 
-        is_targeting = self.action_mode in ("target_attack", "target_ability")
+        is_targeting = self.action_mode in ("target_attack", "target_ability", "target_bolt")
         self.hover_enemy = None
         self.hover_stack_enemy = None
 
@@ -727,6 +728,20 @@ class CombatUI:
             draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (120, 220, 140), 15, bold=True)
             draw_text(surface, "▼ Click any ally card on the left", SCREEN_W // 2 - 160, ACTION_Y + 52, (100, 180, 120), 12)
             return
+        if self.action_mode == "target_bolt":
+            bolt    = getattr(self, "_pending_bolt", {}) or {}
+            element = bolt.get("_bolt_element", "arcane").title()
+            dmg     = bolt.get("_bolt_dmg", "?")
+            ELEM_COLORS = {
+                "Fire": (255, 120, 60), "Frost": (100, 200, 255),
+                "Lightning": (255, 240, 80), "Shadow": (180, 80, 220),
+                "Divine": (240, 220, 100), "Arcane": (140, 160, 255),
+                "Force": (200, 200, 200),
+            }
+            col = ELEM_COLORS.get(element, (140, 200, 255))
+            prompt = f"→ Click an enemy — {element} Bolt  ~{dmg} dmg  bypasses DEF  (ESC to cancel)"
+            draw_text(surface, prompt, SCREEN_W // 2 - 240, ACTION_Y + 32, col, 15, bold=True)
+            return
         if self.action_mode in ("target_attack", "target_ability"):
             if self.selected_ability:
                 ab_name = self.selected_ability["name"]
@@ -796,15 +811,52 @@ class CombatUI:
         """Populate self._popover_items for the given action label."""
         items = []
         if label == "attack":
-            weapon = actor.get("weapon", {})
+            weapon  = actor.get("weapon", {})
             w_name  = weapon.get("name", "Unarmed")
             w_dmg   = weapon.get("damage", 2)
             w_type  = weapon.get("phys_type", "blunt").capitalize()
             w_range = weapon.get("range", "melee").capitalize()
             w_acc   = weapon.get("accuracy_mod", 0)
             acc_str = f" +{w_acc}% acc" if w_acc > 0 else (f" {w_acc}% acc" if w_acc < 0 else "")
-            item_lbl = f"{w_name}  [{w_dmg} dmg · {w_type} · {w_range}{acc_str}]"
-            items = [(item_lbl, {"type": "attack_select", "weapon": weapon})]
+
+            FOCUS_SUBTYPES = {"Wand", "Rod", "Orb", "Staff", "wand", "rod", "orb", "staff"}
+            is_focus = weapon.get("subtype", "") in FOCUS_SUBTYPES
+
+            if is_focus:
+                # Focus weapons fire elemental bolts, not physical swings
+                # Element priority: enchant_element > subtype default
+                subtype = weapon.get("subtype", "").lower()
+                element = weapon.get("enchant_element") or {
+                    "wand": "arcane", "rod": "force", "orb": "arcane", "staff": "arcane"
+                }.get(subtype, "arcane")
+                # Damage: INT-primary, boosted by spell_bonus
+                stats   = actor.get("stats", {})
+                int_val = stats.get("INT", 10)
+                wis_val = stats.get("WIS", 10)
+                spell_b = weapon.get("spell_bonus", 0)
+                if subtype == "orb":
+                    bolt_base = w_dmg + int((int_val + wis_val) * 0.30) + spell_b
+                else:
+                    bolt_base = w_dmg + int(int_val * 0.35) + spell_b
+                ELEM_LABELS = {
+                    "fire": "🔥 Fire", "ice": "❄ Frost", "frost": "❄ Frost",
+                    "lightning": "⚡ Lightning", "shock": "⚡ Lightning",
+                    "shadow": "💀 Shadow", "divine": "✨ Divine",
+                    "arcane": "✦ Arcane", "force": "◈ Force",
+                }
+                elem_label = ELEM_LABELS.get(element, element.title())
+                item_lbl = (f"{w_name}  [{elem_label} Bolt · ~{bolt_base} dmg · "
+                            f"INT-acc · bypasses Def]")
+                items = [(item_lbl, {
+                    "type": "attack_select",
+                    "weapon": weapon,
+                    "bolt": True,
+                    "_bolt_dmg": bolt_base,
+                    "_bolt_element": element,
+                })]
+            else:
+                item_lbl = f"{w_name}  [{w_dmg} dmg · {w_type} · {w_range}{acc_str}]"
+                items = [(item_lbl, {"type": "attack_select", "weapon": weapon})]
 
         elif label in ("spell", "skill"):
             abilities = actor.get("abilities", [])
@@ -1099,6 +1151,22 @@ class CombatUI:
                         self.stack_popover_key = group_key
                         return None
 
+        elif self.action_mode == "target_bolt":
+            if self.hover_enemy and self.hover_enemy["alive"]:
+                bolt = getattr(self, "_pending_bolt", {})
+                self._pending_bolt = None
+                self.action_mode = "main"
+                return {"type": "bolt_attack",
+                        "target": self.hover_enemy,
+                        "ability": bolt}
+            # Stack popover for bolts too
+            for card_r, group_key, group_enemies in getattr(self, "_card_rects", []):
+                if card_r.collidepoint(mx, my) and len(group_enemies) > 1:
+                    alive_in_group = [e for e in group_enemies if e.get("alive", True)]
+                    if alive_in_group:
+                        self.stack_popover_key = group_key
+                        return None
+
         elif self.action_mode == "target_ability":
             if self.hover_enemy and self.hover_enemy["alive"]:
                 self.action_mode = "main"
@@ -1121,6 +1189,8 @@ class CombatUI:
 
         # Cancel targeting on ESC / clicking void
         if self.action_mode != "main":
+            if self.action_mode == "target_bolt":
+                self._pending_bolt = None
             self.action_mode = "main"
             self.selected_ability = None
             return None
@@ -1157,7 +1227,16 @@ class CombatUI:
         """
         t = data.get("type")
         if t == "attack_select":
-            self.action_mode = "target_attack"
+            if data.get("bolt"):
+                # Focus weapon bolt — target an enemy then fire
+                self._pending_bolt = {
+                    "_bolt_dmg":     data["_bolt_dmg"],
+                    "_bolt_element": data["_bolt_element"],
+                    "_weapon":       data.get("weapon", {}),
+                }
+                self.action_mode = "target_bolt"
+            else:
+                self.action_mode = "target_attack"
             return None
         if t == "ability":
             ab      = data["ability"]

@@ -2265,10 +2265,23 @@ class CombatState:
 
         # Apply magic resist reduction
         actual_dmg = max(1, bolt_dmg - mr // 4)
+
+        # Element resistances (same scale as spell system)
+        NEUTRAL = 1.0
+        type_mod = target.get("resistances", {}).get(element, NEUTRAL)
+        actual_dmg = max(1, int(actual_dmg * type_mod))
+
         target["hp"] = max(0, target["hp"] - actual_dmg)
         if target["hp"] <= 0:
             target["alive"] = False
 
+        # Element colour tags for UI flash messages
+        ELEM_TAG = {
+            "fire": "🔥", "ice": "❄", "frost": "❄", "lightning": "⚡",
+            "shadow": "💀", "divine": "✨", "arcane": "✦", "force": "◈",
+        }
+        tag = ELEM_TAG.get(element, "◆")
+        resist_str = " (resisted)" if type_mod < 0.8 else (" (absorbed!)" if type_mod <= 0 else "")
         return {
             "action": "bolt_attack",
             "hit": True,
@@ -2276,7 +2289,7 @@ class CombatState:
             "element": element,
             "attacker": actor,
             "defender": target,
-            "messages": [f"{name} fires a {element} bolt at {tgt_name} — {actual_dmg} damage!"],
+            "messages": [f"{name} {tag} {element} bolt → {tgt_name}: {actual_dmg} dmg{resist_str}!"],
         }
 
     def _exec_use_consumable(self, actor, item, target=None):
