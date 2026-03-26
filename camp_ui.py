@@ -97,6 +97,12 @@ class CampUI:
     def draw(self, surface, mx, my, dt=16):
         surface.fill(CAMP_BG)
 
+        # Guard: if party is empty or selected_char is out of range, clamp it
+        if not self.party:
+            draw_text(surface, "No party members.", SCREEN_W // 2 - 80, SCREEN_H // 2, GREY, 16)
+            return
+        self.selected_char = max(0, min(self.selected_char, len(self.party) - 1))
+
         # Title
         title = "Camp — Dungeon" if self.location == "dungeon" else "Camp — Wilderness"
         draw_text(surface, title, SCREEN_W // 2 - 120, 8, GOLD, 22, bold=True)
@@ -495,6 +501,12 @@ class CampUI:
     def _draw_stats(self, surface, mx, my, top):
         """Rich party stats panel: tier badge, effective stats, resistances,
         known abilities/spells with scrollable descriptions."""
+        # Guard: clamp selected_char to valid range
+        if not self.party:
+            draw_text(surface, "No party members.", 80, top + 60, GREY, 14)
+            return
+        self.selected_char = max(0, min(self.selected_char, len(self.party) - 1))
+
         self._draw_char_selector(surface, mx, my, top)
         c = self.party[self.selected_char]
 
@@ -1766,6 +1778,9 @@ class CampUI:
 
     def handle_click(self, mx, my):
         """Handle mouse click. Returns result string or None."""
+        if not self.party:
+            return None
+        self.selected_char = max(0, min(self.selected_char, len(self.party) - 1))
         # Manual click handler (overlay consumes all clicks when open)
         if self.handle_manual_click(mx, my):
             return None
