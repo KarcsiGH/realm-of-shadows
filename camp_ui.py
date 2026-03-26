@@ -67,6 +67,8 @@ class CampUI:
         self._equip_slot_rects    = []
         self._equip_tab_inv_rects = []
         self._inv_btn_rects       = {}
+        self._stats_inv_rects     = []
+        self._stats_inv_sel       = -1
         self._manual_open  = False
         self._manual_page  = 0
         self._manual_scroll = 0
@@ -771,12 +773,58 @@ class CampUI:
             ry2 += ROW_H
 
         # ─────────────────────────────────────────────────────────────────
-        #  RIGHT COLUMN: Equipment summary  (click to unequip)
+        #  RIGHT COLUMN: Status → Equipment → Inventory actions
         # ─────────────────────────────────────────────────────────────────
         ex = RIGHT_X
         ey = BODY_TOP + 4
 
-        draw_text(surface, "EQUIPPED  (click to unequip)", ex, ey, STAT_LABEL, 10, bold=True)
+        # ── Character status ───────────────────────────────────────────────
+        from core.status_effects import get_status_effects
+        hp = c.resources.get("HP", 0)
+        max_hp = max(1, c.resources.get("HP", 1))
+        try:
+            from core.classes import get_all_resources
+            max_hp = get_all_resources(c.class_name, c.stats, c.level).get("HP", 1)
+        except Exception:
+            pass
+
+        effects = get_status_effects(c)
+        status_pills = []
+        if hp <= 0:
+            status_pills.append(("DEAD", (180, 40, 40)))
+        elif hp < max_hp * 0.25:
+            status_pills.append(("CRITICAL", (220, 80, 40)))
+        else:
+            status_pills.append(("OK", (60, 180, 80)))
+        STATUS_COLORS = {
+            "poison": (80, 200, 80), "disease": (140, 200, 60),
+            "stun": (220, 200, 60), "sleep": (80, 140, 220),
+            "blind": (160, 100, 180), "paralyze": (200, 80, 200),
+            "burn": (220, 120, 40), "curse": (160, 60, 200),
+            "bleed": (200, 60, 80), "slow": (140, 140, 200),
+        }
+        for s in effects:
+            stype = s.get("type", s.get("name", ""))
+            label = stype.upper()[:10]
+            col   = STATUS_COLORS.get(stype, (180, 160, 100))
+            status_pills.append((label, col))
+
+        px = ex
+        for label, col in status_pills:
+            pill_w = get_font(10).size(label)[0] + 10
+            pill_r = pygame.Rect(px, ey, pill_w, 18)
+            pygame.draw.rect(surface, (int(col[0]*0.3), int(col[1]*0.3), int(col[2]*0.3)), pill_r, border_radius=4)
+            pygame.draw.rect(surface, col, pill_r, 1, border_radius=4)
+            draw_text(surface, label, px + 5, ey + 3, col, 10, bold=True)
+            px += pill_w + 4
+            if px > SCREEN_W - 20:
+                px = ex
+                ey += 22
+
+        ey += 24
+        pygame.draw.line(surface, (50, 42, 65), (ex, ey - 4), (SCREEN_W - 12, ey - 4))
+
+        draw_text(surface, "EQUIPPED  (hover to preview · click to unequip)", ex, ey, STAT_LABEL, 10, bold=True)
         ey += 16
 
         from core.equipment import SLOT_NAMES
@@ -823,12 +871,64 @@ class CampUI:
 
         # ── Item detail preview on hover ──────────────────────────────────
         if hovered_item:
-            # Draw inline detail panel below the hovered row
             panel_y = min(hovered_y + 20, SCREEN_H - 170)
             panel = pygame.Rect(ex, panel_y, SCREEN_W - ex - 12, 160)
             pygame.draw.rect(surface, (14, 11, 26), panel, border_radius=5)
             pygame.draw.rect(surface, DIM_GOLD, panel, 1, border_radius=5)
             self._draw_item_details(surface, hovered_item, panel_y + 4)
+
+        # ── Inventory actions section ─────────────────────────────────────
+        # Show equippable / usable items with action buttons below equipment list
+        inv_y = ey + 8
+        if inv_y < SCREEN_H - 120:
+            pygame.draw.line(surface, (50, 42, 65), (ex, inv_y - 2), (SCREEN_W - 12, inv_y - 2))
+            draw_text(surface, "INVENTORY  (select to act)", ex, inv_y, STAT_LABEL, 10, bold=True)
+            inv_y += 14
+            # List items that have actions
+            self._stats_inv_rects = []   # [(idx, rect)]
+            shown = 0
+            for ii, it in enumerate(c.inventory):
+                if inv_y > SCREEN_H - 70:
+                    break
+                iname = it.get("name","?")
+                it_w = SCREEN_W - ex - 14
+                it_r = pygame.Rect(ex, inv_y, it_w, 16)
+                sel  = (getattr(self, "_stats_inv_sel", -1) == ii)
+                hov  = it_r.collidepoint(mx, my)
+                if sel:
+                    pygame.draw.rect(surface, (40,32,60), it_r, border_radius=3)
+                    pygame.draw.rect(surface, DIM_GOLD, it_r, 1, border_radius=3)
+                elif hov:
+                    pygame.draw.rect(surface, (30,24,48), it_r, border_radius=3)
+                rar = it.get("rarity","")
+                rc  = {"uncommon":(140,200,255),"rare":(180,120,255),"epic":(255,180,60)}.get(rar, CREAM)
+                draw_text(surface, iname[:28], ex + 4, inv_y + 1, rc, 11)
+                self._stats_inv_rects.append((ii, it_r))
+                inv_y += 18
+                shown += 1
+
+            # Action buttons for selected item
+            sel_ii = getattr(self, "_stats_inv_sel", -1)
+            if 0 <= sel_ii < len(c.inventory):
+                sel_item = c.inventory[sel_ii]
+                protected = sel_item.get("type") in ("key_item","quest_item") or "warden_rank" in sel_item
+                bx = ex
+                btn_y = inv_y + 4
+                if sel_item.get("type") in ("consumable","potion","food"):
+                    use_r = pygame.Rect(bx, btn_y, 70, 26)
+                    draw_button(surface, use_r, "Use", hover=use_r.collidepoint(mx,my), size=11)
+                    bx += 76
+                if sel_item.get("slot"):
+                    eq_r = pygame.Rect(bx, btn_y, 80, 26)
+                    draw_button(surface, eq_r, "Equip", hover=eq_r.collidepoint(mx,my), size=11)
+                    bx += 86
+                if not protected:
+                    dr_r = pygame.Rect(bx, btn_y, 70, 26)
+                    draw_button(surface, dr_r, "Drop", hover=dr_r.collidepoint(mx,my), size=11)
+                    bx += 76
+                if len(self.party) > 1:
+                    gv_r = pygame.Rect(bx, btn_y, 70, 26)
+                    draw_button(surface, gv_r, "Give", hover=gv_r.collidepoint(mx,my), size=11)
 
         surface.set_clip(None)
 
@@ -1067,6 +1167,58 @@ class CampUI:
                     self._msg(f"Unequipped {item.get('name','item')}.", DIM_GOLD)
                 return None
             ey += row_h
+
+        # ── Inventory list item selection ──────────────────────────────────
+        for ii, it_r in getattr(self, "_stats_inv_rects", []):
+            if it_r.collidepoint(mx, my):
+                self._stats_inv_sel = ii if getattr(self,"_stats_inv_sel",-1) != ii else -1
+                return None
+
+        # ── Inventory action buttons ───────────────────────────────────────
+        sel_ii = getattr(self, "_stats_inv_sel", -1)
+        if 0 <= sel_ii < len(c.inventory):
+            sel_item = c.inventory[sel_ii]
+            protected = sel_item.get("type") in ("key_item","quest_item") or "warden_rank" in sel_item
+            # Recompute button Y — must match _draw_stats inv_y calculation
+            # inv_y after equip list: ey (after 11 slots) + 8 + 14 + (shown*18) + 4
+            EQUIP_DISPLAY_LEN = 11
+            equipment = c.equipment if hasattr(c,"equipment") and c.equipment else {}
+            base_ey = (80 + 52) + 4 + 16 + 24  # BODY_TOP+4 + header + status + divider
+            eq_ey = base_ey
+            for sk in ["weapon","off_hand","head","crown","body","hands","feet","neck","ring1","ring2","ring3"]:
+                it = equipment.get(sk)
+                eq_ey += 28 if (it and it.get("stat_bonuses")) else 16
+            inv_y = eq_ey + 8 + 14  # past inv header
+            # Advance past shown items
+            for ii2, it2 in enumerate(c.inventory):
+                if inv_y > SCREEN_H - 70: break
+                inv_y += 18
+            btn_y = inv_y + 4
+            bx = 850  # RIGHT_X
+            if sel_item.get("type") in ("consumable","potion","food"):
+                if pygame.Rect(bx, btn_y, 70, 26).collidepoint(mx, my):
+                    self._use_item(c, sel_ii)
+                    self._stats_inv_sel = -1
+                    return None
+                bx += 76
+            if sel_item.get("slot"):
+                if pygame.Rect(bx, btn_y, 80, 26).collidepoint(mx, my):
+                    self._equip_item(c, sel_ii)
+                    self._stats_inv_sel = -1
+                    return None
+                bx += 86
+            if not protected:
+                if pygame.Rect(bx, btn_y, 70, 26).collidepoint(mx, my):
+                    name = sel_item.get("name","item")
+                    c.inventory.pop(sel_ii)
+                    self._stats_inv_sel = -1
+                    self._msg(f"Dropped {name}.", ORANGE)
+                    return None
+                bx += 76
+            if len(self.party) > 1:
+                if pygame.Rect(bx, btn_y, 70, 26).collidepoint(mx, my):
+                    self._give_mode = not getattr(self,"_give_mode",False)
+                    return None
 
         return None
 
