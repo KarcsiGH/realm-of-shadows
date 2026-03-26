@@ -2306,18 +2306,19 @@ class TownUI:
             all_abs  = CLASS_ABILITIES.get(s.get("class_name",""), [])
             new_name = s["new_abilities"][0]
             ab_data  = next((a for a in all_abs if a["name"] == new_name), None)
-            draw_panel(surface, ab_panel, border_color=GREEN)
-            draw_text(surface, "New Ability!", ab_panel.x+14, ab_panel.y+10, GREEN, 14, bold=True)
+            draw_panel(surface, ab_panel, border_color=(80,200,120))
+            draw_text(surface, "Available to Train!", ab_panel.x+14, ab_panel.y+10, (80,200,120), 14, bold=True)
+            draw_text(surface, "Visit the Guild to purchase training.", ab_panel.x+14, ab_panel.y+28, DIM_GOLD, 11)
             if ab_data:
-                draw_text(surface, ab_data["name"], ab_panel.x+14, ab_panel.y+38, GOLD, 20, bold=True)
+                draw_text(surface, ab_data["name"], ab_panel.x+14, ab_panel.y+50, GOLD, 18, bold=True)
                 draw_text(surface, f"{ab_data['cost']} {ab_data.get('resource','')}",
-                          ab_panel.x+14, ab_panel.y+68, DIM_GOLD, 13)
+                          ab_panel.x+14, ab_panel.y+76, DIM_GOLD, 13)
                 draw_wrapped_text(surface, ab_data.get("desc",""),
-                                  ab_panel.x+14, ab_panel.y+92,
+                                  ab_panel.x+14, ab_panel.y+98,
                                   ab_panel.width-28, (210,210,190), get_font(13))
             if len(s["new_abilities"]) > 1:
-                draw_text(surface, f"+ {len(s['new_abilities'])-1} more learned!",
-                          ab_panel.x+14, ab_panel.bottom-22, GREEN, 11)
+                draw_text(surface, f"+ {len(s['new_abilities'])-1} more available!",
+                          ab_panel.x+14, ab_panel.bottom-22, (80,200,120), 11)
         else:
             draw_panel(surface, ab_panel, border_color=(60,50,40))
             draw_text(surface, "No new abilities this level.", ab_panel.x+14, ab_panel.y+80, (100,90,70), 14)
@@ -3193,7 +3194,7 @@ class TownUI:
                     summary["stats_after"] = dict(c.stats)
                     self.levelup_summary   = summary
                     gains = ", ".join(f"+{v} {k}" for k, v in summary["stat_gains"].items())
-                    ab_str = (" Learned: " + ", ".join(summary["new_abilities"])
+                    ab_str = (" New to train: " + ", ".join(summary["new_abilities"])
                               if summary.get("new_abilities") else "")
                     self.inn_result = (f"{c.name} reached level {c.level}! "
                                       f"{gains}, +{summary['hp_gain']} base HP{ab_str}")

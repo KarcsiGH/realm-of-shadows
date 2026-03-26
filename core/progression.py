@@ -356,10 +356,11 @@ def apply_level_up(character, free_stat=None):
             # Skip ALL branch abilities — player picks these at the right branch level
             if ab["name"] in all_branch_names:
                 continue
-            character.abilities.append(ab.copy())
+            # DO NOT auto-grant abilities — player must purchase training at the guild.
+            # Just report them as newly available so the UI can prompt the player.
             new_abilities.append(ab["name"])
-    summary["new_abilities"] = new_abilities
-    summary["branch_choice"] = branch_opts  # None or [opt_A, opt_B]
+    summary["new_abilities"] = new_abilities      # available to train, not yet learned
+    summary["branch_choice"] = branch_opts        # None or [opt_A, opt_B]
 
     # Recalculate all resources to new maxes (but don't heal — inn rest does that)
     # The caller should recalculate resources after this
