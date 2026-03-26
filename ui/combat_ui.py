@@ -820,8 +820,12 @@ class CombatUI:
                 if (label == "spell" and is_spell) or (label == "skill" and not is_spell):
                     res_cost = ab.get("cost", ab.get("mp_cost", 0))
                     res_name = "MP" if is_spell else (resource.split("-")[-1] if resource else "SP")
+                    # Check if actor can afford this ability
+                    cur_res   = actor.get("resources", {}).get(resource, 0)
+                    can_afford = (cur_res >= res_cost) if res_cost else True
                     cost = f" [{res_cost} {res_name}]" if res_cost else ""
-                    items.append((f"{ab['name']}{cost}", {"type": "ability", "ability": ab}))
+                    items.append((f"{ab['name']}{cost}",
+                                  {"type": "ability", "ability": ab, "can_afford": can_afford}))
 
         elif label == "item":
             ref = actor.get("character_ref")
@@ -831,11 +835,31 @@ class CombatUI:
                 equip = getattr(ref, "equipment", {}) or {}
                 cur_weapon = equip.get("weapon")
                 for it in inv:
-                    slot = it.get("slot", "")
-                    if slot == "consumable" or it.get("usable_in_combat"):
+                    itype = it.get("type", "")
+                    islot = it.get("slot", "")
+                    is_consumable = (
+                        itype in ("consumable","potion","scroll","food","elixir")
+                        or islot == "consumable"
+                        or it.get("usable_in_combat")
+                    )
+                    if is_consumable:
+                        # Build a useful label showing what the item does
+                        heal  = it.get("heal", it.get("heal_amount", 0))
+                        rmp   = it.get("restore_mp", 0)
+                        cures = it.get("cures", [])
+                        eff   = it.get("effect","")
+                        if heal and rmp:   detail = f"+{heal} HP, +{rmp} MP"
+                        elif heal:         detail = f"+{heal} HP"
+                        elif rmp:          detail = f"+{rmp} MP"
+                        elif cures:        detail = f"Cures {', '.join(cures)}"
+                        elif eff:          detail = eff.replace("_"," ").title()
+                        else:              detail = it.get("description","")[:30]
+                        stack = it.get("stack",1)
+                        stk   = f" x{stack}" if stack > 1 else ""
+                        lbl   = f"{it.get('name','Item')}{stk}  [{detail}]" if detail else f"{it.get('name','Item')}{stk}"
                         self._combat_items.append(("consumable", it))
-                        items.append((it.get("name", "Item"), {"type": "use_item", "item": it}))
-                    elif slot == "weapon" and it != cur_weapon:
+                        items.append((lbl, {"type": "use_item", "item": it}))
+                    elif islot == "weapon" and it != cur_weapon:
                         self._combat_items.append(("weapon", it))
                         items.append((f"Equip: {it.get('name','')}", {"type": "switch_weapon", "item": it}))
 
@@ -891,9 +915,19 @@ class CombatUI:
             real_i = i + start
             ir = pygame.Rect(pop_x + PAD, pop_y + 24 + i * ITEM_H,
                              POP_W - PAD * 2, ITEM_H - 4)
-            is_h = ir.collidepoint(mx, my)
-            if is_h:
+            can_afford = data.get("can_afford", True)   # default True for non-spell items
+            is_h = ir.collidepoint(mx, my) and can_afford
+            if ir.collidepoint(mx, my) and can_afford:
                 self.hover_pop_item = real_i
+
+            if not can_afford:
+                # Greyed-out unaffordable abilities
+                _draw_panel(surface, ir, (16,12,22), (40,35,55))
+                draw_text(surface, lbl[:40], ir.x + 8, ir.y + 10, (70,65,80), 12)
+                draw_text(surface, "not enough", ir.x + ir.width - 72, ir.y + 10, (140,60,60), 10)
+                draw_text(surface, str(real_i + 1), ir.x - 14, ir.y + 10, (60,55,70), 12)
+                continue
+
             bg = POP_HOVER if is_h else POP_BG
             _draw_panel(surface, ir, bg, (100, 80, 150) if is_h else LOG_BORDER)
 
@@ -1040,9 +1074,11 @@ class CombatUI:
                 self.popover = None
                 return None
 
-            # Click inside popover — select item
+            # Click inside popover — select item (blocked if can't afford)
             if self.hover_pop_item >= 0 and self.hover_pop_item < len(self._popover_items):
                 _, data = self._popover_items[self.hover_pop_item]
+                if data.get("can_afford", True) is False:
+                    return None   # silently block — item is greyed out
                 self.popover = None
                 return self._resolve_popover_item(data, actor)
             return None
