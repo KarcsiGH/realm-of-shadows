@@ -474,7 +474,10 @@ class CombatUI:
                 self._card_rects.append((card_r, group_key, group_enemies))
 
                 # Hover detection — entire card
-                is_hover = card_r.collidepoint(mx, my)
+                # When a stack popover is open, suppress all main-card hover so cards
+                # in rows behind the popover don't glow red.
+                popover_blocking = (self.stack_popover_key is not None)
+                is_hover = card_r.collidepoint(mx, my) and not popover_blocking
                 if is_hover and alive_enemies and not is_stack:
                     # Single enemy — hover sets target directly
                     self.hover_enemy = alive_enemies[0]
