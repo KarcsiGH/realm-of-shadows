@@ -73,7 +73,7 @@ RIGHT_X      = LEFT_W
 RIGHT_W      = SCREEN_W - LEFT_W
 RIGHT_Y      = TURN_H
 
-ENEMY_H      = int((ACTION_Y - TURN_H) * 0.58)   # ~58% — gives log 4 more lines
+ENEMY_H      = int((ACTION_Y - TURN_H) * 0.76)   # 76% to enemy cards, ~11 log lines remain
 LOG_Y        = TURN_H + ENEMY_H
 LOG_H        = ACTION_Y - LOG_Y
 
