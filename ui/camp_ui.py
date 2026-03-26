@@ -69,6 +69,7 @@ class CampUI:
         self._inv_btn_rects       = {}
         self._stats_inv_rects     = []
         self._stats_inv_sel       = -1
+        self._stats_spell_sel     = -1
         self._manual_open  = False
         self._manual_page  = 0
         self._manual_scroll = 0
@@ -953,19 +954,24 @@ class CampUI:
         ey += 5
         pygame.draw.line(surface, (50,42,65), (ex, ey-2), (SCREEN_W-10, ey-2))
 
-        # ── INVENTORY (capped at 5 items to leave room for spells) ────────
+        # ── INVENTORY — full list, up to 20 items ────────────────────────
         draw_text(surface, "INVENTORY  (click item · then act)", ex, ey, STAT_LABEL, 10, bold=True)
         ey += 13
         sel_ii = getattr(self, "_stats_inv_sel", -1)
-        shown  = 0
+        INV_ITEM_H = 15
+        MAX_INV    = 20
+        shown      = 0
         for ii, it in enumerate(c.inventory):
-            if shown >= 5:
-                remaining = len(c.inventory) - 5
-                draw_text(surface, f"  +{remaining} more (use Inventory tab)",
-                          ex, ey, STAT_LABEL, 10)
-                ey += 13
+            if ey > BODY_BOT - 80:   # stop if near bottom — leave room for buttons
+                remaining = len(c.inventory) - shown
+                if remaining > 0:
+                    draw_text(surface, f"  +{remaining} more — use Inventory tab",
+                              ex, ey, STAT_LABEL, 9)
+                    ey += 12
                 break
-            it_r = pygame.Rect(ex, ey, COL_W, 15)
+            if shown >= MAX_INV:
+                break
+            it_r = pygame.Rect(ex, ey, COL_W, INV_ITEM_H)
             self._stats_hit_map[f"inv:{ii}"] = it_r
             sel = (sel_ii == ii)
             hov = it_r.collidepoint(mx, my)
@@ -976,14 +982,15 @@ class CampUI:
                 pygame.draw.rect(surface, (32,26,50), it_r, border_radius=2)
             rc = {"uncommon":(140,200,255),"rare":(180,120,255),"epic":(255,180,60)}.get(
                 it.get("rarity",""), CREAM)
-            draw_text(surface, it.get("name","?")[:22], ex+3, ey+2, rc, 10)
-            draw_text(surface, it.get("type","")[:6], SCREEN_W-70, ey+2, STAT_LABEL, 9)
-            ey += 15
+            draw_text(surface, it.get("name","?")[:24], ex+3, ey+2, rc, 10)
+            itype_short = it.get("type","")[:5]
+            draw_text(surface, itype_short, SCREEN_W-66, ey+2, STAT_LABEL, 9)
+            ey += INV_ITEM_H
             shown += 1
 
         # Action buttons for selected item
-        if 0 <= sel_ii < len(c.inventory):
-            sel_it   = c.inventory[sel_ii]
+        if 0 <= sel_ii < len(c.inventory) and ey < BODY_BOT - 30:
+            sel_it    = c.inventory[sel_ii]
             protected = sel_it.get("type") in ("key_item","quest_item") or "warden_rank" in sel_it
             bx = ex
             if sel_it.get("type") in ("consumable","potion","food"):
@@ -999,7 +1006,7 @@ class CampUI:
                 r = pygame.Rect(bx, ey, 55, 22); self._stats_hit_map["act:give"] = r
                 draw_button(surface, r, "Give", hover=r.collidepoint(mx,my), size=10)
             ey += 26
-            if getattr(self,"_give_mode",False):
+            if getattr(self,"_give_mode",False) and ey < BODY_BOT - 26:
                 bx = ex
                 for gi, gch in enumerate(self.party):
                     if gi == self.selected_char: continue
@@ -1010,34 +1017,81 @@ class CampUI:
                     bx += gw + 5
                 ey += 24
 
-        ey += 5
-        pygame.draw.line(surface, (50,42,65), (ex, ey-2), (SCREEN_W-10, ey-2))
-
-        # ── CAMP SPELLS (always shown if character has them) ─────────────
+        # ── CAMP SPELLS — compact bars, click to expand popup ────────────
         CAMP_TYPES = ("heal","aoe_heal","cure","revive")
         camp_abs = [a for a in c.abilities if a.get("type") in CAMP_TYPES]
-        if camp_abs:
-            draw_text(surface, "CAMP SPELLS  (click to cast)", ex, ey, STAT_LABEL, 10, bold=True)
+        if camp_abs and ey < BODY_BOT - 30:
+            ey += 5
+            pygame.draw.line(surface, (50,42,65), (ex, ey-2), (SCREEN_W-10, ey-2))
+            draw_text(surface, "CAMP SPELLS  (click for details & cast)", ex, ey, STAT_LABEL, 10, bold=True)
             ey += 13
+
+            SEL_SP = getattr(self, "_stats_spell_sel", -1)
+
             for ai, ab in enumerate(camp_abs):
+                if ey > BODY_BOT - 20:
+                    break
                 rk   = ab.get("resource","")
-                cost = ab.get("cost",0)
+                cost = ab.get("cost", 0)
                 can  = c.resources.get(rk, 0) >= cost if cost else True
-                ab_r = pygame.Rect(ex, ey, COL_W, 20)
+                ab_r = pygame.Rect(ex, ey, COL_W, 17)
                 self._stats_hit_map[f"spell:{ai}"] = ab_r
-                hov = ab_r.collidepoint(mx,my)
-                bg  = (50,40,70) if (hov and can) else (28,22,42)
-                bc  = DIM_GOLD  if (hov and can) else (55,48,75)
-                pygame.draw.rect(surface, bg, ab_r, border_radius=3)
-                pygame.draw.rect(surface, bc, ab_r, 1, border_radius=3)
-                col = CREAM if can else (70,65,80)
-                cost_str = f"  [{cost} {rk}]" if cost else ""
-                draw_text(surface, f"{ab.get('name','?')}{cost_str}", ex+5, ey+4, col, 10)
-                if not can:
-                    draw_text(surface, "no MP", SCREEN_W-52, ey+4, (150,80,80), 9)
-                ey += 22
-        else:
-            draw_text(surface, "No camp spells", ex, ey, (60,55,75), 10)
+                sel_sp = (SEL_SP == ai)
+                hov    = ab_r.collidepoint(mx, my)
+
+                # Compact bar: selected or hovered is brighter
+                if sel_sp:
+                    pygame.draw.rect(surface, (55,42,80), ab_r, border_radius=3)
+                    pygame.draw.rect(surface, DIM_GOLD, ab_r, 1, border_radius=3)
+                elif hov and can:
+                    pygame.draw.rect(surface, (42,34,60), ab_r, border_radius=3)
+                    pygame.draw.rect(surface, (100,80,140), ab_r, 1, border_radius=3)
+                else:
+                    pygame.draw.rect(surface, (28,22,40), ab_r, border_radius=3)
+                    pygame.draw.rect(surface, (50,42,65) if can else (40,35,55), ab_r, 1, border_radius=3)
+
+                # Type colour dot on left
+                TYPE_DOT = {"heal":(80,220,120),"aoe_heal":(80,200,160),
+                            "cure":(100,240,160),"revive":(200,100,255)}
+                dot_col = TYPE_DOT.get(ab.get("type",""), GREY)
+                pygame.draw.circle(surface, dot_col, (ex+6, ey+8), 3)
+
+                name_col = CREAM if can else (70,65,80)
+                cost_str = f" [{cost} {rk}]" if cost else ""
+                draw_text(surface, f"{ab.get('name','?')}{cost_str}", ex+14, ey+3, name_col, 10)
+
+                # ▶ expand indicator on right
+                ind_col = DIM_GOLD if sel_sp else (70,60,90)
+                draw_text(surface, "▼" if sel_sp else "▶", ab_r.right-14, ey+3, ind_col, 10)
+
+                ey += 18
+
+                # ── Expanded popup for selected spell ─────────────────────
+                if sel_sp and ey < BODY_BOT - 50:
+                    popup_h = 58
+                    pop_r = pygame.Rect(ex, ey, COL_W, popup_h)
+                    pygame.draw.rect(surface, (18,14,32), pop_r, border_radius=4)
+                    pygame.draw.rect(surface, DIM_GOLD, pop_r, 1, border_radius=4)
+                    # Description
+                    desc = ab.get("desc") or ab.get("description","")
+                    if desc:
+                        draw_text(surface, desc, ex+6, ey+5, GREY, 10, max_width=COL_W-12)
+                    # Power info
+                    power = ab.get("power", 1.0)
+                    stat  = c.stats.get("WIS", 0) + c.stats.get("PIE", 0)
+                    est   = int((stat * power * 2) + (c.level * power * 3))
+                    draw_text(surface, f"Est. {ab['type'].replace('_',' ').title()}: ~{est} pts",
+                              ex+6, ey+22, (140,200,140), 10)
+                    # Cast button — only if affordable
+                    cast_y = ey + 33
+                    if can:
+                        cast_r = pygame.Rect(ex+6, cast_y, 70, 20)
+                        self._stats_hit_map[f"spell_cast:{ai}"] = cast_r
+                        draw_button(surface, cast_r, "Cast",
+                                    hover=cast_r.collidepoint(mx,my), size=10)
+                    else:
+                        draw_text(surface, f"Need {cost} {rk}", ex+6, cast_y+3, (180,80,80), 10)
+                    ey += popup_h + 3
 
         surface.set_clip(None)
 
@@ -1329,13 +1383,21 @@ class CampUI:
                     self._cast_camp_spell(c, camp_abs[ai])
                 return None
 
-            # ── Camp spell (right column) ───────────────────────────────
+            # ── Camp spell bar — toggle expanded popup ──────────────────
             if key.startswith("spell:"):
                 ai = int(key[6:])
+                cur_sel = getattr(self, "_stats_spell_sel", -1)
+                self._stats_spell_sel = ai if cur_sel != ai else -1
+                return None
+
+            # ── Camp spell Cast button inside expanded popup ─────────────
+            if key.startswith("spell_cast:"):
+                ai = int(key[len("spell_cast:"):])
                 CAMP_TYPES = ("heal","aoe_heal","cure","revive")
                 camp_abs = [a for a in c.abilities if a.get("type") in CAMP_TYPES]
                 if 0 <= ai < len(camp_abs):
                     self._cast_camp_spell(c, camp_abs[ai])
+                    self._stats_spell_sel = -1
                 return None
 
         return None
