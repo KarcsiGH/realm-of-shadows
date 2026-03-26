@@ -2196,7 +2196,9 @@ class CampUI:
             self.selected_item = -1
 
     def _equip_item(self, char, item_idx):
-        """Equip an item from inventory."""
+        """Equip an item from inventory — delegates to core.equipment.equip_item
+        which handles ring slot auto-detection (ring1→ring2→ring3) and all
+        accessory routing correctly."""
         # Guard: stale index protection
         if item_idx < 0 or item_idx >= len(char.inventory):
             self._msg("Equip failed — stale item reference. Please re-select.", ORANGE)
@@ -2204,26 +2206,25 @@ class CampUI:
             return
 
         item = char.inventory[item_idx]
-        slot = item.get("slot")
-        if not slot:
+        if not item.get("slot"):
             return
 
-        if not hasattr(char, "equipment") or char.equipment is None:
-            char.equipment = {}
-
-        # Pop the new item FIRST (preserving its index), then swap old item in
-        char.inventory.pop(item_idx)
-        self.selected_item = -1
-
-        old = char.equipment.get(slot)
-        char.equipment[slot] = item
-
-        # Put displaced item back at the same position so list stays predictable
-        if old:
-            char.inventory.insert(item_idx, old)
-
-        name = item.get("name", "item")
-        self._msg(f"{char.name} equipped {name}.", GOLD)
+        from core.equipment import equip_item as _core_equip
+        success, displaced, msg = _core_equip(char, item)
+        if success:
+            # core.equipment already modified char.equipment; remove item from inventory
+            if item in char.inventory:
+                char.inventory.remove(item)
+            elif item_idx < len(char.inventory):
+                char.inventory.pop(item_idx)
+            self.selected_item = -1
+            # Displaced item goes back into inventory
+            if displaced:
+                char.inventory.append(displaced)
+            name = item.get("name", "item")
+            self._msg(f"{char.name} equipped {name}.", GOLD)
+        else:
+            self._msg(msg or "Cannot equip that item.", ORANGE)
 
     # ─────────────────────────────────────────────────────────
     #  FORMATION TAB

@@ -152,8 +152,8 @@ SECRET_ITEMS_T2 = [
      "description": "An ancient shield that still hums with protective magic. +1 CON.",
      "identified": False, "estimated_value": 180},
 
-    {"name": "Orb of Fading Sight", "appraised_name": "Orb of Fading Sight", "type": "accessory", "slot": "ring1",
-     "subtype": "orb", "rarity": "rare",
+    {"name": "Orb of Fading Sight", "appraised_name": "Orb of Fading Sight", "type": "weapon", "slot": "weapon",
+     "subtype": "Orb", "rarity": "rare", "damage": 6, "phys_type": "blunt", "range": "ranged",
      "effect": {"int_bonus": 3, "wis_bonus": 2},
      "spell_bonus": 4,
      "description": "A dark crystal orb. Glimpses of the Fading swirl within. +3 INT, +2 WIS, +4 spell.",
