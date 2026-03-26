@@ -1733,9 +1733,13 @@ class TownUI:
         """Skill trainer view — learn unlearned abilities for gold."""
         from core.abilities import get_unlearned_abilities
 
-        bld_name = self.current_bld_name or "The Inn"
-        self._draw_bld_npc_header(surface, bld_name,
-            "Train your skills — spend gold to master new abilities.", mx, my)
+        if getattr(self, "_trainer_origin", "inn") == "guild":
+            bld_name = getattr(self, "_guild_building_name", "Adventurers' Guild")
+            subtitle = "Purchase training — spend gold to master new abilities."
+        else:
+            bld_name = self.current_bld_name or "The Inn"
+            subtitle = "Train your skills — spend gold to master new abilities."
+        self._draw_bld_npc_header(surface, bld_name, subtitle, mx, my)
 
         back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
         draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
@@ -3101,7 +3105,11 @@ class TownUI:
 
             back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
             if back.collidepoint(mx, my):
-                self.view = self.VIEW_INN
+                if getattr(self, "_trainer_origin", "inn") == "guild":
+                    self._trainer_origin = "inn"
+                    self.view = self.VIEW_GUILD
+                else:
+                    self.view = self.VIEW_INN
                 return None
 
             # Character tabs (match draw: tab_area_w = SCREEN_W - 170)
@@ -3459,10 +3467,11 @@ class TownUI:
                             self._guild_branch_origin = True
                             self.view = self.VIEW_BRANCH_CHOICE
                         else:
-                            # No choices pending — open class tree
-                            self.classtree_char_idx = 0
-                            self._guild_classtree_origin = True
-                            self.view = self.VIEW_CLASSTREE
+                            # Open the ability trainer shop so players can purchase training
+                            self.trainer_char_idx = 0
+                            self.trainer_scroll = 0
+                            self._trainer_origin = "guild"   # back button returns here
+                            self.view = self.VIEW_INN_TRAINER
                     elif action == "classtree":
                         self.classtree_char_idx = 0
                         self._guild_classtree_origin = True
