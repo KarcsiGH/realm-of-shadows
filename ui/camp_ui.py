@@ -685,6 +685,9 @@ class CampUI:
         # ─────────────────────────────────────────────────────────────────
         from core.abilities import CLASS_ABILITIES
 
+        # Initialise hit map here so middle column can add camp-castable cards
+        self._stats_hit_map = {}   # key -> pygame.Rect
+
         col_x = MID_X
         col_w = RIGHT_X - MID_X - 20
         ay = BODY_TOP + 4
@@ -745,14 +748,25 @@ class CampUI:
 
             card_rect = pygame.Rect(col_x, ry2, col_w, ROW_H - 4)
             is_locked = (kind == "locked")
+            ab_type = ab.get("type","attack")
+            _CAMP = {"heal","aoe_heal","cure","revive"}
+            is_camp = ab_type in _CAMP and not is_locked
+            # Store camp-castable ability cards in hit map
+            if is_camp:
+                self._stats_hit_map[f"midcol:{len([k for k in self._stats_hit_map if k.startswith('midcol:')])}"] = card_rect
+
             bg_col = (14, 11, 22) if not is_locked else (10, 8, 16)
+            # Highlight camp-castable cards so player knows they're clickable
+            if is_camp and card_rect.collidepoint(mx, my):
+                bg_col = (30, 22, 48)
             pygame.draw.rect(surface, bg_col, card_rect, border_radius=4)
 
-            ab_type = ab.get("type","attack")
             type_col = TYPE_COLORS.get(ab_type, GREY)
             if is_locked: type_col = (60,55,70)
-            pygame.draw.rect(surface, type_col if not is_locked else (40,35,55),
-                             card_rect, 1, border_radius=4)
+            border_col = type_col if not is_locked else (40,35,55)
+            if is_camp and card_rect.collidepoint(mx, my):
+                border_col = (120, 220, 140)
+            pygame.draw.rect(surface, border_col, card_rect, 1, border_radius=4)
 
             # Name + level unlock
             name_col = CREAM if not is_locked else (80,75,90)
@@ -776,9 +790,13 @@ class CampUI:
                     draw_text(surface, f"Cost: {cost} {res_key}",
                               col_x + 8, ry2 + 20, (160,140,100), 11)
 
-                # Description
+                # Description / cast hint
                 desc = ab.get("desc") or ab.get("description","")
-                if desc:
+                _CAMP = {"heal","aoe_heal","cure","revive"}
+                if ab_type in _CAMP and card_rect.collidepoint(mx, my):
+                    draw_text(surface, "▶ Click to cast in camp",
+                              col_x + 8, ry2 + 33, (120, 220, 140), 11)
+                elif desc:
                     draw_text(surface, desc, col_x + 8, ry2 + 33,
                               GREY, 11, max_width=col_w - 16)
 
@@ -789,7 +807,7 @@ class CampUI:
         #  Every interactive rect is stored in self._stats_hit_map so the
         #  click handler never recomputes positions independently.
         # ─────────────────────────────────────────────────────────────────
-        self._stats_hit_map = {}   # key -> pygame.Rect
+        self._stats_hit_map.setdefault   # already initialised above
         ex = RIGHT_X
         ey = BODY_TOP + 4
         COL_W = SCREEN_W - RIGHT_X - 10
@@ -1241,7 +1259,16 @@ class CampUI:
                     self._msg(f"Gave {xfer.get('name','item')} to {self.party[gi].name}.", GOLD)
                 return None
 
-            # ── Camp spell ─────────────────────────────────────────────
+            # ── Middle column camp-castable ability card ────────────────
+            if key.startswith("midcol:"):
+                ai = int(key[7:])
+                CAMP_TYPES = ("heal","aoe_heal","cure","revive")
+                camp_abs = [a for a in c.abilities if a.get("type") in CAMP_TYPES]
+                if 0 <= ai < len(camp_abs):
+                    self._cast_camp_spell(c, camp_abs[ai])
+                return None
+
+            # ── Camp spell (right column) ───────────────────────────────
             if key.startswith("spell:"):
                 ai = int(key[6:])
                 CAMP_TYPES = ("heal","aoe_heal","cure","revive")

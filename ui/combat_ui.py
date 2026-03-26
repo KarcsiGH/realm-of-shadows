@@ -774,10 +774,13 @@ class CombatUI:
         if label == "Item":
             ref = actor.get("character_ref")
             if not ref: return False
-            # Check for usable consumables or alt weapons
             inv = getattr(ref, "inventory", []) or []
-            has_consumable = any(i.get("slot") == "consumable" or i.get("usable_in_combat")
-                                  for i in inv)
+            # Check type OR slot for consumable — potions use type:"consumable"
+            has_consumable = any(
+                i.get("type") in ("consumable","potion","scroll","food","elixir")
+                or i.get("slot") == "consumable"
+                or i.get("usable_in_combat")
+                for i in inv)
             cur_weapon = (getattr(ref, "equipment", {}) or {}).get("weapon")
             has_alt_weapon = any(i.get("slot") == "weapon" and i != cur_weapon for i in inv)
             return has_consumable or has_alt_weapon
