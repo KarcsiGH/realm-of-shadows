@@ -1503,20 +1503,46 @@ class DungeonState:
 
 
     def restore_explored(self, explored_data):
-        """Restore discovered tile state from saved data.
-        explored_data: {floor_num_str: [[x, y], ...]}
-        Ensures the floor is generated before applying discovered flags.
+        """Restore discovered tile state, opened chests, and found notes from saved data.
+        explored_data: {floor_num_str: {discovered: [[x,y],...], opened_chests: [...], found_notes: [...]}}
+        Also accepts the old flat-list format for backward compatibility.
         """
-        for floor_str, coords in explored_data.items():
+        for floor_str, floor_data in explored_data.items():
             floor_num = int(floor_str)
             self._ensure_floor(floor_num)
             floor = self.floors[floor_num]
             tiles = floor["tiles"]
             fh = len(tiles)
             fw = len(tiles[0]) if fh > 0 else 0
+
+            # Handle both old format (list of coords) and new format (dict)
+            if isinstance(floor_data, list):
+                coords = floor_data
+                opened_chests = []
+                found_notes   = []
+            else:
+                coords        = floor_data.get("discovered", [])
+                opened_chests = floor_data.get("opened_chests", [])
+                found_notes   = floor_data.get("found_notes", [])
+
+            # Restore discovered tiles
             for x, y in coords:
                 if 0 <= y < fh and 0 <= x < fw:
                     tiles[y][x]["discovered"] = True
+
+            # Restore opened chests
+            opened_set = {(x, y) for x, y in opened_chests}
+            for ev in floor.get("events", []):
+                if ev.get("type") == "treasure":
+                    if (ev.get("x", -1), ev.get("y", -1)) in opened_set:
+                        ev["opened"] = True
+
+            # Restore found notes
+            found_set = {(x, y) for x, y in found_notes}
+            for ev in floor.get("events", []):
+                if ev.get("type") in ("note", "journal", "scroll"):
+                    if (ev.get("x", -1), ev.get("y", -1)) in found_set:
+                        ev["found"] = True
 
     def _update_fog(self):
         """Reveal tiles within LOS sight range (3 tiles, walls/doors block)."""
