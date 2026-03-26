@@ -851,10 +851,38 @@ GREENWOOD_NPCS = [
     },
     {
         "name": "Old Moss",
-        "x": 4, "y": 3,        # near the treeline, north-west open ground
+        "x": 4, "y": 3,
         "dialogue_id": "old_moss",
         "description": "An ancient figure draped in moss and bark, watching the trees with patient eyes.",
         "color": (60, 110, 50),
+    },
+    {
+        "name": "Herb Gatherer",
+        "x": 14, "y": 5,
+        "dialogue_id": "ambient_townsfolk",
+        "description": "A woman with a basket of forest herbs, sorting them by smell.",
+        "color": (120, 160, 100),
+    },
+    {
+        "name": "Woodcutter Bram",
+        "x": 11, "y": 14,
+        "dialogue_id": "ambient_townsfolk",
+        "description": "A broad-shouldered woodcutter resting his axe against a stump.",
+        "color": (150, 120, 80),
+    },
+    {
+        "name": "Greenwood Militia",
+        "x": 6, "y": 15,
+        "dialogue_id": "ambient_guard",
+        "description": "A militia volunteer in rough leather, patrolling the southern path.",
+        "color": (100, 130, 90),
+    },
+    {
+        "name": "Forest Wanderer",
+        "x": 16, "y": 10,
+        "dialogue_id": "ambient_townsfolk",
+        "description": "A quiet traveller who has been in the forest too long and knows it.",
+        "color": (130, 110, 140),
     },
 ]
 
@@ -977,7 +1005,7 @@ SALTMERE_NPCS = [
     },
     {
         "name": "Dockhand Riv",
-        "x": 25, "y": 17,      # open area near the harbor wall
+        "x": 25, "y": 17,
         "dialogue_id": "dockhand_riv",
         "description": "A weathered sailor with rope-burned hands, watching the harbor.",
         "color": (140, 160, 180),
@@ -988,6 +1016,41 @@ SALTMERE_NPCS = [
         "dialogue_id": "shady_figure",
         "description": "A cloaked figure who meets your gaze and looks away too quickly.",
         "color": (80, 70, 100),
+    },
+    {
+        "name": "Harbor Master Yenne",
+        "x": 16, "y": 9,
+        "dialogue_id": "ambient_harbormaster",
+        "description": "A brisk woman with ink-stained ledgers and no patience for delays.",
+        "color": (160, 140, 100),
+    },
+    {
+        "name": "Merchant Osric",
+        "x": 20, "y": 14,
+        "dialogue_id": "ambient_merchant",
+        "description": "A rotund trader complaining loudly about tariffs and tide schedules.",
+        "color": (180, 160, 120),
+    },
+    {
+        "name": "Old Fisherwoman",
+        "x": 24, "y": 19,
+        "dialogue_id": "ambient_townsfolk",
+        "description": "Mending nets by the water, humming an old sea shanty.",
+        "color": (130, 140, 160),
+    },
+    {
+        "name": "Salt Guard",
+        "x": 5, "y": 12,
+        "dialogue_id": "ambient_guard",
+        "description": "A town watchman in salt-crusted armour, eyes on the dock road.",
+        "color": (120, 130, 150),
+    },
+    {
+        "name": "Young Deckhand",
+        "x": 22, "y": 15,
+        "dialogue_id": "ambient_townsfolk",
+        "description": "A gangly youth coiling rope and watching the horizon.",
+        "color": (150, 160, 140),
     },
 ]
 
@@ -1144,6 +1207,34 @@ SANCTUM_NPCS = [
         "description": "A young priest walking the cloister path in quiet prayer.",
         "color": (180, 180, 220),
     },
+    {
+        "name": "Sanctum Scribe",
+        "x": 8, "y": 8,
+        "dialogue_id": "ambient_scholar",
+        "description": "A scribe carrying a stack of illuminated manuscripts toward the cathedral.",
+        "color": (200, 195, 170),
+    },
+    {
+        "name": "Wounded Pilgrim",
+        "x": 20, "y": 14,
+        "dialogue_id": "ambient_townsfolk",
+        "description": "A pilgrim resting on a bench, one leg bandaged from a road injury.",
+        "color": (190, 175, 160),
+    },
+    {
+        "name": "Temple Warden",
+        "x": 5, "y": 18,
+        "dialogue_id": "ambient_guard",
+        "description": "An armoured figure guarding the temple's side entrance.",
+        "color": (210, 205, 190),
+    },
+    {
+        "name": "Choir Singer",
+        "x": 14, "y": 4,
+        "dialogue_id": "ambient_townsfolk",
+        "description": "A young woman whose humming echoes off the cathedral stones.",
+        "color": (185, 185, 215),
+    },
 ]
 
 SANCTUM_SIGNS = {
@@ -1297,6 +1388,27 @@ CRYSTALSPIRE_NPCS = [
         "dialogue_id": "archmage_solen",
         "description": "The Archmage of Crystalspire. Ancient, precise, and watching everything.",
         "color": (180, 200, 255),
+    },
+    {
+        "name": "Rune Carver",
+        "x": 22, "y": 12,
+        "dialogue_id": "ambient_scholar",
+        "description": "A mage etching protective runes into the street stones with a silver stylus.",
+        "color": (170, 190, 230),
+    },
+    {
+        "name": "Crystal Merchant",
+        "x": 18, "y": 18,
+        "dialogue_id": "ambient_merchant",
+        "description": "A merchant with a cart full of raw crystals, each pulsing faintly.",
+        "color": (200, 210, 240),
+    },
+    {
+        "name": "Academy Guard",
+        "x": 8, "y": 8,
+        "dialogue_id": "ambient_guard",
+        "description": "A guard in reinforced robes standing watch at the academy approach.",
+        "color": (160, 170, 210),
     },
 ]
 

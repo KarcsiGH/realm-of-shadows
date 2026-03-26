@@ -7784,6 +7784,201 @@ _NEW_DIALOGUES = {
 # Merge into main NPC_DIALOGUES
 NPC_DIALOGUES.update(_NEW_DIALOGUES)
 
+# ══════════════════════════════════════════════════════════════
+#  AMBIENT NPC DIALOGUES — Generic flavour NPCs in towns
+# ══════════════════════════════════════════════════════════════
+
+_AMBIENT_DIALOGUES = {
+    "ambient_townsfolk": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "ambient_townsfolk_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Townsperson",
+                        "text": "Troubling times. But life goes on, doesn't it? It has to.",
+                        "choices": [
+                            {"text": "Have you noticed anything strange lately?", "next": "strange"},
+                            {"text": "Indeed. Take care.", "next": "bye"},
+                        ],
+                    },
+                    "strange": {
+                        "speaker": "Townsperson",
+                        "text": "Strange? Aye. The nights are darker than they should be. "
+                                "Animals acting up. Old folks say it's like the last time the "
+                                "world went quiet before something big happened. "
+                                "I try not to think about it.",
+                        "next": "bye",
+                    },
+                    "bye": {
+                        "speaker": "Townsperson",
+                        "text": "Watch yourself out there.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+    "ambient_guard": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "ambient_guard_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Guard",
+                        "text": "Move along, please. Nothing to see here. "
+                                "If you're looking for trouble, look elsewhere. "
+                                "If you need directions, I can help with that.",
+                        "choices": [
+                            {"text": "What should I know about this town?", "next": "town_info"},
+                            {"text": "Anything unusual happening?",          "next": "unusual"},
+                            {"text": "Just passing through.",               "next": "bye"},
+                        ],
+                    },
+                    "town_info": {
+                        "speaker": "Guard",
+                        "text": "Guild's always looking for capable folk. Inn's the safest "
+                                "place to sleep if you're new. Don't cause trouble and "
+                                "we won't have a problem.",
+                        "next": "start",
+                    },
+                    "unusual": {
+                        "speaker": "Guard",
+                        "text": "Define unusual. Everything's unusual these days. "
+                                "I keep my head down and my post. That's all I can do.",
+                        "next": "bye",
+                    },
+                    "bye": {
+                        "speaker": "Guard",
+                        "text": "On your way.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+    "ambient_merchant": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "ambient_merchant_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Merchant",
+                        "text": "Finest goods this side of the capital, if you're buying. "
+                                "If you're just browsing, try not to touch anything.",
+                        "choices": [
+                            {"text": "How's business?",          "next": "business"},
+                            {"text": "Heard any news on the road?", "next": "news"},
+                            {"text": "Just looking.",             "next": "bye"},
+                        ],
+                    },
+                    "business": {
+                        "speaker": "Merchant",
+                        "text": "Slow. The roads aren't safe like they were. Bandits, "
+                                "strange creatures, caravans going missing. "
+                                "Hard to turn a profit when half your shipments don't arrive.",
+                        "next": "start",
+                    },
+                    "news": {
+                        "speaker": "Merchant",
+                        "text": "Word from the last trader through: the roads east of Thornhaven "
+                                "are worse than ever. Something out there's spooking the horses "
+                                "before you can even see what it is. Stay on the main paths.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Merchant",
+                        "text": "Come back when your purse is heavier.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+    "ambient_scholar": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "ambient_scholar_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Scholar",
+                        "text": "Hmm? Oh — sorry, deep in thought. "
+                                "The Fading does strange things to the ley lines. "
+                                "I've been trying to document it but the patterns keep shifting.",
+                        "choices": [
+                            {"text": "What can you tell me about the Fading?", "next": "fading"},
+                            {"text": "Don't let me interrupt.",                "next": "bye"},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "Scholar",
+                        "text": "It's not just decay — it's erasure. Magic forgets itself. "
+                                "Creatures mutate toward entropy. The Hearthstones were built "
+                                "to anchor the ley network, prevent exactly this. "
+                                "Without them, the world slowly... unmakes.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Scholar",
+                        "text": "Of course. Do be careful — knowledge is only useful "
+                                "if you survive to apply it.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+    "ambient_harbormaster": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "ambient_harbormaster_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Harbor Master",
+                        "text": "All ships register here. No exceptions. "
+                                "You want to cross the strait, you file the paperwork first.",
+                        "choices": [
+                            {"text": "What ships are in port?",       "next": "ships"},
+                            {"text": "Is the sea route safe?",        "next": "safe"},
+                            {"text": "Just passing through.",         "next": "bye"},
+                        ],
+                    },
+                    "ships": {
+                        "speaker": "Harbor Master",
+                        "text": "Two merchants, one fishing boat, and a vessel I've been told "
+                                "to ask no questions about. That last one troubles me.",
+                        "next": "start",
+                    },
+                    "safe": {
+                        "speaker": "Harbor Master",
+                        "text": "Define safe. The water's calm enough. It's what's under it "
+                                "that's changed. Captains are reporting lights in the deep "
+                                "that follow the hull. I'm keeping my own feet on dry land.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Harbor Master",
+                        "text": "Right. Don't block the dock.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+}
+
+NPC_DIALOGUES.update(_AMBIENT_DIALOGUES)
+
 
 # ══════════════════════════════════════════════════════════════
 #  POST-BOSS DIALOGUES
