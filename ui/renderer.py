@@ -45,24 +45,7 @@ _font_cache = {}
 def get_font(size, bold=False):
     key = (size, bold)
     if key not in _font_cache:
-        # Use pygame's built-in font to avoid fc-list timeout on Mac
-        # SysFont triggers a slow system font scan that can crash on some configs
-        try:
-            import threading, queue
-            result = queue.Queue()
-            def _try_sysfont():
-                try:
-                    result.put(pygame.font.SysFont("consolas,courier,monospace", size, bold=bold))
-                except Exception:
-                    result.put(None)
-            t = threading.Thread(target=_try_sysfont, daemon=True)
-            t.start()
-            t.join(timeout=0.5)   # give SysFont 500ms before falling back
-            font = result.get_nowait() if not result.empty() else None
-        except Exception:
-            font = None
-        if font is None:
-            font = pygame.font.Font(None, max(8, size + 4))   # built-in fallback
+        font = pygame.font.SysFont("consolas,courier,monospace", size, bold=bold)
         _font_cache[key] = font
     return _font_cache[key]
 
@@ -144,13 +127,22 @@ def draw_panel(surface, rect, border_color=PANEL_BORDER, bg_color=PANEL_BG, bord
 
 
 def draw_button(surface, rect, text, color=CREAM, bg=DARKER_GREY,
-                border=PANEL_BORDER, hover=False, size=16):
-    """Draw a clickable button. Returns the rect for hit testing."""
-    bg_actual = (60, 50, 90) if hover else bg
+                border=PANEL_BORDER, hover=False, size=16, disabled=False):
+    """Draw a clickable button. Returns the rect for hit testing.
+    When disabled=True the button renders dimmed and ignores hover state."""
+    if disabled:
+        bg_actual  = (35, 30, 40)
+        bdr_actual = (70, 65, 75)
+        txt_color  = (90, 85, 95)
+        hover      = False
+    else:
+        bg_actual  = (60, 50, 90) if hover else bg
+        bdr_actual = HIGHLIGHT if hover else border
+        txt_color  = GOLD if hover else color
     pygame.draw.rect(surface, bg_actual, rect)
-    pygame.draw.rect(surface, border if not hover else HIGHLIGHT, rect, 2)
+    pygame.draw.rect(surface, bdr_actual, rect, 2)
     font = get_font(size)
-    rendered = font.render(text, True, GOLD if hover else color)
+    rendered = font.render(text, True, txt_color)
     tx = rect.x + (rect.width - rendered.get_width()) // 2
     ty = rect.y + (rect.height - rendered.get_height()) // 2
     surface.blit(rendered, (tx, ty))

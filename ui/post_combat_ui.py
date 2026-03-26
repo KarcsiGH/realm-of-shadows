@@ -679,6 +679,8 @@ class PostCombatUI:
             iy = panel_items.y + 35
             col_w = (panel_items.width - 30) // 2
             for idx in range(len(self.loot_items)):
+                if idx in self.loot_assignments:
+                    continue  # already assigned, skip
                 col_idx = idx % 2
                 row_idx = idx // 2
                 item_rect = pygame.Rect(
@@ -687,12 +689,8 @@ class PostCombatUI:
                     col_w, 62
                 )
                 if item_rect.collidepoint(mx, my):
-                    if idx in self.loot_assignments:
-                        # Already assigned — clicking unassigns it so player can
-                        # reassign to a different character
-                        del self.loot_assignments[idx]
-                        self.loot_selected_items.discard(idx)
-                    elif idx in self.loot_selected_items:
+                    # Toggle selection
+                    if idx in self.loot_selected_items:
                         self.loot_selected_items.discard(idx)
                     else:
                         self.loot_selected_items.add(idx)
@@ -802,6 +800,14 @@ class PostCombatUI:
         elif name == "Wolf Pelt":
             start_quest("side_wolf_pelts")   # no-op if already started or not yet given
             increment("wolf_pelts_quest.count")
+
+        # Spire Crystals: count toward side_arcane_salvage quest objective
+        elif name == "Spire Crystal":
+            from data.story_data import QUESTS
+            from core.story_flags import get_flag
+            if get_flag("quest.side_arcane_salvage.state", 0) == 1:
+                cur = get_flag("side_salvage.crystals_collected", 0)
+                set_flag("side_salvage.crystals_collected", cur + 1)
 
     # ─────────────────────────────────────────────────────────
     #  HELPERS
