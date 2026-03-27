@@ -265,6 +265,7 @@ STATUS_TICK_DAMAGE = {
     "Burning":      6,
     "Frostbitten":  3,
     "Shocked":      5,
+    "Bleeding":     3,
 }
 
 # Status effects that prevent action (Speed = 0 handles skipping,
@@ -287,6 +288,10 @@ STATUS_DURATION_TICK = (
        "divine_intervention", "time_stop", "death_mark", "Taunted",
        "morale_break", "ward_isolation", "cyclone_ward", "last_ward",
        "Weakened", "Silenced", "Feared",
+       "Confused", "Bleeding", "Marked",
+       # New buff names from expanded abilities
+       "battle_stance", "arcane_surge", "fortify", "keen_eye",
+       "eagle_eye", "iron_will",
        }
 )
 

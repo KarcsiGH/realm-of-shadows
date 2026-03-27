@@ -486,71 +486,100 @@ class TownUI:
                         (px + ts//5, py + ts//6, ts*3//5, ts//3), 1, border_radius=2)
 
                 elif tile == TT_WALL:
+                    # ── Top-down building view ─────────────────────────────
                     bld = bld_col_map.get((tx, ty))
-                    if bld:
-                        bc = bld["color"]
-                        r0_b, r1_b = bld.get("wall_rows", (ty, ty))
-                        c0_b, c1_b = bld.get("wall_cols", (tx, tx))
-                        door_x = bld["door"][0]
-                        is_top_row    = (ty == r0_b)
-                        is_left_col   = (tx == c0_b)
-                        is_right_col  = (tx == c1_b)
+                    bc = bld["color"] if bld else (130, 110, 85)
+                    r0_b, r1_b = bld.get("wall_rows", (ty, ty)) if bld else (ty, ty)
+                    c0_b, c1_b = bld.get("wall_cols", (tx, tx)) if bld else (tx, tx)
+                    btype      = bld.get("type", "") if bld else ""
 
-                        wall_c = tuple(min(255, int(c * 0.85)) for c in bc)
+                    is_top_row    = (ty == r0_b)
+                    is_bottom_row = (ty == r1_b)
+                    is_left_col   = (tx == c0_b)
+                    is_right_col  = (tx == c1_b)
+                    is_edge = is_top_row or is_bottom_row or is_left_col or is_right_col
+
+                    # Outer wall colour — darker, stony
+                    WALL_DARK = max(12, ts // 8)
+                    wall_c  = tuple(max(0, int(c * 0.55)) for c in bc)
+                    roof_c  = tuple(min(255, int(c * 0.90)) for c in bc)
+                    inner_c = tuple(min(255, int(c * 1.00)) for c in bc)
+
+                    if is_edge:
+                        # Stone outer wall from above
                         pygame.draw.rect(surface, wall_c, (px, py, ts, ts))
-
+                        # Mortar lines on wall face
+                        mortar = tuple(max(0, c-20) for c in wall_c)
+                        bw = max(2, ts // 6)
                         if is_top_row:
-                            roof_c = tuple(max(0, int(c * 0.55)) for c in bc)
-                            pygame.draw.rect(surface, roof_c, (px, py, ts, ts//3))
-                            pygame.draw.line(surface, tuple(max(0, c-30) for c in roof_c),
-                                             (px, py + ts//3), (px+ts, py+ts//3), 1)
-
-                        mortar_c = tuple(max(0, int(c * 0.6)) for c in bc)
-                        for ml in range(1, 3):
-                            pygame.draw.line(surface, mortar_c,
-                                (px, py + ml * ts//3), (px+ts, py + ml * ts//3), 1)
-
-                        if is_left_col or is_right_col:
-                            pillar_c = tuple(min(255, int(c * 1.15)) for c in bc)
-                            pygame.draw.rect(surface, pillar_c, (px, py, max(3, ts//4), ts))
-
-                        if (r0_b + 1 <= ty <= r1_b - 1 and not is_left_col
-                                and not is_right_col and tx != door_x
-                                and (tx - c0_b) % 3 == 1):
-                            win_m = max(3, ts//4)
-                            wx, wy = px + win_m, py + win_m
-                            ww, wh = ts - win_m*2, ts - win_m*2
-                            pygame.draw.rect(surface, tuple(max(0, c-40) for c in bc), (wx, wy, ww, wh))
-                            glass_c = (180, 210, 230) if bld.get("type") != "forge" else (220, 160, 80)
-                            pygame.draw.rect(surface, glass_c, (wx+2, wy+2, ww-4, wh-4))
-                            pygame.draw.line(surface, tuple(max(0, c-40) for c in bc),
-                                (wx+ww//2, wy), (wx+ww//2, wy+wh), 1)
-                            pygame.draw.line(surface, tuple(max(0, c-40) for c in bc),
-                                (wx, wy+wh//2), (wx+ww, wy+wh//2), 1)
-
-                        if bld.get("type") == "forge" and is_top_row and tx == c1_b - 1:
-                            for si in range(3):
-                                drift = int(((self.walk_anim_t // 300 + si) % 6) - 3)
-                                sa = max(0, 80 - si * 20)
-                                sc3 = pygame.Surface((ts//2, ts//3), pygame.SRCALPHA)
-                                sc3.fill((80, 80, 80, sa))
-                                surface.blit(sc3, (px + ts//4 + drift, py - ts//3 - si * ts//3))
+                            pygame.draw.rect(surface, mortar, (px, py+ts-bw, ts, bw))
+                        if is_bottom_row:
+                            # South wall gets a drop shadow — gives illusion of wall height
+                            pygame.draw.rect(surface, (0, 0, 0), (px, py+ts-max(2,ts//5), ts, max(2,ts//5)))
+                        if is_left_col:
+                            pygame.draw.rect(surface, mortar, (px+ts-bw, py, bw, ts))
+                        if is_right_col:
+                            pygame.draw.rect(surface, (0, 0, 0), (px+ts-max(2,ts//5), py, max(2,ts//5), ts))
+                        # Brick / stone texture on edge walls
+                        brick_c = tuple(min(255, c+18) for c in wall_c)
+                        step = max(4, ts // 3)
+                        offset = (ty % 2) * (step // 2)
+                        for bx2 in range(px + offset % step, px + ts, step):
+                            for by2 in range(py, py + ts, step // 2):
+                                bw2 = min(step - 2, px + ts - bx2 - 1)
+                                bh2 = min(step // 2 - 1, py + ts - by2 - 1)
+                                if bw2 > 1 and bh2 > 1:
+                                    pygame.draw.rect(surface, brick_c, (bx2+1, by2+1, bw2, bh2))
                     else:
-                        pygame.draw.rect(surface, (62, 50, 38), (px, py, ts, ts))
-                        pygame.draw.rect(surface, (75, 62, 48), (px, py, ts, ts//3))
+                        # Interior roof tile
+                        pygame.draw.rect(surface, inner_c, (px, py, ts, ts))
+                        # Roof texture: subtle shingle/beam pattern
+                        tile_idx = (tx - c0_b) + (ty - r0_b) * 100
+                        if btype in ("guild", "temple", "castle"):
+                            # Stone tile roof
+                            tc = tuple(max(0, c-15) for c in inner_c)
+                            if (tx + ty) % 2 == 0:
+                                pygame.draw.rect(surface, tc, (px, py, ts//2, ts//2))
+                                pygame.draw.rect(surface, tc, (px+ts//2, py+ts//2, ts//2, ts//2))
+                        else:
+                            # Wooden beam roof — horizontal lines
+                            beam_c = tuple(max(0, c-22) for c in inner_c)
+                            for bl in range(0, ts, max(3, ts//4)):
+                                pygame.draw.line(surface, beam_c, (px, py+bl), (px+ts, py+bl), 1)
+                        # Chimney on inn/forge top-left interior
+                        if btype in ("forge", "inn") and (tx - c0_b == 1) and (ty - r0_b == 1):
+                            chim_c = (80, 70, 65)
+                            cw = max(4, ts//3)
+                            pygame.draw.rect(surface, chim_c,
+                                (px + ts//2 - cw//2, py + ts//2 - cw//2, cw, cw))
+                            pygame.draw.rect(surface, (50, 45, 40),
+                                (px + ts//2 - cw//2, py + ts//2 - cw//2, cw, cw), 1)
+                        # Forge: glowing embers through roof gap
+                        if btype == "forge" and (tx - c0_b == 2) and (ty - r0_b == 1):
+                            glow_a = int(80 + 60 * abs(((self.walk_anim_t % 1200) - 600) / 600))
+                            gs = pygame.Surface((ts-4, ts-4), pygame.SRCALPHA)
+                            gs.fill((220, 100, 20, glow_a))
+                            surface.blit(gs, (px+2, py+2))
 
                 elif tile == TT_DOOR:
+                    # ── Top-down doorway ───────────────────────────────────
                     bld2 = get_building_at(td, tx, ty)
-                    bc2 = bld2[1]["color"] if bld2 else (140, 110, 60)
-                    pygame.draw.rect(surface, tuple(max(0, int(c*0.6)) for c in bc2), (px, py, ts, ts))
-                    pygame.draw.rect(surface, tuple(max(0, int(c*0.5)) for c in bc2), (px+2, py+1, ts-4, ts-2))
-                    pygame.draw.rect(surface, tuple(min(255, int(c*1.1)) for c in bc2),
-                        (px + ts//5, py + ts//10, ts*3//5, ts*4//5), border_radius=2)
-                    pygame.draw.rect(surface, tuple(max(0, int(c*0.5)) for c in bc2),
-                        (px + ts//5, py + ts//10, ts*3//5, ts*4//5), 1, border_radius=2)
-                    pygame.draw.circle(surface, (220, 185, 90),
-                        (px + ts*3//4, py + ts//2), max(2, ts//7))
-                    pygame.draw.rect(surface, tuple(max(0, int(c*0.7)) for c in bc2), (px, py, ts, ts//5))
+                    bc2  = bld2[1]["color"] if bld2 else (140, 110, 60)
+                    btype2 = bld2[1].get("type", "") if bld2 else ""
+                    # Door threshold: floor-coloured opening in the wall
+                    floor_c = (108, 92, 68)   # stone floor
+                    wall_c2 = tuple(max(0, int(c * 0.55)) for c in bc2)
+                    pygame.draw.rect(surface, wall_c2, (px, py, ts, ts))
+                    # Open gap in the wall — brighter interior
+                    gap = max(2, ts // 5)
+                    pygame.draw.rect(surface, floor_c, (px + gap, py, ts - gap*2, ts))
+                    # Door mat / welcome slab
+                    mat_c = tuple(min(255, int(c * 0.75)) for c in bc2)
+                    pygame.draw.rect(surface, mat_c,
+                        (px + gap + 1, py + ts//4, ts - gap*2 - 2, ts//2), border_radius=1)
+                    # Tiny doorknob
+                    pygame.draw.circle(surface, (210, 175, 80),
+                        (px + ts//2, py + ts*2//3), max(1, ts//8))
 
                 else:
                     # '.' open tiles adjacent to doors also show a path stub

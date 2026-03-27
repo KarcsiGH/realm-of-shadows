@@ -632,6 +632,10 @@ def resolve_basic_attack(attacker, defender, enemies=None):
         if n == "shadow_step":            atk_mult *= 1.50
         if n == "last_stand" and attacker["hp"] / max(1, attacker["max_hp"]) <= 0.25:
                                           atk_mult *= 1.50
+        if n == "battle_stance":          atk_mult *= 1.20
+        if n == "arcane_surge":           atk_mult *= 1.30
+        if n == "Weakened":               atk_mult *= 0.70   # debuff: -30% outgoing damage
+        if n == "blessed":                atk_mult *= 1.10
     if atk_mult != 1.0:
         damage = max(MINIMUM_DAMAGE, int(damage * atk_mult))
 
@@ -651,6 +655,7 @@ def resolve_basic_attack(attacker, defender, enemies=None):
         if n == "ward_anchor":           def_reduce += 6
         if n == "battle_prayer":         def_reduce += 4
         if n in ("unbreakable", "divine_intervention"): def_reduce += 20
+        if n == "fortify":               def_reduce += 18   # heavy physical damage reduction
     if def_reduce:
         damage = max(MINIMUM_DAMAGE, damage - def_reduce)
 
@@ -1026,8 +1031,9 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             if n == "arcane_surge":          dmg_mult *= 1.30
             if n == "keen_eye":              dmg_mult *= 1.15
             if n == "eagle_eye":             dmg_mult *= 1.20
-            if n == "iron_will":             pass   # handled in status resistance
-            if n == "fortify":               def_reduce += 15  # halve incoming damage
+            if n == "blessed":               dmg_mult *= 1.10
+            if n == "Weakened":              dmg_mult *= 0.70
+            if n == "fortify":               def_reduce += 18
             # ── Flat defense (absorbed from incoming damage) ──
             if n == "blessed":               def_reduce += 5   # Cleric Bless: +10% saves → +5 def
             if n == "spirit_bond":           def_reduce += 6   # Warden Spirit Bond: shared protection
@@ -1099,6 +1105,10 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                 tgt["hp"] = 1
         if tgt["hp"] <= 0:
             tgt["alive"] = False
+        # Sleep breaks on any damage
+        if dmg > 0:
+            tgt["status_effects"] = [s for s in tgt.get("status_effects", [])
+                                     if s["name"] != "Sleep"]
         crit_str = " CRITICAL!" if is_crit else ""
         return dmg, is_crit, [f"{attacker['name']} uses {ability['name']} on {tgt['name']} for {dmg} damage!{crit_str}"]
 
@@ -1151,6 +1161,10 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                 tgt["hp"] = 1
         if tgt["hp"] <= 0:
             tgt["alive"] = False
+        # Sleep breaks on any damage
+        if dmg > 0:
+            tgt["status_effects"] = [s for s in tgt.get("status_effects", [])
+                                     if s["name"] != "Sleep"]
         crit_str = " CRITICAL!" if is_crit else ""
         return dmg, is_crit, [f"{attacker['name']} casts {ability['name']} on {tgt['name']} for {dmg} damage!{crit_str}"]
 
@@ -2124,6 +2138,14 @@ class CombatState:
                 status_msgs = tick_status_effects(c)
                 for m in status_msgs:
                     self.log(m)
+                # Tick marks (Hunter's Mark, Death Mark, etc.)
+                if c.get("marks"):
+                    still_active = []
+                    for mark in c["marks"]:
+                        mark["duration"] -= 1
+                        if mark["duration"] > 0:
+                            still_active.append(mark)
+                    c["marks"] = still_active
 
         # Check for deaths from status ticks
         if not any(p["alive"] for p in self.players):
@@ -2212,6 +2234,11 @@ class CombatState:
             result = resolve_defend(actor)
 
         elif action_type == "ability":
+            # Silenced actors cannot use abilities (spells, skills)
+            if any(s["name"] == "Silenced" for s in actor.get("status_effects", [])):
+                self.log(f"{actor['name']} is Silenced and cannot use abilities!")
+                self.advance_turn()
+                return {}
             result = resolve_ability(actor, target, ability,
                                      all_players=self.players,
                                      all_enemies=self.enemies)
@@ -2466,6 +2493,21 @@ class CombatState:
                 self.log(f"{actor['name']} is {status['name']} and cannot act!")
                 self.advance_turn()
                 return {}
+
+        # Confused: attack a random valid target (may hit own side)
+        for status in actor.get("status_effects", []):
+            if status["name"] == "Confused":
+                all_living = [c for c in self.all_combatants if c["alive"] and c is not actor]
+                if all_living:
+                    import random as _rand
+                    confused_target = _rand.choice(all_living)
+                    self.log(f"{actor['name']} is Confused and attacks {confused_target['name']}!")
+                    result = resolve_physical_combat(actor, confused_target)
+                    for m in result.get("messages", []):
+                        self.log(m)
+                    self.advance_turn()
+                    return result
+                break
 
         # ── Boss phase check ──────────────────────────────────────
         phase_result = _check_boss_phase(actor, self)
