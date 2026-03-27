@@ -35,6 +35,7 @@ PASSABLE_TILES = {DT_FLOOR, DT_CORRIDOR, DT_DOOR, DT_STAIRS_DOWN,
 DUNGEONS = {
     "goblin_warren": {
         "name": "Goblin Warren",
+        "intended_level": 1,
         "floors": 3,
         "width": 32, "height": 26,
         "encounter_table": {
@@ -49,6 +50,7 @@ DUNGEONS = {
     },
     "spiders_nest": {
         "name": "Spider's Nest",
+        "intended_level": 2,
         "floors": 4,
         "width": 35, "height": 28,
         "encounter_table": {
@@ -63,6 +65,7 @@ DUNGEONS = {
         "encounter_rate": 8,
     },
     "abandoned_mine": {
+        "intended_level": 3,
         "name": "Abandoned Mine",
         "floors": 5,
         "width": 40, "height": 30,
@@ -79,6 +82,7 @@ DUNGEONS = {
         "encounter_rate": 8,
     },
     "sunken_crypt": {
+        "intended_level": 4,
         "name": "Sunken Crypt",
         "floors": 4,
         "width": 35, "height": 28,
@@ -94,6 +98,7 @@ DUNGEONS = {
         "encounter_rate": 9,
     },
     "ruins_ashenmoor": {
+        "intended_level": 5,
         "name": "Ruins of Ashenmoor",
         "floors": 4,
         "width": 38, "height": 30,
@@ -109,6 +114,7 @@ DUNGEONS = {
         "encounter_rate": 7,
     },
     "valdris_spire": {
+        "intended_level": 9,
         "name": "Valdris' Spire",
         "floors": 6,
         "width": 22, "height": 18,  # smaller, tighter tower floors
@@ -126,6 +132,7 @@ DUNGEONS = {
         "encounter_rate": 7,
     },
     "dragons_tooth": {
+        "intended_level": 6,
         "name": "Dragon's Tooth",
         "floors": 3,
         "width": 38, "height": 30,
@@ -143,6 +150,7 @@ DUNGEONS = {
     # ── ACT 3 DUNGEONS ──────────────────────────────────────
 
     "pale_coast": {
+        "intended_level": 7,
         "name": "Pale Coast Catacombs",
         "floors": 4,
         "width": 35, "height": 28,
@@ -160,6 +168,7 @@ DUNGEONS = {
     },
 
     "windswept_isle": {
+        "intended_level": 8,
         "name": "Windswept Isle Ruins",
         "floors": 6,
         "width": 36, "height": 30,
@@ -180,6 +189,7 @@ DUNGEONS = {
     },
 
     "shadow_throne": {
+        "intended_level": 10,
         "name": "The Shadow Throne",
         "floors": 8,
         "width": 40, "height": 32,

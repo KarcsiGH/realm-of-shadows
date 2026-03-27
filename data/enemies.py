@@ -70,10 +70,10 @@ ENEMIES = {
 
     "Goblin Archer": {
         "name": "Goblin Archer",
-        "hp": 95, "defense": 4, "magic_resist": 2,
+        "hp": 48, "defense": 2, "magic_resist": 2,
         "stats": {"STR": 4, "DEX": 12, "CON": 4, "INT": 5, "WIS": 5, "PIE": 2},
         "speed_base": 16,
-        "attack_damage": 31, "attack_type": "ranged", "phys_type": "piercing",
+        "attack_damage": 14, "attack_type": "ranged", "phys_type": "piercing",
         "accuracy_bonus": 5,
         "preferred_row": MID,
         "ai_type": "aggressive", "pack_tactics": True, "cowardly": True,
@@ -176,10 +176,10 @@ ENEMIES = {
 
     "Wolf": {
         "name": "Wolf",
-        "hp": 85, "defense": 5, "magic_resist": 2,
+        "hp": 55, "defense": 3, "magic_resist": 1,
         "stats": {"STR": 10, "DEX": 14, "CON": 8, "INT": 3, "WIS": 10, "PIE": 2},
         "speed_base": 22,
-        "attack_damage": 32, "attack_type": "melee", "phys_type": "piercing",
+        "attack_damage": 16, "attack_type": "melee", "phys_type": "piercing",
         "accuracy_bonus": 5,
         "preferred_row": FRONT,
         "ai_type": "aggressive", "pack_tactics": True,

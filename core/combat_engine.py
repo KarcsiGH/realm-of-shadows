@@ -1957,7 +1957,7 @@ class CombatState:
     Tracks turn order, round number, combat log, victory/defeat.
     """
 
-    def __init__(self, party_chars, encounter_key, surprise=None):
+    def __init__(self, party_chars, encounter_key, surprise=None, dungeon_id=None):
         from data.enemies import build_encounter
 
         self.round_num = 1
@@ -2028,20 +2028,34 @@ class CombatState:
                     e["preferred_row"] = FRONT
                     break
 
-        # Scale enemy power to party average level.
-        # Uses a sqrt curve so early levels feel the difference more than late levels.
-        # Bosses are never scaled here — their base stats are already tuned per act.
+        # Scale enemy power relative to the dungeon's intended level.
+        # A party at the intended level sees BASE stats — no inflation.
+        # Scaling only kicks in when the party is ABOVE the intended level,
+        # so overlevelled parties still feel some resistance.
+        # Parties BELOW intended level also see base stats — the dungeon is
+        # already hard for them; no need to make it worse.
         if party_chars:
             avg_level = sum(getattr(c, "level", 1) for c in party_chars) / len(party_chars)
             import math as _math
-            # sqrt gives diminishing returns: fast early, flattens later
-            # HP scale: 1.0 at L1 → ~2.8× at L10 (matches player damage growth)
-            # DMG scale: slightly steeper so higher-level enemies feel threatening
-            hp_scale  = max(1.0, 1.0 + (_math.sqrt(avg_level) - 1.0) * 0.90)
-            dmg_scale = max(1.0, 1.0 + (_math.sqrt(avg_level) - 1.0) * 1.10)
-            # Hard cap: even at max level, a bat is still a bat
-            hp_scale  = min(hp_scale,  3.5)
-            dmg_scale = min(dmg_scale, 3.0)
+
+            # Intended level comes from the dungeon definition (set per-dungeon in DUNGEONS)
+            intended_level = 1
+            if dungeon_id:
+                from data.dungeon import DUNGEONS as _DUNGEONS
+                intended_level = _DUNGEONS.get(dungeon_id, {}).get("intended_level", 1)
+
+            # level_over: how many levels above intended the party is
+            # Clamped to 0 — we never deflate stats for under-levelled parties
+            level_over = max(0.0, avg_level - intended_level)
+
+            # sqrt curve: fast early gains, flattens at high level_over
+            # 0 over  → 1.0× (base — dungeon feels exactly as designed)
+            # 2 over  → HP×1.57  DMG×1.71  (returning to clear it again)
+            # 4 over  → HP×2.00  DMG×2.50  (farming old content — still punishing)
+            # Hard cap: trash never becomes a wall of HP
+            hp_scale  = min(2.5, 1.0 + _math.sqrt(level_over) * 0.50)
+            dmg_scale = min(2.5, 1.0 + _math.sqrt(level_over) * 0.71)
+
             for e in self.enemies:
                 if "boss" not in e.get("template_key", "").lower():
                     e["hp"]     = max(1, int(e["hp"]     * hp_scale))

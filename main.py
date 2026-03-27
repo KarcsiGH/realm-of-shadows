@@ -2774,7 +2774,9 @@ class Game:
 
     def start_combat(self, encounter_key, surprise=None):
         """Initialize combat with an encounter."""
-        self.combat_state = CombatState(self.party, encounter_key, surprise=surprise)
+        dungeon_id = getattr(self.dungeon_state, "dungeon_id", None) if self.dungeon_state else None
+        self.combat_state = CombatState(self.party, encounter_key, surprise=surprise,
+                                        dungeon_id=dungeon_id)
         self.combat_ui = CombatUI(self.combat_state)
         self.enemy_turn_delay = 0
         # Tutorial hints — queue first-combat hints with a short delay
