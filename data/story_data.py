@@ -1201,9 +1201,8 @@ NPC_DIALOGUES = {
         # Checked BEFORE the kill path so it takes priority when both flags exist
         {
             "conditions": [
-                {"flag": "choice.grak_spared", "op": "==", "value": True},
-                {"flag": "boss_defeated.goblin_warren", "op": "==", "value": True},
-                {"flag": "quest.main_goblin_warren.state", "op": "==", "value": 1},
+                {"flag": "choice.grak_spared",          "op": "==", "value": True},
+                {"flag": "boss_defeated.goblin_warren",  "op": "==", "value": True},
             ],
             "tree": {
                 "id": "maren_post_warren_peaceful",
@@ -1256,9 +1255,8 @@ NPC_DIALOGUES = {
         # After goblin warren — kill path (Grak defeated in combat)
         {
             "conditions": [
-                {"flag": "choice.grak_killed", "op": "==", "value": True},
-                {"flag": "boss_defeated.goblin_warren", "op": "==", "value": True},
-                {"flag": "quest.main_goblin_warren.state", "op": "==", "value": 1},
+                {"flag": "choice.grak_killed",          "op": "==", "value": True},
+                {"flag": "boss_defeated.goblin_warren",  "op": "==", "value": True},
             ],
             "tree": {
                 "id": "maren_post_warren",
