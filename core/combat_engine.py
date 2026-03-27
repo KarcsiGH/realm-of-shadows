@@ -980,9 +980,23 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             shred = ability["armor_shred"]
             tgt["defense"] = max(0, tgt.get("defense", 0) - shred)
             msgs.append(f"{msg_prefix}{tgt['name']}'s defense reduced by {shred}!")
+        # Generic status field — e.g. Sleep, Confuse, Silence (used by spell abilities)
+        if ability.get("status"):
+            sname   = ability["status"]
+            schance = ability.get("status_chance", 1.0)
+            sdur    = ability.get("status_duration", 2)
+            if apply_status_effect(tgt, sname, sdur, schance):
+                msgs.append(f"{msg_prefix}{tgt['name']} is {sname}!")
+        # apply_status field (same pattern, different key used by some abilities)
+        if ability.get("apply_status"):
+            sname   = ability["apply_status"]
+            schance = ability.get("status_chance", 1.0)
+            sdur    = ability.get("status_duration", 2)
+            if apply_status_effect(tgt, sname, sdur, schance):
+                msgs.append(f"{msg_prefix}{tgt['name']} is {sname}!")
         if ability.get("mark_duration"):
             tgt.setdefault("marks", []).append({
-                "type": "death_mark",
+                "type": ability.get("mark_type", "death_mark"),
                 "crit_bonus": ability.get("mark_crit_bonus", 30),
                 "duration": ability["mark_duration"],
             })
@@ -1008,6 +1022,12 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             if n == "rally":                 dmg_mult *= 1.25
             if n == "conqueror":             dmg_mult *= 2.00
             if n == "shadow_step":           dmg_mult *= 1.50
+            if n == "battle_stance":         dmg_mult *= 1.20
+            if n == "arcane_surge":          dmg_mult *= 1.30
+            if n == "keen_eye":              dmg_mult *= 1.15
+            if n == "eagle_eye":             dmg_mult *= 1.20
+            if n == "iron_will":             pass   # handled in status resistance
+            if n == "fortify":               def_reduce += 15  # halve incoming damage
             # ── Flat defense (absorbed from incoming damage) ──
             if n == "blessed":               def_reduce += 5   # Cleric Bless: +10% saves → +5 def
             if n == "spirit_bond":           def_reduce += 6   # Warden Spirit Bond: shared protection
@@ -1068,6 +1088,8 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         for mark in tgt.get("marks", []):
             if mark["type"] == "death_mark" and is_crit:
                 dmg = int(dmg * 1.3)
+            if mark["type"] == "hunter_mark":
+                dmg = int(dmg * 1.20)   # +20% from all sources
 
         tgt["hp"] = max(0, tgt["hp"] - dmg)
         # unbreakable / divine_intervention: survive any hit at 1 HP
@@ -1179,63 +1201,78 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
 
     # ── CURE ───────────────────────────────────────────────────
     if is_cure:
-        cure_tgt = target if target else attacker
-        cures_type = ability.get("cures", "")
-        removed = False
-        CURE_MAP = {"poison": {"Poisoned", "Burning"}, "any": None}
-        cure_set = CURE_MAP.get(cures_type)
-
-        # Special case: Remove Curse lifts cursed equipment AND status curses
-        if cures_type == "curse":
-            cursed_slots = [
-                slot for slot, item in (cure_tgt.get("equipment") or {}).items()
-                if item and item.get("cursed") and not item.get("curse_lifted")
-            ]
-            for slot in cursed_slots:
-                item = cure_tgt["equipment"][slot]
-                item["curse_lifted"] = True
-                cure_tgt["equipment"][slot] = None
-                inv = cure_tgt.get("inventory")
-                if inv is not None:
-                    inv.append(item)
-                result["messages"].append(
-                    f"{attacker['name']} uses {ability['name']} on {cure_tgt['name']} — "
-                    f"{item['name']} curse lifted!"
-                )
-                removed = True
-            # Also clear curse status effects
-            for se in list(cure_tgt.get("status_effects", [])):
-                if se.get("type") == "curse" or se.get("name") == "Cursed":
-                    cure_tgt["status_effects"].remove(se)
-                    result["messages"].append(
-                        f"{attacker['name']} uses {ability['name']} on {cure_tgt['name']} — "
-                        f"{se['name']} removed!"
-                    )
-                    removed = True
+        # Determine cure targets — Mass Cure hits all allies, others hit one
+        if ability.get("targets") == "all_allies" and all_players:
+            cure_targets = [p for p in all_players if p["alive"]]
         else:
-            for se in list(cure_tgt.get("status_effects", [])):
-                if cure_set is None or se["name"] in cure_set or se.get("negative", True):
-                    cure_tgt["status_effects"].remove(se)
+            cure_targets = [target if target else attacker]
+
+        cures_type = ability.get("cures", "")
+        CURE_MAP   = {"poison": {"Poisoned", "Burning"}, "any": None}
+        cure_set   = CURE_MAP.get(cures_type)
+        any_removed = False
+
+        for cure_tgt in cure_targets:
+            removed = False
+
+            if cures_type == "curse":
+                # Lift cursed equipment AND curse status effects
+                cursed_slots = [
+                    slot for slot, item in (cure_tgt.get("equipment") or {}).items()
+                    if item and item.get("cursed") and not item.get("curse_lifted")
+                ]
+                for slot in cursed_slots:
+                    item = cure_tgt["equipment"][slot]
+                    item["curse_lifted"] = True
+                    cure_tgt["equipment"][slot] = None
+                    inv = cure_tgt.get("inventory")
+                    if inv is not None:
+                        inv.append(item)
                     result["messages"].append(
-                        f"{attacker['name']} uses {ability['name']} on {cure_tgt['name']} — "
-                        f"{se['name']} removed!"
+                        f"{attacker['name']} uses {ability['name']} on "
+                        f"{cure_tgt['name']} — {item['name']} curse lifted!"
                     )
                     removed = True
-                    break
-        if not removed:
-            result["messages"].append(
-                f"{attacker['name']} uses {ability['name']} on {cure_tgt['name']} — "
-                f"no matching effects to cure."
-            )
-        # If ability also heals (e.g. Nature's Balm)
-        if ability.get("power") and cure_tgt["alive"]:
-            heal_sp = {"power": cost * ability.get("power", 0.5)}
-            amount = min(cure_tgt["max_hp"] - cure_tgt["hp"],
-                         calc_healing(attacker, heal_sp))
-            if amount > 0:
-                cure_tgt["hp"] += amount
-                result["healing"] += amount
-                result["messages"].append(f"  Also heals {cure_tgt['name']} for {amount} HP.")
+                for se in list(cure_tgt.get("status_effects", [])):
+                    if se.get("type") == "curse" or se.get("name") == "Cursed":
+                        cure_tgt["status_effects"].remove(se)
+                        result["messages"].append(
+                            f"{attacker['name']} uses {ability['name']} on "
+                            f"{cure_tgt['name']} — {se['name']} removed!"
+                        )
+                        removed = True
+            else:
+                # Remove matching status effects
+                for se in list(cure_tgt.get("status_effects", [])):
+                    if cure_set is None or se["name"] in cure_set or se.get("negative", True):
+                        cure_tgt["status_effects"].remove(se)
+                        result["messages"].append(
+                            f"{attacker['name']} uses {ability['name']} on "
+                            f"{cure_tgt['name']} — {se['name']} removed!"
+                        )
+                        removed = True
+                        if cure_set is not None:
+                            break  # single-type cures only remove one effect per target
+
+            if not removed:
+                result["messages"].append(
+                    f"{attacker['name']} uses {ability['name']} on "
+                    f"{cure_tgt['name']} — no matching effects."
+                )
+            else:
+                any_removed = True
+
+            # Bonus heal (e.g. Nature's Balm, Purify with power)
+            if ability.get("power") and cure_tgt["alive"]:
+                heal_sp = {"power": cost * ability.get("power", 0.5)}
+                amount  = min(cure_tgt["max_hp"] - cure_tgt["hp"],
+                              calc_healing(attacker, heal_sp))
+                if amount > 0:
+                    cure_tgt["hp"] += amount
+                    result["healing"] += amount
+                    result["messages"].append(
+                        f"  Also heals {cure_tgt['name']} for {amount} HP.")
+
         return result
 
     # ── BUFF ───────────────────────────────────────────────────
