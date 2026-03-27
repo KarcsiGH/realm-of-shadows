@@ -414,15 +414,24 @@ class WorldMapUI:
         mode_col = GOLD if mode != "Walk" else GREY
         draw_text(surface, f"[{mode}]", SCREEN_W - 260, 12, mode_col, 14)
 
-        # Bottom buttons
+        # Bottom buttons  (right side: Menu | Camp | Save | Save & Exit | Exit)
         btn_y = SCREEN_H - 55
-        camp_btn = pygame.Rect(SCREEN_W - 320, btn_y, 140, 42)
-        draw_button(surface, camp_btn, "Camp",
-                    hover=camp_btn.collidepoint(mx, my), size=16)
+        camp_btn      = pygame.Rect(SCREEN_W - 640, btn_y, 110, 42)
+        menu_btn      = pygame.Rect(SCREEN_W - 520, btn_y, 110, 42)
+        save_btn      = pygame.Rect(SCREEN_W - 390, btn_y, 120, 42)
+        save_exit_btn = pygame.Rect(SCREEN_W - 260, btn_y, 130, 42)
+        exit_btn      = pygame.Rect(SCREEN_W - 120, btn_y, 110, 42)
 
-        menu_btn = pygame.Rect(SCREEN_W - 160, btn_y, 140, 42)
-        draw_button(surface, menu_btn, "Menu",
+        draw_button(surface, camp_btn,      "Camp",
+                    hover=camp_btn.collidepoint(mx, my), size=16)
+        draw_button(surface, menu_btn,      "Menu",
                     hover=menu_btn.collidepoint(mx, my), size=16)
+        draw_button(surface, save_btn,      "Save",
+                    hover=save_btn.collidepoint(mx, my), size=16)
+        draw_button(surface, save_exit_btn, "Save & Exit",
+                    hover=save_exit_btn.collidepoint(mx, my), size=14)
+        draw_button(surface, exit_btn,      "Exit Game",
+                    hover=exit_btn.collidepoint(mx, my), size=14)
 
         # Travel mode toggle button (if has horse or carpet)
         if self.world.travel.has_horse or self.world.travel.has_carpet:
@@ -753,16 +762,24 @@ class WorldMapUI:
                 return None
             return None
 
-        # Camp button → open full camp screen directly
+        # Bottom buttons
         btn_y = SCREEN_H - 55
-        camp_btn = pygame.Rect(SCREEN_W - 320, btn_y, 140, 42)
+        camp_btn      = pygame.Rect(SCREEN_W - 640, btn_y, 110, 42)
+        menu_btn      = pygame.Rect(SCREEN_W - 520, btn_y, 110, 42)
+        save_btn      = pygame.Rect(SCREEN_W - 390, btn_y, 120, 42)
+        save_exit_btn = pygame.Rect(SCREEN_W - 260, btn_y, 130, 42)
+        exit_btn      = pygame.Rect(SCREEN_W - 120, btn_y, 110, 42)
+
         if camp_btn.collidepoint(mx, my):
             return {"type": "menu"}
-
-        # Menu button
-        menu_btn = pygame.Rect(SCREEN_W - 160, btn_y, 140, 42)
         if menu_btn.collidepoint(mx, my):
             return {"type": "menu"}
+        if save_btn.collidepoint(mx, my):
+            return {"type": "world_save"}
+        if save_exit_btn.collidepoint(mx, my):
+            return {"type": "world_save_exit"}
+        if exit_btn.collidepoint(mx, my):
+            return {"type": "world_exit"}
 
         # Travel mode toggle
         if self.world.travel.has_horse or self.world.travel.has_carpet:

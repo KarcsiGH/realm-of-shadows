@@ -735,6 +735,12 @@ class Game:
                         self.add_toast(toast_msg, toast_col)
                     except Exception:
                         pass
+                elif result == "town_save":
+                    self._do_save()
+                elif result == "town_save_exit":
+                    self._do_exit_game(save_first=True)
+                elif result == "town_exit":
+                    self._do_exit_game(save_first=False)
             elif e.type == pygame.MOUSEBUTTONDOWN:
                 if e.button == 1:
                     result = self.town_ui.handle_click(mx, my)
@@ -759,6 +765,12 @@ class Game:
                     elif result == "open_party_review":
                         # Party Review from town — open CampUI without rest option
                         self.start_camp(location="town_review", return_state=S_TOWN)
+                    elif result == "town_save":
+                        self._do_save()
+                    elif result == "town_save_exit":
+                        self._do_exit_game(save_first=True)
+                    elif result == "town_exit":
+                        self._do_exit_game(save_first=False)
                 elif e.button == 4:
                     self.town_ui.handle_scroll(-1)
                 elif e.button == 5:
@@ -986,6 +998,33 @@ class Game:
         """Queue a toast notification (e.g. 'New Quest: …')."""
         from ui.renderer import GOLD
         self._toasts.append([message, color or GOLD, 3500, 3500])
+
+    # ──────────────────────────────────────────────────────────
+    #  SAVE / EXIT  helpers  (called from dungeon, world, town)
+    # ──────────────────────────────────────────────────────────
+
+    def _do_save(self):
+        """Quick-save to slot 'quicksave'. Shows a toast with the result.
+        Only valid outside combat -- callers must enforce that guard."""
+        from core.save_load import save_game as _sg
+        try:
+            ok, _path, _msg = _sg(
+                self.party,
+                world_state=self.world_state,
+                slot_name="quicksave",
+                dungeon_cache=self.dungeon_cache,
+            )
+            col  = (80, 200, 120) if ok else (220, 80, 80)
+            text = "Save game saved." if ok else "X Save failed."
+            self.add_toast(text, col)
+        except Exception as exc:
+            self.add_toast(f"X Save error: {exc}", (220, 80, 80))
+
+    def _do_exit_game(self, save_first=False):
+        """Optionally save, then cleanly quit the game loop."""
+        if save_first:
+            self._do_save()
+        self.running = False
 
     def _sfx2(self, windup_key, resolve_key, delay_ms=260):
         """Play wind-up immediately, queue resolution sound after delay_ms."""
@@ -3658,6 +3697,15 @@ class Game:
             # Open camp screen (inventory, rest, stats, etc.) — same as dungeon camp
             self.start_camp(location="overworld", return_state=S_WORLD_MAP)
 
+        elif event["type"] == "world_save":
+            self._do_save()
+
+        elif event["type"] == "world_save_exit":
+            self._do_exit_game(save_first=True)
+
+        elif event["type"] == "world_exit":
+            self._do_exit_game(save_first=False)
+
     def _process_dungeon_event(self, event):
         """Handle events from the dungeon."""
         # Show any step messages (poison ticks, curse effects, etc.)
@@ -4236,6 +4284,12 @@ class Game:
             self.pre_dungeon_state = S_DUNGEON
             self.inventory_return_state = S_DUNGEON
             self.go(S_PARTY)
+
+        elif event["type"] == "hud_save":
+            self._do_save()
+
+        elif event["type"] == "hud_exit":
+            self._do_exit_game(save_first=False)
 
     def process_combat_action(self, action):
         """Process a player combat action from the UI."""

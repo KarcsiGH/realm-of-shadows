@@ -291,6 +291,12 @@ class TownUI:
              (40, 80, 60), (80, 200, 120)),
             ("Party", "View and manage your characters — equip items, trade, check stats",
              (40, 60, 80), (80, 160, 220)),
+            ("Save Game", "Save your progress without resting",
+             (18, 50, 28), (60, 180, 80)),
+            ("Save & Exit Game", "Save your progress and quit to desktop",
+             (18, 38, 50), (60, 140, 200)),
+            ("Exit Game", "Quit to desktop without saving",
+             (60, 20, 20), (180, 60, 60)),
             ("Leave Town", "Return to the wilds",
              (80, 40, 40), RED),
         ]
@@ -2877,12 +2883,19 @@ class TownUI:
 
         # ── Hub view ──
         if self.view == self.VIEW_HUB:
-            locations = ["inn", "shop", "forge", "temple", "tavern", "jobboard", "party", "exit"]
+            locations = ["inn", "shop", "forge", "temple", "tavern", "jobboard", "party",
+                         "town_save", "town_save_exit", "town_exit", "exit"]
             by = 140
             for i, loc in enumerate(locations):
                 btn = pygame.Rect(SCREEN_W // 2 - 300, by + i * 90, 420, 78)
                 if btn.collidepoint(mx, my):
-                    if loc == "exit":
+                    if loc == "town_save":
+                        return "town_save"
+                    elif loc == "town_save_exit":
+                        return "town_save_exit"
+                    elif loc == "town_exit":
+                        return "town_exit"
+                    elif loc == "exit":
                         self.finished = True
                         return "exit"
                     elif loc == "shop":
