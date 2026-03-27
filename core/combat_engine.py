@@ -2028,19 +2028,29 @@ class CombatState:
                     e["preferred_row"] = FRONT
                     break
 
-        # Scale enemy power to party average level
+        # Scale enemy power to party average level.
+        # Uses a sqrt curve so early levels feel the difference more than late levels.
+        # Bosses are never scaled here — their base stats are already tuned per act.
         if party_chars:
             avg_level = sum(getattr(c, "level", 1) for c in party_chars) / len(party_chars)
-            scale = max(1.0, avg_level * 0.65)  # gentle curve, not 1:1
+            import math as _math
+            # sqrt gives diminishing returns: fast early, flattens later
+            # HP scale: 1.0 at L1 → ~2.8× at L10 (matches player damage growth)
+            # DMG scale: slightly steeper so higher-level enemies feel threatening
+            hp_scale  = max(1.0, 1.0 + (_math.sqrt(avg_level) - 1.0) * 0.90)
+            dmg_scale = max(1.0, 1.0 + (_math.sqrt(avg_level) - 1.0) * 1.10)
+            # Hard cap: even at max level, a bat is still a bat
+            hp_scale  = min(hp_scale,  3.5)
+            dmg_scale = min(dmg_scale, 3.0)
             for e in self.enemies:
                 if "boss" not in e.get("template_key", "").lower():
-                    e["hp"]      = max(1, int(e["hp"]     * scale))
-                    e["max_hp"]  = max(1, int(e["max_hp"] * scale))
+                    e["hp"]     = max(1, int(e["hp"]     * hp_scale))
+                    e["max_hp"] = max(1, int(e["max_hp"] * hp_scale))
                     ad = e["attack_damage"]
                     if isinstance(ad, (list, tuple)):
-                        e["attack_damage"] = (int(ad[0] * scale), int(ad[1] * scale))
+                        e["attack_damage"] = (int(ad[0] * dmg_scale), int(ad[1] * dmg_scale))
                     else:
-                        e["attack_damage"] = (int(ad * scale), int(ad * scale))
+                        e["attack_damage"] = (int(ad * dmg_scale), int(ad * dmg_scale))
 
         # Initial turn order
         self.all_combatants = self.players + self.enemies
