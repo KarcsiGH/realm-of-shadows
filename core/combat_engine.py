@@ -2398,6 +2398,19 @@ class CombatState:
         }
         tag = ELEM_TAG.get(element, "◆")
         resist_str = " (resisted)" if type_mod < 0.8 else (" (absorbed!)" if type_mod <= 0 else "")
+        msgs = [f"{name} {tag} {element} bolt → {tgt_name}: {actual_dmg} dmg{resist_str}!"]
+
+        # On-hit elemental effect from weapon
+        on_hit = weapon.get("on_hit_effect", {})
+        if on_hit and actual_dmg > 0:
+            import random as _rng
+            eff_status  = on_hit.get("status")
+            eff_chance  = on_hit.get("chance", 0.0)
+            eff_dur     = on_hit.get("duration", 2)
+            if eff_status and _rng.random() < eff_chance:
+                if apply_status_effect(target, eff_status, eff_dur, 1.0):
+                    msgs.append(f"  {tgt_name} is {eff_status}! ({eff_dur} turns)")
+
         return {
             "action": "bolt_attack",
             "hit": True,
@@ -2405,7 +2418,7 @@ class CombatState:
             "element": element,
             "attacker": actor,
             "defender": target,
-            "messages": [f"{name} {tag} {element} bolt → {tgt_name}: {actual_dmg} dmg{resist_str}!"],
+            "messages": msgs,
         }
 
     def _exec_use_consumable(self, actor, item, target=None):

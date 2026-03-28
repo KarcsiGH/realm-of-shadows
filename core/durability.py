@@ -18,9 +18,9 @@ DUR_WORN      = 30    # below this: "Worn" — moderate stat penalty
 DUR_BROKEN    = 0     # "Broken" — unusable / heavy penalties
 
 # Damage dealt to weapon per successful hit
-DUR_DECAY_WEAPON_HIT  = 1
+DUR_DECAY_WEAPON_HIT  = 3   # ~33 hits to reach Damaged — meaningful without being punishing
 # Damage dealt to armor per hit received
-DUR_DECAY_ARMOR_HIT   = 1
+DUR_DECAY_ARMOR_HIT   = 2   # armor degrades a bit slower than weapons
 # Accelerated decay for critical hits
 DUR_DECAY_CRIT_MULT   = 2
 

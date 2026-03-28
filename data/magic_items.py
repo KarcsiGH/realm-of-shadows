@@ -27,10 +27,11 @@ SECRET_ITEMS_DA1 = [
     # Mage — tiny spell boost focus
     {"name": "Carved Oak Wand", "appraised_name": "Carved Oak Wand",
      "type": "weapon", "slot": "weapon", "subtype": "Wand",
-     "rarity": "uncommon", "damage": 5, "phys_type": "blunt", "range": "ranged",
-     "spell_bonus": 2,
-     "description": "A wand carved with simple runes. Can fire arcane bolts. +2 spell power.",
-     "identified": False, "estimated_value": 40},
+     "rarity": "uncommon", "damage": 12, "phys_type": "arcane", "range": "ranged",
+     "spell_bonus": 3, "enchant_element": "arcane",
+     "on_hit_effect": {"status": "Slowed", "chance": 0.25, "duration": 2},
+     "description": "A wand carved with dampening runes. Fires arcane bolts — 25% chance to Slow target for 2 turns. +3 spell power.",
+     "identified": False, "estimated_value": 60},
 
     # Cleric — modest holy symbol
     {"name": "Polished Silver Symbol", "appraised_name": "Polished Silver Symbol",
@@ -103,12 +104,12 @@ SECRET_ITEMS_T1 = [
      "identified": False, "estimated_value": 70},
 
     {"name": "Wand of Sparks", "appraised_name": "Wand of Sparks", "type": "weapon", "slot": "weapon",
-     "subtype": "Wand", "rarity": "uncommon", "damage": 6,
-     "phys_type": "blunt", "range": "ranged",
-     "spell_bonus": 3,
-     "enchant_element": "lightning", "enchant_bonus": 3,
-     "description": "A wand crackling with static. Fires lightning bolts. +3 spell power.",
-     "identified": False, "estimated_value": 65},
+     "subtype": "Wand", "rarity": "uncommon", "damage": 16,
+     "phys_type": "lightning", "range": "ranged",
+     "spell_bonus": 4, "enchant_element": "lightning",
+     "on_hit_effect": {"status": "Stunned", "chance": 0.20, "duration": 1},
+     "description": "A wand crackling with static. Fires lightning bolts — 20% chance to Stun for 1 turn. +4 spell power.",
+     "identified": False, "estimated_value": 90},
 
     {"name": "Amulet of the Owl", "appraised_name": "Amulet of the Owl", "type": "accessory", "slot": "ring1",
      "subtype": "amulet", "rarity": "uncommon",
@@ -153,11 +154,12 @@ SECRET_ITEMS_T2 = [
      "identified": False, "estimated_value": 180},
 
     {"name": "Orb of Fading Sight", "appraised_name": "Orb of Fading Sight", "type": "weapon", "slot": "weapon",
-     "subtype": "Orb", "rarity": "rare", "damage": 6, "phys_type": "blunt", "range": "ranged",
+     "subtype": "Orb", "rarity": "rare", "damage": 20, "phys_type": "shadow", "range": "ranged",
      "effect": {"int_bonus": 3, "wis_bonus": 2},
-     "spell_bonus": 4,
-     "description": "A dark crystal orb. Glimpses of the Fading swirl within. +3 INT, +2 WIS, +4 spell.",
-     "identified": False, "estimated_value": 200},
+     "spell_bonus": 5, "enchant_element": "shadow",
+     "on_hit_effect": {"status": "Weakened", "chance": 0.30, "duration": 2},
+     "description": "A dark crystal orb swirling with Fading energy. Shadow bolts — 30% chance to Weaken target (reduced damage) for 2 turns. +3 INT, +2 WIS, +5 spell.",
+     "identified": False, "estimated_value": 240},
 
     {"name": "Boots of the Wind", "appraised_name": "Boots of the Wind", "type": "armor", "slot": "feet",
      "subtype": "boots", "rarity": "rare",

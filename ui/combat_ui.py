@@ -504,7 +504,8 @@ class CombatUI:
             for gi, group_key in enumerate(group_order):
                 group_enemies = groups[group_key]
                 alive_enemies = [e for e in group_enemies if e.get("alive", True)]
-                is_stack = len(group_enemies) > 1
+                # Stack = multiple ALIVE enemies of same type; dead ones don't count
+                is_stack = len(alive_enemies) > 1
 
                 cx = start_x + gi * (card_w + GAP)
                 cy = ry + 7
@@ -601,24 +602,23 @@ class CombatUI:
                         rc2 = ROW_COLORS[rep.get("row", FRONT)]
                         draw_text(surface, f"[{row_key[0].upper()}]",
                                   card_r.right - 22, cy + 3, rc2, 9)
-                        # Status effects — aggregate across all alive in stack,
-                        # always visible. Merges effects so if any alive enemy has
-                        # a status it shows on the shared card.
-                        _all_se: dict = {}
-                        for _ae in alive_enemies:
-                            for _ef in _ae.get("status_effects", []):
-                                _n = _ef["name"] if isinstance(_ef, dict) else _ef
-                                _d = _ef.get("duration", 0) if isinstance(_ef, dict) else 0
-                                if _n not in _all_se or _d > _all_se[_n]:
-                                    _all_se[_n] = _d
-                        _se_list = [{"name": n, "duration": d}
-                                    for n, d in _all_se.items()]
-                        if _se_list:
-                            # Anchor to card bottom so badges always fit
-                            _badge_y = card_r.bottom - 20
-                            _draw_status_badges(surface, _se_list,
-                                                cx + 4, _badge_y,
-                                                card_w - 8, font_size=10)
+
+                    # Status badges — always visible, for ALL card types
+                    # Aggregate across every alive enemy in the group
+                    _all_se: dict = {}
+                    for _ae in alive_enemies:
+                        for _ef in _ae.get("status_effects", []):
+                            _n = _ef["name"] if isinstance(_ef, dict) else _ef
+                            _d = _ef.get("duration", 0) if isinstance(_ef, dict) else 0
+                            if _n not in _all_se or _d > _all_se[_n]:
+                                _all_se[_n] = _d
+                    _se_list = [{"name": n, "duration": d}
+                                for n, d in _all_se.items()]
+                    if _se_list:
+                        _badge_y = card_r.bottom - 20
+                        _draw_status_badges(surface, _se_list,
+                                            cx + 4, _badge_y,
+                                            card_w - 8, font_size=10)
 
                     # Stack hint text (when in targeting mode)
                     if is_stack and alive and is_targeting:

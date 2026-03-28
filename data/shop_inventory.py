@@ -65,7 +65,9 @@ GENERAL_STORE = {
          "buy_price": 55, "sell_price": 22, "identified": True},
 
         {"name": "Wooden Staff", "type": "weapon", "slot": "weapon",
-         "subtype": "Staff", "rarity": "common", "damage": 10,
+         "subtype": "Staff", "rarity": "common", "damage": 14,
+         "enchant_element": "arcane",
+         "on_hit_effect": {"status": "Slowed", "chance": 0.20, "duration": 1},
          "damage_stat": {"DEX": 0.35, "STR": 0.08},
          "phys_type": "blunt", "range": "melee",
          "stat_bonuses": {"INT": 1},
