@@ -4364,14 +4364,14 @@ class Game:
                 for c in self.party:
                     _eff = c.effective_stats() if hasattr(c, "effective_stats") else c.stats
                     max_res = get_all_resources(c.class_name, _eff, c.level)
+                    import math as _math
                     max_hp = max_res.get("HP", 1)
-                    c.resources["HP"] = min(max_hp, c.resources.get("HP", 0) + int(max_hp * 0.25))
-                    # Restore 25% SP/MP/Ki — same pace as HP. Rest helps but doesn't
-                    # fully refill resources; the danger of camping limits recovery.
+                    c.resources["HP"] = min(max_hp, c.resources.get("HP", 0) + _math.ceil(max_hp * 0.25))
+                    # Restore 25% SP/MP/Ki — ceil prevents truncation gap at max
                     for res, max_val in max_res.items():
                         if res != "HP" and max_val > 0:
                             cur = c.resources.get(res, 0)
-                            c.resources[res] = min(max_val, cur + int(max_val * 0.25))
+                            c.resources[res] = min(max_val, cur + _math.ceil(max_val * 0.25))
                 # Apply poison ticks during rest — poison doesn't pause for sleep
                 from core.status_effects import get_status_effects
                 poison_msgs = []

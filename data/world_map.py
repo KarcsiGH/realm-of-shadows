@@ -944,14 +944,15 @@ class WorldState:
             max_res = get_all_resources(c.class_name, c.stats, c.level)
             old_hp = c.resources.get("HP", 0)
             max_hp = max_res.get("HP", 1)
-            heal_hp = int(max_hp * 0.25)
+            import math as _math
+            heal_hp = _math.ceil(max_hp * 0.25)
             c.resources["HP"] = min(max_hp, old_hp + heal_hp)
-            # Restore 25% SP/MP/Ki per camp rest — same pace as HP
+            # Restore 25% SP/MP/Ki — ceil prevents truncation gap at max
             for res_name, max_val in max_res.items():
                 if res_name == "HP" or max_val <= 0:
                     continue
                 cur_r = c.resources.get(res_name, 0)
-                c.resources[res_name] = min(max_val, cur_r + int(max_val * 0.25))
+                c.resources[res_name] = min(max_val, cur_r + _math.ceil(max_val * 0.25))
             healed[c.name] = c.resources["HP"] - old_hp
 
         # Apply one poison tick during rest
