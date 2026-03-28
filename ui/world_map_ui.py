@@ -757,7 +757,7 @@ class WorldMapUI:
         btn_y = SCREEN_H - 55
         camp_btn = pygame.Rect(SCREEN_W - 320, btn_y, 140, 42)
         if camp_btn.collidepoint(mx, my):
-            return {"type": "menu"}
+            return {"type": "camp"}
 
         # Menu button
         menu_btn = pygame.Rect(SCREEN_W - 160, btn_y, 140, 42)
