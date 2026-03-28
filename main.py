@@ -3716,6 +3716,35 @@ class Game:
             sfx.stop_ambient()
             sfx.play_ambient(biome_sound)
 
+    def _check_proximity_discoveries(self):
+        """Reveal locations within discovery_radius of the party's current position."""
+        if not self.world_state:
+            return
+        from data.world_map import LOCATIONS
+        from core.story_flags import get_flag
+        import math, random
+        px, py = self.world_state.party_x, self.world_state.party_y
+        for loc_id, loc in LOCATIONS.items():
+            if loc_id in self.world_state.discovered_locations:
+                continue
+            # Check required_key gate
+            req_key = loc.get("required_key")
+            if req_key and not self.world_state.has_key(req_key):
+                continue
+            radius = loc.get("discovery_radius", 0)
+            if radius <= 0:
+                continue
+            dist = math.sqrt((loc["x"] - px)**2 + (loc["y"] - py)**2)
+            if dist <= radius:
+                # discovery_chance: some locations are harder to notice
+                chance = loc.get("discovery_chance", 100)
+                if random.randint(1, 100) <= chance:
+                    self.world_state.discovered_locations.add(loc_id)
+                    loc_name = loc.get("name", loc_id.replace("_", " ").title())
+                    loc_type = loc.get("type", "location")
+                    icon = "🏰" if loc_type == "dungeon" else "🏘" if loc_type == "town" else "✦"
+                    self.add_toast(f"{icon} Discovered: {loc_name}", (180, 220, 255))
+
     def _process_world_event(self, event):
         """Handle events from the world map."""
         if event is None:
@@ -3723,6 +3752,7 @@ class Game:
             # update the biome ambient in case terrain changed.
             if self.state == S_WORLD_MAP:
                 self._update_world_biome_sound()
+                self._check_proximity_discoveries()
             return
 
         if event["type"] == "encounter":

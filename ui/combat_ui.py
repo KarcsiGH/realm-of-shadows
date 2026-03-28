@@ -813,13 +813,25 @@ class CombatUI:
             return
         if self.action_mode in ("target_attack", "target_ability"):
             if self.selected_ability:
-                ab_name = self.selected_ability["name"]
+                ab = self.selected_ability
+                ab_name = ab["name"]
+                tgt_spec = ab.get("target", "")
+                ab_type  = ab.get("type", "")
+                if ab_type in ("aoe", "special") and tgt_spec == "row":
+                    prompt = f"→ Click ANY enemy in target row — {ab_name} hits that whole row  (ESC to cancel)"
+                    draw_text(surface, prompt, SCREEN_W // 2 - 280, ACTION_Y + 32, (255, 160, 60), 14, bold=True)
+                elif ab_type in ("aoe", "special") and tgt_spec == "stack":
+                    prompt = f"→ Click ANY enemy in target stack — {ab_name} hits the whole group  (ESC to cancel)"
+                    draw_text(surface, prompt, SCREEN_W // 2 - 280, ACTION_Y + 32, (255, 200, 80), 14, bold=True)
+                else:
+                    prompt = f"→ Click an enemy to use  {ab_name}  (ESC to cancel)"
+                    draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (220, 120, 100), 15, bold=True)
             else:
                 # Basic attack — show equipped weapon name
                 weapon = actor.get("weapon", {}) if actor else {}
                 ab_name = weapon.get("name", "Attack")
-            prompt = f"→ Click an enemy to use  {ab_name}  (ESC to cancel)"
-            draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (220, 120, 100), 15, bold=True)
+                prompt = f"→ Click an enemy to use  {ab_name}  (ESC to cancel)"
+                draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (220, 120, 100), 15, bold=True)
             return
 
         self.hover_action = -1
@@ -1360,9 +1372,19 @@ class CombatUI:
                 self.selected_ability = ab
                 self.action_mode = "target_heal"
                 return None
-            # AoE attacks / special: auto-broadcast
+            # AoE attacks — route by target spec:
+            # front_row / back_row / aoe_enemy: auto-fire (no click needed)
+            # row / stack: need an enemy click to establish reference row/stack
             if ab_type in ("aoe", "special"):
-                return {"type": "ability", "ability": ab, "target": None}
+                tgt_spec = ab.get("target", "aoe_enemy")
+                if tgt_spec in ("row", "stack"):
+                    # Must click a target enemy to determine which row/stack
+                    self.selected_ability = ab
+                    self.action_mode = "target_ability"
+                    return None
+                else:
+                    # front_row, back_row, aoe_enemy — auto-broadcast, no target needed
+                    return {"type": "ability", "ability": ab, "target": None}
             # Passives: no-op guard
             if ab_type == "passive":
                 return None

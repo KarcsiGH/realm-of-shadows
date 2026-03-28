@@ -483,6 +483,33 @@ class WorldMapUI:
                 draw_text(surface, "Press ENTER to access port",
                           SCREEN_W // 2 - 120, SCREEN_H - 90, LOC_PORT_COL, 15)
 
+        # Nearby undiscovered location hint — compass direction + distance
+        import math as _math
+        px, py = self.world.party_x, self.world.party_y
+        best_hint = None
+        best_dist = 999
+        for _lid, _loc in LOCATIONS.items():
+            if _lid in self.world.discovered_locations:
+                continue
+            req = _loc.get("required_key")
+            if req and not self.world.has_key(req):
+                continue
+            _r = _loc.get("discovery_radius", 0)
+            if _r <= 0:
+                continue
+            _dist = _math.sqrt((_loc["x"] - px)**2 + (_loc["y"] - py)**2)
+            hint_dist = _r * 3   # show hint when within 3× discovery radius
+            if _dist <= hint_dist and _dist < best_dist:
+                best_dist = _dist
+                dx = _loc["x"] - px; dy = _loc["y"] - py
+                angle = _math.degrees(_math.atan2(dy, dx))
+                dirs = ["E","SE","S","SW","W","NW","N","NE"]
+                compass = dirs[int((angle + 22.5) / 45) % 8]
+                best_hint = (f"Something lies to the {compass} ({int(_dist)} tiles away)",
+                             (180, 200, 255))
+        if best_hint:
+            draw_text(surface, best_hint[0], 15, SCREEN_H - 44, best_hint[1], 12)
+
         # Controls hint
         draw_text(surface, "Arrow keys / WASD to move",
                   15, SCREEN_H - 25, DARK_GREY, 12)
