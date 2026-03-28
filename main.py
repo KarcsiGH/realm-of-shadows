@@ -1195,12 +1195,20 @@ class Game:
             t[2] -= dt
 
     def _notify_quests_done(self, quest_ids):
-        """Queue a prominent banner for each newly-completed quest and award rewards."""
+        """Queue a prominent banner for each newly-completed quest and award rewards.
+        Uses quest_rewarded.{qid} flag to prevent double-awarding on repeated calls."""
         if not quest_ids:
             return
         from data.story_data import QUESTS
         from core.progression import can_level_up
+        from core.story_flags import get_flag as _gf, set_flag as _sf
         for qid in quest_ids:
+            # Guard: only award rewards once per quest
+            _reward_key = f"quest_rewarded.{qid}"
+            if _gf(_reward_key):
+                continue   # already awarded — show no banner, skip everything
+            _sf(_reward_key, True)   # mark before awarding
+
             q = QUESTS.get(qid, {})
             name  = q.get("name", qid)
             gold  = q.get("reward_gold", 0)
@@ -1215,7 +1223,7 @@ class Game:
                     else:
                         c.xp = getattr(c, "xp", 0) + xp
 
-            # ── Award gold split across party (or to first member) ──
+            # ── Award gold split across party ────────────────────────
             if gold and self.party:
                 share = gold // len(self.party)
                 remainder = gold - share * len(self.party)

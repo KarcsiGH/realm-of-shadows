@@ -4617,6 +4617,9 @@ TAVERN_RUMORS = {
         "The old Warden traditions talked about warriors who crossed paths — soldiers who learned the arcane, or mages who learned the blade. The guild calls it a transition.",
         "My uncle was a ranger who spent years with a shaman in the hills. Came back changed. Said he could feel the land breathing. Never fought the same way again.",
         "The Crystalspire Mages say there's a discipline beyond pure magic — something that fuses it with devotion. A Mystic, they call it. Rare. Harder than either alone.",
+        # New settlement hints
+        "There's a mining post near the Dragon's Tooth — Emberveil, they call it. Volcanic rock, sulphur smell, and a blacksmith who knows more about the Warden routes than he lets on.",
+        "A fishing village on the mainland coast near the Windswept Isle. The Anchorage. Half researchers, half fisherfolk. An old elf there has lived long enough to remember the Wardens.",
     ],
     3: [
         "Eastport has gone dark. No ships, no messages. Nothing.",
@@ -4632,6 +4635,11 @@ TAVERN_RUMORS = {
         "Valdris's tower has been visible from the hills. Something in it is moving.",
         "The Cathedral in Sanctum is seeing a thousand pilgrims a day. People want somewhere to pray.",
         "If those Warden-blooded people fail... I don't think anyone's coming after them.",
+        # New settlement hints
+        "There's a rebel camp in the Ashlands — the Holdfast. They've been holding the Fading back by sheer stubbornness. The last Warden initiate runs supplies there.",
+        "The Holdfast is northeast of Thornhaven, deep in the Ashlands. Dangerous road but they'll take any help they can get. The commander there knows the Spire's layout.",
+        "A smith in Emberveil — Renn — says there's a back way into Dragon's Tooth. Lava tube on the east face. Skips the first floor entirely.",
+        "The elf at the Anchorage is three hundred years old. Knew the Keeper of Windswept Isle personally. If anyone knows how to reach her, it's them.",
     ],
 }
 
@@ -7008,6 +7016,7 @@ _NEW_DIALOGUES = {
                         "text": "Keep your weapons sheathed in the capital. The city watch doesn't ask twice. You're registered with the Imperial Guild? Good. That makes this easier.",
                         "choices": [
                             {"text": "What's the situation in the city?", "next": "situation"},
+                            {"text": "What's happening in the Ashlands?", "next": "ashlands"},
                             {"text": "We understand.", "next": None},
                         ],
                     },
@@ -7015,6 +7024,16 @@ _NEW_DIALOGUES = {
                         "speaker": "City Guard",
                         "text": "Tense. There are refugees from the eastern villages — hundreds came in last month. Nobody knows where the villages went. The Governor is managing public order but it's fragile. Don't start anything.",
                         "choices": [{"text": "We won't.", "next": None}],
+                    },
+                    "ashlands": {
+                        "speaker": "City Guard",
+                        "text": "Off the record? There is a rebel camp out there — they call it "
+                                "the Holdfast. Northeast of here, deep in the Ashlands fog.\n"
+                                "The Governor calls them insurgents. I call them the only reason "
+                                "the Fading has not taken another fifty miles of ground.\n"
+                                "If you are heading that way — the last Warden initiate runs "
+                                "their supplies. Name is Dael. Worth talking to.",
+                        "choices": [{"text": "Thank you.", "next": None}],
                     },
                 },
             },
@@ -7996,6 +8015,7 @@ _AMBIENT_DIALOGUES = {
                         "choices": [
                             {"text": "What ships are in port?",       "next": "ships"},
                             {"text": "Is the sea route safe?",        "next": "safe"},
+                            {"text": "What's east of here?",          "next": "east_ports"},
                             {"text": "Just passing through.",         "next": "bye"},
                         ],
                     },
@@ -8010,6 +8030,18 @@ _AMBIENT_DIALOGUES = {
                         "text": "Define safe. The water's calm enough. It's what's under it "
                                 "that's changed. Captains are reporting lights in the deep "
                                 "that follow the hull. I'm keeping my own feet on dry land.",
+                        "next": "start",
+                    },
+                    "east_ports": {
+                        "speaker": "Harbor Master",
+                        "text": "Two places worth knowing. Emberveil, on the Dragon's Tooth "
+                                "island — volcanic mining post, maybe two hundred souls. "
+                                "The smith there, Renn, knows those lava-cave routes better "
+                                "than anyone.\n"
+                                "And the Anchorage, on the mainland coast opposite the "
+                                "Windswept Isle. Crystalspire researchers and fisherfolk. "
+                                "There is an elf there, Elder Vaethari — very old, very sharp. "
+                                "Worth speaking to if you are headed for the Isle.",
                         "next": "start",
                     },
                     "bye": {
