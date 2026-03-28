@@ -1957,6 +1957,55 @@ NPC_DIALOGUES = {
     #  BESS — Innkeeper
     # ─────────────────────────────────────────────────────────
     "bess": [
+        # ── Act 3: after Spire known / explored ──────────────────────
+        {
+            "conditions": [
+                {"flag": "maren.left",              "op": "==", "value": True},
+                {"flag": "explored.valdris_spire.floor1", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "bess_act3_spire",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Bess",
+                        "text": "You've been to the Spire, then. I can see it on you.\n"
+                                "A traveller came through yesterday — said the tower wards "
+                                "are still active. Whatever Maren went in to stop, "
+                                "it hasn't happened yet. There's still time.",
+                        "on_enter": [{"action": "meet_npc", "npc": "bess"}],
+                        "choices": [
+                            {"text": "Have you heard anything else about the Spire?",
+                             "next": "spire_word"},
+                            {"text": "We'll bring her back if we can.", "next": "bring_back"},
+                            {"text": "Just checking in.", "next": "bye"},
+                        ],
+                    },
+                    "spire_word": {
+                        "speaker": "Bess",
+                        "text": "Only what travellers bring through, and most of them are "
+                                "too frightened to go near the Ashlands.\n"
+                                "One thing stands out: no one who's gone in has come out. "
+                                "But the wards pulse every few hours, like a heartbeat. "
+                                "Whatever is happening in there, it isn't finished.",
+                        "next": "start",
+                    },
+                    "bring_back": {
+                        "speaker": "Bess",
+                        "text": "That's all I ask. She paid for three more nights "
+                                "when she left — in advance.\n"
+                                "I think that was her way of saying she planned to come back.",
+                        "next": "bye",
+                    },
+                    "bye": {
+                        "speaker": "Bess",
+                        "text": "The Rusty Flagon will be here when you're done. "
+                                "It always is.",
+                        "end": True,
+                    },
+                },
+            },
+        },
         # ── After Maren leaves (Act 2+) ──────────────────────────────
         {
             "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
@@ -2004,9 +2053,11 @@ NPC_DIALOGUES = {
                     },
                     "road_word": {
                         "speaker": "Bess",
-                        "text": "Nothing reliable. A carter said he passed a woman matching "
-                                "her description on the north road, moving fast. "
-                                "That's all I have. She didn't want to be followed.",
+                        "text": "A carter passed through from the Ashlands — said the tower "
+                                "wards are still active. 'Pulsing like a second sun,' "
+                                "his words.\n"
+                                "That means whatever she went to stop hasn't happened yet. "
+                                "She hasn't failed. Go find her.",
                         "next": "start",
                     },
                     "bye": {
@@ -8322,41 +8373,502 @@ _TRAINER_DIALOGUES = {
 
     # ── Emberveil Warden contact ──────────────────────────────────────────────
     "renn_emberveil": [
-        {"condition": None, "lines": [
-            "Name's Renn. I run the forge — and I keep an eye on Dragon's Tooth for the old Order.",
-            "There's a back way into the Tooth. Lava tube, third vent on the east face.",
-            "Bypasses the first floor entirely. You'll come out in the mid-caves.",
-            "My terms: you clear whatever's nesting near the caldera. Deal?",
-        ]},
+        {
+            "conditions": [],
+            "tree": {
+                "id": "renn_emberveil_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Master Forger Renn",
+                        "text": "Name's Renn. I run the forge — and I keep an eye on "
+                                "Dragon's Tooth for the old Order.\n"
+                                "There's a back way into the Tooth. "
+                                "Lava tube, third vent on the east face.",
+                        "choices": [
+                            {"text": "Tell me more about the back entrance.",
+                             "next": "back_way"},
+                            {"text": "What's your connection to the Warden Order?",
+                             "next": "warden"},
+                            {"text": "Any news from the Ashlands?", "next": "ashlands"},
+                            {"text": "Thanks for the tip.", "next": "bye"},
+                        ],
+                    },
+                    "back_way": {
+                        "speaker": "Master Forger Renn",
+                        "text": "Third vent on the east face — you'll know it by the "
+                                "blue-edged smoke. Bypasses the first floor entirely, "
+                                "puts you in the mid-caves.\n"
+                                "My terms: clear whatever's nesting near the caldera. "
+                                "The smoke's changed colour and that means something "
+                                "moved in.",
+                        "next": "start",
+                    },
+                    "warden": {
+                        "speaker": "Master Forger Renn",
+                        "text": "My grandmother was a Warden-Commander. "
+                                "She taught me the signs and the routes before she died.\n"
+                                "The Order's gone, but the information isn't. "
+                                "Seems worth passing on.",
+                        "next": "start",
+                    },
+                    "ashlands": {
+                        "speaker": "Master Forger Renn",
+                        "text": "The Fading fog is visible from the caldera on a clear day. "
+                                "Getting closer every month.\n"
+                                "If what's in Valdris' Spire doesn't get stopped, "
+                                "Emberveil becomes an island in a sea of nothing. "
+                                "I'd prefer that not happen.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Master Forger Renn",
+                        "text": "Come back when you've cleared the caldera. "
+                                "I'll have something worth your while.",
+                        "end": True,
+                    },
+                },
+            },
+        },
     ],
 
     # ── The Anchorage Warden contact ──────────────────────────────────────────
     "vaethari_anchorage": [
-        {"condition": None, "lines": [
-            "I have watched three hundred years of this world. The Fading is not new — but this outbreak is different.",
-            "The Keeper of Windswept Isle is an old friend. Or was, before the Fading took her.",
-            "She would not harm you willingly. Whatever she has become, part of her remembers.",
-            "Approach the central shrine. Speak the old words: Aethen, sol vareth, kai.",
-            "She will hear you. Whether she answers... that I cannot promise.",
-        ]},
+        {
+            "conditions": [],
+            "tree": {
+                "id": "vaethari_anchorage_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Vaethari",
+                        "text": "I have watched three hundred years of this world. "
+                                "The Fading is not new — the wards have frayed before.\n"
+                                "But this outbreak is different. Something with will "
+                                "is driving it, not merely entropy.",
+                        "choices": [
+                            {"text": "Tell us about Windswept Isle.",
+                             "next": "about_isle"},
+                            {"text": "What do you know about Valdris?",
+                             "next": "about_valdris"},
+                            {"text": "What are the Hearthstones?", "next": "hearthstones"},
+                            {"text": "Thank you, Elder.", "next": "bye"},
+                        ],
+                    },
+                    "about_isle": {
+                        "speaker": "Elder Vaethari",
+                        "text": "The Keeper of Windswept Isle is an old friend. "
+                                "Or was, before the Fading took her.\n"
+                                "She would not harm you willingly. "
+                                "Whatever she has become, part of her remembers.\n"
+                                "Approach the central shrine. "
+                                "Speak the old words: Aethen, sol vareth, kai.\n"
+                                "She will hear you. Whether she answers — "
+                                "that I cannot promise.",
+                        "next": "start",
+                    },
+                    "about_valdris": {
+                        "speaker": "Elder Vaethari",
+                        "text": "Valdris was a Senior Warden. Brilliant and reckless "
+                                "in equal measure.\n"
+                                "He believed the wards could be strengthened permanently — "
+                                "not just maintained, but made eternal. "
+                                "He attempted a ritual that required a sacrifice of will.\n"
+                                "The Fading claimed him before the ritual completed. "
+                                "What remains is something that was Valdris "
+                                "and chose not to end.",
+                        "next": "start",
+                    },
+                    "hearthstones": {
+                        "speaker": "Elder Vaethari",
+                        "text": "Ward anchor points — crystallised concentrations of "
+                                "the original binding magic.\n"
+                                "Each stone reinforces a section of the great ward network. "
+                                "Scattered when the Order fell, "
+                                "but recoverable if someone knows where to look.\n"
+                                "You have them, I presume, or you would not be here. "
+                                "Good. Take them to the Spire anchor points. "
+                                "The binding will complete itself.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Elder Vaethari",
+                        "text": "Three hundred years of watching, and still the young "
+                                "ones have to be the ones who act.\n"
+                                "Go well.",
+                        "end": True,
+                    },
+                },
+            },
+        },
     ],
 
     # ── The Holdfast Warden contacts ──────────────────────────────────────────
+    # ── Quartermaster Dael — last Warden initiate, camp quartermaster ─────────
     "dael_holdfast": [
-        {"condition": None, "lines": [
-            "Warden Initiate Dael. Last one standing, near as I can tell.",
-            "I never finished my training — the Order fell before I could take my oaths.",
-            "But I know enough. The Spire feeds on despair. Go in angry, not afraid.",
-            "Supplies are thin. Anything you can spare helps the camp.",
-        ]},
+        # After Maren entered the Spire — different framing
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "dael_holdfast_maren_gone",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Quartermaster Dael",
+                        "text": "Warden Initiate Dael. You must be the Wardens Maren "
+                                "told me to watch for.\n"
+                                "She left a note at the camp entrance — said you'd come eventually. "
+                                "I've been holding it.",
+                        "choices": [
+                            {"text": "What does the note say?", "next": "the_note"},
+                            {"text": "When did she arrive here?", "next": "when_arrived"},
+                            {"text": "What do you know about the Spire?", "next": "spire_info"},
+                            {"text": "We need supplies for the Spire approach.", "next": "supplies"},
+                        ],
+                    },
+                    "the_note": {
+                        "speaker": "Quartermaster Dael",
+                        "text": "Here.\n\n"
+                                "[The note reads: 'They will come from the south. "
+                                "Tell them the Spire wards are still active — "
+                                "that means he hasn't completed the ritual yet. "
+                                "There is still time. I went ahead to find the anchor points. "
+                                "I did not go in fear. Do not come in fear either. — M']",
+                        "next": "start",
+                    },
+                    "when_arrived": {
+                        "speaker": "Quartermaster Dael",
+                        "text": "About a week ago. Stayed one night, traded some coin for "
+                                "supplies, and left before dawn.\n"
+                                "Scout Mira watched her go. Said she walked toward the Spire "
+                                "like someone walking to a meeting they'd been dreading "
+                                "for years. Calm. Deliberate.\n"
+                                "None of us have seen anyone come back out. "
+                                "But the tower wards are still intact — "
+                                "that means whatever she went in to stop hasn't happened yet.",
+                        "next": "start",
+                    },
+                    "spire_info": {
+                        "speaker": "Quartermaster Dael",
+                        "text": "The Spire draws on something called the Lingering Will — "
+                                "a consciousness that refused the Fading and bound itself "
+                                "to the tower instead.\n"
+                                "My training said: don't let it speak at length. "
+                                "It uses grief. It finds the thing you most regret "
+                                "and it offers to fix it.\n"
+                                "Don't bargain. Don't hesitate. "
+                                "The wards can still be restored if you reach the top floor.",
+                        "next": "start",
+                    },
+                    "supplies": {
+                        "speaker": "Quartermaster Dael",
+                        "text": "We're thin but we share what we have. "
+                                "Sarev has authorised a resupply for any Warden-aligned party "
+                                "heading for the Spire.\n"
+                                "The Shadow Throne is beyond the Spire to the northeast — "
+                                "don't attempt it before the Spire is cleared. "
+                                "The Throne is sealed until the Lingering Will is broken.",
+                        "next": "bye",
+                    },
+                    "bye": {
+                        "speaker": "Quartermaster Dael",
+                        "text": "Go in angry, not afraid. That's the only advice I have "
+                                "that's worth anything.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Default — before Maren left
+        {
+            "conditions": [],
+            "tree": {
+                "id": "dael_holdfast_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Quartermaster Dael",
+                        "text": "Warden Initiate Dael. Last one standing, near as I can tell.\n"
+                                "I never finished my training — the Order fell before I could "
+                                "take my oaths. But I know enough to keep this camp alive.",
+                        "choices": [
+                            {"text": "What can you tell us about the Spire?", "next": "spire_info"},
+                            {"text": "What's the situation here at the Holdfast?",
+                             "next": "situation"},
+                            {"text": "Stay safe.", "next": "bye"},
+                        ],
+                    },
+                    "spire_info": {
+                        "speaker": "Quartermaster Dael",
+                        "text": "Valdris' Spire is north of here, in the deep Ashlands. "
+                                "You can't miss it — black stone, no windows, "
+                                "wards that make your teeth ache.\n"
+                                "The Lingering Will inside it is what's driving the Fading. "
+                                "Stop that, and the worst of it should ease.",
+                        "next": "start",
+                    },
+                    "situation": {
+                        "speaker": "Quartermaster Dael",
+                        "text": "We hold this position as long as we can. "
+                                "Every day we hold it is another day for the villages "
+                                "further south to evacuate.\n"
+                                "The Fading pushes harder each week. "
+                                "Whatever you're doing out there — do it faster.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Quartermaster Dael",
+                        "text": "Watch the Ashlands fog. It's not natural.",
+                        "end": True,
+                    },
+                },
+            },
+        },
     ],
+
+    # ── Commander Sarev — rebel leader, pragmatist ──────────────────────────
     "sarev_holdfast": [
-        {"condition": None, "lines": [
-            "The empire calls us rebels. Valdris calls us insurgents.",
-            "We call ourselves alive — which is more than most Ashlanders can say.",
-            "I don't care about thrones or Orders. I want these people safe.",
-            "Help us hold the line, and we'll help you reach the Spire.",
-        ]},
+        # After Maren entered — knows she went in
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "sarev_holdfast_act3",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Commander Sarev",
+                        "text": "You're the Wardens she mentioned. Good.\n"
+                                "The scholar — Maren — entered the Spire six days ago. "
+                                "No one's come out. But the wards are still up, "
+                                "which means the ritual hasn't completed.\n"
+                                "You still have a window.",
+                        "choices": [
+                            {"text": "What do you know about the Spire's defenses?",
+                             "next": "defenses"},
+                            {"text": "Tell me about the Shadow Throne.", "next": "throne"},
+                            {"text": "Why are you helping us?", "next": "why_help"},
+                            {"text": "We're ready to move.", "next": "ready"},
+                        ],
+                    },
+                    "defenses": {
+                        "speaker": "Commander Sarev",
+                        "text": "Six floors, each one worse than the last. "
+                                "The Spire summons things — echoes of fallen Wardens, "
+                                "mostly. Corrupted, angry, lethal.\n"
+                                "The thing at the top is what she calls a Lingering Will. "
+                                "My scouts say it projects illusions. "
+                                "Don't trust what you see on the upper floors.",
+                        "next": "start",
+                    },
+                    "throne": {
+                        "speaker": "Commander Sarev",
+                        "text": "The Shadow Throne is northeast of the Spire — "
+                                "about four hours on foot through the Ashlands.\n"
+                                "It's sealed while the Lingering Will exists. "
+                                "Break that first. Then the Throne becomes accessible.\n"
+                                "That's where the Fading began, and where it can end. "
+                                "The Hearthstones you carry are the key.",
+                        "next": "start",
+                    },
+                    "why_help": {
+                        "speaker": "Commander Sarev",
+                        "text": "Because I want the Ashlands free. "
+                                "Not free of Valdris only — free of the empire too, "
+                                "eventually.\n"
+                                "But one problem at a time. "
+                                "Valdris is killing my people faster than the empire is. "
+                                "You stop the Fading, and I'll owe you a debt. "
+                                "I pay my debts.",
+                        "next": "start",
+                    },
+                    "ready": {
+                        "speaker": "Commander Sarev",
+                        "text": "Then go. The Spire is north-northeast, "
+                                "two hours through the Ashlands.\n"
+                                "I'll keep a light burning here. "
+                                "If you're not back in three days — "
+                                "well. I'll think of something to tell the survivors.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Default
+        {
+            "conditions": [],
+            "tree": {
+                "id": "sarev_holdfast_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Commander Sarev",
+                        "text": "The empire calls us rebels. Valdris calls us insurgents.\n"
+                                "We call ourselves alive — which is more than most "
+                                "Ashlanders can say.",
+                        "choices": [
+                            {"text": "What's your goal here?", "next": "goal"},
+                            {"text": "Can you tell us about Valdris' Spire?",
+                             "next": "spire"},
+                            {"text": "We may need your help soon.", "next": "help"},
+                            {"text": "We'll be in touch.", "next": "bye"},
+                        ],
+                    },
+                    "goal": {
+                        "speaker": "Commander Sarev",
+                        "text": "Simple: protect what's left of the Ashlands. "
+                                "When the Fading passes — if it passes — "
+                                "we want to still be standing here.\n"
+                                "The empire can negotiate with survivors. "
+                                "They can't negotiate with ash.",
+                        "next": "start",
+                    },
+                    "spire": {
+                        "speaker": "Commander Sarev",
+                        "text": "Black tower, north of here. Six floors of things "
+                                "that want you dead, and something at the top "
+                                "that wants worse than that.\n"
+                                "My scouts don't go within half a mile. "
+                                "Not after what happened to the last ones.",
+                        "next": "start",
+                    },
+                    "help": {
+                        "speaker": "Commander Sarev",
+                        "text": "You want my help, help us first. "
+                                "Hold the perimeter, clear a route through the Ashlands, "
+                                "or just survive long enough to matter.\n"
+                                "Prove you're worth backing. Then we talk.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Commander Sarev",
+                        "text": "Don't get killed before you're useful.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ── Scout Mira — witnessed Maren's approach to the Spire ────────────────
+    "ambient_scout": [
+        {
+            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "tree": {
+                "id": "scout_mira_maren_witness",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Scout Mira",
+                        "text": "I watched that scholar — Maren — walk toward the Spire "
+                                "about a week ago.\n"
+                                "She didn't run. She didn't look scared. "
+                                "She walked like someone who'd already made their peace "
+                                "and was just finishing the last errand.",
+                        "choices": [
+                            {"text": "Did she say anything before she went?",
+                             "next": "last_words"},
+                            {"text": "What happened at the Spire entrance?",
+                             "next": "entrance"},
+                            {"text": "Thank you.", "next": "bye"},
+                        ],
+                    },
+                    "last_words": {
+                        "speaker": "Scout Mira",
+                        "text": "She stopped at the edge of the Ashlands fog and looked back. "
+                                "I thought she was going to change her mind.\n"
+                                "She just said: 'Tell them the wards are still up.' "
+                                "Then she walked into the fog and I lost sight of her.",
+                        "next": "start",
+                    },
+                    "entrance": {
+                        "speaker": "Scout Mira",
+                        "text": "The Spire gate opened for her. Just — opened. "
+                                "No key, no force. Like it knew her.\n"
+                                "The wards didn't pulse or react. "
+                                "Whatever's in there, it let her in willingly.\n"
+                                "That worries me more than if it had fought her.",
+                        "next": "start",
+                    },
+                    "bye": {
+                        "speaker": "Scout Mira",
+                        "text": "Bring her back if you can. "
+                                "She had kind eyes, for someone carrying that much.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "scout_mira_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Scout Mira",
+                        "text": "Just back from the Ashlands perimeter. "
+                                "The fog is pushing further south every week.\n"
+                                "We can't hold the line forever. "
+                                "Someone needs to stop it at the source.",
+                        "choices": [
+                            {"text": "What's the perimeter situation?", "next": "perimeter"},
+                            {"text": "Stay safe.", "next": "bye"},
+                        ],
+                    },
+                    "perimeter": {
+                        "speaker": "Scout Mira",
+                        "text": "We've lost three miles of ground since last month. "
+                                "The Fading corrupts everything it touches — "
+                                "animals, plants, even the stones start to shimmer.\n"
+                                "The Spire is the source. Everyone knows it. "
+                                "Nobody's done anything about it yet.",
+                        "next": "bye",
+                    },
+                    "bye": {
+                        "speaker": "Scout Mira",
+                        "text": "Eyes open out there.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+    ],
+
+    # ── Ambient rebel fighter — Holdfast background ──────────────────────────
+    "ambient_rebel": [
+        {
+            "conditions": [],
+            "tree": {
+                "id": "ambient_rebel_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Rebel Fighter",
+                        "text": "We didn't choose this fight. The Fading chose it for us.\n"
+                                "But here we are.",
+                        "choices": [
+                            {"text": "How long have you been here?", "next": "how_long"},
+                            {"text": "Stay strong.", "next": "bye"},
+                        ],
+                    },
+                    "how_long": {
+                        "speaker": "Rebel Fighter",
+                        "text": "Six months. Used to be a farmer in the eastern Ashlands. "
+                                "My fields faded in a night — just gone, "
+                                "like they'd never been there.\n"
+                                "Sarev found me on the road and gave me a blade. "
+                                "Here I am.",
+                        "next": "bye",
+                    },
+                    "bye": {
+                        "speaker": "Rebel Fighter",
+                        "text": "Kill whatever's in that tower. "
+                                "Do it for all of us.",
+                        "end": True,
+                    },
+                },
+            },
+        },
     ],
 
 }
