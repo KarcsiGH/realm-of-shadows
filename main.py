@@ -915,7 +915,8 @@ class Game:
                     self.save_load_ui = None
                     if isinstance(result, tuple) and result[0] == "saved":
                         sfx.play("ui_confirm")
-                        self.add_toast("✓ Game saved.", (80, 200, 120))
+                        slot_label = result[1].replace("save","Slot ").replace("_"," ").title()
+                        self.add_toast(f"✓ Saved to {slot_label}.", (80, 200, 120))
                         self.go(self._save_load_return_state)
                     elif isinstance(result, tuple) and result[0] == "loaded":
                         _, party, world_state = result[0], result[1], result[2]
@@ -936,7 +937,12 @@ class Game:
                                 except Exception:
                                     pass  # skip unknown dungeons gracefully
                         sfx.play("ui_confirm")
-                        self.add_toast("✓ Save loaded.", (80, 200, 120))
+                        avg_lvl = sum(c.level for c in party) // max(1, len(party))
+                        names = ", ".join(c.name for c in party[:2])
+                        if len(party) > 2:
+                            names += f" +{len(party)-2}"
+                        self.add_toast(f"✓ Loaded — {names}  (avg Lv{avg_lvl})",
+                                       (80, 200, 120))
                         self.go_fade(S_PARTY)
                     else:
                         sfx.play("ui_cancel")
@@ -1171,21 +1177,54 @@ class Game:
             t[2] -= dt
 
     def _notify_quests_done(self, quest_ids):
-        """Queue a prominent banner for each newly-completed quest."""
+        """Queue a prominent banner for each newly-completed quest and award rewards."""
         if not quest_ids:
             return
         from data.story_data import QUESTS
+        from core.progression import can_level_up
         for qid in quest_ids:
             q = QUESTS.get(qid, {})
             name  = q.get("name", qid)
             gold  = q.get("reward_gold", 0)
             xp    = q.get("reward_xp", 0)
             items = q.get("reward_items", [])
+
+            # ── Award XP to every party member ──────────────────────
+            if xp and self.party:
+                for c in self.party:
+                    if hasattr(c, "add_xp"):
+                        c.add_xp(xp)
+                    else:
+                        c.xp = getattr(c, "xp", 0) + xp
+
+            # ── Award gold split across party (or to first member) ──
+            if gold and self.party:
+                share = gold // len(self.party)
+                remainder = gold - share * len(self.party)
+                for i, c in enumerate(self.party):
+                    amount = share + (remainder if i == 0 else 0)
+                    if hasattr(c, "add_gold"):
+                        c.add_gold(amount)
+                    else:
+                        c.gold = getattr(c, "gold", 0) + amount
+
+            # ── Give reward items to first living party member ───────
+            if items and self.party:
+                recipient = next((c for c in self.party
+                                  if c.resources.get("HP", 1) > 0), self.party[0])
+                for item in items:
+                    if isinstance(item, dict):
+                        recipient.inventory.append(dict(item))
+
+            # ── Check for level-ups unlocked by XP ──────────────────
+            leveled = [c.name for c in self.party if can_level_up(c)] if xp else []
+
             self._quest_notifications.append({
                 "name":      name,
                 "gold":      gold,
                 "xp":        xp,
                 "items":     items,
+                "leveled":   leveled,
                 "timer":     7000,
                 "max_timer": 7000,
                 "slide":     0.0,
@@ -1304,15 +1343,19 @@ class Game:
             desc = n.get("tier_desc", "")
             draw_text(surface, desc, px + 20, ry, CREAM, 13, max_width=PW - 40)
         elif reward_lines:
-            draw_text(surface, "Rewards:", px + 20, ry, GREY, 13)
-            rx = px + 100
+            # "Rewards awarded:" label
+            draw_text(surface, "Rewards awarded:", px + 20, ry, GREY, 12)
+            ry += 20
+            # Render each reward on its own row for clarity
             for text, col in reward_lines:
-                tw = get_font(14).size(text)[0]
-                if rx + tw > px + PW - 20:
-                    rx = px + 100
-                    ry += 24
-                draw_text(surface, text, rx, ry, col, 14, bold=True)
-                rx += tw + 20
+                draw_text(surface, f"  ✦  {text}", px + 20, ry, col, 14, bold=True)
+                ry += 22
+            # Level-up alert if any character leveled
+            leveled = n.get("leveled", [])
+            if leveled:
+                ry += 4
+                lup_msg = f"⬆  Level up available: {', '.join(leveled[:3])}"
+                draw_text(surface, lup_msg, px + 20, ry, (120, 255, 160), 12, bold=True)
         else:
             draw_text(surface, "Objectives fulfilled.", px + 20, ry, GREY, 13)
 

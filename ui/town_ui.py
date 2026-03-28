@@ -1289,6 +1289,23 @@ class TownUI:
         pending_chars = []  # branching removed
 
         # ── Menu options ────────────────────────────────────────────
+        # Build next-unlock summary for each party member
+        from core.abilities import CLASS_ABILITIES
+        next_unlock_parts = []
+        for _c in self.party:
+            all_abs = CLASS_ABILITIES.get(_c.class_name, [])
+            known_names = {a["name"] for a in _c.abilities}
+            # Find the first ability not yet known that's within 3 levels
+            upcoming = [a for a in all_abs
+                        if a["name"] not in known_names and a.get("level", 1) > _c.level]
+            upcoming.sort(key=lambda a: a.get("level", 99))
+            if upcoming:
+                nxt = upcoming[0]
+                gap = nxt.get("level", 1) - _c.level
+                gap_str = f"L{nxt.get('level',1)}" if gap > 1 else "next level"
+                next_unlock_parts.append(f"{_c.name}: {nxt['name']} ({gap_str})")
+        next_unlock_str = "  |  ".join(next_unlock_parts[:3]) if next_unlock_parts                           else "All known abilities trained."
+
         options = [
             {
                 "label":   "Take a Job",
@@ -1301,14 +1318,14 @@ class TownUI:
                 "sub":     (f"{', '.join(c.name for c in pending_chars)} "
                             f"{'have' if len(pending_chars) > 1 else 'has'} a new path to choose!"
                             if pending_chars
-                            else "View your class progression and ability paths"),
+                            else f"Next: {next_unlock_str}"),
                 "accent":  (160, 120, 220) if pending_chars else (120, 100, 180),
                 "action":  "train",
                 "badge":   len(pending_chars),
             },
             {
                 "label":   "View Abilities",
-                "sub":     "See your full class progression tree",
+                "sub":     "See your full class progression tree and what unlocks at each level",
                 "accent":  (100, 160, 220),
                 "action":  "classtree",
             },
