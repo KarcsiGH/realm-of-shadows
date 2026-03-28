@@ -716,7 +716,7 @@ class WorldMapUI:
                 return {"type": "enter_location", "id": loc_id, "data": loc}
             return None
         elif key == pygame.K_c:
-            return {"type": "menu"}
+            return {"type": "open_camp"}
 
         if dx == 0 and dy == 0:
             return None
@@ -753,11 +753,11 @@ class WorldMapUI:
                 return None
             return None
 
-        # Camp button → open full camp screen directly
+        # Camp button → open full camp screen
         btn_y = SCREEN_H - 55
         camp_btn = pygame.Rect(SCREEN_W - 320, btn_y, 140, 42)
         if camp_btn.collidepoint(mx, my):
-            return {"type": "camp"}
+            return {"type": "open_camp"}
 
         # Menu button
         menu_btn = pygame.Rect(SCREEN_W - 160, btn_y, 140, 42)

@@ -3791,6 +3791,10 @@ class Game:
         elif event["type"] == "discovery":
             sfx.play("discovery")
 
+        elif event["type"] == "open_camp":
+            # Camp button / C key — open full tabbed camp screen
+            self.start_camp(location="overworld", return_state=S_WORLD_MAP)
+
         elif event["type"] == "menu":
             self.show_menu_overlay = True
 
