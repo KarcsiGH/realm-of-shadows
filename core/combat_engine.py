@@ -2361,6 +2361,17 @@ class CombatState:
         """
         if not target:
             return {"messages": ["No target."]}
+        # Check and consume a charge
+        weapon = ability.get("_weapon", {})
+        try:
+            from core.focus_charges import consume_charge, is_focus, init_charges
+            if is_focus(weapon):
+                init_charges(weapon)
+                if not consume_charge(weapon):
+                    return {"messages": [f"{actor['name']}'s {weapon.get('name','wand')} is depleted! Recharge at camp or a forge."],
+                            "hit": False, "_resource_failed": True}
+        except Exception:
+            pass
         name = actor["name"]
         tgt_name = target.get("name", "target")
         bolt_dmg = ability.get("_bolt_dmg", 5)

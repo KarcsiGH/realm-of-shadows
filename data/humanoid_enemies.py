@@ -46,7 +46,7 @@ def _dagger(name, dmg, val, desc):
             "description": desc}
 
 def _staff(name, dmg, val, desc):
-    return {"name": name, "type": "weapon", "subtype": "Staff",
+    return {"name": name, "type": "weapon", "subtype": "Staff", "max_charges": 30,
             "rarity": "common", "damage": dmg + 10,
             "damage_stat": {"STR": 0.16, "INT": 0.24},
             "phys_type": "blunt",
@@ -405,6 +405,11 @@ HUMANOID_ENEMIES = {
         "status_immunities": [],
         "abilities": ["enemy_shadow_bolt"],
         "loot_table": [
+            {"drop_chance": 0.18, "item": {
+                "name": "Mana Crystal", "type": "material", "subtype": "reagent",
+                "rarity": "uncommon", "quantity": 1, "identified": True,
+                "description": "A dense crystal of condensed arcane energy. Recharges 5 charges on a focus weapon."}},
+
             {"drop_chance": 0.20, "item": {
                 "name": "Cultist's Sigil", "type": "material", "subtype": "arcane",
                 "rarity": "uncommon", "tier": 1, "identify_difficulty": 2,
@@ -460,6 +465,11 @@ HUMANOID_ENEMIES = {
         "status_immunities": [],
         "abilities": ["enemy_shadow_bolt", "enemy_weaken"],
         "loot_table": [
+            {"drop_chance": 0.18, "item": {
+                "name": "Mana Crystal", "type": "material", "subtype": "reagent",
+                "rarity": "uncommon", "quantity": 1, "identified": True,
+                "description": "A dense crystal of condensed arcane energy. Recharges 5 charges on a focus weapon."}},
+
             {"drop_chance": 0.20, "item": {
                 "name": "Hexblade Saber", "type": "weapon", "subtype": "Long Sword",
                 "rarity": "uncommon", "damage_stat": {"STR": 0.3, "DEX": 0.12},
@@ -526,8 +536,13 @@ HUMANOID_ENEMIES = {
         "status_immunities": ["Cursed", "Stunned"],
         "abilities": ["enemy_shadow_bolt", "enemy_minor_heal", "enemy_mass_weaken", "enemy_smite"],
         "loot_table": [
+            {"drop_chance": 0.18, "item": {
+                "name": "Mana Crystal", "type": "material", "subtype": "reagent",
+                "rarity": "uncommon", "quantity": 1, "identified": True,
+                "description": "A dense crystal of condensed arcane energy. Recharges 5 charges on a focus weapon."}},
+
             {"drop_chance": 0.35, "item": {
-                "name": "High Cultist's Grimoire", "type": "weapon", "subtype": "Staff",
+                "name": "High Cultist's Grimoire", "type": "weapon", "subtype": "Staff", "max_charges": 30,
                 "rarity": "rare", "damage_stat": {"STR": 0.16, "INT": 0.24},
                 "damage": 18, "phys_type": "shadow",
                 "identify_difficulty": 4, "element": "shadow",
@@ -657,8 +672,13 @@ HUMANOID_ENEMIES = {
         "tags": ["undead"],
         "abilities": ["enemy_fireball", "enemy_arcane_slash", "enemy_shadow_bolt"],
         "loot_table": [
+            {"drop_chance": 0.18, "item": {
+                "name": "Mana Crystal", "type": "material", "subtype": "reagent",
+                "rarity": "uncommon", "quantity": 1, "identified": True,
+                "description": "A dense crystal of condensed arcane energy. Recharges 5 charges on a focus weapon."}},
+
             {"drop_chance": 0.22, "item": {
-                "name": "Crypt Archmage's Orb", "type": "weapon", "subtype": "Orb",
+                "name": "Crypt Archmage's Orb", "type": "weapon", "subtype": "Orb", "max_charges": 30,
                 "rarity": "rare", "damage_stat": {"INT": 0.24, "WIS": 0.16},
                 "damage": 20, "phys_type": "arcane",
                 "identify_difficulty": 4, "element": "arcane",

@@ -398,7 +398,15 @@ def attempt_identify(combatant, item, action):
 def get_item_display_name(item):
     """Return the appropriate display name based on identification state."""
     if item.get("identified"):
-        return item.get("name", "Unknown Item")
+        base = item.get("name", "Unknown Item")
+        # Append charge status for focus weapons
+        try:
+            from core.focus_charges import is_focus, get_charge_label
+            if is_focus(item):
+                base += get_charge_label(item)
+        except Exception:
+            pass
+        return base
     elif item.get("magic_identified") and not item.get("material_identified"):
         # Know the magic, not the material — show enchantment hint
         base = item.get("unidentified_name", f"??? {item.get('type', 'Item')}")

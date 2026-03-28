@@ -26,7 +26,7 @@ SECRET_ITEMS_DA1 = [
 
     # Mage — tiny spell boost focus
     {"name": "Carved Oak Wand", "appraised_name": "Carved Oak Wand",
-     "type": "weapon", "slot": "weapon", "subtype": "Wand",
+     "type": "weapon", "slot": "weapon", "subtype": "Wand", "max_charges": 20,
      "rarity": "uncommon", "damage": 12, "phys_type": "arcane", "range": "ranged",
      "spell_bonus": 3, "enchant_element": "arcane",
      "on_hit_effect": {"status": "Slowed", "chance": 0.25, "duration": 2},
@@ -104,7 +104,7 @@ SECRET_ITEMS_T1 = [
      "identified": False, "estimated_value": 70},
 
     {"name": "Wand of Sparks", "appraised_name": "Wand of Sparks", "type": "weapon", "slot": "weapon",
-     "subtype": "Wand", "rarity": "uncommon", "damage": 16,
+     "subtype": "Wand", "max_charges": 20, "rarity": "uncommon", "damage": 16,
      "phys_type": "lightning", "range": "ranged",
      "spell_bonus": 4, "enchant_element": "lightning",
      "on_hit_effect": {"status": "Stunned", "chance": 0.20, "duration": 1},
@@ -123,7 +123,7 @@ SECRET_ITEMS_T1 = [
      "identified": True, "estimated_value": 75},
 
     {"name": "Ember Wand", "appraised_name": "Ember Wand",
-     "type": "weapon", "slot": "weapon", "subtype": "Wand",
+     "type": "weapon", "slot": "weapon", "subtype": "Wand", "max_charges": 20,
      "rarity": "uncommon", "damage": 14, "phys_type": "fire", "range": "ranged",
      "spell_bonus": 3, "enchant_element": "fire",
      "on_hit_effect": {"status": "Burning", "chance": 0.30, "duration": 2},
@@ -132,7 +132,7 @@ SECRET_ITEMS_T1 = [
      "identified": False, "estimated_value": 85},
 
     {"name": "Frost Rod", "appraised_name": "Frost Rod",
-     "type": "weapon", "slot": "weapon", "subtype": "Rod",
+     "type": "weapon", "slot": "weapon", "subtype": "Rod", "max_charges": 25,
      "rarity": "uncommon", "damage": 16, "phys_type": "ice", "range": "ranged",
      "spell_bonus": 3, "enchant_element": "ice",
      "on_hit_effect": {"status": "Slowed", "chance": 0.40, "duration": 2},
@@ -172,7 +172,7 @@ SECRET_ITEMS_T2 = [
      "identified": False, "estimated_value": 180},
 
     {"name": "Orb of Fading Sight", "appraised_name": "Orb of Fading Sight", "type": "weapon", "slot": "weapon",
-     "subtype": "Orb", "rarity": "rare", "damage": 20, "phys_type": "shadow", "range": "ranged",
+     "subtype": "Orb", "max_charges": 30, "rarity": "rare", "damage": 20, "phys_type": "shadow", "range": "ranged",
      "effect": {"int_bonus": 3, "wis_bonus": 2},
      "spell_bonus": 5, "enchant_element": "shadow",
      "on_hit_effect": {"status": "Weakened", "chance": 0.30, "duration": 2},
@@ -187,7 +187,7 @@ SECRET_ITEMS_T2 = [
      "identified": False, "estimated_value": 170},
 
     {"name": "Shadow Wand", "appraised_name": "Shadow Wand",
-     "type": "weapon", "slot": "weapon", "subtype": "Wand",
+     "type": "weapon", "slot": "weapon", "subtype": "Wand", "max_charges": 20,
      "rarity": "rare", "damage": 18, "phys_type": "shadow", "range": "ranged",
      "spell_bonus": 5, "enchant_element": "shadow",
      "on_hit_effect": {"status": "Sleep", "chance": 0.25, "duration": 2},
@@ -196,7 +196,7 @@ SECRET_ITEMS_T2 = [
      "identified": False, "estimated_value": 200},
 
     {"name": "Tempest Rod", "appraised_name": "Tempest Rod",
-     "type": "weapon", "slot": "weapon", "subtype": "Rod",
+     "type": "weapon", "slot": "weapon", "subtype": "Rod", "max_charges": 25,
      "rarity": "rare", "damage": 22, "phys_type": "lightning", "range": "ranged",
      "spell_bonus": 5, "enchant_element": "lightning",
      "on_hit_effect": {"status": "Stunned", "chance": 0.25, "duration": 1},
@@ -230,7 +230,7 @@ SECRET_ITEMS_T3 = [
      "identified": False, "estimated_value": 350},
 
     {"name": "Staff of the Fading", "appraised_name": "Staff of the Fading", "type": "weapon", "slot": "weapon",
-     "subtype": "Staff", "rarity": "epic", "damage": 11,
+     "subtype": "Staff", "max_charges": 30, "rarity": "epic", "damage": 11,
      "damage_stat": {"STR": 0.3, "DEX": 0.12},
      "phys_type": "blunt", "range": "melee",
      "spell_bonus": 8,
@@ -289,7 +289,7 @@ BOSS_BONUS_LOOT = {
     "Shadow Valdris": [
         {"drop_chance": 0.80, "item": {
             "name": "Valdris' Shadowstaff", "appraised_name": "Valdris' Shadowstaff", "type": "weapon", "slot": "weapon",
-            "subtype": "Staff", "rarity": "epic", "damage": 8,
+            "subtype": "Staff", "max_charges": 30, "rarity": "epic", "damage": 8,
             "damage_stat": {"STR": 0.16, "INT": 0.24},
             "phys_type": "blunt", "range": "melee",
             "spell_bonus": 7,

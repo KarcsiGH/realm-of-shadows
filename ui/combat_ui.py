@@ -891,46 +891,65 @@ class CombatUI:
             FOCUS_SUBTYPES = {"Wand", "Rod", "Orb", "Staff", "wand", "rod", "orb", "staff"}
             is_focus = weapon.get("subtype", "") in FOCUS_SUBTYPES
 
+            # Init charges on focus weapons
+            try:
+                from core.focus_charges import is_focus as _is_focus, init_charges as _ic
+                if _is_focus(weapon):
+                    _ic(weapon)
+            except Exception:
+                pass
+
             if is_focus:
-                # Focus weapons fire elemental bolts, not physical swings
-                # Element priority: enchant_element > subtype default
-                subtype = weapon.get("subtype", "").lower()
-                element = weapon.get("enchant_element") or {
-                    "wand": "arcane", "rod": "force", "orb": "arcane", "staff": "arcane"
-                }.get(subtype, "arcane")
-                # Damage: INT-primary, boosted by spell_bonus
-                stats   = actor.get("stats", {})
-                int_val = stats.get("INT", 10)
-                wis_val = stats.get("WIS", 10)
-                spell_b = weapon.get("spell_bonus", 0)
-                if subtype == "orb":
-                    bolt_base = w_dmg + int((int_val + wis_val) * 0.30) + spell_b
+                # Check if depleted
+                _charges = weapon.get("charges", -1)
+                _depleted = (_charges == 0)
+                if _depleted:
+                    # Show as weak melee tap — bolt unavailable
+                    item_lbl = f"{w_name}  [DEPLETED — recharge at camp or forge · {w_dmg} dmg tap]"
+                    items = [(item_lbl, {"type": "attack_select", "weapon": weapon})]
                 else:
-                    bolt_base = w_dmg + int(int_val * 0.35) + spell_b
-                ELEM_LABELS = {
-                    "fire": "🔥 Fire", "ice": "❄ Frost", "frost": "❄ Frost",
-                    "lightning": "⚡ Lightning", "shock": "⚡ Lightning",
-                    "shadow": "💀 Shadow", "divine": "✨ Divine",
-                    "arcane": "✦ Arcane", "force": "◈ Force",
-                }
-                elem_label = ELEM_LABELS.get(element, element.title())
-                # Show on_hit_effect if present
-                _ohe = weapon.get("on_hit_effect", {})
-                _ohe_str = ""
-                if _ohe:
-                    _ohe_pct = int(_ohe.get("chance", 0) * 100)
-                    _ohe_st  = _ohe.get("status", "")
-                    _ohe_dur = _ohe.get("duration", 1)
-                    _ohe_str = f" · {_ohe_pct}% {_ohe_st}({_ohe_dur}t)"
-                item_lbl = (f"{w_name}  [{elem_label} Bolt · ~{bolt_base} dmg"
-                            f" · INT-acc · bypasses Def{_ohe_str}]")
-                items = [(item_lbl, {
-                    "type": "attack_select",
-                    "weapon": weapon,
-                    "bolt": True,
-                    "_bolt_dmg": bolt_base,
-                    "_bolt_element": element,
-                })]
+                    # Focus weapons fire elemental bolts, not physical swings
+                    subtype = weapon.get("subtype", "").lower()
+                    element = weapon.get("enchant_element") or {
+                        "wand": "arcane", "rod": "force", "orb": "arcane", "staff": "arcane"
+                    }.get(subtype, "arcane")
+                    # Damage: INT-primary, boosted by spell_bonus
+                    stats   = actor.get("stats", {})
+                    int_val = stats.get("INT", 10)
+                    wis_val = stats.get("WIS", 10)
+                    spell_b = weapon.get("spell_bonus", 0)
+                    if subtype == "orb":
+                        bolt_base = w_dmg + int((int_val + wis_val) * 0.30) + spell_b
+                    else:
+                        bolt_base = w_dmg + int(int_val * 0.35) + spell_b
+                    ELEM_LABELS = {
+                        "fire": "🔥 Fire", "ice": "❄ Frost", "frost": "❄ Frost",
+                        "lightning": "⚡ Lightning", "shock": "⚡ Lightning",
+                        "shadow": "💀 Shadow", "divine": "✨ Divine",
+                        "arcane": "✦ Arcane", "force": "◈ Force",
+                    }
+                    elem_label = ELEM_LABELS.get(element, element.title())
+                    # Show on_hit_effect if present
+                    _ohe = weapon.get("on_hit_effect", {})
+                    _ohe_str = ""
+                    if _ohe:
+                        _ohe_pct = int(_ohe.get("chance", 0) * 100)
+                        _ohe_st  = _ohe.get("status", "")
+                        _ohe_dur = _ohe.get("duration", 1)
+                        _ohe_str = f" · {_ohe_pct}% {_ohe_st}({_ohe_dur}t)"
+                    # Show charge count in label
+                    _chg_cur = weapon.get("charges", weapon.get("max_charges", 20))
+                    _chg_max = weapon.get("max_charges", 20)
+                    _chg_str = f" · {_chg_cur}/{_chg_max} charges"
+                    item_lbl = (f"{w_name}  [{elem_label} Bolt · ~{bolt_base} dmg"
+                                f" · INT-acc · bypasses Def{_ohe_str}{_chg_str}]")
+                    items = [(item_lbl, {
+                        "type": "attack_select",
+                        "weapon": weapon,
+                        "bolt": True,
+                        "_bolt_dmg": bolt_base,
+                        "_bolt_element": element,
+                    })]
             else:
                 item_lbl = f"{w_name}  [{w_dmg} dmg · {w_type} · {w_range}{acc_str}]"
                 items = [(item_lbl, {"type": "attack_select", "weapon": weapon})]

@@ -3652,6 +3652,45 @@ class TownUI:
         if not found_any:
             draw_text(surface, "All equipment is in good condition.", 20, y, (100, 200, 100), 14)
 
+        # ── Focus weapon recharge section ────────────────────────────
+        from core.focus_charges import is_focus, init_charges, crystals_needed, get_charge_label, CRYSTAL_NAME
+        from core.crafting import count_material
+        y += 30
+        found_focus = False
+        for char in self.party:
+            eq = char.equipment or {}
+            for slot, item in eq.items():
+                if not item or not is_focus(item):
+                    continue
+                init_charges(item)
+                cur = item.get("charges", 0)
+                mx_c = item.get("max_charges", 20)
+                if cur >= mx_c:
+                    continue
+                found_focus = True
+                needed = crystals_needed(item)
+                have   = count_material(self.party, CRYSTAL_NAME)
+                can_rch = have >= needed > 0
+                lbl_col = (120, 200, 255) if can_rch else GREY
+                row = pygame.Rect(20, y, SCREEN_W - 180, 48)
+                pygame.draw.rect(surface, (18, 22, 38), row, border_radius=3)
+                pygame.draw.rect(surface, (80, 120, 200), row, 1, border_radius=3)
+                draw_text(surface, item.get("name","?"), row.x + 10, row.y + 5, CREAM, 13, bold=True)
+                draw_text(surface, f"{char.name} — {slot}", row.x + 10, row.y + 24, GREY, 11)
+                draw_text(surface, get_charge_label(item).strip("()"),
+                          row.x + 320, row.y + 5, lbl_col, 13)
+                draw_text(surface, f"Need {needed} Mana Crystal{'s' if needed>1 else ''} (have {have})",
+                          row.x + 320, row.y + 24, lbl_col, 11)
+                btn_col = (80, 160, 255) if can_rch else (60, 60, 80)
+                btn = pygame.Rect(SCREEN_W - 150, y + 9, 120, 30)
+                pygame.draw.rect(surface, (12, 20, 40) if can_rch else (20, 20, 30), btn, border_radius=3)
+                pygame.draw.rect(surface, btn_col, btn, 1, border_radius=3)
+                lbl = "Recharge" if can_rch else "No Crystals"
+                draw_text(surface, lbl, btn.x + 10, btn.y + 7, btn_col, 12)
+                y += 54
+        if not found_focus:
+            pass  # no depleted focus weapons — nothing to show
+
     def _pie_disposition_discount(self, base_price: int) -> tuple:
         """Apply PIE-based temple/holy NPC discount.
         High-PIE parties are shown favour by divine servants.
@@ -4073,7 +4112,11 @@ class TownUI:
                 has_durability, get_durability_state, get_repair_cost,
                 repair_item, init_durability
             )
-            y_r = 138 + 40  # matches _draw_forge_repair: y + 40
+            from core.focus_charges import (
+                is_focus, init_charges, crystals_needed, recharge_with_crystals, CRYSTAL_NAME
+            )
+            from core.crafting import count_material
+            y_r = 138 + 40
             row_h = 52
             btn_w, btn_h = 120, 30
             for ci, char in enumerate(self.party):
@@ -4096,6 +4139,37 @@ class TownUI:
                         self._msg(f"Repaired {item.get('name','item')} for {cost}g.", (100, 220, 100))
                         return None
                     y_r += row_h + 6
+            # Focus weapon recharge buttons
+            y_rc = 138 + 40 + y_r + 30  # approximate — after repair section
+            # Re-iterate to find recharge button positions (must mirror draw order)
+            y_rc = 138 + 40
+            # Skip past repair rows
+            for char in self.party:
+                for slot, item in list((char.equipment or {}).items()):
+                    if not item or not has_durability(item): continue
+                    init_durability(item)
+                    if get_durability_state(item) != "full":
+                        y_rc += row_h + 6
+            y_rc += 30   # gap before recharge section
+            for char in self.party:
+                for slot, item in list((char.equipment or {}).items()):
+                    if not item or not is_focus(item): continue
+                    init_charges(item)
+                    cur = item.get("charges", 0); mx_c = item.get("max_charges", 20)
+                    if cur >= mx_c: continue
+                    btn = pygame.Rect(SCREEN_W - 150, y_rc + 9, 120, 30)
+                    if btn.collidepoint(mx, my):
+                        needed = crystals_needed(item)
+                        have   = count_material(self.party, CRYSTAL_NAME)
+                        if have < needed:
+                            self._msg(f"Need {needed} Mana Crystals (have {have}).", RED)
+                            return None
+                        gained, used = recharge_with_crystals(item, self.party)
+                        sfx.play("shop_buy")
+                        self._msg(f"Recharged {item.get('name','wand')}: +{gained} charges "
+                                  f"({used} crystal{'s' if used>1 else ''} used).", (120, 200, 255))
+                        return None
+                    y_rc += 54
             return None
 
         if active_view == self.VIEW_FORGE_CRAFT:

@@ -1783,6 +1783,48 @@ class CampUI:
             self._spell_target_rects = []
             self._spell_cast_btn = None
 
+        # ── Focus weapon recharge section ────────────────────────────
+        # Shown for any character — Mage or not — who has a depleted focus weapon
+        from core.focus_charges import is_focus, init_charges, crystals_needed, get_charge_label, CRYSTAL_NAME
+        from core.crafting import count_material
+        self._recharge_btns = []   # (rect, item, char)
+        recharge_y = top + 340
+        found_depleted = False
+        for ch in self.party:
+            for slot, item in (ch.equipment or {}).items():
+                if not item or not is_focus(item):
+                    continue
+                init_charges(item)
+                cur = item.get("charges", 0)
+                mx_c = item.get("max_charges", 20)
+                if cur >= mx_c:
+                    continue
+                found_depleted = True
+                needed = crystals_needed(item)
+                have   = count_material(self.party, CRYSTAL_NAME)
+                can_rch = have >= needed > 0
+                # Row
+                row_r = pygame.Rect(80, recharge_y, SCREEN_W // 2 - 60, 44)
+                pygame.draw.rect(surface, (18, 22, 40), row_r, border_radius=4)
+                pygame.draw.rect(surface, (80, 120, 200), row_r, 1, border_radius=4)
+                lc = (120, 200, 255) if can_rch else GREY
+                draw_text(surface, f"{item.get('name','?')} {get_charge_label(item)}",
+                          row_r.x + 10, row_r.y + 5, CREAM, 13, bold=True)
+                draw_text(surface,
+                          f"{ch.name}  ·  Need {needed} {CRYSTAL_NAME}{'s' if needed>1 else ''} (have {have})",
+                          row_r.x + 10, row_r.y + 24, lc, 11)
+                btn_r = pygame.Rect(row_r.right + 10, recharge_y + 7, 130, 30)
+                bc = (80, 160, 255) if can_rch else (55, 55, 70)
+                pygame.draw.rect(surface, (12, 18, 38) if can_rch else (18, 18, 28), btn_r, border_radius=4)
+                pygame.draw.rect(surface, bc, btn_r, 1, border_radius=4)
+                lbl = "Recharge" if can_rch else "No Crystals"
+                draw_text(surface, lbl, btn_r.x + 14, btn_r.y + 7, bc, 12)
+                self._recharge_btns.append((btn_r, item, ch))
+                recharge_y += 50
+
+        if found_depleted and not self._recharge_btns:
+            draw_text(surface, "No Mana Crystals in inventory.", 80, recharge_y, GREY, 12)
+
     def _handle_spells_click(self, mx, my):
         from core.classes import get_all_resources
 
@@ -1820,6 +1862,21 @@ class CampUI:
             if 0 <= self.spell_selected < len(abilities):
                 ab = abilities[self.spell_selected]
                 self._cast_camp_spell(caster, ab)
+
+        # Recharge buttons
+        from core.focus_charges import recharge_with_crystals, crystals_needed, CRYSTAL_NAME
+        from core.crafting import count_material
+        for btn_r, item, ch in getattr(self, "_recharge_btns", []):
+            if btn_r.collidepoint(mx, my):
+                needed = crystals_needed(item)
+                have   = count_material(self.party, CRYSTAL_NAME)
+                if have < needed:
+                    self._msg(f"Need {needed} Mana Crystal{'s' if needed>1 else ''} (have {have}).")
+                    return None
+                gained, used = recharge_with_crystals(item, self.party)
+                self._msg(f"{item.get('name','Wand')} recharged: +{gained} charges "
+                          f"({used} crystal{'s' if used>1 else ''} used).")
+                return None
         return None
 
     def _cast_camp_spell(self, caster, ability):
