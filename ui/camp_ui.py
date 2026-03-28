@@ -800,6 +800,32 @@ class CampUI:
             y += 18
         y += 4
 
+        # ── Combat Stats (Defense / Magic Resist / Speed) ─────────────────
+        pygame.draw.line(surface, (60,50,80), (LEFT_X, y), (LEFT_X+380, y))
+        y += 6
+        draw_text(surface, "COMBAT STATS", LEFT_X, y, STAT_LABEL, 10, bold=True)
+        y += 14
+        try:
+            from core.equipment import calc_equipment_defense, calc_equipment_magic_resist
+            from core.combat_config import DEF_CON_MULT
+            equip_def = calc_equipment_defense(c)
+            con_def   = int(eff_stats.get("CON", 0) * DEF_CON_MULT)
+            total_def = con_def + equip_def
+            equip_mr  = calc_equipment_magic_resist(c)
+            base_mr   = int(eff_stats.get("WIS", 0) * 2)
+            total_mr  = base_mr + equip_mr
+            draw_text(surface, "Defense:", LEFT_X, y, STAT_LABEL, 12)
+            draw_text(surface, str(total_def), LEFT_X + 65, y, STAT_VAL, 12, bold=True)
+            draw_text(surface, f"({con_def} CON + {equip_def} gear)", LEFT_X + 90, y, GREY, 10)
+            y += 18
+            draw_text(surface, "Mag Resist:", LEFT_X, y, STAT_LABEL, 12)
+            draw_text(surface, str(total_mr), LEFT_X + 65, y, STAT_VAL, 12, bold=True)
+            draw_text(surface, f"({base_mr} WIS + {equip_mr} gear)", LEFT_X + 90, y, GREY, 10)
+            y += 18
+        except Exception:
+            pass
+        y += 4
+
         # ── Resistances ───────────────────────────────────────────────────
         pygame.draw.line(surface, (60,50,80), (LEFT_X, y), (LEFT_X+380, y))
         y += 6
@@ -1058,24 +1084,26 @@ class CampUI:
         ey += 5
         pygame.draw.line(surface, (50,42,65), (ex, ey-2), (SCREEN_W-10, ey-2))
 
-        # ── INVENTORY — full list, up to 20 items ────────────────────────
+        # ── INVENTORY — scrollable ────────────────────────────────────────
         draw_text(surface, "INVENTORY  (click item · then act)", ex, ey, STAT_LABEL, 10, bold=True)
         ey += 13
-        sel_ii = getattr(self, "_stats_inv_sel", -1)
-        INV_ITEM_H = 15
-        MAX_INV    = 20
-        shown      = 0
-        for ii, it in enumerate(c.inventory):
-            if ey > BODY_BOT - 80:   # stop if near bottom — leave room for buttons
-                remaining = len(c.inventory) - shown
-                if remaining > 0:
-                    draw_text(surface, f"  +{remaining} more — use Inventory tab",
-                              ex, ey, STAT_LABEL, 9)
-                    ey += 12
-                break
-            if shown >= MAX_INV:
-                break
-            it_r = pygame.Rect(ex, ey, COL_W, INV_ITEM_H)
+        sel_ii      = getattr(self, "_stats_inv_sel", -1)
+        INV_ITEM_H  = 15
+        BTN_RESERVE = 56     # space for action buttons at bottom
+        inv_bot     = BODY_BOT - BTN_RESERVE
+        vis_n       = max(1, (inv_bot - ey) // INV_ITEM_H)
+        total_inv   = len(c.inventory)
+        max_off     = max(0, total_inv - vis_n)
+        # Clamp scroll offset
+        inv_off = max(0, min(getattr(self, "_stats_inv_scroll", 0), max_off))
+        self._stats_inv_scroll = inv_off
+        SB_W = 8
+        inv_col_w = COL_W - SB_W - 2
+
+        for slot_i, ii in enumerate(range(inv_off, min(total_inv, inv_off + vis_n))):
+            it   = c.inventory[ii]
+            row_y = ey + slot_i * INV_ITEM_H
+            it_r = pygame.Rect(ex, row_y, inv_col_w, INV_ITEM_H)
             self._stats_hit_map[f"inv:{ii}"] = it_r
             sel = (sel_ii == ii)
             hov = it_r.collidepoint(mx, my)
@@ -1086,11 +1114,21 @@ class CampUI:
                 pygame.draw.rect(surface, (32,26,50), it_r, border_radius=2)
             rc = {"uncommon":(140,200,255),"rare":(180,120,255),"epic":(255,180,60)}.get(
                 it.get("rarity",""), CREAM)
-            draw_text(surface, it.get("name","?")[:24], ex+3, ey+2, rc, 10)
-            itype_short = it.get("type","")[:5]
-            draw_text(surface, itype_short, SCREEN_W-66, ey+2, STAT_LABEL, 9)
-            ey += INV_ITEM_H
-            shown += 1
+            draw_text(surface, it.get("name","?")[:24], ex+3, row_y+2, rc, 10)
+            draw_text(surface, it.get("type","")[:5], SCREEN_W-66, row_y+2, STAT_LABEL, 9)
+
+        # Scrollbar
+        if total_inv > vis_n:
+            sb_x    = ex + inv_col_w + 2
+            sb_top  = ey
+            sb_full = vis_n * INV_ITEM_H
+            pygame.draw.rect(surface, (28,22,40), (sb_x, sb_top, SB_W, sb_full), border_radius=3)
+            th = max(12, int(sb_full * vis_n / max(1, total_inv)))
+            ty = sb_top + int((sb_full - th) * inv_off / max(1, max_off))
+            pygame.draw.rect(surface, (90,70,130), (sb_x, ty, SB_W, th), border_radius=3)
+
+        ey += vis_n * INV_ITEM_H
+        shown = min(total_inv, vis_n)
 
         # Action buttons for selected item
         if 0 <= sel_ii < len(c.inventory) and ey < BODY_BOT - 30:
@@ -1120,6 +1158,10 @@ class CampUI:
                     draw_button(surface, r, gch.name, hover=r.collidepoint(mx,my), size=10)
                     bx += gw + 5
                 ey += 24
+
+            # ── Comparison panel for equippable items ─────────────────────
+            if sel_it.get("slot") and ey < BODY_BOT - 20:
+                self._draw_equip_compare(surface, sel_it, ex, ey, COL_W)
 
         # ── CAMP SPELLS — compact bars, click to expand popup ────────────
         CAMP_TYPES = ("heal","aoe_heal","cure","revive")
@@ -1509,8 +1551,18 @@ class CampUI:
     def handle_scroll(self, direction):
         """Handle mousewheel scrolling."""
         if self.tab == TAB_STATS:
-            cur = getattr(self, "_stats_scroll", 0)
-            self._stats_scroll = max(0, cur + direction * 24)
+            # Determine which sub-area the mouse is over
+            import pygame as _pg
+            mx, my = _pg.mouse.get_pos()
+            RIGHT_X = 850
+            if mx >= RIGHT_X:
+                # Right column — inventory scroll
+                cur = getattr(self, "_stats_inv_scroll", 0)
+                self._stats_inv_scroll = max(0, cur + direction)
+            else:
+                # Middle column — abilities scroll
+                cur = getattr(self, "_stats_scroll", 0)
+                self._stats_scroll = max(0, cur + direction * 24)
         elif self.tab == TAB_INVENTORY:
             c = self.party[self.selected_char] if self.party else None
             if c:
