@@ -3136,6 +3136,7 @@ class Game:
             "dragons_tooth":   "pale_coast_access",  # unlocks Pale Coast Catacombs
             "pale_coast":      "pale_coast_cleared",
             "windswept_isle":  "spire_key",          # all 5 stones → Valdris' Spire unlocked
+            "valdris_spire":   "throne_key",          # Spire cleared → Shadow Throne unlocked
         }
         # Hearthstone numbers per dungeon
         HEARTHSTONE_MAP = {

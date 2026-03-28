@@ -280,6 +280,15 @@ LOCATIONS = {
         "description": "A rebel encampment in the Ashlands shadow, ~300 fighters and refugees. Grows as Act 3 progresses.",
         "discovery_radius": 4,
     },
+    "shadow_throne": {
+        "name": "The Shadow Throne", "type": LOC_DUNGEON,
+        "x": 103, "y": 28, "region": "ashlands",
+        "visible": False, "icon": "D",
+        "description": "The seat of the Fading — where the wards first failed and the ritual began. Eight floors of shadow and ruin.",
+        "floors": 8, "difficulty": "legendary",
+        "required_key": "throne_key",
+        "discovery_radius": 4,
+    },
 }
 
 # Port routes (which ports connect)
