@@ -49,7 +49,7 @@ TOWER_ENEMIES = {
     # ── Floor 1-2: Constructs & vermin ──
     "Stone Guardian": _e("Stone Guardian", 137, 35, 8,
         _S(16, 4, 14, 2, 4, 0), 6, 18, "melee", "blunt",
-        xp=28, gold=(4, 12),
+        xp=84, gold=(4, 12),
         res={"piercing": 0.3, "slashing": 0.5, "blunt": 1.5, "lightning": 2.0,
              "fire": 0.8, "ice": 0.8},
         imm=["Poisoned", "Fear", "Sleep"],        loot=[
@@ -62,7 +62,7 @@ TOWER_ENEMIES = {
 
     "Arcane Sentry": _e("Arcane Sentry", 87, 15, 20,
         _S(4, 10, 8, 14, 10, 2), 14, 12, "ranged", "arcane",
-        acc=4, row="mid", xp=25, gold=(5, 14),
+        acc=4, row="mid", xp=375, gold=(5, 14),
         res={"arcane": 0.0, "shadow": 1.5},
         imm=["Poisoned", "Sleep"],
         ab=[{"name": "Arcane Bolt", "type": "damage", "target": "single_enemy",
@@ -75,7 +75,7 @@ TOWER_ENEMIES = {
 
     "Tower Rat": _e("Tower Rat", 30, 3, 1,
         _S(3, 14, 3, 1, 3, 0), 20, 5, "melee", "piercing",
-        acc=3, xp=5, gold=(0, 2),        loot=[
+        acc=3, xp=75, gold=(0, 2),        loot=[
             {"drop_chance": 0.12, "item": {"name": 'Rat Tail', "type": 'material', "subtype": 'trophy', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Rat Tail', "unidentified_desc": 'A scaly hairless tail.', "appraised_name": 'Tower Rat Tail', "material_desc": 'Proof of a rat kill.', "magic_desc": 'No magical properties.', "estimated_value": 1, "description": 'A rat tail from the tower.', "identified": False}},
             {"drop_chance": 0.08, "item": {"name": 'Nibbled Scroll Fragment', "type": 'material', "subtype": 'crafting_part', "rarity": 'common', "tier": 1, "identify_difficulty": 1, "unidentified_name": 'Chewed Paper', "unidentified_desc": 'A scrap of paper with bite marks.', "appraised_name": 'Damaged Scroll Fragment', "material_desc": 'Partially-destroyed scroll.', "magic_desc": 'Faint arcane residue.', "estimated_value": 3, "description": 'A scrap of paper chewed by rats.', "identified": False}},
         ],
@@ -84,7 +84,7 @@ TOWER_ENEMIES = {
 
     "Animated Armor": _e("Animated Armor", 162, 40, 4,
         _S(18, 6, 14, 1, 2, 0), 6, 22, "melee", "slashing",
-        xp=38, gold=(8, 18),
+        xp=570, gold=(8, 18),
         res={"piercing": 0.5, "slashing": 0.5, "blunt": 1.5, "lightning": 1.8},
         imm=["Poisoned", "Fear", "Sleep", "Stun"],
         loot=[{"drop_chance": 0.10, "item": {
@@ -98,7 +98,7 @@ TOWER_ENEMIES = {
     # ── Floor 3-4: Corrupted scholars & experiments ──
     "Corrupted Scholar": _e("Corrupted Scholar", 100, 7, 24,
         _S(4, 8, 6, 16, 14, 4), 12, 8, "ranged", "arcane",
-        acc=5, row="back", ai="supportive", xp=35, gold=(8, 20),
+        acc=5, row="back", ai="supportive", xp=525, gold=(8, 20),
         res={"arcane": 0.5, "shadow": 0.5, "divine": 1.5},
         ab=[{"name": "Fading Bolt", "type": "damage", "target": "single_enemy",
              "power": 18, "element": "shadow", "description": "A bolt of Fading energy."},
@@ -114,7 +114,7 @@ TOWER_ENEMIES = {
 
     "Flesh Golem": _e("Flesh Golem", 225, 20, 8,
         _S(22, 4, 20, 2, 4, 0), 5, 26, "melee", "blunt",
-        xp=48, gold=(5, 15),
+        xp=720, gold=(5, 15),
         res={"lightning": 2.0, "fire": 1.5, "nature": 0.5, "shadow": 0.5},
         imm=["Poisoned", "Fear", "Sleep"],
         ab=[{"name": "Slam", "type": "damage", "target": "single_enemy",
@@ -128,7 +128,7 @@ TOWER_ENEMIES = {
 
     "Arcane Wisp": _e("Arcane Wisp", 45, 3, 28,
         _S(1, 16, 4, 12, 10, 2), 22, 10, "ranged", "arcane",
-        acc=6, row="back", xp=18, gold=(3, 8),
+        acc=6, row="back", xp=270, gold=(3, 8),
         res={"piercing": 0.0, "slashing": 0.0, "blunt": 0.0, "arcane": 0.0, "shadow": 1.5, "divine": 1.5},
         imm=["Poisoned", "Fear"],        loot=[
             {"drop_chance": 0.2, "item": {"name": 'Wisp Essence', "type": 'material', "subtype": 'reagent', "rarity": 'uncommon', "tier": 2, "identify_difficulty": 1, "unidentified_name": 'Floating Orb', "unidentified_desc": 'A small globe of light floating in mid-air.', "appraised_name": 'Arcane Wisp Essence', "material_desc": 'Condensed arcane energy. Tier 2 reagent.', "magic_desc": 'Pure arcane resonance.', "estimated_value": 30, "description": 'A floating ball of arcane energy.', "identified": False}},
@@ -139,7 +139,7 @@ TOWER_ENEMIES = {
 
     "Living Tome": _e("Living Tome", 70, 10, 24,
         _S(2, 10, 6, 16, 12, 4), 14, 6, "ranged", "arcane",
-        acc=4, row="back", xp=22, gold=(6, 14),
+        acc=4, row="back", xp=330, gold=(6, 14),
         res={"fire": 3.0, "arcane": 0.0},
         ab=[{"name": "Spell Page", "type": "damage", "target": "single_enemy",
              "power": 16, "element": "arcane",
@@ -170,7 +170,7 @@ TOWER_ENEMIES = {
 
     "Void Tendril": _e("Void Tendril", 75, 10, 16,
         _S(14, 8, 10, 2, 2, 0), 10, 16, "melee", "shadow",
-        xp=28, gold=(0, 5),
+        xp=420, gold=(0, 5),
         res={"shadow": 0.0, "divine": 2.0, "fire": 1.5},
         ab=[{"name": "Grasping Pull", "type": "debuff", "target": "single_enemy",
              "effect": {"speed_penalty": 0.5, "duration": 2},
@@ -180,7 +180,7 @@ TOWER_ENEMIES = {
 
     "Reality Fracture": _e("Reality Fracture", 125, 3, 40,
         _S(1, 1, 12, 18, 18, 6), 8, 0, "ranged", "arcane",
-        ai="supportive", row="back", xp=50, gold=(10, 25),
+        ai="supportive", row="back", xp=750, gold=(10, 25),
         res={"piercing": 0.0, "slashing": 0.0, "blunt": 0.0,
              "arcane": 0.0, "shadow": 0.0, "divine": 2.0, "fire": 1.5},
         imm=["Poisoned", "Fear", "Sleep", "Stun"],

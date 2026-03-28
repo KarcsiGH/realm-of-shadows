@@ -24,7 +24,7 @@ ENEMIES = {
         "accuracy_bonus": 0,
         "preferred_row": FRONT,
         "ai_type": "aggressive", "pack_tactics": True, "cowardly": True,
-        "xp_reward": 15, "gold_reward": (5, 12),
+        "xp_reward": 22, "gold_reward": (5, 12),
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
             "fire": NEUTRAL, "ice": NEUTRAL, "lightning": NEUTRAL,
@@ -77,7 +77,7 @@ ENEMIES = {
         "accuracy_bonus": 5,
         "preferred_row": MID,
         "ai_type": "aggressive", "pack_tactics": True, "cowardly": True,
-        "xp_reward": 18, "gold_reward": (6, 14),
+        "xp_reward": 27, "gold_reward": (6, 14),
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
             "fire": NEUTRAL, "ice": NEUTRAL, "lightning": NEUTRAL,
@@ -130,7 +130,7 @@ ENEMIES = {
         "accuracy_bonus": 2,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
-        "xp_reward": 30, "gold_reward": (10, 25),
+        "xp_reward": 60, "gold_reward": (10, 25),
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
             "fire": NEUTRAL, "ice": NEUTRAL, "lightning": NEUTRAL,
@@ -183,7 +183,7 @@ ENEMIES = {
         "accuracy_bonus": 5,
         "preferred_row": FRONT,
         "ai_type": "aggressive", "pack_tactics": True,
-        "xp_reward": 22, "gold_reward": (2, 6),  # wolves carry some scraps
+        "xp_reward": 33, "gold_reward": (2, 6),  # wolves carry some scraps
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
             "fire": VULNERABLE, "ice": RESISTANT, "lightning": NEUTRAL,
@@ -304,7 +304,7 @@ ENEMIES = {
         "accuracy_bonus": 0,
         "preferred_row": FRONT,
         "ai_type": "defensive",
-        "xp_reward": 35, "gold_reward": (5, 15),
+        "xp_reward": 70, "gold_reward": (5, 15),
         "resistances": {
             "piercing": RESISTANT, "slashing": RESISTANT, "blunt": VULNERABLE,
             "fire": NEUTRAL, "ice": RESISTANT, "lightning": NEUTRAL,
@@ -371,7 +371,7 @@ ENEMIES = {
         "accuracy_bonus": 0,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
-        "xp_reward": 50, "gold_reward": (10, 25),
+        "xp_reward": 100, "gold_reward": (10, 25),
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
             "fire": NEUTRAL, "ice": NEUTRAL, "lightning": NEUTRAL,
@@ -424,7 +424,7 @@ ENEMIES = {
         "accuracy_bonus": 5,
         "preferred_row": FRONT,
         "ai_type": "boss",
-        "xp_reward": 120, "gold_reward": (30, 60),
+        "xp_reward": 240, "gold_reward": (30, 60),
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
             "fire": NEUTRAL, "ice": NEUTRAL, "lightning": NEUTRAL,
@@ -502,7 +502,7 @@ ENEMIES = {
         "accuracy_bonus": 0,
         "preferred_row": BACK,
         "ai_type": "supportive",
-        "xp_reward": 35, "gold_reward": (5, 12),
+        "xp_reward": 52, "gold_reward": (5, 12),
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
             "fire": NEUTRAL, "ice": NEUTRAL, "lightning": NEUTRAL,
@@ -802,7 +802,7 @@ ENEMIES = {
         "accuracy_bonus": 8,
         "preferred_row": FRONT,
         "ai_type": "aggressive",
-        "xp_reward": 30, "gold_reward": (2, 5),
+        "xp_reward": 45, "gold_reward": (2, 5),
         "resistances": {
             "piercing": NEUTRAL, "slashing": NEUTRAL, "blunt": NEUTRAL,
             "fire": VULNERABLE, "ice": NEUTRAL, "lightning": NEUTRAL,
@@ -1015,6 +1015,118 @@ DUNGEON_ENCOUNTER_TABLES = {
         3: ["boss_orc", "orc_patrol"],
         "boss": "boss_ashenmoor",
     },
+    # ── Spider's Nest — proper escalation ─────────────────────────
+    "sn_web_scouts": {
+        "name": "Web Scouts",
+        "difficulty": "easy",
+        "groups": [
+            {"enemy": "Spiderling", "count": 4, "row": "front"},
+            {"enemy": "Spiderling", "count": 2, "row": "mid"},
+        ],
+    },
+    "sn_patrol": {
+        "name": "Spider Patrol",
+        "difficulty": "easy",
+        "groups": [
+            {"enemy": "Spiderling", "count": 3, "row": "front"},
+            {"enemy": "Giant Spider", "count": 1, "row": "mid"},
+        ],
+    },
+    "sn_webbed": {
+        "name": "Webbed Chamber",
+        "difficulty": "medium",
+        "groups": [
+            {"enemy": "Giant Spider", "count": 2, "row": "front"},
+            {"enemy": "Spiderling", "count": 3, "row": "mid"},
+        ],
+    },
+    "sn_broodling": {
+        "name": "Brood Cluster",
+        "difficulty": "medium",
+        "groups": [
+            {"enemy": "Web Spinner", "count": 1, "row": "back"},
+            {"enemy": "Giant Spider", "count": 1, "row": "front"},
+            {"enemy": "Spiderling", "count": 4, "row": "front"},
+        ],
+    },
+    # ── Abandoned Mine — proper escalation ─────────────────────────
+    "mine_rats": {
+        "name": "Rat Infestation",
+        "difficulty": "easy",
+        "groups": [
+            {"enemy": "Rabid Rat", "count": 5, "row": "front"},
+            {"enemy": "Mine Rat Swarm", "count": 2, "row": "mid"},
+        ],
+    },
+    "mine_bandits": {
+        "name": "Bandit Camp",
+        "difficulty": "medium",
+        "groups": [
+            {"enemy": "Bandit", "count": 2, "row": "front"},
+            {"enemy": "Bandit Thief", "count": 1, "row": "mid"},
+        ],
+    },
+    "mine_mixed": {
+        "name": "Bandit Warband",
+        "difficulty": "hard",
+        "groups": [
+            {"enemy": "Bandit Fighter", "count": 2, "row": "front"},
+            {"enemy": "Bandit Archer", "count": 2, "row": "mid"},
+            {"enemy": "Bandit Mage", "count": 1, "row": "back"},
+        ],
+    },
+    # ── Sunken Crypt — undead escalation ───────────────────────────
+    "crypt_easy": {
+        "name": "Risen Dead",
+        "difficulty": "easy",
+        "groups": [
+            {"enemy": "Zombie", "count": 3, "row": "front"},
+        ],
+    },
+    "crypt_medium": {
+        "name": "Crypt Patrol",
+        "difficulty": "medium",
+        "groups": [
+            {"enemy": "Skeleton Warrior", "count": 2, "row": "front"},
+            {"enemy": "Skeletal Archer", "count": 2, "row": "mid"},
+        ],
+    },
+    "crypt_hard": {
+        "name": "Crypt Guard",
+        "difficulty": "hard",
+        "groups": [
+            {"enemy": "Crypt Soldier", "count": 2, "row": "front"},
+            {"enemy": "Crypt Shade", "count": 2, "row": "mid"},
+            {"enemy": "Ghoul", "count": 1, "row": "front"},
+        ],
+    },
+    # ── Ruins of Ashenmoor — escalation ────────────────────────────
+    "ash_cultists": {
+        "name": "Cultist Cell",
+        "difficulty": "medium",
+        "groups": [
+            {"enemy": "Cultist Initiate", "count": 3, "row": "front"},
+            {"enemy": "Cultist Warrior", "count": 1, "row": "front"},
+        ],
+    },
+    "ash_ruin_guard": {
+        "name": "Ruin Guard",
+        "difficulty": "medium",
+        "groups": [
+            {"enemy": "Ruin Archer", "count": 2, "row": "mid"},
+            {"enemy": "Ashenmoor Bandit", "count": 2, "row": "front"},
+        ],
+    },
+    "ash_hard": {
+        "name": "Ashenmoor Warband",
+        "difficulty": "hard",
+        "groups": [
+            {"enemy": "Orc Fighter", "count": 2, "row": "front"},
+            {"enemy": "Ashenmoor Crossbowman", "count": 2, "row": "mid"},
+            {"enemy": "Cultist Hexblade", "count": 1, "row": "back"},
+        ],
+    },
+
 }
 
 def get_floor_encounter(dungeon_id, floor_num, total_floors, is_boss_floor=False):

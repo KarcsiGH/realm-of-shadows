@@ -8298,6 +8298,67 @@ _TRAINER_DIALOGUES = {
             },
         },
     ],
+    # ── Ambient NPC types for new settlements ───────────────────────────────
+    "ambient_fisher": [
+        {"condition": None, "lines": [
+            "The currents have been strange lately. Something under the water is restless.",
+        ]},
+    ],
+    "ambient_miner": [
+        {"condition": None, "lines": [
+            "Dragon's Tooth has been groaning for weeks. I give it a month before she blows.",
+        ]},
+    ],
+    "ambient_rebel": [
+        {"condition": None, "lines": [
+            "We didn't choose this fight. The Fading chose it for us.",
+        ]},
+    ],
+    "ambient_scout": [
+        {"condition": None, "lines": [
+            "The perimeter's clear for now. Won't stay that way if Valdris pushes south.",
+        ]},
+    ],
+
+    # ── Emberveil Warden contact ──────────────────────────────────────────────
+    "renn_emberveil": [
+        {"condition": None, "lines": [
+            "Name's Renn. I run the forge — and I keep an eye on Dragon's Tooth for the old Order.",
+            "There's a back way into the Tooth. Lava tube, third vent on the east face.",
+            "Bypasses the first floor entirely. You'll come out in the mid-caves.",
+            "My terms: you clear whatever's nesting near the caldera. Deal?",
+        ]},
+    ],
+
+    # ── The Anchorage Warden contact ──────────────────────────────────────────
+    "vaethari_anchorage": [
+        {"condition": None, "lines": [
+            "I have watched three hundred years of this world. The Fading is not new — but this outbreak is different.",
+            "The Keeper of Windswept Isle is an old friend. Or was, before the Fading took her.",
+            "She would not harm you willingly. Whatever she has become, part of her remembers.",
+            "Approach the central shrine. Speak the old words: Aethen, sol vareth, kai.",
+            "She will hear you. Whether she answers... that I cannot promise.",
+        ]},
+    ],
+
+    # ── The Holdfast Warden contacts ──────────────────────────────────────────
+    "dael_holdfast": [
+        {"condition": None, "lines": [
+            "Warden Initiate Dael. Last one standing, near as I can tell.",
+            "I never finished my training — the Order fell before I could take my oaths.",
+            "But I know enough. The Spire feeds on despair. Go in angry, not afraid.",
+            "Supplies are thin. Anything you can spare helps the camp.",
+        ]},
+    ],
+    "sarev_holdfast": [
+        {"condition": None, "lines": [
+            "The empire calls us rebels. Valdris calls us insurgents.",
+            "We call ourselves alive — which is more than most Ashlanders can say.",
+            "I don't care about thrones or Orders. I want these people safe.",
+            "Help us hold the line, and we'll help you reach the Spire.",
+        ]},
+    ],
+
 }
 
 NPC_DIALOGUES.update(_TRAINER_DIALOGUES)

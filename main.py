@@ -4000,6 +4000,30 @@ class Game:
                 floor = self.dungeon_state.current_floor
                 self.dungeon_ui.show_event(f"Descended to Floor {floor}.", GOLD)
                 self.dungeon_ui.on_floor_change()
+                # ── Floor completion XP bonus ───────────────────────────
+                from data.dungeon import DUNGEONS as _DG
+                from core.progression import can_level_up
+                _d = _DG.get(self.dungeon_state.dungeon_id, {})
+                _floor_bonus = _d.get("floor_xp_bonus", 0)
+                if _floor_bonus and self.party:
+                    _prev_floor = floor - 1
+                    _bonus_msg_parts = []
+                    for _c in self.party:
+                        if hasattr(_c, "add_xp"):
+                            _c.add_xp(_floor_bonus)
+                        else:
+                            _c.xp = getattr(_c, "xp", 0) + _floor_bonus
+                        _bonus_msg_parts.append(f"{_c.name} +{_floor_bonus}XP")
+                    if _bonus_msg_parts:
+                        self.dungeon_ui.show_event(
+                            f"Floor {_prev_floor} cleared! ({_floor_bonus} XP each)",
+                            (120, 200, 255))
+                        # Queue level-up notifications
+                        _leveled = [_c for _c in self.party if can_level_up(_c)]
+                        if _leveled:
+                            self.dungeon_ui.show_event(
+                                "Level up available! Visit the guild to train.",
+                                GOLD)
                 # Track exploration for job board
                 from data.job_board import on_dungeon_floor_reached
                 on_dungeon_floor_reached(self.dungeon_state.dungeon_id, floor)

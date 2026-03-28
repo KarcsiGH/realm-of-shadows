@@ -10,17 +10,18 @@ import random
 # ═══════════════════════════════════════════════════════════════
 
 XP_TABLE = {
-    # Early (L1-5): ~5-8 encounters per level — feels earnable, not trivial
-    1: 0, 2: 400, 3: 900, 4: 1600, 5: 2600,
-    # Mid (L6-10): ~10-15 encounters per level — dungeons feel like real progress
-    6: 3900, 7: 5600, 8: 7800, 9: 10500, 10: 14000,
-    # Late (L11-15): each level is a meaningful milestone
-    11: 18500, 12: 24000, 13: 30500, 14: 38000, 15: 47000,
-    # Endgame (L16-20): serious investment
-    16: 57500, 17: 70000, 18: 85000, 19: 103000, 20: 124000,
-    # Prestige (L21-30): for the truly dedicated
-    21: 148000, 22: 176000, 23: 208000, 24: 244000, 25: 285000,
-    26: 330000, 27: 380000, 28: 435000, 29: 496000, 30: 564000,
+    # Rebalanced for 6-player party, 2-3 levels per dungeon, final ~L22
+    # Early (L1-5): fast and satisfying — earn each level in one dungeon wing
+    1: 0,       2: 600,     3: 1400,    4: 2400,    5: 3600,
+    # Mid (L6-10): dungeon-paced — one major dungeon per level
+    6: 5100,    7: 7100,    8: 9600,    9: 12800,   10: 16800,
+    # Late (L11-15): milestone levels — advanced class territory
+    11: 21800,  12: 27800,  13: 34800,  14: 43300,  15: 53300,
+    # Endgame (L16-20): earned through Act 3 dungeons
+    16: 65300,  17: 79300,  18: 95300,  19: 113800, 20: 134800,
+    # Prestige (L21-30): for completionists
+    21: 158800, 22: 185800, 23: 215800, 24: 248800, 25: 285800,
+    26: 326800, 27: 371800, 28: 421800, 29: 476800, 30: 536800,
 }
 
 MAX_LEVEL = 30

@@ -36,6 +36,7 @@ DUNGEONS = {
     "goblin_warren": {
         "name": "Goblin Warren",
         "intended_level": 1,
+        "floor_xp_bonus": 300,
         "floors": 3,
         "width": 32, "height": 26,
         "encounter_table": {
@@ -51,13 +52,14 @@ DUNGEONS = {
     "spiders_nest": {
         "name": "Spider's Nest",
         "intended_level": 2,
+        "floor_xp_bonus": 300,
         "floors": 4,
         "width": 35, "height": 28,
         "encounter_table": {
-            1: ["easy_spiders", "medium_spiders"],
-            2: ["medium_spiders", "hard_spiders"],
-            3: ["hard_spiders", "spider_swarm"],
-            4: ["spider_swarm", "hard_spiders"],
+            1: ["sn_web_scouts", "sn_patrol"],
+            2: ["sn_patrol", "sn_webbed"],
+            3: ["sn_webbed", "sn_broodling", "medium_spiders"],
+            4: ["medium_spiders", "hard_spiders"],
         },
         "boss_floor": 4,
         "boss_encounter": "boss_spider_queen",
@@ -66,14 +68,15 @@ DUNGEONS = {
     },
     "abandoned_mine": {
         "intended_level": 3,
+        "floor_xp_bonus": 500,
         "name": "Abandoned Mine",
         "floors": 5,
         "width": 40, "height": 30,
         "encounter_table": {
-            1: ["medium_bandits"],
-            2: ["medium_bandits", "hard_mixed"],
-            3: ["hard_mixed"],
-            4: ["hard_mixed"],
+            1: ["mine_rats", "mine_bandits"],
+            2: ["mine_bandits", "medium_bandits"],
+            3: ["medium_bandits", "mine_mixed"],
+            4: ["mine_mixed", "hard_mixed"],
             5: ["hard_mixed"],
         },
         "boss_floor": 5,
@@ -83,14 +86,15 @@ DUNGEONS = {
     },
     "sunken_crypt": {
         "intended_level": 4,
+        "floor_xp_bonus": 700,
         "name": "Sunken Crypt",
         "floors": 4,
         "width": 35, "height": 28,
         "encounter_table": {
-            1: ["medium_goblins"],
-            2: ["medium_bandits"],
-            3: ["medium_bandits", "hard_mixed"],
-            4: ["hard_mixed"],
+            1: ["crypt_easy", "medium_goblins"],
+            2: ["crypt_easy", "crypt_medium"],
+            3: ["crypt_medium", "crypt_hard"],
+            4: ["crypt_hard", "hard_mixed"],
         },
         "boss_floor": 4,
         "boss_encounter": "boss_warden",
@@ -99,13 +103,14 @@ DUNGEONS = {
     },
     "ruins_ashenmoor": {
         "intended_level": 5,
+        "floor_xp_bonus": 600,
         "name": "Ruins of Ashenmoor",
         "floors": 4,
         "width": 38, "height": 30,
         "encounter_table": {
-            1: ["hard_mixed"],
-            2: ["hard_mixed"],
-            3: ["hard_mixed"],
+            1: ["ash_cultists", "ash_ruin_guard"],
+            2: ["ash_ruin_guard", "ash_hard"],
+            3: ["ash_hard", "hard_mixed"],
             4: ["hard_mixed"],
         },
         "boss_floor": 4,
@@ -115,6 +120,7 @@ DUNGEONS = {
     },
     "valdris_spire": {
         "intended_level": 9,
+        "floor_xp_bonus": 3600,
         "name": "Valdris' Spire",
         "floors": 6,
         "width": 22, "height": 18,  # smaller, tighter tower floors
@@ -133,6 +139,7 @@ DUNGEONS = {
     },
     "dragons_tooth": {
         "intended_level": 6,
+        "floor_xp_bonus": 700,
         "name": "Dragon's Tooth",
         "floors": 3,
         "width": 38, "height": 30,
@@ -151,6 +158,7 @@ DUNGEONS = {
 
     "pale_coast": {
         "intended_level": 7,
+        "floor_xp_bonus": 700,
         "name": "Pale Coast Catacombs",
         "floors": 4,
         "width": 35, "height": 28,
@@ -169,6 +177,7 @@ DUNGEONS = {
 
     "windswept_isle": {
         "intended_level": 8,
+        "floor_xp_bonus": 900,
         "name": "Windswept Isle Ruins",
         "floors": 6,
         "width": 36, "height": 30,
@@ -190,6 +199,7 @@ DUNGEONS = {
 
     "shadow_throne": {
         "intended_level": 10,
+        "floor_xp_bonus": 1000,
         "name": "The Shadow Throne",
         "floors": 8,
         "width": 40, "height": 32,

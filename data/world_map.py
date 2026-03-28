@@ -257,6 +257,29 @@ LOCATIONS = {
         "floors": 6, "difficulty": "legendary",
         "required_key": "spire_key", "discovery_radius": 5,
     },
+
+    # ── New Hub Settlements ────────────────────────────────────
+    "emberveil": {
+        "name": "Emberveil", "type": LOC_TOWN,
+        "x": 112, "y": 50, "region": "ocean",
+        "visible": False, "icon": "T",
+        "description": "A volcanic mining and fishing settlement of ~200 souls. Smells of sulphur and smoked eel.",
+        "discovery_radius": 3,
+    },
+    "the_anchorage": {
+        "name": "The Anchorage", "type": LOC_TOWN,
+        "x": 45, "y": 108, "region": "coastal",
+        "visible": False, "icon": "T",
+        "description": "A windswept outpost of Crystalspire researchers and hardy fisherfolk, ~80 souls.",
+        "discovery_radius": 3,
+    },
+    "the_holdfast": {
+        "name": "The Holdfast", "type": LOC_TOWN,
+        "x": 98, "y": 36, "region": "ashlands",
+        "visible": False, "icon": "C",
+        "description": "A rebel encampment in the Ashlands shadow, ~300 fighters and refugees. Grows as Act 3 progresses.",
+        "discovery_radius": 4,
+    },
 }
 
 # Port routes (which ports connect)

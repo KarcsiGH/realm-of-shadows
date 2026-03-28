@@ -1777,3 +1777,371 @@ def is_exit(town_data, x, y):
 
 # 24x20 — Small forest clearing. Dense trees on all sides.
 # One winding path, basic services only. Feels remote and rough.
+# ═══════════════════════════════════════════════════════════════
+#  EMBERVEIL  (volcanic mining/fishing settlement, near Dragon's Tooth)
+# ═══════════════════════════════════════════════════════════════
+# ~20×16  — cramped volcanic-rock buildings around a central forge plaza
+EMBERVEIL_MAP_RAW = [
+    "TTTTTTTTTTTTTTTTTTTT",  # 0
+    "T..................T",   # 1
+    "T..####..####......T",   # 2
+    "T..#..#..#..#......T",   # 3
+    "T..#..D..#..D......T",   # 4  inn(5,4)  shop(10,4)
+    "T..####..####......T",   # 5
+    "T..................T",   # 6
+    "T....PPPP..........T",  # 7
+    "T....P.............T",  # 8
+    "T....P..####..####.T",  # 9
+    "T....P..#..#..#..#.T",  # 10
+    "T....P..#..D..#..D.T",  # 11  forge(13,11) temple(18,11)
+    "T....P..####..####.T",  # 12
+    "T....P.............T",  # 13
+    "T....P..S..........T",  # 14
+    "TTTEEETTTTTTTTTTTTTT",  # 15  exits(4,15)(5,15)(6,15)
+]
+EMBERVEIL_MAP = _pad_map(EMBERVEIL_MAP_RAW, 20)
+
+EMBERVEIL_BUILDINGS = {
+    "inn": {
+        "name": "The Cinder Rest",
+        "type": BLD_INN,
+        "door": (5, 4),
+        "color": (160, 90, 60),
+        "label_pos": (3, 2),
+        "wall_cols": (3, 6), "wall_rows": (2, 5),
+        "npc_name": "Innkeeper Sorli",
+    },
+    "shop": {
+        "name": "Ember Trading Post",
+        "type": BLD_SHOP,
+        "door": (10, 4),
+        "color": (120, 110, 80),
+        "label_pos": (8, 2),
+        "wall_cols": (8, 11), "wall_rows": (2, 5),
+        "npc_name": "Merchant Yula",
+    },
+    "forge": {
+        "name": "Renn's Forge",
+        "type": BLD_FORGE,
+        "door": (13, 11),
+        "color": (180, 80, 40),
+        "label_pos": (11, 9),
+        "wall_cols": (11, 14), "wall_rows": (9, 12),
+        "npc_name": "Master Forger Renn",
+    },
+    "temple": {
+        "name": "Shrine of the Deep Flame",
+        "type": BLD_TEMPLE,
+        "door": (18, 11),
+        "color": (200, 120, 60),
+        "label_pos": (16, 9),
+        "wall_cols": (16, 19), "wall_rows": (9, 12),
+        "npc_name": "Flame-Keeper Mira",
+    },
+}
+
+EMBERVEIL_NPCS = [
+    {
+        "name": "Master Forger Renn",
+        "x": 12, "y": 8,
+        "dialogue_id": "renn_emberveil",
+        "description": "A broad-shouldered smith with burn scars on both forearms. Warden contact — knows the Dragon's Tooth backdoor.",
+        "color": (220, 140, 60),
+        "npc_type": "warden",
+        "service": "forge",
+    },
+    {
+        "name": "Cinder Guard",
+        "x": 7, "y": 6,
+        "dialogue_id": "ambient_guard",
+        "description": "A watchman in heat-blackened armour, sweating through his post.",
+        "color": (140, 120, 100),
+    },
+    {
+        "name": "Lava Fisher Tok",
+        "x": 16, "y": 6,
+        "dialogue_id": "ambient_fisher",
+        "description": "A leathery man who claims to fish the volcanic vents for blind eels.",
+        "color": (160, 130, 90),
+    },
+    {
+        "name": "Miner Dast",
+        "x": 9, "y": 13,
+        "dialogue_id": "ambient_miner",
+        "description": "Coughing ash and complaining about cave-ins. The Dragon's Tooth has been restless.",
+        "color": (130, 120, 110),
+    },
+]
+
+EMBERVEIL_SIGNS = {
+    (7, 14): "Renn's Forge — Weapons and armor, no questions asked.",
+    (14, 6): "Volcanic vent fishing — at your own risk.",
+}
+
+EMBERVEIL_SPAWN = (8, 13)
+EMBERVEIL_EXIT = [(4, 15), (5, 15), (6, 15)]
+
+
+# ═══════════════════════════════════════════════════════════════
+#  THE ANCHORAGE  (research post + fishing village, near Windswept Isle)
+# ═══════════════════════════════════════════════════════════════
+# ~22×16 — a weathered coastal outpost split between scholars and fisherfolk
+ANCHORAGE_MAP_RAW = [
+    "TTTTTTTTTTTTTTTTTTTTTT",  # 0
+    "T....................T",   # 1
+    "T..####..####........T",  # 2
+    "T..#..#..#..#........T",  # 3
+    "T..#..D..#..D........T",  # 4  inn(5,4)  shop(10,4)
+    "T..####..####........T",  # 5
+    "T....................T",   # 6
+    "T....PPPPPP..........T",  # 7
+    "T....P.......S.......T",  # 8
+    "T....P..####..####...T",  # 9
+    "T....P..#..#..#..#...T",  # 10
+    "T....P..#..D..#..D...T",  # 11  guild(13,11) temple(18,11)
+    "T....P..####..####...T",  # 12
+    "T....P...............T",  # 13
+    "T....P...............T",  # 14
+    "TWWEEEWWWWWWWWWWWWWWWW",  # 15  exits(3,15)(4,15)(5,15), water
+]
+ANCHORAGE_MAP = _pad_map(ANCHORAGE_MAP_RAW, 22)
+
+ANCHORAGE_BUILDINGS = {
+    "inn": {
+        "name": "The Tethered Lantern",
+        "type": BLD_INN,
+        "door": (5, 4),
+        "color": (80, 120, 160),
+        "label_pos": (3, 2),
+        "wall_cols": (3, 6), "wall_rows": (2, 5),
+        "npc_name": "Innkeeper Bram",
+    },
+    "shop": {
+        "name": "Anchorage Supplies",
+        "type": BLD_SHOP,
+        "door": (10, 4),
+        "color": (100, 130, 120),
+        "label_pos": (8, 2),
+        "wall_cols": (8, 11), "wall_rows": (2, 5),
+        "npc_name": "Merchant Cael",
+    },
+    "guild": {
+        "name": "Research Hall",
+        "type": BLD_GUILD,
+        "door": (13, 11),
+        "color": (120, 140, 180),
+        "label_pos": (11, 9),
+        "wall_cols": (11, 14), "wall_rows": (9, 12),
+        "npc_name": "Elder Vaethari",
+    },
+    "temple": {
+        "name": "Chapel of the Tide",
+        "type": BLD_TEMPLE,
+        "door": (18, 11),
+        "color": (100, 140, 200),
+        "label_pos": (16, 9),
+        "wall_cols": (16, 19), "wall_rows": (9, 12),
+        "npc_name": "Tide-Priest Senna",
+    },
+}
+
+ANCHORAGE_NPCS = [
+    {
+        "name": "Elder Vaethari",
+        "x": 12, "y": 8,
+        "dialogue_id": "vaethari_anchorage",
+        "description": "An ancient elf, 300 years old if a day. Still sharp. Knows the isle's Keeper personally.",
+        "color": (160, 210, 220),
+        "npc_type": "warden",
+        "service": "guild",
+    },
+    {
+        "name": "Crystalspire Scholar",
+        "x": 16, "y": 6,
+        "dialogue_id": "ambient_scholar",
+        "description": "Taking notes on tidal patterns with excessive enthusiasm.",
+        "color": (140, 160, 200),
+    },
+    {
+        "name": "Fisher Nael",
+        "x": 8, "y": 6,
+        "dialogue_id": "ambient_fisher",
+        "description": "Mending a net, one eye on the approaching weather.",
+        "color": (150, 140, 110),
+    },
+    {
+        "name": "Dock Watcher",
+        "x": 19, "y": 13,
+        "dialogue_id": "ambient_guard",
+        "description": "A quiet woman watching the water. Something in her manner says ex-soldier.",
+        "color": (120, 130, 140),
+    },
+]
+
+ANCHORAGE_SIGNS = {
+    (9, 8): "Research Hall — Crystalspire Expeditionary Survey.",
+    (15, 13): "Dock — Small craft only. Windswept Isle passage by arrangement.",
+}
+
+ANCHORAGE_SPAWN = (8, 13)
+ANCHORAGE_EXIT = [(3, 15), (4, 15), (5, 15)]
+
+
+# ═══════════════════════════════════════════════════════════════
+#  THE HOLDFAST  (rebel encampment, Ashlands, near Spire + Throne)
+# ═══════════════════════════════════════════════════════════════
+# ~24×18 — a fortified rebel camp that grows as the party progresses Act 3
+HOLDFAST_MAP_RAW = [
+    "TTTTTTTTTTTTTTTTTTTTTTTT",  # 0
+    "T......................T",   # 1
+    "T..####..####..........T",  # 2
+    "T..#..#..#..#..........T",  # 3
+    "T..#..D..#..D..........T",  # 4  command(5,4)  supply(10,4)
+    "T..####..####..........T",  # 5
+    "T......................T",   # 6
+    "T.....PPPPPPP..........T",  # 7
+    "T.....P.......S........T",  # 8
+    "T.....P..####..####....T",  # 9
+    "T.....P..#..#..#..#....T",  # 10
+    "T.....P..#..D..#..D....T",  # 11  inn(13,11) temple(18,11)
+    "T.....P..####..####....T",  # 12
+    "T.....P................T",  # 13
+    "T.....P..####..........T",  # 14
+    "T.....P..#..#..........T",  # 15  training hall
+    "T.....P..#..D..........T",  # 16  guild(12,16)
+    "TEEETTTTTTTTTTTTTTTTTTTT",  # 17  exits(1,17)(2,17)(3,17)
+]
+HOLDFAST_MAP = _pad_map(HOLDFAST_MAP_RAW, 24)
+
+HOLDFAST_BUILDINGS = {
+    "shop": {
+        "name": "Command Tent",
+        "type": BLD_SHOP,
+        "door": (5, 4),
+        "color": (120, 100, 60),
+        "label_pos": (3, 2),
+        "wall_cols": (3, 6), "wall_rows": (2, 5),
+        "npc_name": "Quartermaster Dael",
+    },
+    "shop2": {
+        "name": "Supply Cache",
+        "type": BLD_SHOP,
+        "door": (10, 4),
+        "color": (100, 110, 80),
+        "label_pos": (8, 2),
+        "wall_cols": (8, 11), "wall_rows": (2, 5),
+        "npc_name": "Supply Runner Fen",
+    },
+    "inn": {
+        "name": "The Holdfast Barracks",
+        "type": BLD_INN,
+        "door": (13, 11),
+        "color": (90, 100, 80),
+        "label_pos": (11, 9),
+        "wall_cols": (11, 14), "wall_rows": (9, 12),
+        "npc_name": "Sergeant Holt",
+    },
+    "temple": {
+        "name": "Field Shrine",
+        "type": BLD_TEMPLE,
+        "door": (18, 11),
+        "color": (140, 120, 100),
+        "label_pos": (16, 9),
+        "wall_cols": (16, 19), "wall_rows": (9, 12),
+        "npc_name": "Cleric Asha",
+    },
+    "guild": {
+        "name": "Training Ground",
+        "type": BLD_GUILD,
+        "door": (12, 16),
+        "color": (100, 120, 90),
+        "label_pos": (10, 14),
+        "wall_cols": (10, 13), "wall_rows": (14, 17),
+        "npc_name": "Drill Master Kael",
+    },
+}
+
+HOLDFAST_NPCS = [
+    {
+        "name": "Quartermaster Dael",
+        "x": 7, "y": 7,
+        "dialogue_id": "dael_holdfast",
+        "description": "Last trained Warden initiate. Exhausted, resourceful, holding the camp together through will alone.",
+        "color": (180, 160, 100),
+        "npc_type": "warden",
+        "service": "shop",
+    },
+    {
+        "name": "Commander Sarev",
+        "x": 16, "y": 6,
+        "dialogue_id": "sarev_holdfast",
+        "description": "Scarred rebel commander. Wants the Ashlands free of both Valdris AND the empire.",
+        "color": (200, 100, 80),
+    },
+    {
+        "name": "Rebel Fighter",
+        "x": 9, "y": 13,
+        "dialogue_id": "ambient_rebel",
+        "description": "A weary soldier sharpening a blade. Too tired for speeches, too angry to stop.",
+        "color": (140, 130, 100),
+    },
+    {
+        "name": "Scout Mira",
+        "x": 20, "y": 13,
+        "dialogue_id": "ambient_scout",
+        "description": "Just back from the Ashlands perimeter. Still catching her breath.",
+        "color": (160, 150, 120),
+    },
+    {
+        "name": "Ashlands Refugee",
+        "x": 13, "y": 6,
+        "dialogue_id": "ambient_townsfolk",
+        "description": "One of dozens who fled the Fading. Still has ash in her hair.",
+        "color": (150, 140, 130),
+    },
+]
+
+HOLDFAST_SIGNS = {
+    (8, 8): "Holdfast — No Imperials. No exceptions.",
+    (18, 8): "The Ashlands remember. So do we.",
+}
+
+HOLDFAST_SPAWN = (10, 15)
+HOLDFAST_EXIT = [(1, 17), (2, 17), (3, 17)]
+
+# Register all three new towns
+TOWN_MAPS["emberveil"] = {
+    "name": "Emberveil",
+    "map": EMBERVEIL_MAP,
+    "width": 20,
+    "height": 16,
+    "buildings": EMBERVEIL_BUILDINGS,
+    "npcs": EMBERVEIL_NPCS,
+    "signs": EMBERVEIL_SIGNS,
+    "spawn": EMBERVEIL_SPAWN,
+    "exits": EMBERVEIL_EXIT,
+}
+
+TOWN_MAPS["the_anchorage"] = {
+    "name": "The Anchorage",
+    "map": ANCHORAGE_MAP,
+    "width": 22,
+    "height": 16,
+    "buildings": ANCHORAGE_BUILDINGS,
+    "npcs": ANCHORAGE_NPCS,
+    "signs": ANCHORAGE_SIGNS,
+    "spawn": ANCHORAGE_SPAWN,
+    "exits": ANCHORAGE_EXIT,
+}
+
+TOWN_MAPS["the_holdfast"] = {
+    "name": "The Holdfast",
+    "map": HOLDFAST_MAP,
+    "width": 24,
+    "height": 18,
+    "buildings": HOLDFAST_BUILDINGS,
+    "npcs": HOLDFAST_NPCS,
+    "signs": HOLDFAST_SIGNS,
+    "spawn": HOLDFAST_SPAWN,
+    "exits": HOLDFAST_EXIT,
+}
