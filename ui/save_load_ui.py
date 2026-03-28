@@ -53,13 +53,13 @@ KEY_COL      = DIM_GOLD
 CONFIRM_BG   = (30, 10, 10)
 CONFIRM_BOR  = (160, 40, 40)
 
-SLOT_NAMES = ["save1", "save2", "save3"]  # 3 manual slots
+SLOT_NAMES = ["save1", "save2", "save3", "save4", "save5"]  # 5 manual slots
 
 CARD_W = 560
-CARD_H = 190
-CARD_GAP = 20
-CARDS_TOTAL_H = 3 * CARD_H + 2 * CARD_GAP
-AUTOSAVE_H = 100          # narrower card for autosave
+CARD_H = 128             # reduced to fit 5 slots on screen
+CARD_GAP = 10
+CARDS_TOTAL_H = 5 * CARD_H + 4 * CARD_GAP
+AUTOSAVE_H = 72          # narrower card for autosave
 
 # ── Helper ───────────────────────────────────────────────────────────────────
 
@@ -221,15 +221,15 @@ class SaveLoadUI:
         draw_text(surface, title, SCREEN_W // 2 - get_font(26).size(title)[0] // 2,
                   28, GOLD, 26, bold=True)
 
-        # Draw 3 manual slot cards
+        # Draw manual slot cards
         cx = (SCREEN_W - CARD_W) // 2
-        start_y = 80
+        start_y = 72
         for i, slot in enumerate(SLOT_NAMES):
             cy = start_y + i * (CARD_H + CARD_GAP)
             self._draw_slot_card(surface, i, slot, cx, cy, CARD_W, CARD_H)
 
-        # Autosave card (index 3, load-only)
-        auto_y = start_y + 3 * (CARD_H + CARD_GAP) + 10
+        # Autosave card (index len(SLOT_NAMES), load-only)
+        auto_y = start_y + len(SLOT_NAMES) * (CARD_H + CARD_GAP) + 8
         self._draw_autosave_card(surface, cx, auto_y, CARD_W, AUTOSAVE_H)
 
         # Cancel button
@@ -256,15 +256,16 @@ class SaveLoadUI:
 
     def _card_rect(self, idx) -> pygame.Rect:
         cx = (SCREEN_W - CARD_W) // 2
-        start_y = 80
-        if idx < 3:
+        start_y = 72
+        n = len(SLOT_NAMES)
+        if idx < n:
             return pygame.Rect(cx, start_y + idx * (CARD_H + CARD_GAP), CARD_W, CARD_H)
         else:  # autosave
-            auto_y = start_y + 3 * (CARD_H + CARD_GAP) + 10
+            auto_y = start_y + n * (CARD_H + CARD_GAP) + 8
             return pygame.Rect(cx, auto_y, CARD_W, AUTOSAVE_H)
 
     def _slot_at(self, pos) -> int | None:
-        for i in range(4):
+        for i in range(len(SLOT_NAMES) + 1):  # +1 for autosave
             if self._card_rect(i).collidepoint(pos):
                 return i
         return None
@@ -307,29 +308,29 @@ class SaveLoadUI:
             pygame.draw.rect(surface, border_col, rect, 2, border_radius=6)
 
             # Slot label  +  timestamp (top row)
-            draw_text(surface, label,            x + 16,       y + 12, DIM_GOLD, 12, bold=True)
-            draw_text(surface, info["timestamp"], x + w - 160,  y + 12, META_COL, 12)
+            draw_text(surface, label,            x + 16,       y + 10, DIM_GOLD, 12, bold=True)
+            draw_text(surface, info["timestamp"], x + w - 160,  y + 10, META_COL, 12)
 
             # Thin divider
             pygame.draw.line(surface, CARD_BORDER,
-                             (x + 12, y + 30), (x + w - 12, y + 30))
+                             (x + 12, y + 27), (x + w - 12, y + 27))
 
             # Hero line (prominent)
-            draw_text(surface, info["hero"], x + 16, y + 38, HERO_COL, 17, bold=True)
+            draw_text(surface, info["hero"], x + 16, y + 33, HERO_COL, 15, bold=True)
 
-            # Companion pills — wrap across 2 lines if needed
-            pill_y = y + 64
+            # Companion pills — single line
+            pill_y = y + 56
             self._draw_companions(surface, info["companions"], x + 16, pill_y, w - 32)
 
             # Thin divider before meta row
             pygame.draw.line(surface, CARD_BORDER,
-                             (x + 12, y + 112), (x + w - 12, y + 112))
+                             (x + 12, y + 82), (x + w - 12, y + 82))
 
             # Meta row: locations · furthest
             loc_str = f"{info['n_locs']} locations explored"
             if info["furthest"]:
                 loc_str += f"  ·  Last: {info['furthest']}"
-            draw_text(surface, loc_str, x + 16, y + 120, META_COL, 13)
+            draw_text(surface, loc_str, x + 16, y + 89, META_COL, 12)
 
             # Second meta row: gold · key items · travel
             row2_parts = []
@@ -338,17 +339,17 @@ class SaveLoadUI:
             if info["key_items"]:
                 row2_parts.append(info["key_items"])
             row2 = "  ·  ".join(row2_parts)
-            draw_text(surface, row2, x + 16, y + 138, KEY_COL, 12)
+            draw_text(surface, row2, x + 16, y + 106, KEY_COL, 11)
 
             if info["travel"]:
-                draw_text(surface, info["travel"], x + w - 120, y + 138, ORANGE, 12)
+                draw_text(surface, info["travel"], x + w - 120, y + 106, ORANGE, 11)
 
             # Action hint
             if self.mode == "save":
                 hint = "Click to overwrite"
             else:
                 hint = "Click to load"
-            draw_text(surface, hint, x + 16, y + h - 22, META_COL, 11)
+            draw_text(surface, hint, x + 16, y + h - 14, META_COL, 10)
 
     def _draw_companions(self, surface, companions: list[str], x, y, max_w):
         """Draw companion pills, wrapping to a second line if needed."""
@@ -372,8 +373,9 @@ class SaveLoadUI:
             cx += pw + GAP
 
     def _draw_autosave_card(self, surface, x, y, w, h):
-        data  = self._slots[3]
-        hover = (self._hover_slot == 3)
+        n     = len(SLOT_NAMES)
+        data  = self._slots[n]
+        hover = (self._hover_slot == n)
         label = "AUTOSAVE"
 
         rect = pygame.Rect(x, y, w, h)
@@ -422,8 +424,8 @@ class SaveLoadUI:
         pygame.draw.rect(surface, CONFIRM_BOR, modal, 2, border_radius=8)
 
         slot_n = self._confirm_idx + 1
-        draw_text(surface, f"Overwrite Save {slot_n}?",
-                  mx_ + mw // 2 - get_font(18).size(f"Overwrite Save {slot_n}?")[0] // 2,
+        draw_text(surface, f"Overwrite Save Slot {slot_n}?",
+                  mx_ + mw // 2 - get_font(18).size(f"Overwrite Save Slot {slot_n}?")[0] // 2,
                   my_ + 18, CREAM, 18, bold=True)
         draw_text(surface, "This will replace the existing save.",
                   mx_ + mw // 2 - get_font(13).size("This will replace the existing save.")[0] // 2,
@@ -446,7 +448,7 @@ class SaveLoadUI:
 
     def _on_slot_click(self, idx: int):
         if self.mode == "save":
-            if idx == 3:
+            if idx >= len(SLOT_NAMES):
                 return  # autosave is read-only
             if self._slots[idx] is not None:
                 self._confirm_idx = idx   # ask before overwriting
@@ -473,7 +475,7 @@ class SaveLoadUI:
             self._error_timer = 3000
 
     def _do_load(self, idx: int):
-        slot = SLOT_NAMES[idx] if idx < 3 else "inn_autosave"
+        slot = SLOT_NAMES[idx] if idx < len(SLOT_NAMES) else "inn_autosave"
         ok, party, world_state, msg, dungeon_explored = load_game(slot)
         if ok:
             self.result   = ("loaded", party, world_state, dungeon_explored)

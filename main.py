@@ -1010,21 +1010,19 @@ class Game:
     # ──────────────────────────────────────────────────────────
 
     def _do_save(self):
-        """Quick-save to slot 'quicksave'. Shows a toast with the result.
+        """Open the full save slot picker so the player chooses a slot.
         Only valid outside combat -- callers must enforce that guard."""
-        from core.save_load import save_game as _sg
-        try:
-            ok, _path, _msg = _sg(
-                self.party,
-                world_state=self.world_state,
-                slot_name="quicksave",
-                dungeon_cache=self.dungeon_cache,
-            )
-            col  = (80, 200, 120) if ok else (220, 80, 80)
-            text = "Save game saved." if ok else "X Save failed."
-            self.add_toast(text, col)
-        except Exception as exc:
-            self.add_toast(f"X Save error: {exc}", (220, 80, 80))
+        from ui.save_load_ui import SaveLoadUI
+        # Close the menu overlay first so SaveLoadUI draws cleanly
+        self.show_menu_overlay = False
+        self.save_load_ui = SaveLoadUI(
+            "save",
+            party=self.party,
+            world_state=self.world_state,
+            dungeon_cache=self.dungeon_cache,
+        )
+        self._save_load_return_state = self.state
+        self.go(S_SAVE_LOAD)
 
     def _do_exit_game(self, save_first=False):
         """Optionally save, then cleanly quit the game loop."""
