@@ -2256,39 +2256,51 @@ class CampUI:
 
     def _handle_inventory_click(self, mx, my):
         c = self.party[self.selected_char]
-        top = 80
-        iy = top + 45
 
-        # Item list clicks
-        visible = c.inventory[self.scroll_offset:self.scroll_offset + 12]
+        # ── Item list clicks — use draw-time geometry ─────────────
+        top      = 80
+        list_top = top + 52
+        ROW_H    = 36
+        BODY_BOT = 840
+        list_bot = BODY_BOT - 60
+        visible_n = max(1, (list_bot - list_top) // ROW_H)
+        LIST_X   = 60
+        ROW_W    = SCREEN_W - LIST_X - 26
+
+        visible = c.inventory[self.scroll_offset:self.scroll_offset + visible_n]
         for i in range(len(visible)):
             idx = self.scroll_offset + i
-            row = pygame.Rect(60, iy + i * 38, SCREEN_W - 120, 34)
+            row = pygame.Rect(LIST_X, list_top + i * ROW_H, ROW_W, ROW_H - 2)
             if row.collidepoint(mx, my):
                 self.selected_item = idx
                 self._give_mode = False
                 return None
 
-        # Action buttons — compute positions exactly as _draw_inventory does
+        # ── Action buttons — use EXACT rects stored during draw ───
+        # _inv_btn_rects and _inv_btn_by are set by _draw_inventory
+        btn_rects = getattr(self, "_inv_btn_rects", {})
+        by = getattr(self, "_inv_btn_by", -1)
+        if by < 0 or not btn_rects:
+            return None   # nothing drawn yet
+
         if 0 <= self.selected_item < len(c.inventory):
             item = c.inventory[self.selected_item]
-            # by = iy (after visible loop) + 10
-            by = iy + len(visible) * 38 + 10
             protected = item.get("type") in ("key_item", "quest_item") or "warden_rank" in item
 
-            if item.get("type") in ("consumable", "potion", "food"):
-                if pygame.Rect(80, by, 100, 34).collidepoint(mx, my):
-                    self._give_mode = False
-                    self._use_item(c, self.selected_item)
-                    return None
+            # Use button
+            if "use" in btn_rects and btn_rects["use"].collidepoint(mx, my):
+                self._give_mode = False
+                self._use_item(c, self.selected_item)
+                return None
 
-            if item.get("slot"):
-                if pygame.Rect(190, by, 100, 34).collidepoint(mx, my):
-                    self._give_mode = False
-                    self._equip_item(c, self.selected_item)
-                    return None
+            # Equip button
+            if "equip" in btn_rects and btn_rects["equip"].collidepoint(mx, my):
+                self._give_mode = False
+                self._equip_item(c, self.selected_item)
+                return None
 
-            if pygame.Rect(300, by, 100, 34).collidepoint(mx, my):
+            # Drop button
+            if "drop" in btn_rects and btn_rects["drop"].collidepoint(mx, my):
                 if protected:
                     self._msg(f"{item.get('name','item')} is a key item and cannot be dropped.", ORANGE)
                     return None
@@ -2299,25 +2311,26 @@ class CampUI:
                 self._msg(f"Dropped {name}.", ORANGE)
                 return None
 
-            if len(self.party) > 1:
-                if pygame.Rect(410, by, 100, 34).collidepoint(mx, my):
-                    self._give_mode = not getattr(self, "_give_mode", False)
-                    return None
-                # Give sub-buttons
-                if getattr(self, "_give_mode", False):
-                    gx = 80
-                    for gi, gchar in enumerate(self.party):
-                        if gi == self.selected_char:
-                            continue
-                        gbw = max(80, len(gchar.name)*8+16)
-                        if pygame.Rect(gx, by + 44, gbw, 28).collidepoint(mx, my):
-                            if 0 <= self.selected_item < len(c.inventory):
-                                xfer = c.inventory.pop(self.selected_item)
-                                gchar.inventory.append(xfer)
-                                self.selected_item = -1
-                                self._give_mode = False
-                                self._msg(f"Gave {xfer.get('name','item')} to {gchar.name}.", GOLD)
-                            return None
+            # Give button
+            if "give" in btn_rects and btn_rects["give"].collidepoint(mx, my):
+                self._give_mode = not getattr(self, "_give_mode", False)
+                return None
+
+            # Give sub-buttons (character selection)
+            if getattr(self, "_give_mode", False):
+                gx = 80
+                for gi, gchar in enumerate(self.party):
+                    if gi == self.selected_char:
+                        continue
+                    gbw = max(80, len(gchar.name)*8+16)
+                    if pygame.Rect(gx, by + 44, gbw, 28).collidepoint(mx, my):
+                        if 0 <= self.selected_item < len(c.inventory):
+                            xfer = c.inventory.pop(self.selected_item)
+                            gchar.inventory.append(xfer)
+                            self.selected_item = -1
+                            self._give_mode = False
+                            self._msg(f"Gave {xfer.get('name','item')} to {gchar.name}.", GOLD)
+                        return None
                         gx += gbw + 8
 
         return None
