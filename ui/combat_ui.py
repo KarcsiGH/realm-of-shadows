@@ -987,7 +987,18 @@ class CombatUI:
                     cur_res   = actor.get("resources", {}).get(resource, 0)
                     can_afford = (cur_res >= res_cost) if res_cost else True
                     cost = f" [{res_cost} {res_name}]" if res_cost else ""
-                    items.append((f"{ab['name']}{cost}",
+                    # Add scope tag for AoE abilities so player knows what they're targeting
+                    _ab_scope = ""
+                    if ab.get("type") in ("aoe", "special"):
+                        _ts = ab.get("target", "aoe_enemy")
+                        _ab_scope = {
+                            "front_row": " · front row",
+                            "back_row":  " · back row",
+                            "row":       " · chosen row",
+                            "stack":     " · chosen stack",
+                            "aoe_enemy": " · all enemies",
+                        }.get(_ts, " · all enemies")
+                    items.append((f"{ab['name']}{cost}{_ab_scope}",
                                   {"type": "ability", "ability": ab, "can_afford": can_afford}))
 
         elif label == "item":

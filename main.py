@@ -4852,11 +4852,20 @@ class Game:
                         dmg = result.get("damage", 0)
                         col = _ELEM_COL.get(ab_elem, (200, 160, 255)) if not is_physical_skill else (220, 180, 80)
                         if is_crit:
-                            self.combat_ui.add_flash(f"✦ CRITICAL! {ab_name} {dmg}", (255, 215, 40))
+                            self.combat_ui.add_flash(f"✦ CRITICAL! {ab_name} — {dmg} total", (255, 215, 40))
                         elif ab_type == "aoe":
-                            self.combat_ui.add_flash(f"◈ {ab_name} hits all! {dmg}", col)
+                            # Describe AoE scope accurately based on target field
+                            _tgt_spec = ab.get("target", "aoe_enemy") if isinstance(ab, dict) else "aoe_enemy"
+                            _scope = {
+                                "front_row":  "front row",
+                                "back_row":   "back row",
+                                "row":        "target row",
+                                "stack":      "target stack",
+                                "aoe_enemy":  "all enemies",
+                            }.get(_tgt_spec, "all enemies")
+                            self.combat_ui.add_flash(f"◈ {ab_name} → {_scope}! {dmg} total", col)
                         else:
-                            self.combat_ui.add_flash(f"◆ {ab_name} {dmg}", col)
+                            self.combat_ui.add_flash(f"◆ {ab_name} — {dmg}", col)
                 # Kill sound — after the hit resolves
                 if result and result.get("defender", {}).get("alive") is False:
                     tgt = result.get("defender", {})
