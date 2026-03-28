@@ -433,11 +433,12 @@ class CombatUI:
                     if bar_y > r.bottom - 14:
                         break
 
-                # Status effect badges — readable size
+                # Status effect badges — bottom of card, never overlap resource bars
                 se = p.get("status_effects", [])
                 if se:
-                    badge_y = r.bottom - 20
-                    _draw_status_badges(surface, se, ix, badge_y, iw, font_size=10)
+                    badge_y = max(bar_y + 2, r.bottom - 20)
+                    if badge_y + 16 <= r.bottom:   # only draw if it fits
+                        _draw_status_badges(surface, se, ix, badge_y, iw, font_size=10)
 
                 cy += card_h
 
@@ -538,12 +539,14 @@ class CombatUI:
 
                 _draw_panel(surface, card_r, bg, border, radius=5)
 
-                # Silhouette — constrain to native 48:80 aspect ratio, centred
-                sil_h = card_h - 50
-                sil_w = max(20, int(sil_h * 48 / 80))   # 48:80 = 0.6
-                sil_w = min(sil_w, card_w - 8)           # never wider than card
-                sil_h = int(sil_w * 80 / 48)             # recalc height from constrained width
-                sil_x = cx + (card_w - sil_w) // 2       # horizontally centred
+                # Silhouette — reserve bottom 60px for name+HP+badges
+                # cap silhouette to at most 55% of card height
+                sil_h = min(card_h - 65, int(card_h * 0.55))
+                sil_h = max(20, sil_h)
+                sil_w = max(16, int(sil_h * 48 / 80))   # 48:80 = 0.6
+                sil_w = min(sil_w, card_w - 8)
+                sil_h = int(sil_w * 80 / 48)
+                sil_x = cx + (card_w - sil_w) // 2
                 sil_r = pygame.Rect(sil_x, cy + 4, sil_w, sil_h)
                 tier = rep.get("knowledge_tier", -1)
                 tkey = rep.get("template_key") or rep.get("name", "")
@@ -611,8 +614,10 @@ class CombatUI:
                         _se_list = [{"name": n, "duration": d}
                                     for n, d in _all_se.items()]
                         if _se_list:
+                            # Anchor to card bottom so badges always fit
+                            _badge_y = card_r.bottom - 20
                             _draw_status_badges(surface, _se_list,
-                                                cx + 4, bar_y + 22,
+                                                cx + 4, _badge_y,
                                                 card_w - 8, font_size=10)
 
                     # Stack hint text (when in targeting mode)

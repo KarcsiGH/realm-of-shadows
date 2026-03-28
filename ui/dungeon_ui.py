@@ -614,8 +614,19 @@ class DungeonUI:
 
     def on_floor_change(self):
         self._update_fading()
+        # Snap to new floor entrance immediately — cancel any in-progress animation
         self.px = float(self.dungeon.party_x) + 0.5
         self.py = float(self.dungeon.party_y) + 0.5
+        # Reset movement animation so the next frame doesn't resume interpolating
+        # toward a target on the previous floor
+        self._move_anim_t   = 1.0
+        self._turn_anim_t   = 1.0
+        self._move_start_x  = self.px
+        self._move_start_y  = self.py
+        self._move_target_x = self.px
+        self._move_target_y = self.py
+        # Sync grid position immediately so minimap is correct on first frame
+        self._sync_grid_pos()
         self._recalc_camera()
 
     def _is_solid(self, gx, gy):
@@ -1831,6 +1842,93 @@ class DungeonUI:
             bt = fb.render(lbl, True, GOLD)
             surface.blit(bt, (btn.x+btn.w//2-bt.get_width()//2, btn.y+btn.h//2-bt.get_height()//2))
 
+    # ─────────────────────────────────────────────────────────
+    #  SPIRE → THRONE CHOICE MODAL
+    # ─────────────────────────────────────────────────────────
+    def _draw_spire_choice_modal(self, surface, mx, my):
+        """Post-Spire choice: descend to Shadow Throne now or return to surface."""
+        import pygame
+        from ui.renderer import (SCREEN_W, SCREEN_H, GOLD, CREAM, GREY,
+                                 draw_text, draw_button, get_font)
+        if not self.spire_choice_modal:
+            return
+
+        # Dim overlay
+        dim = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        dim.fill((0, 0, 0, 190))
+        surface.blit(dim, (0, 0))
+
+        W, H = 700, 340
+        bx = SCREEN_W // 2 - W // 2
+        by = SCREEN_H // 2 - H // 2
+        box = pygame.Rect(bx, by, W, H)
+        pygame.draw.rect(surface, (10, 6, 20), box, border_radius=10)
+        pygame.draw.rect(surface, GOLD, box, 2, border_radius=10)
+        # Gold top accent bar
+        pygame.draw.rect(surface, (180, 140, 40), (bx, by, W, 6), border_radius=10)
+
+        # Header
+        header = "✦  THE LINGERING WILL IS BROKEN  ✦"
+        hw = get_font(15).size(header)[0]
+        draw_text(surface, header, bx + (W - hw) // 2, by + 18, GOLD, 15, bold=True)
+
+        pygame.draw.line(surface, (60, 50, 80), (bx + 20, by + 44), (bx + W - 20, by + 44))
+
+        # Body text
+        body_lines = [
+            "The Spire's binding is undone. Maren seals the anchor points.",
+            "Ahead, the Shadow Throne lies open — the seat of the Fading itself.",
+            "The wards will hold only as long as the Throne remains uncontested.",
+            "",
+            "You may press on while the path is clear,",
+            "or return to the surface to rest and resupply.",
+        ]
+        ty = by + 56
+        for line in body_lines:
+            if line:
+                draw_text(surface, line, bx + 28, ty, CREAM if "You may" not in line else (200, 180, 120),
+                          13, max_width=W - 56)
+            ty += 20
+
+        # Buttons
+        btn_y = by + H - 68
+        descend_btn = pygame.Rect(bx + 40,      btn_y, 280, 46)
+        surface_btn = pygame.Rect(bx + W - 320, btn_y, 280, 46)
+
+        dh = descend_btn.collidepoint(mx, my)
+        sh = surface_btn.collidepoint(mx, my)
+
+        # Descend button — more prominent
+        pygame.draw.rect(surface, (40, 20, 60) if dh else (28, 14, 42), descend_btn, border_radius=6)
+        pygame.draw.rect(surface, (180, 100, 255) if dh else (120, 70, 180), descend_btn, 2, border_radius=6)
+        dlabel = "⬇  Descend to Shadow Throne"
+        dw = get_font(14).size(dlabel)[0]
+        draw_text(surface, dlabel, descend_btn.x + (descend_btn.w - dw) // 2,
+                  descend_btn.y + 15, (200, 140, 255) if dh else (160, 110, 220), 14, bold=True)
+
+        # Return button
+        pygame.draw.rect(surface, (20, 30, 20) if sh else (14, 20, 14), surface_btn, border_radius=6)
+        pygame.draw.rect(surface, (100, 180, 100) if sh else (60, 120, 60), surface_btn, 2, border_radius=6)
+        slabel = "↑  Return to surface"
+        sw = get_font(14).size(slabel)[0]
+        draw_text(surface, slabel, surface_btn.x + (surface_btn.w - sw) // 2,
+                  surface_btn.y + 15, (140, 220, 140) if sh else (100, 170, 100), 14, bold=True)
+
+        self._spire_descend_btn = descend_btn
+        self._spire_surface_btn = surface_btn
+
+    def _handle_spire_choice_click(self, mx, my):
+        """Handle clicks on the Spire->Throne choice modal."""
+        descend_btn = getattr(self, "_spire_descend_btn", None)
+        surface_btn = getattr(self, "_spire_surface_btn", None)
+        if descend_btn and descend_btn.collidepoint(mx, my):
+            self.spire_choice_modal = None
+            return {"type": "spire_descend_throne"}
+        if surface_btn and surface_btn.collidepoint(mx, my):
+            self.spire_choice_modal = None
+            return {"type": "spire_return_surface"}
+        return None  # click inside modal but not on a button — consume
+
     def _draw_scroll_modal(self, surface, mx, my):
         """Draw a parchment/stone scroll overlay when the party finds a note."""
         import math as _m
@@ -2162,6 +2260,8 @@ class DungeonUI:
                 self.show_camp_confirm = False
             return None
 
+        if self.spire_choice_modal:
+            return self._handle_spire_choice_click(mx, my)
         if self.interactable_modal:
             return self._handle_interactable_modal_click(mx, my)
         if self.chest_modal:

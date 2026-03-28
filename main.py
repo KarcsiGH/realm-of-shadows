@@ -832,8 +832,26 @@ class Game:
                     result = self.post_combat_ui.handle_click(mx, my)
                     if result == "continue":
                         self.party_scroll = 0
-                        # Special routing: story combat that drops into a town
-                        if getattr(self, "_post_combat_town", None):
+                        # Special routing: after Spire, descend to Shadow Throne
+                        from core.story_flags import get_flag, set_flag
+                        if get_flag("spire.descend_to_throne"):
+                            set_flag("spire.descend_to_throne", False)
+                            # Enter Shadow Throne dungeon
+                            from data.dungeon import DungeonState
+                            try:
+                                self.dungeon_state = DungeonState("shadow_throne", self.party)
+                                from ui.dungeon_ui import DungeonUI
+                                self.dungeon_ui = DungeonUI(self.dungeon_state)
+                                if self.world_state:
+                                    self.world_state.discovered_locations.add("shadow_throne")
+                                self.add_toast("Descending to the Shadow Throne...",
+                                               (160, 100, 220))
+                                self.go_fade(S_DUNGEON)
+                            except Exception as _e:
+                                self.add_toast("Shadow Throne not yet accessible.", (200,100,80))
+                                self.go_fade(S_WORLD_MAP)
+                        # Normal routing: story combat that drops into a town
+                        elif getattr(self, "_post_combat_town", None):
                             town_id = self._post_combat_town
                             self._post_combat_town = None
                             self.town_ui = TownUI(self.party, town_id=town_id)
@@ -4097,8 +4115,39 @@ class Game:
                 if floor == 2:
                     from core.tutorial import fire_dungeon_hints
                     fire_dungeon_hints("second_floor", self.dungeon_ui)
-                # Maren reunion — fires on Valdris Spire floor 5, once
+
+                # Shadow Throne forward camp — warded chamber between floors 4 and 5
                 dungeon_id = self.dungeon_state.dungeon_id
+                if dungeon_id == "shadow_throne" and floor == 5:
+                    from core.story_flags import get_flag as _gf2, set_flag as _sf2
+                    if not _gf2("shadow_throne.forward_camp_seen"):
+                        _sf2("shadow_throne.forward_camp_seen", True)
+                        self.dungeon_ui.scroll_modal = {
+                            "title": "Warded Chamber",
+                            "lines": self._wrap_msg(
+                                "The air here is different - still, clean, free of the Fading. "
+                                "Someone carved ward-signs into every stone surface. "
+                                "Recent work. Perhaps Maren's doing.\n\n"
+                                "The wards hold. You may rest here safely.\n\n"
+                                "The Shadow Throne lies three floors above. "
+                                "Whatever Valdris became, it waits at the summit.",
+                                55),
+                            "wall_inscription": False,
+                        }
+                        # Full resource recovery — the wards make this a true safe rest
+                        from core.classes import get_all_resources
+                        import math as _math
+                        for _c in self.party:
+                            _eff = _c.effective_stats() if hasattr(_c, "effective_stats") else _c.stats
+                            _max = get_all_resources(_c.class_name, _eff, _c.level)
+                            for _rk, _mv in _max.items():
+                                if _mv > 0:
+                                    _c.resources[_rk] = _mv
+                        self.dungeon_ui.show_event(
+                            "Warded chamber — party fully restored.", (100, 200, 140))
+                        sfx.play("camp_rest")
+
+                # Maren reunion — fires on Valdris Spire floor 5, once
                 if dungeon_id == "valdris_spire" and floor == 5:
                     from core.story_flags import get_flag
                     if get_flag("maren.left") and not get_flag("maren.spire_reunion_done"):
@@ -4118,6 +4167,18 @@ class Game:
                 sfx.play("stairs")
                 floor = self.dungeon_state.current_floor
                 self.dungeon_ui.show_event(f"Ascended to Floor {floor}.", (80, 180, 220))
+
+        elif event["type"] == "spire_descend_throne":
+            # Player chose to descend directly to Shadow Throne from Spire
+            self.start_post_combat()   # first collect Spire loot/XP
+            # After post-combat resolves, auto-enter Shadow Throne
+            # We set a flag so post-combat UI knows to route to throne
+            from core.story_flags import set_flag
+            set_flag("spire.descend_to_throne", True)
+
+        elif event["type"] == "spire_return_surface":
+            # Player chose to return to surface — normal post-combat then world map
+            self.start_post_combat()
 
         elif event["type"] == "exit_dungeon":
             # Transition state FIRST so draw_state stops rendering dungeon,
@@ -4538,10 +4599,21 @@ class Game:
                 _dungeon_id = getattr(self.dungeon_state, "dungeon_id", None) if self.dungeon_state else None
                 _is_boss_enc = getattr(self.combat_state, "is_boss", False)
                 if _dungeon_id and _is_boss_enc:
-                    self._show_post_boss_dialogue(
-                        _dungeon_id, peaceful=False,
-                        callback=lambda _: self.start_post_combat()
-                    )
+                    # Special: after Spire boss, show descent choice before post-combat
+                    if _dungeon_id == "valdris_spire":
+                        def _spire_done(_):
+                            if self.dungeon_ui:
+                                self.dungeon_ui.spire_choice_modal = {"active": True}
+                            else:
+                                self.start_post_combat()
+                        self._show_post_boss_dialogue(
+                            _dungeon_id, peaceful=False, callback=_spire_done
+                        )
+                    else:
+                        self._show_post_boss_dialogue(
+                            _dungeon_id, peaceful=False,
+                            callback=lambda _: self.start_post_combat()
+                        )
                 else:
                     self.start_post_combat()
             else:
