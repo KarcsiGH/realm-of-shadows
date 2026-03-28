@@ -1390,13 +1390,41 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         n_hits   = ability.get("hits", 1)
         hit_power = 1.0 / n_hits if n_hits > 1 else 1.0  # split power across hits
 
-        # AOE: gather all targets
+        # AOE: gather targets based on the ability's "target" field
         if is_aoe:
-            raw_targets = [e for e in (all_enemies or [target])
-                           if e and e["alive"]] if not is_magic or True else []
-            # "target: row" — just hit all enemies (simplified to all alive)
-            aoe_targets = [e for e in (all_enemies or ([target] if target else []))
-                           if e and e["alive"]]
+            tgt_spec = ability.get("target", "aoe_enemy")
+            alive_all = [e for e in (all_enemies or []) if e and e["alive"]]
+
+            if tgt_spec == "front_row":
+                aoe_targets = [e for e in alive_all if e.get("row") == FRONT]
+                if not aoe_targets:        # fall back to nearest occupied row
+                    for _row in (FRONT, MID, BACK):
+                        aoe_targets = [e for e in alive_all if e.get("row") == _row]
+                        if aoe_targets: break
+            elif tgt_spec == "back_row":
+                aoe_targets = [e for e in alive_all if e.get("row") == BACK]
+                if not aoe_targets:
+                    for _row in (BACK, MID, FRONT):
+                        aoe_targets = [e for e in alive_all if e.get("row") == _row]
+                        if aoe_targets: break
+            elif tgt_spec == "row":
+                # Hit the row of the selected target (or front row if none)
+                ref_row = target.get("row", FRONT) if target else FRONT
+                aoe_targets = [e for e in alive_all if e.get("row") == ref_row]
+            elif tgt_spec == "stack":
+                # Hit all enemies sharing template_key + row with the selected target
+                if target:
+                    tkey = target.get("template_key") or target.get("name", "")
+                    trow = target.get("row", FRONT)
+                    aoe_targets = [e for e in alive_all
+                                   if (e.get("template_key") or e.get("name","")) == tkey
+                                   and e.get("row") == trow]
+                else:
+                    aoe_targets = alive_all[:1]
+            else:
+                # "aoe_enemy" or unspecified — hit all alive enemies
+                aoe_targets = alive_all
+
             if not aoe_targets and target:
                 aoe_targets = [target]
         else:

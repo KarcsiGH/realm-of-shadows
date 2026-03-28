@@ -29,6 +29,63 @@ from ui.pixel_art import draw_character_silhouette, draw_enemy_silhouette, CLASS
 from core.combat_config import FRONT, MID, BACK
 from core.party_knowledge import get_enemy_display_name
 
+# ── Canonical status names and abbreviations ─────────────────────────────────
+_DEBUFF_NAMES = {
+    "Poisoned", "Burning", "Stunned", "Slowed", "Blinded", "Weakened",
+    "Cursed", "Bleeding", "Silenced", "Confused", "Sleep", "Sleeping",
+    "Frozen", "Feared", "Petrified", "Diseased", "Plague",
+}
+_BUFF_NAMES = {
+    "defense_up", "iron_skin", "magic_shield", "bulwark", "war_cry",
+    "hawk_eye", "ki_deflect", "last_stand", "evasion", "smoke_screen",
+    "courage_aura", "empty_mind", "WarCry", "Defending", "Blessed",
+    "battle_stance", "fortify", "ward_anchor",
+}
+_STATUS_ABBREV = {
+    "Poisoned":   "PSN", "Burning":   "BRN", "Stunned":   "STN",
+    "Slowed":     "SLW", "Blinded":   "BLD", "Weakened":  "WKN",
+    "Cursed":     "CRS", "Bleeding":  "BLG", "Silenced":  "SLC",
+    "Confused":   "CNF", "Sleep":     "SLP", "Sleeping":  "SLP",
+    "Frozen":     "FRZ", "Feared":    "FER", "Diseased":  "DIS",
+    "defense_up": "DEF", "iron_skin": "ARM", "war_cry":   "CRY",
+    "Blessed":    "BLS", "Defending": "DFN", "fortify":   "FRT",
+    "battle_stance": "STN", "evasion": "EVA",
+}
+def _status_badge_col(name):
+    if name in _DEBUFF_NAMES:  return (230,  80,  60)
+    if name in _BUFF_NAMES:    return (80,  200, 100)
+    return (220, 180,  60)   # unknown — amber
+
+def _draw_status_badges(surface, effects, x, y, max_w, font_size=11):
+    """Draw readable status badges. Returns final y after badges."""
+    import pygame as _pg
+    from ui.renderer import draw_text, get_font
+    if not effects:
+        return y
+    BADGE_H  = 16
+    BADGE_PAD = 4
+    GAP       = 3
+    bx = x
+    for eff in list(effects)[:8]:
+        sname = eff["name"] if isinstance(eff, dict) else eff
+        dur   = eff.get("duration", 0) if isinstance(eff, dict) else 0
+        col   = _status_badge_col(sname)
+        abbr  = _STATUS_ABBREV.get(sname, sname[:3].upper())
+        label = abbr + (f" {dur}" if dur > 0 else "")
+        fw    = get_font(font_size).size(label)[0]
+        bw    = fw + BADGE_PAD * 2
+        if bx + bw > x + max_w:
+            bx = x
+            y += BADGE_H + GAP
+        badge = _pg.Rect(bx, y, bw, BADGE_H)
+        dark  = (int(col[0]*.2), int(col[1]*.2), int(col[2]*.2))
+        _pg.draw.rect(surface, dark, badge, border_radius=3)
+        _pg.draw.rect(surface, col,  badge, 1, border_radius=3)
+        draw_text(surface, label, bx + BADGE_PAD, y + 2, col, font_size, bold=True)
+        bx += bw + GAP
+    return y + BADGE_H
+
+
 # ═══════════════════════════════════════════════════════════════
 #  COLORS
 # ═══════════════════════════════════════════════════════════════
@@ -376,31 +433,11 @@ class CombatUI:
                     if bar_y > r.bottom - 14:
                         break
 
-                # Status effect badges
+                # Status effect badges — readable size
                 se = p.get("status_effects", [])
                 if se:
-                    BUFF_NAMES   = {"defense_up","iron_skin","magic_shield","bulwark","war_cry",
-                                    "hawk_eye","ki_deflect","last_stand","evasion","smoke_screen",
-                                    "courage_aura","empty_mind","WarCry","Defending","Blessed"}
-                    DEBUFF_NAMES = {"Poisoned","Burning","Stunned","Slowed","Blinded","Confused",
-                                    "Cursed","death_mark","Weakened"}
-                    sx = ix
-                    for effect in list(se)[:4]:
-                        sname = effect["name"] if isinstance(effect, dict) else effect
-                        dur   = effect.get("duration","") if isinstance(effect, dict) else ""
-                        dur_s = f"{dur}" if dur else ""
-                        if sname in BUFF_NAMES:      col = (100, 230, 130)
-                        elif sname in DEBUFF_NAMES:  col = (230, 80, 60)
-                        else:                        col = ORANGE
-                        abbr  = sname[:3].upper()
-                        bw    = 28
-                        badge = pygame.Rect(sx, r.bottom - 15, bw, 12)
-                        pygame.draw.rect(surface, (int(col[0]*0.25),int(col[1]*0.25),int(col[2]*0.25)), badge)
-                        pygame.draw.rect(surface, col, badge, 1)
-                        draw_text(surface, abbr, sx + 2, r.bottom - 13, col, 9)
-                        if dur_s:
-                            draw_text(surface, dur_s, sx + bw - 8, r.bottom - 13, col, 9)
-                        sx += bw + 2
+                    badge_y = r.bottom - 20
+                    _draw_status_badges(surface, se, ix, badge_y, iw, font_size=10)
 
                 cy += card_h
 
@@ -561,36 +598,22 @@ class CombatUI:
                         rc2 = ROW_COLORS[rep.get("row", FRONT)]
                         draw_text(surface, f"[{row_key[0].upper()}]",
                                   card_r.right - 22, cy + 3, rc2, 9)
-                        # Status effects — always visible on single-enemy cards
-                        se = rep.get("status_effects", [])
-                        if se:
-                            sey = bar_y + 22
-                            DEBUFF_C = (230, 80, 60); BUFF_C = (100, 230, 130)
-                            DEBUFF_N = {"Poisoned","Burning","Stunned","Slowed",
-                                        "Blinded","Weakened","Cursed","Bleeding",
-                                        "Silenced","Confused","Sleeping"}
-                            sex = cx + 4
-                            # Fit as many badges as card width allows
-                            bw = max(22, min(32, (card_w - 8) // max(1, len(se[:5])) - 2))
-                            for effect in list(se)[:6]:
-                                sname = effect["name"] if isinstance(effect, dict) else effect
-                                dur   = effect.get("duration", 0) if isinstance(effect, dict) else 0
-                                col   = DEBUFF_C if sname in DEBUFF_N else BUFF_C
-                                badge = pygame.Rect(sex, sey, bw, 13)
-                                if sex + bw > card_r.right - 2:
-                                    break
-                                pygame.draw.rect(surface,
-                                    (int(col[0]*.18), int(col[1]*.18), int(col[2]*.18)), badge,
-                                    border_radius=2)
-                                pygame.draw.rect(surface, col, badge, 1, border_radius=2)
-                                abbrev = sname[:3].upper()
-                                draw_text(surface, abbrev, sex + 2, sey + 2, col, 9)
-                                # Duration pip in bottom-right of badge
-                                if dur > 0:
-                                    pip = str(dur) if dur < 10 else "+"
-                                    draw_text(surface, pip,
-                                              sex + bw - 6, sey + 2, (220,220,180), 8)
-                                sex += bw + 2
+                        # Status effects — aggregate across all alive in stack,
+                        # always visible. Merges effects so if any alive enemy has
+                        # a status it shows on the shared card.
+                        _all_se: dict = {}
+                        for _ae in alive_enemies:
+                            for _ef in _ae.get("status_effects", []):
+                                _n = _ef["name"] if isinstance(_ef, dict) else _ef
+                                _d = _ef.get("duration", 0) if isinstance(_ef, dict) else 0
+                                if _n not in _all_se or _d > _all_se[_n]:
+                                    _all_se[_n] = _d
+                        _se_list = [{"name": n, "duration": d}
+                                    for n, d in _all_se.items()]
+                        if _se_list:
+                            _draw_status_badges(surface, _se_list,
+                                                cx + 4, bar_y + 22,
+                                                card_w - 8, font_size=10)
 
                     # Stack hint text (when in targeting mode)
                     if is_stack and alive and is_targeting:
