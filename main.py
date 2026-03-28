@@ -2881,7 +2881,25 @@ class Game:
             if return_state == S_DUNGEON:
                 self._process_dungeon_event({"type": "camp_rest_execute"})
             elif return_state == S_WORLD_MAP:
-                self._process_world_event({"type": "camp"})
+                # Full camp UI rest on overland = full resource recovery
+                # (unlike quick-camp which only gives 25%)
+                from core.classes import get_all_resources
+                healed_parts = []
+                for c in self.party:
+                    _eff = c.effective_stats() if hasattr(c, "effective_stats") else c.stats
+                    max_res = get_all_resources(c.class_name, _eff, c.level)
+                    old_hp = c.resources.get("HP", 0)
+                    for res_name, max_val in max_res.items():
+                        if max_val > 0:
+                            c.resources[res_name] = max_val
+                    gained_hp = c.resources.get("HP", 0) - old_hp
+                    if gained_hp > 0:
+                        healed_parts.append(f"{c.name} +{gained_hp}HP")
+                msg = "Rested fully. " + ", ".join(healed_parts) if healed_parts else "Rested. Party fully restored."
+                if self.world_map_ui:
+                    from ui.renderer import GREEN
+                    self.world_map_ui._show_event(msg, GREEN)
+                sfx.play("camp_rest")
             elif return_state == S_TOWN:
                 pass  # just return to town, no special rest handling
         else:
