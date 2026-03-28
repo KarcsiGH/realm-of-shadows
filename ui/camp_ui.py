@@ -243,7 +243,7 @@ class CampUI:
         LIST_X     = 60
         SB_W       = 10           # scrollbar width
         ROW_W      = SCREEN_W - LIST_X - 26  # leave room for scrollbar
-        list_top   = top + 45
+        list_top   = top + 52
         list_bot   = BODY_BOT - 60   # leave room for action buttons below list
         visible_n  = max(1, (list_bot - list_top) // ROW_H)
 
@@ -420,7 +420,7 @@ class CampUI:
         draw_text(surface, f"{rarity}  |  Value: ~{value}g", x, dy, DIM_GOLD, 11)
 
     def _draw_equip_compare(self, surface, new_item, px, py, pw):
-        """Compact comparison: new_item vs what's currently in the same slot."""
+        """Side-by-side comparison panel: new item vs currently equipped in same slot."""
         from core.identification import get_item_display_name
         if not self.party or self.selected_char >= len(self.party):
             return
@@ -429,45 +429,80 @@ class CampUI:
         slot  = new_item.get("slot")
         if not slot:
             return
-        cur   = equip.get(slot)
-        ph    = 64 if cur else 34
+        cur = equip.get(slot)
+
+        # ── Panel background ──────────────────────────────────────────────
+        ph = 130 if cur else 38
         panel = pygame.Rect(px, py, pw, ph)
-        pygame.draw.rect(surface, (12, 18, 32), panel, border_radius=4)
-        pygame.draw.rect(surface, (60, 80, 120), panel, 1, border_radius=4)
-        cx, cy = panel.x + 8, panel.y + 6
-        draw_text(surface, f"Compare [{slot}]:", cx, cy, (100,140,200), 10, bold=True)
+        pygame.draw.rect(surface, (10, 16, 28), panel, border_radius=5)
+        pygame.draw.rect(surface, (60, 90, 140), panel, 1, border_radius=5)
+
+        cy = panel.y + 6
+        half = (pw - 24) // 2
+        lx = panel.x + 8          # left column (equipped)
+        rx = panel.x + half + 16  # right column (new)
+
+        # ── Header row ───────────────────────────────────────────────────
+        draw_text(surface, f"Slot: {slot}", panel.x + 8, cy, (100, 140, 200), 10, bold=True)
         cy += 14
-        if cur:
-            def_d = new_item.get("defense",0)  - cur.get("defense",0)
-            dmg_d = new_item.get("damage",0)   - cur.get("damage",0)
-            mr_d  = new_item.get("magic_resist",0) - cur.get("magic_resist",0)
-            sp_d  = new_item.get("spell_bonus",0)  - cur.get("spell_bonus",0)
-            # stat_bonuses deltas
-            nb = new_item.get("stat_bonuses",{}) or {}
-            cb = cur.get("stat_bonuses",{}) or {}
-            all_keys = set(nb)|set(cb)
-            deltas = []
-            if def_d: deltas.append(("Def", def_d))
-            if dmg_d: deltas.append(("Dmg", dmg_d))
-            if mr_d:  deltas.append(("MR",  mr_d))
-            if sp_d:  deltas.append(("Spl", sp_d))
-            for k in all_keys:
-                d = nb.get(k,0) - cb.get(k,0)
-                if d: deltas.append((k[:3], d))
-            cur_name = get_item_display_name(cur)[:20]
-            draw_text(surface, f"vs {cur_name}", cx, cy, (160,140,100), 10)
-            if deltas:
-                parts = []
-                for lbl, d in deltas[:6]:
-                    parts.append(f"{lbl}:{'+' if d>0 else ''}{d}")
-                pos = sum(1 for _,d in deltas if d>0)
-                neg = sum(1 for _,d in deltas if d<0)
-                col = (100,220,100) if pos>neg else (220,100,100) if neg>pos else (220,200,80)
-                draw_text(surface, "  ".join(parts), cx + 130, cy, col, 10)
-            else:
-                draw_text(surface, "no stat difference", cx + 130, cy, GREY, 10)
+
+        pygame.draw.line(surface, (60, 90, 140),
+                         (panel.x + 6, cy), (panel.x + pw - 6, cy))
+        cy += 4
+
+        if not cur:
+            draw_text(surface, "Nothing equipped  —  equipping is a pure gain",
+                      panel.x + 8, cy, (80, 210, 100), 11)
+            return
+
+        cur_name = get_item_display_name(cur)[:24]
+        new_name = get_item_display_name(new_item)[:24]
+        draw_text(surface, f"▼ {cur_name}", lx, cy, (160, 140, 100), 10, bold=True)
+        draw_text(surface, f"▶ {new_name}", rx, cy, (100, 180, 240), 10, bold=True)
+        cy += 14
+
+        # ── Stat rows ─────────────────────────────────────────────────────
+        def _cmp_row(label, cur_val, new_val, surface, lx, rx, cy):
+            """Draw one comparison row. Returns cy advanced."""
+            if cur_val == 0 and new_val == 0:
+                return cy
+            delta = new_val - cur_val
+            d_col = (80, 210, 100) if delta > 0 else (210, 80, 80) if delta < 0 else GREY
+            d_str = f"  ({'+' if delta >= 0 else ''}{delta})" if delta != 0 else ""
+            draw_text(surface, f"{label}:", lx, cy, STAT_LABEL, 10)
+            draw_text(surface, str(cur_val), lx + 50, cy, GREY, 10)
+            draw_text(surface, str(new_val) + d_str, rx, cy, d_col, 10, bold=(delta != 0))
+            return cy + 13
+
+        stat_rows = [
+            ("Damage",      cur.get("damage", 0),       new_item.get("damage", 0)),
+            ("Defense",     cur.get("defense", 0),      new_item.get("defense", 0)),
+            ("Magic Res",   cur.get("magic_resist", 0), new_item.get("magic_resist", 0)),
+            ("Spell Bonus", cur.get("spell_bonus", 0),  new_item.get("spell_bonus", 0)),
+        ]
+        nb = new_item.get("stat_bonuses", {}) or {}
+        cb = cur.get("stat_bonuses", {}) or {}
+        for k in sorted(set(nb) | set(cb)):
+            stat_rows.append((k, cb.get(k, 0), nb.get(k, 0)))
+
+        for label, cv, nv in stat_rows:
+            cy = _cmp_row(label, cv, nv, surface, lx, rx, cy)
+            if cy > panel.bottom - 12:
+                break
+
+        # ── Overall verdict ───────────────────────────────────────────────
+        improvements = sum(1 for _, cv, nv in stat_rows if nv > cv)
+        regressions  = sum(1 for _, cv, nv in stat_rows if nv < cv)
+        if improvements > regressions:
+            verdict, vc = "Upgrade",    (80, 210, 100)
+        elif regressions > improvements:
+            verdict, vc = "Downgrade",  (210, 80,  80)
         else:
-            draw_text(surface, f"Nothing in {slot} — equipping is a gain!", cx, cy, (100,220,100), 10)
+            verdict, vc = "Sidegrade",  (220, 200, 80)
+        pygame.draw.line(surface, (60, 90, 140),
+                         (panel.x + 6, panel.bottom - 15),
+                         (panel.x + pw - 6, panel.bottom - 15))
+        draw_text(surface, verdict, panel.x + 8, panel.bottom - 13, vc, 10, bold=True)
 
     # ──────────────────────────────────────────────────────────
     #  EQUIPMENT TAB
@@ -478,7 +513,7 @@ class CampUI:
         c = self.party[self.selected_char]
         equipment = c.equipment if hasattr(c, "equipment") and c.equipment else {}
 
-        ey = top + 45
+        ey = top + 52
         for slot in EQUIP_SLOTS:
             row = pygame.Rect(60, ey, SCREEN_W - 120, 38)
             hover = row.collidepoint(mx, my)
@@ -498,7 +533,7 @@ class CampUI:
                     draw_text(surface, "[Click to unequip]", row.x + row.width - 150,
                               row.y + 8, DIM_GOLD, 11)
                     # Show stat details for equipped item on hover
-                    detail_y = min(row.bottom + 4, SCREEN_H - 170)
+                    detail_y = min(row.bottom + 4, SCREEN_H - 310)
                     self._draw_item_details(surface, equipped, detail_y)
             else:
                 draw_text(surface, "— empty —", row.x + 120, row.y + 8, DARK_GREY, 13)
@@ -524,9 +559,10 @@ class CampUI:
                 draw_text(surface, "[Click to equip]", row.x + row.width - 130,
                           row.y + 6, DIM_GOLD, 11)
                 # Show stat details + compare panel on hover
-                detail_y = min(row.bottom + 4, SCREEN_H - 240)
+                detail_y = min(row.bottom + 4, SCREEN_H - 310)
                 self._draw_item_details(surface, item, detail_y)
-                self._draw_equip_compare(surface, item, 80, detail_y + 164, SCREEN_W - 160)
+                if item.get("slot"):
+                    self._draw_equip_compare(surface, item, 80, detail_y + 164, SCREEN_W - 160)
             self._equip_tab_inv_rects.append((i, row))
             ey += 36
             if ey > SCREEN_H - 60:
@@ -613,7 +649,7 @@ class CampUI:
         LEFT_X   = 30
         MID_X    = 430
         RIGHT_X  = 850
-        BODY_TOP = top + 52        # below char selector
+        BODY_TOP = top + 60        # below char selector
         BODY_BOT = SCREEN_H - 60  # leave room for Manual button
         CONTENT_H = BODY_BOT - BODY_TOP
 
@@ -625,6 +661,40 @@ class CampUI:
         #  LEFT COLUMN: Tier badge + Base stats + Resources + Resistances
         # ─────────────────────────────────────────────────────────────────
         y = BODY_TOP + 4
+
+        # ── HP / Resources summary bar (always visible at top) ───────────
+        hp_bar_y = y
+        try:
+            max_res_top = get_all_resources(c.class_name, c.stats, c.level)
+            mhp = max(1, max_res_top.get("HP", 1))
+            chp = c.resources.get("HP", mhp)
+            hp_pct = max(0.0, chp / mhp)
+            hp_col = (60,200,80) if hp_pct > 0.5 else (220,160,40) if hp_pct > 0.25 else (220,60,60)
+            # HP label
+            draw_text(surface, "HP", LEFT_X, y, STAT_LABEL, 11, bold=True)
+            draw_text(surface, f"{chp} / {mhp}", LEFT_X + 28, y, hp_col, 13, bold=True)
+            # HP bar
+            bar_r = pygame.Rect(LEFT_X + 110, y + 3, 220, 10)
+            pygame.draw.rect(surface, (40, 20, 20), bar_r, border_radius=3)
+            fill_w = int(220 * hp_pct)
+            if fill_w > 0:
+                pygame.draw.rect(surface, hp_col,
+                                 pygame.Rect(bar_r.x, bar_r.y, fill_w, 10), border_radius=3)
+            # Other resources inline
+            rx = LEFT_X + 340
+            for rname, mval in max_res_top.items():
+                if rname == "HP": continue
+                cval = c.resources.get(rname, 0)
+                fc = MP_BAR if "MP" in rname else SP_BAR
+                draw_text(surface, f"{rname}: {cval}/{mval}", rx, y, GREY, 10)
+                rx += 110
+                if rx > SCREEN_W - 60:
+                    break
+            y += 20
+            pygame.draw.line(surface, (60, 50, 80), (LEFT_X, y), (LEFT_X + 380, y))
+            y += 8
+        except Exception:
+            pass
 
         # ── Tier badge ─────────────────────────────────────────────────────
         try:
@@ -1490,7 +1560,7 @@ class CampUI:
         cx = 60
         for i, c in enumerate(self.party):
             w = max(80, len(c.name) * 8 + 20)
-            r = pygame.Rect(cx, top, w, 30)
+            r = pygame.Rect(cx, top, w, 38)
             hover = r.collidepoint(mx, my)
             bg = TAB_ACTIVE if i == self.selected_char else (TAB_BG if not hover else ITEM_HOVER)
             pygame.draw.rect(surface, bg, r, border_radius=3)
@@ -1513,7 +1583,25 @@ class CampUI:
                     draw_text(surface, "►", rr.x + 2, rr.y + 3, GOLD if rhov else DIM_GOLD, 12)
                     self._reorder_right_rect = rr
             col = GOLD if i == self.selected_char else CREAM
-            draw_text(surface, c.name, r.x + 8, r.y + 6, col, 12, bold=(i == self.selected_char))
+            draw_text(surface, c.name, r.x + 8, r.y + 4, col, 11, bold=(i == self.selected_char))
+            # HP bar under name
+            try:
+                from core.classes import get_all_resources
+                max_r = get_all_resources(c.class_name, c.stats, c.level)
+                mhp = max(1, max_r.get("HP", 1))
+                chp = c.resources.get("HP", mhp)
+                hp_pct = max(0.0, chp / mhp)
+                bar_w2 = r.w - 10
+                bar_r = pygame.Rect(r.x + 5, r.y + 18, bar_w2, 5)
+                hp_col = (60,200,80) if hp_pct > 0.5 else (220,160,40) if hp_pct > 0.25 else (220,60,60)
+                pygame.draw.rect(surface, (40,20,20), bar_r, border_radius=2)
+                fill_w = int(bar_w2 * hp_pct)
+                if fill_w > 0:
+                    pygame.draw.rect(surface, hp_col,
+                                     pygame.Rect(bar_r.x, bar_r.y, fill_w, 5), border_radius=2)
+                draw_text(surface, f"{chp}/{mhp}", r.x + 5, r.y + 20, (160,130,130), 9)
+            except Exception:
+                pass
             cx += w + 6
 
     def _char_to_combatant(self, c):
