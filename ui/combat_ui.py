@@ -304,7 +304,23 @@ class CombatUI:
             fw = max(0, int((r.w - 2) * hp / max(1, mhp)))
             pygame.draw.rect(surface, (30, 10, 10), (r.x + 1, r.y + r.h - 5, r.w - 2, 4))
             if fw: pygame.draw.rect(surface, col, (r.x + 1, r.y + r.h - 5, fw, 4))
-            draw_text(surface, name, r.x + 4, r.y + 4, GOLD if is_cur else CREAM, 13, bold=is_cur)
+            draw_text(surface, name, r.x + 4, r.y + 4, GOLD if is_cur else CREAM, 11, bold=is_cur)
+            # Status indicators in turn bar — show up to 3 abbreviated badges
+            _se = c.get("status_effects", [])
+            if _se:
+                _sx = r.x + 4
+                for _eff in _se[:3]:
+                    _sn = _eff["name"] if isinstance(_eff, dict) else _eff
+                    _ab = _STATUS_ABBREV.get(_sn, _sn[:3].upper())
+                    _sc = _status_badge_col(_sn)
+                    _sw = get_font(8).size(_ab)[0] + 4
+                    if _sx + _sw > r.right - 2:
+                        break
+                    _br = pygame.Rect(_sx, r.y + r.h - 16, _sw, 11)
+                    pygame.draw.rect(surface, (int(_sc[0]*.2), int(_sc[1]*.2), int(_sc[2]*.2)), _br, border_radius=2)
+                    pygame.draw.rect(surface, _sc, _br, 1, border_radius=2)
+                    draw_text(surface, _ab, _sx + 2, r.y + r.h - 15, _sc, 8, bold=True)
+                    _sx += _sw + 2
             x += slot_w
 
     # ─────────────────────────────────────────────────────────
@@ -706,6 +722,22 @@ class CombatUI:
                                (HP_BG, _hp_color(hp, mhp), (190,150,145)))
             draw_text(surface, f"{hp}/{mhp}", px + PAD + POP_W - PAD*2 - 34,
                       iy + 19, _hp_color(hp, mhp), 9)
+            # Status badges for this individual enemy
+            _ise = enemy.get("status_effects", [])
+            if _ise:
+                _isx = px + PAD + 2
+                for _ief in _ise[:4]:
+                    _isn = _ief["name"] if isinstance(_ief, dict) else _ief
+                    _iab = _STATUS_ABBREV.get(_isn, _isn[:3].upper())
+                    _isc = _status_badge_col(_isn)
+                    _isw = get_font(8).size(_iab)[0] + 4
+                    if _isx + _isw > px + POP_W - 4:
+                        break
+                    _ibr = pygame.Rect(_isx, iy + 2, _isw, 10)
+                    pygame.draw.rect(surface, (int(_isc[0]*.2), int(_isc[1]*.2), int(_isc[2]*.2)), _ibr, border_radius=2)
+                    pygame.draw.rect(surface, _isc, _ibr, 1, border_radius=2)
+                    draw_text(surface, _iab, _isx + 2, iy + 3, _isc, 8, bold=True)
+                    _isx += _isw + 2
 
     # ─────────────────────────────────────────────────────────
     #  COMBAT LOG
@@ -882,8 +914,16 @@ class CombatUI:
                     "arcane": "✦ Arcane", "force": "◈ Force",
                 }
                 elem_label = ELEM_LABELS.get(element, element.title())
-                item_lbl = (f"{w_name}  [{elem_label} Bolt · ~{bolt_base} dmg · "
-                            f"INT-acc · bypasses Def]")
+                # Show on_hit_effect if present
+                _ohe = weapon.get("on_hit_effect", {})
+                _ohe_str = ""
+                if _ohe:
+                    _ohe_pct = int(_ohe.get("chance", 0) * 100)
+                    _ohe_st  = _ohe.get("status", "")
+                    _ohe_dur = _ohe.get("duration", 1)
+                    _ohe_str = f" · {_ohe_pct}% {_ohe_st}({_ohe_dur}t)"
+                item_lbl = (f"{w_name}  [{elem_label} Bolt · ~{bolt_base} dmg"
+                            f" · INT-acc · bypasses Def{_ohe_str}]")
                 items = [(item_lbl, {
                     "type": "attack_select",
                     "weapon": weapon,

@@ -121,6 +121,24 @@ SECRET_ITEMS_T1 = [
      "rarity": "uncommon",
      "description": "Lifts all curses from one character, freeing any cursed equipment.",
      "identified": True, "estimated_value": 75},
+
+    {"name": "Ember Wand", "appraised_name": "Ember Wand",
+     "type": "weapon", "slot": "weapon", "subtype": "Wand",
+     "rarity": "uncommon", "damage": 14, "phys_type": "fire", "range": "ranged",
+     "spell_bonus": 3, "enchant_element": "fire",
+     "on_hit_effect": {"status": "Burning", "chance": 0.30, "duration": 2},
+     "unidentified_name": "Scorched Wand", "unidentified_desc": "A wand warm to the touch, with char marks on the tip.",
+     "description": "A wand infused with ember-magic. Fires fire bolts — 30% chance to Burn target for 2 turns. +3 spell power.",
+     "identified": False, "estimated_value": 85},
+
+    {"name": "Frost Rod", "appraised_name": "Frost Rod",
+     "type": "weapon", "slot": "weapon", "subtype": "Rod",
+     "rarity": "uncommon", "damage": 16, "phys_type": "ice", "range": "ranged",
+     "spell_bonus": 3, "enchant_element": "ice",
+     "on_hit_effect": {"status": "Slowed", "chance": 0.40, "duration": 2},
+     "unidentified_name": "Cold Iron Rod", "unidentified_desc": "A heavy rod that leaves frost on your fingers.",
+     "description": "A rod of condensed cold. Fires frost bolts — 40% chance to Slow target for 2 turns. +3 spell power.",
+     "identified": False, "estimated_value": 90},
 ]
 
 SECRET_ITEMS_T2 = [
@@ -167,6 +185,24 @@ SECRET_ITEMS_T2 = [
      "effect": {"dex_bonus": 2},
      "description": "Enchanted boots that make the wearer swift as wind. +2 DEX, +4 speed.",
      "identified": False, "estimated_value": 170},
+
+    {"name": "Shadow Wand", "appraised_name": "Shadow Wand",
+     "type": "weapon", "slot": "weapon", "subtype": "Wand",
+     "rarity": "rare", "damage": 18, "phys_type": "shadow", "range": "ranged",
+     "spell_bonus": 5, "enchant_element": "shadow",
+     "on_hit_effect": {"status": "Sleep", "chance": 0.25, "duration": 2},
+     "unidentified_name": "Darkened Wand", "unidentified_desc": "A wand that seems to absorb light near its tip.",
+     "description": "A wand of shadow-essence. Fires shadow bolts — 25% chance to Sleep target for 2 turns. +5 spell power.",
+     "identified": False, "estimated_value": 200},
+
+    {"name": "Tempest Rod", "appraised_name": "Tempest Rod",
+     "type": "weapon", "slot": "weapon", "subtype": "Rod",
+     "rarity": "rare", "damage": 22, "phys_type": "lightning", "range": "ranged",
+     "spell_bonus": 5, "enchant_element": "lightning",
+     "on_hit_effect": {"status": "Stunned", "chance": 0.25, "duration": 1},
+     "unidentified_name": "Crackling Rod", "unidentified_desc": "A rod that hums and occasionally sparks.",
+     "description": "A rod charged with storm-magic. Fires lightning bolts — 25% chance to Stun for 1 turn. +5 spell power.",
+     "identified": False, "estimated_value": 220},
 
     {"name": "Crown of Clarity", "appraised_name": "Crown of Clarity", "type": "armor", "slot": "head",
      "subtype": "circlet", "rarity": "rare",
