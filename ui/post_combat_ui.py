@@ -97,12 +97,20 @@ class PostCombatUI:
         self.hover_btn = -1
         self.timer = 0
 
-        # ── Register enemy knowledge and auto-ID known loot ──
+        # ── Register enemy knowledge; auto-ID only items the party has seen before ──
         from core.party_knowledge import mark_enemy_encountered, auto_identify_if_known
+        from core.identification import auto_identify_mundane, needs_identification
         for enemy_name in rewards.get("enemy_names", []):
             mark_enemy_encountered(enemy_name, tier=1)
         for item in self.loot_items:
-            auto_identify_if_known(item)
+            # Step 1: mundane items (pelts, common mats) always auto-identify
+            auto_identify_mundane(item)
+            # Step 2: if the party has previously identified this item type,
+            # auto-identify again — they recognise it on sight
+            if not item.get("identified"):
+                auto_identify_if_known(item)
+            # Step 3: anything still unidentified stays that way and goes
+            # to the identify phase so the player can act on it
 
     # ─────────────────────────────────────────────────────────
     #  APPLY XP (called once when entering XP phase)

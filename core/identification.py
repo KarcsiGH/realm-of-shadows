@@ -413,7 +413,44 @@ def get_item_display_name(item):
         return item.get("appraised_name", item.get("unidentified_name",
                         f"??? {item.get('type', 'Item')}"))
     else:
-        return item.get("unidentified_name", f"??? {item.get('type', 'Item')}")
+        # Build a descriptive unidentified label using all available surface info
+        unid = item.get("unidentified_name")
+        if unid:
+            return unid
+        # Construct from subtype/slot/type — never just "armor" or "weapon"
+        slot    = item.get("slot", "")
+        subtype = item.get("subtype", "")
+        itype   = item.get("type", "item")
+        SLOT_LABELS = {
+            "weapon": "weapon", "off_hand": "off-hand", "head": "helm",
+            "body": "armor", "hands": "gloves", "feet": "boots",
+            "neck": "amulet", "ring1": "ring", "ring2": "ring", "ring3": "ring",
+            "crown": "circlet",
+        }
+        TYPE_LABELS = {
+            "consumable": "vial", "potion": "potion", "food": "ration",
+            "scroll": "scroll", "material": "component", "key_item": "key item",
+        }
+        # Colour / shape hints from unidentified_desc
+        desc = item.get("unidentified_desc", "")
+        color_words = ["red", "blue", "green", "black", "white", "yellow",
+                       "purple", "silver", "golden", "glowing", "murky",
+                       "clear", "dark", "bright"]
+        color_hint = next((w.title() for w in color_words if w in desc.lower()), "")
+
+        if itype in ("consumable", "potion"):
+            label = f"{color_hint} Potion" if color_hint else "Unknown Potion"
+        elif itype == "scroll":
+            label = "Scroll (unread)"
+        elif itype == "food":
+            label = "Ration (unknown)"
+        elif subtype:
+            label = f"Unidentified {subtype.replace('_',' ').title()}"
+        elif slot:
+            label = f"Unidentified {SLOT_LABELS.get(slot, slot.title())}"
+        else:
+            label = f"Unidentified {itype.title()}"
+        return label
 
 
 def _auto_unidentified_desc(item):

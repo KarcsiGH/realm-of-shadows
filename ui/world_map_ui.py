@@ -331,7 +331,9 @@ class WorldMapUI:
         # Name is shown in the HUD panel when the party stands on the location.
 
     def _draw_party(self, surface):
-        """Draw the party token — a directional figure with facing indicator."""
+        """Draw the party token — animated cloaked figure with directional facing."""
+        import time
+
         cx = MAP_OFFSET_X + (VIEW_COLS // 2) * TILE_W
         cy = MAP_OFFSET_Y + (VIEW_ROWS // 2) * TILE_H
 
@@ -340,43 +342,75 @@ class WorldMapUI:
         elev = TERRAIN_DATA[tile["terrain"]]["elevation"]
         cy -= elev * ELEVATION_PX
 
-        center_x = cx + TILE_W // 2
-        center_y = cy + TILE_H // 2
+        cx = cx + TILE_W // 2
+        cy = cy + TILE_H // 2
 
-        import time
-        pulse = abs(math.sin(time.time() * 3))
+        t = time.time()
+        # Gentle bob: 2px up/down at ~1 Hz
+        bob   = int(math.sin(t * 2.0) * 2)
+        pulse = abs(math.sin(t * 2.5))
 
-        # Pulsing glow ring
-        glow_r = int(13 + pulse * 4)
-        glow_surf = pygame.Surface((glow_r*2+4, glow_r*2+4), pygame.SRCALPHA)
-        for gr in range(glow_r, glow_r-5, -1):
-            alpha = int(30 + (glow_r - gr) * 25)
-            pygame.draw.circle(glow_surf, (*PARTY_OUTLINE, alpha),
-                               (glow_r+2, glow_r+2), gr)
-        surface.blit(glow_surf, (center_x - glow_r - 2, center_y - glow_r - 2))
-
-        # Body — filled circle
-        pygame.draw.circle(surface, PARTY_COLOR, (center_x, center_y), 9)
-        pygame.draw.circle(surface, PARTY_OUTLINE, (center_x, center_y), 9, 2)
-
-        # Head dot
-        pygame.draw.circle(surface, PARTY_OUTLINE, (center_x, center_y - 4), 3)
-
-        # Facing arrow — short line in direction of travel
         facing_x = self.world.facing_dx if hasattr(self.world, "facing_dx") else 0
         facing_y = self.world.facing_dy if hasattr(self.world, "facing_dy") else -1
-        arrow_len = 14
-        ax = center_x + int(facing_x * arrow_len)
-        ay = center_y + int(facing_y * arrow_len)
-        pygame.draw.line(surface, PARTY_OUTLINE, (center_x, center_y), (ax, ay), 2)
-        # Arrowhead
-        perp_x, perp_y = -facing_y, facing_x
+        # Normalise
+        flen = math.sqrt(facing_x**2 + facing_y**2) or 1
+        facing_x /= flen
+        facing_y /= flen
+
+        # ── Pulsing glow shadow ──────────────────────────────────────
+        glow_r = int(14 + pulse * 5)
+        glow_surf = pygame.Surface((glow_r*2+6, glow_r*2+6), pygame.SRCALPHA)
+        for gr in range(glow_r, glow_r - 6, -1):
+            alpha = int(20 + (glow_r - gr) * 20)
+            pygame.draw.circle(glow_surf, (*PARTY_OUTLINE, alpha),
+                               (glow_r+3, glow_r+3), gr)
+        surface.blit(glow_surf, (cx - glow_r - 3, cy - glow_r - 3 + bob))
+
+        # ── Cloak / cape: directional teardrop behind body ───────────
+        # Cape points away from facing direction
+        cape_dx = -facing_x
+        cape_dy = -facing_y
+        cape_len = 11
+        cape_w   = 7
+        perp_x, perp_y = -cape_dy, cape_dx  # perpendicular to facing
+        cape_tip = (cx + int(cape_dx * cape_len),
+                    cy + int(cape_dy * cape_len) + bob)
+        cape_l   = (cx + int(perp_x * cape_w), cy + int(perp_y * cape_w) + bob)
+        cape_r   = (cx - int(perp_x * cape_w), cy - int(perp_y * cape_w) + bob)
+        cape_col = tuple(max(0, c - 40) for c in PARTY_COLOR)  # darker shade of party colour
+        pygame.draw.polygon(surface, cape_col, [cape_l, cape_r, cape_tip])
+        pygame.draw.polygon(surface, PARTY_OUTLINE, [cape_l, cape_r, cape_tip], 1)
+
+        # ── Body: rounded rectangle centred on token ─────────────────
+        body_w, body_h = 10, 13
+        body_rect = pygame.Rect(cx - body_w//2, cy - body_h//2 + bob, body_w, body_h)
+        pygame.draw.rect(surface, PARTY_COLOR, body_rect, border_radius=3)
+        pygame.draw.rect(surface, PARTY_OUTLINE, body_rect, 1, border_radius=3)
+
+        # ── Head: circle above body ───────────────────────────────────
+        head_r = 5
+        head_cy = cy - body_h//2 - head_r + bob
+        pygame.draw.circle(surface, PARTY_COLOR,   (cx, head_cy), head_r)
+        pygame.draw.circle(surface, PARTY_OUTLINE, (cx, head_cy), head_r, 1)
+
+        # ── Facing indicator: bright gem/eye on chest ─────────────────
+        # Small bright dot in the facing direction on the body
+        gem_x = cx + int(facing_x * 4)
+        gem_y = cy + int(facing_y * 4) + bob
+        gem_col = (255, 240, 120)  # warm yellow eye
+        pygame.draw.circle(surface, gem_col, (gem_x, gem_y), 2)
+
+        # ── Facing arrow: subtle directional line above figure ────────
+        arr_start = (cx + int(facing_x * 8), cy + int(facing_y * 8) + bob)
+        arr_end   = (cx + int(facing_x * 16), cy + int(facing_y * 16) + bob)
+        pygame.draw.line(surface, (*PARTY_OUTLINE, 180), arr_start, arr_end, 2)
+        # Arrowhead tip
         tip_pts = [
-            (ax, ay),
-            (ax - int(facing_x*4) + int(perp_x*3),
-             ay - int(facing_y*4) + int(perp_y*3)),
-            (ax - int(facing_x*4) - int(perp_x*3),
-             ay - int(facing_y*4) - int(perp_y*3)),
+            arr_end,
+            (arr_end[0] - int(facing_x*4) + int(perp_x*3),
+             arr_end[1] - int(facing_y*4) + int(perp_y*3)),
+            (arr_end[0] - int(facing_x*4) - int(perp_x*3),
+             arr_end[1] - int(facing_y*4) - int(perp_y*3)),
         ]
         pygame.draw.polygon(surface, PARTY_OUTLINE, tip_pts)
 

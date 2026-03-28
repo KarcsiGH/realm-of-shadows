@@ -41,8 +41,8 @@ HUD_H        = 110
 MM_X    = VP_X + VP_W + 8
 MM_Y    = VP_Y + 4
 MM_W    = SCREEN_W - MM_X - 4
-MM_H    = 200
-MM_TS   = 5
+MM_H    = 390          # taller — uses more of the right-column space
+MM_TS   = 9            # larger tiles — much easier to read
 
 NUM_RAYS    = VP_W
 FOV         = math.radians(66)
@@ -51,7 +51,7 @@ PROJ_DIST   = (VP_W / 2) / math.tan(HALF_FOV)
 
 MOVE_SPEED  = 3.5
 ROT_SPEED   = 2.2
-TORCH_DIST  = 8.0
+TORCH_DIST  = 11.0         # brighter — extends visible range
 
 # ═══════════════════════════════════════════════════════════════
 #  DUNGEON THEMES
@@ -566,6 +566,7 @@ class DungeonUI:
         self.chest_modal         = None   # None or dict with modal state
         self.interactable_modal  = None   # fountain/shrine/altar modal state
         self.scroll_modal        = None   # None or {title, text, lines} for note/journal display
+        self.spire_choice_modal  = None   # None or dict — post-Spire descent choice
 
         self.fading_intensity = 0.0
         self._update_fading()
@@ -799,6 +800,8 @@ class DungeonUI:
             self._draw_interactable_modal(surface, mx, my)
         if self.scroll_modal:
             self._draw_scroll_modal(surface, mx, my)
+        if self.spire_choice_modal:
+            self._draw_spire_choice_modal(surface, mx, my)
 
         if (self.event_message and self.event_timer > 0) or self.event_queue:
             self._draw_events(surface)
@@ -1353,26 +1356,40 @@ class DungeonUI:
                 ecol = (255, 60, 60, 255) if enemy.get("state") == "chase" else (200, 80, 80, 220)
                 pygame.draw.circle(bg, ecol, (esx, esy), max(2, ts // 2 - 1))
 
-        # Party dot + directional arrowhead (contained within tile square)
-        ppx = (px_i-x0)*ts + ts//2
-        ppy = (py_i-y0)*ts + ts//2
-        # Arrow tip: stay within the tile (max ts//2 - 1 from centre)
-        arrow_r = max(2, ts//2 - 1)
-        ax  = ppx + int(math.cos(self.angle) * arrow_r)
-        ay  = ppy + int(math.sin(self.angle) * arrow_r)
-        # Draw filled party circle
-        pygame.draw.circle(bg, (0,220,200,255), (ppx,ppy), max(2, ts//2 - 1))   # cyan — unique party color
-        # Draw arrowhead triangle pointing in facing direction
+        # ── Party figure — helm + body + directional facing indicator ──
+        ppx = (px_i - x0) * ts + ts // 2
+        ppy = (py_i - y0) * ts + ts // 2
+        CYAN   = (0, 220, 200, 255)
+        DARK_C = (0, 120, 110, 255)
+        WHITE  = (240, 240, 230, 255)
+
+        # Body: filled rounded rect (2/3 tile height below centre)
+        body_w = max(4, ts // 3)
+        body_h = max(4, ts // 2)
+        body_r = pygame.Rect(ppx - body_w // 2, ppy - body_h // 6,
+                             body_w, body_h)
+        pygame.draw.rect(bg, CYAN,   body_r, border_radius=2)
+        pygame.draw.rect(bg, DARK_C, body_r, 1, border_radius=2)
+
+        # Head: small circle above body
+        head_r = max(2, ts // 5)
+        pygame.draw.circle(bg, CYAN,   (ppx, ppy - body_h // 6 - head_r), head_r)
+        pygame.draw.circle(bg, DARK_C, (ppx, ppy - body_h // 6 - head_r), head_r, 1)
+
+        # Facing: bright chevron / visor line pointing in view direction
+        facing_len = max(3, ts // 2)
+        fx = ppx + int(math.cos(self.angle) * facing_len)
+        fy = ppy + int(math.sin(self.angle) * facing_len)
+        pygame.draw.line(bg, WHITE, (ppx, ppy), (fx, fy), 2)
+        # Chevron tip
         perp_x = -math.sin(self.angle)
         perp_y =  math.cos(self.angle)
-        tip_x  = ppx + int(math.cos(self.angle) * arrow_r)
-        tip_y  = ppy + int(math.sin(self.angle) * arrow_r)
-        base_w = max(1, ts // 4)
-        b1x = tip_x - int(math.cos(self.angle) * arrow_r * 0.7) + int(perp_x * base_w)
-        b1y = tip_y - int(math.sin(self.angle) * arrow_r * 0.7) + int(perp_y * base_w)
-        b2x = tip_x - int(math.cos(self.angle) * arrow_r * 0.7) - int(perp_x * base_w)
-        b2y = tip_y - int(math.sin(self.angle) * arrow_r * 0.7) - int(perp_y * base_w)
-        pygame.draw.polygon(bg, (0,220,200,255), [(tip_x,tip_y),(b1x,b1y),(b2x,b2y)])  # cyan party arrow
+        cw = max(1, ts // 5)
+        c1 = (fx - int(math.cos(self.angle) * cw) + int(perp_x * cw),
+              fy - int(math.sin(self.angle) * cw) + int(perp_y * cw))
+        c2 = (fx - int(math.cos(self.angle) * cw) - int(perp_x * cw),
+              fy - int(math.sin(self.angle) * cw) - int(perp_y * cw))
+        pygame.draw.polygon(bg, WHITE, [(fx, fy), c1, c2])
         pygame.draw.rect(bg, (100,90,72,200), (0,0,cols*ts,rows*ts), 1)
 
         surface.blit(bg, (MM_X, MM_Y))
