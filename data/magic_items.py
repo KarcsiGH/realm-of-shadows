@@ -830,3 +830,11 @@ def get_unique_item(key, party=None):
     if party and party_has_unique(party, item["name"]):
         return None
     return dict(item)
+
+
+# ── Fix missing slot fields on any items that lack them ────────
+from core.item_slot_fixer import fix_item_list as _fix_items
+for _lst in [SECRET_ITEMS_DA1, SECRET_ITEMS_T1, SECRET_ITEMS_T2, SECRET_ITEMS_T3]:
+    _fix_items(_lst)
+for _items in ITEM_SETS.values():
+    _fix_items(_items)

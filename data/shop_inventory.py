@@ -631,3 +631,14 @@ def get_town_shop(town_id, party_classes=None):
             shop["consumables"].append(it)
 
     return shop
+
+
+# ── Fix missing slot fields on all shop item lists ─────────────
+from core.item_slot_fixer import fix_item_list as _fix_items
+_fix_items(GENERAL_STORE.get("weapons", []))
+_fix_items(GENERAL_STORE.get("armor", []))
+_fix_items(GENERAL_STORE.get("accessories", []))
+for _town_id, _town_data in TOWN_SHOP_PROFILES.items():
+    _fix_items(_town_data.get("bonus_items", []))
+    _fix_items(_town_data.get("weapons", []))
+    _fix_items(_town_data.get("armor", []))

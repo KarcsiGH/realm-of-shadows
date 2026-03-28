@@ -83,7 +83,9 @@ def _item(name, itype, subtype, rarity, dmg_or_def, phys, unid, unid_desc,
          "appraised_name": appraised, "material_desc": mat_desc,
          "magic_desc": magic_desc, "estimated_value": val, "description": desc}
     if itype == "weapon":
-        d["damage"] = dmg_or_def + 10  # +10 base to account for stat scaling
+        d["slot"] = "weapon"
+        d["range"] = "melee"
+        d["damage"] = dmg_or_def + 10
         d["phys_type"] = phys
         if "damage_stat" not in kw:
             ds = _WEAPON_DS.get(subtype)
@@ -91,6 +93,28 @@ def _item(name, itype, subtype, rarity, dmg_or_def, phys, unid, unid_desc,
                 d["damage_stat"] = ds
     elif itype == "armor":
         d["defense"] = dmg_or_def
+        # Infer slot from subtype
+        sub_lower = subtype.lower()
+        if any(x in sub_lower for x in ("shield","buckler","off_hand")):
+            d["slot"] = "off_hand"
+        elif any(x in sub_lower for x in ("helm","helmet","crown","circlet","hat","hood")):
+            d["slot"] = "head"
+        elif any(x in sub_lower for x in ("boot","shoe","greave","sabatons")):
+            d["slot"] = "feet"
+        elif any(x in sub_lower for x in ("glove","gauntlet","bracer","hand")):
+            d["slot"] = "hands"
+        else:
+            d["slot"] = "body"
+    elif itype == "accessory":
+        sub_lower = subtype.lower()
+        if any(x in sub_lower for x in ("amulet","necklace","pendant","talisman","holy symbol")):
+            d["slot"] = "neck"
+        elif any(x in sub_lower for x in ("circlet","crown","diadem","coronet")):
+            d["slot"] = "crown"
+        else:
+            # rings, trinkets, charms → generic "accessory" so equip_item
+            # auto-fills ring1→ring2→ring3 rather than always slot into ring1
+            d["slot"] = "accessory"
     d.update(kw)
     return d
 
@@ -1291,3 +1315,11 @@ NEW_FACTION_ENCOUNTER_TABLE_UPDATES = {
         3: ["imperial_with_mage", "imperial_inquisitor_enc", "merc_warband"],
     },
 }
+
+
+# ── Fix missing slot fields on all loot items ─────────────────
+from core.item_slot_fixer import fix_loot_table as _fix_loot
+for _faction_dict in [BEAST_ENEMIES, PIRATE_ENEMIES, IMPERIAL_ENEMIES, DWARF_ENEMIES]:
+    for _eid, _edata in _faction_dict.items():
+        if _edata.get("loot_table"):
+            _fix_loot(_edata["loot_table"])

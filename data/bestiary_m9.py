@@ -1436,3 +1436,10 @@ ACT3_ENCOUNTERS = {
 }
 
 NEW_ENCOUNTERS.update(ACT3_ENCOUNTERS)
+
+# ── Fix missing slot fields on all loot items ─────────────────
+from core.item_slot_fixer import fix_loot_table as _fix_loot
+for _d in [NEW_ENEMIES, ACT3_ENEMIES]:
+    for _eid, _edata in _d.items():
+        if isinstance(_edata, dict) and _edata.get("loot_table"):
+            _fix_loot(_edata["loot_table"])

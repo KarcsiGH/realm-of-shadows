@@ -405,3 +405,12 @@ TOWER_FLOOR_MESSAGES = {
     5: "Reality warps. The walls seem to breathe. Tendrils of void seep through cracks in the stone.",
     6: "The top of the tower. A great rift hangs in the air, and within it — a figure of shadow and light.",
 }
+
+# ── Fix missing slot fields on all loot items ─────────────────
+from core.item_slot_fixer import fix_loot_table as _fix_loot
+for _eid, _edata in TOWER_ENEMIES.items():
+    if isinstance(_edata, dict) and _edata.get("loot_table"):
+        _fix_loot(_edata["loot_table"])
+for _item_list in [TOWER_BOSS_LOOT.get("guaranteed", []), TOWER_BOSS_LOOT.get("random", [])]:
+    from core.item_slot_fixer import fix_item_list as _fi
+    _fi(_item_list)

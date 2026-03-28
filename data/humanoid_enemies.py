@@ -24,10 +24,10 @@ from core.combat_config import (
 def _coin(lo, hi): return (lo, hi)
 
 def _sword(name, unid, dmg, val, desc):
-    return {"name": name, "type": "weapon", "subtype": "Short Sword",
+    return {"name": name, "type": "weapon", "slot": "weapon", "subtype": "Long Sword",
             "rarity": "common", "damage": dmg + 10,
-            "damage_stat": {"DEX": 0.28, "STR": 0.12},
-            "phys_type": "slashing",
+            "damage_stat": {"STR": 0.3, "DEX": 0.12},
+            "phys_type": "slashing", "range": "melee",
             "identify_difficulty": 1,
             "unidentified_name": unid, "unidentified_desc": "A serviceable blade.",
             "appraised_name": name, "material_desc": "Common steel.",
@@ -35,7 +35,7 @@ def _sword(name, unid, dmg, val, desc):
             "description": desc}
 
 def _dagger(name, dmg, val, desc):
-    return {"name": name, "type": "weapon", "subtype": "Dagger",
+    return {"name": name, "type": "weapon", "slot": "weapon", "subtype": "Dagger",
             "rarity": "common", "damage": dmg + 10,
             "damage_stat": {"DEX": 0.40},
             "phys_type": "piercing",
@@ -46,7 +46,7 @@ def _dagger(name, dmg, val, desc):
             "description": desc}
 
 def _staff(name, dmg, val, desc):
-    return {"name": name, "type": "weapon", "subtype": "Staff", "max_charges": 30,
+    return {"name": name, "type": "weapon", "slot": "weapon", "subtype": "Staff", "max_charges": 30,
             "rarity": "common", "damage": dmg + 10,
             "damage_stat": {"STR": 0.16, "INT": 0.24},
             "phys_type": "blunt",
@@ -305,7 +305,7 @@ HUMANOID_ENEMIES = {
         "abilities": ["enemy_stunning_blow"],
         "loot_table": [
             {"drop_chance": 0.12, "item": {
-                "name": "Worn Prayer Beads", "type": "accessory", "subtype": "trinket",
+                "name": "Worn Prayer Beads", "type": "accessory", "slot": "neck", "subtype": "trinket",
                 "rarity": "uncommon", "identify_difficulty": 2,
                 "unidentified_name": "Carved Beads", "unidentified_desc": "Smooth wooden beads on a cord.",
                 "appraised_name": "Monk's Focus Beads", "material_desc": "Rosewood beads.",
@@ -334,7 +334,7 @@ HUMANOID_ENEMIES = {
         "abilities": ["enemy_minor_heal", "enemy_smite"],
         "loot_table": [
             {"drop_chance": 0.18, "item": {
-                "name": "Mercenary's Iron Mace", "type": "weapon", "subtype": "Mace",
+                "name": "Mercenary's Iron Mace", "type": "weapon", "slot": "weapon", "subtype": "Mace",
                 "rarity": "common", "damage_stat": {"STR": 0.4},
                 "damage": 19, "phys_type": "blunt",
                 "identify_difficulty": 1,
@@ -371,7 +371,7 @@ HUMANOID_ENEMIES = {
         "abilities": ["enemy_arcane_slash"],
         "loot_table": [
             {"drop_chance": 0.22, "item": {
-                "name": "Rune-Etched Sword", "type": "weapon", "subtype": "Long Sword",
+                "name": "Rune-Etched Sword", "type": "weapon", "slot": "weapon", "subtype": "Long Sword",
                 "rarity": "uncommon", "damage_stat": {"STR": 0.3, "DEX": 0.12},
                 "damage": 20, "phys_type": "slashing",
                 "identify_difficulty": 3, "element": "arcane",
@@ -471,7 +471,7 @@ HUMANOID_ENEMIES = {
                 "description": "A dense crystal of condensed arcane energy. Recharges 5 charges on a focus weapon."}},
 
             {"drop_chance": 0.20, "item": {
-                "name": "Hexblade Saber", "type": "weapon", "subtype": "Long Sword",
+                "name": "Hexblade Saber", "type": "weapon", "slot": "weapon", "subtype": "Long Sword",
                 "rarity": "uncommon", "damage_stat": {"STR": 0.3, "DEX": 0.12},
                 "damage": 19, "phys_type": "slashing",
                 "identify_difficulty": 3, "element": "shadow",
@@ -542,7 +542,7 @@ HUMANOID_ENEMIES = {
                 "description": "A dense crystal of condensed arcane energy. Recharges 5 charges on a focus weapon."}},
 
             {"drop_chance": 0.35, "item": {
-                "name": "High Cultist's Grimoire", "type": "weapon", "subtype": "Staff", "max_charges": 30,
+                "name": "High Cultist's Grimoire", "type": "weapon", "slot": "weapon", "subtype": "Staff", "max_charges": 30,
                 "rarity": "rare", "damage_stat": {"STR": 0.16, "INT": 0.24},
                 "damage": 18, "phys_type": "shadow",
                 "identify_difficulty": 4, "element": "shadow",
@@ -581,7 +581,7 @@ HUMANOID_ENEMIES = {
         "abilities": [],
         "loot_table": [
             {"drop_chance": 0.10, "item": {
-                "name": "Corroded Sword", "type": "weapon", "subtype": "Long Sword",
+                "name": "Corroded Sword", "type": "weapon", "slot": "weapon", "subtype": "Long Sword",
                 "rarity": "common", "damage_stat": {"STR": 0.3, "DEX": 0.12},
                 "damage": 17, "phys_type": "slashing",
                 "identify_difficulty": 1,
@@ -641,7 +641,7 @@ HUMANOID_ENEMIES = {
         "abilities": ["enemy_cleave", "enemy_war_cry"],
         "loot_table": [
             {"drop_chance": 0.18, "item": {
-                "name": "Tarnished Paladin Shield", "type": "armor", "subtype": "Shield",
+                "name": "Tarnished Paladin Shield", "type": "armor", "slot": "off_hand", "subtype": "Shield",
                 "rarity": "uncommon", "defense": 4, "phys_type": "none",
                 "identify_difficulty": 2,
                 "unidentified_name": "Heavy Shield", "unidentified_desc": "A large kite shield, dented and tarnished.",
@@ -678,7 +678,7 @@ HUMANOID_ENEMIES = {
                 "description": "A dense crystal of condensed arcane energy. Recharges 5 charges on a focus weapon."}},
 
             {"drop_chance": 0.22, "item": {
-                "name": "Crypt Archmage's Orb", "type": "weapon", "subtype": "Orb", "max_charges": 30,
+                "name": "Crypt Archmage's Orb", "type": "weapon", "slot": "weapon", "subtype": "Orb", "max_charges": 30,
                 "rarity": "rare", "damage_stat": {"INT": 0.24, "WIS": 0.16},
                 "damage": 20, "phys_type": "arcane",
                 "identify_difficulty": 4, "element": "arcane",
@@ -819,3 +819,10 @@ HUMANOID_ENCOUNTER_TABLE_UPDATES = {
         3: ["cult_elite", "crypt_elite", "cult_with_sorcerer"],
     },
 }
+
+
+# ── Fix missing slot fields on all loot items ─────────────────
+from core.item_slot_fixer import fix_loot_table as _fix_loot
+for _eid, _edata in HUMANOID_ENEMIES.items():
+    if _edata.get("loot_table"):
+        _fix_loot(_edata["loot_table"])

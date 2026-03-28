@@ -983,6 +983,12 @@ ENCOUNTERS = {
 #  FLOOR-BASED ENCOUNTER SCALING
 # ═══════════════════════════════════════════════════════════════
 
+# ── Fix missing slot fields on all loot items ─────────────────
+from core.item_slot_fixer import fix_loot_table as _fix_loot
+for _eid, _edata in ENEMIES.items():
+    if _edata.get("loot_table"):
+        _fix_loot(_edata["loot_table"])
+
 DUNGEON_ENCOUNTER_TABLES = {
     "goblin_warren": {
         1: ["easy_goblins", "medium_goblins", "wolves"],
