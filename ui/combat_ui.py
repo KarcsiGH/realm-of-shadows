@@ -561,27 +561,36 @@ class CombatUI:
                         rc2 = ROW_COLORS[rep.get("row", FRONT)]
                         draw_text(surface, f"[{row_key[0].upper()}]",
                                   card_r.right - 22, cy + 3, rc2, 9)
-                        # Status effects on hover (single cards only)
-                        if is_hover:
-                            se = rep.get("status_effects", [])
-                            if se:
-                                sey = bar_y + 22
-                                DEBUFF_C = (230,80,60); BUFF_C = (100,230,130)
-                                DEBUFF_N = {"Poisoned","Burning","Stunned","Slowed",
-                                            "Blinded","Weakened","Cursed"}
-                                sex = cx + 4
-                                for effect in list(se)[:4]:
-                                    sname = effect["name"] if isinstance(effect,dict) else effect
-                                    col = DEBUFF_C if sname in DEBUFF_N else BUFF_C
-                                    bw = 28
-                                    badge = pygame.Rect(sex, sey, bw, 12)
-                                    pygame.draw.rect(surface,
-                                        (int(col[0]*.2),int(col[1]*.2),int(col[2]*.2)), badge)
-                                    pygame.draw.rect(surface, col, badge, 1)
-                                    draw_text(surface, sname[:3].upper(), sex+2, sey+1, col, 9)
-                                    sex += bw + 2
-                                    if sex + bw > card_r.right:
-                                        sex = cx + 4; sey += 14
+                        # Status effects — always visible on single-enemy cards
+                        se = rep.get("status_effects", [])
+                        if se:
+                            sey = bar_y + 22
+                            DEBUFF_C = (230, 80, 60); BUFF_C = (100, 230, 130)
+                            DEBUFF_N = {"Poisoned","Burning","Stunned","Slowed",
+                                        "Blinded","Weakened","Cursed","Bleeding",
+                                        "Silenced","Confused","Sleeping"}
+                            sex = cx + 4
+                            # Fit as many badges as card width allows
+                            bw = max(22, min(32, (card_w - 8) // max(1, len(se[:5])) - 2))
+                            for effect in list(se)[:6]:
+                                sname = effect["name"] if isinstance(effect, dict) else effect
+                                dur   = effect.get("duration", 0) if isinstance(effect, dict) else 0
+                                col   = DEBUFF_C if sname in DEBUFF_N else BUFF_C
+                                badge = pygame.Rect(sex, sey, bw, 13)
+                                if sex + bw > card_r.right - 2:
+                                    break
+                                pygame.draw.rect(surface,
+                                    (int(col[0]*.18), int(col[1]*.18), int(col[2]*.18)), badge,
+                                    border_radius=2)
+                                pygame.draw.rect(surface, col, badge, 1, border_radius=2)
+                                abbrev = sname[:3].upper()
+                                draw_text(surface, abbrev, sex + 2, sey + 2, col, 9)
+                                # Duration pip in bottom-right of badge
+                                if dur > 0:
+                                    pip = str(dur) if dur < 10 else "+"
+                                    draw_text(surface, pip,
+                                              sex + bw - 6, sey + 2, (220,220,180), 8)
+                                sex += bw + 2
 
                     # Stack hint text (when in targeting mode)
                     if is_stack and alive and is_targeting:

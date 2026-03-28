@@ -3235,6 +3235,15 @@ class Game:
                               k.startswith("boss_dialogue."))]
                 for k in boss_keys:
                     del _flags[k]
+            # Reset world position to the last town so the party doesn't
+            # return to their death location when they exit town.
+            if self.world_state:
+                from data.world_map import LOCATIONS
+                town_loc = LOCATIONS.get(self.current_town_id)
+                if town_loc:
+                    self.world_state.party_x = town_loc["x"]
+                    self.world_state.party_y = town_loc["y"]
+
             # Build inn UI with the recovery message, then fade to town
             self.town_ui = TownUI(self.party, town_id=self.current_town_id)
             self.town_ui.inn_result = (

@@ -238,15 +238,30 @@ class CampUI:
         c = self.party[self.selected_char]
 
         # Inventory list
-        iy = top + 45
+        BODY_BOT   = 840          # usable bottom of camp panel
+        ROW_H      = 36
+        LIST_X     = 60
+        SB_W       = 10           # scrollbar width
+        ROW_W      = SCREEN_W - LIST_X - 26  # leave room for scrollbar
+        list_top   = top + 45
+        list_bot   = BODY_BOT - 60   # leave room for action buttons below list
+        visible_n  = max(1, (list_bot - list_top) // ROW_H)
+
+        iy = list_top
+
         if not c.inventory:
-            draw_text(surface, "No items.", 80, iy, GREY, 14)
+            draw_text(surface, "No items.", LIST_X, iy, GREY, 14)
             return
 
-        visible = c.inventory[self.scroll_offset:self.scroll_offset + 12]
+        total = len(c.inventory)
+        # Clamp scroll offset so we never scroll past the last item
+        max_off = max(0, total - visible_n)
+        self.scroll_offset = max(0, min(self.scroll_offset, max_off))
+
+        visible = c.inventory[self.scroll_offset:self.scroll_offset + visible_n]
         for i, item in enumerate(visible):
             idx = self.scroll_offset + i
-            row = pygame.Rect(60, iy, SCREEN_W - 120, 34)
+            row = pygame.Rect(LIST_X, iy, ROW_W, ROW_H - 2)
             hover = row.collidepoint(mx, my)
             bg = ITEM_HOVER if hover else ITEM_BG
             pygame.draw.rect(surface, bg, row, border_radius=3)
@@ -260,8 +275,27 @@ class CampUI:
             draw_text(surface, f"{name}{stack_str}", row.x + 10, row.y + 7, CREAM, 13)
 
             itype = item.get("type", "misc")
-            draw_text(surface, itype, row.x + row.width - 80, row.y + 7, STAT_LABEL, 11)
-            iy += 38
+            draw_text(surface, itype, row.x + ROW_W - 80, row.y + 7, STAT_LABEL, 11)
+            iy += ROW_H
+
+        # ── Scrollbar ──────────────────────────────────────────
+        if total > visible_n:
+            sb_x    = LIST_X + ROW_W + 4
+            sb_top  = list_top
+            sb_h    = iy - list_top   # height of rendered list area
+            # Rail
+            pygame.draw.rect(surface, (30, 25, 40),
+                             (sb_x, sb_top, SB_W, list_bot - list_top), border_radius=4)
+            # Thumb
+            thumb_h = max(18, int((list_bot - list_top) * visible_n / total))
+            thumb_y = sb_top + int((list_bot - list_top - thumb_h) *
+                                   self.scroll_offset / max(1, max_off))
+            pygame.draw.rect(surface, (100, 80, 140),
+                             (sb_x, thumb_y, SB_W, thumb_h), border_radius=4)
+            # Scroll hint
+            draw_text(surface, f"{self.scroll_offset+1}-"
+                      f"{min(total, self.scroll_offset+visible_n)}/{total}",
+                      sb_x - 30, list_bot - list_top + list_top + 2, GREY, 10)
 
         # Item action buttons if something selected
         # Store rects on self so _handle_inventory_click uses exact draw-time positions
@@ -1408,7 +1442,11 @@ class CampUI:
             cur = getattr(self, "_stats_scroll", 0)
             self._stats_scroll = max(0, cur + direction * 24)
         elif self.tab == TAB_INVENTORY:
-            self.scroll_offset = max(0, self.scroll_offset + direction)
+            c = self.party[self.selected_char] if self.party else None
+            if c:
+                visible_n = max(1, (840 - 60 - (80 + 45)) // 36)
+                max_off   = max(0, len(c.inventory) - visible_n)
+                self.scroll_offset = max(0, min(self.scroll_offset + direction, max_off))
         elif getattr(self, "_manual_open", False):
             cur = getattr(self, "_manual_scroll", 0)
             self._manual_scroll = max(0, cur + direction * 24)
