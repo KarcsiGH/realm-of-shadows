@@ -39,9 +39,9 @@ DUNGEONS = {
         "floors": 3,
         "width": 32, "height": 26,
         "encounter_table": {
-            1: ["medium_goblins", "wolves"],
-            2: ["medium_goblins", "wolves"],
-            3: ["medium_goblins"],
+            1: ["gw_bats", "gw_scouts", "gw_mixed_easy"],
+            2: ["gw_scouts", "gw_mixed_easy", "easy_goblins", "wolves"],
+            3: ["easy_goblins", "medium_goblins", "wolves"],
         },
         "boss_floor": 3,
         "boss_encounter": "boss_goblin_king",

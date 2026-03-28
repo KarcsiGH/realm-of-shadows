@@ -1455,23 +1455,15 @@ class DungeonUI:
         _btn_w = SCREEN_W - MM_X - 8
         _btn_y = by + 4
         bdata = [
-            ("C Camp",       pygame.Rect(_btn_x, _btn_y,       _btn_w, 24)),
-            ("M Menu",       pygame.Rect(_btn_x, _btn_y + 30,  _btn_w, 24)),
-            ("T Disarm",     pygame.Rect(_btn_x, _btn_y + 60,  _btn_w, 24)),
-            ("S Save",       pygame.Rect(_btn_x, _btn_y + 96,  _btn_w, 24)),
-            ("X Exit",       pygame.Rect(_btn_x, _btn_y + 126, _btn_w, 24)),
+            ("C Camp",   pygame.Rect(_btn_x, _btn_y,      _btn_w, 24)),
+            ("M Menu",   pygame.Rect(_btn_x, _btn_y + 30, _btn_w, 24)),
+            ("T Disarm", pygame.Rect(_btn_x, _btn_y + 60, _btn_w, 24)),
         ]
         for lbl, r in bdata:
             hov = r.collidepoint(mx,my)
-            is_save = lbl.startswith("S ")
-            is_exit = lbl.startswith("X ")
-            base_bg  = (18,30,20) if is_save else ((30,18,18) if is_exit else (40,30,18))
-            hov_bg   = (28,48,30) if is_save else ((50,22,22) if is_exit else (62,46,24))
-            base_bdr = (60,140,70) if is_save else ((140,60,60) if is_exit else (75,60,38))
-            hov_bdr  = (80,200,90) if is_save else ((200,80,80) if is_exit else GOLD)
-            pygame.draw.rect(surface, hov_bg if hov else base_bg, r, border_radius=3)
-            pygame.draw.rect(surface, hov_bdr if hov else base_bdr, r, 1, border_radius=3)
-            surface.blit(fb.render(lbl, True, hov_bdr if hov else CREAM), (r.x+6, r.y+5))
+            pygame.draw.rect(surface, (40,30,18) if not hov else (62,46,24), r, border_radius=3)
+            pygame.draw.rect(surface, GOLD if hov else (75,60,38), r, 1, border_radius=3)
+            surface.blit(fb.render(lbl, True, GOLD if hov else CREAM), (r.x+6, r.y+5))
 
         info_text = f"{self.dungeon.dungeon_id.replace('_',' ').title()}  ·  Floor {self.dungeon.current_floor}"
         # Add tier badge if party has advanced beyond Bronze
@@ -2171,14 +2163,10 @@ class DungeonUI:
                     (220, 80, 80))
                 return None
             return {"type": "camp"}
-        if pygame.Rect(_btn_x, _btn_y + 30,  _btn_w, 24).collidepoint(mx,my):
+        if pygame.Rect(_btn_x, _btn_y + 30, _btn_w, 24).collidepoint(mx,my):
             return {"type": "menu"}
-        if pygame.Rect(_btn_x, _btn_y + 60,  _btn_w, 24).collidepoint(mx,my):
+        if pygame.Rect(_btn_x, _btn_y + 60, _btn_w, 24).collidepoint(mx,my):
             return self._try_disarm()
-        if pygame.Rect(_btn_x, _btn_y + 96,  _btn_w, 24).collidepoint(mx,my):
-            return {"type": "hud_save"}
-        if pygame.Rect(_btn_x, _btn_y + 126, _btn_w, 24).collidepoint(mx,my):
-            return {"type": "hud_exit"}
         return None
 
     def _handle_chest_modal_click(self, mx, my):

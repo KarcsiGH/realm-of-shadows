@@ -291,12 +291,6 @@ class TownUI:
              (40, 80, 60), (80, 200, 120)),
             ("Party", "View and manage your characters — equip items, trade, check stats",
              (40, 60, 80), (80, 160, 220)),
-            ("Save Game", "Save your progress without resting",
-             (18, 50, 28), (60, 180, 80)),
-            ("Save & Exit Game", "Save your progress and quit to desktop",
-             (18, 38, 50), (60, 140, 200)),
-            ("Exit Game", "Quit to desktop without saving",
-             (60, 20, 20), (180, 60, 60)),
             ("Leave Town", "Return to the wilds",
              (80, 40, 40), RED),
         ]
@@ -316,6 +310,18 @@ class TownUI:
                       accent if hover else CREAM, 20, bold=True)
             draw_text(surface, desc, btn_rect.x + 20, btn_rect.y + 42,
                       GREY, 12)
+
+        # ── Menu button (top-right) ──
+        menu_r = pygame.Rect(SCREEN_W - 160, 20, 140, 38)
+        mhov = menu_r.collidepoint(mx, my)
+        pygame.draw.rect(surface, (30, 28, 45) if not mhov else (50, 46, 70),
+                         menu_r, border_radius=4)
+        pygame.draw.rect(surface, PANEL_BORDER if not mhov else GOLD,
+                         menu_r, 2, border_radius=4)
+        _mf = get_font(16, bold=True)
+        _ms = _mf.render("Menu", True, GOLD if mhov else CREAM)
+        surface.blit(_ms, (menu_r.x + (menu_r.w - _ms.get_width())//2,
+                            menu_r.y + (menu_r.h - _ms.get_height())//2))
 
         # ── NPC panel (right side) ──
         from data.story_data import get_town_npcs
@@ -2883,19 +2889,17 @@ class TownUI:
 
         # ── Hub view ──
         if self.view == self.VIEW_HUB:
-            locations = ["inn", "shop", "forge", "temple", "tavern", "jobboard", "party",
-                         "town_save", "town_save_exit", "town_exit", "exit"]
+            # Menu button (top-right)
+            menu_r = pygame.Rect(SCREEN_W - 160, 20, 140, 38)
+            if menu_r.collidepoint(mx, my):
+                return "show_menu"
+
+            locations = ["inn", "shop", "forge", "temple", "tavern", "jobboard", "party", "exit"]
             by = 140
             for i, loc in enumerate(locations):
                 btn = pygame.Rect(SCREEN_W // 2 - 300, by + i * 90, 420, 78)
                 if btn.collidepoint(mx, my):
-                    if loc == "town_save":
-                        return "town_save"
-                    elif loc == "town_save_exit":
-                        return "town_save_exit"
-                    elif loc == "town_exit":
-                        return "town_exit"
-                    elif loc == "exit":
+                    if loc == "exit":
                         self.finished = True
                         return "exit"
                     elif loc == "shop":

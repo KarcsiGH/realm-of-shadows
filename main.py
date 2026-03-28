@@ -75,6 +75,7 @@ class Game:
         pygame.display.set_caption("Realm of Shadows")
         self.clock = pygame.time.Clock()
         self.running = True
+        self.show_menu_overlay = False  # pause/save menu drawn on top of any state
         sfx.init()  # Initialize sound system
         sfx.load_settings()  # Apply saved volume settings
         # state set above
@@ -221,6 +222,9 @@ class Game:
                     self.quest_log_ui.draw(self.screen, mx, my)
                 except Exception:
                     pass
+            # Menu overlay — drawn on top of everything except toasts/fade
+            if self.show_menu_overlay and self.state != S_COMBAT:
+                self._draw_menu_overlay(self.screen)
             self._draw_toasts(self.screen)
             self._draw_quest_banner(self.screen, dt)
             self._tick_toasts(dt)
@@ -355,6 +359,16 @@ class Game:
                 return
             if self._handle_journal_event(e, mx, my):
                 return
+
+        # ── Menu overlay intercept ───────────────────────────────────
+        # When the overlay is open it consumes all input except QUIT.
+        # Escape also closes it.
+        if self.show_menu_overlay:
+            if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+                self.show_menu_overlay = False
+            elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                self._handle_menu_overlay_click(mx, my)
+            return  # swallow everything else while overlay is open
 
         if self.state == S_SPLASH:
             if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
@@ -735,12 +749,8 @@ class Game:
                         self.add_toast(toast_msg, toast_col)
                     except Exception:
                         pass
-                elif result == "town_save":
-                    self._do_save()
-                elif result == "town_save_exit":
-                    self._do_exit_game(save_first=True)
-                elif result == "town_exit":
-                    self._do_exit_game(save_first=False)
+                elif result == "show_menu":
+                    self.show_menu_overlay = True
             elif e.type == pygame.MOUSEBUTTONDOWN:
                 if e.button == 1:
                     result = self.town_ui.handle_click(mx, my)
@@ -765,12 +775,8 @@ class Game:
                     elif result == "open_party_review":
                         # Party Review from town — open CampUI without rest option
                         self.start_camp(location="town_review", return_state=S_TOWN)
-                    elif result == "town_save":
-                        self._do_save()
-                    elif result == "town_save_exit":
-                        self._do_exit_game(save_first=True)
-                    elif result == "town_exit":
-                        self._do_exit_game(save_first=False)
+                    elif result == "show_menu":
+                        self.show_menu_overlay = True
                 elif e.button == 4:
                     self.town_ui.handle_scroll(-1)
                 elif e.button == 5:
@@ -1025,6 +1031,98 @@ class Game:
         if save_first:
             self._do_save()
         self.running = False
+
+    # ──────────────────────────────────────────────────────────
+    #  MENU OVERLAY  (Save / Save & Exit / Exit — over any state)
+    # ──────────────────────────────────────────────────────────
+
+    def _draw_menu_overlay(self, surface):
+        """Draw the pause/save menu panel centred on screen."""
+        import pygame as _pg
+        from ui.renderer import (draw_panel, draw_button, draw_text,
+                                  SCREEN_W, SCREEN_H, GOLD, CREAM,
+                                  PANEL_BG, PANEL_BORDER, get_font)
+
+        # Dim backdrop
+        dim = _pg.Surface((SCREEN_W, SCREEN_H), _pg.SRCALPHA)
+        dim.fill((0, 0, 0, 160))
+        surface.blit(dim, (0, 0))
+
+        # Panel
+        pw, ph = 340, 280
+        px = (SCREEN_W - pw) // 2
+        py = (SCREEN_H - ph) // 2
+        panel = _pg.Rect(px, py, pw, ph)
+        draw_panel(surface, panel, border_color=GOLD)
+
+        # Title
+        draw_text(surface, "Game Menu", px + pw // 2 - 60, py + 18,
+                  GOLD, 22, bold=True)
+
+        # Buttons
+        mx, my = _pg.mouse.get_pos()
+        bw, bh, gap = 260, 46, 14
+        bx = px + (pw - bw) // 2
+        by = py + 60
+        for label, key in [
+            ("Save Game",        "menu_save"),
+            ("Save & Exit Game", "menu_save_exit"),
+            ("Exit Game",        "menu_exit"),
+            ("Close Menu",       "menu_close"),
+        ]:
+            r = _pg.Rect(bx, by, bw, bh)
+            hov = r.collidepoint(mx, my)
+            # colour coding: save=green, exit=red, close=neutral
+            if key == "menu_save":
+                bg = (20, 50, 28) if not hov else (30, 70, 38)
+                bd = (50, 160, 70) if not hov else (80, 210, 100)
+            elif key in ("menu_save_exit", "menu_exit"):
+                bg = (50, 20, 20) if not hov else (70, 28, 28)
+                bd = (160, 50, 50) if not hov else (210, 80, 80)
+            else:
+                bg = (30, 28, 45) if not hov else (50, 46, 70)
+                bd = PANEL_BORDER if not hov else GOLD
+            _pg.draw.rect(surface, bg, r, border_radius=4)
+            _pg.draw.rect(surface, bd, r, 2, border_radius=4)
+            txt = get_font(17, bold=(key == "menu_save"))
+            ts = txt.render(label, True, GOLD if hov else CREAM)
+            surface.blit(ts, (r.x + (bw - ts.get_width()) // 2,
+                               r.y + (bh - ts.get_height()) // 2))
+            by += bh + gap
+
+    def _handle_menu_overlay_click(self, mx, my):
+        """Process a click while the menu overlay is visible.
+        Returns True if the click was consumed."""
+        import pygame as _pg
+        from ui.renderer import SCREEN_W, SCREEN_H
+        pw, ph = 340, 280
+        px = (SCREEN_W - pw) // 2
+        py = (SCREEN_H - ph) // 2
+        # Click outside panel = close
+        if not _pg.Rect(px, py, pw, ph).collidepoint(mx, my):
+            self.show_menu_overlay = False
+            return True
+        bw, bh, gap = 260, 46, 14
+        bx = px + (pw - bw) // 2
+        by = py + 60
+        for label, key in [
+            ("Save Game",        "menu_save"),
+            ("Save & Exit Game", "menu_save_exit"),
+            ("Exit Game",        "menu_exit"),
+            ("Close Menu",       "menu_close"),
+        ]:
+            if _pg.Rect(bx, by, bw, bh).collidepoint(mx, my):
+                self.show_menu_overlay = False
+                if key == "menu_save":
+                    self._do_save()
+                elif key == "menu_save_exit":
+                    self._do_exit_game(save_first=True)
+                elif key == "menu_exit":
+                    self._do_exit_game(save_first=False)
+                # menu_close: just close
+                return True
+            by += bh + gap
+        return True  # consumed — inside panel
 
     def _sfx2(self, windup_key, resolve_key, delay_ms=260):
         """Play wind-up immediately, queue resolution sound after delay_ms."""
@@ -3694,17 +3792,7 @@ class Game:
             sfx.play("discovery")
 
         elif event["type"] == "menu":
-            # Open camp screen (inventory, rest, stats, etc.) — same as dungeon camp
-            self.start_camp(location="overworld", return_state=S_WORLD_MAP)
-
-        elif event["type"] == "world_save":
-            self._do_save()
-
-        elif event["type"] == "world_save_exit":
-            self._do_exit_game(save_first=True)
-
-        elif event["type"] == "world_exit":
-            self._do_exit_game(save_first=False)
+            self.show_menu_overlay = True
 
     def _process_dungeon_event(self, event):
         """Handle events from the dungeon."""
@@ -4281,15 +4369,7 @@ class Game:
                 self.dungeon_ui.show_event(rest_msg, GREEN if not poison_msgs else ORANGE)
 
         elif event["type"] == "menu":
-            self.pre_dungeon_state = S_DUNGEON
-            self.inventory_return_state = S_DUNGEON
-            self.go(S_PARTY)
-
-        elif event["type"] == "hud_save":
-            self._do_save()
-
-        elif event["type"] == "hud_exit":
-            self._do_exit_game(save_first=False)
+            self.show_menu_overlay = True
 
     def process_combat_action(self, action):
         """Process a player combat action from the UI."""
