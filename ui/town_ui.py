@@ -437,25 +437,79 @@ class TownUI:
 
                 if tile == TT_GRASS:
                     shade = 3 if (tx + ty) % 2 == 0 else 0
-                    # If this grass tile is directly adjacent to a door, render as a path stub
-                    # so there is a visual walkway connection to every building entrance.
-                    adj_door = any(
-                        get_tile(td, tx+_dx, ty+_dy) == TT_DOOR
-                        for _dx, _dy in ((-1,0),(1,0),(0,-1),(0,1))
-                    )
-                    if adj_door:
-                        pygame.draw.rect(surface, (88, 75, 56), (px, py, ts, ts))
-                        stone_sz = max(3, ts // 3 - 1)
-                        for ox, oy in [(1, 1), (ts//2, 1), (1, ts//2), (ts//2, ts//2)]:
-                            sc2 = (98, 84, 62) if (ox+oy)%2==0 else (80,68,50)
-                            pygame.draw.rect(surface, sc2, (px+ox, py+oy, stone_sz, stone_sz), border_radius=1)
+
+                    # ── Building interior detection ─────────────────────────
+                    # Grass tiles inside a building footprint are interior floors,
+                    # NOT outdoor grass. Render as wooden planks or stone tiles.
+                    bld_interior = bld_col_map.get((tx, ty))
+                    if bld_interior:
+                        bc_i  = bld_interior.get("color", (130, 110, 85))
+                        btype_i = bld_interior.get("type", "")
+                        # Interior floor colour — warmer/lighter than outer walls
+                        floor_c_i = tuple(min(255, int(c * 0.88)) for c in bc_i)
+                        pygame.draw.rect(surface, floor_c_i, (px, py, ts, ts))
+                        if btype_i in ("temple", "guild", "castle"):
+                            # Checkerboard stone tile floor
+                            tc_i = tuple(max(0, c - 16) for c in floor_c_i)
+                            if (tx + ty) % 2 == 0:
+                                pygame.draw.rect(surface, tc_i,
+                                    (px + 2, py + 2, ts // 2 - 2, ts // 2 - 2))
+                                pygame.draw.rect(surface, tc_i,
+                                    (px + ts//2 + 1, py + ts//2 + 1, ts//2 - 2, ts//2 - 2))
+                        elif btype_i == "forge":
+                            # Soot-darkened stone floor
+                            dark_i = tuple(max(0, c - 30) for c in floor_c_i)
+                            pygame.draw.rect(surface, dark_i, (px, py, ts, ts))
+                            if (tx * 3 + ty * 7) % 5 == 0:
+                                pygame.draw.line(surface, floor_c_i,
+                                    (px, py + ts // 2), (px + ts, py + ts // 2), 1)
+                        else:
+                            # Wooden plank floor — horizontal grain
+                            plank_c = tuple(max(0, c - 22) for c in floor_c_i)
+                            step = max(3, ts // 4)
+                            for bl in range(0, ts, step):
+                                pygame.draw.line(surface, plank_c,
+                                    (px, py + bl), (px + ts, py + bl), 1)
+                            # Knot detail
+                            if (tx * 5 + ty * 9) % 7 == 0:
+                                kr = max(2, ts // 8)
+                                pygame.draw.circle(surface, plank_c,
+                                    (px + ts // 3, py + ts // 2), kr, 1)
                     else:
-                        pygame.draw.rect(surface, (52 + shade, 78 + shade, 42 + shade), (px, py, ts, ts))
-                        if (tx * 7 + ty * 13) % 11 == 0:
-                            pygame.draw.line(surface, (38, 62, 30),
-                                (px + ts//3, py + ts//2), (px + ts//3 - 2, py + ts//4), 1)
-                            pygame.draw.line(surface, (38, 62, 30),
-                                (px + ts*2//3, py + ts//2), (px + ts*2//3 + 2, py + ts//4), 1)
+                        # ── Path stub for tiles directly beside a door ─────────
+                        # Extend 2 tiles from any door for a wider, clearer walkway
+                        is_door_adj = False
+                        for _dx, _dy in ((-1,0),(1,0),(0,-1),(0,1),
+                                         (-2,0),(2,0),(0,-2),(0,2)):
+                            if get_tile(td, tx+_dx, ty+_dy) == TT_DOOR:
+                                # Check direct adjacency to the door or 1-step from adj grass
+                                is_door_adj = True
+                                break
+                        # Only render stub for tiles that form a clear path TO main road
+                        # (must also be adj to a P tile or another stub)
+                        has_path_conn = any(
+                            get_tile(td, tx+_dx, ty+_dy) in (TT_PATH, TT_DOOR)
+                            for _dx, _dy in ((-1,0),(1,0),(0,-1),(0,1))
+                        )
+                        if is_door_adj and has_path_conn:
+                            # Wider, cleaner approach path
+                            pygame.draw.rect(surface, (88, 75, 56), (px, py, ts, ts))
+                            stone_sz = max(3, ts // 3 - 1)
+                            for ox, oy in [(1, 1), (ts//2, 1), (1, ts//2), (ts//2, ts//2)]:
+                                sc2 = (100, 86, 64) if (ox+oy)%2==0 else (80, 68, 50)
+                                pygame.draw.rect(surface, sc2,
+                                    (px+ox, py+oy, stone_sz, stone_sz), border_radius=1)
+                                pygame.draw.rect(surface, (68, 58, 42),
+                                    (px+ox, py+oy, stone_sz, stone_sz), 1, border_radius=1)
+                        else:
+                            # Normal outdoor grass
+                            pygame.draw.rect(surface, (52 + shade, 78 + shade, 42 + shade),
+                                (px, py, ts, ts))
+                            if (tx * 7 + ty * 13) % 11 == 0:
+                                pygame.draw.line(surface, (38, 62, 30),
+                                    (px + ts//3, py + ts//2), (px + ts//3 - 2, py + ts//4), 1)
+                                pygame.draw.line(surface, (38, 62, 30),
+                                    (px + ts*2//3, py + ts//2), (px + ts*2//3 + 2, py + ts//4), 1)
 
                 elif tile == TT_PATH:
                     pygame.draw.rect(surface, (95, 82, 62), (px, py, ts, ts))
@@ -576,22 +630,41 @@ class TownUI:
                 elif tile == TT_DOOR:
                     # ── Top-down doorway ───────────────────────────────────
                     bld2 = get_building_at(td, tx, ty)
-                    bc2  = bld2[1]["color"] if bld2 else (140, 110, 60)
-                    btype2 = bld2[1].get("type", "") if bld2 else ""
-                    # Door threshold: floor-coloured opening in the wall
-                    floor_c = (108, 92, 68)   # stone floor
+                    bc2    = bld2[1]["color"] if bld2 else (140, 110, 60)
                     wall_c2 = tuple(max(0, int(c * 0.55)) for c in bc2)
+                    floor_c = (112, 96, 72)   # worn stone threshold
+
+                    # Full wall tile background (matches adjacent walls)
                     pygame.draw.rect(surface, wall_c2, (px, py, ts, ts))
-                    # Open gap in the wall — brighter interior
-                    gap = max(2, ts // 5)
+
+                    # Door opening — centred gap, full height, lighter than wall
+                    gap = max(3, ts // 4)
                     pygame.draw.rect(surface, floor_c, (px + gap, py, ts - gap*2, ts))
-                    # Door mat / welcome slab
-                    mat_c = tuple(min(255, int(c * 0.75)) for c in bc2)
-                    pygame.draw.rect(surface, mat_c,
-                        (px + gap + 1, py + ts//4, ts - gap*2 - 2, ts//2), border_radius=1)
-                    # Tiny doorknob
+
+                    # Doorstep / threshold slab at the outer edge
+                    step_c = tuple(min(255, int(c * 1.1)) for c in floor_c)
+                    step_h = max(3, ts // 5)
+                    # Determine which side is "outside" (the tile below the door is usually outside)
+                    outside_south = get_tile(td, tx, ty + 1) not in (TT_WALL,)
+                    if outside_south:
+                        pygame.draw.rect(surface, step_c,
+                            (px + gap, py + ts - step_h, ts - gap*2, step_h))
+                    else:
+                        pygame.draw.rect(surface, step_c,
+                            (px + gap, py, ts - gap*2, step_h))
+
+                    # Door frame — bright edge strip on each side of the opening
+                    frame_c = tuple(min(255, int(c * 1.2)) for c in wall_c2)
+                    pygame.draw.line(surface, frame_c,
+                        (px + gap, py), (px + gap, py + ts), 2)
+                    pygame.draw.line(surface, frame_c,
+                        (px + ts - gap, py), (px + ts - gap, py + ts), 2)
+
+                    # Knocker / knob — small gold circle on the door edge
                     pygame.draw.circle(surface, (210, 175, 80),
-                        (px + ts//2, py + ts*2//3), max(1, ts//8))
+                        (px + ts//2, py + ts*3//5), max(2, ts//9))
+                    pygame.draw.circle(surface, (170, 135, 55),
+                        (px + ts//2, py + ts*3//5), max(2, ts//9), 1)
 
                 else:
                     # '.' open tiles adjacent to doors also show a path stub
@@ -611,6 +684,28 @@ class TownUI:
                 if tile not in (TT_WALL, TT_TREE):
                     ec = TILE_COLORS.get(tile, (40,40,40))
                     pygame.draw.rect(surface, tuple(max(0, ec[i]-12) for i in range(3)), (px, py, ts, ts), 1)
+
+        # ══ ROOF RIDGE PASS ══
+        # Draw a darker ridge strip along the top wall of each building to
+        # visually signal "this is a roof viewed from above, not a flat surface"
+        for bld in td["buildings"].values():
+            c0, c1 = bld.get("wall_cols", (0, 0))
+            r0 = bld.get("wall_rows", (0, 0))[0]
+            bc_r = bld.get("color", (130, 110, 85))
+            ridge_c = tuple(max(0, int(c * 0.42)) for c in bc_r)
+            for wc in range(c0, c1 + 1):
+                sx2 = wc - cam_x
+                sy2 = r0 - cam_y
+                if 0 <= sx2 * ts < SCREEN_W and 0 <= sy2 * ts < map_area_h:
+                    px2 = sx2 * ts
+                    py2 = sy2 * ts
+                    # Ridge line at bottom of top wall tile (the eave)
+                    ridge_h = max(3, ts // 5)
+                    pygame.draw.rect(surface, ridge_c,
+                        (px2, py2 + ts - ridge_h, ts, ridge_h))
+                    # Bright highlight on the very top edge (roof peak catching light)
+                    hi_c = tuple(min(255, int(c * 1.15)) for c in bc_r)
+                    pygame.draw.line(surface, hi_c, (px2, py2), (px2 + ts, py2), 2)
 
         # ══ TREE CANOPY PASS ══
         for sy in range(map_area_h // ts + 2):
@@ -642,6 +737,21 @@ class TownUI:
                 if get_flag(hide_flag):
                     continue
             nx, ny = npc["x"], npc["y"]
+            # Don't render NPCs standing on door tiles — they're inside the building.
+            # Displace them one tile south (toward open ground) for display.
+            _npc_tile = get_tile(td, nx, ny)
+            if _npc_tile == TT_DOOR:
+                # Check if tile below is walkable
+                _below = get_tile(td, nx, ny + 1)
+                if _below in (TT_GRASS, TT_PATH):
+                    ny = ny + 1
+                else:
+                    _above = get_tile(td, nx, ny - 1)
+                    if _above in (TT_GRASS, TT_PATH):
+                        ny = ny - 1
+            # Also skip NPCs fully inside building walls (non-door wall tiles)
+            elif _npc_tile == TT_WALL:
+                continue
             npx2 = (nx - cam_x) * ts
             npy2 = (ny - cam_y) * ts
             if not (0 <= npx2 < SCREEN_W and -ts <= npy2 < map_area_h):
@@ -740,18 +850,30 @@ class TownUI:
         pygame.draw.circle(surface, (255, 240, 120),
             (pcx + fdx2*ts//4, pcy - ts//5 + fdy2*ts//4), max(2, ts//8))
 
-        # Building name labels over facades
+        # Building name labels — centered above the building's top wall
         for bld_id, bld in td["buildings"].items():
-            lx2, ly2 = bld.get("label_pos", bld["door"])
-            lpx3 = (lx2 - cam_x) * ts
-            lpy3 = (ly2 - cam_y) * ts + ts//3
-            if 0 <= lpx3 < SCREEN_W and 0 <= lpy3 < map_area_h:
+            c0, c1 = bld.get("wall_cols", (0, 0))
+            r0, _r1 = bld.get("wall_rows", (0, 0))
+            # Label centre X = midpoint of building width; Y = just above top wall
+            label_cx = (c0 + c1) / 2.0
+            label_ty = r0  # top wall row
+            lpx3 = int((label_cx - cam_x) * ts)
+            lpy3 = int((label_ty - cam_y) * ts) - 2  # just above top wall tile
+            if 0 <= lpx3 < SCREEN_W and 4 <= lpy3 < map_area_h:
                 bname2 = bld["name"]
-                bw2 = get_font(11).size(bname2)[0]
-                lbg2 = pygame.Surface((bw2+8, 14), pygame.SRCALPHA)
-                lbg2.fill((10, 8, 5, 160))
-                surface.blit(lbg2, (lpx3 - bw2//2 - 4, lpy3 - 1))
-                draw_text(surface, bname2, lpx3 - bw2//2, lpy3, bld["color"], 11, bold=True)
+                bfont  = get_font(11)
+                bw2    = bfont.size(bname2)[0]
+                bh2    = 15
+                pad    = 5
+                # Dark semi-transparent backing with building-colour border
+                lbg2 = pygame.Surface((bw2 + pad*2, bh2), pygame.SRCALPHA)
+                lbg2.fill((8, 6, 4, 200))
+                surface.blit(lbg2, (lpx3 - bw2//2 - pad, lpy3 - 1))
+                pygame.draw.rect(surface, bld["color"],
+                    (lpx3 - bw2//2 - pad, lpy3 - 1, bw2 + pad*2, bh2),
+                    1, border_radius=3)
+                draw_text(surface, bname2, lpx3 - bw2//2, lpy3 + 1,
+                    (245, 235, 215), 11, bold=True)
 
 
         # ── UI bar at bottom ──

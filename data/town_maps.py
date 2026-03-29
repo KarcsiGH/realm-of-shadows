@@ -344,28 +344,28 @@ BRIARHOLLOW_EXIT  = [(28, 29), (29, 29), (30, 29)]
 # Layout: Inn/Shop in NW, Guild in NE, Temple/Tavern in west-center,
 #         Forge in SE, Ranger Hall in SW, bridge crosses river in center
 WOODHAVEN_MAP_RAW = [
-    "TTTTTTTTTTTTTTTTTTTTTTTTTTTT",  # 0
-    "T.......................TTTT",  # 1
-    "T..####..####..........TTTT",  # 2
-    "T..#..#..#..#..........####",  # 3
-    "T..#..D..D..#..........#..#",  # 4  inn(5,4) shop(8,4)      guild(25,4)
-    "T..###.P..###..........D..#",  # 5  stubs to inn(6) and shop(9)
-    "T....PPP.P.....PPPPPPPP####",  # 6  stubs up to inn/shop, east path
-    "T..PPPPPPPPPPPPPPPPPPPPPPPT",  # 7  main E-W street
-    "T..P.........####.........T",  # 8
-    "T..P.........#..#.........T",  # 9
-    "T..P..##.#...D..#.........T",  # 10 temple(8,12)  tavern(13,10)
-    "T..P..#..#...####.........T",  # 11
-    "T..P..#..D...P............T",  # 12
-    "T..P..####...P..S.........T",  # 13
-    "T..P.........P.....###....T",  # 14                forge(18,16)
-    "WWWBWWWWWWWWWBWWWW#..#..WWW",  # 15 bridges at (3,15) and (13,15)
-    "T..P.........P....D..#....T",  # 16
-    "T..P.........P....####....T",  # 17
-    "T..P.........PPPPPPPPP....T",  # 18 east path to forge
-    "T..P..####................T",  # 19
-    "T..P..#..D................T",  # 20 ranger_hall(8,20)
-    "TPPPPPPPPEEPPPPPPPPPPPPPPPT",  # 21 exits(9,21)(10,21)
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTT",  #  0  tree border
+    "T.######..######..######...T",  #  1  inn(2-7) shop(10-15) guild(18-23)
+    "T.######..######..######...T",  #  2
+    "T.######..######..######...T",  #  3
+    "T.######..######..######...T",  #  4
+    "T.##D###..##D###..##D###...T",  #  5  inn-door(4,5) shop-door(12,5) guild-door(20,5)
+    "T...P.......P.......P......T",  #  6  paths from north building doors to main road
+    "T.PPPPPPPPPPPPPPPPPPPPPPPP.T",  #  7  main E-W road
+    "T...P.......P.......P......T",  #  8  paths from road to south building doors
+    "T.##D###..##D###..##D###...T",  #  9  temple-door(4,9) tavern-door(12,9) forge-door(20,9)
+    "T.######..######..######...T",  # 10
+    "T.######..######..######...T",  # 11
+    "T.######..######..######...T",  # 12
+    "T.######..######..######...T",  # 13
+    "T...S...............S......T",  # 14  signs in open ground
+    "WWWBWWWWWWWWWWWWWWWWWWWWWWWW",  # 15  river — bridge at col 3
+    "T..T...............T.......T",  # 16  scattered trees south of river
+    "T.....######...............T",  # 17  ranger hall (cols 5-10)
+    "T.....######...............T",  # 18
+    "T.....##D###...............T",  # 19  ranger-door(7,19)
+    "T..T...............T.......T",  # 20
+    "TPPPPPPPPPPEEEPPPPPPPPPPPPP T",  # 21  exit road, exits at cols 11-13
 ]
 
 WOODHAVEN_MAP = _pad_map(WOODHAVEN_MAP_RAW, 28)
@@ -374,162 +374,106 @@ WOODHAVEN_BUILDINGS = {
     "inn": {
         "name": "The Canopy Rest",
         "type": BLD_INN,
-        "door": (6, 4),
+        "door": (4, 5),           # south wall, faces main road
         "color": (120, 100, 70),
-        "label_pos": (3, 2),
-        "wall_cols": (3, 6), "wall_rows": (2, 5),
+        "wall_cols": (2, 7), "wall_rows": (1, 5),
         "npc_name": "Innkeeper Jessa",
         "indoor_npc": {"name": "Innkeeper Jessa", "npc_type": "innkeeper", "title": "Innkeeper", "description": "A quiet woman who keeps the inn spotless.", "color": (180, 160, 120), "dialogue_id": None},
     },
     "shop": {
         "name": "Woodhaven Trading Post",
         "type": BLD_SHOP,
-        "door": (9, 4),
+        "door": (12, 5),
         "color": (100, 130, 80),
-        "label_pos": (7, 2),
-        "wall_cols": (9, 12), "wall_rows": (2, 5),
+        "wall_cols": (10, 15), "wall_rows": (1, 5),
         "npc_name": "Trader Finn",
         "indoor_npc": {"name": "Trader Finn", "npc_type": "merchant", "title": "Merchant", "description": "A well-traveled merchant with ranger supplies.", "color": (120, 180, 100), "dialogue_id": None},
+    },
+    "guild": {
+        "name": "Ranger's Guild",
+        "type": BLD_GUILD,
+        "door": (20, 5),
+        "color": (80, 120, 70),
+        "wall_cols": (18, 23), "wall_rows": (1, 5),
+        "npc_name": "Guildmaster Oren",
+        "indoor_npc": {"name": "Guildmaster Oren", "npc_type": "guildmaster", "title": "Guildmaster", "description": "A grizzled ranger who runs the guild.", "color": (100, 140, 80), "dialogue_id": "guildmaster_oren"},
     },
     "temple": {
         "name": "Grove Shrine",
         "type": BLD_TEMPLE,
-        "door": (9, 12),
+        "door": (4, 9),           # north wall, faces main road
         "color": (80, 150, 80),
-        "label_pos": (5, 10),
-        "wall_cols": (6, 9), "wall_rows": (10, 13),
+        "wall_cols": (2, 7), "wall_rows": (9, 13),
         "npc_name": "Druid Rowan",
         "indoor_npc": {"name": "Druid Rowan", "npc_type": "priestess", "title": "Druid", "description": "A druid who tends the forest shrine.", "color": (80, 200, 100), "dialogue_id": None},
     },
     "tavern": {
         "name": "The Hunter's Horn",
         "type": BLD_TAVERN,
-        "door": (13, 10),
+        "door": (12, 9),
         "color": (130, 100, 60),
-        "label_pos": (12, 8),
-        "wall_cols": (13, 16), "wall_rows": (8, 11),
+        "wall_cols": (10, 15), "wall_rows": (9, 13),
         "npc_name": "Barkeep Holt",
         "indoor_npc": {"name": "Barkeep Holt", "npc_type": "barkeep", "title": "Barkeep", "description": "A burly hunter who runs the tavern between seasons.", "color": (180, 140, 80), "dialogue_id": None},
     },
     "forge": {
         "name": "Ranger's Forge",
         "type": BLD_FORGE,
-        "door": (18, 16),
+        "door": (20, 9),
         "color": (160, 100, 50),
-        "label_pos": (17, 14),
-        "wall_cols": (18, 21), "wall_rows": (14, 17),
+        "wall_cols": (18, 23), "wall_rows": (9, 13),
         "npc_name": "Smith Wren",
         "indoor_npc": {"name": "Smith Wren", "npc_type": "forger", "title": "Smith", "description": "A wiry woman who crafts bows and arrowheads.", "color": (200, 130, 60), "dialogue_id": None},
-    },
-    "guild": {
-        "name": "Ranger's Guild",
-        "type": BLD_GUILD,
-        "door": (23, 5),
-        "color": (80, 120, 70),
-        "label_pos": (22, 3),
-        "wall_cols": (23, 27), "wall_rows": (3, 6),
-        "npc_name": "Guildmaster Oren",
-        "indoor_npc": {"name": "Guildmaster Oren", "npc_type": "guildmaster", "title": "Guildmaster", "description": "A grizzled ranger who runs the guild.", "color": (100, 140, 80), "dialogue_id": "guildmaster_oren"},
     },
     "ranger_hall": {
         "name": "Scout Hall",
         "type": BLD_HOUSE,
-        "door": (9, 20),
+        "door": (7, 19),
         "color": (90, 110, 70),
-        "label_pos": (5, 19),
-        "wall_cols": (6, 9), "wall_rows": (19, 20),
+        "wall_cols": (5, 10), "wall_rows": (17, 19),
     },
 }
 
 WOODHAVEN_NPCS = [
     {
         "name": "Warden Liaison",
-        "x": 10, "y": 8,
+        "x": 14, "y": 7,   # on main road
         "dialogue_id": "warden_liaison",
         "description": "A representative of the old Warden order. Weathered but watchful.",
         "color": (100, 175, 130),
         "npc_type": "warden",
     },
-    # Story NPCs
     {
-        "name": "Ranger Lyric",
-        "x": 14, "y": 7,
-        "dialogue_id": "ranger_lyric",
-        "description": "A sharp-eyed ranger keeping watch over the forest paths.",
-        "color": (100, 160, 80),
-    },
-    {
-        "name": "Old Moss",
-        "x": 6, "y": 14,
-        "dialogue_id": "old_moss",
-        "description": "An ancient herbalist gathering mushrooms by the river.",
-        "color": (140, 170, 110),
-    },
-    {
-        "name": "Apprentice Scout",
-        "x": 20, "y": 8,
-        "dialogue_id": None,
-        "description": "A young scout practicing her footwork in the open yard.",
-        "color": (90, 150, 70),
-    },
-    # Service NPCs
-    {
-        "name": "Guildmaster Oren",
-        "x": 24, "y": 5,
-        "service": None,
-        "dialogue_id": "guildmaster_oren",
-        "description": "A grizzled ranger who runs the guild. He eyes you appraisingly.",
-        "color": (100, 140, 80),
-    },
-    # Ambient NPCs
-    {
-        "name": "Fletching Merchant",
-        "x": 16, "y": 6,
-        "dialogue_id": None,
-        "description": "A wiry woman with arrow-stained fingers sorting bundles of fletched shafts.",
-        "color": (150, 130, 90),
-        "npc_type": "merchant",
-    },
-    {
-        "name": "Forest Child",
-        "x": 15, "y": 7,
-        "dialogue_id": None,
-        "description": "A small child watching you with wide eyes from behind a tree root.",
-        "color": (190, 175, 140),
-        "npc_type": "youth",
-    },
-    {
-        "name": "Patrol Scout",
-        "x": 11, "y": 10,
-        "dialogue_id": None,
-        "description": "An off-duty scout stretching out trail-sore legs near the river.",
-        "color": (80, 140, 65),
+        "name": "Scout Feryn",
+        "x": 6, "y": 7,    # on main road near inn
+        "dialogue_id": "scout_feryn",
+        "description": "A young ranger scout who patrols the Thornwood roads.",
+        "color": (100, 150, 90),
         "npc_type": "guard",
     },
     {
-        "name": "Herb Trader",
-        "x": 14, "y": 13,
-        "dialogue_id": None,
-        "description": "A travelling herbalist laying out dried bundles on a cloth.",
-        "color": (130, 170, 100),
-        "npc_type": "merchant",
+        "name": "Old Moss",
+        "x": 20, "y": 14,  # south of guild, open ground
+        "dialogue_id": "old_moss",
+        "description": "An ancient woodsman who rarely speaks but knows every trail.",
+        "color": (80, 100, 70),
+        "npc_type": "elder",
     },
     {
-        "name": "Old Woodcarver",
-        "x": 3, "y": 16,
-        "dialogue_id": None,
-        "description": "An elderly craftsman whittling a figure from pale birchwood.",
-        "color": (170, 155, 120),
+        "name": "Old Petra",
+        "x": 8, "y": 14,   # south open ground
+        "dialogue_id": "old_petra",
+        "description": "An elderly woman who has lived in Woodhaven her whole life.",
+        "color": (170, 160, 150),
         "npc_type": "elder",
     },
 ]
-
 WOODHAVEN_SIGNS = {
     (16, 13): "Job Board — Rangers needed for patrol work.",
 }
 
-WOODHAVEN_SPAWN = (11, 20)   # shifted right of ranger_hall door (9,20) to avoid auto-entry
-WOODHAVEN_EXIT = [(9, 21), (10, 21)]
+WOODHAVEN_SPAWN = (13, 21)   # just inside exit road, avoids building doors
+WOODHAVEN_EXIT = [(11, 21), (12, 21), (13, 21)]
 
 
 # ══════════════════════════════════════════════════════════
@@ -538,30 +482,30 @@ WOODHAVEN_EXIT = [(9, 21), (10, 21)]
 
 # 30x24 tile map — stone city with forges and mineshaft entrance
 IRONHEARTH_MAP_RAW = [
-    "##############################",  # 0
-    "#............................#",  # 1
-    "#..####..####..####..####...#",  # 2
-    "#..#..#..#..#..#..#..#..#...#",  # 3
-    "#..#..D..D..#..#..D..D..#...#",  # 4  inn(5,4) shop(8,4) temple(17,4) tavern(20,4)
-    "#..####..####..####..####...#",  # 5
-    "#............................#",  # 6
-    "#..PPPPPPPPPPPPPPPPPPPPPPPP.#",  # 7
-    "#..P........................#",  # 8
-    "#..P..########..########...#",  # 9
-    "#..P..#......#..#......#...#",  # 10
-    "#..P..#......D..D......#...#",  # 11 forge_main(11,11) armory(14,11)
-    "#..P..#......#..#......#...#",  # 12
-    "#..P..########..########...#",  # 13
-    "#..P........................#",  # 14
-    "#..P.S......................#",  # 15
-    "#..P........................#",  # 16
-    "#..P..####......####........#",  # 17
-    "#..P..#..#......#..#........#",  # 18
-    "#..P..#..D......D..#........#",  # 19 guild(8,19) mines_office(15,19)
-    "#..P..####......####........#",  # 20
-    "#..P........................#",  # 21
-    "#..P........................#",  # 22
-    "#PPPPPPPPPEEPPPPPPPPPPPPPPPP#",  # 23 exits(10,23)(11,23)
+    "##############################",  #  0  stone city wall
+    "#............................#",  #  1  open ground north
+    "#.######.######.######.#####.#",  #  2  inn(2-7) shop(9-14) temple(16-21) tavern(23-27)
+    "#.######.######.######.#####.#",  #  3
+    "#.######.######.######.#####.#",  #  4
+    "#.##D###.##D###.##D###.##D##.#",  #  5  inn-d(4) shop-d(11) temple-d(18) tavern-d(25)
+    "#...P.......P.......P.....P..#",  #  6  paths from north building doors
+    "#.PPPPPPPPPPPPPPPPPPPPPPPPPP.#",  #  7  main E-W road
+    "#...P.......P.............P..#",  #  8  paths to forge/armory
+    "#.##############.##########..#",  #  9  grand forge (2-15) armory (17-26)
+    "#.##############.##########..#",  # 10
+    "#.##############.##########..#",  # 11
+    "#.#############D.#########D..#",  # 12  forge-door(15,12) armory-door(26,12)
+    "#............................#",  # 13
+    "#....S...................S...#",  # 14  notice boards
+    "#.PPPPPPPPPPPPPPPPPPPPPPPPPP.#",  # 15  secondary road
+    "#...P.........P..............#",  # 16  paths to guild/mines office
+    "#.######.......######........#",  # 17  guild(2-7) mines office(9-14)
+    "#.######.......######........#",  # 18
+    "#.######.......######........#",  # 19
+    "#.##D###.......##D###........#",  # 20  guild-door(4,20) mines-door(11,20)
+    "#............................#",  # 21
+    "#............................#",  # 22
+    "#PPPPPPPPPPPEEEPPPPPPPPPPPPP##",  # 23  exits at 12-14
 ]
 
 IRONHEARTH_MAP = _pad_map(IRONHEARTH_MAP_RAW, 30)
@@ -570,179 +514,119 @@ IRONHEARTH_BUILDINGS = {
     "inn": {
         "name": "The Iron Anvil Inn",
         "type": BLD_INN,
-        "door": (6, 4),
+        "door": (4, 5),
         "color": (100, 90, 80),
-        "label_pos": (3, 2),
-        "wall_cols": (3, 6), "wall_rows": (2, 5),
+        "wall_cols": (2, 7), "wall_rows": (2, 5),
         "npc_name": "Innkeeper Bron",
         "indoor_npc": {"name": "Innkeeper Bron", "npc_type": "innkeeper", "title": "Innkeeper", "description": "A stout dwarf who pours strong ale.", "color": (160, 130, 90), "dialogue_id": None},
     },
     "shop": {
-        "name": "Ironhearth Forge & Armory",
+        "name": "Ironhearth Supply",
         "type": BLD_SHOP,
-        "door": (9, 4),
+        "door": (11, 5),
         "color": (130, 110, 80),
-        "label_pos": (7, 2),
-        "wall_cols": (9, 12), "wall_rows": (2, 5),
+        "wall_cols": (9, 14), "wall_rows": (2, 5),
         "npc_name": "Merchant Gilda",
         "indoor_npc": {"name": "Merchant Gilda", "npc_type": "merchant", "title": "Merchant", "description": "A sharp-tongued merchant with the finest goods.", "color": (180, 160, 100), "dialogue_id": None},
     },
     "temple": {
         "name": "Shrine of the Deep",
         "type": BLD_TEMPLE,
-        "door": (18, 4),
+        "door": (18, 5),
         "color": (120, 120, 160),
-        "label_pos": (15, 2),
-        "wall_cols": (15, 18), "wall_rows": (2, 5),
+        "wall_cols": (16, 21), "wall_rows": (2, 5),
         "npc_name": "Priest Korvan",
         "indoor_npc": {"name": "Priest Korvan", "npc_type": "priestess", "title": "Priest", "description": "A solemn priest of the deep stone.", "color": (140, 140, 200), "dialogue_id": None},
     },
     "tavern": {
         "name": "The Molten Cup",
         "type": BLD_TAVERN,
-        "door": (21, 4),
+        "door": (25, 5),
         "color": (160, 100, 50),
-        "label_pos": (19, 2),
-        "wall_cols": (21, 24), "wall_rows": (2, 5),
+        "wall_cols": (23, 27), "wall_rows": (2, 5),
         "npc_name": "Barkeep Magda",
         "indoor_npc": {"name": "Barkeep Magda", "npc_type": "barkeep", "title": "Barkeep", "description": "A boisterous dwarven woman who loves a good story.", "color": (200, 140, 80), "dialogue_id": None},
     },
     "forge_main": {
         "name": "The Grand Forge",
         "type": BLD_FORGE,
-        "door": (13, 11),
+        "door": (15, 12),
         "color": (200, 120, 40),
-        "label_pos": (7, 9),
-        "wall_cols": (6, 13), "wall_rows": (9, 13),
+        "wall_cols": (2, 15), "wall_rows": (9, 12),
         "npc_name": "Master Smith Thardin",
         "indoor_npc": {"name": "Master Smith Thardin", "npc_type": "forger", "title": "Master Smith", "description": "The finest weaponsmith in the region.", "color": (220, 140, 40), "dialogue_id": None},
     },
     "armory": {
-        "name": "City Armory",
+        "name": "The Armory",
         "type": BLD_SHOP,
-        "door": (16, 11),
-        "color": (140, 140, 150),
-        "label_pos": (15, 9),
-        "wall_cols": (16, 23), "wall_rows": (9, 13),
-        "npc_name": "Quartermaster Helga",
-        "indoor_npc": {"name": "Quartermaster Helga", "npc_type": "merchant", "title": "Quartermaster", "description": "A no-nonsense quartermaster.", "color": (160, 150, 120), "dialogue_id": None},
+        "door": (26, 12),
+        "color": (150, 120, 60),
+        "wall_cols": (17, 26), "wall_rows": (9, 12),
+        "npc_name": "Armorer Ygrith",
+        "indoor_npc": {"name": "Armorer Ygrith", "npc_type": "merchant", "title": "Armorer", "description": "A dwarven woman who specialises in heavy armor.", "color": (170, 140, 80), "dialogue_id": None},
     },
     "guild": {
         "name": "Miners' Guild",
         "type": BLD_GUILD,
-        "door": (9, 19),
-        "color": (110, 100, 80),
-        "label_pos": (5, 17),
-        "wall_cols": (6, 9), "wall_rows": (17, 20),
-        "npc_name": "Guildmaster Dorric",
-        "indoor_npc": {"name": "Guildmaster Dorric", "npc_type": "guildmaster", "title": "Guildmaster", "description": "A weathered veteran who runs the guild with iron discipline.", "color": (140, 160, 180), "dialogue_id": None},
+        "door": (4, 20),
+        "color": (100, 110, 80),
+        "wall_cols": (2, 7), "wall_rows": (17, 20),
+        "npc_name": "Guild Secretary Hald",
+        "indoor_npc": {"name": "Guild Secretary Hald", "npc_type": "guildmaster", "title": "Guildmaster", "description": "Manages the miners' contracts and safety inspections.", "color": (140, 150, 100), "dialogue_id": "guildmaster_ironhearth"},
     },
     "mines_office": {
         "name": "Mines Office",
         "type": BLD_HOUSE,
-        "door": (16, 19),
-        "color": (100, 100, 110),
-        "label_pos": (14, 17),
-        "wall_cols": (16, 19), "wall_rows": (17, 20),
+        "door": (11, 20),
+        "color": (110, 100, 70),
+        "wall_cols": (9, 14), "wall_rows": (17, 20),
+        "npc_name": "Foreman Drek",
+        "indoor_npc": {"name": "Foreman Drek", "npc_type": "guard", "title": "Mine Foreman", "description": "Tracks ore quotas and manages shift assignments.", "color": (130, 120, 80), "dialogue_id": None},
     },
 }
+
+IRONHEARTH_SPAWN = (15, 23)
+IRONHEARTH_EXIT  = [(12, 23), (13, 23), (14, 23)]
 
 IRONHEARTH_NPCS = [
     {
         "name": "Warden Liaison",
-        "x": 11, "y": 8,
+        "x": 16, "y": 7,    # on main road
         "dialogue_id": "warden_liaison",
-        "description": "A representative of the old Warden order. Weathered but watchful.",
+        "description": "A Warden representative liaising with the Miners Guild.",
         "color": (100, 175, 130),
         "npc_type": "warden",
     },
-    # Story NPCs
     {
-        "name": "Foreman Brak",
-        "x": 20, "y": 14,
-        "dialogue_id": "foreman_brak",
-        "description": "A scarred dwarf who oversees the mine operations.",
-        "color": (180, 140, 90),
-    },
-    {
-        "name": "Scholar Petra",
-        "x": 22, "y": 8,
-        "dialogue_id": "scholar_petra",
-        "description": "A human scholar studying dwarven runes.",
-        "color": (160, 160, 200),
-    },
-    # Guildmaster Dorric outside guild — offers transition guidance
-    {
-        "name": "Guildmaster Dorric",
-        "x": 10, "y": 18,
-        "dialogue_id": "trainer_ironhearth",
-        "description": "The guild's weathered master. He speaks of warriors who walked two paths.",
-        "color": (140, 160, 180),
-        "npc_type": "guildmaster",
-    },
-    # Ambient NPCs
-    {
-        "name": "Miner Durk",
-        "x": 18, "y": 21,
-        "dialogue_id": "miner_durk",
-        "description": "A dusty dwarf heading home after a long shift underground.",
-        "color": (150, 120, 80),
-    },
-    {
-        "name": "City Guard",
-        "x": 14, "y": 6,
+        "name": "Mine Supervisor",
+        "x": 8, "y": 7,
         "dialogue_id": None,
-        "description": "An armored guard keeping watch over the main road.",
-        "color": (140, 150, 170),
-    },
-    {
-        "name": "Apprentice Tova",
-        "x": 20, "y": 19,
-        "dialogue_id": "apprentice_tova",
-        "description": "A young dwarven apprentice running errands between the forge and armory.",
-        "color": (200, 160, 80),
-    },
-    # Additional ambient NPCs
-    {
-        "name": "Ore Counter",
-        "x": 19, "y": 10,
-        "dialogue_id": None,
-        "description": "A stocky dwarf tallying ore deliveries on a battered ledger.",
-        "color": (160, 130, 85),
-        "npc_type": "merchant",
-    },
-    {
-        "name": "Off-Duty Guard",
-        "x": 26, "y": 12,
-        "dialogue_id": None,
-        "description": "A guard in half-armour, eating a meat pasty near the city wall.",
-        "color": (140, 145, 165),
+        "description": "Oversees the day-shift miners heading to the upper shafts.",
+        "color": (130, 120, 90),
         "npc_type": "guard",
     },
     {
-        "name": "Stonecutter",
-        "x": 7, "y": 16,
-        "dialogue_id": None,
-        "description": "A broad-shouldered dwarf chiselling mortar from a cracked paving stone.",
-        "color": (170, 145, 100),
+        "name": "Forgemaster Dunn",
+        "x": 8, "y": 13,    # south of forge area, open ground
+        "dialogue_id": "forgemaster_dunn",
+        "description": "The legendary forge master who built half of Ironhearth's walls.",
+        "color": (200, 150, 60),
+        "npc_type": "forger",
     },
     {
-        "name": "Merchant Courier",
-        "x": 3, "y": 17,
-        "dialogue_id": None,
-        "description": "A young human hurrying between the armory and the city gate with a satchel of papers.",
-        "color": (180, 165, 130),
+        "name": "Merchant Kira",
+        "x": 20, "y": 13,
+        "dialogue_id": "merchant_kira",
+        "description": "A travelling merchant who buys rare ore and sells unusual goods.",
+        "color": (160, 140, 120),
         "npc_type": "merchant",
     },
-    # Service NPCs
 ]
 
 IRONHEARTH_SIGNS = {
-    (5, 15): "Job Board — Miners and fighters needed.",
+    (6, 14): "Grand Forge — forged by Thardin clan, Third Age.",
+    (18, 14): "Armory — Imperial contract holder. No credit.",
 }
-
-IRONHEARTH_SPAWN = (10, 22)
-IRONHEARTH_EXIT = [(10, 23), (11, 23)]
 
 
 # ══════════════════════════════════════════════════════════

@@ -481,13 +481,32 @@ class CombatUI:
         for ri, row_key in enumerate(rows):
             ry = RIGHT_Y + ri * ROW_H
 
-            # Row label
+            # Row label — clickable when in row-targeting mode
             row_label = row_key[0].upper() + row_key[1:]
             rc = ROW_COLORS[row_key]
-            pygame.draw.rect(surface, (rc[0]//5, rc[1]//5, rc[2]//5),
-                             (RIGHT_X, ry, ROW_LABEL_W, ROW_H))
+            is_targeting = self.action_mode in ("target_attack", "target_ability", "target_bolt")
+            _row_label_r = pygame.Rect(RIGHT_X, ry, ROW_LABEL_W, ROW_H)
+            # Highlight row label when targeting a row-AoE ability
+            _row_tgt_spec = ""
+            if self.selected_ability and is_targeting:
+                _row_tgt_spec = self.selected_ability.get("target", "")
+            _row_clickable = is_targeting and _row_tgt_spec in ("row", "front_row", "back_row")
+            if _row_clickable and _row_label_r.collidepoint(mx, my):
+                # Bright highlight on hover
+                pygame.draw.rect(surface, (rc[0]//2, rc[1]//2, rc[2]//2), _row_label_r)
+                pygame.draw.rect(surface, rc, _row_label_r, 2)
+            else:
+                pygame.draw.rect(surface, (rc[0]//5, rc[1]//5, rc[2]//5), _row_label_r)
+                if _row_clickable:
+                    pygame.draw.rect(surface, rc, _row_label_r, 1)  # subtle border when clickable
             draw_text(surface, row_label, RIGHT_X + 4, ry + ROW_H//2 - 7, rc, 13, bold=True)
+            if _row_clickable:
+                draw_text(surface, "▶", RIGHT_X + 4, ry + ROW_H//2 + 6, rc, 9)
             pygame.draw.line(surface, PANEL_BORDER, (RIGHT_X, ry), (SCREEN_W, ry))
+            # Store row label rect for click detection
+            if not hasattr(self, "_row_label_rects"):
+                self._row_label_rects = {}
+            self._row_label_rects[row_key] = _row_label_r
 
             row_enemies = enemies_by_row.get(row_key, [])
             if not row_enemies:
@@ -818,11 +837,15 @@ class CombatUI:
                 tgt_spec = ab.get("target", "")
                 ab_type  = ab.get("type", "")
                 if ab_type in ("aoe", "special") and tgt_spec == "row":
-                    prompt = f"→ Click ANY enemy in target row — {ab_name} hits that whole row  (ESC to cancel)"
-                    draw_text(surface, prompt, SCREEN_W // 2 - 280, ACTION_Y + 32, (255, 160, 60), 14, bold=True)
+                    prompt = f"→ Click the ROW LABEL on the right to fire {ab_name} at that whole row  (ESC to cancel)"
+                    draw_text(surface, prompt, SCREEN_W // 2 - 320, ACTION_Y + 32, (255, 160, 60), 13, bold=True)
+                elif ab_type in ("aoe", "special") and tgt_spec in ("front_row", "back_row"):
+                    row_name = "front" if tgt_spec == "front_row" else "back"
+                    prompt = f"→ {ab_name} hits the {row_name} row — firing automatically or click the row label"
+                    draw_text(surface, prompt, SCREEN_W // 2 - 300, ACTION_Y + 32, (255, 160, 60), 13, bold=True)
                 elif ab_type in ("aoe", "special") and tgt_spec == "stack":
-                    prompt = f"→ Click ANY enemy in target stack — {ab_name} hits the whole group  (ESC to cancel)"
-                    draw_text(surface, prompt, SCREEN_W // 2 - 280, ACTION_Y + 32, (255, 200, 80), 14, bold=True)
+                    prompt = f"→ Click an ENEMY GROUP CARD to fire {ab_name} at that whole stack  (ESC to cancel)"
+                    draw_text(surface, prompt, SCREEN_W // 2 - 300, ACTION_Y + 32, (255, 200, 80), 13, bold=True)
                 else:
                     prompt = f"→ Click an enemy to use  {ab_name}  (ESC to cancel)"
                     draw_text(surface, prompt, SCREEN_W // 2 - 200, ACTION_Y + 32, (220, 120, 100), 15, bold=True)
@@ -1287,11 +1310,36 @@ class CombatUI:
                         return None
 
         elif self.action_mode == "target_ability":
+            # ── Row label click — fire row/front_row/back_row AoE directly ──
+            ab = self.selected_ability or {}
+            tgt_spec = ab.get("target", "")
+            if tgt_spec in ("row", "front_row", "back_row"):
+                for row_key, label_r in getattr(self, "_row_label_rects", {}).items():
+                    if label_r.collidepoint(mx, my):
+                        # Pick any alive enemy in that row as the reference target
+                        _ref = next(
+                            (e for e in self.combat.enemies
+                             if e.get("alive") and e.get("row") == row_key), None)
+                        if _ref or tgt_spec in ("front_row", "back_row"):
+                            self.action_mode = "main"
+                            return {"type": "ability", "ability": ab, "target": _ref}
+                        return None
+            # ── Stack card click — fire stack AoE ────────────────────────
+            if tgt_spec == "stack":
+                for card_r, group_key, group_enemies in getattr(self, "_card_rects", []):
+                    if card_r.collidepoint(mx, my):
+                        alive_in_group = [e for e in group_enemies if e.get("alive")]
+                        if alive_in_group:
+                            self.action_mode = "main"
+                            # Pass any member as target — engine uses template_key+row to find all
+                            return {"type": "ability", "ability": ab,
+                                    "target": alive_in_group[0]}
+                        return None
             if self.hover_enemy and self.hover_enemy["alive"]:
                 self.action_mode = "main"
                 return {"type": "ability", "ability": self.selected_ability,
                         "target": self.hover_enemy}
-            # Click on a stack card → open stack popover
+            # Click on a stack card → open stack popover (for single-target abilities)
             for card_r, group_key, group_enemies in getattr(self, "_card_rects", []):
                 if card_r.collidepoint(mx, my) and len(group_enemies) > 1:
                     alive_in_group = [e for e in group_enemies if e.get("alive", True)]

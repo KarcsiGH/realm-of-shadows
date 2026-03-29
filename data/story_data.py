@@ -987,7 +987,7 @@ NPC_DIALOGUES = {
                     },
                     "first_steps": {
                         "speaker": "Warden Liaison",
-                        "text": "There's a scholar named Maren in Briarhollow. She's been studying the land sickness longer than anyone I know of. Find her first.\nThe Abandoned Mine east of town is where the trouble started — but don't go alone and don't go unprepared.",
+                        "text": "There's a scholar named Maren in Briarhollow. She's been studying the land sickness longer than anyone I know of. Find her first.\nThe Abandoned Mine is north of Ironhearth — but don't go alone and don't go unprepared — but don't go alone and don't go unprepared.",
                         "choices": [{"text": "We'll find Maren.", "next": None}]
                     },
                     "about_order": {
@@ -1670,7 +1670,7 @@ NPC_DIALOGUES = {
                         "speaker": "Maren",
                         "text": "The wards can be restored, but only with the Hearthstones — five "
                                 "ancient artifacts scattered across Aldenmere. I've been tracking them "
-                                "for years. The first lead points to the Goblin Warren east of here. "
+                                "for years. The first lead points to the Goblin Warren — it's just to the northwest of here. "
                                 "The goblins have been raiding our farms, but I believe they're "
                                 "fleeing something far worse.",
                         "on_enter": [{"action": "discover_lore", "lore": "hearthstones"}],
@@ -2092,7 +2092,7 @@ NPC_DIALOGUES = {
                     "rumors": {
                         "speaker": "Bess",
                         "text": "Old Petra's been complaining about giant spider silk on the "
-                                "eastern path. Not normal size — thick as rope, she says. "
+                                "path to the Thornwood. Not normal size — thick as rope, she says. "
                                 "Half the village thinks she's losing her mind. "
                                 "The other half won't go near that road after dark.",
                         "next": "start",
@@ -2169,7 +2169,7 @@ NPC_DIALOGUES = {
                 "nodes": {
                     "start": {
                         "speaker": "Old Petra",
-                        "text": "The eastern path is clear again. I walked it myself this morning — "
+                        "text": "The Thornwood path is clear again. I walked it myself this morning — "
                                 "first time in weeks I didn't feel watched. "
                                 "Whatever you did in that cave, it worked. "
                                 "Don't let anyone tell you otherwise.",
@@ -2182,7 +2182,7 @@ NPC_DIALOGUES = {
                     "webs_start": {
                         "speaker": "Old Petra",
                         "text": "Overnight, almost. First one morning there was a strand or two — "
-                                "I thought a big garden spider. Next morning the whole east hedge "
+                                "I thought a big garden spider. Next morning the whole northwest hedge "
                                 "was wrapped. Silk thick as my wrist. Something in that cave "
                                 "was growing. Whatever the Fading touches, it doesn't grow natural.",
                         "next": "start",
@@ -2206,10 +2206,10 @@ NPC_DIALOGUES = {
                         "speaker": "Old Petra",
                         "text": "I've lived on this square for sixty years. I know every face "
                                 "and every fence post. And I know something's wrong with the "
-                                "eastern path. Go see for yourself if you don't believe an old woman.",
+                                "eastern path. Head northwest toward the Thornwood if you don't believe an old woman.",
                         "on_enter": [{"action": "meet_npc", "npc": "old_petra"}],
                         "choices": [
-                            {"text": "What's wrong with the eastern path?", "next": "spiders"},
+                            {"text": "What's wrong with the Thornwood path?", "next": "spiders"},
                             {"text": "How long has it been like this?", "next": "how_long"},
                             {"text": "We'll look into it.", "next": "look_into"},
                             {"text": "I'll keep that in mind.", "next": "bye"},
@@ -2218,7 +2218,7 @@ NPC_DIALOGUES = {
                     "spiders": {
                         "speaker": "Old Petra",
                         "text": "Spider silk. Everywhere. And not small spiders — I found a web "
-                                "yesterday that could catch a horse. The cave east of town, "
+                                "yesterday that could catch a horse. The cave to the northwest, "
                                 "the one the children dare each other to enter. Something inside "
                                 "it has grown very large, and very hungry. "
                                 "Nobody will listen because I'm old. Maybe you will.",
@@ -2235,7 +2235,7 @@ NPC_DIALOGUES = {
                     },
                     "look_into": {
                         "speaker": "Old Petra",
-                        "text": "The cave is east, past the old mill. You'll smell it before "
+                        "text": "The cave is northwest, past the old mill. You'll smell it before "
                                 "you see it — like damp earth and something sweet gone wrong. "
                                 "Be careful. Those webs aren't decoration.",
                         "on_enter": [{"action": "start_quest", "quest": "main_spiders_nest"}],
@@ -5313,7 +5313,7 @@ def get_rumor(act=None):
         ([{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
          "Old Petra's crowing about the spider cave. Says she told everyone and nobody listened. She's right."),
         ([{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
-         "The eastern path is clear. Whatever was in that cave is gone. Petra says it was the Fading."),
+         "The Thornwood path is clear. Whatever was in that cave is gone. Petra says it was the Fading."),
         ([{"flag": "item.hearthstone.1", "op": "==", "value": True}],
          "Word is they found one of those old ward-stones in the mine. Living magic, they say. Warm to the touch."),
         ([{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
@@ -5473,7 +5473,7 @@ _NEW_DIALOGUES = {
                             {"text": "What kind of trouble?", "next": "trouble"},
                             {"text": "Any missing patrols?", "next": "patrol"},
                             {"text": "The mine — what do you know about it?", "next": "mine"},
-                            {"text": "Old Petra mentioned spiders on the eastern path.", "next": "spiders",
+                            {"text": "Old Petra mentioned spiders on the Thornwood path.", "next": "spiders",
                              "conditions": [{"flag": "npc.old_petra.met", "op": "==", "value": True},
                                             {"flag": "boss_defeated.spiders_nest", "op": "not_exists"}]},
                             {"text": "We can handle ourselves.", "next": "confident"},
@@ -5597,7 +5597,7 @@ _NEW_DIALOGUES = {
                     },
                     "changed": {
                         "speaker": "Ranger Lyric",
-                        "text": "Six months ago she was just a big spider. Now she's the size of a cart horse and her brood covers the whole eastern slope. Something's feeding her growth. The same thing that's killing the trees, maybe.",
+                        "text": "Six months ago she was just a big spider. Now she's the size of a cart horse and her brood covers the whole northwest slope. Something's feeding her growth. The same thing that's killing the trees, maybe.",
                         "choices": [{"text": "We'll find out.", "next": None}],
                     },
                 },
@@ -5625,7 +5625,7 @@ _NEW_DIALOGUES = {
                     },
                     "work": {
                         "speaker": "Ranger Lyric",
-                        "text": "Check the job board. Guildmaster Oren posts contracts. But between us — the real problem is the spider nest to the east. It's getting out of hand.",
+                        "text": "Check the job board. Guildmaster Oren posts contracts. But between us — the real problem is the spider nest to the northwest. It's getting out of hand.",
                         "choices": [{"text": "We'll look into it.", "next": None}],
                     },
                 },
@@ -5733,7 +5733,7 @@ _NEW_DIALOGUES = {
                     },
                     "contracts": {
                         "speaker": "Guildmaster Oren",
-                        "text": "Check the job board outside. I post what comes in. Right now it's mostly patrol work and pest control. The spider situation to the east is getting serious — I'm offering a premium for proof of the nest being cleared.",
+                        "text": "Check the job board outside. I post what comes in. Right now it's mostly patrol work and pest control. The spider situation to the northwest is getting serious — I'm offering a premium for proof of the nest being cleared.",
                         "choices": [{"text": "Noted.", "next": None}],
                     },
                     "think": {
