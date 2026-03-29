@@ -428,9 +428,9 @@ WOODHAVEN_BUILDINGS = {
     "ranger_hall": {
         "name": "Scout Hall",
         "type": BLD_HOUSE,
-        "door": (7, 19),
+        "door": (8, 19),
         "color": (90, 110, 70),
-        "wall_cols": (5, 10), "wall_rows": (17, 19),
+        "wall_cols": (6, 11), "wall_rows": (17, 19),
     },
 }
 
@@ -453,7 +453,7 @@ WOODHAVEN_NPCS = [
     },
     {
         "name": "Old Moss",
-        "x": 20, "y": 14,  # south of guild, open ground
+        "x": 20, "y": 16,  # south of guild, open ground
         "dialogue_id": "old_moss",
         "description": "An ancient woodsman who rarely speaks but knows every trail.",
         "color": (80, 100, 70),
@@ -577,9 +577,9 @@ IRONHEARTH_BUILDINGS = {
     "mines_office": {
         "name": "Mines Office",
         "type": BLD_HOUSE,
-        "door": (11, 20),
+        "door": (17, 20),
         "color": (110, 100, 70),
-        "wall_cols": (9, 14), "wall_rows": (17, 20),
+        "wall_cols": (15, 20), "wall_rows": (17, 20),
         "npc_name": "Foreman Drek",
         "indoor_npc": {"name": "Foreman Drek", "npc_type": "guard", "title": "Mine Foreman", "description": "Tracks ore quotas and manages shift assignments.", "color": (130, 120, 80), "dialogue_id": None},
     },
@@ -639,13 +639,13 @@ GREENWOOD_MAP_RAW = [
     "TTTT..........####..TTTT",  # 1  Guild top wall cols 14-17
     "TTT..TT..####.#..#TTTTT",  # 2  Inn(cols 9-12) | Guild(cols 14-17)
     "TT...TT..#..#.#..#.TTTT",  # 3
-    "TT...TT..#..D.#.D#.TTTT",  # 4  Inn door(12) | Guild door(16)
+    "TT...TT..#..D.##D#.TTTT",  # 4  Inn door(12) | Guild door(16)
     "TT...TT..####..TT..TTTT",  # 5
     "TT....PPPPP..TTTT..TTTT",  # 6
     "TT....P.....TT.....TTTT",  # 7
     "TT....PS####.......TTTT",  # 8
     "TT....P.#..#...S...TTTT",  # 9
-    "TT....P....D.......TTTT",  # 10 tavern(10,10)
+    "TT....P.#..D.......TTTT",  # 10 tavern(10,10)
     "TT....P.####.......TTTT",  # 11
     "TT....P............TTTT",  # 12
     "TT....P..####......TTTT",  # 13
@@ -910,7 +910,7 @@ SALTMERE_NPCS = [
     },
     {
         "name": "Merchant Osric",
-        "x": 20, "y": 14,
+        "x": 20, "y": 13,
         "dialogue_id": "ambient_merchant",
         "description": "A rotund trader complaining loudly about tariffs and tide schedules.",
         "color": (180, 160, 120),
@@ -924,14 +924,14 @@ SALTMERE_NPCS = [
     },
     {
         "name": "Salt Guard",
-        "x": 5, "y": 12,
+        "x": 4, "y": 12,
         "dialogue_id": "ambient_guard",
         "description": "A town watchman in salt-crusted armour, eyes on the dock road.",
         "color": (120, 130, 150),
     },
     {
         "name": "Young Deckhand",
-        "x": 22, "y": 15,
+        "x": 21, "y": 15,
         "dialogue_id": "ambient_townsfolk",
         "description": "A gangly youth coiling rope and watching the horizon.",
         "color": (150, 160, 140),
@@ -965,9 +965,9 @@ SANCTUM_MAP_RAW = [
     "#....PPPPPPPPPPPPPPPPPP......#",  # 7  main nave path
     "#....P..................P....#",  # 8
     "#....P..####......####..P####",  # 9  Inn(9,11) | Shop(18,11) | Guild(26,11)
-    "#....P..#..#......#..#..P#.##",  # 10
-    "#....P..#..D......D..#..P#D##",  # 11 Inn door(11) | Shop door(18) | Guild door(26)
-    "#....P..####......####..P####",  # 12
+    "#....P..#..#......#..#..P####",  # 10
+    "#....P..#..D......D..#..P####",  # 11 Inn door(11) | Shop door(18) | Guild door(26)
+    "#....P..####......####..P##D#",  # 12
     "#....P..................P....#",  # 13
     "#..S.PPPPPPPPPPPPPPPPPPPP...#",  # 14
     "#....P..................P....#",  # 15
@@ -977,7 +977,7 @@ SANCTUM_MAP_RAW = [
     "#....P..####......####..P...#",  # 19
     "#....P..................P....#",  # 20
     "#....P..####..............P.#",  # 21
-    "#....P..#..D..............P.#",  # 22 reliquary(10,22)
+    "#....P..###D..............P.#",  # 22 reliquary(10,22)
     "#PPPPPPPPPEEPPPPPPPPPPPPPPPPP#",  # 23 exits(10,23)(11,23)
 ]
 
@@ -1050,10 +1050,9 @@ SANCTUM_BUILDINGS = {
     "guild": {
         "name": "Order of Light — Chapter House",
         "type": BLD_GUILD,
-        "door": (26, 11),
+        "door": (27, 12),
         "color": (200, 195, 140),
-        "label_pos": (25, 9),
-        "wall_cols": (25, 27), "wall_rows": (9, 12),
+        "wall_cols": (25, 29), "wall_rows": (9, 12),
         "npc_name": "Chapter Master Aldren",
         "indoor_npc": {"name": "Chapter Master Aldren", "npc_type": "guildmaster", "title": "Chapter Master",
                        "description": "A devout warrior-scholar who trains those who serve the Light.",
@@ -1156,9 +1155,9 @@ CRYSTALSPIRE_MAP_RAW = [
     "T......PPPPPP.P.PPP.PPPPPP.....T",  # 15 teleport circle at (16,15)
     "T......P......P..P..P..........T",  # 16
     "T......P..####...P.####.#####..T",  # 17  Tavern(10,19) | Temple(17,19) | Guild(26,19)
-    "T......P..#..#...P.#..#.#...#..T",  # 18
-    "T......P..#..D.....D..#.#.D.#..T",  # 19  Tavern door(13) | Temple door(19) | Guild door(26)
-    "T......P..####...P.####.#####..T",  # 20
+    "T......P..#..#...P.#..#.#####..T",  # 18
+    "T......P..#..D.....D..#.#####..T",  # 19  Tavern door(13) | Temple door(19) | Guild door(26)
+    "T......P..####...P.####.##D##..T",  # 20
     "T......P........P..........P...T",  # 21
     "T......P..S.....P..........P...T",  # 22
     "TPPPPPPPPEEPPPPPPPPPPPPPPPPPPPPPT",  # 23 exits(9,23)(10,23)
@@ -1224,9 +1223,8 @@ CRYSTALSPIRE_BUILDINGS = {
     "guild": {
         "name": "Mages' Conclave",
         "type": BLD_GUILD,
-        "door": (26, 19),
+        "door": (26, 20),
         "color": (155, 145, 210),
-        "label_pos": (24, 17),
         "wall_cols": (24, 28), "wall_rows": (17, 20),
         "npc_name": "Arcanist Veleth",
         "indoor_npc": {"name": "Arcanist Veleth", "npc_type": "guildmaster", "title": "Arcanist",
@@ -1379,7 +1377,7 @@ THORNHAVEN_BUILDINGS = {
         "door": (33, 4),
         "color": (100, 100, 120),
         "label_pos": (28, 2),
-        "wall_cols": (30, 37), "wall_rows": (0, 5),   # right wing of the outer wall
+        "wall_cols": (33, 37), "wall_rows": (2, 5),   # actual castle gatehouse
         "npc_name": "Gate Captain Brynn",
     },
     "temple": {
