@@ -360,7 +360,7 @@ WOODHAVEN_MAP_RAW = [
     "T.######..######..######...T",  # 13
     "T...S...............S......T",  # 14  signs in open ground
     "WWWBWWWWWWWWWWWWWWWWWWWWWWWW",  # 15  river — bridge at col 3
-    "T..T...............T.......T",  # 16  scattered trees south of river
+    "T..................T.......T",  # 16  scattered trees south of river
     "T.....######...............T",  # 17  ranger hall (cols 5-10)
     "T.....######...............T",  # 18
     "T.....##D###...............T",  # 19  ranger-door(7,19)
@@ -640,7 +640,7 @@ GREENWOOD_MAP_RAW = [
     "TTT..TT..####.#..#TTTTT",  # 2  Inn(cols 9-12) | Guild(cols 14-17)
     "TT...TT..#..#.#..#.TTTT",  # 3
     "TT...TT..#..D.##D#.TTTT",  # 4  Inn door(12) | Guild door(16)
-    "TT...TT..####..TT..TTTT",  # 5
+    "TT...TT..####..T...TTTT",  # 5
     "TT....PPPPP..TTTT..TTTT",  # 6
     "TT....P.....TT.....TTTT",  # 7
     "TT....PS####.......TTTT",  # 8
@@ -806,7 +806,7 @@ SALTMERE_MAP_RAW = [
     "T.P..#..#......P...####....T",   # 17
     "T.P..#..D......P...........T",   # 18
     "T.P..####......P...........T",   # 19
-    "WWWWWWWWWWWWWWWWWWWWWWWWWWWW",  # 20  harbor water
+    "WWBBWWWWWWWWWWWWWWWWWWWWWWWW",  # 20  harbor water
     "WWEEWWWWWWWWWWWWWWWWWWWWWWWW",  # 21  exits(2,21)(3,21) — dock exit
 ]
 
@@ -943,7 +943,7 @@ SALTMERE_SIGNS = {
     (17, 8): "Job Board — Mercenaries and merchants post work here.",
 }
 
-SALTMERE_SPAWN = (10, 19)
+SALTMERE_SPAWN = (2, 19)
 SALTMERE_EXIT = [(2, 21), (3, 21)]
 
 
