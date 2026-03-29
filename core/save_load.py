@@ -163,7 +163,24 @@ def deserialize_character(data):
     except Exception:
         pass  # non-critical — stubs still work, just miss type info
     char.inventory = data.get("inventory", [])
+    # Retroactively patch any inventory items missing slot/damage_stat fields
+    # (items saved before the slot-fix commits may lack these)
+    try:
+        from core.item_slot_fixer import ensure_slot
+        for _inv_item in char.inventory:
+            if isinstance(_inv_item, dict):
+                ensure_slot(_inv_item)
+    except Exception:
+        pass
     char.equipment = data.get("equipment", empty_equipment())
+    # Also patch equipped items
+    try:
+        from core.item_slot_fixer import ensure_slot as _es
+        for _slot_val in char.equipment.values() if isinstance(char.equipment, dict) else []:
+            if isinstance(_slot_val, dict):
+                _es(_slot_val)
+    except Exception:
+        pass
     # Migrate old slot names → new names (save compatibility)
     _SLOT_MIGRATION = {"accessory1": "ring1", "accessory2": "neck"}
     for old_s, new_s in _SLOT_MIGRATION.items():

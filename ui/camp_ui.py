@@ -304,6 +304,13 @@ class CampUI:
         self._inv_btn_by    = -1
         if 0 <= self.selected_item < len(c.inventory):
             item = c.inventory[self.selected_item]
+            # Retroactively patch slot for items saved before the slot-fix (old saves)
+            if not item.get("slot") and item.get("type") in ("weapon", "armor", "accessory"):
+                try:
+                    from core.item_slot_fixer import ensure_slot
+                    ensure_slot(item)
+                except Exception:
+                    pass
             by = iy + 10
             self._inv_btn_by = by
             protected = item.get("type") in ("key_item", "quest_item") or "warden_rank" in item
