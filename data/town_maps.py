@@ -427,10 +427,20 @@ WOODHAVEN_BUILDINGS = {
     },
     "ranger_hall": {
         "name": "Scout Hall",
-        "type": BLD_HOUSE,
+        "type": BLD_GUILD,
         "door": (8, 19),
         "color": (90, 110, 70),
         "wall_cols": (6, 11), "wall_rows": (17, 19),
+        "npc_name": "Ranger Cael",
+        "indoor_npc": {
+            "name": "Ranger Cael",
+            "npc_type": "guard",
+            "title": "Ranger",
+            "description": "A weathered scout who has patrolled the Thornwood for years.",
+            "color": (100, 150, 90),
+            "dialogue_id": "ranger_cael",
+            "service": "trainer",
+        },
     },
 }
 
@@ -469,7 +479,8 @@ WOODHAVEN_NPCS = [
     },
 ]
 WOODHAVEN_SIGNS = {
-    (16, 13): "Job Board — Rangers needed for patrol work.",
+    (4,  14): "Job Board — Contract work available. Speak to Guildmaster Oren.",
+    (20, 14): "Notice: Thornwood paths are dangerous. Travel in groups.",
 }
 
 WOODHAVEN_SPAWN = (13, 21)   # just inside exit road, avoids building doors

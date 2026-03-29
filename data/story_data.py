@@ -915,6 +915,174 @@ NPC_DIALOGUES = {
                 }
             }
         },
+        # ── Rank 0.4: Reached Ironhearth — Act 1 late ──────────────
+        {
+            "conditions": [{"flag": "town.ironhearth.visited", "op": "==", "value": True},
+                           {"flag": "boss_defeated.spiders_nest", "op": "!=", "value": True}],
+            "tree": {
+                "id": "warden_ironhearth",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "You made it to Ironhearth. The dwarves don't trust outsiders easily "
+                                "— if they're talking to you, you've earned something.\n"
+                                "The Spider's Nest to the northwest still needs clearing. "
+                                "You have the map. Use it.",
+                        "choices": [
+                            {"text": "What's in the nest?", "next": "nest"},
+                            {"text": "What comes after?", "next": "after"},
+                            {"text": "We're working on it.", "next": None},
+                        ],
+                    },
+                    "nest": {
+                        "speaker": "Warden Liaison",
+                        "text": "A brood queen and her spawn. The Fading has accelerated her growth "
+                                "unnaturally — she's larger and more aggressive than any spider "
+                                "has a right to be. Kill her and the brood collapses.\n"
+                                "There's a Hearthstone fragment in that cave. The spiders are "
+                                "nesting around it.",
+                        "choices": [{"text": "We'll clear it.", "next": None}],
+                    },
+                    "after": {
+                        "speaker": "Warden Liaison",
+                        "text": "The Abandoned Mine north of Ironhearth. A former Warden garrison "
+                                "held it — they didn't make it out. The first Hearthstone "
+                                "fragment is sealed inside. You'll need the mine key from the "
+                                "Spider's Nest to get in.",
+                        "choices": [{"text": "One thing at a time.", "next": None}],
+                    },
+                },
+            },
+        },
+        # ── Rank 0.3: Spider's Nest cleared ─────────────────────────
+        {
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "tree": {
+                "id": "warden_post_spiders",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "The Spider's Nest cleared. I've had three patrols confirm it "
+                                "— the northwest trail is open again.\n"
+                                "The mine key you recovered opens the Abandoned Mine north "
+                                "of Ironhearth. That's your next target. The first Hearthstone "
+                                "fragment is inside — a Fallen Warden named Korrath is guarding it.",
+                        "choices": [
+                            {"text": "Tell me about Korrath.", "next": "korrath"},
+                            {"text": "What happened to the garrison?", "next": "garrison"},
+                            {"text": "We're headed there now.", "next": None},
+                        ],
+                    },
+                    "korrath": {
+                        "speaker": "Warden Liaison",
+                        "text": "Senior Warden. One of the last. When the Order fell apart, "
+                                "some held their posts out of duty. Some out of madness. "
+                                "Korrath stayed in the mine. The Fading got to him eventually.\n"
+                                "He's not what he was. But he was a Warden. If you can reach "
+                                "him before the fight, there may be a way to resolve this without "
+                                "destroying what's left of him.",
+                        "choices": [{"text": "We'll try.", "next": None}],
+                    },
+                    "garrison": {
+                        "speaker": "Warden Liaison",
+                        "text": "The mine was a critical ward anchor point. When the wards "
+                                "began failing, the garrison stayed to hold the anchor manually. "
+                                "One by one the Fading took them. Korrath was the last.\n"
+                                "They died doing their job. The least we can do is finish it.",
+                        "choices": [{"text": "We will.", "next": None}],
+                    },
+                },
+            },
+        },
+        # ── Rank 0.2: Goblin Warren cleared ─────────────────────────
+        {
+            "conditions": [{"flag": "boss_defeated.goblin_warren", "op": "==", "value": True},
+                           {"flag": "boss_defeated.spiders_nest", "op": "!=", "value": True}],
+            "tree": {
+                "id": "warden_post_warren",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "The Warren is clear. I didn't expect results this quickly.\n"
+                                "The map fragment you recovered from Grak marks a cave to the "
+                                "northwest — the Spider's Nest. That's your next objective. "
+                                "There's a Hearthstone fragment inside, protected by a brood queen.",
+                        "choices": [
+                            {"text": "Why was Grak holding a map?", "next": "map"},
+                            {"text": "How do we get to the Spider's Nest?", "next": "directions"},
+                            {"text": "We're already moving.", "next": None},
+                        ],
+                    },
+                    "map": {
+                        "speaker": "Warden Liaison",
+                        "text": "Goblins are territorial and surprisingly methodical about "
+                                "documenting their territory. The Warren is directly connected "
+                                "to the Thornwood trail system.\n"
+                                "The map shows the web cave to the northwest — the Spider's Nest. "
+                                "Grak was avoiding it. Wise, in his way.",
+                        "choices": [{"text": "Northwest. Got it.", "next": None}],
+                    },
+                    "directions": {
+                        "speaker": "Warden Liaison",
+                        "text": "Head northwest from Woodhaven along the Thornwood path. "
+                                "Follow the old trail markers — you'll smell the webs before "
+                                "you see them. The entrance is about a day's travel from here.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                },
+            },
+        },
+        # ── Rank 0.1: Met Maren, before Goblin Warren ────────────────
+        {
+            "conditions": [{"flag": "npc.maren.met", "op": "==", "value": True},
+                           {"flag": "boss_defeated.goblin_warren", "op": "!=", "value": True}],
+            "tree": {
+                "id": "warden_post_maren",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "You found Maren. Good. She understands the Hearthstone "
+                                "mechanics better than anyone alive — you'll want her guidance.\n"
+                                "The Goblin Warren east of Briarhollow is your first target. "
+                                "The goblin raids are being driven by Fading pressure — clearing "
+                                "the Warren will reveal what's behind it.",
+                        "choices": [
+                            {"text": "What can you tell us about the Warren?", "next": "warren_info"},
+                            {"text": "Why are the goblins raiding?", "next": "goblins"},
+                            {"text": "We're on our way there.", "next": None},
+                        ],
+                    },
+                    "warren_info": {
+                        "speaker": "Warden Liaison",
+                        "text": "Three floors. Mixed goblin forces — shamans in the back, "
+                                "warriors up front. Their king, Grak, commands from the deepest "
+                                "level.\nThe Fading is strong near the lower floors. "
+                                "Watch for shadow-touched creatures mixed in with the regular troops.",
+                        "choices": [{"text": "Any weaknesses?", "next": "weakness"}],
+                    },
+                    "weakness": {
+                        "speaker": "Warden Liaison",
+                        "text": "Goblin shamans disrupt spellcasting if you let them. "
+                                "Take them out before they can establish a hex. "
+                                "Grak himself is dangerous in rage — hit him hard before he "
+                                "gets a chance to build up.",
+                        "choices": [{"text": "We'll be ready.", "next": None}],
+                    },
+                    "goblins": {
+                        "speaker": "Warden Liaison",
+                        "text": "The Fading moves creatures like a flood moves debris — "
+                                "everything runs ahead of it. The goblins aren't raiding "
+                                "because they want to. They're raiding because something worse "
+                                "is behind them.\nClear the Warren and you'll find out what.",
+                        "choices": [{"text": "We understand.", "next": None}],
+                    },
+                },
+            },
+        },
         # ── Rank 1: Scout (1st hearthstone recovered) ───────────────
         {
             "conditions": [{"flag": "item.hearthstone.1", "op": "==", "value": True}],
@@ -2972,6 +3140,133 @@ NPC_DIALOGUES = {
             },
         },
     ],
+    "ranger_cael": [
+        # After Spider's Nest cleared
+        {
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "tree": {
+                "id": "ranger_cael_post_spiders",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Ranger Cael",
+                        "text": "The web cave to the northwest — you cleared it? We've been "
+                                "avoiding that whole stretch for weeks. The path to Ironhearth "
+                                "is safer now. You've done the Thornwood a real service.",
+                        "choices": [
+                            {"text": "What's still out there?", "next": "threats"},
+                            {"text": "We heard there's a mine north of Ironhearth.", "next": "mine"},
+                            {"text": "Just doing what needed doing.", "next": None},
+                        ],
+                    },
+                    "threats": {
+                        "speaker": "Ranger Cael",
+                        "text": "The Fading keeps pushing from the east. We hold the western "
+                                "tree line but we're spread thin. The goblins were bad enough — "
+                                "now we're seeing things that used to be deer. Dead things walking.",
+                        "choices": [{"text": "We'll keep watch.", "next": None}],
+                    },
+                    "mine": {
+                        "speaker": "Ranger Cael",
+                        "text": "Abandoned Mine north of Ironhearth. Bad place. A Warden garrison "
+                                "used to hold it — they're gone now. Something in there killed them. "
+                                "If you go, take torches. Lots of them.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                },
+            },
+        },
+        # After Goblin Warren — pre spider's nest
+        {
+            "conditions": [{"flag": "boss_defeated.goblin_warren", "op": "==", "value": True}],
+            "tree": {
+                "id": "ranger_cael_post_warren",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Ranger Cael",
+                        "text": "You cleared the Goblin Warren. The patrols have confirmed it — "
+                                "the goblin raids have stopped cold. I've started sending scouts "
+                                "back on the Thornwood trail. Good work.",
+                        "choices": [
+                            {"text": "There's still a cave to the northwest.", "next": "cave"},
+                            {"text": "The goblins were being driven out by something.", "next": "driven"},
+                            {"text": "Thanks.", "next": None},
+                        ],
+                    },
+                    "cave": {
+                        "speaker": "Ranger Cael",
+                        "text": "The web cave, yes. We've marked it on patrol maps. "
+                                "Giant spiders — bigger than wolves. We don't have the numbers "
+                                "to clear it ourselves. If you're looking for your next challenge, "
+                                "that's northwest of here on the Thornwood path.",
+                        "choices": [{"text": "We'll deal with it.", "next": None}],
+                    },
+                    "driven": {
+                        "speaker": "Ranger Cael",
+                        "text": "They were. I've been saying it for months — something pushed "
+                                "them out of the Warren. The Fading moves creatures like water "
+                                "moves silt. When it spreads, everything runs ahead of it.",
+                        "choices": [{"text": "We'll look into it.", "next": None}],
+                    },
+                },
+            },
+        },
+        # Default — before any progress
+        {
+            "conditions": [],
+            "tree": {
+                "id": "ranger_cael_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Ranger Cael",
+                        "text": "Welcome to the Scout Hall. We track patrols, log sightings, "
+                                "coordinate with the Ranger's Guild. If you want honest work "
+                                "in the Thornwood, you've come to the right place.",
+                        "on_enter": [{"action": "meet_npc", "npc": "ranger_cael"}],
+                        "choices": [
+                            {"text": "What kind of work?", "next": "work"},
+                            {"text": "What have you been seeing out there?", "next": "sightings"},
+                            {"text": "We're tracking goblin activity.", "next": "goblins"},
+                            {"text": "Just looking around.", "next": None},
+                        ],
+                    },
+                    "work": {
+                        "speaker": "Ranger Cael",
+                        "text": "Patrol reports. Monster sightings logged and verified. "
+                                "Dungeon clearances when we can get someone willing. "
+                                "Right now the Goblin Warren east of Briarhollow is the priority — "
+                                "raids have been getting bolder every week.",
+                        "choices": [{"text": "We'll look into the Warren.", "next": None}],
+                    },
+                    "sightings": {
+                        "speaker": "Ranger Cael",
+                        "text": "Shadow-touched animals moving north from the Fading zones. "
+                                "Goblins pushed out of their usual range and raiding settlements. "
+                                "And something deeper in the Thornwood that we haven't identified — "
+                                "webs the size of fishing nets covering the northwest trail.",
+                        "choices": [{"text": "Something made those webs.", "next": "cave"}],
+                    },
+                    "cave": {
+                        "speaker": "Ranger Cael",
+                        "text": "A cave to the northwest. The children call it the web cave. "
+                                "Nobody goes near it anymore. We've lost two scouts in that direction "
+                                "in the last month. Big things moved on that trail.",
+                        "choices": [{"text": "Noted.", "next": None}],
+                    },
+                    "goblins": {
+                        "speaker": "Ranger Cael",
+                        "text": "The Warren east of Briarhollow is the source. Something drove them "
+                                "out — they're raiding because they're afraid, not because they're "
+                                "bold. Clear the Warren and the raids stop. That's my read.",
+                        "choices": [{"text": "We'll handle it.", "next": None}],
+                    },
+                },
+            },
+        },
+    ],
+
     "scout_feryn": [
         {
             "conditions": [],

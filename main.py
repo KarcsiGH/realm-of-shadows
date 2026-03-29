@@ -961,6 +961,9 @@ class Game:
                             names += f" +{len(party)-2}"
                         self.add_toast(f"✓ Loaded — {names}  (avg Lv{avg_lvl})",
                                        (80, 200, 120))
+                        # Sync world keys from story flags immediately after load
+                        # so keys earned before this save are still present
+                        self._sync_flag_keys()
                         self.go_fade(S_PARTY)
                     else:
                         sfx.play("ui_cancel")
@@ -3201,13 +3204,27 @@ class Game:
         if key and self.world_state:
             if not self.world_state.has_key(key):
                 self.world_state.add_key(key)
-                # Reveal matching locations — only update discovered_locations,
-                # never mutate the module-level LOCATIONS dict (that persists
-                # across WorldState instances and causes phantom reveals).
+                # Reveal matching locations — only update discovered_locations
                 from data.world_map import LOCATIONS
                 for loc_id, loc in LOCATIONS.items():
                     if loc.get("required_key") == key:
                         self.world_state.discovered_locations.add(loc_id)
+                # ── Give player a visible map/key item so they know they got it ──
+                KEY_ITEM_NAMES = {
+                    "thornwood_map":    ("Thornwood Map",    "A hand-drawn map of the Thornwood paths, taken from the Warren. Marks a cave to the northwest."),
+                    "mine_key":         ("Mine Key",         "A heavy iron key for the Abandoned Mine north of Ironhearth."),
+                    "crypt_amulet":     ("Crypt Amulet",     "A warden-sealed amulet that unlocks the wards on the Sunken Crypt entrance."),
+                    "ship_passage":     ("Ship Passage Token","A token granting passage on the next vessel to Dragon's Tooth."),
+                    "pale_coast_access":("Pale Coast Pass",  "Imperial travel permit allowing passage to the Pale Coast Catacombs."),
+                    "spire_key":        ("Spire Key",        "An ancient ward-key that opens the approach to Valdris\' Spire."),
+                }
+                if key in KEY_ITEM_NAMES and self.party:
+                    k_name, k_desc = KEY_ITEM_NAMES[key]
+                    key_item = {"name": k_name, "type": "key_item", "slot": None,
+                                "identified": True, "rarity": "common",
+                                "description": k_desc, "world_key": key}
+                    self.party[0].inventory.append(key_item)
+                    self.add_toast(f"✦ Received: {k_name}", (220, 200, 120))
 
         # Set story flags
         from core.story_flags import set_flag, defeat_boss, collect_hearthstone

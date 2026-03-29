@@ -687,8 +687,6 @@ class PostCombatUI:
             iy = panel_items.y + 35
             col_w = (panel_items.width - 30) // 2
             for idx in range(len(self.loot_items)):
-                if idx in self.loot_assignments:
-                    continue  # already assigned, skip
                 col_idx = idx % 2
                 row_idx = idx // 2
                 item_rect = pygame.Rect(
@@ -721,7 +719,7 @@ class PostCombatUI:
                     )
                     if card_rect.collidepoint(mx, my):
                         for sel_idx in self.loot_selected_items:
-                            self.loot_assignments[sel_idx] = i
+                            self.loot_assignments[sel_idx] = i  # overwrites previous assignment
                         self.loot_selected_items.clear()
                         return None
 
