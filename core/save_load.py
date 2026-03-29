@@ -340,14 +340,27 @@ def save_game(party, world_state=None, slot_name="save1", metadata=None, dungeon
     save_data["metadata"]["total_gold"] = sum(c.gold for c in party)
 
     filepath = os.path.join(SAVE_DIR, f"{slot_name}.json")
+    tmp_path  = filepath + ".tmp"
     try:
-        with open(filepath, "w") as f:
+        # Atomic write: write to a temp file first, fsync, then rename.
+        # This means the real save file is never in a partial/corrupt state —
+        # the rename only happens after all bytes are safely on disk.
+        with open(tmp_path, "w") as f:
             json.dump(save_data, f, indent=2)
-        # Verify the file was actually written and is readable
-        if not os.path.exists(filepath) or os.path.getsize(filepath) < 10:
+            f.flush()
+            os.fsync(f.fileno())   # force kernel buffer → physical disk
+        # Verify temp file looks valid before replacing the real save
+        if not os.path.exists(tmp_path) or os.path.getsize(tmp_path) < 10:
             return False, None, "Save failed: file not written to disk"
+        os.replace(tmp_path, filepath)  # atomic on POSIX/macOS
         return True, filepath, f"Game saved to {slot_name}"
     except Exception as e:
+        # Clean up temp file if it exists
+        try:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        except Exception:
+            pass
         return False, None, f"Save failed: {e}"
 
 

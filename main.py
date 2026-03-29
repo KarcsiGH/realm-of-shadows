@@ -203,6 +203,17 @@ class Game:
             mx, my = pygame.mouse.get_pos()
             for e in pygame.event.get():
                 if e.type == pygame.QUIT:
+                    # Autosave to inn_autosave whenever the window is closed so
+                    # progress is never lost regardless of how the game exits.
+                    if self.party:
+                        try:
+                            from core.save_load import save_game as _sg
+                            _sg(self.party,
+                                world_state=self.world_state,
+                                slot_name="inn_autosave",
+                                dungeon_cache=self.dungeon_cache)
+                        except Exception:
+                            pass
                     self.running = False
                     return
                 try:
