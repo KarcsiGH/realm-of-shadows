@@ -1070,8 +1070,8 @@ class Game:
         dim.fill((0, 0, 0, 160))
         surface.blit(dim, (0, 0))
 
-        # Panel
-        pw, ph = 340, 280
+        # Panel — tall enough for 5 buttons
+        pw, ph = 340, 348
         px = (SCREEN_W - pw) // 2
         py = (SCREEN_H - ph) // 2
         panel = _pg.Rect(px, py, pw, ph)
@@ -1088,6 +1088,7 @@ class Game:
         by = py + 60
         for label, key in [
             ("Save Game",        "menu_save"),
+            ("Settings",         "menu_settings"),
             ("Save & Exit Game", "menu_save_exit"),
             ("Exit Game",        "menu_exit"),
             ("Close Menu",       "menu_close"),
@@ -1098,6 +1099,9 @@ class Game:
             if key == "menu_save":
                 bg = (20, 50, 28) if not hov else (30, 70, 38)
                 bd = (50, 160, 70) if not hov else (80, 210, 100)
+            elif key == "menu_settings":
+                bg = (28, 38, 55) if not hov else (40, 55, 80)
+                bd = (80, 120, 200) if not hov else (120, 170, 255)
             elif key in ("menu_save_exit", "menu_exit"):
                 bg = (50, 20, 20) if not hov else (70, 28, 28)
                 bd = (160, 50, 50) if not hov else (210, 80, 80)
@@ -1117,7 +1121,7 @@ class Game:
         Returns True if the click was consumed."""
         import pygame as _pg
         from ui.renderer import SCREEN_W, SCREEN_H
-        pw, ph = 340, 280
+        pw, ph = 340, 348
         px = (SCREEN_W - pw) // 2
         py = (SCREEN_H - ph) // 2
         # Click outside panel = close
@@ -1129,6 +1133,7 @@ class Game:
         by = py + 60
         for label, key in [
             ("Save Game",        "menu_save"),
+            ("Settings",         "menu_settings"),
             ("Save & Exit Game", "menu_save_exit"),
             ("Exit Game",        "menu_exit"),
             ("Close Menu",       "menu_close"),
@@ -1137,6 +1142,13 @@ class Game:
                 self.show_menu_overlay = False
                 if key == "menu_save":
                     self._do_save()
+                elif key == "menu_settings":
+                    from ui.settings_ui import SettingsUI
+                    self.settings_ui = SettingsUI()
+                    self._settings_return_state = self.state
+                    import core.sound as _sfx
+                    _sfx.play("ui_open")
+                    self.go(S_SETTINGS)
                 elif key == "menu_save_exit":
                     self._do_exit_game(save_first=True)
                 elif key == "menu_exit":
