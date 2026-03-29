@@ -22,7 +22,7 @@ SECRET_ITEMS_DA1 = [
      "type": "weapon", "slot": "weapon", "subtype": "Short Sword",
      "rarity": "common", "damage": 14, "phys_type": "slashing", "range": "melee",
      "description": "A well-honed blade. Nothing magical, but a cut above the standard issue.",
-     "identified": True, "estimated_value": 35},
+     "identified": True, "estimated_value": 100},
 
     # Mage — tiny spell boost focus
     {"name": "Carved Oak Wand", "appraised_name": "Carved Oak Wand",
@@ -31,7 +31,7 @@ SECRET_ITEMS_DA1 = [
      "spell_bonus": 3, "enchant_element": "arcane",
      "on_hit_effect": {"status": "Slowed", "chance": 0.25, "duration": 2},
      "description": "A wand carved with dampening runes. Fires arcane bolts — 25% chance to Slow target for 2 turns. +3 spell power.",
-     "identified": False, "estimated_value": 60},
+     "identified": False, "estimated_value": 190},
 
     # Cleric — modest holy symbol
     {"name": "Polished Silver Symbol", "appraised_name": "Polished Silver Symbol",
@@ -40,7 +40,7 @@ SECRET_ITEMS_DA1 = [
      "effect": {"pie_bonus": 1},
      "magic_resist": 2,
      "description": "A well-crafted holy symbol. +1 PIE, +2 magic resist.",
-     "identified": False, "estimated_value": 45},
+     "identified": False, "estimated_value": 105},
 
     # Thief — light quick boots
     {"name": "Soft Leather Shoes", "appraised_name": "Soft Leather Shoes",
@@ -48,14 +48,14 @@ SECRET_ITEMS_DA1 = [
      "rarity": "common", "defense": 1,
      "effect": {"dex_bonus": 1},
      "description": "Supple leather shoes that make little noise. +1 DEX.",
-     "identified": False, "estimated_value": 30},
+     "identified": False, "estimated_value": 80},
 
     # Ranger — carved hunting bow
     {"name": "Carved Hunting Bow", "appraised_name": "Carved Hunting Bow",
      "type": "weapon", "slot": "weapon", "subtype": "Shortbow",
      "rarity": "common", "damage": 14, "phys_type": "piercing", "range": "ranged",
      "description": "Carved from a single stave of yew. Balanced and true.",
-     "identified": True, "estimated_value": 30},
+     "identified": True, "estimated_value": 110},
 
     # Monk — meditation beads
     {"name": "Iron Ki Beads", "appraised_name": "Iron Ki Beads",
@@ -64,7 +64,7 @@ SECRET_ITEMS_DA1 = [
      "effect": {"wis_bonus": 1},
      "magic_resist": 1,
      "description": "Simple iron beads worn during meditation. Steadies the Ki. +1 WIS.",
-     "identified": False, "estimated_value": 28},
+     "identified": False, "estimated_value": 95},
 
     # General — minor fortitude ring (fits anyone)
     {"name": "Copper Ring of Endurance", "appraised_name": "Copper Ring of Endurance",
@@ -72,14 +72,14 @@ SECRET_ITEMS_DA1 = [
      "rarity": "common",
      "effect": {"con_bonus": 1, "max_hp_bonus": 5},
      "description": "A plain copper ring. Wearers feel a little tougher. +1 CON, +5 max HP.",
-     "identified": False, "estimated_value": 25},
+     "identified": False, "estimated_value": 55},
 
     # General — light protective wrap
     {"name": "Padded Arm Guards", "appraised_name": "Padded Arm Guards",
      "type": "armor", "slot": "hands", "subtype": "bracers",
      "rarity": "common", "defense": 2,
      "description": "Thick leather wrapped around the forearms. Simple protection.",
-     "identified": True, "estimated_value": 18},
+     "identified": True, "estimated_value": 75},
 ]
 
 SECRET_ITEMS_T1 = [
@@ -87,21 +87,21 @@ SECRET_ITEMS_T1 = [
      "subtype": "ring", "rarity": "uncommon",
      "effect": {"con_bonus": 2, "max_hp_bonus": 10},
      "description": "A plain iron ring that makes the wearer feel hardier. +2 CON, +10 max HP.",
-     "identified": False, "estimated_value": 60},
+     "identified": False, "estimated_value": 120},
 
     {"name": "Boots of Quiet Steps", "appraised_name": "Boots of Quiet Steps", "type": "armor", "slot": "feet",
      "subtype": "boots", "rarity": "uncommon",
      "defense": 1, "speed_bonus": 2,
      "effect": {"dex_bonus": 1},
      "description": "Soft leather boots. +1 DEX, +2 speed. Helps avoid encounters.",
-     "identified": False, "estimated_value": 55},
+     "identified": False, "estimated_value": 145},
 
     {"name": "Cloak of Shadows", "appraised_name": "Cloak of Shadows", "type": "armor", "slot": "body",
      "subtype": "cloak", "rarity": "uncommon", "armor_tier": "clothing",
      "defense": 2, "magic_resist": 3,
      "effect": {"dex_bonus": 1},
      "description": "A dark cloak that seems to drink in light. +1 DEX, +3 magic resist.",
-     "identified": False, "estimated_value": 70},
+     "identified": False, "estimated_value": 155},
 
     {"name": "Wand of Sparks", "appraised_name": "Wand of Sparks", "type": "weapon", "slot": "weapon",
      "subtype": "Wand", "max_charges": 20, "rarity": "uncommon", "damage": 16,
@@ -109,13 +109,13 @@ SECRET_ITEMS_T1 = [
      "spell_bonus": 4, "enchant_element": "lightning",
      "on_hit_effect": {"status": "Stunned", "chance": 0.20, "duration": 1},
      "description": "A wand crackling with static. Fires lightning bolts — 20% chance to Stun for 1 turn. +4 spell power.",
-     "identified": False, "estimated_value": 90},
+     "identified": False, "estimated_value": 200},
 
     {"name": "Amulet of the Owl", "appraised_name": "Amulet of the Owl", "type": "accessory", "slot": "ring1",
      "subtype": "amulet", "rarity": "uncommon",
      "effect": {"wis_bonus": 2, "int_bonus": 1},
      "description": "A silver owl pendant. +2 WIS, +1 INT.",
-     "identified": False, "estimated_value": 55},
+     "identified": False, "estimated_value": 115},
     {"name": "Scroll of Remove Curse", "appraised_name": "Scroll of Remove Curse",
      "type": "consumable", "subtype": "scroll", "effect": "remove_curse",
      "rarity": "uncommon",
@@ -129,7 +129,7 @@ SECRET_ITEMS_T1 = [
      "on_hit_effect": {"status": "Burning", "chance": 0.30, "duration": 2},
      "unidentified_name": "Scorched Wand", "unidentified_desc": "A wand warm to the touch, with char marks on the tip.",
      "description": "A wand infused with ember-magic. Fires fire bolts — 30% chance to Burn target for 2 turns. +3 spell power.",
-     "identified": False, "estimated_value": 85},
+     "identified": False, "estimated_value": 200},
 
     {"name": "Frost Rod", "appraised_name": "Frost Rod",
      "type": "weapon", "slot": "weapon", "subtype": "Rod", "max_charges": 25,
@@ -138,7 +138,7 @@ SECRET_ITEMS_T1 = [
      "on_hit_effect": {"status": "Slowed", "chance": 0.40, "duration": 2},
      "unidentified_name": "Cold Iron Rod", "unidentified_desc": "A heavy rod that leaves frost on your fingers.",
      "description": "A rod of condensed cold. Fires frost bolts — 40% chance to Slow target for 2 turns. +3 spell power.",
-     "identified": False, "estimated_value": 90},
+     "identified": False, "estimated_value": 210},
 ]
 
 SECRET_ITEMS_T2 = [
@@ -147,7 +147,7 @@ SECRET_ITEMS_T2 = [
      "phys_type": "slashing", "range": "melee",
      "enchant_element": "fire", "enchant_bonus": 5, "enchant_name": "Flame",
      "description": "A longsword wreathed in faint flames. Deals bonus fire damage.",
-     "identified": False, "estimated_value": 160},
+     "identified": False, "estimated_value": 385},
 
     {"name": "Frostbite Dagger", "appraised_name": "Frostbite Dagger", "type": "weapon", "slot": "weapon",
      "subtype": "Dagger", "rarity": "rare", "damage": 10,
@@ -156,20 +156,20 @@ SECRET_ITEMS_T2 = [
      "enchant_element": "ice", "enchant_bonus": 5, "enchant_name": "Frost",
      "effect": {"dex_bonus": 2},
      "description": "An ice-cold dagger. +2 DEX, bonus ice damage.",
-     "identified": False, "estimated_value": 150},
+     "identified": False, "estimated_value": 375},
 
     {"name": "Ring of the Battlemage", "appraised_name": "Ring of the Battlemage", "type": "accessory", "slot": "ring1",
      "subtype": "ring", "rarity": "rare",
      "effect": {"int_bonus": 3, "str_bonus": 1},
      "description": "Worn by warrior-mages of the old Wardens. +3 INT, +1 STR.",
-     "identified": False, "estimated_value": 140},
+     "identified": False, "estimated_value": 310},
 
     {"name": "Shield of the Sentinel", "appraised_name": "Shield of the Sentinel", "type": "armor", "slot": "off_hand",
      "subtype": "shield", "rarity": "rare",
      "defense": 6, "magic_resist": 4,
      "effect": {"con_bonus": 1},
      "description": "An ancient shield that still hums with protective magic. +1 CON.",
-     "identified": False, "estimated_value": 180},
+     "identified": False, "estimated_value": 355},
 
     {"name": "Orb of Fading Sight", "appraised_name": "Orb of Fading Sight", "type": "weapon", "slot": "weapon",
      "subtype": "Orb", "max_charges": 30, "rarity": "rare", "damage": 20, "phys_type": "shadow", "range": "ranged",
@@ -177,14 +177,14 @@ SECRET_ITEMS_T2 = [
      "spell_bonus": 5, "enchant_element": "shadow",
      "on_hit_effect": {"status": "Weakened", "chance": 0.30, "duration": 2},
      "description": "A dark crystal orb swirling with Fading energy. Shadow bolts — 30% chance to Weaken target (reduced damage) for 2 turns. +3 INT, +2 WIS, +5 spell.",
-     "identified": False, "estimated_value": 240},
+     "identified": False, "estimated_value": 430},
 
     {"name": "Boots of the Wind", "appraised_name": "Boots of the Wind", "type": "armor", "slot": "feet",
      "subtype": "boots", "rarity": "rare",
      "defense": 2, "speed_bonus": 4,
      "effect": {"dex_bonus": 2},
      "description": "Enchanted boots that make the wearer swift as wind. +2 DEX, +4 speed.",
-     "identified": False, "estimated_value": 170},
+     "identified": False, "estimated_value": 340},
 
     {"name": "Shadow Wand", "appraised_name": "Shadow Wand",
      "type": "weapon", "slot": "weapon", "subtype": "Wand", "max_charges": 20,
@@ -193,7 +193,7 @@ SECRET_ITEMS_T2 = [
      "on_hit_effect": {"status": "Sleep", "chance": 0.25, "duration": 2},
      "unidentified_name": "Darkened Wand", "unidentified_desc": "A wand that seems to absorb light near its tip.",
      "description": "A wand of shadow-essence. Fires shadow bolts — 25% chance to Sleep target for 2 turns. +5 spell power.",
-     "identified": False, "estimated_value": 200},
+     "identified": False, "estimated_value": 390},
 
     {"name": "Tempest Rod", "appraised_name": "Tempest Rod",
      "type": "weapon", "slot": "weapon", "subtype": "Rod", "max_charges": 25,
@@ -202,21 +202,21 @@ SECRET_ITEMS_T2 = [
      "on_hit_effect": {"status": "Stunned", "chance": 0.25, "duration": 1},
      "unidentified_name": "Crackling Rod", "unidentified_desc": "A rod that hums and occasionally sparks.",
      "description": "A rod charged with storm-magic. Fires lightning bolts — 25% chance to Stun for 1 turn. +5 spell power.",
-     "identified": False, "estimated_value": 220},
+     "identified": False, "estimated_value": 410},
 
     {"name": "Crown of Clarity", "appraised_name": "Crown of Clarity", "type": "armor", "slot": "head",
      "subtype": "circlet", "rarity": "rare",
      "defense": 2, "magic_resist": 6,
      "effect": {"wis_bonus": 3},
      "description": "A silver circlet that clears the mind. +3 WIS, +6 magic resist.",
-     "identified": False, "estimated_value": 190},
+     "identified": False, "estimated_value": 370},
 
     {"name": "Gauntlets of Might", "appraised_name": "Gauntlets of Might", "type": "armor", "slot": "hands",
      "subtype": "gauntlets", "rarity": "rare",
      "defense": 3,
      "effect": {"str_bonus": 3},
      "description": "Heavy gauntlets that make your blows land harder. +3 STR.",
-     "identified": False, "estimated_value": 160},
+     "identified": False, "estimated_value": 325},
 ]
 
 SECRET_ITEMS_T3 = [
@@ -227,7 +227,7 @@ SECRET_ITEMS_T3 = [
      "enchant_element": "divine", "enchant_bonus": 6, "enchant_name": "Holy",
      "effect": {"str_bonus": 2, "pie_bonus": 2},
      "description": "A holy blade of the old Wardens. +2 STR, +2 PIE, divine damage.",
-     "identified": False, "estimated_value": 350},
+     "identified": False, "estimated_value": 620},
 
     {"name": "Staff of the Fading", "appraised_name": "Staff of the Fading", "type": "weapon", "slot": "weapon",
      "subtype": "Staff", "max_charges": 30, "rarity": "epic", "damage": 11,
@@ -237,7 +237,7 @@ SECRET_ITEMS_T3 = [
      "enchant_element": "shadow", "enchant_bonus": 6, "enchant_name": "Shadow",
      "effect": {"int_bonus": 4},
      "description": "A twisted staff that channels the Fading itself. +4 INT, +8 spell, shadow damage.",
-     "identified": False, "estimated_value": 400},
+     "identified": False, "estimated_value": 660},
 
     {"name": "Aegis of Dawn", "appraised_name": "Aegis of Dawn", "type": "armor", "slot": "off_hand",
      "subtype": "shield", "rarity": "epic",
@@ -245,7 +245,7 @@ SECRET_ITEMS_T3 = [
      "effect": {"con_bonus": 2, "pie_bonus": 2},
      "enchant_resist": "shadow", "enchant_resist_bonus": 5,
      "description": "A radiant shield that repels darkness. +2 CON, +2 PIE, shadow resist.",
-     "identified": False, "estimated_value": 450},
+     "identified": False, "estimated_value": 580},
 ]
 
 

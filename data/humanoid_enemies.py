@@ -100,7 +100,7 @@ HUMANOID_ENEMIES = {
         "abilities": [],
         "loot_table": [
             {"drop_chance": 0.15, "item": _sword(
-                "Bandit Broadsword", "Heavy Sword", 8, 14,
+                "Bandit Broadsword", "Heavy Sword", 8, 85,
                 "A broad iron sword, notched from heavy use. Still cuts.")},
             {"drop_chance": 0.10, "item": _leather()},
         ],
@@ -130,7 +130,7 @@ HUMANOID_ENEMIES = {
                 "name": "Bundle of Arrows", "type": "consumable", "subtype": "ammo",
                 "rarity": "common", "quantity": 8, "identify_difficulty": 0, "identified": True,
                 "description": "A bundle of crude iron-tipped arrows."}},
-            {"drop_chance": 0.08, "item": _dagger("Backup Knife", 4, 6,
+            {"drop_chance": 0.08, "item": _dagger("Backup Knife", 4, 60,
                 "A short blade the archer kept hidden.")},
         ],
         "description_tiers": {
@@ -155,7 +155,7 @@ HUMANOID_ENEMIES = {
         "status_immunities": [],
         "abilities": ["enemy_crippling_strike"],
         "loot_table": [
-            {"drop_chance": 0.18, "item": _dagger("Serrated Stiletto", 5, 10,
+            {"drop_chance": 0.18, "item": _dagger("Serrated Stiletto", 5, 75,
                 "A thin blade with a serrated edge. Designed to wound, not kill quickly.")},
             {"drop_chance": 0.15, "item": _coin_pouch(5, 20)},
         ],
@@ -181,7 +181,7 @@ HUMANOID_ENEMIES = {
         "status_immunities": [],
         "abilities": ["enemy_fireball"],
         "loot_table": [
-            {"drop_chance": 0.20, "item": _staff("Rough Ashwood Staff", 5, 18,
+            {"drop_chance": 0.20, "item": _staff("Rough Ashwood Staff", 5, 80,
                 "A staff carved with crude runes. Self-taught magic at its most dangerous.")},
             {"drop_chance": 0.25, "item": {
                 "name": "Mana Shard", "type": "material", "subtype": "arcane",
@@ -214,7 +214,7 @@ HUMANOID_ENEMIES = {
         "abilities": ["enemy_war_cry", "enemy_cleave"],
         "loot_table": [
             {"drop_chance": 0.30, "item": _sword(
-                "Captain's Longsword", "Fine Sword", 12, 35,
+                "Captain's Longsword", "Fine Sword", 12, 115,
                 "A proper sword — well-maintained and obviously the captain's pride.")},
             {"drop_chance": 0.20, "item": _coin_pouch(20, 50)},
             {"drop_chance": 0.12, "item": {
@@ -248,7 +248,7 @@ HUMANOID_ENEMIES = {
         "abilities": [],
         "loot_table": [
             {"drop_chance": 0.18, "item": _sword(
-                "Iron Contract Blade", "Heavy Longsword", 10, 22,
+                "Iron Contract Blade", "Heavy Longsword", 10, 100,
                 "Mercenary-issued iron sword. Functional, boring, deadly.")},
             {"drop_chance": 0.08, "item": _leather(6)},
         ],
@@ -280,7 +280,7 @@ HUMANOID_ENEMIES = {
                 "identify_difficulty": 1,
                 "unidentified_name": "Well-made Bow", "unidentified_desc": "A compact bow, better than average.",
                 "appraised_name": "Mercenary Shortbow", "material_desc": "Laminated hardwood, professionally strung.",
-                "magic_desc": "No magical properties.", "estimated_value": 25,
+                "magic_desc": "No magical properties.", "estimated_value": 105,
                 "description": "Standard-issue mercenary shortbow. Reliable."}},
         ],
         "description_tiers": {
@@ -309,7 +309,7 @@ HUMANOID_ENEMIES = {
                 "rarity": "uncommon", "identify_difficulty": 2,
                 "unidentified_name": "Carved Beads", "unidentified_desc": "Smooth wooden beads on a cord.",
                 "appraised_name": "Monk's Focus Beads", "material_desc": "Rosewood beads.",
-                "magic_desc": "Faint calming resonance.", "estimated_value": 18,
+                "magic_desc": "Faint calming resonance.", "estimated_value": 90,
                 "description": "Beads used for focus meditation. Still hold traces of ki."}},
         ],
         "description_tiers": {
@@ -340,7 +340,7 @@ HUMANOID_ENEMIES = {
                 "identify_difficulty": 1,
                 "unidentified_name": "Heavy Mace", "unidentified_desc": "A sturdy iron mace.",
                 "appraised_name": "Iron War Mace", "material_desc": "Cast iron head, hardwood haft.",
-                "magic_desc": "No magical properties.", "estimated_value": 20,
+                "magic_desc": "No magical properties.", "estimated_value": 95,
                 "description": "A mercenary cleric's tool of trade. Heals allies, bludgeons enemies."}},
             {"drop_chance": 0.15, "item": {
                 "name": "Vial of Holy Water", "type": "consumable", "subtype": "potion",
@@ -377,7 +377,7 @@ HUMANOID_ENEMIES = {
                 "identify_difficulty": 3, "element": "arcane",
                 "unidentified_name": "Glowing Blade", "unidentified_desc": "A sword with faintly glowing runes.",
                 "appraised_name": "Arcane Longsword", "material_desc": "Steel blade with arcane runes.",
-                "magic_desc": "Arcane enchantment — blade channels magic.", "estimated_value": 55,
+                "magic_desc": "Arcane enchantment — blade channels magic.", "estimated_value": 180,
                 "description": "A sword whose edge crackles with channeled arcane energy."}},
         ],
         "description_tiers": {
@@ -440,7 +440,7 @@ HUMANOID_ENEMIES = {
         "abilities": [],
         "loot_table": [
             {"drop_chance": 0.14, "item": _sword(
-                "Ruin-Black Blade", "Dark Sword", 9, 16,
+                "Ruin-Black Blade", "Dark Sword", 9, 95,
                 "Blackened iron blade engraved with cult markings.")},
             {"drop_chance": 0.10, "item": _leather(5)},
         ],
@@ -480,7 +480,7 @@ HUMANOID_ENEMIES = {
                 "appraised_name": "Shadow-Etched Saber",
                 "material_desc": "Steel blade treated with shadow essence.",
                 "magic_desc": "Shadow enchantment — weakens divine resistance.",
-                "estimated_value": 48, "description": "A saber that inflicts shadow-infused wounds."}},
+                "estimated_value": 170, "description": "A saber that inflicts shadow-infused wounds."}},
         ],
         "description_tiers": {
             0: "A warrior whose weapon seems to leave shadows hanging in the air.",
@@ -504,7 +504,7 @@ HUMANOID_ENEMIES = {
         "abilities": ["enemy_shadow_bolt", "enemy_fireball", "enemy_mass_weaken"],
         "loot_table": [
             {"drop_chance": 0.25, "item": _staff(
-                "Sorcerer's Blackwood Staff", 7, 38,
+                "Sorcerer's Blackwood Staff", 7, 110,
                 "A staff carved from shadowwood, still resonating with channeled power.")},
             {"drop_chance": 0.30, "item": {
                 "name": "Shadow Essence", "type": "material", "subtype": "arcane",
@@ -550,7 +550,7 @@ HUMANOID_ENEMIES = {
                 "appraised_name": "Tome of Unmaking",
                 "material_desc": "Bound in shadow-cured leather.",
                 "magic_desc": "Shadow enchantment — amplifies dark magic.",
-                "estimated_value": 120, "description": "A grimoire of shadow rituals."}},
+                "estimated_value": 320, "description": "A grimoire of shadow rituals."}},
             {"drop_chance": 0.20, "item": _coin_pouch(30, 70)},
         ],
         "description_tiers": {
@@ -587,7 +587,7 @@ HUMANOID_ENEMIES = {
                 "identify_difficulty": 1,
                 "unidentified_name": "Rusted Blade", "unidentified_desc": "A heavily corroded longsword.",
                 "appraised_name": "Corroded Iron Sword", "material_desc": "Iron nearly eaten through by rust.",
-                "magic_desc": "No magical properties.", "estimated_value": 4,
+                "magic_desc": "No magical properties.", "estimated_value": 50,
                 "description": "A sword long-dead along with its owner. Still holds an edge, barely."}},
         ],
         "description_tiers": {
@@ -646,7 +646,7 @@ HUMANOID_ENEMIES = {
                 "identify_difficulty": 2,
                 "unidentified_name": "Heavy Shield", "unidentified_desc": "A large kite shield, dented and tarnished.",
                 "appraised_name": "Corrupted Knight's Shield", "material_desc": "Iron-faced hardwood.",
-                "magic_desc": "Dark residual energy.", "estimated_value": 45,
+                "magic_desc": "Dark residual energy.", "estimated_value": 135,
                 "description": "A paladin's shield, corrupted like its former owner."}},
         ],
         "description_tiers": {
@@ -686,7 +686,7 @@ HUMANOID_ENEMIES = {
                 "appraised_name": "Void Orb",
                 "material_desc": "Crystal infused with void energy.",
                 "magic_desc": "Arcane and shadow enchantment.",
-                "estimated_value": 95, "description": "A mage's focus orb, corrupted by prolonged shadow exposure."}},
+                "estimated_value": 310, "description": "A mage's focus orb, corrupted by prolonged shadow exposure."}},
         ],
         "description_tiers": {
             0: "A desiccated robed figure crackling with unstable arcane energy.",

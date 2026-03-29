@@ -45,7 +45,7 @@ ENEMIES = {
                 "appraised_name": "Scrap Iron Shiv",
                 "material_desc": "Scrap iron, crudely shaped. Barely worth the metal.",
                 "magic_desc": "No magical properties.",
-                "estimated_value": 4,
+                "estimated_value": 55,
                 "description": "A goblin-forged shiv. Crude but sharp enough to draw blood.",
             }},
             {"drop_chance": 0.35, "item": {
@@ -98,7 +98,7 @@ ENEMIES = {
                 "appraised_name": "Crude Wooden Shortbow",
                 "material_desc": "Cheap wood, poorly shaped. Might snap under heavy use.",
                 "magic_desc": "No magical properties.",
-                "estimated_value": 5,
+                "estimated_value": 50,
                 "description": "A goblin-made shortbow. Flimsy but functional.",
             }},
             {"drop_chance": 0.15, "item": {
@@ -151,7 +151,7 @@ ENEMIES = {
                 "appraised_name": "Decent Steel Short Sword",
                 "material_desc": "Common steel, mass-forged. Nothing special about the make.",
                 "magic_desc": "No magical properties detected.",
-                "estimated_value": 12,
+                "estimated_value": 80,
                 "description": "A well-used blade with nicks along the edge. Carried by a bandit who won't need it anymore.",
             }},
             {"drop_chance": 0.30, "item": {
@@ -326,7 +326,7 @@ ENEMIES = {
                 "appraised_name": "Rusted Grave Sword",
                 "material_desc": "Old iron, badly corroded. Still functional if sharpened.",
                 "magic_desc": "Faint traces of old enchantment — long since faded.",
-                "estimated_value": 6,
+                "estimated_value": 55,
                 "description": "A sword reclaimed from a skeleton. Pitted with rust but serviceable.",
             }},
             {"drop_chance": 0.20, "item": {
@@ -351,7 +351,7 @@ ENEMIES = {
                 "appraised_name": "Cracked Iron Buckler",
                 "material_desc": "Cracked iron, structurally compromised. Barely worth carrying.",
                 "magic_desc": "No magical properties.",
-                "estimated_value": 8,
+                "estimated_value": 65,
                 "description": "A small iron shield, cracked but still deflecting.",
             }},
         ],
@@ -392,7 +392,7 @@ ENEMIES = {
                 "appraised_name": "Orcish Iron Broadsword",
                 "material_desc": "Crude orcish ironwork. Heavy but effective. Poor resale value.",
                 "magic_desc": "No magical properties.",
-                "estimated_value": 15,
+                "estimated_value": 90,
                 "description": "A crude but heavy iron blade favored by orc warriors.",
             }},
             {"drop_chance": 0.25, "item": {
@@ -450,7 +450,7 @@ ENEMIES = {
                 "appraised_name": "Masterwork Orcish Broadsword",
                 "material_desc": "Superior orcish steel, forged by a skilled weaponsmith. Rare quality for orc work.",
                 "magic_desc": "+1 enhancement. Faint enchantment boosts the wielder's strength.",
-                "estimated_value": 120,
+                "estimated_value": 220,
                 "description": "A massive jagged blade imbued with orcish battle rage. +1 enhancement, +1 STR when equipped.",
             }},
             {"drop_chance": 0.05, "item": {
@@ -463,7 +463,7 @@ ENEMIES = {
                 "appraised_name": "Orcish Bone Totem",
                 "material_desc": "Carved from troll bone — rare material. Ceremonial significance to orc clans.",
                 "magic_desc": "Imbued with a war blessing. Grants +2 STR while carried.",
-                "estimated_value": 200,
+                "estimated_value": 220,
                 "description": "A bone totem etched with crude symbols of power. +2 STR when equipped.",
             }},
             {"drop_chance": 0.12, "item": {
@@ -543,7 +543,7 @@ ENEMIES = {
                 "appraised_name": "Goblin Focus Wand",
                 "material_desc": "Swamp oak wrapped in lizard leather. Crude but functional focus implement.",
                 "magic_desc": "Channeling focus. Grants +2 to spell power when casting.",
-                "estimated_value": 35,
+                "estimated_value": 80,
                 "description": "A gnarled twig wrapped in leather strips. +2 spell bonus when used as a focus.",
             }},
         ],
@@ -581,7 +581,7 @@ ENEMIES = {
                 "name": "Goblin King's Crown", "type": "armor", "subtype": "helmet",
                 "rarity": "rare", "tier": 2, "defense": 12, "identified": False,
                 "appraised_name": "Goblin King's Crown",
-                "estimated_value": 200,
+                "estimated_value": 260,
                 "description": "A crude crown of bent metal and stolen gems. "
                                "+12 DEF. Surprisingly well-made for goblin craftsmanship.",
             }},
@@ -589,7 +589,7 @@ ENEMIES = {
                 "name": "Goblin King's Coin", "type": "accessory", "subtype": "trinket",
                 "rarity": "uncommon", "tier": 2, "identified": False,
                 "appraised_name": "Goblin King's Lucky Coin",
-                "estimated_value": 120,
+                "estimated_value": 140,
                 "stat_bonus": {"LCK": 2},
                 "description": "A battered gold coin Grak carried for luck. +2 LCK.",
             }},
@@ -629,7 +629,7 @@ ENEMIES = {
             {"drop_chance": 0.80, "item": {
                 "name": "Spider Silk Mantle", "type": "armor", "subtype": "cloak",
                 "rarity": "rare", "tier": 2, "defense": 7, "magic_resist": 8, "identified": True,
-                "estimated_value": 180,
+                "estimated_value": 265,
                 "description": "A shimmering cloak woven from spider silk. Light and magically resistant.",
             }},
             {"drop_chance": 0.15, "item": {
@@ -670,7 +670,7 @@ ENEMIES = {
                 "name": "Foreman's Pickaxe", "type": "weapon", "subtype": "axe",
                 "rarity": "rare", "tier": 3, "damage": 32, "identified": True,
                 "damage_stat": {"STR": 0.4},
-                "estimated_value": 250,
+                "estimated_value": 295,
                 "description": "A massive mining pick, still sharp after centuries. +22 base damage.",
             }},
             {"drop_chance": 0.15, "item": {
@@ -719,7 +719,7 @@ ENEMIES = {
                 "name": "Warden's Stone Hammer", "type": "weapon", "subtype": "hammer",
                 "rarity": "rare", "tier": 3, "damage": 36, "identified": True,
                 "damage_stat": {"STR": 0.4},
-                "estimated_value": 340,
+                "estimated_value": 380,
                 "description": "A dwarven war-hammer inscribed with ward-runes. "
                                "+26 base damage, +8 magic resist to wielder.",
                 "stat_bonus": {"magic_resist": 8},
@@ -763,7 +763,7 @@ ENEMIES = {
             {"drop_chance": 0.90, "item": {
                 "name": "Ashenmoor Commander's Seal", "type": "accessory",
                 "subtype": "amulet", "rarity": "rare", "tier": 3,
-                "identified": True, "estimated_value": 280,
+                "identified": True, "estimated_value": 300,
                 "description": "A cracked warden seal, still radiating residual authority. "
                                "+12 magic resist, +6 defense.",
                 "stat_bonus": {"magic_resist": 12, "defense": 6},
@@ -772,7 +772,7 @@ ENEMIES = {
                 "name": "Scorched Warden Blade", "type": "weapon", "subtype": "sword",
                 "rarity": "uncommon", "tier": 3, "damage": 30, "identified": True,
                 "damage_stat": {"STR": 0.3, "DEX": 0.12},
-                "estimated_value": 210,
+                "estimated_value": 300,
                 "description": "A warden's sword, blackened by whatever destroyed Ashenmoor. "
                                "+20 base damage, deals bonus fire damage.",
                 "stat_bonus": {"fire_damage_bonus": 6},
