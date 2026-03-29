@@ -343,6 +343,9 @@ def save_game(party, world_state=None, slot_name="save1", metadata=None, dungeon
     try:
         with open(filepath, "w") as f:
             json.dump(save_data, f, indent=2)
+        # Verify the file was actually written and is readable
+        if not os.path.exists(filepath) or os.path.getsize(filepath) < 10:
+            return False, None, "Save failed: file not written to disk"
         return True, filepath, f"Game saved to {slot_name}"
     except Exception as e:
         return False, None, f"Save failed: {e}"

@@ -1053,8 +1053,22 @@ class Game:
 
     def _do_exit_game(self, save_first=False):
         """Optionally save, then cleanly quit the game loop."""
-        if save_first:
-            self._do_save()
+        if save_first and self.party:
+            # Save immediately to inn_autosave without opening the slot picker.
+            # Opening the slot picker then setting running=False means the game
+            # exits before the user can click a slot — the save never happens.
+            from core.save_load import save_game
+            try:
+                ok, _path, msg = save_game(
+                    self.party,
+                    world_state=self.world_state,
+                    slot_name="inn_autosave",
+                    dungeon_cache=self.dungeon_cache,
+                )
+                if ok:
+                    self.add_toast("✓ Progress autosaved.", (80, 200, 120))
+            except Exception:
+                pass
         self.running = False
 
     # ──────────────────────────────────────────────────────────
@@ -1153,8 +1167,10 @@ class Game:
                     _sfx.play("ui_open")
                     self.go(S_SETTINGS)
                 elif key == "menu_save_exit":
+                    self.show_menu_overlay = False
                     self._do_exit_game(save_first=True)
                 elif key == "menu_exit":
+                    self.show_menu_overlay = False
                     self._do_exit_game(save_first=False)
                 # menu_close: just close
                 return True
