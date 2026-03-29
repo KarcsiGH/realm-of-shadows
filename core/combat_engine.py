@@ -962,8 +962,24 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             if apply_status_effect(tgt, "Stunned", 1, 1.0):
                 msgs.append(f"{msg_prefix}{tgt['name']} is STUNNED!")
         if ability.get("slow_chance") and random.random() < ability["slow_chance"]:
-            if apply_status_effect(tgt, "Slowed", ability.get("slow_duration", 2), 1.0):
+            slow_dur = ability.get("slow_duration", 2)
+            # Cold resistance reduces both chance and magnitude
+            cold_resist = tgt.get("resistances", {}).get("ice", 1.0)
+            if cold_resist < 1.0:
+                if random.random() < cold_resist:
+                    msgs.append(f"{msg_prefix}{tgt['name']} resists the chill!")
+                    return msgs
+            if apply_status_effect(tgt, "Slowed", slow_dur, 1.0):
                 msgs.append(f"{msg_prefix}{tgt['name']} is Slowed!")
+                # Apply defense and accuracy penalties to enemies only
+                if tgt.get("type") == "enemy":
+                    def_pen = max(1, int(tgt.get("defense", 0) * 0.20))
+                    acc_pen = 15
+                    tgt["_slow_def_penalty"] = tgt.get("_slow_def_penalty", 0) + def_pen
+                    tgt["_slow_acc_penalty"] = tgt.get("_slow_acc_penalty", 0) + acc_pen
+                    tgt["defense"] = max(0, tgt.get("defense", 0) - def_pen)
+                    tgt["accuracy_bonus"] = tgt.get("accuracy_bonus", 0) - acc_pen
+                    msgs.append(f"{msg_prefix}{tgt['name']}'s defenses are compromised by the cold!")
         if ability.get("apply_poison"):
             poison_key = ability["apply_poison"]
             # Map progression poison keys → combat status
@@ -979,6 +995,10 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             dot_map = {"burning": "Burning"}
             sname = dot_map.get(ability["dot"], ability["dot"].capitalize())
             sdur  = ability.get("dot_duration", 2)
+            # Burn duration scales with caster level: +1 per 4 levels above 1
+            if sname == "Burning" and attacker.get("type") == "player":
+                caster_lv = attacker.get("level", 1)
+                sdur = sdur + max(0, (caster_lv - 1) // 4)
             if apply_status_effect(tgt, sname, sdur, 1.0):
                 msgs.append(f"{msg_prefix}{tgt['name']} is {sname}!")
         if ability.get("armor_shred"):
@@ -1145,6 +1165,13 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
 
         atk_mult, _, _, _ = _active_buff_mods(attacker)
         _, def_bonus, _, _ = _active_buff_mods(tgt)
+
+        # ── Caster level scaling: +3% per level above 1, capped at +40% ──
+        if attacker.get("type") == "player":
+            caster_lv = attacker.get("level", 1)
+            level_bonus = min(0.40, (caster_lv - 1) * 0.03)
+            if level_bonus > 0:
+                atk_mult *= (1.0 + level_bonus)
 
         # Spell Mastery passive (Archmage): +25% spell damage
         if any(a.get("passive") == "spell_mastery" for a in attacker.get("abilities", [])
@@ -1326,6 +1353,33 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
 
     # ── DEBUFF ─────────────────────────────────────────────────
     if is_debuff:
+        # ── Special: Turn Undead — affects all undead/shadow_touched/faded enemies ──
+        if ability.get("targets") == "undead":
+            valid_tags = {"undead", "shadow_touched", "faded"}
+            tgt_list = [e for e in (all_enemies or [])
+                        if e.get("alive") and valid_tags & set(e.get("tags", []))]
+            if not tgt_list:
+                result["messages"].append(
+                    f"{attacker['name']} uses {ability['name']} — "
+                    f"no undead or shadow-touched enemies present!"
+                )
+                return result
+            dur = ability.get("fear_duration", 3)
+            count = 0
+            for tgt in tgt_list:
+                if apply_status_effect(tgt, "Fear", dur, 1.0):
+                    tgt["attack_damage"] = max(1, int(tgt.get("attack_damage", 1) * 0.5))
+                    label = "TURNED" if "undead" in tgt.get("tags", []) else "DRIVEN BACK"
+                    result["messages"].append(
+                        f"{tgt['name']} is {label} — cowering in holy terror!"
+                    )
+                    count += 1
+            if not count:
+                result["messages"].append(
+                    f"{attacker['name']} uses {ability['name']} — enemies resist!"
+                )
+            return result
+
         acc = calc_magic_accuracy(attacker, target)
         if not roll_hit(acc):
             result["hit"] = False
@@ -1596,6 +1650,14 @@ def tick_status_effects(combatant):
             remaining.append(status)
         else:
             messages.append(f"{name} wears off {combatant['name']}.")
+            # Restore cold-slow penalties on enemies when Slowed expires
+            if name == "Slowed" and combatant.get("type") == "enemy":
+                def_pen = combatant.pop("_slow_def_penalty", 0)
+                acc_pen = combatant.pop("_slow_acc_penalty", 0)
+                if def_pen:
+                    combatant["defense"] = combatant.get("defense", 0) + def_pen
+                if acc_pen:
+                    combatant["accuracy_bonus"] = combatant.get("accuracy_bonus", 0) + acc_pen
 
     combatant["status_effects"] = remaining
     return messages

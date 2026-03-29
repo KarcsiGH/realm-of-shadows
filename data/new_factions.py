@@ -1103,6 +1103,22 @@ DWARF_ENEMIES = {
 #  ALL ENEMIES MERGED
 # ═══════════════════════════════════════════════════════════════
 
+# ── Post-process: add tags to fading-touched enemies ────────────
+_FADED_BEASTS = {"Fading Wolf","Fading Hound","Fading Boar","Fading Bear","Fading Stag"}
+_SHADOW_FACTION = {"Warden Shade","Shadow Warden","Iron Ridge Shade"}
+for _d in [BEAST_ENEMIES, FALLEN_WARDEN_ENEMIES if "FALLEN_WARDEN_ENEMIES" in dir() else {},
+           PIRATE_ENEMIES, IMPERIAL_ENEMIES, DWARF_ENEMIES]:
+    for _k, _v in _d.items():
+        if isinstance(_v, dict):
+            _n = _v.get("name","")
+            if _n in _FADED_BEASTS:
+                _v.setdefault("tags",[])
+                if "faded" not in _v["tags"]: _v["tags"].append("faded")
+                if "shadow_touched" not in _v["tags"]: _v["tags"].append("shadow_touched")
+            elif _n in _SHADOW_FACTION:
+                _v.setdefault("tags",[])
+                if "shadow_touched" not in _v["tags"]: _v["tags"].append("shadow_touched")
+
 ALL_NEW_FACTION_ENEMIES = {}
 ALL_NEW_FACTION_ENEMIES.update(BEAST_ENEMIES)
 ALL_NEW_FACTION_ENEMIES.update(FALLEN_WARDEN_ENEMIES)

@@ -262,7 +262,7 @@ MACE_ARMOR_BYPASS = 0.30  # maces ignore 30% of defense
 # Value is flat damage per tick.  Tunable here.
 STATUS_TICK_DAMAGE = {
     "Poisoned":     4,
-    "Burning":      6,
+    "Burning":      10,
     "Frostbitten":  3,
     "Shocked":      5,
     "Bleeding":     3,
@@ -270,7 +270,8 @@ STATUS_TICK_DAMAGE = {
 
 # Status effects that prevent action (Speed = 0 handles skipping,
 # these are listed for the tick system to decrement duration only)
-STATUS_INCAPACITATE = {"Stunned", "Frozen", "Petrified", "Sleep", "Feared"}
+# "Fear" (from Turn Undead) and "Feared" both incapacitate — enemy skips turn
+STATUS_INCAPACITATE = {"Stunned", "Frozen", "Petrified", "Sleep", "Feared", "Fear"}
 
 # All statuses that should tick down each round
 STATUS_DURATION_TICK = (

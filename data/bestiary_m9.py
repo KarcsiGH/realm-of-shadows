@@ -580,6 +580,18 @@ NEW_ENEMIES = {
               2:"Karreth — Final Boss. Fire immune. Ice deals 2.5x. AoE fire breath. Very high HP."}),
 }
 
+# ── Post-process: add tags to Fading/Shadow enemies ─────────────
+_SHADOW_TOUCHED = {
+    "Fading Cultist", "Fading Abomination", "Shadow Stalker", "Shadow Brute",
+    "Shadow Valdris", "Warden Revenant",
+}
+for _k, _v in NEW_ENEMIES.items():
+    if isinstance(_v, dict):
+        if _k in _SHADOW_TOUCHED:
+            _v.setdefault("tags", [])
+            if "shadow_touched" not in _v["tags"]:
+                _v["tags"].append("shadow_touched")
+
 # ══════════════════════════════════════════════════════════
 #  NEW ENCOUNTERS
 # ══════════════════════════════════════════════════════════
