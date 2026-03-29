@@ -238,13 +238,14 @@ class CampUI:
         c = self.party[self.selected_char]
 
         # Inventory list
-        BODY_BOT   = 840          # usable bottom of camp panel
+        # Reserve 320px at bottom for action buttons + item detail + compare panel
+        BODY_BOT   = SCREEN_H - 320   # 580 at 900px screen
         ROW_H      = 36
         LIST_X     = 60
         SB_W       = 10           # scrollbar width
         ROW_W      = SCREEN_W - LIST_X - 26  # leave room for scrollbar
         list_top   = top + 52
-        list_bot   = BODY_BOT - 60   # leave room for action buttons below list
+        list_bot   = BODY_BOT          # list ends here; buttons + detail go below
         visible_n  = max(1, (list_bot - list_top) // ROW_H)
 
         iy = list_top
@@ -345,11 +346,13 @@ class CampUI:
 
             # ── Item details + compare panel ──────────────
             detail_offset = 84 if getattr(self,"_give_mode",False) and len(self.party)>1 else 50
-            detail_y = by + detail_offset
+            # Clamp detail panel so it never extends below screen bottom
+            detail_y = min(by + detail_offset, SCREEN_H - 260)
             self._draw_item_details(surface, item, detail_y)
             # Show comparison if item is equippable
             if item.get("slot"):
-                self._draw_equip_compare(surface, item, 80, detail_y + 164, SCREEN_W - 160)
+                cmp_y = min(detail_y + 164, SCREEN_H - 100)
+                self._draw_equip_compare(surface, item, 80, cmp_y, SCREEN_W - 160)
 
     def _draw_item_details(self, surface, item, y):
         """Draw item attribute panel for a selected item."""
@@ -2261,8 +2264,8 @@ class CampUI:
         top      = 80
         list_top = top + 52
         ROW_H    = 36
-        BODY_BOT = 840
-        list_bot = BODY_BOT - 60
+        BODY_BOT = SCREEN_H - 320
+        list_bot = BODY_BOT
         visible_n = max(1, (list_bot - list_top) // ROW_H)
         LIST_X   = 60
         ROW_W    = SCREEN_W - LIST_X - 26
