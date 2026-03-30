@@ -229,6 +229,130 @@ def _gen_door_texture(theme_id="cave", wall_light=(110,90,70), wall_dark=(45,35,
     return surf
 
 
+def _gen_arch_sprite(theme_id, wall_light, wall_dark, width, height):
+    """Generate a stone arch frame sprite sized to (width, height).
+
+    The arch frame is drawn as a pygame Surface with per-pixel alpha so it
+    composites cleanly over the door wall slice.  Only the arch surround is
+    drawn — the opening is fully transparent, preserving the door texture.
+    """
+    import math as _math
+    surf = pygame.Surface((width, height), pygame.SRCALPHA)
+    surf.fill((0, 0, 0, 0))   # fully transparent base
+
+    if width < 6 or height < 6:
+        return surf            # too small to draw
+
+    rng_arch = random.Random(hash(("arch", theme_id, width, height)) & 0xFFFFFFFF)
+
+    # Arch geometry
+    jamb_w   = max(3, width  // 10)        # side jamb width in pixels
+    arch_cx  = width  // 2
+    arch_top = max(2, height // 6)         # y-coord of arch centre
+    arch_r   = (width // 2) - jamb_w       # radius to inner arch edge
+    arch_thick = max(3, width // 9)        # thickness of arch ring
+
+    mortar   = tuple(max(0, int(v * 0.38)) for v in wall_dark) + (255,)
+    stone_l  = tuple(min(255, int(v * 0.9)) for v in wall_light) + (255,)
+    stone_h  = tuple(min(255, int(v * 1.12)) for v in wall_light) + (255,)
+
+    BH = max(4, height // 9)
+    BW = max(6, width  // 4)
+
+    # ── Left jamb (stone blocks) ──────────────────────────────────────────
+    y_start = int(arch_top + arch_r)        # jamb starts below arch curve
+    for row in range(20):
+        oy = y_start + row * BH
+        if oy >= height: break
+        tone = 0.80 + rng_arch.random() * 0.28
+        c = tuple(min(255, int(v * tone)) for v in wall_light) + (255,)
+        h = min(BH - 1, height - oy)
+        if h > 0:
+            pygame.draw.rect(surf, c, (0, oy, jamb_w, h))
+            pygame.draw.rect(surf, mortar, (0, oy + h - 1, jamb_w, 1))
+            # Highlight top of each block
+            pygame.draw.rect(surf, stone_h, (0, oy, jamb_w, 1))
+            # Shadow on right edge of jamb
+            pygame.draw.rect(surf, mortar, (jamb_w - 1, oy, 1, h))
+
+    # ── Right jamb ────────────────────────────────────────────────────────
+    rng_arch2 = random.Random(hash(("arch2", theme_id)) & 0xFFFFFFFF)
+    for row in range(20):
+        oy = y_start + row * BH
+        if oy >= height: break
+        tone = 0.80 + rng_arch2.random() * 0.28
+        c = tuple(min(255, int(v * tone)) for v in wall_light) + (255,)
+        h = min(BH - 1, height - oy)
+        if h > 0:
+            pygame.draw.rect(surf, c, (width - jamb_w, oy, jamb_w, h))
+            pygame.draw.rect(surf, mortar, (width - jamb_w, oy + h - 1, jamb_w, 1))
+            pygame.draw.rect(surf, stone_h, (width - jamb_w, oy, jamb_w, 1))
+            pygame.draw.rect(surf, mortar, (width - jamb_w, oy, 1, h))
+
+    # ── Voussoir arch ring ────────────────────────────────────────────────
+    n_stones = max(5, min(13, width // 14))   # odd number for keystone
+    if n_stones % 2 == 0:
+        n_stones += 1
+    inner_r  = arch_r
+    outer_r  = arch_r + arch_thick
+
+    for i in range(n_stones):
+        a0 = _math.pi + (i / n_stones) * _math.pi
+        a1 = _math.pi + ((i + 1) / n_stones) * _math.pi
+
+        is_keystone = (i == n_stones // 2)
+        tone = 1.15 if is_keystone else (0.78 + rng_arch.random() * 0.30)
+        c = tuple(min(255, int(v * tone)) for v in wall_light) + (255,)
+
+        # Draw filled voussoir wedge
+        pts = []
+        steps = max(4, int((a1 - a0) * outer_r))
+        for s in range(steps + 1):
+            t = s / steps
+            a = a0 + t * (a1 - a0)
+            pts.append((int(arch_cx + outer_r * _math.cos(a)),
+                         int(arch_top  + outer_r * _math.sin(a))))
+        for s in range(steps, -1, -1):
+            t = s / steps
+            a = a0 + t * (a1 - a0)
+            pts.append((int(arch_cx + inner_r * _math.cos(a)),
+                         int(arch_top  + inner_r * _math.sin(a))))
+        if len(pts) >= 3:
+            pygame.draw.polygon(surf, c, pts)
+            # Mortar joint lines at edges
+            pygame.draw.polygon(surf, mortar, pts, 1)
+
+        # Chisel highlight on outer edge (lighter line)
+        mid_a = (a0 + a1) / 2
+        for da in (_math.radians(2),):
+            hx1 = int(arch_cx + outer_r * _math.cos(a0 + da))
+            hy1 = int(arch_top  + outer_r * _math.sin(a0 + da))
+            hx2 = int(arch_cx + outer_r * _math.cos(a1 - da))
+            hy2 = int(arch_top  + outer_r * _math.sin(a1 - da))
+            pygame.draw.line(surf, stone_h, (hx1, hy1), (hx2, hy2), 1)
+
+        # Mortar joint line between voussoirs
+        for edge_a in (a0, a1):
+            ix = int(arch_cx + inner_r * _math.cos(edge_a))
+            iy = int(arch_top  + inner_r * _math.sin(edge_a))
+            ox = int(arch_cx + outer_r * _math.cos(edge_a))
+            oy = int(arch_top  + outer_r * _math.sin(edge_a))
+            pygame.draw.line(surf, mortar, (ix, iy), (ox, oy), max(1, width // 80))
+
+    # Tower theme: add void glow on arch outer edge
+    if theme_id == "tower":
+        void_col = (110, 55, 210, 60)
+        for i in range(max(5, int(outer_r * _math.pi / 2))):
+            t = i / max(1, int(outer_r * _math.pi / 2))
+            a = _math.pi + t * _math.pi
+            gx = int(arch_cx + (outer_r + 2) * _math.cos(a))
+            gy = int(arch_top  + (outer_r + 2) * _math.sin(a))
+            if 0 <= gx < width and 0 <= gy < height:
+                surf.set_at((gx, gy), void_col)
+
+    return surf
+
+
 def _gen_stair_texture(going_down=True, light=(180,160,120), dark=(90,75,50)):
     """Full-wall stair texture: perspective step pattern floor-to-ceiling."""
     surf = pygame.Surface((TEX_W, TEX_H))
@@ -664,6 +788,9 @@ class DungeonUI:
         self._tex_door       = _gen_door_texture(
             self.theme_id, self.wall_light, self.wall_dark)
         self._door_cols      = self._bake_tex_cols(self._tex_door)
+        # Arch sprite cache: key=(width,height) -> Surface.
+        # Generated lazily and cached so each unique door size is only built once.
+        self._arch_cache: dict = {}
         # Stairs down: cool blue-grey (going deeper into darkness)
         _sd_l = (max(0,self.wall_light[0]-20), max(0,self.wall_light[1]-10), min(255,self.wall_light[2]+40))
         _sd_d = (max(0,self.wall_dark[0]-15),  max(0,self.wall_dark[1]-8),   min(255,self.wall_dark[2]+25))
@@ -1033,6 +1160,12 @@ class DungeonUI:
         door_cols     = self._door_cols
         num_v         = len(wall_variants)
 
+        # Track door screen bounds for arch sprite overlay (Option B)
+        _door_col_min = VW     # leftmost column of door
+        _door_col_max = -1     # rightmost column of door
+        _door_top_min = VH     # topmost pixel of door
+        _door_bot_max = 0      # bottommost pixel of door
+
         for col in range(VW):
             cam_x    = (2.0 * col / VW) - 1.0
             ray_dx   = self.dx + self.cx * cam_x
@@ -1049,6 +1182,13 @@ class DungeonUI:
             tex_x = int(wx * TEX_W) % TEX_W
             if is_door:
                 cols_src = door_cols[tex_x]
+                # Accumulate door screen bounds for arch sprite
+                if col < _door_col_min: _door_col_min = col
+                if col > _door_col_max: _door_col_max = col
+                _door_top_this = max(0, top)
+                _door_bot_this = min(VH, top + wall_h)
+                if _door_top_this < _door_top_min: _door_top_min = _door_top_this
+                if _door_bot_this > _door_bot_max: _door_bot_max = _door_bot_this
             elif is_stair:
                 # Dedicated stair texture — no sprite overlay needed
                 if hit_tt == DT_STAIRS_DOWN:
@@ -1077,6 +1217,23 @@ class DungeonUI:
                 gc = int(g * bright + fog_c[1] * fb)
                 bc = int(b * bright + fog_c[2] * fb)
                 view.set_at((col, screen_y), (rc, gc, bc))
+
+        # ── Arch sprite overlay ──
+        # Draw stone arch frame over the door wall slice.
+        # Only fires when a door was actually visible this frame.
+        if _door_col_max >= _door_col_min and _door_bot_max > _door_top_min:
+            dw = _door_col_max - _door_col_min + 1
+            dh = _door_bot_max - _door_top_min
+            if dw >= 6 and dh >= 6:
+                key = (dw, dh)
+                if key not in self._arch_cache:
+                    self._arch_cache[key] = _gen_arch_sprite(
+                        self.theme_id, self.wall_light, self.wall_dark, dw, dh)
+                arch_surf = self._arch_cache[key]
+                view.blit(arch_surf, (_door_col_min, _door_top_min))
+            # Reset bounds for next frame
+            _door_col_min = VW; _door_col_max = -1
+            _door_top_min = VH; _door_bot_max = 0
 
         # ── Sprites ──
         self._render_sprites(view, zbuf)
