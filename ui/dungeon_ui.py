@@ -74,23 +74,158 @@ NUM_WALL_VARIANTS = 3   # variants per theme — assigned per tile coordinate ha
 
 # ── Variant generators ───────────────────────────────────────────
 
-def _gen_door_texture():
-    """Warm wood door — unchanged, shared by all themes."""
+def _gen_door_texture(theme_id="cave", wall_light=(110,90,70), wall_dark=(45,35,26)):
+    """Generate a door texture appropriate for the given dungeon theme.
+
+    Styles:
+      cave  — banded wood planks with iron straps (goblin warren)
+      mine  — heavy timber frame with cross-brace, iron bolts
+      crypt — cut-stone pointed arch, iron-studded oak door
+      ruins — crumbling stone round arch, weathered wood
+      tower — narrow pointed arch, void-tinted stone surround
+    Web / spider theme is handled in _gen_theme_textures via wall variant.
+    """
     surf = pygame.Surface((TEX_W, TEX_H))
-    rng  = random.Random(0xD00D)
-    WOOD_BASE  = (120, 75, 35)
-    WOOD_DARK  = (80,  50, 20)
-    WOOD_LIGHT = (160, 105, 55)
-    surf.fill(WOOD_BASE)
-    for px in range(0, TEX_W, 6):
-        tone = rng.uniform(0.85, 1.15)
-        c = tuple(min(255, int(v * tone)) for v in WOOD_BASE)
-        pygame.draw.line(surf, c, (px, 0), (px, TEX_H))
-    for py in [TEX_H//6, TEX_H//2, TEX_H*5//6]:
-        pygame.draw.rect(surf, WOOD_DARK,  (0, py-2, TEX_W, 4))
-        pygame.draw.rect(surf, WOOD_LIGHT, (0, py-3, TEX_W, 1))
-    pygame.draw.circle(surf, (200, 160, 40), (TEX_W*3//4, TEX_H//2), 4)
-    pygame.draw.circle(surf, (240, 200, 80), (TEX_W*3//4, TEX_H//2), 3)
+    rng  = random.Random(hash(("door", theme_id)) & 0xFFFFFFFF)
+
+    if theme_id == "mine":
+        # Heavy timber frame door — plank fill + thick frame + cross-brace
+        WOOD   = (95, 62, 28)
+        DARK   = (58, 36, 14)
+        FRAME  = (72, 46, 18)
+        IRON   = (55, 55, 60)
+        surf.fill(DARK)
+        # Vertical planks
+        for px in range(2, TEX_W - 2, 7):
+            tone = rng.uniform(0.88, 1.12)
+            c = tuple(min(255, int(v * tone)) for v in WOOD)
+            pygame.draw.rect(surf, c, (px, 2, 5, TEX_H - 4))
+        # Plank shading (right edge of each plank)
+        for px in range(2, TEX_W - 2, 7):
+            pygame.draw.line(surf, DARK, (px + 5, 2), (px + 5, TEX_H - 4), 1)
+        # Cross-brace (Z-brace)
+        pygame.draw.line(surf, DARK,  (2, TEX_H//4),     (TEX_W-2, TEX_H*3//4), 3)
+        pygame.draw.line(surf, DARK,  (2, TEX_H*3//4),   (TEX_W-2, TEX_H//4),   3)
+        pygame.draw.line(surf, FRAME, (2, TEX_H//4 - 1), (TEX_W-2, TEX_H*3//4 - 1), 1)
+        # Thick timber frame around the whole door
+        pygame.draw.rect(surf, FRAME, (0, 0, TEX_W, 5))        # top beam
+        pygame.draw.rect(surf, FRAME, (0, TEX_H-5, TEX_W, 5))  # bottom sill
+        pygame.draw.rect(surf, FRAME, (0, 0, 5, TEX_H))        # left post
+        pygame.draw.rect(surf, FRAME, (TEX_W-5, 0, 5, TEX_H))  # right post
+        # Highlight top edge of beams
+        pygame.draw.rect(surf, WOOD,  (0, 0, TEX_W, 1))
+        pygame.draw.rect(surf, WOOD,  (0, 0, 1, TEX_H))
+        # Iron bolt heads at frame corners and mid-points
+        for bx, by in [(5,5),(TEX_W-8,5),(5,TEX_H-8),(TEX_W-8,TEX_H-8),
+                       (TEX_W//2-2, 3),(TEX_W//2-2, TEX_H-7)]:
+            pygame.draw.rect(surf, IRON, (bx, by, 4, 4))
+            pygame.draw.rect(surf, (70,70,75), (bx+1, by+1, 2, 2))
+        # Handle
+        pygame.draw.rect(surf, IRON, (TEX_W-12, TEX_H//2-5, 5, 10))
+        pygame.draw.rect(surf, (75,75,80), (TEX_W-11, TEX_H//2-4, 3, 8))
+
+    elif theme_id in ("crypt", "ruins", "tower"):
+        # Stone arch doorway — carved stone surround, arched opening, door recessed
+        arch_r  = TEX_W // 2 - 2          # arch radius
+        arch_cx = TEX_W // 2              # arch centre x
+        arch_cy = TEX_H // 2 - arch_r + 2 # arch centre y (door top)
+        door_top = arch_cy
+
+        STONE  = wall_light
+        MORTAR = tuple(max(0, int(v * 0.4)) for v in wall_dark)
+        RECESSED = tuple(max(0, int(v * 0.55)) for v in wall_light)
+        WOOD   = (85, 52, 22) if theme_id != "tower" else (48, 34, 62)
+        IRON   = (52, 52, 58)
+
+        # Stone wall fill
+        BLOCK_H, BLOCK_W = 10, 20
+        surf.fill(MORTAR)
+        for row in range(TEX_H // BLOCK_H + 2):
+            oy = row * BLOCK_H
+            offset = (BLOCK_W // 2) if row % 2 else 0
+            for col in range(-1, TEX_W // BLOCK_W + 2):
+                ox = col * BLOCK_W + offset
+                tone = 0.82 + rng.random() * 0.24
+                c = tuple(min(255, int(v * tone)) for v in STONE)
+                rx = max(0, ox+1); ry = max(0, oy+1)
+                rw = min(BLOCK_W-2, TEX_W-rx); rh = min(BLOCK_H-2, TEX_H-ry)
+                if rw > 0 and rh > 0:
+                    pygame.draw.rect(surf, c, (rx, ry, rw, rh))
+
+        # Carve arched opening (fill with dark recess)
+        for y in range(TEX_H):
+            for x in range(TEX_W):
+                in_rect = (x >= 4 and x < TEX_W-4 and y >= door_top and y < TEX_H)
+                in_arch = False
+                if y < door_top:
+                    dx = x - arch_cx; dy = y - arch_cy
+                    in_arch = (dx*dx + dy*dy) <= arch_r*arch_r
+                if in_rect or in_arch:
+                    surf.set_at((x, y), RECESSED)
+
+        # Draw the door itself inside the opening
+        door_l, door_r = 5, TEX_W - 5
+        for px in range(door_l, door_r, 6):
+            tone = rng.uniform(0.88, 1.10)
+            c = tuple(min(255, int(v * tone)) for v in WOOD)
+            pygame.draw.line(surf, c, (px, door_top), (px, TEX_H - 1))
+        # Horizontal door rails
+        for py in [door_top + (TEX_H - door_top)//3, door_top + (TEX_H - door_top)*2//3]:
+            pygame.draw.rect(surf, tuple(max(0,v-20) for v in WOOD), (door_l, py-2, door_r-door_l, 4))
+            pygame.draw.rect(surf, tuple(min(255,v+15) for v in WOOD),(door_l, py-3, door_r-door_l, 1))
+
+        # Arch voussoir lines (keystone joint marks)
+        for angle_deg in range(-60, 62, 15):
+            import math
+            ang = math.radians(angle_deg - 90)
+            ix = int(arch_cx + (arch_r-1) * math.cos(ang))
+            iy = int(arch_cy + (arch_r-1) * math.sin(ang))
+            ox = int(arch_cx + (arch_r+4) * math.cos(ang))
+            oy = int(arch_cy + (arch_r+4) * math.sin(ang))
+            pygame.draw.line(surf, MORTAR, (ix,iy), (ox,oy), 1)
+
+        # Iron ring pull
+        pygame.draw.circle(surf, IRON, (TEX_W//2, TEX_H*2//3), 4, 2)
+        pygame.draw.circle(surf, (68,68,72), (TEX_W//2, TEX_H*2//3), 3, 1)
+
+        # Tower-specific: faint void tint on arch frame
+        if theme_id == "tower":
+            void_surf = pygame.Surface((TEX_W, TEX_H), pygame.SRCALPHA)
+            pygame.draw.circle(void_surf, (90, 40, 180, 35), (arch_cx, arch_cy), arch_r + 5, 4)
+            surf.blit(void_surf, (0, 0))
+
+    else:
+        # Default cave/warren — crude banded wood planks + iron straps
+        WOOD_BASE  = (105, 66, 30)
+        WOOD_DARK  = (68,  42, 16)
+        WOOD_LIGHT = (140, 90, 45)
+        IRON       = (55, 55, 60)
+        surf.fill(WOOD_BASE)
+        # Vertical planks with grain
+        for px in range(0, TEX_W, 6):
+            tone = rng.uniform(0.84, 1.14)
+            c = tuple(min(255, int(v * tone)) for v in WOOD_BASE)
+            pygame.draw.line(surf, c, (px, 0), (px, TEX_H))
+        # Rough grain texture (short horizontal scratches)
+        for _ in range(18):
+            gx = rng.randint(0, TEX_W - 8); gy = rng.randint(0, TEX_H - 1)
+            gc = tuple(max(0, int(v * rng.uniform(0.7, 0.9))) for v in WOOD_BASE)
+            pygame.draw.line(surf, gc, (gx, gy), (gx + rng.randint(3,7), gy))
+        # Iron strap bands across the planks
+        for py in [TEX_H//5, TEX_H*2//5, TEX_H*3//5, TEX_H*4//5]:
+            pygame.draw.rect(surf, IRON,      (0, py-3, TEX_W, 6))
+            pygame.draw.rect(surf, (70,70,75),(0, py-2, TEX_W, 4))
+            # Rivet heads along the strap
+            for rx in range(4, TEX_W - 4, 10):
+                pygame.draw.circle(surf, (72,72,78), (rx, py), 3)
+                pygame.draw.circle(surf, (85,85,90), (rx, py), 2)
+        # Rough plank edge lines
+        for px in range(0, TEX_W, 6):
+            pygame.draw.line(surf, WOOD_DARK, (px, 0), (px, TEX_H), 1)
+        # Door handle — crude iron ring
+        pygame.draw.circle(surf, IRON, (TEX_W*3//4, TEX_H//2), 5, 2)
+        pygame.draw.circle(surf, (70,70,76), (TEX_W*3//4, TEX_H//2), 4, 1)
+
     return surf
 
 
@@ -475,10 +610,10 @@ def _gen_theme_textures(theme_id, wall_light, wall_dark):
     return fn(wall_light, wall_dark)
 
 
-def _gen_texture(wall_light, wall_dark, is_door=False):
-    """Backward-compat wrapper — returns a single cave-style texture."""
+def _gen_texture(wall_light, wall_dark, is_door=False, theme_id="cave"):
+    """Backward-compat wrapper — returns a single texture."""
     if is_door:
-        return _gen_door_texture()
+        return _gen_door_texture(theme_id, wall_light, wall_dark)
     return _gen_cave_textures(wall_light, wall_dark)[0]
 
 
@@ -525,7 +660,9 @@ class DungeonUI:
         self._keys: set = set()
 
         # Pre-generate textures — NUM_WALL_VARIANTS per theme
-        self._tex_door       = _gen_door_texture()
+        # Theme-matched door texture — arch style varies by dungeon
+        self._tex_door       = _gen_door_texture(
+            self.theme_id, self.wall_light, self.wall_dark)
         self._door_cols      = self._bake_tex_cols(self._tex_door)
         # Stairs down: cool blue-grey (going deeper into darkness)
         _sd_l = (max(0,self.wall_light[0]-20), max(0,self.wall_light[1]-10), min(255,self.wall_light[2]+40))
