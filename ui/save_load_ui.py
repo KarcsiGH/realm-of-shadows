@@ -165,11 +165,12 @@ class SaveLoadUI:
     result: None (open) | "cancelled" | ("saved", slot) | ("loaded", party, world_state)
     """
 
-    def __init__(self, mode: str, party=None, world_state=None, dungeon_cache=None):
+    def __init__(self, mode: str, party=None, world_state=None, dungeon_cache=None, dungeon_state=None):
         self.mode         = mode          # "save" or "load"
         self.party        = party         # current live party (for saving)
         self.world_state  = world_state
         self.dungeon_cache = dungeon_cache
+        self.dungeon_state = dungeon_state  # active dungeon state (if saving inside dungeon)
         self.finished     = False
         self.result       = None
 
@@ -466,6 +467,7 @@ class SaveLoadUI:
             world_state=self.world_state,
             slot_name=slot,
             dungeon_cache=getattr(self, "dungeon_cache", None),
+            dungeon_state=getattr(self, "dungeon_state", None),
         )
         if ok:
             self.result   = ("saved", slot)
@@ -476,9 +478,9 @@ class SaveLoadUI:
 
     def _do_load(self, idx: int):
         slot = SLOT_NAMES[idx] if idx < len(SLOT_NAMES) else "inn_autosave"
-        ok, party, world_state, msg, dungeon_explored = load_game(slot)
+        ok, party, world_state, msg, dungeon_explored, dungeon_position = load_game(slot)
         if ok:
-            self.result   = ("loaded", party, world_state, dungeon_explored)
+            self.result   = ("loaded", party, world_state, dungeon_explored, dungeon_position)
             self.finished = True
         else:
             self._error_msg   = msg

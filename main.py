@@ -211,7 +211,8 @@ class Game:
                             _sg(self.party,
                                 world_state=self.world_state,
                                 slot_name="inn_autosave",
-                                dungeon_cache=self.dungeon_cache)
+                                dungeon_cache=self.dungeon_cache,
+                                dungeon_state=self.dungeon_state)
                         except Exception:
                             pass
                     self.running = False
@@ -949,7 +950,8 @@ class Game:
                         self.go(self._save_load_return_state)
                     elif isinstance(result, tuple) and result[0] == "loaded":
                         _, party, world_state = result[0], result[1], result[2]
-                        dungeon_explored = result[3] if len(result) > 3 else {}
+                        dungeon_explored  = result[3] if len(result) > 3 else {}
+                        dungeon_position  = result[4] if len(result) > 4 else None
                         self.party = party
                         if world_state:
                             self.world_state = world_state
@@ -973,8 +975,45 @@ class Game:
                         self.add_toast(f"✓ Loaded — {names}  (avg Lv{avg_lvl})",
                                        (80, 200, 120))
                         # Sync world keys from story flags immediately after load
-                        # so keys earned before this save are still present
                         self._sync_flag_keys()
+                        # ── Restore dungeon position if save was made inside one ──
+                        if dungeon_position:
+                            try:
+                                from data.dungeon import DungeonState as _DS
+                                from ui.dungeon_ui import DungeonUI as _DUI
+                                from data.dungeon import DUNGEONS as _DUNG
+                                _did   = dungeon_position["dungeon_id"]
+                                _floor = dungeon_position["current_floor"]
+                                _dx    = dungeon_position["party_x"]
+                                _dy    = dungeon_position["party_y"]
+                                if _did in _DUNG:
+                                    # Re-use cached state if we already built it above,
+                                    # otherwise create a fresh one
+                                    if _did in self.dungeon_cache:
+                                        _dstate = self.dungeon_cache[_did]
+                                    else:
+                                        _dstate = _DS(_did, party)
+                                        self.dungeon_cache[_did] = _dstate
+                                    # Navigate to the saved floor
+                                    if _floor != 1:
+                                        _dstate._ensure_floor(_floor)
+                                        _dstate.current_floor = _floor
+                                    # Place party at saved position (validate it's in-bounds)
+                                    _fw = _dstate.definition.get("width", 35)
+                                    _fh = _dstate.definition.get("height", 28)
+                                    _dstate.party_x = max(1, min(_dx, _fw - 2))
+                                    _dstate.party_y = max(1, min(_dy, _fh - 2))
+                                    _dstate._update_fog()
+                                    self.dungeon_state = _dstate
+                                    self.dungeon_ui    = _DUI(_dstate)
+                                    self.pre_dungeon_state = S_WORLD_MAP
+                                    self.add_toast("Returned to dungeon.", (180, 220, 255))
+                                    self.go_fade(S_DUNGEON)
+                                    return
+                            except Exception as _e:
+                                # Dungeon restore failed — fall back to party screen
+                                self.dungeon_state = None
+                                self.dungeon_ui    = None
                         self.go_fade(S_PARTY)
                     else:
                         sfx.play("ui_cancel")
@@ -1058,6 +1097,7 @@ class Game:
             party=self.party,
             world_state=self.world_state,
             dungeon_cache=self.dungeon_cache,
+            dungeon_state=self.dungeon_state,
         )
         self._save_load_return_state = self.state
         self.go(S_SAVE_LOAD)
@@ -1075,6 +1115,7 @@ class Game:
                     world_state=self.world_state,
                     slot_name="inn_autosave",
                     dungeon_cache=self.dungeon_cache,
+                    dungeon_state=self.dungeon_state,
                 )
                 if ok:
                     self.add_toast("✓ Progress autosaved.", (80, 200, 120))
