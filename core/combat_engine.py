@@ -2767,7 +2767,7 @@ class CombatState:
                     import random as _rand
                     confused_target = _rand.choice(all_living)
                     self.log(f"{actor['name']} is Confused and attacks {confused_target['name']}!")
-                    result = resolve_physical_combat(actor, confused_target)
+                    result = resolve_enemy_attack(actor, confused_target)
                     for m in result.get("messages", []):
                         self.log(m)
                     self.advance_turn()
