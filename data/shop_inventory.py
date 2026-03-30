@@ -315,6 +315,297 @@ TAVERN = {
 
 
 # ═══════════════════════════════════════════════════════════════
+#  PER-TOWN TAVERN PATRONS
+# ═══════════════════════════════════════════════════════════════
+
+TOWN_TAVERN_PATRONS = {
+    "briarhollow": TAVERN["patrons"],   # default — used as fallback too
+
+    "woodhaven": [
+        {
+            "name": "Petra the Trapper",
+            "role": "trapper",
+            "description": "A leathery woman who sets snares in the Thornwood.",
+            "color": (140, 160, 110),
+            "sober": [
+                "Spiders are getting bigger out there. Saw one drag off a hare last week.",
+                "The Thornwood used to be safe after dawn. Not anymore.",
+                "If you're heading northwest, don't go alone.",
+            ],
+            "drunk": [
+                "I told the Rangers. They wrote it down. Nothing happened. I hate it here.",
+                "My grandmother saw the Greying once — that's what she called it. Said it smelled like rain before a storm. Dry rain.",
+                "There's something in the web cave that isn't a spider. Bigger. Quieter.",
+            ],
+        },
+        {
+            "name": "Corvin the Scout",
+            "role": "ranger",
+            "description": "An off-duty Warden scout with ink-stained fingers and tired eyes.",
+            "color": (100, 140, 120),
+            "sober": [
+                "I've mapped every trail in the Thornwood. The northwest one I won't walk again.",
+                "The Order doesn't have the people it used to. We're spread thin.",
+                "Don't mistake quiet for safe.",
+            ],
+            "drunk": [
+                "There are Warden patrol markers on trees the Rangers don't know about. I know what they mean. Not sharing.",
+                "Someone's been maintaining the old ward-stones in secret. Not us. Not the mages. Someone else.",
+                "I found a camp east of the Thornwood. Fresh fire. Warden colours. Nobody there.",
+            ],
+        },
+        {
+            "name": "Nessa",
+            "role": "woodcutter",
+            "description": "A young woodcutter taking a break from a long shift.",
+            "color": (190, 155, 100),
+            "sober": [
+                "Work's good if you don't mind the quiet.",
+                "The trees at the forest edge are going wrong. Grey bark. Won't burn right.",
+                "I just want a drink and not to think about it.",
+            ],
+            "drunk": [
+                "My father says the forest used to sing. I don't know what that means but I believe him.",
+                "Saw something last week between the trees. Just standing there. Not moving. Not anything I know.",
+                "Druid Rowan prays every morning at the old oak. She thinks nobody sees. We all see.",
+            ],
+        },
+    ],
+
+    "ironhearth": [
+        {
+            "name": "Harn the Forgehand",
+            "role": "forgehand",
+            "description": "A thick-armed dwarf with scorched knuckles and a permanent squint.",
+            "color": (180, 130, 70),
+            "sober": [
+                "Three furnaces running tonight. Don't tell me about tired.",
+                "The ore from the eastern veins is coming up grey. Something's wrong with the seams.",
+                "You want conversation, buy a drink. You want quiet, buy two.",
+            ],
+            "drunk": [
+                "Twenty years ago the deep veins sang. Now they just groan. The forgemasters pretend not to hear.",
+                "I was in the mine when they sealed it. Fifteen years ago. We ran. I didn't look back. I should have looked back.",
+                "The Fading doesn't care about iron or stone. My granddad built this hall to last forever. Nothing lasts forever.",
+            ],
+        },
+        {
+            "name": "Elswyn the Cartographer",
+            "role": "cartographer",
+            "description": "A precise woman with rolled maps in every pocket.",
+            "color": (160, 170, 130),
+            "sober": [
+                "The eastern roads have shifted. Literally — landmarks that were there last season aren't.",
+                "I'm updating six maps. They were current six months ago. The world moves faster now.",
+                "Ask me about roads. Don't ask me about what I've found at the end of them.",
+            ],
+            "drunk": [
+                "Two villages I've mapped aren't there anymore. Not abandoned — gone. The ground is wrong where they were.",
+                "There's a road north of the mine that doesn't appear on any charter. Old paving. Warden work. Where does it go? I've been trying not to find out.",
+                "My mentor said the Fading takes edges first. Borders, thresholds, shorelines. Then it comes for the middle.",
+            ],
+        },
+        {
+            "name": "Brek",
+            "role": "miner",
+            "description": "A young miner who doesn't look like he's slept in days.",
+            "color": (130, 115, 100),
+            "sober": [
+                "New shift in two hours. Just getting warm.",
+                "Heard noises in shaft three. Foreman says it's the rock settling. Foreman wasn't in shaft three.",
+                "Don't go near the sealed section. Even the rats don't.",
+            ],
+            "drunk": [
+                "Something tapped on my helmet from inside a sealed wall last month. Three times. Evenly spaced.",
+                "We found tools in the deep section. Old tools. The kind the garrison would have used. Fifteen years they've been down there and they're still sharp.",
+                "The mine wants to be left alone. I know that sounds mad. But it wants to be left alone.",
+            ],
+        },
+    ],
+
+    "greenwood": [
+        {
+            "name": "Farren the Huntsman",
+            "role": "huntsman",
+            "description": "A lean man who speaks carefully and misses nothing.",
+            "color": (120, 155, 100),
+            "sober": [
+                "Game's moving east. Something's pushing it out of the western valleys.",
+                "The Fading boundary is two leagues closer than it was in spring.",
+                "Ask me what I've seen. Don't ask me what I think it means.",
+            ],
+            "drunk": [
+                "I tracked a Fading-touched stag for three days. When I caught up to it, it was standing still at the boundary edge. Waiting. I turned around.",
+                "There's a clearing in the western forest where nothing grows anymore. Not even moss. The soil just stopped.",
+                "The Warden outpost south of here has been abandoned for a year. Someone's been leaving firewood at the door.",
+            ],
+        },
+        {
+            "name": "Sylva",
+            "role": "herbalist",
+            "description": "A herbalist who knows which mushrooms are which — very precisely.",
+            "color": (160, 200, 130),
+            "sober": [
+                "Half my herb patches have gone grey. Still growing, just wrong.",
+                "The remedies I know don't work on Fading sickness. I've been looking for ones that do.",
+                "If you find anything unusual growing near the boundary, don't touch it.",
+            ],
+            "drunk": [
+                "I've made something that slows Fading corruption. On plants. I'm working on the rest. Don't tell anyone. The Mage Guild would want it and I'm not ready.",
+                "You know what the Fading-touched plants taste like? Nothing. Absolutely nothing. That's the worst part.",
+                "There's an old Warden herb garden behind the eastern outpost. Still alive. Still producing. Like it knows what's at stake.",
+            ],
+        },
+    ],
+
+    "saltmere": [
+        {
+            "name": "Dorin the Sailor",
+            "role": "sailor",
+            "description": "A weathered mariner nursing something dark and strong.",
+            "color": (100, 140, 170),
+            "sober": [
+                "Three ships gone this season. No storm. No wreck. Just gone.",
+                "The sea's wrong east of the pale coast. Colour, depth, current. All of it.",
+                "I've sailed these waters twenty years. I won't take passengers past the inlet anymore.",
+            ],
+            "drunk": [
+                "We pulled something up in the net two weeks ago. Not a fish. Not anything with a name I know. We threw it back and said nothing to the harbour master.",
+                "The Isle to the west. Something on it is different. The light hits it wrong. Like it's slightly further away than it should be.",
+                "Old sailors say the Fading started at sea. That the first thing it took was the horizon.",
+            ],
+        },
+        {
+            "name": "Callie the Dockmaster",
+            "role": "dockmaster",
+            "description": "A sharp-eyed woman who knows every ship in every port.",
+            "color": (170, 150, 110),
+            "sober": [
+                "I track what comes in and goes out. Mostly it balances. Lately it doesn't.",
+                "The Imperial agents were here last month. Looking at cargo manifests. Didn't like what they found.",
+                "If you need passage east, the Pale Gull will take you. If you can afford her.",
+            ],
+            "drunk": [
+                "The Governor's been moving gold east for six months. Before that it was weapons. Before that it was something I didn't look at closely enough.",
+                "There's a courier who arrives here every two weeks with a sealed pouch. Goes straight to the harbour master's office. Never waits for a receipt.",
+                "I've been offered a lot of money to stop asking questions. Haven't taken it yet.",
+            ],
+        },
+    ],
+
+    "sanctum": [
+        {
+            "name": "Brother Aldwyn",
+            "role": "pilgrim",
+            "description": "A cathedral novice on a supply errand, grateful for a warm corner.",
+            "color": (160, 160, 200),
+            "sober": [
+                "The cathedral has a thousand pilgrims a day now. A month ago it was two hundred.",
+                "People come to pray when they don't know what else to do. I understand that.",
+                "The Chapter Master says prayer holds the world in shape. I believe that more than I used to.",
+            ],
+            "drunk": [
+                "They brought in a Fading-touched body for study last week. The scholars spent six hours on it. Then they burned it and didn't write down what they found.",
+                "There's a vault under the cathedral that nobody opens anymore. The senior brothers avoid walking over it. I've noticed.",
+                "Chapter Master Aldren hasn't slept in two weeks. I can tell. Someone who doesn't sleep like that is waiting for something.",
+            ],
+        },
+        {
+            "name": "Mira the Scribe",
+            "role": "scribe",
+            "description": "A cathedral archivist taking a rare evening away from her desk.",
+            "color": (190, 180, 220),
+            "sober": [
+                "Thirty years of records in the cathedral archive. Most of them say the same thing: we knew, and we didn't act.",
+                "The Warden histories are technically restricted. They're also the most read documents in the archive. Make of that what you will.",
+                "Someone requested everything we had on Valdris three months before the first Fading report. We filled the request. I wish we hadn't.",
+            ],
+            "drunk": [
+                "The Warden Order had a succession plan. Someone was supposed to carry it on. The records are very specific about this. The records don't say who.",
+                "I found a prayer in the oldest section of the archive that predates the Cathedral by two centuries. It asks for protection from someone called the Last Warden. That's what it says. The Last Warden.",
+                "We have a letter from Valdris. Written forty years ago, when he was still a junior Warden. He writes about the Fading like he already knows what it will do. I've read it fifty times.",
+            ],
+        },
+    ],
+
+    "crystalspire": [
+        {
+            "name": "Novice Ren",
+            "role": "apprentice",
+            "description": "A young mage apprentice with chalk dust on everything.",
+            "color": (160, 140, 220),
+            "sober": [
+                "Third failed transmutation today. I'm buying a drink before I try again.",
+                "The ley lines are flickering. The senior mages pretend they're not.",
+                "Don't ask what my thesis is on. It's embarrassing.",
+            ],
+            "drunk": [
+                "The Archmage ran the numbers three times and got three different answers. That doesn't happen. Arcane math doesn't do that unless the substrate is changing.",
+                "I overheard two senior mages arguing about whether the Fading is a natural process or an engineered one. The one who said engineered won the argument. They both looked terrified.",
+                "My binding circle failed yesterday. First time in two years. The spell didn't go wrong — it just stopped. Like the magic forgot what it was supposed to do.",
+            ],
+        },
+        {
+            "name": "Voss the Artificer",
+            "role": "artificer",
+            "description": "A practical enchanter who repairs more than he creates these days.",
+            "color": (140, 170, 200),
+            "sober": [
+                "Wands are coming in with charge loss I can't explain. Not use — spontaneous drain.",
+                "The enchantments I placed on the west gate pillars last year are failing. They were rated for a century.",
+                "Magic works differently near the Fading boundary. Not worse. Just differently. That's almost scarier.",
+            ],
+            "drunk": [
+                "I've been quietly reinforcing the city's ward anchors on my own time. Nobody asked me to. Nobody told me to stop.",
+                "The Arcane Containment Crystal — the type the Court Mages use? It's not for storage. Not originally. It was designed to capture and hold Fading energy. That's what the old design notes say.",
+                "Whoever made the Hearthstones understood something about permanent enchantment that we've lost. I've been trying to reverse-engineer one. The magic is older than the methods we have to study it.",
+            ],
+        },
+    ],
+
+    "thornhaven": [
+        {
+            "name": "Aldric the Soldier",
+            "role": "soldier",
+            "description": "An off-duty Imperial soldier who looks like he has regrets.",
+            "color": (160, 140, 100),
+            "sober": [
+                "Don't ask me about the Governor. Off duty.",
+                "The eastern roads are dangerous. We've lost two squads this month.",
+                "I joined for the structure. I didn't think the structure would look like this.",
+            ],
+            "drunk": [
+                "The Governor knows more than he says. The orders that come down don't make sense unless someone at the top knows what's coming.",
+                "We were told to stop a group of travellers carrying ward-stones. We let them through. My squad decided together. None of us reported it.",
+                "There's a rumour that the black-cloaks are recruiting. I've heard the pitch. It's compelling if you're scared enough. I'm not. Not yet.",
+            ],
+        },
+        {
+            "name": "Innkeeper Brann",   # the famous one
+            "role": "innkeeper",
+            "description": "The innkeeper of the Silver Anchor, taking a rare seat at someone else's bar.",
+            "color": (180, 155, 100),
+            "sober": [
+                "Strange to be on this side of the counter.",
+                "My inn sees everyone who passes through. Lately they all have the same look.",
+                "The Fading's close enough to feel now. Not see — feel. Like standing near something very cold.",
+            ],
+            "drunk": [
+                "Twenty years I've run that inn. Never asked questions. Fed people, rested them, sent them on. Lately I find myself asking what happened to them after.",
+                "Maren stayed three nights. Barely slept. Kept writing. Left before dawn. Didn't pay — I didn't ask. Some bills you just forgive.",
+                "I have guests who fight the Fading and guests who serve it and I can't always tell which is which until they're gone.",
+            ],
+        },
+    ],
+}
+
+
+def get_tavern_patrons(town_id):
+    """Return the patron list for the given town, falling back to Briarhollow."""
+    return TOWN_TAVERN_PATRONS.get(town_id, TOWN_TAVERN_PATRONS["briarhollow"])
+
+
+# ═══════════════════════════════════════════════════════════════
 #  SELL PRICE CALCULATOR
 # ═══════════════════════════════════════════════════════════════
 

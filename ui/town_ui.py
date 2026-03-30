@@ -152,7 +152,12 @@ class TownUI:
         self.tavern_tab = "patrons"  # "patrons" | "recruit" | "party"
         self.tavern_recruit_sel = 0
         self.tavern_party_sel = 0
-        self.current_rumor = ""      # story-aware rumor text, set on tavern open
+        # Story-aware rumor — set on tavern open; pre-populate so it's never blank
+        from data.story_data import get_rumor as _gr
+        try:
+            self.current_rumor = _gr()
+        except Exception:
+            self.current_rumor = "Strange times. Buy a round and listen."
         self._tavern_recruits = None        # cached recruit list
         self._tavern_recruits_at_level = -1 # party avg level when cache was built
 
@@ -1402,6 +1407,19 @@ class TownUI:
         except Exception:
             pass
 
+        # ── Advance Rank button (shown when requirements met) ──────
+        self._guild_advance_btn = None
+        try:
+            if next_tier_data and next_ready:
+                adv_r = pygame.Rect(W - 280, 18, 128, 36)
+                pygame.draw.rect(surface, (24, 18, 44), adv_r, border_radius=6)
+                pygame.draw.rect(surface, next_col, adv_r, 2, border_radius=6)
+                draw_text(surface, "▲ Advance Rank",
+                          adv_r.x + 10, adv_r.y + 10, next_col, 13, bold=True)
+                self._guild_advance_btn = adv_r
+        except Exception:
+            pass
+
         # Back button
         back = pygame.Rect(W - 140, 18, 120, 36)
         draw_button(surface, back, "← Leave", hover=back.collidepoint(mx, my), size=13)
@@ -1494,6 +1512,38 @@ class TownUI:
 
         # ── Party bar ───────────────────────────────────────────────
         self._draw_party_bar(surface, mx, my)
+
+    def _do_guild_advance(self):
+        """Advance the party to the next Warden rank tier."""
+        from core.progression import PLANAR_TIERS, apply_tier_stat_bonus
+        from core.story_flags import get_flag
+        import core.sound as sfx
+
+        tier_num = max((getattr(c, "planar_tier", 0) for c in self.party), default=0)
+        next_tier_num = tier_num + 1
+        next_tier_data = PLANAR_TIERS.get(next_tier_num)
+        if not next_tier_data:
+            return
+
+        # Final check: requirements still met
+        flag    = next_tier_data.get("unlock_flag")
+        min_lv  = next_tier_data.get("min_level", 1)
+        flag_ok = (not flag) or bool(get_flag(flag))
+        lv_ok   = min((c.level for c in self.party), default=1) >= min_lv
+        if not (flag_ok and lv_ok):
+            self._msg("Requirements not yet met.", (200, 80, 80))
+            return
+
+        # Apply the tier to every party member
+        for c in self.party:
+            old_tier = getattr(c, "planar_tier", 0)
+            if old_tier < next_tier_num:
+                apply_tier_stat_bonus(c, next_tier_num)
+                c.planar_tier = next_tier_num
+
+        sfx.play("quest_complete")
+        rank_name = next_tier_data.get("name", "")
+        self._msg(f"The party advances to {rank_name}! Warden bonuses applied.", (180, 220, 200))
 
     def _return_to_town(self):
         """Return to the main town view — walkable if the town has a map, hub menu otherwise."""
@@ -2688,7 +2738,7 @@ class TownUI:
         return self._tavern_recruits
 
     def _draw_tavern(self, surface, mx, my):
-        from data.shop_inventory import TAVERN
+        from data.shop_inventory import TAVERN, get_tavern_patrons
         from core.story_flags import get_flag
 
         W, H = SCREEN_W, SCREEN_H
@@ -2716,7 +2766,7 @@ class TownUI:
 
         # ── PATRONS tab ───────────────────────────────────────────────────────
         if self.tavern_tab == "patrons":
-            patrons = [p for p in TAVERN["patrons"]
+            patrons = [p for p in get_tavern_patrons(self.town_id)
                        if not (p.get("hide_if") and get_flag(p["hide_if"]))]
             drink_cost = TAVERN.get("drink_cost", 2)
 
@@ -3589,6 +3639,12 @@ class TownUI:
 
         # ── Guild Hub ──
         elif self.view == self.VIEW_GUILD:
+            # Advance Rank button
+            adv_btn = getattr(self, "_guild_advance_btn", None)
+            if adv_btn and adv_btn.collidepoint(mx, my):
+                self._do_guild_advance()
+                return None
+
             # Back button
             back = getattr(self, "_guild_back_btn", None)
             if back and back.collidepoint(mx, my):

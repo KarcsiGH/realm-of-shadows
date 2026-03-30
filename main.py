@@ -3387,6 +3387,24 @@ class Game:
             if gf("quest.main_windswept_isle.state", 0) >= 1 or gf("item.hearthstone.3"):
                 self.world_state.discovered_locations.add("windswept_isle")
 
+        # ── Act III settlement reveals ────────────────────────────────────────
+        # These have no required_key so must be revealed by story flag directly.
+        ACT3_REVEALS = [
+            # Emberveil (volcanic outpost) — appears once Dragon's Tooth is cleared
+            ("boss_defeated.dragons_tooth",   "emberveil"),
+            # The Anchorage (coastal research post) — appears with 3rd Hearthstone
+            ("item.hearthstone.3",             "the_anchorage"),
+            # The Holdfast (rebel encampment) — appears once Ashenmoor falls
+            ("boss_defeated.ruins_ashenmoor",  "the_holdfast"),
+            # valdris_spire: granted via spire_key above, but sync here as safety
+            ("boss_defeated.windswept_isle",   "valdris_spire"),
+            # Shadow Throne: appears after Spire is cleared
+            ("boss_defeated.valdris_spire",    "shadow_throne"),
+        ]
+        for flag, loc_id in ACT3_REVEALS:
+            if gf(flag) and loc_id not in self.world_state.discovered_locations:
+                self.world_state.discovered_locations.add(loc_id)
+
     def _trigger_ending(self):
         """Fire after Valdris is defeated. Transition to the epilogue sequence."""
         from core.story_flags import hearthstone_count, get_flag
