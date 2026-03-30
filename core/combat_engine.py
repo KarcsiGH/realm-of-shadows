@@ -714,6 +714,105 @@ def resolve_basic_attack(attacker, defender, enemies=None):
     return result
 
 
+# ── Attack flavour verb lookup ──────────────────────────────────────────────
+# Maps (phys_type, creature_category) → (hit_verb, miss_verb)
+# creature_category is inferred from the enemy's name and tags.
+
+def _attack_verbs(attacker, is_crit=False):
+    """Return (hit_verb, miss_verb) appropriate to this attacker."""
+    name  = attacker.get("name", "").lower()
+    phys  = attacker.get("phys_type", "slashing")
+    tags  = attacker.get("tags", [])
+    atype = attacker.get("attack_type", "melee")
+
+    # ── Specific creature overrides ─────────────────────────────────────
+    if any(w in name for w in ("spider", "spiderling", "broodmother")):
+        return ("bites", "misses")
+    if "venomfang" in name:
+        return ("injects venom into", "misses")
+    if "phase spider" in name:
+        return ("phases through and bites", "phases through — misses")
+    if "web spinner" in name:
+        return ("snares", "misses")
+    if "egg sac" in name:
+        return ("bursts at", "misses")
+    if any(w in name for w in ("wolf", "hound", "dog")):
+        return ("tears into", "snaps at") if not is_crit else ("savages", "snaps at")
+    if any(w in name for w in ("bear",)):
+        return ("mauls", "swipes at")
+    if "boar" in name:
+        return ("gores", "charges past")
+    if "stag" in name:
+        return ("rams", "charges past")
+    if any(w in name for w in ("bat", "cave bat")):
+        return ("swoops at", "swoops past")
+    if any(w in name for w in ("rat", "swarm")):
+        return ("gnaws at", "scurries past")
+    if "leech" in name:
+        return ("latches onto", "misses")
+    if "troll" in name:
+        return ("clubs", "swings wildly at")
+    if "zombie" in name:
+        return ("grapples", "grasps at")
+    if "ghoul" in name:
+        return ("claws at", "rakes past")
+    if any(w in name for w in ("skeleton", "revenant", "crypt soldier", "crypt paladin")):
+        return ("strikes", "swings at")
+    if any(w in name for w in ("wraith", "shade", "spirit", "ghost", "wisp")):
+        return ("drains", "passes through")
+    if any(w in name for w in ("tendril", "void tendril")):
+        return ("lashes", "whips past")
+    if any(w in name for w in ("golem", "colossus", "automaton", "sentinel", "guardian", "animated armor")):
+        return ("slams", "swings at")
+    if any(w in name for w in ("gargoyle",)):
+        return ("rakes", "swipes past")
+    if "fungal" in name:
+        return ("slams", "lurches past")
+    if "drake" in name or "hatchling" in name:
+        return ("claws", "snaps at")
+    if "beetle" in name:
+        return ("bashes", "charges past")
+    if any(w in name for w in ("treant", "treant")):
+        return ("smashes", "swings at")
+    if "abomination" in name:
+        return ("slams", "lurches at")
+    if "brute" in name and "shadow" in name:
+        return ("crushes", "swings at")
+    if "stalker" in name and "shadow" in name:
+        return ("slashes", "swipes at")
+    if "karreth" in name:
+        return ("rends", "swipes at")
+    if "korrath" in name:
+        return ("hammers", "swings at")
+
+    # ── Faded/shadow-touched beasts ──────────────────────────────────────
+    if "faded" in tags or "shadow_touched" in tags:
+        if phys == "piercing":
+            return ("tears into", "snaps at")
+        if phys == "shadow":
+            return ("corrupts", "reaches through")
+
+    # ── Humanoid fallback by phys_type ───────────────────────────────────
+    if phys == "shadow":
+        return ("corrupts", "reaches past")
+    if phys == "fire":
+        return ("scorches", "singes near")
+    if phys == "lightning":
+        return ("shocks", "crackles past")
+    if phys == "divine":
+        return ("smites", "misses")
+    if phys == "arcane":
+        return ("blasts", "crackles near")
+    if phys == "nature":
+        return ("poisons", "misses")
+    if phys == "piercing":
+        return ("stabs", "misses") if "ranged" not in atype else ("shoots", "misses")
+    if phys == "blunt":
+        return ("smashes", "swings at")
+    # Default slashing
+    return ("slashes", "misses")
+
+
 def resolve_enemy_attack(attacker, defender):
     """Resolve an enemy's basic attack against a player."""
     weapon_range = attacker.get("attack_type", "melee")
@@ -749,7 +848,8 @@ def resolve_enemy_attack(attacker, defender):
     }
 
     if not hit:
-        result["messages"].append(f"{attacker['name']} attacks {defender['name']} — MISS!")
+        _hv, _mv = _attack_verbs(attacker)
+        result["messages"].append(f"{attacker['name']} {_mv} {defender['name']} — MISS!")
         return result
 
     # Enemy damage: attack_damage + STR scaling + variance - defense
@@ -785,6 +885,26 @@ def resolve_enemy_attack(attacker, defender):
     result["damage"] = damage
 
     defender["hp"] = max(0, defender["hp"] - damage)
+
+    # ── Fading secondary: shadow corruption on hit ────────────────────────
+    # Faded/shadow-touched beasts deal a small extra shadow hit each attack.
+    # Represents the Fading energy bleeding through their strikes.
+    _tags = attacker.get("tags", [])
+    if ("faded" in _tags or "shadow_touched" in _tags) and defender.get("alive", True):
+        _shadow_base = 6  # flat shadow damage — bypasses phys resistance
+        # Reduced by defender's shadow resistance
+        _shadow_res = defender.get("resistances", {}).get("shadow", 1.0)
+        _shadow_dmg = max(1, int(_shadow_base * _shadow_res))
+        # Humanoid / undead enemies already have shadow attacks — skip self-damage
+        if defender.get("type") == "player":
+            defender["hp"] = max(0, defender["hp"] - _shadow_dmg)
+            result["messages"].append(
+                f"The Fading corruption bleeds through — {defender['name']} "
+                f"takes {_shadow_dmg} shadow damage!"
+            )
+            if defender["hp"] <= 0:
+                defender["alive"] = False
+
     if defender["hp"] <= 0 and defender.get("type") == "player":
         if any(st["name"] in ("unbreakable", "divine_intervention")
                for st in defender.get("status_effects", [])):
@@ -792,7 +912,10 @@ def resolve_enemy_attack(attacker, defender):
     if defender["hp"] <= 0:
         defender["alive"] = False
 
-    msg = f"{attacker['name']} attacks {defender['name']} for {damage} damage!"
+    # Flavour verb
+    _hit_v, _miss_v = _attack_verbs(attacker, result.get("is_crit", False))
+    crit_str = " — CRITICAL HIT!" if result.get("is_crit") else ""
+    msg = f"{attacker['name']} {_hit_v} {defender['name']} for {damage} damage!{crit_str}"
     result["messages"].append(msg)
 
     if not defender["alive"]:
@@ -2650,6 +2773,73 @@ class CombatState:
                     self.advance_turn()
                     return result
                 break
+
+        # ── Egg Sac: spawn spiderlings instead of attacking ──────────
+        if actor.get("template_key") == "Egg Sac" or actor.get("name") == "Egg Sac":
+            hp_pct = actor["hp"] / max(1, actor.get("max_hp", actor["hp"]))
+            if hp_pct > 0.55:
+                # Not yet damaged enough to burst — pulse menacingly
+                self.log(f"{actor['name']} pulses ominously...")
+                self.advance_turn()
+                return {}
+            if actor.get("_burst_done"):
+                # Already released its spiderlings — inert
+                self.log(f"{actor['name']} lies empty.")
+                self.advance_turn()
+                return {}
+            # Burst! Spawn 1-2 Spiderlings
+            actor["_burst_done"] = True
+            actor["alive"] = False  # sac ruptures
+            from data.bestiary_m9 import NEW_ENEMIES
+            from data.enemies import create_enemy_instance
+            n_spawn = random.randint(1, 2)
+            spawned = []
+            for _ in range(n_spawn):
+                try:
+                    uid = max((e["uid"] for e in self.enemies), default=0) + 1
+                    spl = dict(NEW_ENEMIES["Spiderling"])
+                    from data.enemies import ENEMIES
+                    # Build a proper combatant dict for Spiderling
+                    spiderling_key = "Spiderling"
+                    if spiderling_key in NEW_ENEMIES:
+                        from core.combat_config import FRONT
+                        tmpl = NEW_ENEMIES[spiderling_key]
+                        new_e = {
+                            "uid": uid, "type": "enemy",
+                            "template_key": spiderling_key,
+                            "name": tmpl["name"], "hp": tmpl["hp"],
+                            "max_hp": tmpl["hp"], "defense": tmpl["defense"],
+                            "magic_resist": tmpl["magic_resist"],
+                            "stats": dict(tmpl["stats"]),
+                            "speed_base": tmpl["speed_base"],
+                            "attack_damage": tmpl["attack_damage"],
+                            "attack_type": tmpl["attack_type"],
+                            "phys_type": tmpl["phys_type"],
+                            "accuracy_bonus": tmpl.get("accuracy_bonus", 0),
+                            "row": FRONT, "preferred_row": FRONT,
+                            "ai_type": tmpl.get("ai_type", "aggressive"),
+                            "resistances": dict(tmpl.get("resistances", {})),
+                            "status_immunities": list(tmpl.get("status_immunities", [])),
+                            "tags": list(tmpl.get("tags", [])),
+                            "abilities": [],
+                            "status_effects": [], "is_defending": False,
+                            "alive": True, "knowledge_tier": 0,
+                            "loot_table": tmpl.get("loot_table", []),
+                        }
+                        self.enemies.append(new_e)
+                        spawned.append(new_e["name"])
+                except Exception:
+                    pass
+            if spawned:
+                self.log(
+                    f"{actor['name']} BURSTS — "
+                    f"{len(spawned)} Spiderling{'s' if len(spawned)>1 else ''} "
+                    f"pour{'s' if len(spawned)==1 else ''} out!"
+                )
+            else:
+                self.log(f"{actor['name']} ruptures harmlessly.")
+            self.advance_turn()
+            return {"spawned": spawned}
 
         # ── Boss phase check ──────────────────────────────────────
         phase_result = _check_boss_phase(actor, self)
