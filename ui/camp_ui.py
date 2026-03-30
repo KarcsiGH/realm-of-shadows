@@ -1536,6 +1536,8 @@ class CampUI:
                 CAMP_TYPES = ("heal","aoe_heal","cure","revive")
                 camp_abs = [a for a in c.abilities if a.get("type") in CAMP_TYPES]
                 if 0 <= ai < len(camp_abs):
+                    # Target is the currently selected character in the party tab
+                    self.spell_target = self.selected_char
                     self._cast_camp_spell(c, camp_abs[ai])
                 return None
 
@@ -1552,6 +1554,7 @@ class CampUI:
                 CAMP_TYPES = ("heal","aoe_heal","cure","revive")
                 camp_abs = [a for a in c.abilities if a.get("type") in CAMP_TYPES]
                 if 0 <= ai < len(camp_abs):
+                    self.spell_target = self.selected_char
                     self._cast_camp_spell(c, camp_abs[ai])
                     self._stats_spell_sel = -1
                 return None
@@ -1944,12 +1947,15 @@ class CampUI:
                 else:
                     msgs.append(f"{tgt.name} already full HP")
             elif ab_type_key == "cure":
-                from core.status_effects import get_status_effects, remove_status_effect
-                effects = get_status_effects(tgt) if hasattr(tgt, "_status_effects") else []
+                from core.status_effects import get_status_effects, remove_status
+                effects = get_status_effects(tgt)   # creates list if missing
                 cured = [e for e in effects if e.get("type") in ("poison", "disease", "curse")]
                 for e in cured:
-                    remove_status_effect(tgt, e["name"])
-                msgs.append(f"{tgt.name}: {len(cured)} effect(s) cured")
+                    remove_status(tgt, e["id"])      # remove by "id", not "name"
+                if cured:
+                    msgs.append(f"{tgt.name}: cleared {', '.join(e['name'] for e in cured)}")
+                else:
+                    msgs.append(f"{tgt.name}: no status effects to cure")
 
         self._msg("  ".join(msgs) if msgs else "No effect.", HEAL_COL)
 
