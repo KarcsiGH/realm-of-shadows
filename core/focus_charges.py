@@ -132,3 +132,42 @@ def recharge_for_gold(item, party, full=True):
             break
     item["charges"] = item["max_charges"]
     return cost, True
+
+# ── Arcane Containment Crystal — max_charges expansion ───────────────────
+ACC_NAME          = "Arcane Containment Crystal"
+ACC_CHARGES_BONUS = 5    # each crystal permanently adds 5 max_charges
+ACC_MAX_EXPANSIONS = 3   # cap: a focus weapon can be expanded at most 3 times
+
+
+def can_expand(item):
+    """True if this focus weapon can still be expanded with an ACC."""
+    if not is_focus(item):
+        return False
+    init_charges(item)
+    return item.get("_acc_expansions", 0) < ACC_MAX_EXPANSIONS
+
+
+def expand_with_acc(item, party):
+    """Consume one Arcane Containment Crystal to expand max_charges by ACC_CHARGES_BONUS.
+
+    Returns (success: bool, message: str).
+    """
+    if not is_focus(item):
+        return False, "Only focus weapons (Wand, Rod, Orb, Staff) can be expanded."
+    init_charges(item)
+    if item.get("_acc_expansions", 0) >= ACC_MAX_EXPANSIONS:
+        return False, f"{item.get('name','Item')} is already at maximum capacity."
+
+    from core.crafting import count_material, consume_materials
+    have = count_material(party, ACC_NAME)
+    if have < 1:
+        return False, f"No {ACC_NAME} in inventory."
+
+    consume_materials(party, {ACC_NAME: 1})
+    item["max_charges"]     = item.get("max_charges", 20) + ACC_CHARGES_BONUS
+    item["charges"]         = item.get("charges", 0) + ACC_CHARGES_BONUS  # fill the new capacity
+    item["_acc_expansions"] = item.get("_acc_expansions", 0) + 1
+    left = ACC_MAX_EXPANSIONS - item["_acc_expansions"]
+    return True, (f"{item.get('name','Item')} expanded to "
+                  f"{item['max_charges']} max charges! "
+                  f"({left} expansion{'s' if left != 1 else ''} remaining)")

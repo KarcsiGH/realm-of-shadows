@@ -232,6 +232,44 @@ class CampUI:
     #  INVENTORY TAB
     # ──────────────────────────────────────────────────────────
 
+# ── Inventory stacking helper (module-level for easy testing) ────────────
+def _build_inv_groups(inventory):
+    """Collapse inventory into display groups for stacked rendering.
+
+    Returns list of dicts:
+      {"name": str, "count": int, "indices": [int,...], "item": dict}
+
+    Weapons/armor with enchant/bonus/unique fields never stack.
+    Key items never stack. Everything else groups by (name, type, subtype).
+    """
+    groups = []
+    group_map = {}
+
+    for idx, item in enumerate(inventory):
+        itype = item.get("type", "")
+        if itype in ("key_item", "quest_item") or "warden_rank" in item:
+            groups.append({"name": item.get("name","?"), "count": 1,
+                           "indices": [idx], "item": item})
+            continue
+        if itype in ("weapon", "armor", "accessory"):
+            if (item.get("enchant_element") or item.get("enchant_bonus") or
+                    item.get("bonus") or item.get("unique") or
+                    item.get("enchant_name")):
+                groups.append({"name": item.get("name","?"), "count": 1,
+                               "indices": [idx], "item": item})
+                continue
+        key = (item.get("name",""), itype, item.get("subtype",""))
+        if key in group_map:
+            gi = group_map[key]
+            groups[gi]["count"] += 1
+            groups[gi]["indices"].append(idx)
+        else:
+            group_map[key] = len(groups)
+            groups.append({"name": item.get("name","?"), "count": 1,
+                           "indices": [idx], "item": item})
+    return groups
+
+
     def _draw_inventory(self, surface, mx, my, top):
         # Character selector
         self._draw_char_selector(surface, mx, my, top)
@@ -254,26 +292,32 @@ class CampUI:
             draw_text(surface, "No items.", LIST_X, iy, GREY, 14)
             return
 
-        total = len(c.inventory)
-        # Clamp scroll offset so we never scroll past the last item
+        # Build collapsed groups — identical stackable items share one row
+        groups = _build_inv_groups(c.inventory)
+        # Store groups for click handler
+        self._inv_groups = groups
+        total = len(groups)
+        # Clamp scroll offset so we never scroll past the last group
         max_off = max(0, total - visible_n)
         self.scroll_offset = max(0, min(self.scroll_offset, max_off))
 
-        visible = c.inventory[self.scroll_offset:self.scroll_offset + visible_n]
-        for i, item in enumerate(visible):
-            idx = self.scroll_offset + i
+        visible_groups = groups[self.scroll_offset:self.scroll_offset + visible_n]
+        for gi, grp in enumerate(visible_groups):
+            g_idx = self.scroll_offset + gi   # index into groups list
+            item  = grp["item"]
             row = pygame.Rect(LIST_X, iy, ROW_W, ROW_H - 2)
             hover = row.collidepoint(mx, my)
             bg = ITEM_HOVER if hover else ITEM_BG
             pygame.draw.rect(surface, bg, row, border_radius=3)
-            if idx == self.selected_item:
+            # Highlight if selected_item points to any index in this group
+            if self.selected_item in grp["indices"]:
                 pygame.draw.rect(surface, GOLD, row, 2, border_radius=3)
 
             from core.identification import get_item_display_name
             name = get_item_display_name(item)
-            stack = item.get("stack", 1)
-            stack_str = f" ×{stack}" if stack > 1 else ""
-            draw_text(surface, f"{name}{stack_str}", row.x + 10, row.y + 7, CREAM, 13)
+            count = grp["count"]
+            count_str = f" ×{count}" if count > 1 else ""
+            draw_text(surface, f"{name}{count_str}", row.x + 10, row.y + 7, CREAM, 13)
 
             itype = item.get("type", "misc")
             draw_text(surface, itype, row.x + ROW_W - 80, row.y + 7, STAT_LABEL, 11)
@@ -1838,6 +1882,45 @@ class CampUI:
         if found_depleted and not self._recharge_btns:
             draw_text(surface, "No Mana Crystals in inventory.", 80, recharge_y, GREY, 12)
 
+        # ── Arcane Containment Crystal — expand max_charges ──────────
+        from core.focus_charges import (ACC_NAME, ACC_CHARGES_BONUS, ACC_MAX_EXPANSIONS,
+                                         can_expand)
+        have_acc = count_material(self.party, ACC_NAME)
+        self._acc_expand_btns = []   # (rect, item, char)
+        if have_acc > 0:
+            expand_y = recharge_y + 20
+            draw_text(surface, f"Arcane Containment Crystal  ×{have_acc}",
+                      80, expand_y, (200, 160, 255), 13, bold=True)
+            draw_text(surface,
+                      f"Permanently expands a focus weapon by +{ACC_CHARGES_BONUS} max charges "
+                      f"(up to {ACC_MAX_EXPANSIONS}× per item)",
+                      80, expand_y + 16, GREY, 11)
+            expand_y += 38
+            for ch in self.party:
+                for slot, item in (ch.equipment or {}).items():
+                    if not item or not is_focus(item):
+                        continue
+                    init_charges(item)
+                    if not can_expand(item):
+                        continue
+                    exps = item.get("_acc_expansions", 0)
+                    row_r = pygame.Rect(80, expand_y, SCREEN_W // 2 - 60, 44)
+                    pygame.draw.rect(surface, (22, 16, 38), row_r, border_radius=4)
+                    pygame.draw.rect(surface, (150, 90, 220), row_r, 1, border_radius=4)
+                    draw_text(surface,
+                              f"{item.get('name','?')}  ({item.get('max_charges',20)} → "
+                              f"{item.get('max_charges',20)+ACC_CHARGES_BONUS} charges)",
+                              row_r.x + 10, row_r.y + 5, CREAM, 13, bold=True)
+                    draw_text(surface,
+                              f"{ch.name}  ·  Expansion {exps+1}/{ACC_MAX_EXPANSIONS}",
+                              row_r.x + 10, row_r.y + 24, (180, 130, 255), 11)
+                    btn_r = pygame.Rect(row_r.right + 10, expand_y + 7, 130, 30)
+                    pygame.draw.rect(surface, (18, 12, 32), btn_r, border_radius=4)
+                    pygame.draw.rect(surface, (160, 100, 240), btn_r, 1, border_radius=4)
+                    draw_text(surface, "Expand", btn_r.x + 28, btn_r.y + 7, (180, 130, 255), 12)
+                    self._acc_expand_btns.append((btn_r, item, ch))
+                    expand_y += 50
+
     def _handle_spells_click(self, mx, my):
         from core.classes import get_all_resources
 
@@ -1890,6 +1973,15 @@ class CampUI:
                 self._msg(f"{item.get('name','Wand')} recharged: +{gained} charges "
                           f"({used} crystal{'s' if used>1 else ''} used).")
                 return None
+
+        # ACC expand buttons
+        from core.focus_charges import expand_with_acc
+        for btn_r, item, ch in getattr(self, "_acc_expand_btns", []):
+            if btn_r.collidepoint(mx, my):
+                ok, msg = expand_with_acc(item, self.party)
+                self._msg(msg, (180, 130, 255) if ok else (220, 80, 80))
+                return None
+
         return None
 
     def _cast_camp_spell(self, caster, ability):
@@ -2283,12 +2375,14 @@ class CampUI:
         LIST_X   = 60
         ROW_W    = SCREEN_W - LIST_X - 26
 
-        visible = c.inventory[self.scroll_offset:self.scroll_offset + visible_n]
-        for i in range(len(visible)):
-            idx = self.scroll_offset + i
+        # Use same collapsed groups as draw — falls back to full list if not yet drawn
+        groups = getattr(self, "_inv_groups", None) or _build_inv_groups(c.inventory)
+        visible_groups = groups[self.scroll_offset:self.scroll_offset + visible_n]
+        for i, grp in enumerate(visible_groups):
             row = pygame.Rect(LIST_X, list_top + i * ROW_H, ROW_W, ROW_H - 2)
             if row.collidepoint(mx, my):
-                self.selected_item = idx
+                # Select the first inventory index in this group
+                self.selected_item = grp["indices"][0]
                 self._give_mode = False
                 return None
 

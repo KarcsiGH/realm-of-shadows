@@ -1105,15 +1105,29 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                     msgs.append(f"{msg_prefix}{tgt['name']}'s defenses are compromised by the cold!")
         if ability.get("apply_poison"):
             poison_key = ability["apply_poison"]
-            # Map progression poison keys → combat status
+            # Map progression poison keys → combat status (base duration)
             POISON_MAP = {
-                "poison_weak":   ("Poisoned",      2),
-                "poison_strong": ("Poisoned",      3),
-                "poison_deadly": ("Poisoned",      4),
+                "poison_weak":   ("Poisoned", 2),
+                "poison_strong": ("Poisoned", 3),
+                "poison_deadly": ("Poisoned", 4),
             }
             sname, sdur = POISON_MAP.get(poison_key, ("Poisoned", 2))
+            # Duration scales with caster level: +1 per 4 levels above 1 (same as Burn)
+            if attacker.get("type") == "player":
+                caster_lv = attacker.get("level", 1)
+                sdur = sdur + max(0, (caster_lv - 1) // 4)
             if apply_status_effect(tgt, sname, sdur, 1.0):
                 msgs.append(f"{msg_prefix}{tgt['name']} is Poisoned!")
+                # Poison applies defense and accuracy penalties on enemies
+                # (represents weakening/tremors — restored when Poisoned expires)
+                if tgt.get("type") == "enemy":
+                    _p_def = max(2, int(tgt.get("defense", 0) * 0.20))
+                    _p_acc = 12
+                    tgt["_poison_def_penalty"] = tgt.get("_poison_def_penalty", 0) + _p_def
+                    tgt["_poison_acc_penalty"] = tgt.get("_poison_acc_penalty", 0) + _p_acc
+                    tgt["defense"]        = max(0, tgt.get("defense", 0) - _p_def)
+                    tgt["accuracy_bonus"] = tgt.get("accuracy_bonus", 0) - _p_acc
+                    msgs.append(f"{msg_prefix}{tgt['name']}'s body weakens under the poison!")
         if ability.get("dot"):
             dot_map = {"burning": "Burning"}
             sname = dot_map.get(ability["dot"], ability["dot"].capitalize())
@@ -1781,6 +1795,14 @@ def tick_status_effects(combatant):
             if name == "Slowed" and combatant.get("type") == "enemy":
                 def_pen = combatant.pop("_slow_def_penalty", 0)
                 acc_pen = combatant.pop("_slow_acc_penalty", 0)
+                if def_pen:
+                    combatant["defense"] = combatant.get("defense", 0) + def_pen
+                if acc_pen:
+                    combatant["accuracy_bonus"] = combatant.get("accuracy_bonus", 0) + acc_pen
+            # Restore poison penalties on enemies when Poisoned expires
+            if name == "Poisoned" and combatant.get("type") == "enemy":
+                def_pen = combatant.pop("_poison_def_penalty", 0)
+                acc_pen = combatant.pop("_poison_acc_penalty", 0)
                 if def_pen:
                     combatant["defense"] = combatant.get("defense", 0) + def_pen
                 if acc_pen:

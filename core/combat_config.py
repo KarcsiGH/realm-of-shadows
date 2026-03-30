@@ -261,7 +261,7 @@ MACE_ARMOR_BYPASS = 0.30  # maces ignore 30% of defense
 # Status effects that deal damage each round.
 # Value is flat damage per tick.  Tunable here.
 STATUS_TICK_DAMAGE = {
-    "Poisoned":     4,
+    "Poisoned":     10,
     "Burning":      10,
     "Frostbitten":  3,
     "Shocked":      5,
