@@ -7135,7 +7135,844 @@ _NEW_DIALOGUES = {
 
     # ── Thornhaven ─────────────────────────────────────────
 
-    "innkeeper_thornhaven": [
+    # ─────────────────────────────────────────────────────────
+    #  WOODHAVEN NPCs
+    # ─────────────────────────────────────────────────────────
+    "innkeeper_jessa": [
+        {
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "tree": {"id": "jessa_post_spiders", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Innkeeper Jessa",
+                    "text": "The northwest trail is open again, they tell me. The web cave cleared.\n"
+                            "I've had guests for the first time in three weeks. You did that, I expect.\n"
+                            "Room's on me tonight.",
+                    "choices": [
+                        {"text": "Happy to help.", "next": None},
+                        {"text": "The forest is still dangerous.", "next": "still_dangerous"},
+                    ],
+                },
+                "still_dangerous": {
+                    "speaker": "Innkeeper Jessa",
+                    "text": "It always is. But dangerous and impassable are different things. "
+                            "We can work with dangerous.",
+                    "choices": [{"text": "Fair enough.", "next": None}],
+                },
+            }},
+        },
+        {
+            "conditions": [],
+            "tree": {"id": "jessa_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Innkeeper Jessa",
+                    "text": "Welcome to the Canopy Rest. The northwest trail's been closed for weeks "
+                            "— web cave, they say. So it's quiet. Too quiet for an inn.\n"
+                            "Rest up. You'll want it.",
+                    "choices": [
+                        {"text": "What do you know about the area?", "next": "area"},
+                        {"text": "We're looking for work.", "next": "work"},
+                        {"text": "Just a room, thanks.", "next": None},
+                    ],
+                },
+                "area": {
+                    "speaker": "Innkeeper Jessa",
+                    "text": "Thornwood paths go east and northwest. East connects to Ironhearth "
+                            "eventually — hard road, dwarf country. Northwest is the web cave. "
+                            "Nobody goes there now. The Rangers have stopped patrolling it entirely.",
+                    "choices": [{"text": "Noted.", "next": None}],
+                },
+                "work": {
+                    "speaker": "Innkeeper Jessa",
+                    "text": "Talk to Guildmaster Oren at the guild hall. He posts contracts. "
+                            "Or the Scout Hall — Ranger Cael tracks patrols and bounties. "
+                            "Either way you'll find something.",
+                    "choices": [{"text": "Thanks.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    "trader_finn": [
+        {
+            "conditions": [],
+            "tree": {"id": "finn_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Trader Finn",
+                    "text": "Best ranger supplies this side of Ironhearth. Arrows, rope, trail "
+                            "rations, the works. Supply lines to the city have been patchy "
+                            "with the road conditions — but I've got what you need.",
+                    "choices": [
+                        {"text": "What's coming through from the east?", "next": "east"},
+                        {"text": "Heard anything useful lately?", "next": "rumour"},
+                        {"text": "Just browsing.", "next": None},
+                    ],
+                },
+                "east": {
+                    "speaker": "Trader Finn",
+                    "text": "Less than usual. Dwarf merchants from Ironhearth have been cutting "
+                            "trips short — something about the mine road being unsafe. "
+                            "They won't say why, but they're nervous. That's not a good sign.",
+                    "choices": [{"text": "Interesting.", "next": None}],
+                },
+                "rumour": {
+                    "speaker": "Trader Finn",
+                    "text": "Ranger brought in a dead Fading-touched wolf last week. "
+                            "Twice the normal size, black around the eyes. "
+                            "They've been getting bigger. Whatever's driving them, "
+                            "it's not getting weaker.",
+                    "choices": [{"text": "We'll keep that in mind.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    "druid_rowan": [
+        {
+            "conditions": [{"flag": "boss_defeated.goblin_warren", "op": "==", "value": True}],
+            "tree": {"id": "rowan_post_warren", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Druid Rowan",
+                    "text": "The grove felt the change when the Warren cleared. Something "
+                            "shifted in the Fading pressure — a brief easing, like a held "
+                            "breath released.\nThe Hearthstones anchor that balance. "
+                            "Each one you recover matters to every living thing in this forest.",
+                    "choices": [
+                        {"text": "Can the forest recover?", "next": "recover"},
+                        {"text": "What can you tell us about the Fading?", "next": "fading"},
+                        {"text": "Thank you.", "next": None},
+                    ],
+                },
+                "recover": {
+                    "speaker": "Druid Rowan",
+                    "text": "With the wards restored? Yes. Slowly, but yes. "
+                            "The corruption retreats when the anchor holds. "
+                            "That's why the Hearthstones matter.",
+                    "choices": [{"text": "We'll keep working.", "next": None}],
+                },
+                "fading": {
+                    "speaker": "Druid Rowan",
+                    "text": "The grove speaks to me in impressions, not words. "
+                            "What I feel: something old and patient. Not malicious — "
+                            "it doesn't hate. It simply consumes. Like rot, not fire.",
+                    "choices": [{"text": "That's unsettling.", "next": None}],
+                },
+            }},
+        },
+        {
+            "conditions": [],
+            "tree": {"id": "rowan_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Druid Rowan",
+                    "text": "This grove has stood for two hundred years. I've tended it "
+                            "for thirty.\nThe Fading has been moving through the root network "
+                            "for months now — I can feel it in the older trees. "
+                            "Something needs to change or the forest won't survive another season.",
+                    "choices": [
+                        {"text": "Is there anything we can do?", "next": "help"},
+                        {"text": "What does the Fading feel like?", "next": "feel"},
+                        {"text": "We'll look into it.", "next": None},
+                    ],
+                },
+                "help": {
+                    "speaker": "Druid Rowan",
+                    "text": "The Warden Order speaks of Hearthstones that once anchored "
+                            "the boundary. If that's true, recovering them would help. "
+                            "Beyond that — clear the corruption at its source. "
+                            "The Goblin Warren east of Briarhollow is where I'd start.",
+                    "choices": [{"text": "We're on it.", "next": None}],
+                },
+                "feel": {
+                    "speaker": "Druid Rowan",
+                    "text": "Like watching colour drain from something. "
+                            "The grove is still alive, but it's less vivid than it was. "
+                            "Less present. I find myself wondering if I'm imagining things — "
+                            "then a branch falls that should have held for another century.",
+                    "choices": [{"text": "We'll do what we can.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    "barkeep_holt": [
+        {
+            "conditions": [],
+            "tree": {"id": "holt_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Barkeep Holt",
+                    "text": "Hunter's Horn. Drink's good, company varies.\n"
+                            "Sit down if you're staying, move along if you're not.",
+                    "choices": [
+                        {"text": "What's the talk lately?", "next": "talk"},
+                        {"text": "Seen anyone come through recently?", "next": "travellers"},
+                        {"text": "Just a drink.", "next": None},
+                    ],
+                },
+                "talk": {
+                    "speaker": "Barkeep Holt",
+                    "text": "Rangers are grumbling about the northwest trail. Spider activity, "
+                            "which is nothing new — but the size of the webs they're describing "
+                            "is. Something in that cave grew. Nobody wants to be the one to "
+                            "find out what.",
+                    "choices": [{"text": "Anyone willing to deal with it?", "next": "deal"},
+                                {"text": "Noted.", "next": None}],
+                },
+                "deal": {
+                    "speaker": "Barkeep Holt",
+                    "text": "Guild's offering coin for it. Talk to Oren. "
+                            "He'll tell you what the job actually pays after "
+                            "he's done lowering your expectations.",
+                    "choices": [{"text": "Thanks for the warning.", "next": None}],
+                },
+                "travellers": {
+                    "speaker": "Barkeep Holt",
+                    "text": "Warden type came through two days ago. Quiet. "
+                            "Nursed one drink for three hours and asked about eastern roads. "
+                            "Left before dark. They always leave before dark.",
+                    "choices": [{"text": "Warden Order?", "next": "warden"},
+                                {"text": "Interesting.", "next": None}],
+                },
+                "warden": {
+                    "speaker": "Barkeep Holt",
+                    "text": "Whatever's left of it. They're spread thin. "
+                            "You see one, there's usually a reason they're in the area. "
+                            "Worth talking to if you can catch one.",
+                    "choices": [{"text": "Thanks.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    "smith_wren": [
+        {
+            "conditions": [],
+            "tree": {"id": "wren_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Smith Wren",
+                    "text": "Ranger's Forge. I make what rangers need — "
+                            "arrowheads, light blades, field repairs.\n"
+                            "Don't ask me for plate armour. Wrong forge, wrong smith.",
+                    "choices": [
+                        {"text": "What do you know about the area?", "next": "area"},
+                        {"text": "Seen any unusual materials come through?", "next": "materials"},
+                        {"text": "Just looking.", "next": None},
+                    ],
+                },
+                "area": {
+                    "speaker": "Smith Wren",
+                    "text": "Forest work mostly. The Thornwood runs northeast from here "
+                            "toward the old Warden patrol routes. Those routes haven't been "
+                            "properly maintained in years. You can still follow them, "
+                            "but don't expect the trail markers to be upright.",
+                    "choices": [{"text": "Good to know.", "next": None}],
+                },
+                "materials": {
+                    "speaker": "Smith Wren",
+                    "text": "Ranger brought in chitin plates last week — from one of those "
+                            "Fading-touched spiders. Harder than standard shell, "
+                            "and there's something wrong with the colour. "
+                            "I'm not working with it until I know more about what it does.",
+                    "choices": [{"text": "Wise.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  IRONHEARTH NPCs
+    # ─────────────────────────────────────────────────────────
+    "innkeeper_bron": [
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {"id": "bron_post_mine", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Innkeeper Bron",
+                    "text": "Word came down from the mine road. Korrath is gone. "
+                            "Took long enough — that garrison's been a black mark on "
+                            "Ironhearth's history for twenty years.\n"
+                            "Drinks are on the house. And I mean it.",
+                    "choices": [
+                        {"text": "What happened to the garrison?", "next": "garrison"},
+                        {"text": "Thank you.", "next": None},
+                    ],
+                },
+                "garrison": {
+                    "speaker": "Innkeeper Bron",
+                    "text": "Warden garrison. Held the mine as an anchor point when the "
+                            "old wards started failing. They held for months. "
+                            "The Fading took them one by one. Korrath was the last.\n"
+                            "Nobody went in after that. Nobody wanted to know.",
+                    "choices": [{"text": "They held as long as they could.", "next": None}],
+                },
+            }},
+        },
+        {
+            "conditions": [],
+            "tree": {"id": "bron_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Innkeeper Bron",
+                    "text": "Ironhearth. You made it in one piece — the road isn't kind "
+                            "to outsiders.\nThe Forge City, they call it. Stone and fire "
+                            "and the smell of hot metal. You'll get used to it.",
+                    "choices": [
+                        {"text": "Tell me about Ironhearth.", "next": "city"},
+                        {"text": "What's the situation with the mine?", "next": "mine"},
+                        {"text": "A room and quiet.", "next": None},
+                    ],
+                },
+                "city": {
+                    "speaker": "Innkeeper Bron",
+                    "text": "Dwarven construction — you can tell from the stonework. "
+                            "Three forge guilds, two trade houses, one temple that "
+                            "everyone pretends is for the dwarven ancestors but is really "
+                            "just where the forgemasters argue about ore grades.\n"
+                            "Good city if you respect the work.",
+                    "choices": [{"text": "Thanks for the overview.", "next": None}],
+                },
+                "mine": {
+                    "speaker": "Innkeeper Bron",
+                    "text": "The Abandoned Mine north of here. Nobody goes there. "
+                            "Used to be a Warden garrison — they sealed it when things "
+                            "went wrong. Whatever went wrong is still in there.\n"
+                            "Foreman Drek at the mines office knows more than he tells.",
+                    "choices": [{"text": "We'll talk to him.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    "merchant_gilda": [
+        {
+            "conditions": [],
+            "tree": {"id": "gilda_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Merchant Gilda",
+                    "text": "Ironhearth Trading Post. We carry forge goods, "
+                            "Dwarven metalwork, standard adventuring supplies.\n"
+                            "Don't haggle. The prices are what they are.",
+                    "choices": [
+                        {"text": "What's moving well these days?", "next": "moving"},
+                        {"text": "Heard anything from the eastern roads?", "next": "east"},
+                        {"text": "Just looking.", "next": None},
+                    ],
+                },
+                "moving": {
+                    "speaker": "Merchant Gilda",
+                    "text": "Torches and oil. Always torches and oil. "
+                            "The mine road brings out the paranoid and the reckless in equal measure. "
+                            "Both groups buy the same supplies.",
+                    "choices": [{"text": "Practical.", "next": None}],
+                },
+                "east": {
+                    "speaker": "Merchant Gilda",
+                    "text": "Imperial patrols have been pushing further west than they should. "
+                            "Asking about trade routes, ore shipments, population numbers. "
+                            "The kind of questions you ask before you decide to take something.",
+                    "choices": [{"text": "That sounds like more than trade interest.", "next": "imperial"},
+                                {"text": "Noted.", "next": None}],
+                },
+                "imperial": {
+                    "speaker": "Merchant Gilda",
+                    "text": "It is. But I sell goods, not opinions. "
+                            "The Guild Secretary would know more — Hald keeps track of who's "
+                            "asking what in this city.",
+                    "choices": [{"text": "We'll find him.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    "priest_korvan": [
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {"id": "korvan_post_mine", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Priest Korvan",
+                    "text": "The old prayers we speak here include the garrison. "
+                            "Twenty-three names. We've spoken them every Forge-day "
+                            "for fifteen years.\nKorrath is among them. "
+                            "Whatever he was at the end — he was a Warden first. "
+                            "Thank you for giving him peace.",
+                    "choices": [
+                        {"text": "He held his post as long as he could.", "next": None},
+                        {"text": "He asked us to free him.", "next": "asked"},
+                    ],
+                },
+                "asked": {
+                    "speaker": "Priest Korvan",
+                    "text": "That sounds like a Warden. They always had more dignity than the "
+                            "rest of us managed.\nWe'll add the date to the memorial. "
+                            "It deserves to be complete.",
+                    "choices": [{"text": "It does.", "next": None}],
+                },
+            }},
+        },
+        {
+            "conditions": [],
+            "tree": {"id": "korvan_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Priest Korvan",
+                    "text": "The Forge Shrine tends to all who work stone and fire. "
+                            "Travellers are welcome, though we don't often see them.\n"
+                            "This city runs on hard work and harder faith. "
+                            "What can I do for you?",
+                    "choices": [
+                        {"text": "Tell me about the abandoned garrison.", "next": "garrison"},
+                        {"text": "What do you know about the Wardens?", "next": "wardens"},
+                        {"text": "Just passing through.", "next": None},
+                    ],
+                },
+                "garrison": {
+                    "speaker": "Priest Korvan",
+                    "text": "Twenty-three names on the memorial stone outside. "
+                            "The Warden garrison that held the mine anchor point "
+                            "when the wards began failing. We speak their names every Forge-day.\n"
+                            "The last survivor — Korrath — is still up there. "
+                            "Changed. We don't send anyone to find out how.",
+                    "choices": [{"text": "We'll go.", "next": None}],
+                },
+                "wardens": {
+                    "speaker": "Priest Korvan",
+                    "text": "The Order of Wardens kept the boundary between this world "
+                            "and the Shadow Realm for centuries. When they failed, "
+                            "we called it the Collapse. The Fading is the result.\n"
+                            "The dwarves of Ironhearth remember it differently. "
+                            "They call it the Breaking of the Deep Wards. "
+                            "Same event. Different scars.",
+                    "choices": [{"text": "Thank you.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    "barkeep_magda": [
+        {
+            "conditions": [],
+            "tree": {"id": "magda_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Barkeep Magda",
+                    "text": "Sit. Drink. The Forge Tap serves dwarven ale and "
+                            "doesn't water it down — which is why the city watch "
+                            "drinks here and nobody else gives us trouble.",
+                    "choices": [
+                        {"text": "What's the mood in the city?", "next": "mood"},
+                        {"text": "Heard anything about the Fading?", "next": "fading"},
+                        {"text": "Just a drink.", "next": None},
+                    ],
+                },
+                "mood": {
+                    "speaker": "Barkeep Magda",
+                    "text": "Tense. The mine road keeps dropping off caravans that "
+                            "started with more people than they arrived with. "
+                            "The forgemasters are cutting travel and nobody's saying why publicly.\n"
+                            "But privately? They're scared. Dwarves don't scare easily.",
+                    "choices": [{"text": "What do they think is happening?", "next": "think"},
+                                {"text": "Noted.", "next": None}],
+                },
+                "think": {
+                    "speaker": "Barkeep Magda",
+                    "text": "The mine. Whatever's in there, the Fading's been feeding it. "
+                            "They sealed it fifteen years ago and hoped it would stay sealed. "
+                            "It hasn't been staying very well lately.",
+                    "choices": [{"text": "We'll look into it.", "next": None}],
+                },
+                "fading": {
+                    "speaker": "Barkeep Magda",
+                    "text": "Comes up slower here than in the settlements — "
+                            "the old dwarven stonework has some natural resistance, "
+                            "or so the priests say. But it comes. Ore veins going grey. "
+                            "Animals acting wrong near the northern passages. It comes.",
+                    "choices": [{"text": "Thanks.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    "master_smith_thardin": [
+        {
+            "conditions": [],
+            "tree": {"id": "thardin_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Master Smith Thardin",
+                    "text": "The Grand Forge has stood for four hundred years. "
+                            "Every blade worth carrying in this region started here.\n"
+                            "State your business. I'm not a sightseer.",
+                    "choices": [
+                        {"text": "Tell me about Ironhearth's forges.", "next": "forges"},
+                        {"text": "We're looking for information on the mine.", "next": "mine"},
+                        {"text": "What do you make here?", "next": "makes"},
+                        {"text": "Sorry to disturb you.", "next": None},
+                    ],
+                },
+                "forges": {
+                    "speaker": "Master Smith Thardin",
+                    "text": "Three guilds. The Grand Forge handles weapons and heavy armour. "
+                            "The Vein Hall does precision work — mechanisms, locks, fine instruments. "
+                            "The Soot Guild takes everything else.\n"
+                            "We cooperate on large contracts and compete on everything else. "
+                            "That tension is why the work is good.",
+                    "choices": [{"text": "Healthy competition.", "next": None}],
+                },
+                "mine": {
+                    "speaker": "Master Smith Thardin",
+                    "text": "The Abandoned Mine is the Grand Forge's oldest wound. "
+                            "That ore fed our furnaces for two centuries. "
+                            "When the garrison fell we lost half our supply lines.\n"
+                            "If you're going up there — and I can see you're thinking it — "
+                            "take fire. The things in there don't like fire.",
+                    "choices": [{"text": "Fire. Noted.", "next": None}],
+                },
+                "makes": {
+                    "speaker": "Master Smith Thardin",
+                    "text": "Iron and steel, mainly. Some alloy work when the ore "
+                            "from the eastern veins comes through — "
+                            "they run cold, which makes for harder edges.\n"
+                            "We've been experimenting with Fading-touched chitin. "
+                            "Results are... mixed. The hardness is exceptional. "
+                            "The material has a temperament.",
+                    "choices": [{"text": "Interesting.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    "armorer_ygrith": [
+        {
+            "conditions": [],
+            "tree": {"id": "ygrith_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Armorer Ygrith",
+                    "text": "Ironhearth Armory. "
+                            "What you see is what's in stock. "
+                            "Custom orders take three weeks and half up front.",
+                    "choices": [
+                        {"text": "Any advice for someone heading to the mine?", "next": "mine"},
+                        {"text": "What sells here?", "next": "sells"},
+                        {"text": "Just browsing.", "next": None},
+                    ],
+                },
+                "mine": {
+                    "speaker": "Armorer Ygrith",
+                    "text": "Don't go light. Whatever's up there hits hard — "
+                            "I've repaired enough gear from people who came back.\n"
+                            "The ones who didn't come back were usually the ones "
+                            "who thought their speed would save them. "
+                            "Speed doesn't help you if you can't see it coming.",
+                    "choices": [{"text": "Heavy armour it is.", "next": None}],
+                },
+                "sells": {
+                    "speaker": "Armorer Ygrith",
+                    "text": "Heavy plate to the garrison soldiers. "
+                            "Chain and leather to the mine workers who still go north. "
+                            "And lately a lot of repair work — "
+                            "shields and breastplates coming back with marks "
+                            "I don't recognise. Shadow damage, the priests call it. "
+                            "I call it bad news.",
+                    "choices": [{"text": "We'll keep that in mind.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    "guildmaster_ironhearth": [
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {"id": "hald_post_mine", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Guild Secretary Hald",
+                    "text": "The mine has been cleared — word came down an hour ago. "
+                            "You're the ones responsible, I assume.\n"
+                            "The Guild will log this. Formally. That matters more than "
+                            "you might think when the historians write it up.",
+                    "choices": [
+                        {"text": "What happens now?", "next": "now"},
+                        {"text": "We appreciate the acknowledgment.", "next": None},
+                    ],
+                },
+                "now": {
+                    "speaker": "Guild Secretary Hald",
+                    "text": "The forgemasters will petition to reopen the northern veins. "
+                            "The Warden Order — what remains of it — "
+                            "will want to re-examine the anchor point. "
+                            "And the city will breathe a little easier.\n"
+                            "Your work here is done. The rest is administration.",
+                    "choices": [{"text": "Good luck with that.", "next": None}],
+                },
+            }},
+        },
+        {
+            "conditions": [],
+            "tree": {"id": "hald_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Guild Secretary Hald",
+                    "text": "Guild Hall. I manage trade records, guild contracts, "
+                            "and visitor registrations for the city.\n"
+                            "If you're conducting business in Ironhearth, "
+                            "I should know about it.",
+                    "choices": [
+                        {"text": "We're investigating the abandoned mine.", "next": "mine"},
+                        {"text": "What do you track here?", "next": "track"},
+                        {"text": "Just passing through.", "next": None},
+                    ],
+                },
+                "mine": {
+                    "speaker": "Guild Secretary Hald",
+                    "text": "Then you'll need to know: the mine road is officially "
+                            "unsafe north of the second waystone. "
+                            "Guild does not cover contracts in that zone.\n"
+                            "Unofficially — the Imperial agents who came through "
+                            "last month were asking about the same road. "
+                            "Whatever they're looking for, they didn't find it. "
+                            "That made them irritable.",
+                    "choices": [{"text": "What were they after?", "next": "imperial"},
+                                {"text": "Noted.", "next": None}],
+                },
+                "imperial": {
+                    "speaker": "Guild Secretary Hald",
+                    "text": "Ore manifests. Specifically, records of what was mined "
+                            "from the deep veins before the garrison fell. "
+                            "I gave them nothing — those records are sealed. "
+                            "But they'll come back.",
+                    "choices": [{"text": "Interesting.", "next": None}],
+                },
+                "track": {
+                    "speaker": "Guild Secretary Hald",
+                    "text": "Trade volume, contract disputes, visitor registrations, "
+                            "and anything that looks like it might become a contract dispute "
+                            "in the next six months. "
+                            "Ironhearth runs on paper as much as on fire.",
+                    "choices": [{"text": "Good to know.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    "foreman_drek": [
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {"id": "drek_post_mine", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Foreman Drek",
+                    "text": "They tell me it's cleared. "
+                            "Twenty years I've kept this office, and not once did I "
+                            "think I'd live to hear those words.\n"
+                            "I've got three crews ready. We're going back in tomorrow. "
+                            "Some of us have been waiting a long time for this.",
+                    "choices": [
+                        {"text": "What's the plan?", "next": "plan"},
+                        {"text": "Take care in there.", "next": None},
+                    ],
+                },
+                "plan": {
+                    "speaker": "Foreman Drek",
+                    "text": "Upper shafts first. See what's still sound. "
+                            "The old gang-boards should hold — dwarven construction, "
+                            "they build for the long term. "
+                            "Lower veins we'll assess before we touch anything.\n"
+                            "There's ore in those walls that's been waiting twenty years. "
+                            "We can be patient another week.",
+                    "choices": [{"text": "Good luck.", "next": None}],
+                },
+            }},
+        },
+        {
+            "conditions": [],
+            "tree": {"id": "drek_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Foreman Drek",
+                    "text": "Mines Office. We manage the active shafts south and east.\n"
+                            "The northern shafts have been sealed for twenty years. "
+                            "I don't discuss what's up there. "
+                            "Everyone who asked before you found out why we don't discuss it.",
+                    "choices": [
+                        {"text": "We're going to the Abandoned Mine.", "next": "going"},
+                        {"text": "What happened to the garrison?", "next": "garrison"},
+                        {"text": "We understand.", "next": None},
+                    ],
+                },
+                "going": {
+                    "speaker": "Foreman Drek",
+                    "text": "Then I'll tell you what I tell everyone: "
+                            "the mine key is the least of your problems. "
+                            "Getting past the door is easy.\n"
+                            "What Korrath became after the Fading took him — "
+                            "that's what the key doesn't prepare you for. "
+                            "He was the best of them. Now he's the worst of it.",
+                    "choices": [{"text": "We'll be ready.", "next": None}],
+                },
+                "garrison": {
+                    "speaker": "Foreman Drek",
+                    "text": "They held the anchor point when the wards started failing. "
+                            "Sent out progress reports for six months. "
+                            "Then the reports stopped.\n"
+                            "We sent one recovery team. They came back without the team. "
+                            "After that we sealed the road and filed the paperwork "
+                            "and I've been looking at that sealed door every morning for two decades.",
+                    "choices": [{"text": "That's a long time to carry.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    # ─────────────────────────────────────────────────────────
+    #  GUILD TRAINERS — Greenwood, Sanctum, Crystalspire
+    # ─────────────────────────────────────────────────────────
+    "trainer_greenwood": [
+        {
+            "conditions": [],
+            "tree": {"id": "trainer_greenwood_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Ranger Warden",
+                    "text": "Greenwood Outpost. We train rangers and track the "
+                            "Fading boundary across the western forest line.\n"
+                            "We can sharpen your skills if you have the aptitude.",
+                    "choices": [
+                        {"text": "What training is available?", "next": "train"},
+                        {"text": "What can you tell us about the western boundary?", "next": "boundary"},
+                        {"text": "Just looking.", "next": None},
+                    ],
+                },
+                "train": {
+                    "speaker": "Ranger Warden",
+                    "text": "Tracking, survival, ranged precision. "
+                            "The outpost specialises in forest combat — "
+                            "positioning, cover use, reading enemy movement before it happens.\n"
+                            "If you want heavy combat training, Ironhearth is better suited. "
+                            "We train you to not need it.",
+                    "choices": [{"text": "We're interested.", "next": None}],
+                },
+                "boundary": {
+                    "speaker": "Ranger Warden",
+                    "text": "The Fading boundary shifts. We map it every season "
+                            "and every season it's further west than last.\n"
+                            "Three settlements have been abandoned in the last two years. "
+                            "The people moved. The buildings stayed. "
+                            "The buildings are still there — most of them.",
+                    "choices": [{"text": "What happens to the buildings?", "next": "buildings"},
+                                {"text": "We'll do what we can.", "next": None}],
+                },
+                "buildings": {
+                    "speaker": "Ranger Warden",
+                    "text": "They fade. Literally. Become less solid. "
+                            "Then one morning you ride past and there's just a "
+                            "foundation and an outline in the soil where the walls were.\n"
+                            "It takes time. But not as much time as it used to.",
+                    "choices": [{"text": "We'll find the Hearthstones.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    "trainer_sanctum": [
+        {
+            "conditions": [],
+            "tree": {"id": "trainer_sanctum_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Chapter Master Aldren",
+                    "text": "The Sanctum chapter has maintained divine and healing "
+                            "arts in this region for a century.\n"
+                            "We train clerics, paladins, and those with the will "
+                            "to face what the Fading sends.",
+                    "choices": [
+                        {"text": "What training do you offer?", "next": "train"},
+                        {"text": "What does the Sanctum know about the Fading?", "next": "fading"},
+                        {"text": "Just passing through.", "next": None},
+                    ],
+                },
+                "train": {
+                    "speaker": "Chapter Master Aldren",
+                    "text": "Divine channelling, restoration, ward maintenance. "
+                            "The practical arts — healing under fire, "
+                            "turning shadow-touched enemies, keeping the party alive "
+                            "when everything else has gone wrong.\n"
+                            "We also train the harder skill: "
+                            "knowing when to act and when to hold.",
+                    "choices": [{"text": "That last one is harder than it sounds.", "next": None}],
+                },
+                "fading": {
+                    "speaker": "Chapter Master Aldren",
+                    "text": "The Fading is not evil. That distinction matters.\n"
+                            "It is entropy given direction. It doesn't choose to consume — "
+                            "it simply does, wherever the boundary wards fail to hold it.\n"
+                            "The Hearthstones anchor those wards. Whoever Valdris is "
+                            "and whatever his reasons — he understood that. "
+                            "Which means he intended the collapse.",
+                    "choices": [
+                        {"text": "You think it was deliberate?", "next": "deliberate"},
+                        {"text": "We'll stop him.", "next": None},
+                    ],
+                },
+                "deliberate": {
+                    "speaker": "Chapter Master Aldren",
+                    "text": "The Warden Order doesn't fail by accident. "
+                            "Not one this complete. Not one that leaves a single survivor "
+                            "in the right position to work against the repairs.\n"
+                            "We've been studying this for twenty years. "
+                            "Find Valdris. Ask him yourself.",
+                    "choices": [{"text": "We will.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+    "trainer_crystalspire": [
+        {
+            "conditions": [],
+            "tree": {"id": "trainer_crystalspire_default", "loop": True, "nodes": {
+                "start": {
+                    "speaker": "Arcanist Veleth",
+                    "text": "Crystalspire Arcane Guild. We research, we train, "
+                            "and we argue about theory.\n"
+                            "The arguing is mostly at mealtimes. The rest of the time "
+                            "we're quite productive.",
+                    "choices": [
+                        {"text": "What training is available?", "next": "train"},
+                        {"text": "What does the Guild know about the Fading?", "next": "fading"},
+                        {"text": "Just passing through.", "next": None},
+                    ],
+                },
+                "train": {
+                    "speaker": "Arcanist Veleth",
+                    "text": "Arcane disciplines — standard spell theory, "
+                            "combat application, identification, wand attunement. "
+                            "We also teach counter-magic and "
+                            "recognition of Fading-touched corruption in spellwork.\n"
+                            "That last course has become rather popular recently.",
+                    "choices": [{"text": "I can imagine why.", "next": None}],
+                },
+                "fading": {
+                    "speaker": "Arcanist Veleth",
+                    "text": "The Fading interacts with arcane energy in three documented ways: "
+                            "it destabilises sustained spell effects, "
+                            "it amplifies shadow-element spells unpredictably, "
+                            "and it corrupts spell anchors if left in contact long enough.\n"
+                            "The third effect is what destroyed the old wards. "
+                            "Someone patient and very skilled could have engineered it.",
+                    "choices": [
+                        {"text": "Valdris?", "next": "valdris"},
+                        {"text": "How would you counter that?", "next": "counter"},
+                    ],
+                },
+                "valdris": {
+                    "speaker": "Arcanist Veleth",
+                    "text": "The last Senior Warden. Yes.\n"
+                            "He had the access and the knowledge. "
+                            "Whether he had the motive — I leave that to philosophers. "
+                            "My concern is understanding the mechanism so we can reverse it.",
+                    "choices": [{"text": "The Hearthstones.", "next": None}],
+                },
+                "counter": {
+                    "speaker": "Arcanist Veleth",
+                    "text": "New anchors. Properly placed and shielded this time.\n"
+                            "The Hearthstone fragments are exactly that — "
+                            "they were designed as anchor points, not just relics. "
+                            "Whoever created them understood the problem.",
+                    "choices": [{"text": "We're finding them.", "next": None}],
+                },
+            }},
+        },
+    ],
+
+        "innkeeper_thornhaven": [
         {
             "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
             "tree": {

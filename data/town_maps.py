@@ -378,7 +378,7 @@ WOODHAVEN_BUILDINGS = {
         "color": (120, 100, 70),
         "wall_cols": (2, 7), "wall_rows": (1, 5),
         "npc_name": "Innkeeper Jessa",
-        "indoor_npc": {"name": "Innkeeper Jessa", "npc_type": "innkeeper", "title": "Innkeeper", "description": "A quiet woman who keeps the inn spotless.", "color": (180, 160, 120), "dialogue_id": None},
+        "indoor_npc": {"name": "Innkeeper Jessa", "npc_type": "innkeeper", "dialogue_id": "innkeeper_jessa", "title": "Innkeeper", "description": "A quiet woman who keeps the inn spotless.", "color": (180, 160, 120)},
     },
     "shop": {
         "name": "Woodhaven Trading Post",
@@ -387,7 +387,7 @@ WOODHAVEN_BUILDINGS = {
         "color": (100, 130, 80),
         "wall_cols": (10, 15), "wall_rows": (1, 5),
         "npc_name": "Trader Finn",
-        "indoor_npc": {"name": "Trader Finn", "npc_type": "merchant", "title": "Merchant", "description": "A well-traveled merchant with ranger supplies.", "color": (120, 180, 100), "dialogue_id": None},
+        "indoor_npc": {"name": "Trader Finn", "npc_type": "merchant", "dialogue_id": "trader_finn", "title": "Merchant", "description": "A well-traveled merchant with ranger supplies.", "color": (120, 180, 100)},
     },
     "guild": {
         "name": "Ranger's Guild",
@@ -405,7 +405,7 @@ WOODHAVEN_BUILDINGS = {
         "color": (80, 150, 80),
         "wall_cols": (2, 7), "wall_rows": (9, 13),
         "npc_name": "Druid Rowan",
-        "indoor_npc": {"name": "Druid Rowan", "npc_type": "priestess", "title": "Druid", "description": "A druid who tends the forest shrine.", "color": (80, 200, 100), "dialogue_id": None},
+        "indoor_npc": {"name": "Druid Rowan", "npc_type": "priestess", "dialogue_id": "druid_rowan", "title": "Druid", "description": "A druid who tends the forest shrine.", "color": (80, 200, 100)},
     },
     "tavern": {
         "name": "The Hunter's Horn",
@@ -414,7 +414,7 @@ WOODHAVEN_BUILDINGS = {
         "color": (130, 100, 60),
         "wall_cols": (10, 15), "wall_rows": (9, 13),
         "npc_name": "Barkeep Holt",
-        "indoor_npc": {"name": "Barkeep Holt", "npc_type": "barkeep", "title": "Barkeep", "description": "A burly hunter who runs the tavern between seasons.", "color": (180, 140, 80), "dialogue_id": None},
+        "indoor_npc": {"name": "Barkeep Holt", "npc_type": "barkeep", "dialogue_id": "barkeep_holt", "title": "Barkeep", "description": "A burly hunter who runs the tavern between seasons.", "color": (180, 140, 80)},
     },
     "forge": {
         "name": "Ranger's Forge",
@@ -423,7 +423,7 @@ WOODHAVEN_BUILDINGS = {
         "color": (160, 100, 50),
         "wall_cols": (18, 23), "wall_rows": (9, 13),
         "npc_name": "Smith Wren",
-        "indoor_npc": {"name": "Smith Wren", "npc_type": "forger", "title": "Smith", "description": "A wiry woman who crafts bows and arrowheads.", "color": (200, 130, 60), "dialogue_id": None},
+        "indoor_npc": {"name": "Smith Wren", "npc_type": "forger", "dialogue_id": "smith_wren", "title": "Smith", "description": "A wiry woman who crafts bows and arrowheads.", "color": (200, 130, 60)},
     },
     "ranger_hall": {
         "name": "Scout Hall",
@@ -529,7 +529,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (100, 90, 80),
         "wall_cols": (2, 7), "wall_rows": (2, 5),
         "npc_name": "Innkeeper Bron",
-        "indoor_npc": {"name": "Innkeeper Bron", "npc_type": "innkeeper", "title": "Innkeeper", "description": "A stout dwarf who pours strong ale.", "color": (160, 130, 90), "dialogue_id": None},
+        "indoor_npc": {"name": "Innkeeper Bron", "npc_type": "innkeeper", "dialogue_id": "innkeeper_bron", "title": "Innkeeper", "description": "A stout dwarf who pours strong ale.", "color": (160, 130, 90)},
     },
     "shop": {
         "name": "Ironhearth Supply",
@@ -538,7 +538,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (130, 110, 80),
         "wall_cols": (9, 14), "wall_rows": (2, 5),
         "npc_name": "Merchant Gilda",
-        "indoor_npc": {"name": "Merchant Gilda", "npc_type": "merchant", "title": "Merchant", "description": "A sharp-tongued merchant with the finest goods.", "color": (180, 160, 100), "dialogue_id": None},
+        "indoor_npc": {"name": "Merchant Gilda", "npc_type": "merchant", "dialogue_id": "merchant_gilda", "title": "Merchant", "description": "A sharp-tongued merchant with the finest goods.", "color": (180, 160, 100)},
     },
     "temple": {
         "name": "Shrine of the Deep",
@@ -547,7 +547,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (120, 120, 160),
         "wall_cols": (16, 21), "wall_rows": (2, 5),
         "npc_name": "Priest Korvan",
-        "indoor_npc": {"name": "Priest Korvan", "npc_type": "priestess", "title": "Priest", "description": "A solemn priest of the deep stone.", "color": (140, 140, 200), "dialogue_id": None},
+        "indoor_npc": {"name": "Priest Korvan", "npc_type": "priestess", "dialogue_id": "priest_korvan", "title": "Priest", "description": "A solemn priest of the deep stone.", "color": (140, 140, 200)},
     },
     "tavern": {
         "name": "The Molten Cup",
@@ -556,7 +556,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (160, 100, 50),
         "wall_cols": (23, 27), "wall_rows": (2, 5),
         "npc_name": "Barkeep Magda",
-        "indoor_npc": {"name": "Barkeep Magda", "npc_type": "barkeep", "title": "Barkeep", "description": "A boisterous dwarven woman who loves a good story.", "color": (200, 140, 80), "dialogue_id": None},
+        "indoor_npc": {"name": "Barkeep Magda", "npc_type": "barkeep", "dialogue_id": "barkeep_magda", "title": "Barkeep", "description": "A boisterous dwarven woman who loves a good story.", "color": (200, 140, 80)},
     },
     "forge_main": {
         "name": "The Grand Forge",
@@ -565,7 +565,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (200, 120, 40),
         "wall_cols": (2, 15), "wall_rows": (9, 12),
         "npc_name": "Master Smith Thardin",
-        "indoor_npc": {"name": "Master Smith Thardin", "npc_type": "forger", "title": "Master Smith", "description": "The finest weaponsmith in the region.", "color": (220, 140, 40), "dialogue_id": None},
+        "indoor_npc": {"name": "Master Smith Thardin", "npc_type": "forger", "dialogue_id": "master_smith_thardin", "title": "Master Smith", "description": "The finest weaponsmith in the region.", "color": (220, 140, 40)},
     },
     "armory": {
         "name": "The Armory",
@@ -574,7 +574,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (150, 120, 60),
         "wall_cols": (17, 26), "wall_rows": (9, 12),
         "npc_name": "Armorer Ygrith",
-        "indoor_npc": {"name": "Armorer Ygrith", "npc_type": "merchant", "title": "Armorer", "description": "A dwarven woman who specialises in heavy armor.", "color": (170, 140, 80), "dialogue_id": None},
+        "indoor_npc": {"name": "Armorer Ygrith", "npc_type": "merchant", "dialogue_id": "armorer_ygrith", "title": "Armorer", "description": "A dwarven woman who specialises in heavy armor.", "color": (170, 140, 80)},
     },
     "guild": {
         "name": "Miners' Guild",
@@ -592,7 +592,7 @@ IRONHEARTH_BUILDINGS = {
         "color": (110, 100, 70),
         "wall_cols": (15, 20), "wall_rows": (17, 20),
         "npc_name": "Foreman Drek",
-        "indoor_npc": {"name": "Foreman Drek", "npc_type": "guard", "title": "Mine Foreman", "description": "Tracks ore quotas and manages shift assignments.", "color": (130, 120, 80), "dialogue_id": None},
+        "indoor_npc": {"name": "Foreman Drek", "npc_type": "guard", "dialogue_id": "foreman_drek", "title": "Mine Foreman", "description": "Tracks ore quotas and manages shift assignments.", "color": (130, 120, 80)},
     },
 }
 

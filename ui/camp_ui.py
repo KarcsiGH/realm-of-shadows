@@ -2341,7 +2341,7 @@ class CampUI:
                             self._give_mode = False
                             self._msg(f"Gave {xfer.get('name','item')} to {gchar.name}.", GOLD)
                         return None
-                        gx += gbw + 8
+                    gx += gbw + 8
 
         return None
 
