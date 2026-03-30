@@ -58,11 +58,12 @@ TORCH_DIST  = 11.0         # brighter — extends visible range
 # ═══════════════════════════════════════════════════════════════
 
 THEMES = {
-    "cave":  ((110,90,70),  (45,35,26),  (55,45,34),  (18,14,10), (220,145,55), (12,8,6)  ),
-    "mine":  ((120,100,75), (55,42,30),  (65,52,38),  (20,15,10), (240,175,65), (14,10,6) ),
-    "crypt": ((80,88,120),  (32,36,55),  (38,42,65),  (12,12,22), (100,130,210),(8,8,16)  ),
-    "ruins": ((115,95,72),  (50,40,30),  (62,50,38),  (18,13,9),  (225,160,55), (12,9,6)  ),
-    "tower": ((90,82,130),  (38,34,62),  (48,44,78),  (14,12,24), (145,115,230),(8,6,18)  ),
+    "cave":   ((110,90,70),  (45,35,26),  (55,45,34),  (18,14,10), (220,145,55), (12,8,6)  ),
+    "spider": ((62,58,54),   (24,20,18),  (30,26,22),  (8,7,6),    (180,170,140),(6,5,4)   ),
+    "mine":   ((120,100,75), (55,42,30),  (65,52,38),  (20,15,10), (240,175,65), (14,10,6) ),
+    "crypt":  ((80,88,120),  (32,36,55),  (38,42,65),  (12,12,22), (100,130,210),(8,8,16)  ),
+    "ruins":  ((115,95,72),  (50,40,30),  (62,50,38),  (18,13,9),  (225,160,55), (12,9,6)  ),
+    "tower":  ((90,82,130),  (38,34,62),  (48,44,78),  (14,12,24), (145,115,230),(8,6,18)  ),
 }
 
 # ═══════════════════════════════════════════════════════════════
@@ -722,14 +723,138 @@ def _gen_tower_textures(light, dark):
     return out
 
 
+def _gen_spider_textures(light, dark):
+    """Spider's Nest: stone walls increasingly obscured by webbing across 3 variants.
+
+    Variant 0 — stone with corner webs and sparse strands (early floors)
+    Variant 1 — heavy web coverage, egg sacs, web curtains dropping from top
+    Variant 2 — near-total web cover, barely see stone, dense layered silk
+    """
+    rng0 = random.Random(hash(("spider0", light)))
+    rng1 = random.Random(hash(("spider1", light)))
+    rng2 = random.Random(hash(("spider2", light)))
+    out  = []
+
+    # ── Stone base shared across all variants (increasingly dark) ────────
+    def _stone_base(rng_st, tone_lo, tone_hi):
+        s = pygame.Surface((TEX_W, TEX_H))
+        mortar = tuple(int(v * 0.42) for v in dark)
+        s.fill(mortar)
+        for _ in range(140):
+            x = rng_st.randint(0, TEX_W-1); y = rng_st.randint(0, TEX_H-1)
+            w = rng_st.randint(2, 7);  h = rng_st.randint(1, 4)
+            tone = rng_st.uniform(tone_lo, tone_hi)
+            c = tuple(min(255, int(v * tone)) for v in light)
+            pygame.draw.rect(s, c, (x, y, min(w, TEX_W-x), min(h, TEX_H-y)))
+        return s, mortar
+
+    WEB_LIGHT = (215, 208, 192)
+    WEB_MID   = (190, 183, 165)
+    WEB_OLD   = (165, 155, 130)   # yellowed older web
+
+    def _draw_web_strand(surf, rng_w, x1, y1, x2, y2, col, width=1):
+        pygame.draw.line(surf, col, (x1, y1), (x2, y2), width)
+
+    def _draw_web_cluster(surf, rng_w, cx, cy, size, density, col):
+        """Radial web cluster centred at (cx,cy)."""
+        n = int(density * 14)
+        for _ in range(n):
+            ang = rng_w.uniform(0, 6.283)
+            import math as _m
+            r  = rng_w.uniform(2, size)
+            ex = int(cx + _m.cos(ang) * r)
+            ey = int(cy + _m.sin(ang) * r)
+            _draw_web_strand(surf, rng_w, cx, cy, ex, ey, col)
+
+    def _draw_egg_sac(surf, x, y, radius, col):
+        pygame.draw.ellipse(surf, col,
+                            (x - radius, y - int(radius * 1.3),
+                             radius * 2, int(radius * 2.6)))
+        outline = tuple(max(0, int(v * 0.7)) for v in col)
+        pygame.draw.ellipse(surf, outline,
+                            (x - radius, y - int(radius * 1.3),
+                             radius * 2, int(radius * 2.6)), 1)
+
+    # ── Variant 0: light web in corners, sparse strands ──────────────────
+    s, mortar = _stone_base(rng0, 0.52, 1.08)
+
+    # Corner web clusters
+    for cx, cy in [(2, 2), (TEX_W-3, 2), (2, TEX_H-3), (TEX_W-3, TEX_H-3)]:
+        _draw_web_cluster(s, rng0, cx, cy, 14, 0.55,
+                          tuple(int(v * 0.85) for v in WEB_LIGHT))
+    # 8 sparse strands
+    for _ in range(8):
+        x1 = rng0.randint(0, TEX_W-1)
+        y1 = rng0.randint(0, TEX_H // 3)
+        x2 = x1 + rng0.randint(-12, 12)
+        y2 = y1 + rng0.randint(4, 18)
+        alpha_col = tuple(int(v * 0.55) for v in WEB_LIGHT)
+        _draw_web_strand(s, rng0, x1, y1,
+                         max(0, min(TEX_W-1, x2)),
+                         min(TEX_H-1, y2), alpha_col)
+    out.append(s)
+
+    # ── Variant 1: heavy coverage, egg sac, web curtain top ──────────────
+    s, mortar = _stone_base(rng1, 0.40, 0.88)
+
+    # Web curtain from ceiling
+    for x in range(0, TEX_W, 2):
+        drop = rng1.randint(6, 24)
+        col  = WEB_MID if rng1.random() > 0.4 else WEB_OLD
+        _draw_web_strand(s, rng1, x, 0,
+                         x + rng1.randint(-2, 2), drop, col)
+    # Diagonal cross-strands covering most of wall
+    for _ in range(22):
+        x1 = rng1.randint(0, TEX_W-1); y1 = rng1.randint(0, TEX_H-1)
+        x2 = max(0, min(TEX_W-1, x1 + rng1.randint(-22, 22)))
+        y2 = max(0, min(TEX_H-1, y1 + rng1.randint(-18, 18)))
+        col = WEB_MID if rng1.random() > 0.35 else WEB_OLD
+        _draw_web_strand(s, rng1, x1, y1, x2, y2, col)
+    # One egg sac
+    ex = rng1.randint(12, TEX_W-12)
+    ey = rng1.randint(TEX_H//4, TEX_H*3//4)
+    _draw_egg_sac(s, ex, ey, rng1.randint(4, 7),
+                  (200, 186, 148))
+    out.append(s)
+
+    # ── Variant 2: near-total coverage, barely see stone ─────────────────
+    s, mortar = _stone_base(rng2, 0.28, 0.65)
+
+    # Dense web fill — draw many overlapping strands
+    for _ in range(48):
+        x1 = rng2.randint(0, TEX_W-1); y1 = rng2.randint(0, TEX_H-1)
+        x2 = max(0, min(TEX_W-1, x1 + rng2.randint(-28, 28)))
+        y2 = max(0, min(TEX_H-1, y1 + rng2.randint(-28, 28)))
+        col = (WEB_LIGHT if rng2.random() > 0.6
+               else WEB_MID if rng2.random() > 0.4
+               else WEB_OLD)
+        w = 1 if rng2.random() > 0.25 else 2
+        _draw_web_strand(s, rng2, x1, y1, x2, y2, col, w)
+    # Heavy curtain
+    for x in range(0, TEX_W):
+        drop = rng2.randint(14, 38)
+        col  = WEB_LIGHT if rng2.random() > 0.5 else WEB_MID
+        _draw_web_strand(s, rng2, x, 0,
+                         x + rng2.randint(-1, 1), drop, col)
+    # Two to three egg sacs
+    for _ in range(rng2.randint(2, 3)):
+        ex2 = rng2.randint(6, TEX_W-6)
+        ey2 = rng2.randint(6, TEX_H-6)
+        _draw_egg_sac(s, ex2, ey2, rng2.randint(3, 6),
+                      (195, 180, 140))
+    out.append(s)
+    return out
+
+
 def _gen_theme_textures(theme_id, wall_light, wall_dark):
     """Return list of NUM_WALL_VARIANTS texture surfaces for this theme."""
     fn = {
-        "cave":  _gen_cave_textures,
-        "mine":  _gen_mine_textures,
-        "crypt": _gen_crypt_textures,
-        "ruins": _gen_ruins_textures,
-        "tower": _gen_tower_textures,
+        "cave":   _gen_cave_textures,
+        "spider": _gen_spider_textures,
+        "mine":   _gen_mine_textures,
+        "crypt":  _gen_crypt_textures,
+        "ruins":  _gen_ruins_textures,
+        "tower":  _gen_tower_textures,
     }.get(theme_id, _gen_cave_textures)
     return fn(wall_light, wall_dark)
 

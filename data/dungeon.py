@@ -63,7 +63,7 @@ DUNGEONS = {
         },
         "boss_floor": 4,
         "boss_encounter": "boss_spider_queen",
-        "theme": "cave",
+        "theme": "spider",
         "encounter_rate": 8,
     },
     "abandoned_mine": {
