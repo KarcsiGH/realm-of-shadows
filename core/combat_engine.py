@@ -1368,7 +1368,11 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             count = 0
             for tgt in tgt_list:
                 if apply_status_effect(tgt, "Fear", dur, 1.0):
-                    tgt["attack_damage"] = max(1, int(tgt.get("attack_damage", 1) * 0.5))
+                    _ad = tgt.get("attack_damage", 1)
+                    if isinstance(_ad, (list, tuple)):
+                        tgt["attack_damage"] = (max(1, int(_ad[0] * 0.5)), max(1, int(_ad[1] * 0.5)))
+                    else:
+                        tgt["attack_damage"] = max(1, int(float(_ad) * 0.5))
                     label = "TURNED" if "undead" in tgt.get("tags", []) else "DRIVEN BACK"
                     result["messages"].append(
                         f"{tgt['name']} is {label} — cowering in holy terror!"
