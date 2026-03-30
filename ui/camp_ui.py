@@ -47,6 +47,43 @@ TAB_COUNT = len(TAB_NAMES)
 from core.equipment import SLOT_ORDER as EQUIP_SLOTS, SLOT_NAMES as SLOT_LABELS
 
 
+# ── Inventory stacking helper ─────────────────────────────────────────────
+def _build_inv_groups(inventory):
+    """Collapse inventory into display groups for stacked rendering.
+
+    Returns list of dicts:
+      {"name": str, "count": int, "indices": [int,...], "item": dict}
+
+    Weapons/armor with enchant/bonus/unique fields never stack.
+    Key items never stack. Everything else groups by (name, type, subtype).
+    """
+    groups = []
+    group_map = {}
+    for idx, item in enumerate(inventory):
+        itype = item.get("type", "")
+        if itype in ("key_item", "quest_item") or "warden_rank" in item:
+            groups.append({"name": item.get("name","?"), "count": 1,
+                           "indices": [idx], "item": item})
+            continue
+        if itype in ("weapon", "armor", "accessory"):
+            if (item.get("enchant_element") or item.get("enchant_bonus") or
+                    item.get("bonus") or item.get("unique") or
+                    item.get("enchant_name")):
+                groups.append({"name": item.get("name","?"), "count": 1,
+                               "indices": [idx], "item": item})
+                continue
+        key = (item.get("name",""), itype, item.get("subtype",""))
+        if key in group_map:
+            gi = group_map[key]
+            groups[gi]["count"] += 1
+            groups[gi]["indices"].append(idx)
+        else:
+            group_map[key] = len(groups)
+            groups.append({"name": item.get("name","?"), "count": 1,
+                           "indices": [idx], "item": item})
+    return groups
+
+
 class CampUI:
     """Full camp screen with tabs."""
 
@@ -231,44 +268,6 @@ class CampUI:
     # ──────────────────────────────────────────────────────────
     #  INVENTORY TAB
     # ──────────────────────────────────────────────────────────
-
-# ── Inventory stacking helper (module-level for easy testing) ────────────
-def _build_inv_groups(inventory):
-    """Collapse inventory into display groups for stacked rendering.
-
-    Returns list of dicts:
-      {"name": str, "count": int, "indices": [int,...], "item": dict}
-
-    Weapons/armor with enchant/bonus/unique fields never stack.
-    Key items never stack. Everything else groups by (name, type, subtype).
-    """
-    groups = []
-    group_map = {}
-
-    for idx, item in enumerate(inventory):
-        itype = item.get("type", "")
-        if itype in ("key_item", "quest_item") or "warden_rank" in item:
-            groups.append({"name": item.get("name","?"), "count": 1,
-                           "indices": [idx], "item": item})
-            continue
-        if itype in ("weapon", "armor", "accessory"):
-            if (item.get("enchant_element") or item.get("enchant_bonus") or
-                    item.get("bonus") or item.get("unique") or
-                    item.get("enchant_name")):
-                groups.append({"name": item.get("name","?"), "count": 1,
-                               "indices": [idx], "item": item})
-                continue
-        key = (item.get("name",""), itype, item.get("subtype",""))
-        if key in group_map:
-            gi = group_map[key]
-            groups[gi]["count"] += 1
-            groups[gi]["indices"].append(idx)
-        else:
-            group_map[key] = len(groups)
-            groups.append({"name": item.get("name","?"), "count": 1,
-                           "indices": [idx], "item": item})
-    return groups
-
 
     def _draw_inventory(self, surface, mx, my, top):
         # Character selector
