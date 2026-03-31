@@ -886,29 +886,57 @@ def _enemy_zombie(s):
     for y in range(75,80): _hl(s,16,24,y,D); _hl(s,24,32,y,D)
     _hl(s,15,25,79,O); _hl(s,23,33,79,O)
 
+
+def _draw_leg(s, x0, y0, xm, ym, x1, y1, M, O):
+    """Draw a 2-segment spider leg: root→knee→tip."""
+    # root to knee
+    steps = max(abs(xm-x0), abs(ym-y0), 1)
+    for i in range(steps+1):
+        t = i/steps
+        _px(s, round(x0+t*(xm-x0)), round(y0+t*(ym-y0)), M)
+    # knee to tip
+    steps2 = max(abs(x1-xm), abs(y1-ym), 1)
+    for i in range(steps2+1):
+        t = i/steps2
+        _px(s, round(xm+t*(x1-xm)), round(ym+t*(y1-ym)), M if i<steps2 else O)
+
+
 def _enemy_giant_spider(s):
-    O=(80,50,80); M=(130,80,130); D=(55,28,55); E=(220,50,50)
-    # body — two oval segments
-    for y in range(32,50):  # abdomen (rear)
-        hw=8-abs(y-40)//2; _hl(s,29,29+hw,y,M); _px(s,29,y,O); _px(s,29+hw,y,O)
-    for y in range(26,38):  # cephalothorax (front)
-        hw=6-abs(y-31)//2; _hl(s,19,19+hw,y,M); _px(s,19,y,O); _px(s,19+hw,y,O)
-    _hl(s,25,28,34,D)  # waist
-    # 8 eyes
-    for ex,ey in [(20,27),(22,27),(24,27),(26,27),(20,29),(22,29),(24,29),(26,29)]:
+    """Giant spider: large abdomen upper-centre, small cephalothorax lower-front,
+    8 legs spreading sideways in 4 pairs. Clearly arachnid silhouette."""
+    O=(60,30,70); M=(110,60,120); D=(45,18,52); E=(220,50,50); H=(160,100,180)
+    # Abdomen — large upper oval, centred
+    for y in range(14,38):
+        hw = max(1, 11 - abs(y-25)*11//14)
+        _hl(s,23-hw,24+hw,y,M); _px(s,23-hw,y,O); _px(s,24+hw,y,O)
+    # Highlight on abdomen
+    _hl(s,21,26,17,H)
+    # Cephalothorax — smaller oval below and slightly forward
+    for y in range(36,54):
+        hw = max(1, 8 - abs(y-44)*8//10)
+        _hl(s,23-hw,24+hw,y,M); _px(s,23-hw,y,O); _px(s,24+hw,y,O)
+    # Pedicel (waist) connecting segments
+    _hl(s,21,26,36,D); _hl(s,21,26,37,D)
+    # 8 eyes on cephalothorax — front face, 2 rows of 4
+    for ex,ey in [(19,40),(21,40),(25,40),(27,40),
+                  (20,43),(22,43),(24,43),(26,43)]:
         _px(s,ex,ey,E)
-    # 8 legs — 4 pairs, fanning out
-    legs = [
-        (22,32,8,20),(22,32,12,22),(22,32,14,24),(22,32,16,28),   # left legs
-        (26,32,38,20),(26,32,36,22),(26,32,34,24),(26,32,32,28),  # right legs
+    # Chelicerae (fangs) pointing down
+    _vl(s,21,52,56,D); _vl(s,26,52,56,D)
+    _px(s,20,56,E); _px(s,27,56,E)
+    # 8 legs — 4 pairs spreading sideways from cephalothorax
+    # Each pair: (attach_y, left_mid_x, left_tip_x, tip_y, right_mid_x, right_tip_x)
+    leg_pairs = [
+        (38, 14, 3,  32,  33, 44, 32),  # front pair — nearly horizontal
+        (41, 13, 2,  38,  34, 45, 38),  # second pair — slight downward
+        (45, 13, 2,  50,  34, 45, 50),  # third pair — more downward
+        (49, 15, 5,  58,  32, 42, 58),  # rear pair — angled back-down
     ]
-    for sx,sy,ex,ey in legs:
-        dx=ex-sx; dy=ey-sy; steps=max(abs(dx),abs(dy))
-        for i in range(steps+1):
-            _px(s,round(sx+i*dx/max(1,steps)),round(sy+i*dy/max(1,steps)),M if i>0 else O)
-        _px(s,ex,ey,O)  # paw tip
-    # fangs
-    _px(s,21,37,E); _px(s,22,38,E); _px(s,25,37,E); _px(s,24,38,E)
+    for ay, lmx, ltx, ty, rmx, rtx, rty in leg_pairs:
+        # left leg: attach → mid-bend → tip (L-shaped with knee)
+        _draw_leg(s, 23, ay, lmx, ay-3, ltx, ty, M, O)
+        # right leg
+        _draw_leg(s, 24, ay, rmx, ay-3, rtx, rty, M, O)
 
 def _enemy_troll(s):
     O=(80,120,58); M=(44,78,28); D=(22,44,12); E=(220,190,40); W=(155,130,90); SK=(155,190,130)
@@ -1097,23 +1125,42 @@ def _enemy_boss_valdris(s):
     _hl(s,16,23,77,O); _hl(s,24,31,77,O)
 
 def _enemy_wolf(s):
-    O=(170,150,110); F=(90,75,50); D=(50,40,25); B=(215,200,160); E=(220,180,30)
-    for y,x1,x2 in [(18,5,16),(19,4,17),(20,3,18),(21,3,18),(22,4,17),(23,5,15)]:
+    """Wolf: horizontal quadruped body, short-to-medium legs, pointed ears,
+    amber eyes, clearly canine silhouette."""
+    O=(155,135,100); F=(85,70,45); D=(48,37,22); B=(210,195,155); E=(220,180,30)
+    # Body — wide horizontal mass
+    for y in range(22,38):
+        _hl(s,8,42,y,F); _px(s,8,y,O); _px(s,42,y,O)
+    _hl(s,8,42,22,O); _hl(s,9,42,23,D)     # back ridge
+    _hl(s,10,40,35,B); _hl(s,10,40,36,B)   # belly
+    # Shoulder hump
+    for y in range(18,26): _hl(s,10,20,y,F); _px(s,10,y,O); _px(s,20,y,O)
+    # Head
+    for y,x1,x2 in [(16,5,17),(17,4,18),(18,3,18),(19,3,18),(20,4,17),(21,5,16)]:
         _hl(s,x1,x2,y,F); _px(s,x1,y,O); _px(s,x2,y,O)
-    for i in range(5): _px(s,8+i,13+i,O); _px(s,13-i,13+i,O)
-    _hl(s,9,12,13,O)
-    for y,x1,x2 in [(21,0,4),(22,0,5)]: _hl(s,x1,x2,y,F); _px(s,x1,y,O); _px(s,x2,y,O)
-    _hl(s,1,6,23,O); _px(s,2,23,B); _px(s,2,24,B); _px(s,4,23,B); _px(s,4,24,B)
-    _px(s,12,19,E); _px(s,13,19,E); _px(s,12,20,E); _px(s,13,20,D)
-    for y in range(19,34): _hl(s,14,42,y,F); _px(s,14,y,O); _px(s,42,y,O)
-    _hl(s,5,42,19,O); _hl(s,5,42,20,D)
-    _hl(s,14,42,31,B); _hl(s,14,42,32,B); _hl(s,14,42,33,O)
-    for y in range(15,21): _hl(s,16,22,y,F); _px(s,16,y,O); _px(s,22,y,O)
-    _hl(s,16,22,15,O)
-    for lx,ly1,ly2 in [(15,34,52),(20,34,52),(32,34,52),(37,34,52)]:
-        for y in range(ly1,ly2): _hl(s,lx,lx+2,y,F); _px(s,lx,y,O); _px(s,lx+2,y,O)
-        for y in range(ly2,ly2+4): _hl(s,lx-1,lx+3,y,F); _px(s,lx-1,y,O); _px(s,lx+3,y,O)
-        _hl(s,lx-1,lx+3,ly2+3,O)
+    # Pointed upright ears — triangular, not pillars
+    for i in range(5): _px(s,8+i,12-i,O); _px(s,7+i,13-i,F)   # left ear
+    for i in range(5): _px(s,15-i,12-i,O); _px(s,16-i,13-i,F)  # right ear
+    # Snout / muzzle
+    for y,x1,x2 in [(19,0,5),(20,0,6),(21,0,6)]:
+        _hl(s,x1,x2,y,F); _px(s,x1,y,O); _px(s,x2,y,O)
+    _hl(s,1,6,22,O)                         # jaw line
+    _px(s,2,20,B); _px(s,3,20,B)            # jowl
+    _px(s,1,19,D); _px(s,2,19,D)            # nostril
+    # Amber eyes
+    _px(s,12,17,E); _px(s,13,17,E); _px(s,12,18,E)
+    # 4 legs — SHORT, clearly under the body, connecting at y=37
+    for lx,ly_top,ly_bot in [(11,37,50),(18,37,50),(30,37,50),(37,37,50)]:
+        for y in range(ly_top,ly_bot):
+            _hl(s,lx,lx+3,y,F); _px(s,lx,y,O); _px(s,lx+3,y,O)
+        # Paws — slightly wider
+        for y in range(ly_bot,ly_bot+3):
+            _hl(s,lx-1,lx+4,y,D)
+        _hl(s,lx-1,lx+4,ly_bot+2,O)
+    # Tail curled up and over
+    for i in range(8):
+        _px(s,43+i,30-i,F); _px(s,43+i,31-i,O)
+    _px(s,45,22,F); _px(s,44,23,F); _px(s,46,23,O)
 
 def _enemy_hound(s):
     O=(160,120,70); F=(105,78,44); D=(62,44,20); B=(220,200,165); E=(210,170,30)
@@ -1193,14 +1240,15 @@ def _enemy_stone_sentinel(s):
     # fists
     _fr(s,9,48,8,8,M); _or(s,9,48,8,8,O)
     _fr(s,31,48,8,8,M); _or(s,31,48,8,8,O)
-    # legs — stone pillars
-    _fr(s,18,56,10,20,M); _or(s,18,56,10,20,O)
-    _fr(s,20,56,8,20,D)
-    _fr(s,30,56,10,20,M); _or(s,30,56,10,20,O)
-    _fr(s,32,56,8,20,D)
-    _hl(s,18,27,56,D); _hl(s,30,39,56,D)
-    for y in range(76,80): _hl(s,17,28,y,D); _hl(s,29,40,y,D)
-    _hl(s,16,29,79,O); _hl(s,28,41,79,O)
+    # legs — stone pillars, CENTRED under body (body chest x=16-31, width=16)
+    # Left leg centred at x=20, right leg centred at x=30
+    _fr(s,16,56,10,20,M); _or(s,16,56,10,20,O)
+    _fr(s,18,56,6,20,D)
+    _fr(s,28,56,10,20,M); _or(s,28,56,10,20,O)
+    _fr(s,30,56,6,20,D)
+    _hl(s,16,25,56,D); _hl(s,28,37,56,D)
+    for y in range(76,80): _hl(s,15,26,y,D); _hl(s,27,38,y,D)
+    _hl(s,14,27,79,O); _hl(s,26,39,79,O)
 
 def _enemy_ash_revenant(s):
     O=(210,185,160); M=(140,110,85); D=(75,55,35); E=(255,120,40); ASH=(180,170,160)
@@ -1461,42 +1509,44 @@ def _enemy_hatchling(s):
     for i,ty in enumerate(range(40,60)): _px(s,29+i//3,ty,SC if i%2==0 else M)
 
 def _enemy_giant_rat(s):
-    O=(140,120,90); F=(95,78,52); D=(56,44,26); B=(210,195,165); E=(200,50,50)
-    # Main body — horizontal oval, properly centered
-    for y in range(38,54):
-        hw = 14 - abs(y-44)*2//3
-        _hl(s,10, 10+hw*2, y, F)
-        _px(s,10,y,O); _px(s,10+hw*2,y,O)
+    """Rabid Rat: clearly recognisable rodent — hunched body, pointed snout,
+    round ears on head, bead eyes, long tail, 4 short legs."""
+    O=(130,108,80); F=(88,70,44); D=(50,38,20); B=(205,185,150); E=(210,45,45)
+    # Body — horizontal oval, centred on canvas
+    for y in range(36,55):
+        hw = max(1, 13 - abs(y-44)*13//10)
+        _hl(s,13,13+hw*2,y,F); _px(s,13,y,O); _px(s,13+hw*2,y,O)
     # Hunched back ridge
-    _hl(s,12,36,38,O); _hl(s,11,37,39,D)
-    # Belly highlight
-    _hl(s,13,35,52,B); _hl(s,14,34,53,B)
-    # Head — at left end, y=33-45
-    for y in range(33,45):
-        hw = 6 - abs(y-39)*4//9
-        _hl(s,4,4+hw*2,y,F); _px(s,4,y,O); _px(s,4+hw*2,y,O)
-    # Long pointy snout
-    for y in range(36,42): _hl(s,0,5,y,F); _px(s,0,y,O)
-    _hl(s,0,2,40,O)
-    _px(s,0,38,D); _px(s,1,38,D)  # nostrils
-    # Beady red eyes
-    _px(s,13,34,E); _px(s,14,34,E)
-    # Round ears — bumps on top, not pillars
-    for ex in [13,19]:
-        _hl(s,ex,ex+4,29,O); _hl(s,ex,ex+4,30,F); _hl(s,ex,ex+4,31,F)
-        _hl(s,ex+1,ex+3,32,F); _px(s,ex+1,30,B); _px(s,ex+2,30,B)
-    # Whiskers
-    for i in range(5): _px(s,i,36,O); _px(s,i,40,O)
-    _px(s,3,38,O); _px(s,2,37,O); _px(s,2,39,O)
+    _hl(s,15,37,36,O); _hl(s,14,38,37,D)
+    # Belly
+    _hl(s,16,36,52,B); _hl(s,17,35,53,B)
+    # Head — at left end, clearly attached to body
+    for y in range(30,44):
+        hw = max(1, 7 - abs(y-37)*7//8)
+        _hl(s,5,5+hw*2,y,F); _px(s,5,y,O); _px(s,5+hw*2,y,O)
+    # Pointed snout
+    for y in range(34,41): _hl(s,1,6,y,F); _px(s,1,y,O)
+    _hl(s,1,3,40,O)
+    _px(s,1,36,D); _px(s,2,36,D)  # nostrils
+    # Beady red eyes — on the head, not the body
+    _px(s,13,31,E); _px(s,14,31,E); _px(s,13,32,D)
+    # Round ears — low domed bumps on TOP of head
+    for ex in [10,16]:
+        _hl(s,ex,ex+5,27,O)
+        _hl(s,ex,ex+5,28,F); _hl(s,ex,ex+5,29,F)
+        _hl(s,ex+1,ex+4,30,F)
+        _px(s,ex+2,28,B); _px(s,ex+3,28,B)  # inner highlight
+    # Whiskers — thin lines from snout
+    for i in range(4): _px(s,i,35,O); _px(s,i,38,O)
     # 4 short legs
-    for lx,ly in [(12,54),(18,54),(28,54),(34,54)]:
-        for y in range(ly, ly+7): _hl(s,lx,lx+3,y,F); _px(s,lx,y,O); _px(s,lx+3,y,O)
-        _hl(s,lx-1,lx+4,ly+6,O)
-    # Long curved tail — sweeps right and up
-    for i in range(16):
-        tx = 37+i; ty = 46 - int(i*i*0.07)
-        _px(s,min(47,tx), max(20,ty), F if i%2==0 else D)
-    for i in range(4): _px(s,min(47,46+i),20,O)
+    for lx,ly in [(16,54),(21,54),(30,54),(35,54)]:
+        for y in range(ly,ly+8): _hl(s,lx,lx+3,y,F); _px(s,lx,y,O); _px(s,lx+3,y,O)
+        _hl(s,lx-1,lx+4,ly+7,O)
+    # Long scaly tail — arcs up from rear
+    for i in range(18):
+        tx = 39+i; ty = int(46 - i*i*0.06)
+        _px(s,min(47,tx), max(18,ty), F if i%2==0 else D)
+    for i in range(3): _px(s,min(47,46+i),18,O)
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  UNIQUE CREATURE SPRITES (Act 2 / Act 3 enemies and bosses)
@@ -1535,35 +1585,46 @@ def _enemy_swamp_leech(s):
         _hl(s, cx - hw, cx + hw, y, O)
 
 def _enemy_tunnel_lurker(s):
-    """Pale eyeless predator — long limbs, hunched, translucent."""
-    O=(210,200,185); M=(170,165,155); D=(120,115,108); E=(200,60,60); BL=(230,220,210)
-    # elongated torso — hunched
-    for y in range(20, 50):
-        hw = 5 + (y - 20) // 8
-        _hl(s, 22 - hw, 22 + hw, y, M)
-        _px(s, 22 - hw, y, O); _px(s, 22 + hw, y, O)
-    # no eyes — smooth pale head
-    for y in range(10, 22):
-        hw = 4 - abs(y - 15) // 3
-        _hl(s, 22 - hw, 22 + hw, y, M)
-        _px(s, 22 - hw, y, O); _px(s, 22 + hw, y, O)
-    # mouth slit (wide)
-    _hl(s, 16, 28, 19, D)
-    for tx in range(17, 28, 2): _px(s, tx, 19, BL)  # pale teeth
-    # four long spindly legs
-    for lx, ly_start in [(10, 48), (16, 50), (26, 50), (34, 48)]:
-        for y in range(ly_start, ly_start + 22, 1):
-            _px(s, lx, y, D if y % 3 == 0 else O)
-        # claws
-        _px(s, lx - 1, ly_start + 22, D)
-        _px(s, lx + 1, ly_start + 22, D)
-    # long arms (reaching forward)
-    for y in range(24, 42):
-        _px(s, 8 - (y - 24) // 6, y, O)
-        _px(s, 36 + (y - 24) // 6, y, O)
-    # translucent internal organs hinted
-    for oy in range(28, 44, 4):
-        _hl(s, 20, 24, oy, D)
+    """Tunnel Lurker: pale eyeless cave predator. Hunched humanoid body,
+    long reaching arms with clawed hands, wide fang-filled mouth, no eyes,
+    four stocky legs. Think cave troll crossed with a blind shark."""
+    O=(205,195,178); M=(162,154,140); D=(108,102,92); E=(200,55,55); BL=(235,228,215)
+    # Hunched wide torso — main body mass
+    for y in range(20,52):
+        hw = max(3, 11 - abs(y-34)*11//18)
+        _hl(s,23-hw,24+hw,y,M); _px(s,23-hw,y,O); _px(s,24+hw,y,O)
+    # Back ridge — curved hump
+    _hl(s,18,30,20,O); _hl(s,17,31,21,D)
+    # Pale belly
+    _hl(s,20,27,46,BL); _hl(s,20,27,47,BL)
+    # Eyeless head — wide, flat, merges with body
+    for y in range(8,22):
+        hw = max(2, 8 - abs(y-15)*8//9)
+        _hl(s,23-hw,24+hw,y,M); _px(s,23-hw,y,O); _px(s,24+hw,y,O)
+    # Smooth eyeless face — no eye markings
+    _hl(s,20,28,8,BL)   # pale brow
+    # Wide hinged jaw with fangs
+    _hl(s,15,32,20,D); _hl(s,15,32,21,D)   # jaw line
+    for tx in range(16,32,2):
+        _px(s,tx,21,BL); _px(s,tx,22,BL)   # teeth
+    _px(s,16,22,E); _px(s,30,22,E)          # blood/gum hint
+    # Long arms reaching forward — 3px wide so they read clearly
+    for y in range(22,48):
+        lx = 10 - (y-22)//8   # sweeps outward as it extends
+        _hl(s,lx,lx+2,y,M); _px(s,lx,y,O); _px(s,lx+2,y,O)
+        rx = 37+(y-22)//8
+        _hl(s,rx,rx+2,y,M); _px(s,rx,y,O); _px(s,rx+2,y,O)
+    # Clawed hands
+    for i in range(3):
+        _px(s,7-i,47+i,D); _px(s,8-i,47+i,O)    # left claws
+        _px(s,40+i,47+i,D); _px(s,39+i,47+i,O)  # right claws
+    # 4 stocky legs — thick not spindly
+    for lx,ly in [(16,51),(21,51),(28,51),(33,51)]:
+        for y in range(ly,ly+16): _hl(s,lx,lx+3,y,M); _px(s,lx,y,O); _px(s,lx+3,y,O)
+        # clawed feet
+        for i in range(3): _px(s,lx-1+i,ly+16,D)
+        _px(s,lx+4,ly+16,D)
+        _hl(s,lx-1,lx+5,ly+15,O)
 
 def _enemy_egg_sac(s):
     """Pulsing silk egg sac, spider-web wrapped, faintly glowing."""
@@ -1621,34 +1682,46 @@ def _enemy_void_tendril(s):
         _px(s, rx, ry, E); _px(s, rx + 1, ry, E)
 
 def _enemy_corrupted_treant(s):
-    """Twisted dark tree animated by fading — bark cracked with shadow."""
-    O=(80,55,30); M=(55,38,18); D=(25,16,6); E=(180,40,200); BK=(15,10,5)
-    # thick trunk — tapers toward top
-    for y in range(18, 75):
-        hw = max(2, 9 - (y - 18) // 10)
-        _hl(s, 23 - hw, 23 + hw, y, M)
-        _px(s, 23 - hw, y, O); _px(s, 23 + hw, y, O)
-    # bark cracks filled with shadow-purple
-    for cy, cx in [(25, 19), (32, 26), (40, 21), (48, 27), (56, 22), (62, 25)]:
-        _vl(s, cx, cy, cy + 5, E)
-        _px(s, cx - 1, cy + 2, E)
-    # root legs
-    for rx, ry in [(14, 70), (10, 68), (30, 70), (34, 68), (20, 73), (26, 73)]:
-        _vl(s, rx, ry, ry + 7, D)
-        _px(s, rx - 1, ry + 6, O); _px(s, rx + 1, ry + 6, O)
-    # branch arms (gnarled)
-    for i in range(8):
-        _px(s, 10 - i // 2, 22 + i * 3, O)
-        _px(s, 36 + i // 2, 22 + i * 3, O)
-    # dark canopy (corrupt foliage)
-    for y in range(4, 20):
-        hw = max(1, 8 - abs(y - 11) // 2)
-        _hl(s, 23 - hw, 23 + hw, y, BK)
-        _px(s, 23 - hw, y, D); _px(s, 23 + hw, y, D)
-    # glowing eye-knots
-    for ey, ex in [(28, 18), (28, 28), (38, 21)]:
-        _px(s, ex, ey, E); _px(s, ex + 1, ey, E)
-        _px(s, ex, ey + 1, E)
+    """Corrupted Treant: upright tree-creature. Wide trunk body, clear branch
+    arms extending sideways, gnarled root feet, dark corrupted foliage crown,
+    glowing purple cracks and eye-knots."""
+    O=(75,50,24); M=(50,34,14); D=(24,14,5); E=(170,35,195); BK=(12,8,4)
+    # Main trunk — wide in middle, tapers at top and flares at base
+    for y in range(22,68):
+        hw = max(3, 8 - (y-22)//12 + (y-50)//10 if y>50 else 8 - (y-22)//12)
+        _hl(s,23-hw,24+hw,y,M); _px(s,23-hw,y,O); _px(s,24+hw,y,O)
+    # Bark texture — vertical grain lines
+    for bx in [18,20,22,25,27,29]:
+        for y in range(28,65,4): _px(s,bx,y,D)
+    # Purple shadow cracks
+    for cy,cx in [(28,19),(36,26),(44,20),(52,27),(58,22)]:
+        _vl(s,cx,cy,cy+6,E); _px(s,cx-1,cy+3,E); _px(s,cx+1,cy+2,E)
+    # LEFT BRANCH ARM — 3px wide, clearly attached and reaching out
+    for i in range(12):
+        bx = 13-i; by = 30+i//2
+        _hl(s,bx,bx+2,by,M); _px(s,bx,by,O); _px(s,bx+2,by,O)
+    # Left branch fork
+    for i in range(5): _px(s,2+i,36-i,O); _px(s,2+i,37-i,M)
+    for i in range(5): _px(s,2+i,36+i//2,O); _px(s,3+i,37+i//2,M)
+    # RIGHT BRANCH ARM
+    for i in range(12):
+        bx = 33+i; by = 30+i//2
+        _hl(s,bx,bx+2,by,M); _px(s,bx,by,O); _px(s,bx+2,by,O)
+    # Right branch fork
+    for i in range(5): _px(s,44-i,36-i,O); _px(s,44-i,37-i,M)
+    for i in range(5): _px(s,44-i,36+i//2,O); _px(s,43-i,37+i//2,M)
+    # Root feet — 3 roots, clearly splaying from base
+    for rx,ry,rdx in [(17,67,-3),(23,68,0),(29,67,3)]:
+        for i in range(8):
+            _hl(s,rx+rdx*i//7,rx+rdx*i//7+2,ry+i,D)
+        _px(s,rx+rdx-1,ry+7,O); _px(s,rx+rdx+2,ry+7,O)
+    # Dark corrupt canopy — mass of foliage at top
+    for y in range(4,24):
+        hw = max(1, 10 - abs(y-13)*10//11)
+        _hl(s,23-hw,24+hw,y,BK); _px(s,23-hw,y,D); _px(s,24+hw,y,D)
+    # Glowing purple eye-knots on trunk
+    for ey,ex in [(30,17),(30,29),(42,20),(42,27)]:
+        _px(s,ex,ey,E); _px(s,ex+1,ey,E); _px(s,ex,ey+1,E)
 
 def _enemy_gargoyle(s):
     """Stone-skinned winged guardian — hunched, grey, cracked."""
@@ -1808,37 +1881,38 @@ _CHAR_DRAW = {
 # Maps template_key → draw function (covers all unique enemy grids)
 
 def _enemy_bear(s):
-    """Large quadruped bear: massive bulk, shoulder hump, round head, thick legs."""
-    O=(100,75,50); F=(65,47,28); D=(38,24,12); B=(160,130,90); E=(220,190,50)
-    # Huge barrel body — main mass
-    for y in range(35,60):
-        hw = 16 - abs(y-47)*3//10
-        _hl(s,8,8+hw*2,y,F); _px(s,8,y,O); _px(s,8+hw*2,y,O)
-    # Shoulder hump (bears are higher at shoulder than hip)
-    for y in range(30,42):
-        hw = 10 - abs(y-35)*3//9
+    """Large quadruped bear: massive bulk, shoulder hump, round head, thick legs.
+    Body centred so all 4 legs connect cleanly underneath."""
+    O=(95,70,46); F=(62,44,26); D=(36,22,10); B=(155,125,85); E=(215,185,45)
+    # Huge barrel body — CENTRED, body spans x=6 to x=42
+    for y in range(34,58):
+        hw = max(4, 16 - abs(y-45)*2//5)
+        cx = 24  # body centred at x=24
+        _hl(s,cx-hw,cx+hw,y,F); _px(s,cx-hw,y,O); _px(s,cx+hw,y,O)
+    # Shoulder hump — left-centre
+    for y in range(28,40):
+        hw = max(2, 10 - abs(y-33)*10//8)
         _hl(s,8,8+hw*2,y,F); _px(s,8,y,O); _px(s,8+hw*2,y,O)
     # Belly
-    _hl(s,12,36,58,B); _hl(s,13,35,59,B)
-    # Round heavy head
-    for y in range(20,38):
-        hw = 9 - abs(y-28)*5//16
-        _hl(s,4,4+hw*2,y,F); _px(s,4,y,O); _px(s,4+hw*2,y,O)
+    _hl(s,14,34,56,B); _hl(s,15,33,57,B)
+    # Round heavy head — left side
+    for y in range(18,36):
+        hw = max(1, 9 - abs(y-26)*5//14)
+        _hl(s,3,3+hw*2,y,F); _px(s,3,y,O); _px(s,3+hw*2,y,O)
     # Broad muzzle
-    for y in range(28,36): _hl(s,3,13,y,B); _px(s,3,y,O); _px(s,13,y,O)
-    _hl(s,5,11,35,O)
-    _px(s,7,36,D); _px(s,8,36,D)  # nostrils
-    # Small round ears
-    _hl(s,9,13,20,O); _vl(s,10,20,24,O); _vl(s,12,20,24,O); _px(s,11,21,F)
-    _hl(s,15,19,20,O); _vl(s,16,20,24,O); _vl(s,18,20,24,O); _px(s,17,21,F)
+    for y in range(26,35): _hl(s,1,10,y,B); _px(s,1,y,O); _px(s,10,y,O)
+    _hl(s,3,9,34,O); _px(s,4,35,D); _px(s,6,35,D)
+    # Round ears — dome-shaped bumps, not pillars
+    _hl(s,7,12,18,O); _hl(s,7,12,19,F); _hl(s,8,11,20,F); _px(s,9,19,B)
+    _hl(s,14,19,18,O); _hl(s,14,19,19,F); _hl(s,15,18,20,F); _px(s,16,19,B)
     # Eyes
-    _px(s,10,26,E); _px(s,11,26,E); _px(s,14,26,E); _px(s,15,26,E)
-    # 4 thick short legs
-    for lx,ly in [(10,60),(17,60),(30,60),(37,60)]:
-        for y in range(ly,ly+10): _hl(s,lx,lx+5,y,F); _px(s,lx,y,O); _px(s,lx+5,y,O)
-        _hl(s,lx-1,lx+6,ly+9,O)
-    # Short stub tail
-    _px(s,40,45,F); _px(s,41,44,F); _px(s,41,45,O)
+    _px(s,9,24,E); _px(s,10,24,E); _px(s,13,24,E); _px(s,14,24,E)
+    # 4 thick legs — evenly spaced UNDER the body (x=6..42 → legs at 10,17,28,35)
+    for lx,ly in [(10,57),(17,57),(29,57),(36,57)]:
+        for y in range(ly,ly+12): _hl(s,lx,lx+5,y,F); _px(s,lx,y,O); _px(s,lx+5,y,O)
+        _hl(s,lx-1,lx+6,ly+11,O)
+    # Short stub tail — right side
+    _px(s,40,42,F); _px(s,41,41,F); _px(s,42,40,F); _px(s,41,42,O)
 
 
 def _enemy_stag(s):
@@ -1867,10 +1941,11 @@ def _enemy_stag(s):
     _hl(s,17,22,9,O); _hl(s,17,22,10,O)
     _hl(s,14,18,14,O)
     _px(s,9,10,O); _px(s,22,9,O); _px(s,23,8,O)
-    # 4 slender long legs
-    for lx,ly in [(15,58),(20,58),(27,58),(32,58)]:
-        for y in range(ly,ly+14): _hl(s,lx,lx+2,y,F); _px(s,lx,y,O); _px(s,lx+2,y,O)
-        _hl(s,lx-1,lx+3,ly+13,O)
+    # 4 slender long legs — all within body width (body spans x=14..30 at mid)
+    # Front pair slightly forward, rear pair slightly back
+    for lx,ly in [(15,58),(19,58),(24,58),(28,58)]:
+        for y in range(ly,ly+13): _hl(s,lx,lx+2,y,F); _px(s,lx,y,O); _px(s,lx+2,y,O)
+        _hl(s,lx-1,lx+3,ly+12,O)
     # White tail flash
     _px(s,38,44,B); _px(s,39,43,B); _px(s,39,44,O)
 
