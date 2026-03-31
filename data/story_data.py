@@ -2495,7 +2495,7 @@ NPC_DIALOGUES = {
                     },
                     "knows": {
                         "speaker": "The Spider Queen",
-                        "text": "So you do know.\nI have fed on the Fading for decades. The stone is why my children were born wrong — too many legs, too many thoughts, too much space between the moments.\nI did not choose this. The stone did.\nYou want it. I want it gone. We may have common ground.",
+                        "text": "So you do know.\nI have fed on the Fading for decades. The ward-anchor buried here is why my children were born wrong — too many legs, too many thoughts, too much space between the moments.\nI did not choose this. The anchor did.\nYou want it. I want it gone. We may have common ground.",
                         "choices": [
                             {"text": "Let us take it and we'll leave you in peace.", "next": "peace"},
                             {"text": "Why haven't you destroyed it?", "next": "why_not"},
@@ -2519,7 +2519,7 @@ NPC_DIALOGUES = {
                     },
                     "greater_good": {
                         "speaker": "The Spider Queen",
-                        "text": "The greater good.\nI have heard that phrase before from smaller creatures justifying larger cruelties.\nBut I have watched the grey take the forest for fifteen years.\nPerhaps your network holds better than my nest.\nTake it. And remember what it cost.",
+                        "text": "The greater good.\nI have heard that phrase before from smaller creatures justifying larger cruelties.\nBut I have watched the grey take the forest for fifteen years.\nPerhaps your network holds better than my nest.\nThe ward-anchor is in the eastern wall of my chamber. Take it. And remember what it cost.",
                         "on_enter": [
                             {"action": "set_flag", "flag": "choice.spider_queen_spared", "value": True},
                             {"action": "set_flag", "flag": "boss.spider_queen.defeated", "value": True},
@@ -2528,7 +2528,7 @@ NPC_DIALOGUES = {
                     },
                     "peace": {
                         "speaker": "The Spider Queen",
-                        "text": "Then there is no fight today.\nTake the stone. Go.\nIf your ward network holds — if the grey recedes — send word to this place.\nMy children have never known a world without the Fading.\nI would like them to.",
+                        "text": "Then there is no fight today.\nThe ward-anchor is embedded in the eastern wall of my chamber. You will know it — it hums wrong, like a note held too long.\nPry it free. Take it. Go.\nIf your ward network holds — if the grey recedes — send word to this place.\nMy children have never known a world without the Fading.\nI would like them to.",
                         "on_enter": [
                             {"action": "set_flag", "flag": "choice.spider_queen_spared", "value": True},
                             {"action": "set_flag", "flag": "boss.spider_queen.defeated", "value": True},
@@ -9405,6 +9405,14 @@ BOSS_POST_DIALOGUES = {
 # ══════════════════════════════════════════════════════════════
 
 BOSS_PEACEFUL_RESOLUTIONS = {
+    "spiders_nest": {
+        "flag":          "choice.spider_queen_spared",
+        "hearthstone":   None,          # Spider's Nest holds no Hearthstone
+        "hearthstone_name": None,
+        "bonus_loot":    [],
+        "boss_npc":      "spider_queen",
+        "world_key":     "mine_key",    # unlocks Abandoned Mine
+    },
     "goblin_warren": {
         "flag":          "choice.grak_spared",
         "hearthstone":   1,

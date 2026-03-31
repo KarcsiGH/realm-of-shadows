@@ -2913,6 +2913,32 @@ class Game:
             for lid, loc in LOCATIONS.items():
                 if loc.get("required_key") == world_key:
                     self.world_state.discovered_locations.add(lid)
+            # Add visible inventory item so player sees something tangible
+            KEY_ITEM_NAMES = {
+                "thornwood_map":    ("Thornwood Map",
+                                    "A hand-drawn map of the Thornwood paths. Marks a cave to the northwest."),
+                "mine_key":         ("Mine Key",
+                                    "A heavy iron key for the Abandoned Mine north of Ironhearth."),
+                "crypt_amulet":     ("Crypt Amulet",
+                                    "A warden-sealed amulet that unlocks the wards on the Sunken Crypt entrance."),
+                "ship_passage":     ("Ship Passage Token",
+                                    "A token granting passage on the next vessel to Dragon's Tooth."),
+                "pale_coast_access":("Pale Coast Pass",
+                                    "Imperial travel permit allowing passage to the Pale Coast Catacombs."),
+                "spire_key":        ("Spire Key",
+                                    "An ancient ward-key that opens the approach to Valdris' Spire."),
+            }
+            if world_key in KEY_ITEM_NAMES and self.party:
+                k_name, k_desc = KEY_ITEM_NAMES[world_key]
+                # Only add if not already in inventory
+                already = any(i.get("world_key") == world_key
+                              for c in self.party for i in c.inventory)
+                if not already:
+                    key_item = {"name": k_name, "type": "key_item", "slot": None,
+                                "identified": True, "rarity": "common",
+                                "description": k_desc, "world_key": world_key}
+                    self.party[0].inventory.append(key_item)
+                    self.add_toast(f"✦ Received: {k_name}", (220, 200, 120))
 
         # 5. Advance quests
         _done = auto_advance_quests(self.party)
