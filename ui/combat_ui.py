@@ -377,10 +377,12 @@ class CombatUI:
 
                 _draw_panel(surface, r, bg, border)
 
-                # Silhouette (left side of card)
+                # Silhouette — maintain 48:80 (0.6) aspect ratio
                 sil_w = 44
-                sil_h = card_h - 10
-                sil_r = pygame.Rect(r.x + 3, r.y + 3, sil_w, sil_h)
+                sil_h = int(sil_w * 96 / 64)   # correct ratio: ~73px
+                # Centre vertically within the card
+                sil_top = r.y + max(3, (r.h - sil_h) // 2)
+                sil_r = pygame.Rect(r.x + 3, sil_top, sil_w, sil_h)
                 cls   = p.get("class_name", "Fighter")
                 equip = p.get("equipment", {})
                 armor_tier = None
@@ -579,9 +581,9 @@ class CombatUI:
                 # cap silhouette to at most 55% of card height
                 sil_h = min(card_h - 65, int(card_h * 0.55))
                 sil_h = max(20, sil_h)
-                sil_w = max(16, int(sil_h * 48 / 80))   # 48:80 = 0.6
+                sil_w = max(16, int(sil_h * 64 / 96))   # 64:96 = 0.667
                 sil_w = min(sil_w, card_w - 8)
-                sil_h = int(sil_w * 80 / 48)
+                sil_h = int(sil_w * 96 / 64)
                 sil_x = cx + (card_w - sil_w) // 2
                 sil_r = pygame.Rect(sil_x, cy + 4, sil_w, sil_h)
                 tier = rep.get("knowledge_tier", -1)
