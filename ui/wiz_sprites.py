@@ -13,59 +13,24 @@ Public API (mirrors pixel_art.py):
 import pygame
 
 BG     = (6, 6, 10)
-W, H   = 64, 96        # native canvas size (64×96 for crisper sprites)
+W, H   = 48, 80        # native canvas size
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  PRIMITIVE HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Scale factors: old coords were designed for 48×80, new canvas is 64×96
-# x * 64/48 = x * 1.333,  y * 96/80 = y * 1.2
-# We scale at draw time so all existing sprite coordinates work unchanged.
-_SX = 64 / 48   # horizontal scale
-_SY = 96 / 80   # vertical scale
-
-def _sx(x):  return int(round(x * _SX))
-def _sy(y):  return int(round(y * _SY))
-def _sw(w):  return max(1, int(round(w * _SX)))
-def _sh(h):  return max(1, int(round(h * _SY)))
-
 def _px(s, x, y, c):
-    sx, sy = _sx(x), _sy(y)
-    # Paint a small filled block to fill the scaled-up pixel
-    bw, bh = max(1, int(_SX+0.5)), max(1, int(_SY+0.5))
-    for dy in range(bh):
-        for dx in range(bw):
-            nx, ny = sx+dx, sy+dy
-            if 0 <= nx < W and 0 <= ny < H:
-                s.set_at((nx, ny), c)
+    if 0 <= x < W and 0 <= y < H:
+        s.set_at((x, y), c)
 
 def _hl(s, x1, x2, y, c):
-    sy = _sy(y)
-    bh = max(1, int(_SY+0.5))
-    sx1, sx2 = _sx(x1), _sx(x2) + max(1, int(_SX+0.5)) - 1
-    for dy in range(bh):
-        for x in range(sx1, sx2+1):
-            if 0 <= x < W and 0 <= sy+dy < H:
-                s.set_at((x, sy+dy), c)
+    for x in range(x1, x2 + 1): _px(s, x, y, c)
 
 def _vl(s, x, y1, y2, c):
-    sx = _sx(x)
-    bw = max(1, int(_SX+0.5))
-    sy1, sy2 = _sy(y1), _sy(y2) + max(1, int(_SY+0.5)) - 1
-    for dx in range(bw):
-        for y in range(sy1, sy2+1):
-            if 0 <= sx+dx < W and 0 <= y < H:
-                s.set_at((sx+dx, y), c)
+    for y in range(y1, y2 + 1): _px(s, x, y, c)
 
 def _fr(s, x, y, w, h, c):           # filled rect
-    sx, sy = _sx(x), _sy(y)
-    sw, sh = _sw(w), _sh(h)
-    for dy in range(sh):
-        for dx in range(sw):
-            nx, ny = sx+dx, sy+dy
-            if 0 <= nx < W and 0 <= ny < H:
-                s.set_at((nx, ny), c)
+    for dy in range(h): _hl(s, x, x + w - 1, y + dy, c)
 
 def _or(s, x, y, w, h, c):           # outline rect
     _hl(s, x, x + w - 1, y, c)
