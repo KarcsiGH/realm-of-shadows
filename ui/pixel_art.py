@@ -2006,11 +2006,22 @@ def _find_enemy_grid(key):
 
 def draw_character_silhouette(surface, rect, class_name,
                                equipped_weapon=None, armor_tier=None, highlight=False):
+    # Try PNG first, fall back to procedural
+    from ui.sprite_loader import draw_character_silhouette as _png_char
+    if _png_char(surface, rect, class_name,
+                 equipped_weapon=equipped_weapon,
+                 armor_tier=armor_tier, highlight=highlight):
+        return
     from ui.wiz_sprites import draw_wiz_character
     draw_wiz_character(surface, rect, class_name, highlight=highlight)
 
 def draw_enemy_silhouette(surface, rect, enemy_template_key,
                            knowledge_tier=0, hover=False, dead=False):
+    # Try PNG first, fall back to procedural
+    from ui.sprite_loader import draw_enemy_silhouette as _png_enemy
+    if _png_enemy(surface, rect, enemy_template_key,
+                  knowledge_tier=knowledge_tier, hover=hover, dead=dead):
+        return
     from ui.wiz_sprites import draw_wiz_enemy
     tier = max(-1, min(2, knowledge_tier))
     draw_wiz_enemy(surface, rect, enemy_template_key,
