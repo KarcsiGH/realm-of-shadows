@@ -204,9 +204,9 @@ def _load(path: str) -> pygame.Surface | None:
     try:
         surf = pygame.image.load(path)
         try:
-            return surf.convert()
+            return surf.convert_alpha()   # preserve transparency
         except Exception:
-            return surf  # headless / no display mode
+            return surf
     except Exception:
         return None
 
@@ -271,17 +271,17 @@ def _apply_effects(surf: pygame.Surface, dead=False,
 # ── Blit helper ───────────────────────────────────────────────────────────────
 def _draw_png(surface: pygame.Surface, rect: pygame.Rect,
               src: pygame.Surface, dead=False, hover=False, tier=0) -> None:
-    """Scale src to rect (fit-to-height, centre-crop) and blit."""
+    """Scale src to rect (fit-to-height, centre-crop) and blit with alpha."""
     sw, sh = src.get_width(), src.get_height()
     # Fit to height
     scale = rect.h / sh
     nw, nh = max(1, int(sw * scale)), rect.h
     scaled = pygame.transform.smoothscale(src, (nw, nh))
-    # Centre-crop to rect width
+    # Centre-crop to rect width onto transparent surface
     ox = max(0, (nw - rect.w) // 2)
     crop = pygame.Rect(ox, 0, rect.w, rect.h)
-    tmp = pygame.Surface((rect.w, rect.h))
-    tmp.fill((6, 6, 10))
+    tmp = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
+    tmp.fill((0, 0, 0, 0))           # fully transparent base
     tmp.blit(scaled, (0, 0), crop)
     tmp = _apply_effects(tmp, dead=dead, hover=hover, tier=tier)
     surface.blit(tmp, rect.topleft)
