@@ -17,10 +17,12 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 _BASE = os.path.join(_HERE, '..', 'assets', 'sprites')
 _CHAR_DIR  = os.path.normpath(os.path.join(_BASE, 'characters'))
 _ENEMY_DIR = os.path.normpath(os.path.join(_BASE, 'enemies'))
+_NPC_DIR   = os.path.normpath(os.path.join(_BASE, 'npcs'))
 
 # ── Cache ────────────────────────────────────────────────────────────────────
 _char_cache:  dict = {}   # class_name → Surface | None
 _enemy_cache: dict = {}   # filename   → Surface | None
+_npc_cache:   dict = {}   # npc_name   → Surface | None
 _effect_cache: dict = {}  # (filename, dead, hover, tier) → Surface
 
 # ── Filename mappings ─────────────────────────────────────────────────────────
@@ -286,6 +288,28 @@ def _draw_png(surface: pygame.Surface, rect: pygame.Rect,
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
+def _get_npc(npc_name: str) -> pygame.Surface | None:
+    """Load NPC portrait PNG. Filename: NPC name with spaces→underscores."""
+    if npc_name not in _npc_cache:
+        fname = npc_name.replace(' ', '_').replace("'", '').replace(',', '')
+        path = os.path.join(_NPC_DIR, fname + '.png')
+        _npc_cache[npc_name] = _load(path)
+    return _npc_cache[npc_name]
+
+
+def draw_npc_portrait(surface: pygame.Surface, rect: pygame.Rect,
+                      npc_name: str, hover=False) -> bool:
+    """
+    Draw NPC portrait PNG. Returns True if PNG used, False if no file found.
+    Caller handles fallback.
+    """
+    src = _get_npc(npc_name)
+    if src is None:
+        return False
+    _draw_png(surface, rect, src, dead=False, hover=hover, tier=0)
+    return True
+
+
 def draw_character_silhouette(surface: pygame.Surface, rect: pygame.Rect,
                                class_name: str, equipped_weapon=None,
                                armor_tier=None, highlight=False) -> bool:

@@ -1185,9 +1185,9 @@ class TownUI:
         """Draw building title + indoor NPC portrait card at top of service views.
         Portrait is on the LEFT so it never overlaps the Back button (top-right).
         Click handling is done in handle_click via self._bld_npc_portrait_rect."""
-        draw_text(surface, bld_name, 220, 18, GOLD, 22, bold=True)
+        draw_text(surface, bld_name, 278, 14, GOLD, 22, bold=True)
         if subtitle:
-            draw_text(surface, subtitle, 220, 46, GREY, 13)
+            draw_text(surface, subtitle, 278, 42, GREY, 13)
 
         npc = self.current_bld_indoor_npc
         self._bld_npc_portrait_rect = None
@@ -1200,31 +1200,51 @@ class TownUI:
             "priest":    "High Priest", "forger":      "Champion",
             "guildmaster": "Archmage",  "ranger":      "Ranger",
             "elder":     "Mage",        "guard":       "Fighter",
+            "warden":    "Warden",      "mage":        "Mage",
+            "youth":     "Thief",
         }
         cls = _npc_class.get(npc.get("npc_type", ""), "Fighter")
         col = npc.get("color", CREAM)
         did = npc.get("dialogue_id")
 
-        # Portrait card — LEFT side, y=8 so it sits under the title area
-        pr = pygame.Rect(8, 8, 200, 62)
+        # Portrait card — LEFT side, larger for AI portraits
+        PORTRAIT_W, PORTRAIT_H = 80, 110
+        CARD_W, CARD_H = PORTRAIT_W + 180, PORTRAIT_H + 16
+        pr = pygame.Rect(8, 8, CARD_W, CARD_H)
         self._bld_npc_portrait_rect = pr if did else None
         hover = did and pr.collidepoint(mx, my)
         bg_col = (38, 28, 50) if hover else (22, 16, 32)
         border_col = col if hover else PANEL_BORDER
-        pygame.draw.rect(surface, bg_col, pr, border_radius=5)
-        pygame.draw.rect(surface, border_col, pr, 1, border_radius=5)
+        pygame.draw.rect(surface, bg_col, pr, border_radius=6)
+        pygame.draw.rect(surface, border_col, pr, 1, border_radius=6)
 
-        from ui.pixel_art import draw_character_silhouette
-        sil_r = pygame.Rect(pr.x + 4, pr.y + 5, 36, 52)
-        draw_character_silhouette(surface, sil_r, cls, highlight=bool(hover))
+        # Portrait image — try NPC-specific PNG first, then class silhouette fallback
+        sil_r = pygame.Rect(pr.x + 6, pr.y + 6, PORTRAIT_W, PORTRAIT_H)
+        npc_name = npc.get("name", "")
+        from ui.sprite_loader import draw_npc_portrait
+        if not draw_npc_portrait(surface, sil_r, npc_name, hover=bool(hover)):
+            from ui.pixel_art import draw_character_silhouette
+            draw_character_silhouette(surface, sil_r, cls, highlight=bool(hover))
 
-        draw_text(surface, npc["name"],          pr.x + 44, pr.y + 7,  CREAM,  12, bold=True)
-        draw_text(surface, npc.get("title", ""), pr.x + 44, pr.y + 21, GREY,   11)
+        # Thin colour accent bar on left edge of portrait
+        pygame.draw.rect(surface, col,
+                         pygame.Rect(pr.x, pr.y + 8, 3, PORTRAIT_H), border_radius=2)
+
+        # Text — right of portrait
+        tx = pr.x + PORTRAIT_W + 14
+        draw_text(surface, npc_name,              tx, pr.y + 10, CREAM,   13, bold=True)
+        draw_text(surface, npc.get("title", ""),  tx, pr.y + 28, GREY,    11)
+        desc = npc.get("description", "")
+        if desc:
+            draw_text(surface, desc, tx, pr.y + 46, (140, 130, 150), 10,
+                      max_width=CARD_W - PORTRAIT_W - 24)
         if did:
             talk_lbl = "[ Talk → ]" if hover else "[ Talk ]"
-            draw_text(surface, talk_lbl, pr.x + 44, pr.y + 36, col if hover else DIM_GOLD, 11)
+            draw_text(surface, talk_lbl, tx, pr.y + CARD_H - 28,
+                      col if hover else DIM_GOLD, 11)
         else:
-            draw_text(surface, "\"Hello, travellers.\"", pr.x + 44, pr.y + 36, DIM_GOLD, 10)
+            draw_text(surface, "\"Hello, travellers.\"", tx, pr.y + CARD_H - 28,
+                      DIM_GOLD, 10)
 
 
     def _open_indoor_npc_dialogue(self):
