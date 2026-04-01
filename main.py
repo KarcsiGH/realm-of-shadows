@@ -998,11 +998,49 @@ class Game:
                                     if _floor != 1:
                                         _dstate._ensure_floor(_floor)
                                         _dstate.current_floor = _floor
-                                    # Place party at saved position (validate it's in-bounds)
+                                    # Place party at saved position — validate walkable
                                     _fw = _dstate.definition.get("width", 35)
                                     _fh = _dstate.definition.get("height", 28)
-                                    _dstate.party_x = max(1, min(_dx, _fw - 2))
-                                    _dstate.party_y = max(1, min(_dy, _fh - 2))
+                                    _cx = max(1, min(_dx, _fw - 2))
+                                    _cy = max(1, min(_dy, _fh - 2))
+
+                                    from data.dungeon import PASSABLE_TILES
+                                    _floor_data = _dstate.floors.get(_floor, {})
+                                    _tiles = _floor_data.get("tiles", [])
+
+                                    def _tile_walkable(tx, ty):
+                                        try:
+                                            return _tiles[ty][tx].get("type") in PASSABLE_TILES
+                                        except (IndexError, AttributeError):
+                                            return False
+
+                                    if _tile_walkable(_cx, _cy):
+                                        _dstate.party_x = _cx
+                                        _dstate.party_y = _cy
+                                    else:
+                                        # Saved tile is not walkable — spiral outward to find
+                                        # the nearest walkable floor tile
+                                        _placed = False
+                                        for _r in range(1, max(_fw, _fh)):
+                                            for _oy in range(-_r, _r + 1):
+                                                for _ox in range(-_r, _r + 1):
+                                                    if abs(_ox) != _r and abs(_oy) != _r:
+                                                        continue
+                                                    _nx = _cx + _ox
+                                                    _ny = _cy + _oy
+                                                    if _tile_walkable(_nx, _ny):
+                                                        _dstate.party_x = _nx
+                                                        _dstate.party_y = _ny
+                                                        _placed = True
+                                                        break
+                                                if _placed:
+                                                    break
+                                            if _placed:
+                                                break
+                                        if not _placed:
+                                            # Ultimate fallback: use floor entrance
+                                            _ent = _floor_data.get("entrance", (_cx, _cy))
+                                            _dstate.party_x, _dstate.party_y = _ent
                                     _dstate._update_fog()
                                     self.dungeon_state = _dstate
                                     self.dungeon_ui    = _DUI(_dstate)
