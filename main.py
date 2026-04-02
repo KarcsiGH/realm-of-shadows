@@ -372,11 +372,20 @@ class Game:
             if self._handle_journal_event(e, mx, my):
                 return
 
+        # ── M key: open menu overlay from any valid state ────────────
+        if (e.type == pygame.KEYDOWN and e.key == pygame.K_m
+                and not self.show_menu_overlay
+                and self.party
+                and self.state not in (S_COMBAT, S_SAVE_LOAD, S_SETTINGS,
+                                       S_SPLASH, S_MODE, S_CAMP)):
+            self.show_menu_overlay = True
+            return
+
         # ── Menu overlay intercept ───────────────────────────────────
         # When the overlay is open it consumes all input except QUIT.
         # Escape also closes it.
         if self.show_menu_overlay:
-            if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+            if e.type == pygame.KEYDOWN and e.key in (pygame.K_ESCAPE, pygame.K_m):
                 self.show_menu_overlay = False
             elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
                 self._handle_menu_overlay_click(mx, my)

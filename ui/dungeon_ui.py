@@ -2693,6 +2693,8 @@ class DungeonUI:
             return None
         if key == pygame.K_t:
             return self._try_disarm()
+        if key == pygame.K_m:
+            return {"type": "menu"}
         return None
 
     def handle_keyup(self, key):

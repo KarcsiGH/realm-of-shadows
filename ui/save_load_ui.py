@@ -462,13 +462,21 @@ class SaveLoadUI:
 
     def _do_save(self, idx: int):
         slot = SLOT_NAMES[idx]
-        ok, _path, msg = save_game(
-            self.party,
-            world_state=self.world_state,
-            slot_name=slot,
-            dungeon_cache=getattr(self, "dungeon_cache", None),
-            dungeon_state=getattr(self, "dungeon_state", None),
-        )
+        if not self.party:
+            self._error_msg   = "Save failed: no active party."
+            self._error_timer = 3000
+            return
+        try:
+            ok, _path, msg = save_game(
+                self.party,
+                world_state=self.world_state,
+                slot_name=slot,
+                dungeon_cache=getattr(self, "dungeon_cache", None),
+                dungeon_state=getattr(self, "dungeon_state", None),
+            )
+        except Exception as _e:
+            ok  = False
+            msg = f"Save failed: {_e}"
         if ok:
             self.result   = ("saved", slot)
             self.finished = True

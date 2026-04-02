@@ -261,35 +261,41 @@ def _serialize_dungeon_explored(dungeon_cache):
     if not dungeon_cache:
         return {}
     result = {}
-    for dungeon_id, dstate in dungeon_cache.items():
-        floors_data = {}
-        for floor_num, floor in dstate.floors.items():
-            # Discovered tiles
-            discovered = []
-            tiles = floor.get("tiles", [])
-            for ty, row in enumerate(tiles):
-                for tx, tile in enumerate(row):
-                    if tile.get("discovered"):
-                        discovered.append([tx, ty])
-            # Opened chests and found notes
-            opened_chests = []
-            found_notes   = []
-            for ev in floor.get("events", []):
-                if ev.get("type") == "treasure" and ev.get("opened"):
-                    opened_chests.append((ev.get("x", -1), ev.get("y", -1)))
-                if ev.get("type") in ("note", "journal", "scroll") and ev.get("found"):
-                    found_notes.append((ev.get("x", -1), ev.get("y", -1)))
-            floor_entry = {}
-            if discovered:
-                floor_entry["discovered"] = discovered
-            if opened_chests:
-                floor_entry["opened_chests"] = opened_chests
-            if found_notes:
-                floor_entry["found_notes"] = found_notes
-            if floor_entry:
-                floors_data[str(floor_num)] = floor_entry
-        if floors_data:
-            result[dungeon_id] = floors_data
+    try:
+        for dungeon_id, dstate in dungeon_cache.items():
+            try:
+                floors_data = {}
+                for floor_num, floor in dstate.floors.items():
+                    # Discovered tiles
+                    discovered = []
+                    tiles = floor.get("tiles", [])
+                    for ty, row in enumerate(tiles):
+                        for tx, tile in enumerate(row):
+                            if tile.get("discovered"):
+                                discovered.append([tx, ty])
+                    # Opened chests and found notes
+                    opened_chests = []
+                    found_notes   = []
+                    for ev in floor.get("events", []):
+                        if ev.get("type") == "treasure" and ev.get("opened"):
+                            opened_chests.append((ev.get("x", -1), ev.get("y", -1)))
+                        if ev.get("type") in ("note", "journal", "scroll") and ev.get("found"):
+                            found_notes.append((ev.get("x", -1), ev.get("y", -1)))
+                    floor_entry = {}
+                    if discovered:
+                        floor_entry["discovered"] = discovered
+                    if opened_chests:
+                        floor_entry["opened_chests"] = opened_chests
+                    if found_notes:
+                        floor_entry["found_notes"] = found_notes
+                    if floor_entry:
+                        floors_data[str(floor_num)] = floor_entry
+                if floors_data:
+                    result[dungeon_id] = floors_data
+            except Exception:
+                pass   # skip any dungeon that can't be serialized
+    except Exception:
+        pass
     return result
 
 def save_game(party, world_state=None, slot_name="save1", metadata=None, dungeon_cache=None, dungeon_state=None):
