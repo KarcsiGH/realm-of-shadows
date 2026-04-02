@@ -616,51 +616,67 @@ class InventoryUI:
             return   # nothing useful to show
 
         # ── Layout ───────────────────────────────────────────
-        ROW_H  = 16
-        PAD    = 8
-        TW     = 200
-        TH     = PAD * 2 + 16 + len(rows) * ROW_H + 4
-        # Position tooltip: prefer left of item rect, fall back right
-        tx = item_rect.x - TW - 6
-        if tx < 0:
-            tx = item_rect.right + 6
+        ROW_H  = 17
+        PAD    = 10
+        TW     = 270     # wider for readability
+        TH     = PAD * 2 + 20 + len(rows) * ROW_H + 8
+
+        # Position: prefer right of panel (panel is on right side of screen)
+        # Try to the LEFT of the item rect first (less likely to overlap panel)
+        tx = item_rect.x - TW - 8
+        if tx < 4:       # doesn't fit left — try right
+            tx = item_rect.right + 8
+        if tx + TW > surface.get_width() - 4:
+            tx = surface.get_width() - TW - 4
+
         ty = item_rect.y
-        if ty + TH > surface.get_height():
+        if ty + TH > surface.get_height() - 4:
             ty = surface.get_height() - TH - 4
+        ty = max(4, ty)
 
         # Background
         tip_rect = pygame.Rect(tx, ty, TW, TH)
-        pygame.draw.rect(surface, (12, 10, 26), tip_rect, border_radius=4)
-        pygame.draw.rect(surface, (80, 65, 120), tip_rect, 1, border_radius=4)
+        pygame.draw.rect(surface, (10, 8, 22), tip_rect, border_radius=5)
+        pygame.draw.rect(surface, (75, 60, 120), tip_rect, 1, border_radius=5)
 
-        # Header: slot name + equipped name
+        # Header: slot + equipped name
         slot_label = slot.replace("_", " ").title()
-        eq_name = equipped.get("name", "Nothing") if equipped else "Empty slot"
-        draw_text(surface, f"{slot_label}: {eq_name[:18]}", tx + PAD, ty + PAD,
-                  DIM_GOLD, 11, bold=True)
+        eq_name = equipped.get("name", "Empty slot") if equipped else "Empty slot"
+        draw_text(surface, slot_label, tx + PAD, ty + PAD, (80, 120, 200), 10, bold=True)
+        draw_text(surface, eq_name[:28], tx + PAD + 52, ty + PAD, DIM_GOLD, 10)
+
+        pygame.draw.line(surface, (60, 50, 90),
+                         (tx + 4, ty + PAD + 14), (tx + TW - 4, ty + PAD + 14))
+
+        # Column headers
+        ry = ty + PAD + 18
+        draw_text(surface, "Stat", tx + PAD,       ry, STAT_LABEL, 9, bold=True)
+        draw_text(surface, "Now",  tx + PAD + 70,  ry, STAT_LABEL, 9, bold=True)
+        draw_text(surface, "New",  tx + PAD + 130, ry, STAT_LABEL, 9, bold=True)
+        draw_text(surface, "Δ",    tx + PAD + 190, ry, STAT_LABEL, 9, bold=True)
+        ry += 13
+
+        pygame.draw.line(surface, (50, 42, 78),
+                         (tx + 4, ry), (tx + TW - 4, ry))
+        ry += 3
 
         # Delta rows
-        ry = ty + PAD + 16
         for label, old_v, new_v, delta, higher_better in rows:
-            # Old value
-            old_str = f"{old_v:+d}" if old_v != 0 else "—"
-            new_str = f"{new_v:+d}" if new_v != 0 else "—"
+            old_str = str(old_v) if old_v != 0 else "—"
+            new_str = str(new_v) if new_v != 0 else "—"
 
             if delta == 0:
-                delta_col = GREY
-                delta_str = "="
+                delta_col = GREY;  delta_str = "—"
             elif (delta > 0) == higher_better:
-                delta_col = STAT_UP
-                delta_str = f"▲{abs(delta)}"
+                delta_col = STAT_UP;   delta_str = f"+{abs(delta)}"
             else:
-                delta_col = STAT_DOWN
-                delta_str = f"▼{abs(delta)}"
+                delta_col = STAT_DOWN; delta_str = f"−{abs(delta)}"
 
-            draw_text(surface, f"{label:<5}", tx + PAD, ry, GREY, 11)
-            draw_text(surface, old_str, tx + PAD + 44, ry, GREY, 11)
-            draw_text(surface, "→", tx + PAD + 78, ry, GREY, 11)
-            draw_text(surface, new_str, tx + PAD + 96, ry, CREAM, 11)
-            draw_text(surface, delta_str, tx + PAD + 136, ry, delta_col, 11, bold=(delta != 0))
+            draw_text(surface, f"{label}",  tx + PAD,       ry, GREY,  11)
+            draw_text(surface, old_str,     tx + PAD + 70,  ry, GREY,  11)
+            draw_text(surface, new_str,     tx + PAD + 130, ry,
+                      delta_col if delta != 0 else CREAM, 11, bold=(delta != 0))
+            draw_text(surface, delta_str,   tx + PAD + 190, ry, delta_col, 11, bold=(delta != 0))
             ry += ROW_H
 
     # ─────────────────────────────────────────────────────────

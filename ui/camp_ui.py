@@ -394,86 +394,108 @@ class CampUI:
                                     hover=gb.collidepoint(mx, my), size=12)
                         gx += gb.width + 8
 
-            # ── Item details + compare panel ──────────────
+            # ── Item details + compare panel (side by side, always on screen) ──
             detail_offset = 84 if getattr(self,"_give_mode",False) and len(self.party)>1 else 50
-            # Clamp detail panel so it never extends below screen bottom
-            detail_y = min(by + detail_offset, SCREEN_H - 260)
-            self._draw_item_details(surface, item, detail_y)
-            # Show comparison if item is equippable
-            if item.get("slot"):
-                cmp_y = min(detail_y + 164, SCREEN_H - 100)
-                self._draw_equip_compare(surface, item, 80, cmp_y, SCREEN_W - 160)
+            panel_top  = min(by + detail_offset, SCREEN_H - 20)
+            avail_h    = max(20, SCREEN_H - panel_top - 8)   # space down to bottom
 
-    def _draw_item_details(self, surface, item, y):
-        """Draw item attribute panel for a selected item."""
+            has_slot   = bool(item.get("slot"))
+            if has_slot:
+                # Split available space: detail (left ⅔) | compare (right ⅓)
+                # but place them stacked so each has its own width
+                detail_w   = (SCREEN_W - 160) * 7 // 10
+                compare_w  = (SCREEN_W - 160) - detail_w - 10
+                detail_h   = min(avail_h, avail_h * 2 // 5)
+                compare_h  = avail_h - detail_h - 6
+                # Draw detail panel (left-aligned, narrower)
+                detail_ph  = self._draw_item_details(surface, item, panel_top,
+                                                     max_h=detail_h)
+                # Draw compare panel immediately below, using remaining space
+                cmp_top = panel_top + detail_ph + 6
+                if cmp_top < SCREEN_H - 40:
+                    self._draw_equip_compare(surface, item, 80, cmp_top,
+                                             SCREEN_W - 160)
+            else:
+                self._draw_item_details(surface, item, panel_top, max_h=avail_h)
+
+    def _draw_item_details(self, surface, item, y, max_h=None):
+        """Draw item attribute panel. max_h caps the panel height (default uncapped)."""
         from core.identification import get_item_display_name
         if not item:
-            return
+            return 0
 
         identified = item.get("identified", True)
-        panel = pygame.Rect(80, y, SCREEN_W - 160, 160)
+        avail = max_h if max_h else (SCREEN_H - y - 8)
+        avail = max(40, avail)
+        pw = SCREEN_W - 160
+
+        # Collect lines first so we can size the panel
+        lines = []   # (text, colour, size, bold)
+        lines.append((get_item_display_name(item), GOLD, 14, True))
+
+        if not identified:
+            lines.append((item.get("unidentified_desc", "Properties unknown."), GREY, 12, False))
+            lines.append(("[Unidentified — use Identify tab to appraise]", ORANGE, 11, False))
+        else:
+            desc = item.get("description", "")
+            if desc:
+                lines.append((desc, GREY, 12, False))
+
+            itype = item.get("type", "")
+            if itype == "weapon":
+                base = item.get("damage", 0)
+                ds   = item.get("damage_stat", {})
+                ds_str = ", ".join(f"{k}×{v}" for k,v in ds.items()) if ds else "none"
+                lines.append((f"Damage: {base}  |  Scaling: {ds_str}", STAT_VAL, 12, False))
+                mods = []
+                if item.get("accuracy_mod"): mods.append(f"Acc {item['accuracy_mod']:+d}%")
+                if item.get("crit_mod"):     mods.append(f"Crit {item['crit_mod']:+d}%")
+                if item.get("speed_mod"):    mods.append(f"Speed {item['speed_mod']:+d}")
+                if item.get("spell_bonus"):  mods.append(f"+{item['spell_bonus']} Spell Power")
+                if mods:
+                    lines.append(("  ".join(mods), STAT_LABEL, 11, False))
+            elif itype == "armor":
+                lines.append((f"Defense: {item.get('defense',0)}   Magic Resist: {item.get('magic_resist',0)}",
+                               STAT_VAL, 12, False))
+
+            stat_bonuses = item.get("stat_bonuses", {})
+            if stat_bonuses:
+                bonuses = ",  ".join(f"{k} {v:+d}" for k,v in stat_bonuses.items() if v)
+                lines.append((f"Bonuses:  {bonuses}", (140, 220, 160), 12, False))
+
+            if item.get("enchant_element"):
+                lines.append((f"Enchant: {item['enchant_element'].title()} +{item.get('enchant_bonus',0)}",
+                               (180, 140, 255), 12, False))
+
+            rarity = item.get("rarity", "").title()
+            value  = item.get("estimated_value", item.get("sell_price", 0))
+            lines.append((f"{rarity}   Value: ~{value}g", DIM_GOLD, 11, False))
+
+        # Measure required height
+        line_heights = [18 if l[2] >= 13 else 15 for l in lines]
+        needed_h = 14 + sum(line_heights)
+        ph = min(needed_h, avail)
+
+        panel = pygame.Rect(80, y, pw, ph)
         pygame.draw.rect(surface, (18, 14, 30), panel, border_radius=5)
         pygame.draw.rect(surface, EQUIP_SLOT_BORDER, panel, 1, border_radius=5)
 
-        x, dy = panel.x + 14, panel.y + 10
-        draw_text(surface, get_item_display_name(item), x, dy, GOLD, 14, bold=True)
-        dy += 22
+        dy = panel.y + 8
+        for text, col, size, bold in lines:
+            if dy + size + 2 > panel.bottom - 4:
+                break
+            draw_text(surface, text, panel.x + 14, dy, col, size, bold=bold,
+                      max_width=pw - 28)
+            dy += line_heights[lines.index((text, col, size, bold))]
 
-        if not identified:
-            draw_text(surface, item.get("unidentified_desc", "Properties unknown."), x, dy, GREY, 12)
-            dy += 18
-            draw_text(surface, "[Unidentified — use Identify tab to appraise]", x, dy, ORANGE, 11)
-            return
-
-        # Description
-        desc = item.get("description", "")
-        if desc:
-            draw_text(surface, desc, x, dy, GREY, 12)
-            dy += 18
-
-        # Type-specific stats
-        itype = item.get("type", "")
-        col2 = panel.x + panel.width // 2
-
-        if itype == "weapon":
-            base = item.get("damage", 0)
-            ds   = item.get("damage_stat", {})
-            ds_str = ", ".join(f"{k}×{v}" for k,v in ds.items()) if ds else "none"
-            draw_text(surface, f"Damage: {base} base  |  Stat scaling: {ds_str}", x, dy, STAT_VAL, 12)
-            dy += 16
-            mods = []
-            if item.get("accuracy_mod"): mods.append(f"Acc {item['accuracy_mod']:+d}%")
-            if item.get("crit_mod"):     mods.append(f"Crit {item['crit_mod']:+d}%")
-            if item.get("speed_mod"):    mods.append(f"Speed {item['speed_mod']:+d}")
-            if item.get("spell_bonus"):  mods.append(f"+{item['spell_bonus']} Spell Power")
-            if mods:
-                draw_text(surface, "  ".join(mods), x, dy, STAT_LABEL, 11)
-                dy += 16
-
-        elif itype == "armor":
-            draw_text(surface, f"Defense: {item.get('defense', 0)}  Magic Resist: {item.get('magic_resist', 0)}", x, dy, STAT_VAL, 12)
-            dy += 16
-
-        # Stat bonuses
-        stat_bonuses = item.get("stat_bonuses", {})
-        if stat_bonuses:
-            bonuses = ", ".join(f"{k} {v:+d}" for k,v in stat_bonuses.items() if v)
-            draw_text(surface, f"Bonuses: {bonuses}", x, dy, (140, 220, 160), 12)
-            dy += 16
-
-        # Enchant
-        if item.get("enchant_element"):
-            draw_text(surface, f"Enchant: {item['enchant_element'].title()} +{item.get('enchant_bonus',0)}",
-                      x, dy, (180, 140, 255), 12)
-            dy += 16
-
-        # Rarity and value
-        rarity = item.get("rarity", "").title()
-        value  = item.get("estimated_value", item.get("sell_price", 0))
-        draw_text(surface, f"{rarity}  |  Value: ~{value}g", x, dy, DIM_GOLD, 11)
+        return ph   # return actual drawn height
 
     def _draw_equip_compare(self, surface, new_item, px, py, pw):
-        """Side-by-side comparison panel: new item vs currently equipped in same slot."""
+        """Side-by-side comparison panel: equipped vs new item.
+
+        Dynamically sizes to fit stat rows; always clamped so it stays on screen.
+        Layout: EQUIPPED (left half)  ↔  NEW (right half), delta highlighted.
+        """
         from core.identification import get_item_display_name
         if not self.party or self.selected_char >= len(self.party):
             return
@@ -484,78 +506,118 @@ class CampUI:
             return
         cur = equip.get(slot)
 
-        # ── Panel background ──────────────────────────────────────────────
-        ph = 130 if cur else 38
+        # Build stat rows before sizing the panel
+        stat_rows = []
+        for label, ckey, nkey in [
+            ("Damage",     "damage",       "damage"),
+            ("Defense",    "defense",      "defense"),
+            ("Mag.Resist", "magic_resist", "magic_resist"),
+            ("Spell Pwr",  "spell_bonus",  "spell_bonus"),
+            ("Accuracy",   "accuracy_mod", "accuracy_mod"),
+            ("Crit",       "crit_mod",     "crit_mod"),
+        ]:
+            cv = cur.get(ckey, 0) if cur else 0
+            nv = new_item.get(nkey, 0)
+            if cv != 0 or nv != 0:
+                stat_rows.append((label, cv, nv))
+
+        nb = new_item.get("stat_bonuses", {}) or {}
+        cb = cur.get("stat_bonuses", {}) or {} if cur else {}
+        for k in sorted(set(nb) | set(cb)):
+            cv = cb.get(k, 0); nv = nb.get(k, 0)
+            if cv != 0 or nv != 0:
+                stat_rows.append((k, cv, nv))
+
+        # Height: header (40) + name row (18) + stat rows (15 each) + verdict (20) + pad
+        ROW_H = 15
+        if cur:
+            needed_h = 40 + 18 + len(stat_rows) * ROW_H + 24
+        else:
+            needed_h = 40
+
+        # Clamp so panel never goes below screen
+        max_y_bottom = SCREEN_H - 8
+        if py + needed_h > max_y_bottom:
+            py = max(4, max_y_bottom - needed_h)
+        ph = min(needed_h, max_y_bottom - py)
+
         panel = pygame.Rect(px, py, pw, ph)
-        pygame.draw.rect(surface, (10, 16, 28), panel, border_radius=5)
-        pygame.draw.rect(surface, (60, 90, 140), panel, 1, border_radius=5)
+        pygame.draw.rect(surface, (8, 14, 26), panel, border_radius=5)
+        pygame.draw.rect(surface, (55, 90, 150), panel, 1, border_radius=5)
 
         cy = panel.y + 6
-        half = (pw - 24) // 2
-        lx = panel.x + 8          # left column (equipped)
-        rx = panel.x + half + 16  # right column (new)
+        # Column widths: label | equipped | arrow | new | delta
+        lbl_w = 80; eq_w = pw // 3; new_w = pw // 3
+        lx_lbl = panel.x + 10
+        lx_eq  = lx_lbl + lbl_w
+        lx_arr = lx_eq + eq_w
+        lx_new = lx_arr + 18
+        lx_del = lx_new + new_w
 
-        # ── Header row ───────────────────────────────────────────────────
-        draw_text(surface, f"Slot: {slot}", panel.x + 8, cy, (100, 140, 200), 10, bold=True)
-        cy += 14
-
-        pygame.draw.line(surface, (60, 90, 140),
+        # Header
+        slot_label = slot.replace("_", " ").title()
+        draw_text(surface, f"COMPARE  ·  Slot: {slot_label}",
+                  lx_lbl, cy, (80, 120, 200), 11, bold=True)
+        cy += 16
+        pygame.draw.line(surface, (50, 80, 130),
                          (panel.x + 6, cy), (panel.x + pw - 6, cy))
         cy += 4
 
         if not cur:
-            draw_text(surface, "Nothing equipped  —  equipping is a pure gain",
-                      panel.x + 8, cy, (80, 210, 100), 11)
+            draw_text(surface, "Nothing equipped — equipping is a pure gain",
+                      lx_lbl, cy, (80, 210, 100), 12)
             return
 
-        cur_name = get_item_display_name(cur)[:24]
-        new_name = get_item_display_name(new_item)[:24]
-        draw_text(surface, f"▼ {cur_name}", lx, cy, (160, 140, 100), 10, bold=True)
-        draw_text(surface, f"▶ {new_name}", rx, cy, (100, 180, 240), 10, bold=True)
+        # Name row — truncated to fit columns
+        max_name = (eq_w - 4) // 6  # approx chars at size 10
+        cur_name = get_item_display_name(cur)[:max_name]
+        new_name = get_item_display_name(new_item)[:max_name]
+        draw_text(surface, "EQUIPPED", lx_eq, cy, (130, 110, 80), 9, bold=True)
+        draw_text(surface, "NEW",      lx_new, cy, (80, 150, 220), 9, bold=True)
+        cy += 13
+
+        # Column header divider
+        pygame.draw.line(surface, (40, 60, 100),
+                         (panel.x + 6, cy), (panel.x + pw - 6, cy))
+        cy += 3
+
+        # Truncated item names
+        draw_text(surface, cur_name, lx_eq, cy, (180, 155, 110), 10)
+        draw_text(surface, new_name, lx_new, cy, (100, 180, 240), 10)
         cy += 14
 
-        # ── Stat rows ─────────────────────────────────────────────────────
-        def _cmp_row(label, cur_val, new_val, surface, lx, rx, cy):
-            """Draw one comparison row. Returns cy advanced."""
-            if cur_val == 0 and new_val == 0:
-                return cy
-            delta = new_val - cur_val
-            d_col = (80, 210, 100) if delta > 0 else (210, 80, 80) if delta < 0 else GREY
-            d_str = f"  ({'+' if delta >= 0 else ''}{delta})" if delta != 0 else ""
-            draw_text(surface, f"{label}:", lx, cy, STAT_LABEL, 10)
-            draw_text(surface, str(cur_val), lx + 50, cy, GREY, 10)
-            draw_text(surface, str(new_val) + d_str, rx, cy, d_col, 10, bold=(delta != 0))
-            return cy + 13
-
-        stat_rows = [
-            ("Damage",      cur.get("damage", 0),       new_item.get("damage", 0)),
-            ("Defense",     cur.get("defense", 0),      new_item.get("defense", 0)),
-            ("Magic Res",   cur.get("magic_resist", 0), new_item.get("magic_resist", 0)),
-            ("Spell Bonus", cur.get("spell_bonus", 0),  new_item.get("spell_bonus", 0)),
-        ]
-        nb = new_item.get("stat_bonuses", {}) or {}
-        cb = cur.get("stat_bonuses", {}) or {}
-        for k in sorted(set(nb) | set(cb)):
-            stat_rows.append((k, cb.get(k, 0), nb.get(k, 0)))
-
+        # Stat comparison rows
         for label, cv, nv in stat_rows:
-            cy = _cmp_row(label, cv, nv, surface, lx, rx, cy)
-            if cy > panel.bottom - 12:
+            if cy + ROW_H > panel.bottom - 22:
+                draw_text(surface, "…", lx_lbl, cy, GREY, 10)
                 break
+            delta = nv - cv
+            d_col = (80, 210, 100) if delta > 0 else (210, 80, 80) if delta < 0 else GREY
+            d_str = (f"+{delta}" if delta > 0 else str(delta)) if delta != 0 else "="
 
-        # ── Overall verdict ───────────────────────────────────────────────
+            draw_text(surface, f"{label}:", lx_lbl, cy, STAT_LABEL, 10)
+            draw_text(surface, str(cv) if cv != 0 else "—", lx_eq,  cy, GREY, 10)
+            draw_text(surface, "→", lx_arr, cy, (70, 80, 100), 10)
+            draw_text(surface, str(nv) if nv != 0 else "—", lx_new, cy,
+                      d_col if delta != 0 else CREAM, 10, bold=(delta != 0))
+            if delta != 0:
+                draw_text(surface, d_str, lx_del, cy, d_col, 10, bold=True)
+            cy += ROW_H
+
+        # Verdict bar
         improvements = sum(1 for _, cv, nv in stat_rows if nv > cv)
         regressions  = sum(1 for _, cv, nv in stat_rows if nv < cv)
         if improvements > regressions:
-            verdict, vc = "Upgrade",    (80, 210, 100)
+            verdict, vc = "▲ Upgrade",    (80, 210, 100)
         elif regressions > improvements:
-            verdict, vc = "Downgrade",  (210, 80,  80)
+            verdict, vc = "▼ Downgrade",  (210, 80,  80)
         else:
-            verdict, vc = "Sidegrade",  (220, 200, 80)
-        pygame.draw.line(surface, (60, 90, 140),
-                         (panel.x + 6, panel.bottom - 15),
-                         (panel.x + pw - 6, panel.bottom - 15))
-        draw_text(surface, verdict, panel.x + 8, panel.bottom - 13, vc, 10, bold=True)
+            verdict, vc = "◆ Sidegrade",  (220, 200, 80)
+        vbar_y = panel.bottom - 18
+        pygame.draw.line(surface, (50, 80, 130),
+                         (panel.x + 6, vbar_y - 2),
+                         (panel.x + pw - 6, vbar_y - 2))
+        draw_text(surface, verdict, panel.x + 10, vbar_y, vc, 11, bold=True)
 
     # ──────────────────────────────────────────────────────────
     #  EQUIPMENT TAB
@@ -586,8 +648,9 @@ class CampUI:
                     draw_text(surface, "[Click to unequip]", row.x + row.width - 150,
                               row.y + 8, DIM_GOLD, 11)
                     # Show stat details for equipped item on hover
-                    detail_y = min(row.bottom + 4, SCREEN_H - 310)
-                    self._draw_item_details(surface, equipped, detail_y)
+                    detail_y = min(row.bottom + 4, SCREEN_H - 200)
+                    avail = SCREEN_H - detail_y - 8
+                    self._draw_item_details(surface, equipped, detail_y, max_h=avail)
             else:
                 draw_text(surface, "— empty —", row.x + 120, row.y + 8, DARK_GREY, 13)
 
@@ -611,11 +674,14 @@ class CampUI:
             if hover:
                 draw_text(surface, "[Click to equip]", row.x + row.width - 130,
                           row.y + 6, DIM_GOLD, 11)
-                # Show stat details + compare panel on hover
-                detail_y = min(row.bottom + 4, SCREEN_H - 310)
-                self._draw_item_details(surface, item, detail_y)
-                if item.get("slot"):
-                    self._draw_equip_compare(surface, item, 80, detail_y + 164, SCREEN_W - 160)
+                # Show stat details + compare panel on hover — stack within screen
+                detail_y = min(row.bottom + 4, SCREEN_H - 8)
+                avail = SCREEN_H - detail_y - 8
+                detail_ph = self._draw_item_details(surface, item, detail_y,
+                                                    max_h=avail // 2)
+                if item.get("slot") and detail_y + detail_ph + 6 < SCREEN_H - 40:
+                    self._draw_equip_compare(surface, item, 80,
+                                             detail_y + detail_ph + 6, SCREEN_W - 160)
             self._equip_tab_inv_rects.append((i, row))
             ey += 36
             if ey > SCREEN_H - 60:
