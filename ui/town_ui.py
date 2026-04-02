@@ -764,62 +764,13 @@ class TownUI:
 
             nc2   = npc.get("color", (180, 180, 180))
             ntype = npc.get("npc_type", "default")
-            dark2 = tuple(max(0, int(c*0.5)) for c in nc2)
             light2= tuple(min(255, int(c*1.25)) for c in nc2)
             ncx   = npx2 + ts//2
             ncy   = npy2 + ts//2
 
-            shd2 = pygame.Surface((ts, ts//4), pygame.SRCALPHA)
-            shd2.fill((0, 0, 0, 50))
-            surface.blit(shd2, (npx2, npy2 + ts*3//4))
-
-            body_w2 = max(6, ts*5//12)
-            body_h2 = max(8, ts*5//12)
-            bx2 = ncx - body_w2//2
-            by2 = ncy - body_h2//8
-            pygame.draw.rect(surface, nc2, (bx2, by2, body_w2, body_h2), border_radius=2)
-            pygame.draw.line(surface, dark2, (ncx, by2+2), (ncx, by2+body_h2-2), 1)
-            pygame.draw.rect(surface, nc2, (bx2-2, by2+2, 3, body_h2//2), border_radius=1)
-            pygame.draw.rect(surface, nc2, (bx2+body_w2-1, by2+2, 3, body_h2//2), border_radius=1)
-
-            head_r2 = max(4, ts*3//14)
-            hcx = ncx
-            hcy = by2 - head_r2 + 2
-            pygame.draw.circle(surface, (220, 185, 155), (hcx, hcy), head_r2)
-            pygame.draw.circle(surface, dark2, (hcx, hcy), head_r2, 1)
-
-            if ntype == "guard":
-                pygame.draw.ellipse(surface, (130, 145, 175),
-                    (hcx-head_r2, hcy-head_r2, head_r2*2, head_r2+2))
-                pygame.draw.rect(surface, (110, 125, 155),
-                    (hcx-head_r2-2, hcy, head_r2*2+4, 3))
-            elif ntype == "elder":
-                pygame.draw.arc(surface, (180, 175, 170),
-                    pygame.Rect(hcx-head_r2, hcy-head_r2, head_r2*2, head_r2*2),
-                    0, 3.14, max(1, head_r2//2))
-            elif ntype == "priestess":
-                vl = pygame.Surface((head_r2*2+4, head_r2*2+4), pygame.SRCALPHA)
-                pygame.draw.ellipse(vl, (240, 235, 200, 170),
-                    (0, 0, head_r2*2+4, head_r2*2+4))
-                surface.blit(vl, (hcx-head_r2-2, hcy-head_r2-2))
-            elif ntype == "merchant":
-                pygame.draw.ellipse(surface, dark2,
-                    (hcx-head_r2-3, hcy-1, head_r2*2+6, 4))
-                pygame.draw.ellipse(surface, nc2,
-                    (hcx-head_r2+1, hcy-head_r2-2, head_r2*2-2, head_r2+2))
-            elif ntype == "innkeeper":
-                pygame.draw.rect(surface, (235, 230, 215),
-                    (bx2+2, by2+body_h2//3, body_w2-4, body_h2*2//3), border_radius=1)
-            elif ntype == "forger":
-                pygame.draw.rect(surface, (90, 64, 30),
-                    (bx2, by2+body_h2//4, body_w2, body_h2*3//4))
-            elif ntype == "mage":
-                hat_pts = [(ncx, hcy-head_r2*2), (ncx-head_r2, hcy), (ncx+head_r2, hcy)]
-                pygame.draw.polygon(surface, nc2, hat_pts)
-                pygame.draw.polygon(surface, dark2, hat_pts, 1)
-            elif ntype == "barkeep":
-                pygame.draw.ellipse(surface, (155, 105, 50),
-                    (hcx-head_r2+1, hcy+head_r2//2, head_r2*2-2, head_r2))
+            # Ultima-style pixel art figure
+            from ui.town_sprites import draw_npc_figure
+            draw_npc_figure(surface, ncx, ncy, ts, ntype, nc2)
 
             if npc.get("service"):
                 badge_txt = {"inn":"INN","shop":"SHOP","forge":"FORGE",
@@ -841,19 +792,9 @@ class TownUI:
         ppy = (self.walk_y - cam_y) * ts
         pcx, pcy = ppx + ts//2, ppy + ts//2
 
-        pshd = pygame.Surface((ts, ts//4), pygame.SRCALPHA)
-        pshd.fill((0, 0, 0, 60))
-        surface.blit(pshd, (ppx, ppy + ts*3//4))
-        pygame.draw.rect(surface, (80, 65, 30),
-            (pcx-ts//4, pcy, ts//2, ts*5//12), border_radius=2)
-        pygame.draw.rect(surface, (200, 175, 80),
-            (pcx-ts//5, pcy+2, ts*2//5, ts*5//12-4), border_radius=2)
-        pygame.draw.circle(surface, (225, 190, 155), (pcx, pcy-ts//5), max(5, ts*3//14))
-        pygame.draw.circle(surface, (180, 150, 80), (pcx, pcy-ts//5), max(5, ts*3//14), 1)
-        dx_map2 = {"up":(0,-1),"down":(0,1),"left":(-1,0),"right":(1,0)}
-        fdx2, fdy2 = dx_map2.get(self.walk_facing, (0,1))
-        pygame.draw.circle(surface, (255, 240, 120),
-            (pcx + fdx2*ts//4, pcy - ts//5 + fdy2*ts//4), max(2, ts//8))
+        # Ultima-style pixel art party figure
+        from ui.town_sprites import draw_party_figure
+        draw_party_figure(surface, pcx, pcy, ts, self.walk_facing)
 
         # Building name labels — centered above the building's top wall
         for bld_id, bld in td["buildings"].items():
