@@ -1975,7 +1975,7 @@ class DungeonUI:
             True, (150,138,110))
         surface.blit(info, (SCREEN_W - info.get_width() - 10, by + HUD_H - 28))
 
-        ctrl = fs.render("WASD Move  QE/←→ Turn  ENTER Interact  C Camp  T Disarm", True, (72,64,50))
+        ctrl = fs.render("WASD Move  QE/←→ Turn  ENTER Interact  C Camp  M Menu  T Disarm", True, (72,64,50))
         surface.blit(ctrl, (VP_X+4, by+3))
 
     # ─────────────────────────────────────────────────────────

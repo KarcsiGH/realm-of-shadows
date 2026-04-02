@@ -469,12 +469,12 @@ class WorldMapUI:
                 compass = dirs[int((angle + 22.5) / 45) % 8]
                 best_hint = (f"Something lies to the {compass} ({int(_dist)} tiles away)",
                              (180, 200, 255))
-        if best_hint:
-            draw_text(surface, best_hint[0], 15, SCREEN_H - 44, best_hint[1], 12)
+        # Controls hint — bottom-left, clear of the Camp/Menu button row
+        draw_text(surface, "Arrow keys / WASD  ·  C Camp  ·  M Menu",
+                  15, SCREEN_H - 20, DARK_GREY, 12)
 
-        # Controls hint
-        draw_text(surface, "Arrow keys / WASD to move",
-                  15, SCREEN_H - 25, DARK_GREY, 12)
+        if best_hint:
+            draw_text(surface, best_hint[0], 15, SCREEN_H - 36, best_hint[1], 12)
 
         # Minimap
         self._draw_minimap(surface)

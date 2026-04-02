@@ -324,7 +324,7 @@ class TownUI:
         pygame.draw.rect(surface, PANEL_BORDER if not mhov else GOLD,
                          menu_r, 2, border_radius=4)
         _mf = get_font(16, bold=True)
-        _ms = _mf.render("Menu", True, GOLD if mhov else CREAM)
+        _ms = _mf.render("Menu [M]", True, GOLD if mhov else CREAM)
         surface.blit(_ms, (menu_r.x + (menu_r.w - _ms.get_width())//2,
                             menu_r.y + (menu_r.h - _ms.get_height())//2))
 
@@ -1532,7 +1532,7 @@ class TownUI:
         ]
 
         for i, (name, desc, accent) in enumerate(options):
-            btn = pygame.Rect(SCREEN_W // 2 - 200, 130 + i * 90, 400, 75)
+            btn = pygame.Rect(SCREEN_W // 2 - 200, 148 + i * 90, 400, 75)
             hover = btn.collidepoint(mx, my)
             bg = (40, 35, 65) if hover else (25, 20, 45)
             pygame.draw.rect(surface, bg, btn, border_radius=4)
@@ -1556,10 +1556,10 @@ class TownUI:
         back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
         draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
 
-        # Category tabs
+        # Category tabs — start below the NPC portrait card (card bottom = ~134px)
         tabs = [("weapons", "Weapons"), ("armor", "Armor"), ("consumables", "Supplies")]
         for i, (key, label) in enumerate(tabs):
-            tr = pygame.Rect(20 + i * 140, 50, 130, 32)
+            tr = pygame.Rect(20 + i * 140, 140, 130, 32)
             is_sel = (self.shop_tab == key)
             hover = tr.collidepoint(mx, my)
             bg = (50, 40, 85) if is_sel else (35, 30, 60) if hover else (20, 18, 36)
@@ -1574,7 +1574,7 @@ class TownUI:
         # Append sold items to current tab (they appear in all tabs under "Buyback")
         buyback_start = len(items)
         items.extend(self.sold_items)
-        panel = pygame.Rect(20, 95, SCREEN_W - 40, SCREEN_H - 200)
+        panel = pygame.Rect(20, 182, SCREEN_W - 40, SCREEN_H - 287)
         draw_panel(surface, panel, bg_color=SHOP_BG)
 
         if not items:
@@ -1661,12 +1661,12 @@ class TownUI:
         back = pygame.Rect(SCREEN_W - 140, 14, 120, 30)
         draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
 
-        # Character tabs — constrained width so they don't overlap back button
+        # Character tabs — below NPC portrait card (card bottom ~134px), clear of back button
         tab_area_w = SCREEN_W - 170  # leave 170px for back button
         for i, c in enumerate(self.party):
             cls = CLASSES[c.class_name]
             tw = tab_area_w // len(self.party)
-            tr = pygame.Rect(20 + i * tw, 50, tw - 4, 32)
+            tr = pygame.Rect(20 + i * tw, 140, tw - 4, 32)
             is_sel = (i == self.sell_char)
             hover = tr.collidepoint(mx, my)
             bg = (50, 40, 85) if is_sel else (35, 30, 60) if hover else (20, 18, 36)
@@ -1677,7 +1677,7 @@ class TownUI:
                       tr.x + 8, tr.y + 7, cls["color"] if is_sel else GREY, 13, bold=is_sel)
 
         char = self.party[self.sell_char]
-        panel = pygame.Rect(20, 95, SCREEN_W - 40, SCREEN_H - 200)
+        panel = pygame.Rect(20, 182, SCREEN_W - 40, SCREEN_H - 287)
         draw_panel(surface, panel, bg_color=SHOP_BG)
 
         if not char.inventory:
@@ -1843,7 +1843,7 @@ class TownUI:
         # Check for characters ready to level up
         lvl_ready = [c for c in self.party if can_level_up(c)]
 
-        by = 110
+        by = 148
         for i, tier_key in enumerate(INN_TIER_ORDER):
             tier = INN_TIERS[tier_key]
             room_cost = tier["cost_per_char"] * party_size
@@ -4025,26 +4025,26 @@ class TownUI:
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Gold: {total_gold}", SCREEN_W - 150, 20, DIM_GOLD, 14)
 
-        # Tab bar (starts at y=78 to clear the NPC portrait at y=8-70)
+        # Tab bar — below NPC portrait card (card bottom ~134px)
         tabs = [("Craft", self.VIEW_FORGE_CRAFT),
                 ("Upgrade", self.VIEW_FORGE_UPGRADE),
                 ("Enchant", self.VIEW_FORGE_ENCHANT),
                 ("Repair",  self.VIEW_FORGE_REPAIR)]
         for i, (label, view) in enumerate(tabs):
-            tr = pygame.Rect(20 + i * 140, 78, 130, 32)
+            tr = pygame.Rect(20 + i * 140, 140, 130, 32)
             active = self.view == view or (self.view == self.VIEW_FORGE and i == 0)
             col = FORGE_ORANGE if active else FORGE_DIM
             pygame.draw.rect(surface, col, tr, 0 if active else 1, 4)
             tc = BLACK if active else col
             draw_text(surface, label, tr.x + 35, tr.y + 7, tc, 15, bold=active)
 
-        # Back button (at y=78 to clear the NPC portrait)
-        back = pygame.Rect(SCREEN_W - 140, 78, 120, 34)
+        # Back button — aligned with tabs
+        back = pygame.Rect(SCREEN_W - 140, 140, 120, 34)
         pygame.draw.rect(surface, (100, 60, 60), back, 1, 4)
         draw_text(surface, "Back", back.x + 40, back.y + 8, RED, 14)
 
-        # Materials summary bar (below tabs at y=78+32=110, with small gap)
-        draw_text(surface, "Materials:", 20, 118, GREY, 12)
+        # Materials summary bar (below tabs)
+        draw_text(surface, "Materials:", 20, 180, GREY, 12)
         mx_pos = 100
         shown_mats = {}
         for c in self.party:
@@ -4054,11 +4054,11 @@ class TownUI:
                     shown_mats[n] = shown_mats.get(n, 0) + item.get("quantity", 1)
         for mat_name, count in list(shown_mats.items())[:8]:
             short = mat_name[:12]
-            draw_text(surface, f"{short}×{count}", mx_pos, 118, CREAM, 11)
+            draw_text(surface, f"{short}×{count}", mx_pos, 180, CREAM, 11)
             mx_pos += 110
 
         active_view = self.view if self.view != self.VIEW_FORGE else self.VIEW_FORGE_CRAFT
-        y = 138
+        y = 200
 
         if active_view == self.VIEW_FORGE_CRAFT:
             self._draw_forge_craft(surface, mx, my, y, RECIPES, total_gold, FORGE_ORANGE)

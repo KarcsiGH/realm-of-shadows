@@ -631,11 +631,16 @@ class Game:
                 elif e.button == 5:
                     self.party_scroll = min(max(0, len(self.party) - 3), self.party_scroll + 1)
                 elif e.button == 1:
-                    # Inventory button
-                    inv_btn = pygame.Rect(SCREEN_W - 200, 40, 180, 40)
+                    # Single-row layout — matches draw_party coordinates exactly
+                    inv_btn      = pygame.Rect(SCREEN_W - 170, 40, 150, 34)
+                    journal_btn  = pygame.Rect(SCREEN_W - 330, 40, 150, 34)
+                    save_btn     = pygame.Rect(20,  40, 110, 34)
+                    load_btn     = pygame.Rect(140, 40, 110, 34)
+                    world_btn    = pygame.Rect(260, 40, 155, 34)
+                    settings_btn = pygame.Rect(425, 40, 135, 34)
+
                     if inv_btn.collidepoint(mx, my) and self.party:
                         self.inventory_ui = InventoryUI(self.party)
-                        # Return to where we came from
                         if self.dungeon_state:
                             self.inventory_return_state = S_DUNGEON
                         else:
@@ -643,15 +648,10 @@ class Game:
                         sfx.play("ui_open")
                         self.go(S_INVENTORY)
                         return
-                    # Journal button
-                    journal_btn = pygame.Rect(SCREEN_W - 200, 85, 180, 34)
                     if journal_btn.collidepoint(mx, my) and self.party:
                         from ui.quest_log_ui import QuestLogUI
                         self.quest_log_ui = QuestLogUI()
                         return
-                    # Town button removed — navigate via world map
-                    # Save button
-                    save_btn = pygame.Rect(20, 40, 120, 40)
                     if save_btn.collidepoint(mx, my) and self.party:
                         from ui.save_load_ui import SaveLoadUI
                         self.save_load_ui = SaveLoadUI(
@@ -662,8 +662,6 @@ class Game:
                         sfx.play("ui_open")
                         self.go(S_SAVE_LOAD)
                         return
-                    # Load button
-                    load_btn = pygame.Rect(150, 40, 120, 40)
                     if load_btn.collidepoint(mx, my):
                         from ui.save_load_ui import SaveLoadUI
                         self.save_load_ui = SaveLoadUI(
@@ -674,8 +672,6 @@ class Game:
                         sfx.play("ui_open")
                         self.go(S_SAVE_LOAD)
                         return
-                    # World Map / Back button
-                    world_btn = pygame.Rect(290, 40, 160, 40)
                     if world_btn.collidepoint(mx, my) and self.party:
                         if self.dungeon_state:
                             self.go_fade(S_DUNGEON)
@@ -683,8 +679,6 @@ class Game:
                             self._init_world_map()
                             self.go_fade(S_WORLD_MAP)
                         return
-                    # Settings button
-                    settings_btn = pygame.Rect(20, 88, 120, 32)
                     if settings_btn.collidepoint(mx, my):
                         from ui.settings_ui import SettingsUI
                         self.settings_ui = SettingsUI()
@@ -2636,36 +2630,37 @@ class Game:
             draw_button(self.screen, r, _adv_label,
                         hover=r.collidepoint(mx, my), size=18)
 
-        # Top buttons (always visible)
+        # Top buttons — single row at y=40 so they never overlap the character cards
         if self.party:
-            inv_btn = pygame.Rect(SCREEN_W - 200, 40, 180, 40)
-            draw_button(self.screen, inv_btn, "Inventory",
-                        hover=inv_btn.collidepoint(mx, my), size=16)
-            # Journal button
-            journal_btn = pygame.Rect(SCREEN_W - 200, 85, 180, 34)
-            draw_button(self.screen, journal_btn, "Journal",
-                        hover=journal_btn.collidepoint(mx, my), size=14)
-            # Town button removed from party/menu screen —
-            # players navigate to towns via the world map
-            save_btn = pygame.Rect(20, 40, 120, 40)
-            draw_button(self.screen, save_btn, "Save",
-                        hover=save_btn.collidepoint(mx, my), size=16)
-            load_btn = pygame.Rect(150, 40, 120, 40)
-            draw_button(self.screen, load_btn, "Load",
-                        hover=load_btn.collidepoint(mx, my), size=16)
-            world_btn = pygame.Rect(290, 40, 160, 40)
+            # Left cluster
+            save_btn     = pygame.Rect(20,  40, 110, 34)
+            load_btn     = pygame.Rect(140, 40, 110, 34)
+            world_btn    = pygame.Rect(260, 40, 155, 34)
+            settings_btn = pygame.Rect(425, 40, 135, 34)
+            # Right cluster
+            journal_btn  = pygame.Rect(SCREEN_W - 330, 40, 150, 34)
+            inv_btn      = pygame.Rect(SCREEN_W - 170, 40, 150, 34)
+
             back_label = "Back to Dungeon" if self.dungeon_state else "World Map"
-            draw_button(self.screen, world_btn, back_label,
-                        hover=world_btn.collidepoint(mx, my), size=14 if self.dungeon_state else 16)
-            settings_btn = pygame.Rect(20, 88, 120, 32)
+            draw_button(self.screen, save_btn,     "Save",
+                        hover=save_btn.collidepoint(mx, my),     size=14)
+            draw_button(self.screen, load_btn,     "Load",
+                        hover=load_btn.collidepoint(mx, my),     size=14)
+            draw_button(self.screen, world_btn,    back_label,
+                        hover=world_btn.collidepoint(mx, my),    size=13)
             draw_button(self.screen, settings_btn, "⚙ Settings",
                         hover=settings_btn.collidepoint(mx, my), size=13)
+            draw_button(self.screen, journal_btn,  "Journal",
+                        hover=journal_btn.collidepoint(mx, my),  size=14)
+            draw_button(self.screen, inv_btn,      "Inventory",
+                        hover=inv_btn.collidepoint(mx, my),      size=14)
 
-            # Save/load message
+            # Save/load message — above buttons, under title
             if hasattr(self, 'save_msg') and self.save_msg_timer > 0:
                 self.save_msg_timer -= self.clock.get_time()
-                draw_text(self.screen, self.save_msg, 290, 52,
-                          self.save_msg_color, 14)
+                draw_text(self.screen, self.save_msg,
+                          SCREEN_W // 2 - 100, 10,
+                          self.save_msg_color, 13)
 
     # ══════════════════════════════════════════════════════════
     #  COMBAT
