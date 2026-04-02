@@ -996,24 +996,42 @@ class CampUI:
             ab_type = ab.get("type","attack")
             _CAMP = {"heal","aoe_heal","cure","revive"}
             is_camp = ab_type in _CAMP and not is_locked
-            # Store camp-castable ability cards in hit map
-            if is_camp:
-                self._stats_hit_map[f"midcol:{len([k for k in self._stats_hit_map if k.startswith('midcol:')])}"] = card_rect
 
-            bg_col = (14, 11, 22) if not is_locked else (10, 8, 16)
-            # Highlight camp-castable cards so player knows they're clickable
-            if is_camp and card_rect.collidepoint(mx, my):
-                bg_col = (30, 22, 48)
+            # Key: use ability name so click handler can find it reliably
+            ab_name_key = f"midcol_camp:{ab.get('name','')}"
+            if is_camp:
+                self._stats_hit_map[ab_name_key] = card_rect
+
+            # Is this card expanded (clicked)?
+            sel_camp = getattr(self, "_stats_midcol_sel", None)
+            is_expanded = (is_camp and sel_camp == ab.get("name"))
+
+            # Background
+            if is_expanded:
+                bg_col = (28, 20, 46)
+            elif is_camp and card_rect.collidepoint(mx, my):
+                bg_col = (26, 19, 44)
+            elif is_locked:
+                bg_col = (10, 8, 16)
+            else:
+                bg_col = (14, 11, 22)
             pygame.draw.rect(surface, bg_col, card_rect, border_radius=4)
 
             type_col = TYPE_COLORS.get(ab_type, GREY)
             if is_locked: type_col = (60,55,70)
-            border_col = type_col if not is_locked else (40,35,55)
-            if is_camp and card_rect.collidepoint(mx, my):
+
+            # Border: green for expanded, bright green on hover, normal otherwise
+            if is_expanded:
                 border_col = (120, 220, 140)
+            elif is_camp and card_rect.collidepoint(mx, my):
+                border_col = (90, 180, 110)
+            elif is_locked:
+                border_col = (40,35,55)
+            else:
+                border_col = type_col
             pygame.draw.rect(surface, border_col, card_rect, 1, border_radius=4)
 
-            # Name + level unlock
+            # Name
             name_col = CREAM if not is_locked else (80,75,90)
             draw_text(surface, ab.get("name","?"), col_x + 8, ry2 + 5, name_col, 13, bold=not is_locked)
 
@@ -1028,6 +1046,12 @@ class CampUI:
                 pygame.draw.rect(surface, type_col, pill, border_radius=3)
                 draw_text(surface, type_label, pill.x + 4, pill.y + 2, (20,15,30), 9, bold=True)
 
+                # Expand/collapse chevron for camp abilities
+                if is_camp:
+                    chev = "▼" if is_expanded else "▶"
+                    draw_text(surface, chev, col_x + col_w - pill_w - 22, ry2 + 5,
+                              (120,220,140) if is_expanded else (80,160,100), 11)
+
                 # Cost
                 cost = ab.get("cost", 0)
                 res_key = ab.get("resource","STR-SP")
@@ -1035,17 +1059,43 @@ class CampUI:
                     draw_text(surface, f"Cost: {cost} {res_key}",
                               col_x + 8, ry2 + 20, (160,140,100), 11)
 
-                # Description / cast hint
+                # Description row
                 desc = ab.get("desc") or ab.get("description","")
-                _CAMP = {"heal","aoe_heal","cure","revive"}
-                if ab_type in _CAMP and card_rect.collidepoint(mx, my):
-                    draw_text(surface, "▶ Click to cast in camp",
+                if not is_expanded and is_camp and card_rect.collidepoint(mx, my):
+                    draw_text(surface, "▶ Click to expand & cast in camp",
                               col_x + 8, ry2 + 33, (120, 220, 140), 11)
                 elif desc:
                     draw_text(surface, desc, col_x + 8, ry2 + 33,
                               GREY, 11, max_width=col_w - 16)
 
             ry2 += ROW_H
+
+            # ── Inline expanded popup for camp-castable ability ───────────
+            if is_expanded and not is_locked:
+                popup_h = 58
+                pop_r = pygame.Rect(col_x, ry2, col_w, popup_h)
+                if pop_r.bottom < BODY_BOT:
+                    self._stats_hit_map[f"midcol_popup:{ab.get('name','')}"] = pop_r
+                    pygame.draw.rect(surface, (18,14,32), pop_r, border_radius=4)
+                    pygame.draw.rect(surface, (80,160,100), pop_r, 1, border_radius=4)
+                    desc2 = ab.get("desc") or ab.get("description","")
+                    if desc2:
+                        draw_text(surface, desc2, col_x+8, ry2+5, GREY, 10, max_width=col_w-12)
+                    power = ab.get("power", 1.0)
+                    stat_sum = c.stats.get("WIS",0) + c.stats.get("PIE",0)
+                    est = int((stat_sum * power * 2) + (c.level * power * 3))
+                    draw_text(surface, f"Est. {ab_type.replace('_',' ').title()}: ~{est} pts",
+                              col_x+8, ry2+20, (140,200,140), 10)
+                    cost2 = ab.get("cost",0); res2 = ab.get("resource","")
+                    can_cast = c.resources.get(res2,0) >= cost2 if cost2 else True
+                    cast_r = pygame.Rect(col_x+8, ry2+33, 70, 20)
+                    if can_cast:
+                        self._stats_hit_map[f"midcol_cast:{ab.get('name','')}"] = cast_r
+                        draw_button(surface, cast_r, "Cast",
+                                    hover=cast_r.collidepoint(mx,my), size=10)
+                    else:
+                        draw_text(surface, f"Need {cost2} {res2}", col_x+8, ry2+36, (180,80,80), 10)
+                    ry2 += popup_h + 3
 
         # ─────────────────────────────────────────────────────────────────
         #  RIGHT COLUMN — single source of truth for all clickable elements
@@ -1215,82 +1265,6 @@ class CampUI:
             # ── Comparison panel for equippable items ─────────────────────
             if sel_it.get("slot") and ey < BODY_BOT - 20:
                 self._draw_equip_compare(surface, sel_it, ex, ey, COL_W)
-
-        # ── CAMP SPELLS — compact bars, click to expand popup ────────────
-        CAMP_TYPES = ("heal","aoe_heal","cure","revive")
-        camp_abs = [a for a in c.abilities if a.get("type") in CAMP_TYPES]
-        if camp_abs and ey < BODY_BOT - 30:
-            ey += 5
-            pygame.draw.line(surface, (50,42,65), (ex, ey-2), (SCREEN_W-10, ey-2))
-            draw_text(surface, "CAMP SPELLS  (click for details & cast)", ex, ey, STAT_LABEL, 10, bold=True)
-            ey += 13
-
-            SEL_SP = getattr(self, "_stats_spell_sel", -1)
-
-            for ai, ab in enumerate(camp_abs):
-                if ey > BODY_BOT - 20:
-                    break
-                rk   = ab.get("resource","")
-                cost = ab.get("cost", 0)
-                can  = c.resources.get(rk, 0) >= cost if cost else True
-                ab_r = pygame.Rect(ex, ey, COL_W, 17)
-                self._stats_hit_map[f"spell:{ai}"] = ab_r
-                sel_sp = (SEL_SP == ai)
-                hov    = ab_r.collidepoint(mx, my)
-
-                # Compact bar: selected or hovered is brighter
-                if sel_sp:
-                    pygame.draw.rect(surface, (55,42,80), ab_r, border_radius=3)
-                    pygame.draw.rect(surface, DIM_GOLD, ab_r, 1, border_radius=3)
-                elif hov and can:
-                    pygame.draw.rect(surface, (42,34,60), ab_r, border_radius=3)
-                    pygame.draw.rect(surface, (100,80,140), ab_r, 1, border_radius=3)
-                else:
-                    pygame.draw.rect(surface, (28,22,40), ab_r, border_radius=3)
-                    pygame.draw.rect(surface, (50,42,65) if can else (40,35,55), ab_r, 1, border_radius=3)
-
-                # Type colour dot on left
-                TYPE_DOT = {"heal":(80,220,120),"aoe_heal":(80,200,160),
-                            "cure":(100,240,160),"revive":(200,100,255)}
-                dot_col = TYPE_DOT.get(ab.get("type",""), GREY)
-                pygame.draw.circle(surface, dot_col, (ex+6, ey+8), 3)
-
-                name_col = CREAM if can else (70,65,80)
-                cost_str = f" [{cost} {rk}]" if cost else ""
-                draw_text(surface, f"{ab.get('name','?')}{cost_str}", ex+14, ey+3, name_col, 10)
-
-                # ▶ expand indicator on right
-                ind_col = DIM_GOLD if sel_sp else (70,60,90)
-                draw_text(surface, "▼" if sel_sp else "▶", ab_r.right-14, ey+3, ind_col, 10)
-
-                ey += 18
-
-                # ── Expanded popup for selected spell ─────────────────────
-                if sel_sp and ey < BODY_BOT - 50:
-                    popup_h = 58
-                    pop_r = pygame.Rect(ex, ey, COL_W, popup_h)
-                    pygame.draw.rect(surface, (18,14,32), pop_r, border_radius=4)
-                    pygame.draw.rect(surface, DIM_GOLD, pop_r, 1, border_radius=4)
-                    # Description
-                    desc = ab.get("desc") or ab.get("description","")
-                    if desc:
-                        draw_text(surface, desc, ex+6, ey+5, GREY, 10, max_width=COL_W-12)
-                    # Power info
-                    power = ab.get("power", 1.0)
-                    stat  = c.stats.get("WIS", 0) + c.stats.get("PIE", 0)
-                    est   = int((stat * power * 2) + (c.level * power * 3))
-                    draw_text(surface, f"Est. {ab['type'].replace('_',' ').title()}: ~{est} pts",
-                              ex+6, ey+22, (140,200,140), 10)
-                    # Cast button — only if affordable
-                    cast_y = ey + 33
-                    if can:
-                        cast_r = pygame.Rect(ex+6, cast_y, 70, 20)
-                        self._stats_hit_map[f"spell_cast:{ai}"] = cast_r
-                        draw_button(surface, cast_r, "Cast",
-                                    hover=cast_r.collidepoint(mx,my), size=10)
-                    else:
-                        draw_text(surface, f"Need {cost} {rk}", ex+6, cast_y+3, (180,80,80), 10)
-                    ey += popup_h + 3
 
         surface.set_clip(None)
 
@@ -1573,33 +1547,27 @@ class CampUI:
                     self._msg(f"Gave {xfer.get('name','item')} to {self.party[gi].name}.", GOLD)
                 return None
 
-            # ── Middle column camp-castable ability card ────────────────
-            if key.startswith("midcol:"):
-                ai = int(key[7:])
-                CAMP_TYPES = ("heal","aoe_heal","cure","revive")
-                camp_abs = [a for a in c.abilities if a.get("type") in CAMP_TYPES]
-                if 0 <= ai < len(camp_abs):
-                    # Target is the currently selected character in the party tab
-                    self.spell_target = self.selected_char
-                    self._cast_camp_spell(c, camp_abs[ai])
+            # ── Middle column camp ability card — toggle expand ──────────
+            if key.startswith("midcol_camp:"):
+                ab_name = key[len("midcol_camp:"):]
+                cur_sel = getattr(self, "_stats_midcol_sel", None)
+                self._stats_midcol_sel = ab_name if cur_sel != ab_name else None
                 return None
 
-            # ── Camp spell bar — toggle expanded popup ──────────────────
-            if key.startswith("spell:"):
-                ai = int(key[6:])
-                cur_sel = getattr(self, "_stats_spell_sel", -1)
-                self._stats_spell_sel = ai if cur_sel != ai else -1
-                return None
+            # ── Middle column camp ability popup background (no-op click) ─
+            if key.startswith("midcol_popup:"):
+                return None   # click inside popup area but not Cast button
 
-            # ── Camp spell Cast button inside expanded popup ─────────────
-            if key.startswith("spell_cast:"):
-                ai = int(key[len("spell_cast:"):])
+            # ── Middle column Cast button ─────────────────────────────────
+            if key.startswith("midcol_cast:"):
+                ab_name = key[len("midcol_cast:"):]
                 CAMP_TYPES = ("heal","aoe_heal","cure","revive")
-                camp_abs = [a for a in c.abilities if a.get("type") in CAMP_TYPES]
-                if 0 <= ai < len(camp_abs):
-                    self.spell_target = self.selected_char
-                    self._cast_camp_spell(c, camp_abs[ai])
-                    self._stats_spell_sel = -1
+                for ab in c.abilities:
+                    if ab.get("name") == ab_name and ab.get("type") in CAMP_TYPES:
+                        self.spell_target = self.selected_char
+                        self._cast_camp_spell(c, ab)
+                        self._stats_midcol_sel = None   # collapse after cast
+                        break
                 return None
 
         return None
