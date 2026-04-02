@@ -3844,6 +3844,11 @@ class Game:
     def draw_world_map(self, mx, my):
         """Draw the world map."""
         dt = self.clock.get_time()
+        # Guard: world_map_ui can be None if the player loaded a save
+        # directly into a dungeon and then returned to the overland via a
+        # code path that skips _init_world_map() (e.g. post-combat fallback).
+        if self.world_map_ui is None:
+            self._init_world_map()
         self.world_map_ui.draw(self.screen, mx, my, dt)
 
     def draw_dungeon(self, mx, my):
