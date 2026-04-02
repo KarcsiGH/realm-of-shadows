@@ -740,7 +740,12 @@ class InventoryUI:
                 self.inv_scroll = 0
                 return None
 
+        # Mirror draw()'s content_y logic so item rects match what's on screen
         content_y = 100
+        if self.mode == "give_to" and self.give_item:
+            content_y = 126
+        elif self.mode == "identify" and self.identify_item:
+            content_y = 126
 
         # ── Equipment slot clicks → unequip ──
         panel_l = pygame.Rect(20, content_y, 420, 470)
