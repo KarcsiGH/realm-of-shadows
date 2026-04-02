@@ -1591,39 +1591,17 @@ class DungeonUI:
                     continue  # skip the generic spr blit below
 
                 elif icon_key == DT_TRAP:
-                    # Armed detected trap — glowing rune pressure plate
-                    pw = max(8, surf_w * 4 // 5)
-                    ph = max(4, surf_h // 4)
-                    ox = (surf_w - pw) // 2
-                    oy = surf_h - ph - 1
-                    # Plate base — dark stone
-                    pygame.draw.rect(spr, dim, (ox, oy, pw, ph))
-                    pygame.draw.rect(spr, c_a, (ox, oy, pw, ph), 1)
-                    # Rune glow — pulsing red symbols on the plate
-                    pulse_a = int(alpha * (0.75 + 0.25 * abs(math.sin(self.t * 3.5))))
-                    glow_c = (*color, pulse_a)
-                    # Central rune circle
-                    cx_r, cy_r = surf_w // 2, oy + ph // 2
-                    r_sz = max(2, ph // 3)
-                    pygame.draw.circle(spr, glow_c, (cx_r, cy_r), r_sz, 1)
-                    # Radiating rune lines from centre
-                    for ang_i in range(4):
-                        import math as _m
-                        a_ = ang_i * _m.pi / 2
-                        rx = cx_r + int(_m.cos(a_) * (pw // 3))
-                        ry = cy_r + int(_m.sin(a_) * (ph // 2 - 1))
-                        rx = max(ox+1, min(ox+pw-2, rx))
-                        ry = max(oy+1, min(oy+ph-2, ry))
-                        pygame.draw.line(spr, glow_c, (cx_r, cy_r), (rx, ry), 1)
-                    # Outer glow halo — soft bleed above plate
-                    halo_h = max(2, ph)
-                    halo_a = pulse_a // 2
-                    for hly in range(halo_h):
-                        fade = int(halo_a * (1 - hly / halo_h))
-                        hw = max(2, pw * (halo_h - hly) // halo_h)
-                        hx = surf_w // 2 - hw // 2
-                        pygame.draw.line(spr, (*color, fade),
-                                         (hx, oy - hly), (hx + hw, oy - hly))
+                    # Armed trap — dark summoning glyph burned into floor
+                    # Draw base glyph then add pulsing animation on top
+                    from ui.dungeon_objects import draw_trap_armed as _dta
+                    _dta(spr, pygame.Rect(0, 0, surf_w, surf_h), self.theme_id)
+                    # Pulse the glow intensity using existing animation timer
+                    pulse_scale = 0.75 + 0.25 * abs(math.sin(self.t * 3.5))
+                    if pulse_scale < 0.85:
+                        # Dim pass — darken glyph slightly at minimum pulse
+                        dim_ov = pygame.Surface((surf_w, surf_h), pygame.SRCALPHA)
+                        dim_ov.fill((0, 0, 0, int(40 * (1.0 - pulse_scale) * 2)))
+                        spr.blit(dim_ov, (0, 0))
 
                 elif icon_key == "trap_disarmed":
                     # Disarmed trap — flat green-grey plate with X mark
