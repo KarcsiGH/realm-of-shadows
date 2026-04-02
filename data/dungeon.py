@@ -610,6 +610,31 @@ def _pick_door(tiles, candidates, rng):
     tiles[y][x]["type"] = DT_DOOR
 
 
+def _stair_facing(tiles, x, y, width, height):
+    """
+    Determine which cardinal direction a stair tile's entrance faces.
+    Looks up to 8 tiles in each direction; the direction with the most
+    passable tiles is the approach corridor → that face shows the stair.
+    Defaults to "south" if all directions are equally open (room centre).
+    """
+    best_dir = "south"
+    best_count = -1
+    for dx, dy, direction in [(0, -1, "north"), (0, 1, "south"),
+                               (-1,  0, "west"), (1,  0, "east")]:
+        count = 0
+        for step in range(1, 9):
+            nx, ny = x + dx * step, y + dy * step
+            if 0 <= nx < width and 0 <= ny < height:
+                if tiles[ny][nx].get("type") in PASSABLE_TILES:
+                    count += 1
+            else:
+                break
+        if count > best_count:
+            best_count = count
+            best_dir = direction
+    return best_dir
+
+
 def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_id="goblin_warren"):
     """Generate a single dungeon floor grid.
     Returns 2D list of tile dicts and metadata."""
@@ -691,6 +716,8 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             tiles[entrance_y][entrance_x]["type"] = DT_ENTRANCE
         else:
             tiles[entrance_y][entrance_x]["type"] = DT_STAIRS_UP
+            tiles[entrance_y][entrance_x]["facing"] = _stair_facing(
+                tiles, entrance_x, entrance_y, width, height)
 
         # ── Place stairs down (except last floor) ──
         stairs_down_pos = None
@@ -699,6 +726,8 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             sdx = last_room[0] + last_room[2] // 2
             sdy = last_room[1] + last_room[3] // 2
             tiles[sdy][sdx]["type"] = DT_STAIRS_DOWN
+            tiles[sdy][sdx]["facing"] = _stair_facing(
+                tiles, sdx, sdy, width, height)
             stairs_down_pos = (sdx, sdy)
 
         # ── Place boss encounter on last floor ──

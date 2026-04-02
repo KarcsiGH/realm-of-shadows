@@ -355,58 +355,117 @@ def _gen_arch_sprite(theme_id, wall_light, wall_dark, width, height):
 
 
 def _gen_stair_texture(going_down=True, light=(180,160,120), dark=(90,75,50)):
-    """Full-wall stair texture: perspective step pattern floor-to-ceiling."""
-    surf = pygame.Surface((TEX_W, TEX_H))
-    rng  = random.Random(0xF17E if going_down else 0xF17A)
+    """
+    Full-wall stair texture (64x64) — v9 design.
 
-    STEP_COL   = light                         # step top face (lighter)
-    RISER_COL  = dark                          # step riser face (darker)
-    EDGE_COL   = tuple(max(0,c-30) for c in dark)  # step edge crease
+    Both: wide at the bottom (near/base), narrowing toward the top (far).
+    The side walls are the wall_light / wall_dark stone colours.
 
-    # 5 steps, each occupying TEX_H//5 rows
-    n_steps = 5
-    step_h  = TEX_H // n_steps
+    Stairs UP:   expanding black void above the last step fans out to full
+                 image width — suggests the opening above.
+    Stairs DOWN: constant-width black rectangle above the top step — the
+                 doorway in the far wall at the base of the staircase.
+    """
+    W, H = TEX_W, TEX_H
+    surf = pygame.Surface((W, H))
+    DARK_PIX = (4, 2, 8)
+    surf.fill(DARK_PIX)
 
-    for s in range(n_steps):
-        if going_down:
-            # Stairs going down: near step (s=0) is full width at top,
-            # far steps get narrower — perspective shrink on x axis
-            frac  = (n_steps - s) / n_steps      # 1.0→0.2 top to bottom
-        else:
-            frac  = (s + 1) / n_steps            # 0.2→1.0 top to bottom
+    rng = random.Random(0xF17E if going_down else 0xF17A)
 
-        # Horizontal span of this step across the texture
-        margin = int((1.0 - frac) * TEX_W * 0.45)
-        x0, x1 = margin, TEX_W - margin
+    shadow = tuple(max(0, c - 18) for c in dark)
+    mortar = tuple(max(0, c - 22) for c in dark)
+    lit_face = tuple(min(255, int(light[i]*0.85 + dark[i]*0.15)) for i in range(3))
+    shd_face = tuple(max(0, int(dark[i]*0.75)) for i in range(3))
 
-        y_top  = s * step_h
-        y_mid  = y_top + max(1, step_h // 3)    # riser/tread divider
-        y_bot  = y_top + step_h
+    wall_near_w = int(W * 0.19)   # wall face at near (bottom) — wide corridor
+    wall_far_w  = int(W * 0.46)   # wall face at far  (top)   — narrow corridor
 
-        # Step tread (top face, lighter)
-        for y in range(y_top, y_mid):
-            tone = rng.uniform(0.88, 1.08)
-            c = tuple(min(255, int(v * tone)) for v in STEP_COL)
-            for x in range(x0, x1):
-                surf.set_at((x, y), c)
+    def lwall(y):   return int(wall_far_w + (wall_near_w - wall_far_w) * y / H)
+    def rwall(y):   return W - lwall(y)
 
-        # Step riser (front face, darker)
-        for y in range(y_mid, y_bot):
-            tone = rng.uniform(0.80, 1.0)
-            c = tuple(min(255, int(v * tone)) for v in RISER_COL)
-            for x in range(x0, x1):
-                surf.set_at((x, y), c)
+    # ── Stone masonry walls (irregular blocks) ────────────────────────
+    block_h = max(3, H // 14); block_w = max(4, W // 9)
+    seed_l = hash(("stex_l", going_down)) & 0xFFFFFF
+    seed_r = hash(("stex_r", going_down)) & 0xFFFFFF
 
-        # Edge crease lines
-        if y_top > 0:
-            pygame.draw.line(surf, EDGE_COL, (x0, y_top), (x1, y_top), 1)
-        pygame.draw.line(surf, EDGE_COL, (x0, y_mid), (x1, y_mid), 1)
-        # Side walls (the rock beside the stair edges)
-        for y in range(y_top, y_bot):
-            for x in range(0, x0):
-                surf.set_at((x, y), tuple(int(v*0.4) for v in RISER_COL))
-            for x in range(x1, TEX_W):
-                surf.set_at((x, y), tuple(int(v*0.4) for v in RISER_COL))
+    for side, get_lx, get_rx, base_col, seed in [
+        ("left",  lambda y: 0,        lwall,             lit_face, seed_l),
+        ("right", rwall,  lambda y: W, shd_face, seed_r),
+    ]:
+        y = 0; row = 0
+        while y < H:
+            row_h = block_h + rng.randint(-block_h//3, block_h//2)
+            row_h = max(2, min(row_h, H - y))
+            y2 = y + row_h
+            lx = int(get_lx(y)); rx = int(get_rx(y))
+            if rx <= lx: y = y2; row += 1; continue
+            offset = rng.randint(block_w//3, block_w*2//3) if row % 2 else 0
+            ci = 0; x = lx - offset
+            while x < rx:
+                bw = block_w + rng.randint(-block_w//3, block_w//2)
+                bw = max(3, bw)
+                bx = max(lx, x); bx2 = min(rx, x + bw - 1)
+                if bx2 > bx:
+                    v  = rng.randint(-16, 16)
+                    sp = rng.randint(0, 12)
+                    if sp == 0:   v -= 12
+                    elif sp == 1: v += 9
+                    bc = tuple(max(0, min(255, c + v)) for c in base_col)
+                    pygame.draw.rect(surf, bc, (bx, y, bx2 - bx, row_h - 1))
+                x += bw; ci += 1
+            # Mortar line
+            if y2 < H:
+                pygame.draw.line(surf, mortar, (lx, y2 - 1), (rx, y2 - 1), 1)
+            y = y2; row += 1
+
+    # ── Steps: wide at bottom, narrowing upward ───────────────────────
+    if going_down:
+        y_end = int(H * 0.48)   # steps stop at 48% from top
+        STEPS = 5
+    else:
+        y_end = int(H * 0.20)   # steps fill most of height; void above
+        STEPS = 7
+
+    for i in range(STEPS):
+        near_y = int(H - (H - y_end) * (i     / STEPS))
+        far_y  = int(H - (H - y_end) * ((i+1) / STEPS))
+        lnear  = lwall(near_y); rnear = rwall(near_y)
+        lfar   = lwall(far_y);  rfar  = rwall(far_y)
+
+        brightness = 0.18 + (0.30 * i / max(1, STEPS - 1))
+        tone = rng.uniform(0.92, 1.08)
+        sv = rng.randint(-8, 8)
+        step_col  = tuple(max(0, min(255, int(dark[j] + (light[j]-dark[j])*brightness*tone) + sv))
+                          for j in range(3))
+        riser_col = tuple(max(0, int(step_col[j] * 0.55)) for j in range(3))
+
+        pygame.draw.polygon(surf, step_col,
+            [(lnear, near_y), (rnear, near_y), (rfar, far_y), (lfar, far_y)])
+        riser_h = max(1, (near_y - far_y) // 3)
+        pygame.draw.polygon(surf, riser_col,
+            [(lnear, near_y), (rnear, near_y),
+             (rnear, near_y + riser_h), (lnear, near_y + riser_h)])
+        pygame.draw.polygon(surf, shadow,
+            [(lnear, near_y), (rnear, near_y), (rfar, far_y), (lfar, far_y)], 1)
+        edge_col = tuple(min(255, c + 22) for c in step_col)
+        pygame.draw.line(surf, edge_col,
+                         (lnear + 1, near_y + 1), (rnear - 1, near_y + 1), 1)
+
+    # ── Dark opening ──────────────────────────────────────────────────
+    if going_down:
+        # Constant-width black rectangle — doorway in far wall
+        lx_s = lwall(y_end); rx_s = rwall(y_end)
+        rect_w = rx_s - lx_s
+        if rect_w > 0:
+            pygame.draw.rect(surf, DARK_PIX, (lx_s, 0, rect_w, y_end))
+            pygame.draw.line(surf, shadow, (lx_s, y_end), (rx_s, y_end), 2)
+    else:
+        # Expanding void — fans from corridor width at y_end to full width at top
+        lx_v = lwall(y_end); rx_v = rwall(y_end)
+        pygame.draw.polygon(surf, DARK_PIX,
+            [(0, 0), (W, 0), (rx_v, y_end), (lx_v, y_end)])
+        pygame.draw.line(surf, shadow, (lx_v, y_end), (rx_v, y_end), 2)
 
     return surf
 
@@ -1089,7 +1148,19 @@ class DungeonUI:
                 else:
                     wx = self.px + dist * ray_dx
                 wx -= math.floor(wx)
-                return max(0.01, dist), wx, ns, False, map_x, map_y, is_stair, tt, 0.0
+
+                # Stairs: only show stair texture on the entrance face.
+                # The other three faces render as normal dungeon wall.
+                show_stair = False
+                if is_stair:
+                    facing = tile.get("facing", "south")
+                    if ns:
+                        hit_face = "north" if step_y > 0 else "south"
+                    else:
+                        hit_face = "west"  if step_x > 0 else "east"
+                    show_stair = (hit_face == facing)
+
+                return max(0.01, dist), wx, ns, False, map_x, map_y, show_stair, tt, 0.0
 
             if is_d:
                 # Determine door orientation from neighbors.
