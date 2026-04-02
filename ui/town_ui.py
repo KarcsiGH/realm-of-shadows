@@ -1225,6 +1225,7 @@ class TownUI:
     def _draw_guild(self, surface, mx, my):
         """Draw the Guild hub menu."""
         surface.fill(TOWN_BG)
+        self._bld_npc_portrait_rect = None   # no portrait card in guild view
 
         W, H = SCREEN_W, SCREEN_H
         name = getattr(self, "_guild_building_name", "Adventurers' Guild")
@@ -2702,6 +2703,7 @@ class TownUI:
         from data.shop_inventory import TAVERN, get_tavern_patrons
         from core.story_flags import get_flag
 
+        self._bld_npc_portrait_rect = None   # no portrait card in tavern
         W, H = SCREEN_W, SCREEN_H
         draw_text(surface, TAVERN["name"], W//2 - 130, 28, GOLD, 22, bold=True)
 
@@ -3030,10 +3032,14 @@ class TownUI:
                     pass
             return None  # consume the click regardless
 
-        # ── Indoor NPC portrait click (any service view) ──
+        # ── Indoor NPC portrait click (service views that draw the header) ──
+        _NO_PORTRAIT_VIEWS = {
+            self.VIEW_WALK, self.VIEW_HUB, self.VIEW_TAVERN,
+            self.VIEW_JOBBOARD, self.VIEW_INN_LEVELUP,
+        }
         if (self._bld_npc_portrait_rect and
                 self._bld_npc_portrait_rect.collidepoint(mx, my) and
-                self.view not in (self.VIEW_WALK, self.VIEW_HUB)):
+                self.view not in _NO_PORTRAIT_VIEWS):
             self._open_indoor_npc_dialogue()
             return None
 
@@ -3096,7 +3102,7 @@ class TownUI:
         elif self.view == self.VIEW_SHOP:
             options = ["buy", "sell", "back"]
             for i, opt in enumerate(options):
-                btn = pygame.Rect(SCREEN_W // 2 - 200, 130 + i * 90, 400, 75)
+                btn = pygame.Rect(SCREEN_W // 2 - 200, 148 + i * 90, 400, 75)
                 if btn.collidepoint(mx, my):
                     if opt == "buy":
                         self.view = self.VIEW_SHOP_BUY
@@ -3110,26 +3116,26 @@ class TownUI:
 
         # ── Shop buy ──
         elif self.view == self.VIEW_SHOP_BUY:
-            # Back button
+            # Back button — matches draw y=50
             back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
             if back.collidepoint(mx, my):
                 self.view = self.VIEW_SHOP
                 return None
 
-            # Tab clicks
+            # Tab clicks — matches draw y=140
             tabs = ["weapons", "armor", "consumables"]
             for i, key in enumerate(tabs):
-                tr = pygame.Rect(20 + i * 140, 50, 130, 32)
+                tr = pygame.Rect(20 + i * 140, 140, 130, 32)
                 if tr.collidepoint(mx, my):
                     self.shop_tab = key
                     self.shop_scroll = 0
                     return None
 
-            # Item clicks — regular shop + buyback
+            # Item clicks — matches draw panel y=182
             items = list(self.shop.get(self.shop_tab, []))
             buyback_start = len(items)
             items.extend(self.sold_items)
-            panel = pygame.Rect(20, 95, SCREEN_W - 40, SCREEN_H - 200)
+            panel = pygame.Rect(20, 182, SCREEN_W - 40, SCREEN_H - 287)
             iy = panel.y + 10
             start = self.shop_scroll
             end = min(len(items), start + 8)
@@ -3151,19 +3157,19 @@ class TownUI:
                 self.view = self.VIEW_SHOP
                 return None
 
-            # Character tabs — match _draw_shop_sell tab_area_w = SCREEN_W - 170
+            # Character tabs — matches draw y=140
             for i in range(len(self.party)):
                 tab_area_w = SCREEN_W - 170
                 tw = tab_area_w // len(self.party)
-                tr = pygame.Rect(20 + i * tw, 50, tw - 4, 32)
+                tr = pygame.Rect(20 + i * tw, 140, tw - 4, 32)
                 if tr.collidepoint(mx, my):
                     self.sell_char = i
                     self.sell_scroll = 0
                     return None
 
-            # Item clicks
+            # Item clicks — matches draw panel y=182
             char = self.party[self.sell_char]
-            panel = pygame.Rect(20, 95, SCREEN_W - 40, SCREEN_H - 200)
+            panel = pygame.Rect(20, 182, SCREEN_W - 40, SCREEN_H - 287)
             iy = panel.y + 10
             start = self.sell_scroll
             end = min(len(char.inventory), start + 8)
@@ -3245,7 +3251,7 @@ class TownUI:
                 self.view = self.VIEW_INN_CHARSHEET
                 return None
 
-            by = 110
+            by = 148
             for i, tier_key in enumerate(INN_TIER_ORDER):
                 btn = pygame.Rect(SCREEN_W // 2 - 280, by + i * 95, 560, 85)
                 if btn.collidepoint(mx, my):
@@ -3486,6 +3492,9 @@ class TownUI:
         elif self.view == self.VIEW_TAVERN:
             from data.shop_inventory import TAVERN
             from core.story_flags import get_flag
+            # Tavern has no NPC portrait card — clear so stale rect from a
+            # previously visited building doesn't intercept clicks here.
+            self._bld_npc_portrait_rect = None
 
             # Tab switches
             for key, tr in getattr(self, '_tavern_tab_rects', []):
@@ -4225,18 +4234,18 @@ class TownUI:
             count_material,
         )
 
-        # Back button
-        back = pygame.Rect(SCREEN_W - 140, 78, 120, 34)
+        # Back button — matches draw y=140
+        back = pygame.Rect(SCREEN_W - 140, 140, 120, 34)
         if back.collidepoint(mx, my):
             self._return_to_town()
             self.forge_selected_item = None
             return None
 
-        # Tab clicks — y=78 matches _draw_forge tab bar
+        # Tab clicks — matches draw y=140
         tabs = [(self.VIEW_FORGE_CRAFT, 20), (self.VIEW_FORGE_UPGRADE, 160),
                 (self.VIEW_FORGE_ENCHANT, 300), (self.VIEW_FORGE_REPAIR, 440)]
         for view, tx in tabs:
-            tr = pygame.Rect(tx, 78, 130, 32)
+            tr = pygame.Rect(tx, 140, 130, 32)
             if tr.collidepoint(mx, my):
                 self.view = view
                 self.forge_scroll = 0
@@ -4244,7 +4253,7 @@ class TownUI:
                 return None
 
         active_view = self.view if self.view != self.VIEW_FORGE else self.VIEW_FORGE_CRAFT
-        y = 138  # matches _draw_forge y=138
+        y = 200  # matches _draw_forge y=200
 
         if active_view == self.VIEW_FORGE_REPAIR:
             from core.durability import (
@@ -4255,7 +4264,7 @@ class TownUI:
                 is_focus, init_charges, crystals_needed, recharge_with_crystals, CRYSTAL_NAME
             )
             from core.crafting import count_material
-            y_r = 138 + 40
+            y_r = 200 + 40
             row_h = 52
             btn_w, btn_h = 120, 30
             for ci, char in enumerate(self.party):
@@ -4281,7 +4290,7 @@ class TownUI:
             # Focus weapon recharge buttons
             y_rc = 138 + 40 + y_r + 30  # approximate — after repair section
             # Re-iterate to find recharge button positions (must mirror draw order)
-            y_rc = 138 + 40
+            y_rc = 200 + 40
             # Skip past repair rows
             for char in self.party:
                 for slot, item in list((char.equipment or {}).items()):
