@@ -656,7 +656,8 @@ class Game:
                         from ui.save_load_ui import SaveLoadUI
                         self.save_load_ui = SaveLoadUI(
                             "save", party=self.party, world_state=self.world_state,
-                            dungeon_cache=self.dungeon_cache
+                            dungeon_cache=self.dungeon_cache,
+                            dungeon_state=self.dungeon_state,
                         )
                         self._save_load_return_state = self.state
                         sfx.play("ui_open")

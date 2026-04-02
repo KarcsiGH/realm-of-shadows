@@ -207,11 +207,22 @@ def serialize_world_state(ws):
         return None
     try:
         travel = ws.travel
+        # Serialize tile-level fog-of-war as compact [x,y] list
+        fog = []
+        try:
+            from data.world_map import MAP_W, MAP_H
+            for wy in range(MAP_H):
+                for wx in range(MAP_W):
+                    if ws.tiles[wy][wx].get("discovered"):
+                        fog.append([wx, wy])
+        except Exception:
+            pass
         return {
             "party_x": ws.party_x,
             "party_y": ws.party_y,
             "step_counter": ws.step_counter,
             "discovered_locations": sorted(ws.discovered_locations),
+            "fog_discovered": fog,
             "key_items": list(ws.key_items),
             "seed": getattr(ws, "_seed", 42),
             "travel": {
@@ -249,7 +260,17 @@ def deserialize_world_state(data, party):
         ws.travel.boat_location = travel_data.get("boat_location", None)
         ws.travel.attuned_circles = list(travel_data.get("attuned_circles", []))
         ws.travel.rail_unlocked = travel_data.get("rail_unlocked", False)
-        ws._update_fog()
+        # Restore tile-level fog BEFORE _update_fog so previously seen tiles
+        # remain visible after loading, not just the immediate vicinity.
+        fog = data.get("fog_discovered", [])
+        try:
+            from data.world_map import MAP_W, MAP_H
+            for wx, wy in fog:
+                if 0 <= wy < MAP_H and 0 <= wx < MAP_W:
+                    ws.tiles[wy][wx]["discovered"] = True
+        except Exception:
+            pass
+        ws._update_fog()   # also reveal current position neighbourhood
         return ws
     except Exception:
         return None

@@ -1134,12 +1134,18 @@ class CampUI:
 
             # ── Inline expanded popup for camp-castable ability ───────────
             if is_expanded and not is_locked:
-                popup_h = 58
+                # Check if this spell is awaiting target selection
+                awaiting_target = (getattr(self, "_stats_midcol_target_ab", None) == ab.get("name"))
+                is_aoe = (ab_type == "aoe_heal")
+                needs_target = not is_aoe and awaiting_target
+
+                popup_h = 58 if not needs_target else (58 + len(self.party) * 22 + 4)
                 pop_r = pygame.Rect(col_x, ry2, col_w, popup_h)
                 if pop_r.bottom < BODY_BOT:
                     self._stats_hit_map[f"midcol_popup:{ab.get('name','')}"] = pop_r
                     pygame.draw.rect(surface, (18,14,32), pop_r, border_radius=4)
-                    pygame.draw.rect(surface, (80,160,100), pop_r, 1, border_radius=4)
+                    border_c = (220,160,60) if needs_target else (80,160,100)
+                    pygame.draw.rect(surface, border_c, pop_r, 1, border_radius=4)
                     desc2 = ab.get("desc") or ab.get("description","")
                     if desc2:
                         draw_text(surface, desc2, col_x+8, ry2+5, GREY, 10, max_width=col_w-12)
@@ -1150,13 +1156,37 @@ class CampUI:
                               col_x+8, ry2+20, (140,200,140), 10)
                     cost2 = ab.get("cost",0); res2 = ab.get("resource","")
                     can_cast = c.resources.get(res2,0) >= cost2 if cost2 else True
-                    cast_r = pygame.Rect(col_x+8, ry2+33, 70, 20)
-                    if can_cast:
-                        self._stats_hit_map[f"midcol_cast:{ab.get('name','')}"] = cast_r
-                        draw_button(surface, cast_r, "Cast",
-                                    hover=cast_r.collidepoint(mx,my), size=10)
+
+                    if needs_target:
+                        # Show target picker pills
+                        draw_text(surface, "Choose target:", col_x+8, ry2+33, (220,180,60), 10, bold=True)
+                        ty_pill = ry2 + 46
+                        for gi, gch in enumerate(self.party):
+                            hp = gch.resources.get("HP", 0)
+                            can_target = (ab_type != "revive" or hp <= 0) and                                          (ab_type not in ("heal","cure") or hp > 0)
+                            t_col = CREAM if can_target else (70,65,80)
+                            hp_str = f"{hp}HP" if hp > 0 else "KO"
+                            pill_r = pygame.Rect(col_x+8, ty_pill, col_w-16, 18)
+                            if can_target:
+                                self._stats_hit_map[f"midcol_target:{gi}"] = pill_r
+                                hov_t = pill_r.collidepoint(mx, my)
+                                bg_t = (50,38,20) if hov_t else (28,22,12)
+                                bd_t = (200,160,60) if hov_t else (80,65,30)
+                            else:
+                                bg_t = (22,20,26); bd_t = (50,45,60)
+                            pygame.draw.rect(surface, bg_t, pill_r, border_radius=3)
+                            pygame.draw.rect(surface, bd_t, pill_r, 1, border_radius=3)
+                            draw_text(surface, f"{gch.name}  ({hp_str})",
+                                      col_x+12, ty_pill+3, t_col, 10)
+                            ty_pill += 22
                     else:
-                        draw_text(surface, f"Need {cost2} {res2}", col_x+8, ry2+36, (180,80,80), 10)
+                        cast_r = pygame.Rect(col_x+8, ry2+33, 70, 20)
+                        if can_cast:
+                            self._stats_hit_map[f"midcol_cast:{ab.get('name','')}"] = cast_r
+                            draw_button(surface, cast_r, "Cast",
+                                        hover=cast_r.collidepoint(mx,my), size=10)
+                        else:
+                            draw_text(surface, f"Need {cost2} {res2}", col_x+8, ry2+36, (180,80,80), 10)
                     ry2 += popup_h + 3
 
         # ─────────────────────────────────────────────────────────────────
@@ -1324,9 +1354,18 @@ class CampUI:
                     bx += gw + 5
                 ey += 24
 
-            # ── Comparison panel for equippable items ─────────────────────
-            if sel_it.get("slot") and ey < BODY_BOT - 20:
-                self._draw_equip_compare(surface, sel_it, ex, ey, COL_W)
+            # ── Item detail + comparison panel for equippable items ──────
+            if ey < BODY_BOT - 30:
+                avail_detail = min(180, BODY_BOT - ey - 8)
+                if sel_it.get("slot"):
+                    detail_ph = self._draw_item_details(surface, sel_it, ey,
+                                                        max_h=avail_detail)
+                    cmp_top = ey + detail_ph + 4
+                    if cmp_top < BODY_BOT - 20:
+                        self._draw_equip_compare(surface, sel_it, ex, cmp_top, COL_W)
+                elif sel_it.get("type") in ("consumable","potion","food"):
+                    self._draw_item_details(surface, sel_it, ey,
+                                            max_h=avail_detail)
 
         surface.set_clip(None)
 
@@ -1626,10 +1665,31 @@ class CampUI:
                 CAMP_TYPES = ("heal","aoe_heal","cure","revive")
                 for ab in c.abilities:
                     if ab.get("name") == ab_name and ab.get("type") in CAMP_TYPES:
-                        self.spell_target = self.selected_char
-                        self._cast_camp_spell(c, ab)
-                        self._stats_midcol_sel = None   # collapse after cast
+                        if ab.get("type") == "aoe_heal":
+                            # AoE: no target needed — cast immediately on all
+                            self._cast_camp_spell(c, ab)
+                            self._stats_midcol_sel = None
+                        else:
+                            # Single-target: open target picker in the popup
+                            self._stats_midcol_target_ab = ab_name
+                            if not hasattr(self, "_stats_midcol_target_ab"):
+                                self._stats_midcol_target_ab = ab_name
                         break
+                return None
+
+            # ── Middle column target picker pill ─────────────────────────
+            if key.startswith("midcol_target:"):
+                gi = int(key[len("midcol_target:"):])
+                ab_name = getattr(self, "_stats_midcol_target_ab", None)
+                if ab_name:
+                    CAMP_TYPES = ("heal","aoe_heal","cure","revive")
+                    for ab in c.abilities:
+                        if ab.get("name") == ab_name and ab.get("type") in CAMP_TYPES:
+                            self.spell_target = gi
+                            self._cast_camp_spell(c, ab)
+                            self._stats_midcol_sel = None
+                            self._stats_midcol_target_ab = None
+                            break
                 return None
 
         return None
@@ -1652,8 +1712,14 @@ class CampUI:
         elif self.tab == TAB_INVENTORY:
             c = self.party[self.selected_char] if self.party else None
             if c:
-                visible_n = max(1, (840 - 60 - (80 + 45)) // 36)
-                max_off   = max(0, len(c.inventory) - visible_n)
+                # Use same constants as _draw_inventory so scroll matches draw
+                BODY_BOT_inv  = SCREEN_H - 320   # 580 at 900px
+                list_top_inv  = 80 + 52           # content_y(80) + header(52) = 132
+                ROW_H_inv     = 36
+                visible_n = max(1, (BODY_BOT_inv - list_top_inv) // ROW_H_inv)
+                from ui.camp_ui import _build_inv_groups
+                groups  = _build_inv_groups(c.inventory)
+                max_off = max(0, len(groups) - visible_n)
                 self.scroll_offset = max(0, min(self.scroll_offset + direction, max_off))
         elif getattr(self, "_manual_open", False):
             cur = getattr(self, "_manual_scroll", 0)

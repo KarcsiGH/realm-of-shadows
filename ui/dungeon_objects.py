@@ -442,12 +442,8 @@ def draw_fountain_used(surf, r, theme=None):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def draw_trap_armed(surf, r, theme=None):
+    # No background fill — let the dungeon floor show through (SRCALPHA surface)
     w, h = r.w, r.h; cx = r.x + w // 2
-
-    for ty in range(r.y, r.y + h, max(10, h // 5)):
-        pygame.draw.line(surf, (36, 30, 22), (r.x, ty), (r.x + w, ty), 1)
-    for tx in range(r.x, r.x + w, max(12, w // 5)):
-        pygame.draw.line(surf, (36, 30, 22), (tx, r.y), (tx, r.y + h), 1)
 
     scorch_rx = int(w * 0.42); scorch_ry = int(h * 0.20)
     scorch_cy = r.y + int(h * 0.62)
@@ -487,8 +483,6 @@ def draw_trap_armed(surf, r, theme=None):
 def draw_trap_tripped(surf, r, theme=None):
     """Tripped trap — glyph dark and inert."""
     w, h = r.w, r.h; cx = r.x + w // 2
-    for ty in range(r.y, r.y + h, max(10, h // 5)):
-        pygame.draw.line(surf, (28, 22, 16), (r.x, ty), (r.x + w, ty), 1)
     scorch_rx = int(w * 0.42); scorch_cy = r.y + int(h * 0.62)
     scorch_ry = int(h * 0.20)
     pygame.draw.ellipse(surf, (16, 11, 8),
@@ -520,7 +514,7 @@ def draw_chest(surf, r, theme=None):
         (body_x, body_y + body_h - band_h, body_w, band_h), border_radius=2)
     pygame.draw.rect(surf, IRON_L,
         (body_x, body_y + body_h - band_h, body_w, band_h), 1, border_radius=2)
-    pygame.draw.rect(surf, DARK, (body_x, body_y, body_w, body_h), 2, border_radius=3)
+    pygame.draw.rect(surf, WOOD_D, (body_x, body_y, body_w, body_h), 2, border_radius=3)
     pygame.draw.line(surf, WOOD_L,
                      (body_x + 3, body_y + 2), (body_x + body_w - 3, body_y + 2), 2)
 
@@ -535,7 +529,7 @@ def draw_chest(surf, r, theme=None):
     band2_y = lid_y + lid_h * 2 // 5
     pygame.draw.rect(surf, IRON,   (lid_x, band2_y, lid_w, band_h), border_radius=1)
     pygame.draw.rect(surf, IRON_L, (lid_x, band2_y, lid_w, band_h), 1, border_radius=1)
-    pygame.draw.rect(surf, DARK,   (lid_x, lid_y, lid_w, lid_h), 2, border_radius=3)
+    pygame.draw.rect(surf, WOOD_D, (lid_x, lid_y, lid_w, lid_h), 2, border_radius=3)
     pygame.draw.arc(surf, WOOD_L,
                     (lid_x + 3, lid_y + 3, lid_w - 6, lid_h * 2 // 3 - 4), 0, math.pi, 2)
 

@@ -52,15 +52,15 @@ def get_font(size, bold=False):
 
 # ── Text Rendering ────────────────────────────────────────────
 
-def draw_text(surface, text, x, y, color=WHITE, size=16, bold=False, max_width=None):
+def draw_text(surface, text, x, y, color=WHITE, size=16, bold=False, max_width=None, max_h=None):
     """Draw text, optionally word-wrapped. Returns the total height used."""
     font = get_font(size, bold)
     if max_width is None:
-        rendered = font.render(text, True, color)
+        rendered = font.render(str(text), True, color)
         surface.blit(rendered, (x, y))
         return rendered.get_height()
     else:
-        return draw_wrapped_text(surface, text, x, y, max_width, color, font)
+        return draw_wrapped_text(surface, str(text), x, y, max_width, color, font, max_h=max_h)
 
 
 def draw_text_shadowed(surface, text, x, y, color=CREAM, size=16, bold=False,
@@ -93,8 +93,9 @@ def draw_text_on_panel(surface, text, x, y, color=CREAM, size=16, bold=False,
     return draw_text(surface, text, x, y, color, size, bold, max_width)
 
 
-def draw_wrapped_text(surface, text, x, y, max_width, color, font):
-    """Word-wrap text within max_width. Returns total height."""
+def draw_wrapped_text(surface, text, x, y, max_width, color, font, max_h=None):
+    """Word-wrap text within max_width. Returns total height used.
+    max_h: if set, stops drawing once height would exceed this value."""
     words = text.split(' ')
     lines = []
     current_line = ""
@@ -105,13 +106,25 @@ def draw_wrapped_text(surface, text, x, y, max_width, color, font):
         else:
             if current_line:
                 lines.append(current_line)
-            current_line = word
+            # Long single word — truncate with ellipsis if needed
+            if font.size(word)[0] > max_width:
+                while word and font.size(word + "…")[0] > max_width:
+                    word = word[:-1]
+                current_line = word + "…"
+            else:
+                current_line = word
     if current_line:
         lines.append(current_line)
 
     total_h = 0
     line_h = font.get_linesize()
     for line in lines:
+        if max_h is not None and total_h + line_h > max_h:
+            # Would overflow — draw truncation indicator on last visible line
+            if total_h > 0:
+                trunc = "…"
+                surface.blit(font.render(trunc, True, color), (x, y + total_h - line_h + (line_h - font.get_height())//2 ))
+            break
         rendered = font.render(line, True, color)
         surface.blit(rendered, (x, y + total_h))
         total_h += line_h
