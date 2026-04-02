@@ -401,16 +401,12 @@ class CampUI:
 
             has_slot   = bool(item.get("slot"))
             if has_slot:
-                # Split available space: detail (left ⅔) | compare (right ⅓)
-                # but place them stacked so each has its own width
-                detail_w   = (SCREEN_W - 160) * 7 // 10
-                compare_w  = (SCREEN_W - 160) - detail_w - 10
-                detail_h   = min(avail_h, avail_h * 2 // 5)
-                compare_h  = avail_h - detail_h - 6
-                # Draw detail panel (left-aligned, narrower)
+                # Detail panel: up to 200px — enough for any item (densest ~130px).
+                # Never artificially capped below what content needs.
+                detail_h   = min(avail_h, 200)
                 detail_ph  = self._draw_item_details(surface, item, panel_top,
                                                      max_h=detail_h)
-                # Draw compare panel immediately below, using remaining space
+                # Compare panel: placed immediately below, self-clamps to screen bottom
                 cmp_top = panel_top + detail_ph + 6
                 if cmp_top < SCREEN_H - 40:
                     self._draw_equip_compare(surface, item, 80, cmp_top,
@@ -471,9 +467,9 @@ class CampUI:
             value  = item.get("estimated_value", item.get("sell_price", 0))
             lines.append((f"{rarity}   Value: ~{value}g", DIM_GOLD, 11, False))
 
-        # Measure required height
-        line_heights = [18 if l[2] >= 13 else 15 for l in lines]
-        needed_h = 14 + sum(line_heights)
+        # Measure required height — lh paired with line so no fragile index lookup
+        lh = [18 if l[2] >= 13 else 15 for l in lines]
+        needed_h = 14 + sum(lh)
         ph = min(needed_h, avail)
 
         panel = pygame.Rect(80, y, pw, ph)
@@ -481,12 +477,12 @@ class CampUI:
         pygame.draw.rect(surface, EQUIP_SLOT_BORDER, panel, 1, border_radius=5)
 
         dy = panel.y + 8
-        for text, col, size, bold in lines:
+        for (text, col, size, bold), row_h in zip(lines, lh):
             if dy + size + 2 > panel.bottom - 4:
                 break
             draw_text(surface, text, panel.x + 14, dy, col, size, bold=bold,
                       max_width=pw - 28)
-            dy += line_heights[lines.index((text, col, size, bold))]
+            dy += row_h
 
         return ph   # return actual drawn height
 
@@ -678,7 +674,7 @@ class CampUI:
                 detail_y = min(row.bottom + 4, SCREEN_H - 8)
                 avail = SCREEN_H - detail_y - 8
                 detail_ph = self._draw_item_details(surface, item, detail_y,
-                                                    max_h=avail // 2)
+                                                    max_h=min(avail, 200))
                 if item.get("slot") and detail_y + detail_ph + 6 < SCREEN_H - 40:
                     self._draw_equip_compare(surface, item, 80,
                                              detail_y + detail_ph + 6, SCREEN_W - 160)
