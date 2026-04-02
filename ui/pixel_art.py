@@ -1644,15 +1644,39 @@ _DUNGEON_OBJECT_GRIDS = {
 }
 
 
-def draw_dungeon_object(surface, rect, obj_type):
+def draw_dungeon_object(surface, rect, obj_type, theme=None):
     """
-    Render a dungeon object (chest, stairs, shrine) using the pixel art grid system.
+    Render a dungeon object using procedural drawing.
     obj_type: 'chest' | 'stairs_down' | 'stairs_up' | 'shrine_active' | 'shrine_used'
+              'fountain_active' | 'fountain_used' | 'trap_armed' | 'trap_tripped'
     """
-    grid = _DUNGEON_OBJECT_GRIDS.get(obj_type, DUNGEON_CHEST)
-    pal  = dict(_FIXED)
-    sprite = _render(grid, pal, rect.w, rect.h)
-    surface.blit(sprite, rect.topleft)
+    from ui.dungeon_objects import (
+        draw_stairs_up, draw_stairs_down,
+        draw_shrine_active, draw_shrine_used,
+        draw_fountain_active, draw_fountain_used,
+        draw_trap_armed, draw_trap_tripped,
+        draw_chest,
+    )
+    _dispatch = {
+        "stairs_up":       draw_stairs_up,
+        "stairs_down":     draw_stairs_down,
+        "shrine_active":   draw_shrine_active,
+        "shrine_used":     draw_shrine_used,
+        "fountain_active": draw_fountain_active,
+        "fountain_used":   draw_fountain_used,
+        "trap_armed":      draw_trap_armed,
+        "trap_tripped":    draw_trap_tripped,
+        "chest":           draw_chest,
+    }
+    fn = _dispatch.get(obj_type)
+    if fn:
+        fn(surface, rect, theme)
+    else:
+        # Legacy fallback for any unrecognised type
+        grid = _DUNGEON_OBJECT_GRIDS.get(obj_type, DUNGEON_CHEST)
+        pal  = dict(_FIXED)
+        sprite = _render(grid, pal, rect.w, rect.h)
+        surface.blit(sprite, rect.topleft)
 
 
 # ═══════════════════════════════════════════════════════════════

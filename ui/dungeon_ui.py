@@ -1531,11 +1531,13 @@ class DungeonUI:
 
                 elif icon_key == DT_STAIRS_DOWN:
                     obj_r = pygame.Rect(0, 0, surf_w, surf_h)
-                    draw_dungeon_object(spr, obj_r, "stairs_down")
+                    from ui.dungeon_objects import draw_stairs_down as _dsd
+                    _dsd(spr, obj_r, self.theme_id)
 
                 elif icon_key == DT_STAIRS_UP:
                     obj_r = pygame.Rect(0, 0, surf_w, surf_h)
-                    draw_dungeon_object(spr, obj_r, "stairs_up")
+                    from ui.dungeon_objects import draw_stairs_up as _dsu
+                    _dsu(spr, obj_r, self.theme_id)
 
                 elif icon_key == DT_INTERACTABLE:
                     # Distinguish fountain (healing_pool) vs shrine (mp_shrine)
@@ -1552,11 +1554,11 @@ class DungeonUI:
                         obj_key = "fountain_used" if i_used else "fountain_active"
                     else:
                         obj_key = "shrine_used" if i_used else "shrine_active"
-                    draw_dungeon_object(spr, obj_r, obj_key)
+                    draw_dungeon_object(spr, obj_r, obj_key, self.theme_id)
 
                 elif icon_key == DT_TREASURE:
                     obj_r = pygame.Rect(0, 0, surf_w, surf_h)
-                    draw_dungeon_object(spr, obj_r, "chest")
+                    draw_dungeon_object(spr, obj_r, "chest", self.theme_id)
 
                 elif icon_key in ("enemy", "boss"):
                     # Draw faction-specific enemy silhouette from pixel_art
