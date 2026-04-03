@@ -356,59 +356,188 @@ def _gen_arch_sprite(theme_id, wall_light, wall_dark, width, height):
 
 def _gen_stair_texture(going_down=True, light=(180,160,120), dark=(90,75,50)):
     """
-    Full-wall stair texture (64x64) — U-shaped alcove design.
+    Full-wall stair texture (64×64).
 
-    The party looks into a recessed U-shaped alcove:
-      - Left arm:  inner side wall of the U, angled away to the left
-      - Right arm: inner side wall of the U, angled away to the right
-      - Back:      the stairs (up or down) at the far end of the U
-      - Floor of alcove visible at bottom
+    Stairs DOWN — floor-perspective view:
+        Looking at a floor tile where the stairwell descends.
+        Stairs are carved into the floor: wide near the party (bottom of
+        texture), narrowing toward the far end (top). The floor beside the
+        stairs runs at normal floor tone near the party edge and fades
+        with soft, low-contrast gradients toward the stairwell opening.
+        The opening itself is a dark void at the narrow/far end.
 
-    Stairs DOWN: opening/void above the stairs (descending into dark)
-    Stairs UP:   torch sconce above the stairs, ceiling stone visible
+    Stairs UP — U-shaped alcove wall view:
+        Party looks into a recessed U-shaped alcove. Side walls of the
+        alcove angle inward; stairs rise at the back. Dim light from
+        above + torch sconce for the UP direction.
     """
     W, H = TEX_W, TEX_H
     surf = pygame.Surface((W, H))
     DARK_PIX = (4, 2, 8)
     surf.fill(DARK_PIX)
 
-    rng = random.Random(0xF17E if going_down else 0xF17A)
+    rng    = random.Random(0xF17E if going_down else 0xF17A)
+    shadow = tuple(max(0, c - 18) for c in dark)
+    mortar = tuple(max(0, c - 22) for c in dark)
 
-    shadow  = tuple(max(0, c - 18) for c in dark)
-    mortar  = tuple(max(0, c - 22) for c in dark)
-    lit     = tuple(min(255, int(light[i]*0.90 + dark[i]*0.10)) for i in range(3))
-    shd     = tuple(max(0, int(dark[i]*0.72)) for i in range(3))
-    mid     = tuple((lit[i] + shd[i]) // 2 for i in range(3))
+    # ═══════════════════════════════════════════════════════════
+    #  STAIRS DOWN — floor perspective
+    # ═══════════════════════════════════════════════════════════
+    if going_down:
+        # Floor colour slightly warmer/lighter than wall dark
+        floor_base = tuple(min(255, int(dark[i] * 1.30 + 8)) for i in range(3))
+        floor_near = tuple(min(255, int(c * 1.10)) for c in floor_base)  # slightly brighter near
+        floor_far  = tuple(max(0,   int(c * 0.68)) for c in floor_base)  # darker at far end
 
-    # ── U-shape geometry ──────────────────────────────────────────────
-    # The U mouth is at the bottom of the texture (near/party side).
-    # The U back is at a fixed depth above (~55% from top).
-    # Arm width: each arm occupies outer 30% of texture width.
-    MOUTH_Y  = H - 1              # bottom of texture (near)
-    BACK_Y   = int(H * 0.42)     # back wall of U (far end, upper portion)
-    FLOOR_Y  = int(H * 0.80)     # floor of alcove (perspective floor line)
-    ARM_W    = int(W * 0.28)     # width of each U arm at the mouth
-    BACK_W   = int(W * 0.44)     # width of stair opening at the back
+        # ── Fill entire surface with a gentle floor-to-dark gradient ─
+        # Row by row: near (bottom) = floor_near, far (top) = floor_far
+        # Gradient is soft (low contrast) as requested
+        for y in range(H):
+            t = y / max(1, H - 1)              # 0 = top (far), 1 = bottom (near)
+            row_col = tuple(int(floor_far[i] + (floor_near[i] - floor_far[i]) * t)
+                            for i in range(3))
+            pygame.draw.line(surf, row_col, (0, y), (W - 1, y))
+
+        # ── Stair opening: trapezoid, wide at bottom (near), narrow at top (far)
+        # Left and right edges converge to a central vanishing point near the top
+        STAIR_NEAR_HALF = int(W * 0.42)   # half-width of opening at near (bottom)
+        STAIR_FAR_HALF  = int(W * 0.10)   # half-width at far (top) vanishing point
+        VOID_Y          = int(H * 0.10)   # row where stairs vanish into void
+
+        def stair_lx(y):
+            """Left edge of stair opening at row y (0=top/far, H=bottom/near)."""
+            t = max(0.0, min(1.0, (y - VOID_Y) / max(1, H - 1 - VOID_Y)))
+            return int(W // 2 - (STAIR_FAR_HALF + (STAIR_NEAR_HALF - STAIR_FAR_HALF) * t))
+
+        def stair_rx(y):
+            """Right edge of stair opening at row y."""
+            t = max(0.0, min(1.0, (y - VOID_Y) / max(1, H - 1 - VOID_Y)))
+            return int(W // 2 + (STAIR_FAR_HALF + (STAIR_NEAR_HALF - STAIR_FAR_HALF) * t))
+
+        # ── Dark void at top (the deep opening) ──────────────────────
+        void_pts = [
+            (stair_lx(VOID_Y), VOID_Y),
+            (stair_rx(VOID_Y), VOID_Y),
+            (stair_rx(VOID_Y + 4), VOID_Y + 4),
+            (stair_lx(VOID_Y + 4), VOID_Y + 4),
+        ]
+        # Fill from top of texture down to VOID_Y+4 between stair edges
+        for y in range(0, VOID_Y + 6):
+            lx = stair_lx(max(VOID_Y, y)); rx = stair_rx(max(VOID_Y, y))
+            fade = max(0.0, 1.0 - y / max(1, VOID_Y + 6))
+            void_col = tuple(int(c * 0.12 * fade) for c in floor_base)
+            if rx > lx:
+                pygame.draw.line(surf, void_col, (lx, y), (rx - 1, y))
+
+        # ── Step treads ───────────────────────────────────────────────
+        # Draw N steps between VOID_Y and bottom of texture
+        STEPS   = 6
+        step_y0 = VOID_Y + 4           # first (farthest/highest) tread row
+        step_y1 = H - 2                # last  (nearest/lowest)   tread row
+
+        for i in range(STEPS):
+            t_far  = i       / STEPS
+            t_near = (i + 1) / STEPS
+            y_far  = int(step_y0 + (step_y1 - step_y0) * t_far)
+            y_near = int(step_y0 + (step_y1 - step_y0) * t_near)
+            lx_far  = stair_lx(y_far);  rx_far  = stair_rx(y_far)
+            lx_near = stair_lx(y_near); rx_near = stair_rx(y_near)
+
+            # Tread brightness increases toward viewer (near = brighter)
+            brightness = 0.45 + 0.35 * (i / max(1, STEPS - 1))
+            sv = rng.randint(-6, 6)
+            step_col  = tuple(max(0, min(255,
+                int(dark[j] + (light[j] - dark[j]) * brightness) + sv))
+                for j in range(3))
+            riser_col = tuple(max(0, int(step_col[j] * 0.50)) for j in range(3))
+            edge_hi   = tuple(min(255, c + 18) for c in step_col)
+
+            # Tread face (top surface of step, seen in perspective)
+            if rx_far > lx_far and y_near > y_far:
+                pygame.draw.polygon(surf, step_col, [
+                    (lx_far,  y_far),
+                    (rx_far,  y_far),
+                    (rx_near, y_near),
+                    (lx_near, y_near),
+                ])
+                # Highlight near edge of tread
+                pygame.draw.line(surf, edge_hi,
+                                 (lx_near + 1, y_near), (rx_near - 1, y_near), 1)
+                # Shadow outline
+                pygame.draw.polygon(surf, shadow, [
+                    (lx_far, y_far), (rx_far, y_far),
+                    (rx_near, y_near), (lx_near, y_near)
+                ], 1)
+
+            # Riser (vertical face of step, below the tread near edge)
+            riser_h = max(1, (y_near - y_far) // 3)
+            if rx_near > lx_near:
+                pygame.draw.polygon(surf, riser_col, [
+                    (lx_near, y_near),
+                    (rx_near, y_near),
+                    (rx_near, min(H - 1, y_near + riser_h)),
+                    (lx_near, min(H - 1, y_near + riser_h)),
+                ])
+
+        # ── Side floor areas: darken toward stairwell edges ───────────
+        # Walk each row and darken the floor between the stair edge and
+        # the texture boundary — soft gradient, low contrast as requested
+        for y in range(VOID_Y, H):
+            lx = stair_lx(y); rx = stair_rx(y)
+            t_row = (y - VOID_Y) / max(1, H - 1 - VOID_Y)   # 0=far, 1=near
+            base_row = tuple(int(floor_far[i] + (floor_near[i] - floor_far[i]) * t_row)
+                             for i in range(3))
+            # Left floor strip: texture left to stair left edge
+            for x in range(0, lx):
+                # Darken slightly toward the stair edge (low contrast)
+                edge_t = 1.0 - (lx - x) / max(1, lx)   # 0=far left, 1=near stair
+                shadow_factor = 0.82 + 0.18 * (1.0 - edge_t * 0.40)
+                c = tuple(max(0, int(base_row[i] * shadow_factor)) for i in range(3))
+                surf.set_at((x, y), c)
+            # Right floor strip: stair right edge to texture right
+            for x in range(rx, W):
+                edge_t = (x - rx) / max(1, W - 1 - rx)   # 0=near stair, 1=far right
+                shadow_factor = 0.82 + 0.18 * (1.0 - edge_t * 0.40)
+                c = tuple(max(0, int(base_row[i] * shadow_factor)) for i in range(3))
+                surf.set_at((x, y), c)
+
+        # ── Subtle stone crack / grain lines on floor ─────────────────
+        rng2 = random.Random(0xC0F1)
+        for _ in range(4):
+            cx0 = rng2.randint(2, W - 2)
+            cy0 = rng2.randint(H // 2, H - 4)
+            crack_col = tuple(max(0, c - 10) for c in dark)
+            for _ in range(rng2.randint(5, 10)):
+                cx1 = cx0 + rng2.randint(-2, 2)
+                cy1 = cy0 + rng2.randint(1, 3)
+                pygame.draw.line(surf, crack_col, (cx0, cy0), (cx1, cy1), 1)
+                cx0, cy0 = cx1, cy1
+
+        return surf
+
+    # ═══════════════════════════════════════════════════════════
+    #  STAIRS UP — U-shaped alcove (unchanged)
+    # ═══════════════════════════════════════════════════════════
+    lit  = tuple(min(255, int(light[i]*0.90 + dark[i]*0.10)) for i in range(3))
+    shd  = tuple(max(0, int(dark[i]*0.72)) for i in range(3))
+    mid  = tuple((lit[i] + shd[i]) // 2 for i in range(3))
+
+    MOUTH_Y  = H - 1
+    BACK_Y   = int(H * 0.42)
+    FLOOR_Y  = int(H * 0.80)
+    ARM_W    = int(W * 0.28)
+    BACK_W   = int(W * 0.44)
     BACK_L   = (W - BACK_W) // 2
     BACK_R   = BACK_L + BACK_W
 
-    # Arm inner edges converge from (ARM_W, MOUTH_Y) toward (BACK_L, BACK_Y)
-    # Arm outer edges are the texture border (x=0 and x=W-1)
-    l_inner_top = BACK_L          # left arm inner edge at back_y
-    l_inner_bot = ARM_W           # left arm inner edge at mouth
-    r_inner_top = BACK_R          # right arm inner edge at back_y
-    r_inner_bot = W - ARM_W       # right arm inner edge at mouth
-
     def l_inner(y):
-        """x of left arm inner edge at row y (0=top, H=bottom)."""
         t = max(0.0, min(1.0, (y - BACK_Y) / max(1, FLOOR_Y - BACK_Y)))
-        return int(l_inner_top + (l_inner_bot - l_inner_top) * t)
+        return int(BACK_L + (ARM_W - BACK_L) * t)
 
     def r_inner(y):
         t = max(0.0, min(1.0, (y - BACK_Y) / max(1, FLOOR_Y - BACK_Y)))
-        return int(r_inner_top + (r_inner_bot - r_inner_top) * t)
+        return int(BACK_R + ((W - ARM_W) - BACK_R) * t)
 
-    # ── Draw left arm of U (lit side wall) ───────────────────────────
     def _stone_strip(lx_fn, rx_fn, y0, y1, base_col, seed):
         rng2 = random.Random(seed)
         bh = max(2, H // 14); bw = max(3, W // 9)
@@ -431,15 +560,11 @@ def _gen_stair_texture(going_down=True, light=(180,160,120), dark=(90,75,50)):
                     pygame.draw.line(surf, mortar, (lx, y + rh - 1), (rx, y + rh - 1), 1)
             y += rh; row += 1
 
-    # Left arm: x=0 to l_inner(y), from BACK_Y to FLOOR_Y
     _stone_strip(lambda y: 0, l_inner, BACK_Y, FLOOR_Y, lit, 0xAA01)
-    # Right arm: r_inner(y) to W, from BACK_Y to FLOOR_Y
     _stone_strip(r_inner, lambda y: W, BACK_Y, FLOOR_Y, shd, 0xAA02)
 
-    # ── Back wall of U — stone face behind the stairs ─────────────────
     bw_col = tuple(max(0, int(c * 0.65)) for c in mid)
     pygame.draw.rect(surf, bw_col, (BACK_L, 0, BACK_W, BACK_Y))
-    # Subtle stone texture on back wall
     rng_bw = random.Random(0xBB03)
     for _ in range(40):
         bx = BACK_L + rng_bw.randint(0, BACK_W - 1)
@@ -449,44 +574,34 @@ def _gen_stair_texture(going_down=True, light=(180,160,120), dark=(90,75,50)):
         bc = tuple(max(0, min(255, c + v)) for c in bw_col)
         pygame.draw.rect(surf, bc, (bx, by, min(bwi, BACK_R - bx), bhi))
 
-    # ── Alcove floor (perspective trapezoid below steps) ─────────────
     floor_col = tuple(max(0, int(c * 0.55)) for c in dark)
     pygame.draw.polygon(surf, floor_col,
         [(BACK_L, BACK_Y), (BACK_R, BACK_Y),
          (r_inner(FLOOR_Y), FLOOR_Y), (l_inner(FLOOR_Y), FLOOR_Y)])
-    # Floor stone lines
     for fi in range(3):
         fy = BACK_Y + (FLOOR_Y - BACK_Y) * (fi + 1) // 4
         lf = l_inner(fy); rf = r_inner(fy)
         pygame.draw.line(surf, shadow, (lf, fy), (rf, fy), 1)
 
-    # ── Steps: drawn in the back/center of the U ─────────────────────
-    STEPS = 5
-    step_y0 = BACK_Y        # top of stair stack (farthest from party)
-    step_y1 = FLOOR_Y       # bottom of stair stack (closest floor)
-    step_lx0 = BACK_L + BACK_W // 6    # narrowest at top
-    step_rx0 = BACK_R - BACK_W // 6
-    step_lx1 = l_inner(FLOOR_Y) + 2   # widest at bottom
-    step_rx1 = r_inner(FLOOR_Y) - 2
+    STEPS   = 5
+    step_y0 = BACK_Y; step_y1 = FLOOR_Y
+    step_lx0 = BACK_L + BACK_W // 6; step_rx0 = BACK_R - BACK_W // 6
+    step_lx1 = l_inner(FLOOR_Y) + 2; step_rx1 = r_inner(FLOOR_Y) - 2
 
     for i in range(STEPS):
-        t_near = (i + 1) / STEPS
-        t_far  = i / STEPS
+        t_near = (i + 1) / STEPS; t_far = i / STEPS
         near_y = int(step_y0 + (step_y1 - step_y0) * t_near)
         far_y  = int(step_y0 + (step_y1 - step_y0) * t_far)
         lnear  = int(step_lx0 + (step_lx1 - step_lx0) * t_near)
         rnear  = int(step_rx0 + (step_rx1 - step_rx0) * t_near)
         lfar   = int(step_lx0 + (step_lx1 - step_lx0) * t_far)
         rfar   = int(step_rx0 + (step_rx1 - step_rx0) * t_far)
-
         brightness = 0.20 + 0.32 * i / max(1, STEPS - 1)
         sv = rng.randint(-8, 8)
         step_col  = tuple(max(0, min(255, int(dark[j] + (light[j]-dark[j])*brightness) + sv))
                           for j in range(3))
         riser_col = tuple(max(0, int(step_col[j] * 0.52)) for j in range(3))
         edge_col  = tuple(min(255, c + 20) for c in step_col)
-
-        # Tread (top face of step)
         if rnear > lnear and near_y > far_y:
             pygame.draw.polygon(surf, step_col,
                 [(lnear, near_y), (rnear, near_y), (rfar, far_y), (lfar, far_y)])
@@ -494,7 +609,6 @@ def _gen_stair_texture(going_down=True, light=(180,160,120), dark=(90,75,50)):
                              (lnear + 1, near_y), (rnear - 1, near_y), 1)
             pygame.draw.polygon(surf, shadow,
                 [(lnear, near_y), (rnear, near_y), (rfar, far_y), (lfar, far_y)], 1)
-        # Riser (front face of step)
         riser_h = max(1, (near_y - far_y) // 3)
         if rnear > lnear:
             pygame.draw.polygon(surf, riser_col,
@@ -502,39 +616,24 @@ def _gen_stair_texture(going_down=True, light=(180,160,120), dark=(90,75,50)):
                  (rnear, min(H - 1, near_y + riser_h)),
                  (lnear, min(H - 1, near_y + riser_h))])
 
-    # ── Dark void / opening at the back ──────────────────────────────
-    if going_down:
-        # Deep dark void above and behind steps — descending into darkness
-        void_poly = [(BACK_L, 0), (BACK_R, 0),
-                     (step_rx0, step_y0 + 2), (step_lx0, step_y0 + 2)]
-        pygame.draw.polygon(surf, DARK_PIX, void_poly)
-        pygame.draw.line(surf, shadow,
-                         (step_lx0, step_y0 + 2), (step_rx0, step_y0 + 2), 2)
-    else:
-        # Stairs up: dim light from above — lighter void with hint of ceiling
-        ceil_col = tuple(max(0, int(c * 0.35)) for c in light)
-        void_poly = [(BACK_L, 0), (BACK_R, 0),
-                     (step_rx0, step_y0 + 2), (step_lx0, step_y0 + 2)]
-        pygame.draw.polygon(surf, ceil_col, void_poly)
-        # Torch sconce on back wall right side
-        tc_x = BACK_R - BACK_W // 5; tc_y = BACK_Y // 3
-        torch_col = (220, 140, 50)
-        pygame.draw.circle(surf, torch_col, (tc_x, tc_y), max(2, W // 14))
-        pygame.draw.circle(surf, (255, 200, 100), (tc_x, tc_y), max(1, W // 22))
-        pygame.draw.line(surf, shadow,
-                         (step_lx0, step_y0 + 2), (step_rx0, step_y0 + 2), 2)
+    ceil_col = tuple(max(0, int(c * 0.35)) for c in light)
+    void_poly = [(BACK_L, 0), (BACK_R, 0),
+                 (step_rx0, step_y0 + 2), (step_lx0, step_y0 + 2)]
+    pygame.draw.polygon(surf, ceil_col, void_poly)
+    tc_x = BACK_R - BACK_W // 5; tc_y = BACK_Y // 3
+    pygame.draw.circle(surf, (220, 140, 50), (tc_x, tc_y), max(2, W // 14))
+    pygame.draw.circle(surf, (255, 200, 100), (tc_x, tc_y), max(1, W // 22))
+    pygame.draw.line(surf, shadow,
+                     (step_lx0, step_y0 + 2), (step_rx0, step_y0 + 2), 2)
 
-    # ── Perspective edge lines of U arms ─────────────────────────────
-    # Left arm inner edge: from (l_inner_top, BACK_Y) to (l_inner_bot, FLOOR_Y)
     pygame.draw.line(surf, shadow,
-                     (l_inner_top, BACK_Y), (l_inner_bot, FLOOR_Y), 2)
-    # Right arm inner edge
+                     (BACK_L, BACK_Y), (l_inner(FLOOR_Y), FLOOR_Y), 2)
     pygame.draw.line(surf, shadow,
-                     (r_inner_top, BACK_Y), (r_inner_bot, FLOOR_Y), 2)
-    # Back wall top edge
+                     (BACK_R, BACK_Y), (r_inner(FLOOR_Y), FLOOR_Y), 2)
     pygame.draw.line(surf, shadow, (BACK_L, BACK_Y), (BACK_R, BACK_Y), 1)
 
     return surf
+
 
 
 def _gen_cave_textures(light, dark):
