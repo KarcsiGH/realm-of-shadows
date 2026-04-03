@@ -178,76 +178,129 @@ def draw_stairs_up(surf, r, theme=None):
 
 def draw_stairs_down(surf, r, theme=None):
     """
-    Stairs going down — viewed from the top landing.
-    Wide at bottom (near base of stairs), narrow toward top.
-    A constant-width black rectangle (doorway in the far wall) sits above
-    the top step and extends to the top of the image.
+    Stairs going DOWN — floor-perspective view of a stairwell opening.
+
+    Looking at a floor tile where the stairwell descends:
+      • Black rectangle flush at top-centre (the void / stairwell mouth)
+      • Amorphous stone floor shapes either side — large organic blobs near
+        the party edge, shrinking to tiny flecks near the void
+      • Gradient: full floor colour at bottom → near-black at the void rect
+      • 6 step treads recede in perspective from near (bright) to far (dark)
+      • Faint ember glow at the void edge (heat from below)
     """
     w, h = r.w, r.h
     ox, oy = r.x, r.y
+    cx = ox + w // 2
     th = _THEMES.get(theme or _DEFAULT_THEME, _THEMES[_DEFAULT_THEME])
     light, dark, mid = th["light"], th["dark"], th["mid"]
-    shadow = _clamp(tuple(c - 18 for c in dark))
-    mortar = _clamp(tuple(c - 22 for c in dark))
 
-    wall_near_w = int(w * 0.19)
-    wall_far_w  = int(w * 0.46)
+    shadow  = _clamp(tuple(c - 22 for c in dark))
+    floor_n = _clamp(_lerp_col(dark, mid,  0.60))   # floor colour, near party
+    floor_f = _clamp(_lerp_col(DARK, dark, 0.14))   # near-black, far edge
 
-    def lwr(y): return ox + int(_lerp(wall_far_w, wall_near_w, (y - oy) / h))
-    def rwl(y): return ox + w - int(_lerp(wall_far_w, wall_near_w, (y - oy) / h))
+    # ── 1. Gradient background: floor_n at bottom → near-black at top ────
+    for y in range(h):
+        t_c = ((1.0 - y / max(1, h - 1)) ** 2.0)
+        row_col = _clamp(_lerp_col(DARK, floor_n, t_c))
+        pygame.draw.line(surf, row_col, (ox, oy + y), (ox + w - 1, oy + y))
 
-    y_stop = oy + int(h * 0.48)   # steps stop here
-    lx_stop = lwr(y_stop); rx_stop = rwl(y_stop)
-    rect_w = rx_stop - lx_stop; rect_x = lx_stop
+    # ── 2. Stairwell geometry ─────────────────────────────────────────────
+    RECT_W   = int(w * 0.44)
+    RECT_H   = int(h * 0.18)
+    RECT_X   = cx - RECT_W // 2
+    RECT_Y   = oy
+    NEAR_HALF = int(w * 0.43)
+    FAR_HALF  = RECT_W // 2
+    STEP_TOP  = oy + RECT_H
+    STEP_BOT  = oy + h - 2
 
-    pygame.draw.rect(surf, DARK, (ox, oy, w, h))
+    def slx(y):
+        t = max(0.0, min(1.0, (y - oy - RECT_H) / max(1, h - RECT_H - 2)))
+        return int(cx - (FAR_HALF + (NEAR_HALF - FAR_HALF) * t))
 
-    lit  = _lerp_col(mid, light, 0.55)
-    shd  = _lerp_col(dark, mid,  0.28)
-    seed_l = hash((theme, "dl")) & 0xFFFFFF
-    seed_r = hash((theme, "dr")) & 0xFFFFFF
-    bh = max(3, w // 15); bw = max(5, w // 9)
+    def srx(y):
+        t = max(0.0, min(1.0, (y - oy - RECT_H) / max(1, h - RECT_H - 2)))
+        return int(cx + (FAR_HALF + (NEAR_HALF - FAR_HALF) * t))
 
-    _draw_masonry(surf, ox, oy, oy + h,
-                  lambda y: ox, lwr, lit, mortar, bh, bw, seed_l)
-    _draw_masonry(surf, ox, oy, oy + h,
-                  rwl, lambda y: ox + w, shd, mortar, bh, bw, seed_r)
+    # ── 3. Amorphous stone shapes — large near party, tiny near void ──────
+    import random as _random
+    rng = _random.Random(hash((theme or _DEFAULT_THEME, "sd3")) & 0xFFFFFF)
+    N_BANDS = 10
+    for band in range(N_BANDS):
+        band_t   = band / N_BANDS
+        band_bot = oy + h - 1 - int(band_t * h)
+        band_top = oy + h - 1 - int((band_t + 1.0 / N_BANDS) * h)
+        band_top = max(band_top, oy)
 
-    # Constant-width black rectangle — the doorway in the far wall
-    if rect_w > 0:
-        pygame.draw.rect(surf, DARK, (rect_x, oy, rect_w, y_stop - oy))
-        pygame.draw.line(surf, shadow,
-                         (rect_x, y_stop), (rect_x + rect_w, y_stop), 2)
-        edge_col = _clamp(tuple(c - 10 for c in dark))
-        pygame.draw.line(surf, edge_col, (rect_x, oy),         (rect_x, y_stop), 1)
-        pygame.draw.line(surf, edge_col, (rect_x + rect_w, oy), (rect_x + rect_w, y_stop), 1)
+        max_rx = max(2, int(w * (0.14 - 0.12 * band_t)))
+        max_ry = max(1, int(h * (0.08 - 0.07 * band_t)))
+        t_col  = (1.0 - band_t) ** 2.0
+        base_c = _clamp(_lerp_col(DARK, floor_n, t_col))
+        v_rng  = int(20 * (1.0 - band_t))
+        n_blobs = max(3, int(18 * (1.0 - band_t * 0.7)))
 
-    # Steps: wide at bottom, narrow toward y_stop
-    STEPS = 5
+        for _ in range(n_blobs):
+            bx = ox + rng.randint(0, w - 1)
+            by = rng.randint(band_top, max(band_top, band_bot))
+            lx_h = slx(by) if by >= STEP_TOP else cx - FAR_HALF
+            rx_h = srx(by) if by >= STEP_TOP else cx + FAR_HALF
+            if lx_h <= bx <= rx_h:
+                continue    # skip blobs inside stairwell opening
+            rx_b = rng.randint(max(1, max_rx // 2), max(2, max_rx))
+            ry_b = max(1, rng.randint(max(1, max_ry // 2), max(1, max_ry)) * 6 // 10)
+            v    = rng.randint(-v_rng, v_rng)
+            col  = _clamp(tuple(c + v for c in base_c))
+            if rx_b >= 3 and ry_b >= 2:
+                pygame.draw.ellipse(surf, col, (bx - rx_b, by - ry_b, rx_b*2, ry_b*2))
+                hi = _clamp(tuple(min(255, c + max(1, v_rng // 2)) for c in col))
+                pygame.draw.ellipse(surf, hi, (bx - rx_b, by - ry_b, rx_b*2, ry_b*2), 1)
+            elif rx_b >= 2:
+                pygame.draw.circle(surf, col, (bx, by), rx_b)
+            else:
+                if 0 <= bx - ox < w and 0 <= by - oy < h:
+                    surf.set_at((bx, by), col)
+
+    # ── 4. Step treads ────────────────────────────────────────────────────
+    STEPS = 6
+    out_line = _clamp(tuple(max(0, c - 18) for c in dark))
     for i in range(STEPS):
-        near_y = int(_lerp(oy + h, y_stop, i / STEPS))
-        far_y  = int(_lerp(oy + h, y_stop, (i + 1) / STEPS))
-        lnear = lwr(near_y); rnear = rwl(near_y)
-        lfar  = lwr(far_y);  rfar  = rwl(far_y)
-
-        brightness = _lerp(0.26, 0.06, i / (STEPS - 1))
-        sv = _seeded(hash((theme, "ds", i)), 0, 0, -6, 6)
-        sc = _clamp(tuple(c + sv for c in
-                    _clamp(_lerp_col(DARK, dark, brightness * 3.2))))
-        rc = _clamp(_lerp_col(DARK, shadow, brightness * 1.5))
-
+        y_far  = int(STEP_TOP + (STEP_BOT - STEP_TOP) * i       / STEPS)
+        y_near = int(STEP_TOP + (STEP_BOT - STEP_TOP) * (i + 1) / STEPS)
+        lx_f = slx(y_far);  rx_f = srx(y_far)
+        lx_n = slx(y_near); rx_n = srx(y_near)
+        if rx_n <= lx_n or y_near <= y_far:
+            continue
+        brightness = _lerp(0.08, 0.78, i / max(1, STEPS - 1))
+        sv  = _seeded(hash((theme or _DEFAULT_THEME, "st3", i)), 0, 0, -6, 6)
+        sc  = _clamp(tuple(c + sv for c in _lerp_col(DARK, light, brightness)))
+        rc  = _clamp(_lerp_col(DARK, shadow, brightness * 0.38))
+        ehi = _clamp(tuple(min(255, c + 32) for c in sc))
         pygame.draw.polygon(surf, sc,
-            [(lnear, near_y), (rnear, near_y), (rfar, far_y), (lfar, far_y)])
-        rh2 = max(1, (far_y - near_y) // 3)
-        pygame.draw.polygon(surf, rc,
-            [(lnear, near_y), (rnear, near_y),
-             (rnear, near_y + rh2), (lnear, near_y + rh2)])
-        pygame.draw.polygon(surf, shadow,
-            [(lnear, near_y), (rnear, near_y), (rfar, far_y), (lfar, far_y)], 1)
-        if brightness > 0.10:
-            ec = _clamp(tuple(c + 18 for c in sc))
-            pygame.draw.line(surf, ec,
-                             (lnear + 1, near_y + 1), (rnear - 1, near_y + 1), 1)
+            [(lx_f,y_far),(rx_f,y_far),(rx_n,y_near),(lx_n,y_near)])
+        pygame.draw.line(surf, ehi, (lx_n+1,y_near), (rx_n-1,y_near), 2)
+        pygame.draw.polygon(surf, out_line,
+            [(lx_f,y_far),(rx_f,y_far),(rx_n,y_near),(lx_n,y_near)], 1)
+        riser_h = max(2, (y_near - y_far) // 3)
+        bot_r   = min(oy + h - 1, y_near + riser_h)
+        if rx_n > lx_n:
+            pygame.draw.polygon(surf, rc,
+                [(lx_n,y_near),(rx_n,y_near),(rx_n,bot_r),(lx_n,bot_r)])
+
+    # ── 5. Black void rectangle flush at top ─────────────────────────────
+    pygame.draw.rect(surf, (2, 1, 4), (RECT_X, RECT_Y, RECT_W, RECT_H))
+    # Stone lip around void rect
+    lip = _clamp(_lerp_col(DARK, mid, 0.30))
+    pygame.draw.rect(surf, lip, (RECT_X, RECT_Y, RECT_W, RECT_H), 1)
+    void_bot = RECT_Y + RECT_H
+    pygame.draw.line(surf, _clamp(_lerp_col(DARK, dark, 0.28)),
+                     (RECT_X, void_bot), (RECT_X + RECT_W, void_bot), 2)
+
+    # ── 6. Faint ember glow at void base ─────────────────────────────────
+    for gi in range(5):
+        gy = void_bot + gi + 1
+        gw = max(2, RECT_W - gi * 4)
+        glow = (max(0, 40 - gi*8), max(0, 14 - gi*3), 1)
+        pygame.draw.line(surf, _clamp(glow), (cx - gw//2, gy), (cx + gw//2, gy))
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -548,3 +601,155 @@ def draw_chest(surf, r, theme=None):
     for bx in [body_x + int(body_w * 0.18), body_x + int(body_w * 0.82)]:
         pygame.draw.rect(surf, IRON,   (bx - 3, body_y - 3, 6, 6))
         pygame.draw.rect(surf, IRON_L, (bx - 3, body_y - 3, 6, 6), 1)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  DUNGEON EXIT  — grand stone archway with surface daylight beyond
+# ══════════════════════════════════════════════════════════════════════════════
+
+def draw_entrance(surf, r, theme=None):
+    """
+    Dungeon entrance/exit archway — seen from INSIDE the dungeon.
+
+    The party looks at a grand stone arch through which warm surface
+    daylight floods.  Voussoir keystones, iron sconce torches at the
+    jamb shoulders, a stone threshold slab, and warm-amber floor glow
+    spilling toward the party.
+    """
+    w, h = r.w, r.h
+    ox, oy = r.x, r.y
+    cx = ox + w // 2
+    th = _THEMES.get(theme or _DEFAULT_THEME, _THEMES[_DEFAULT_THEME])
+    light, dark, mid = th["light"], th["dark"], th["mid"]
+
+    shadow  = _clamp(tuple(c - 22 for c in dark))
+    mortar  = _clamp(tuple(c - 26 for c in dark))
+    stone_l = _clamp(_lerp_col(dark, light, 0.55))
+    stone_d = _clamp(_lerp_col(DARK, dark, 0.65))
+
+    import random as _random, math as _math
+    rng = _random.Random(hash((theme or _DEFAULT_THEME, "exit")) & 0xFFFFFF)
+
+    # ── 1. Stone wall fill ────────────────────────────────────────────────
+    surf.fill(mortar, (ox, oy, w, h))
+    BH = max(4, h // 9); BW = max(5, w // 6)
+    for row in range(h // BH + 2):
+        ry = oy + row * BH
+        off = (BW // 2) if row % 2 else 0
+        for col2 in range(-1, w // BW + 2):
+            bx2 = ox + col2 * BW + off
+            bx_c = max(ox, bx2 + 1); by_c = max(oy, ry + 1)
+            bw_c = min(BW - 2, ox + w - bx_c); bh_c = min(BH - 2, oy + h - by_c)
+            if bw_c > 0 and bh_c > 0:
+                tone = 0.82 + rng.random() * 0.28
+                c_b  = _clamp(tuple(int(v * tone) for v in stone_l))
+                pygame.draw.rect(surf, c_b, (bx_c, by_c, bw_c, bh_c))
+
+    # ── 2. Archway geometry ───────────────────────────────────────────────
+    jamb_w   = max(5, w // 7)
+    door_l   = ox + jamb_w
+    door_r   = ox + w - jamb_w
+    door_w   = door_r - door_l
+    arch_bot = oy + int(h * 0.88)
+    rect_top = oy + int(h * 0.52)
+    arch_cy  = rect_top
+    arch_rx  = door_w // 2
+    arch_ry  = int(h * 0.26)
+
+    # ── 3. Outside light — warm surface daylight through the opening ──────
+    for y in range(oy, oy + h):
+        xl = door_l; xr = door_r
+        in_rect = (rect_top <= y <= arch_bot)
+        in_arch = False
+        if oy <= y < rect_top:
+            dy_a = y - arch_cy
+            if arch_rx > 0 and arch_ry > 0:
+                inside = 1.0 - (dy_a / arch_ry) ** 2
+                if inside >= 0:
+                    half = _math.sqrt(inside) * arch_rx
+                    xl = int(cx - half); xr = int(cx + half)
+                    in_arch = (xl < xr)
+        if in_rect or in_arch:
+            t_y = 1.0 - max(0.0, min(1.0, (y - oy) / max(1, arch_bot - oy)))
+            sky_top = (200, 195, 175)
+            sky_bot = (160, 115,  55)
+            sky_col = _clamp(_lerp_col(sky_bot, sky_top, t_y ** 0.7))
+            pygame.draw.line(surf, sky_col, (xl, y), (xr - 1, y))
+
+    # ── 4. Silhouetted jambs ──────────────────────────────────────────────
+    for y in range(rect_top, arch_bot + 2):
+        pygame.draw.line(surf, stone_d, (ox, y), (door_l - 1, y))
+        pygame.draw.line(surf, shadow,  (door_r, y), (ox + w - 1, y))
+
+    # ── 5. Voussoir arch ring ─────────────────────────────────────────────
+    n_stones = max(7, min(13, w // 11))
+    if n_stones % 2 == 0: n_stones += 1
+    thick_x = max(4, w // 9); thick_y = max(3, h // 11)
+    outer_rx = arch_rx + thick_x; outer_ry = arch_ry + thick_y
+    inner_rx = arch_rx;           inner_ry = arch_ry
+
+    for i in range(n_stones):
+        a0 = _math.pi * (1.0 - i / n_stones)
+        a1 = _math.pi * (1.0 - (i + 1) / n_stones)
+        is_ks = (i == n_stones // 2)
+        tone  = 1.20 if is_ks else 0.78 + rng.random() * 0.32
+        c_s   = _clamp(tuple(int(v * tone) for v in stone_l))
+        steps = max(4, int(abs(a1 - a0) * outer_rx * 1.5))
+        opts  = [(cx + outer_rx * _math.cos(a0 + t/steps*(a1-a0)),
+                  arch_cy + outer_ry * _math.sin(a0 + t/steps*(a1-a0)))
+                 for t in range(steps + 1)]
+        ipts  = [(cx + inner_rx * _math.cos(a0 + t/steps*(a1-a0)),
+                  arch_cy + inner_ry * _math.sin(a0 + t/steps*(a1-a0)))
+                 for t in range(steps + 1)]
+        pts   = [(int(x), int(y)) for x, y in opts + list(reversed(ipts))]
+        if len(pts) >= 3:
+            pygame.draw.polygon(surf, c_s, pts)
+            pygame.draw.polygon(surf, mortar, pts, 1)
+        # Highlight & joint
+        hx = int(cx + outer_rx * _math.cos((a0+a1)/2))
+        hy = int(arch_cy + outer_ry * _math.sin((a0+a1)/2))
+        if 0 <= hx < surf.get_width() and 0 <= hy < surf.get_height():
+            hi = _clamp(tuple(min(255, c + 25) for c in c_s))
+            pygame.draw.circle(surf, hi, (hx, hy), max(1, w // 55))
+        for edge_a in (a0, a1):
+            ix = int(cx + inner_rx * _math.cos(edge_a))
+            iy = int(arch_cy + inner_ry * _math.sin(edge_a))
+            ex2 = int(cx + outer_rx * _math.cos(edge_a))
+            ey2 = int(arch_cy + outer_ry * _math.sin(edge_a))
+            pygame.draw.line(surf, mortar, (ix, iy), (ex2, ey2), 1)
+
+    # ── 6. Keystone rune medallion ────────────────────────────────────────
+    ks_y = int(arch_cy - outer_ry) - 1
+    if ks_y > oy + 1:
+        ks_r = max(3, w // 16)
+        pygame.draw.circle(surf, mortar,  (cx, ks_y), ks_r + 2)
+        pygame.draw.circle(surf, stone_l, (cx, ks_y), ks_r)
+        pygame.draw.circle(surf, mortar,  (cx, ks_y), ks_r, 1)
+        lw = max(1, w // 55)
+        for ang in range(0, 360, 45):
+            ex2 = cx + int((ks_r - 1) * _math.cos(_math.radians(ang)))
+            ey2 = ks_y + int((ks_r - 1) * _math.sin(_math.radians(ang)))
+            pygame.draw.line(surf, mortar, (cx, ks_y), (ex2, ey2), lw)
+
+    # ── 7. Torches ────────────────────────────────────────────────────────
+    torch_y = arch_cy + int(arch_ry * 0.25)
+    _draw_torch(surf, ox + 1,                        torch_y, w)
+    _draw_torch(surf, ox + w - max(12, w // 14) - 1, torch_y, w)
+
+    # ── 8. Threshold slab ────────────────────────────────────────────────
+    slab_y = arch_bot
+    slab_h = max(3, h // 12)
+    pygame.draw.rect(surf, stone_d,
+                     (door_l - 2, slab_y, door_w + 4, slab_h), border_radius=2)
+    pygame.draw.rect(surf, stone_l,
+                     (door_l - 2, slab_y, door_w + 4, slab_h), 1, border_radius=2)
+    pygame.draw.line(surf, _clamp(tuple(min(255, c + 20) for c in stone_l)),
+                     (door_l - 1, slab_y + 1), (door_r + 1, slab_y + 1), 1)
+
+    # ── 9. Warm floor glow spilling toward party ──────────────────────────
+    for gi in range(6):
+        gy = slab_y + slab_h + gi
+        if gy >= oy + h: break
+        gw   = max(2, door_w - gi * 6)
+        glow = _clamp((max(0, 65 - gi*10), max(0, 40 - gi*7), max(0, 15 - gi*3)))
+        pygame.draw.line(surf, glow, (cx - gw//2, gy), (cx + gw//2 - 1, gy))

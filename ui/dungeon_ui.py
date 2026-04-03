@@ -381,137 +381,117 @@ def _gen_stair_texture(going_down=True, light=(180,160,120), dark=(90,75,50)):
     mortar = tuple(max(0, c - 22) for c in dark)
 
     # ═══════════════════════════════════════════════════════════
-    #  STAIRS DOWN — floor perspective
+    #  STAIRS DOWN — floor perspective, amorphous stone, black rect void
     # ═══════════════════════════════════════════════════════════
     if going_down:
-        # Floor colour slightly warmer/lighter than wall dark
-        floor_base = tuple(min(255, int(dark[i] * 1.30 + 8)) for i in range(3))
-        floor_near = tuple(min(255, int(c * 1.10)) for c in floor_base)  # slightly brighter near
-        floor_far  = tuple(max(0,   int(c * 0.68)) for c in floor_base)  # darker at far end
+        # ── Derive floor colour from theme dark/light tones ───────────
+        floor_n = tuple(min(255, int(dark[i] * 1.35 + 8)) for i in range(3))
+        floor_n = tuple(min(255, int(floor_n[i] * 1.10)) for i in range(3))
 
-        # ── Fill entire surface with a gentle floor-to-dark gradient ─
-        # Row by row: near (bottom) = floor_near, far (top) = floor_far
-        # Gradient is soft (low contrast) as requested
+        # ── Gradient background: floor_n at bottom → near-black at top ─
         for y in range(H):
-            t = y / max(1, H - 1)              # 0 = top (far), 1 = bottom (near)
-            row_col = tuple(int(floor_far[i] + (floor_near[i] - floor_far[i]) * t)
+            t_c = ((1.0 - y / max(1, H - 1)) ** 2.0)
+            row_col = tuple(int(DARK_PIX[i] + (floor_n[i] - DARK_PIX[i]) * t_c)
                             for i in range(3))
             pygame.draw.line(surf, row_col, (0, y), (W - 1, y))
 
-        # ── Stair opening: trapezoid, wide at bottom (near), narrow at top (far)
-        # Left and right edges converge to a central vanishing point near the top
-        STAIR_NEAR_HALF = int(W * 0.42)   # half-width of opening at near (bottom)
-        STAIR_FAR_HALF  = int(W * 0.10)   # half-width at far (top) vanishing point
-        VOID_Y          = int(H * 0.10)   # row where stairs vanish into void
+        # ── Stairwell geometry ─────────────────────────────────────────
+        RECT_W    = int(W * 0.44)
+        RECT_H    = int(H * 0.18)
+        RECT_X    = W // 2 - RECT_W // 2
+        RECT_Y    = 0
+        NEAR_HALF = int(W * 0.43)
+        FAR_HALF  = RECT_W // 2
+        STEP_TOP  = RECT_H
+        STEP_BOT  = H - 2
 
-        def stair_lx(y):
-            """Left edge of stair opening at row y (0=top/far, H=bottom/near)."""
-            t = max(0.0, min(1.0, (y - VOID_Y) / max(1, H - 1 - VOID_Y)))
-            return int(W // 2 - (STAIR_FAR_HALF + (STAIR_NEAR_HALF - STAIR_FAR_HALF) * t))
+        def slx(y):
+            t = max(0.0, min(1.0, (y - RECT_H) / max(1, H - RECT_H - 2)))
+            return int(W // 2 - (FAR_HALF + (NEAR_HALF - FAR_HALF) * t))
 
-        def stair_rx(y):
-            """Right edge of stair opening at row y."""
-            t = max(0.0, min(1.0, (y - VOID_Y) / max(1, H - 1 - VOID_Y)))
-            return int(W // 2 + (STAIR_FAR_HALF + (STAIR_NEAR_HALF - STAIR_FAR_HALF) * t))
+        def srx(y):
+            t = max(0.0, min(1.0, (y - RECT_H) / max(1, H - RECT_H - 2)))
+            return int(W // 2 + (FAR_HALF + (NEAR_HALF - FAR_HALF) * t))
 
-        # ── Dark void at top (the deep opening) ──────────────────────
-        void_pts = [
-            (stair_lx(VOID_Y), VOID_Y),
-            (stair_rx(VOID_Y), VOID_Y),
-            (stair_rx(VOID_Y + 4), VOID_Y + 4),
-            (stair_lx(VOID_Y + 4), VOID_Y + 4),
-        ]
-        # Fill from top of texture down to VOID_Y+4 between stair edges
-        for y in range(0, VOID_Y + 6):
-            lx = stair_lx(max(VOID_Y, y)); rx = stair_rx(max(VOID_Y, y))
-            fade = max(0.0, 1.0 - y / max(1, VOID_Y + 6))
-            void_col = tuple(int(c * 0.12 * fade) for c in floor_base)
-            if rx > lx:
-                pygame.draw.line(surf, void_col, (lx, y), (rx - 1, y))
+        # ── Amorphous stone blobs — large near party, tiny near void ──
+        N_BANDS = 10
+        for band in range(N_BANDS):
+            band_t   = band / N_BANDS
+            band_bot = H - 1 - int(band_t * H)
+            band_top = H - 1 - int((band_t + 1.0 / N_BANDS) * H)
+            band_top = max(band_top, 0)
+
+            max_rx = max(2, int(W * (0.14 - 0.12 * band_t)))
+            max_ry = max(1, int(H * (0.08 - 0.07 * band_t)))
+            t_col  = (1.0 - band_t) ** 2.0
+            base_c = tuple(int(DARK_PIX[i] + (floor_n[i] - DARK_PIX[i]) * t_col)
+                           for i in range(3))
+            v_rng  = int(20 * (1.0 - band_t))
+            n_blobs = max(3, int(18 * (1.0 - band_t * 0.7)))
+
+            for _ in range(n_blobs):
+                bx = rng.randint(0, W - 1)
+                by = rng.randint(band_top, max(band_top, band_bot))
+                lx_h = slx(by) if by >= STEP_TOP else W // 2 - FAR_HALF
+                rx_h = srx(by) if by >= STEP_TOP else W // 2 + FAR_HALF
+                if lx_h <= bx <= rx_h:
+                    continue
+                rx_b = rng.randint(max(1, max_rx // 2), max(2, max_rx))
+                ry_b = max(1, rng.randint(max(1, max_ry // 2), max(1, max_ry)) * 6 // 10)
+                v = rng.randint(-v_rng, v_rng)
+                col = tuple(max(0, min(255, c + v)) for c in base_c)
+                if rx_b >= 3 and ry_b >= 2:
+                    pygame.draw.ellipse(surf, col, (bx-rx_b, by-ry_b, rx_b*2, ry_b*2))
+                    hi = tuple(min(255, c + max(1, v_rng // 2)) for c in col)
+                    pygame.draw.ellipse(surf, hi, (bx-rx_b, by-ry_b, rx_b*2, ry_b*2), 1)
+                elif rx_b >= 2:
+                    pygame.draw.circle(surf, col, (bx, by), rx_b)
+                else:
+                    if 0 <= bx < W and 0 <= by < H:
+                        surf.set_at((bx, by), col)
 
         # ── Step treads ───────────────────────────────────────────────
-        # Draw N steps between VOID_Y and bottom of texture
-        STEPS   = 6
-        step_y0 = VOID_Y + 4           # first (farthest/highest) tread row
-        step_y1 = H - 2                # last  (nearest/lowest)   tread row
-
+        STEPS = 6
+        out_ln = tuple(max(0, c - 18) for c in dark)
         for i in range(STEPS):
-            t_far  = i       / STEPS
-            t_near = (i + 1) / STEPS
-            y_far  = int(step_y0 + (step_y1 - step_y0) * t_far)
-            y_near = int(step_y0 + (step_y1 - step_y0) * t_near)
-            lx_far  = stair_lx(y_far);  rx_far  = stair_rx(y_far)
-            lx_near = stair_lx(y_near); rx_near = stair_rx(y_near)
+            y_far  = int(STEP_TOP + (STEP_BOT - STEP_TOP) * i       / STEPS)
+            y_near = int(STEP_TOP + (STEP_BOT - STEP_TOP) * (i + 1) / STEPS)
+            lx_f = slx(y_far);  rx_f = srx(y_far)
+            lx_n = slx(y_near); rx_n = srx(y_near)
+            if rx_n <= lx_n or y_near <= y_far:
+                continue
+            brightness = 0.08 + 0.70 * (i / max(1, STEPS - 1))
+            sv  = rng.randint(-6, 6)
+            sc  = tuple(max(0, min(255, int(dark[j] + (light[j]-dark[j])*brightness) + sv))
+                        for j in range(3))
+            rc  = tuple(max(0, int(sc[j] * 0.38)) for j in range(3))
+            ehi = tuple(min(255, c + 32) for c in sc)
+            pygame.draw.polygon(surf, sc,
+                [(lx_f,y_far),(rx_f,y_far),(rx_n,y_near),(lx_n,y_near)])
+            pygame.draw.line(surf, ehi, (lx_n+1,y_near), (rx_n-1,y_near), 2)
+            pygame.draw.polygon(surf, out_ln,
+                [(lx_f,y_far),(rx_f,y_far),(rx_n,y_near),(lx_n,y_near)], 1)
+            riser_h = max(2, (y_near - y_far) // 3)
+            bot_r   = min(H - 1, y_near + riser_h)
+            if rx_n > lx_n:
+                pygame.draw.polygon(surf, rc,
+                    [(lx_n,y_near),(rx_n,y_near),(rx_n,bot_r),(lx_n,bot_r)])
 
-            # Tread brightness increases toward viewer (near = brighter)
-            brightness = 0.45 + 0.35 * (i / max(1, STEPS - 1))
-            sv = rng.randint(-6, 6)
-            step_col  = tuple(max(0, min(255,
-                int(dark[j] + (light[j] - dark[j]) * brightness) + sv))
-                for j in range(3))
-            riser_col = tuple(max(0, int(step_col[j] * 0.50)) for j in range(3))
-            edge_hi   = tuple(min(255, c + 18) for c in step_col)
+        # ── Black void rectangle flush at top ─────────────────────────
+        pygame.draw.rect(surf, DARK_PIX, (RECT_X, RECT_Y, RECT_W, RECT_H))
+        lip = tuple(max(0, min(255, int(dark[i]*0.30))) for i in range(3))
+        pygame.draw.rect(surf, lip, (RECT_X, RECT_Y, RECT_W, RECT_H), 1)
+        void_bot = RECT_H
+        pygame.draw.line(surf, tuple(max(0, int(dark[i]*0.28)) for i in range(3)),
+                         (RECT_X, void_bot), (RECT_X+RECT_W, void_bot), 2)
 
-            # Tread face (top surface of step, seen in perspective)
-            if rx_far > lx_far and y_near > y_far:
-                pygame.draw.polygon(surf, step_col, [
-                    (lx_far,  y_far),
-                    (rx_far,  y_far),
-                    (rx_near, y_near),
-                    (lx_near, y_near),
-                ])
-                # Highlight near edge of tread
-                pygame.draw.line(surf, edge_hi,
-                                 (lx_near + 1, y_near), (rx_near - 1, y_near), 1)
-                # Shadow outline
-                pygame.draw.polygon(surf, shadow, [
-                    (lx_far, y_far), (rx_far, y_far),
-                    (rx_near, y_near), (lx_near, y_near)
-                ], 1)
-
-            # Riser (vertical face of step, below the tread near edge)
-            riser_h = max(1, (y_near - y_far) // 3)
-            if rx_near > lx_near:
-                pygame.draw.polygon(surf, riser_col, [
-                    (lx_near, y_near),
-                    (rx_near, y_near),
-                    (rx_near, min(H - 1, y_near + riser_h)),
-                    (lx_near, min(H - 1, y_near + riser_h)),
-                ])
-
-        # ── Side floor areas: darken toward stairwell edges ───────────
-        # Walk each row and darken the floor between the stair edge and
-        # the texture boundary — soft gradient, low contrast as requested
-        for y in range(VOID_Y, H):
-            lx = stair_lx(y); rx = stair_rx(y)
-            t_row = (y - VOID_Y) / max(1, H - 1 - VOID_Y)   # 0=far, 1=near
-            base_row = tuple(int(floor_far[i] + (floor_near[i] - floor_far[i]) * t_row)
-                             for i in range(3))
-            # Left floor strip: texture left to stair left edge
-            for x in range(0, lx):
-                # Darken slightly toward the stair edge (low contrast)
-                edge_t = 1.0 - (lx - x) / max(1, lx)   # 0=far left, 1=near stair
-                shadow_factor = 0.82 + 0.18 * (1.0 - edge_t * 0.40)
-                c = tuple(max(0, int(base_row[i] * shadow_factor)) for i in range(3))
-                surf.set_at((x, y), c)
-            # Right floor strip: stair right edge to texture right
-            for x in range(rx, W):
-                edge_t = (x - rx) / max(1, W - 1 - rx)   # 0=near stair, 1=far right
-                shadow_factor = 0.82 + 0.18 * (1.0 - edge_t * 0.40)
-                c = tuple(max(0, int(base_row[i] * shadow_factor)) for i in range(3))
-                surf.set_at((x, y), c)
-
-        # ── Subtle stone crack / grain lines on floor ─────────────────
-        rng2 = random.Random(0xC0F1)
-        for _ in range(4):
-            cx0 = rng2.randint(2, W - 2)
-            cy0 = rng2.randint(H // 2, H - 4)
-            crack_col = tuple(max(0, c - 10) for c in dark)
-            for _ in range(rng2.randint(5, 10)):
-                cx1 = cx0 + rng2.randint(-2, 2)
-                cy1 = cy0 + rng2.randint(1, 3)
-                pygame.draw.line(surf, crack_col, (cx0, cy0), (cx1, cy1), 1)
-                cx0, cy0 = cx1, cy1
+        # ── Faint ember glow at void base ─────────────────────────────
+        for gi in range(5):
+            gy = void_bot + gi + 1
+            gw = max(2, RECT_W - gi * 4)
+            gcx = W // 2
+            glow = (max(0,40-gi*8), max(0,14-gi*3), 1)
+            pygame.draw.line(surf, glow, (gcx-gw//2, gy), (gcx+gw//2, gy))
 
         return surf
 
@@ -1523,10 +1503,12 @@ class DungeonUI:
         num_v         = len(wall_variants)
 
         # Track door screen bounds for arch sprite overlay (Option B)
-        _door_col_min = VW     # leftmost column of door
-        _door_col_max = -1     # rightmost column of door
-        _door_top_min = VH     # topmost pixel of door
-        _door_bot_max = 0      # bottommost pixel of door
+        _door_col_min  = VW    # leftmost column of door
+        _door_col_max  = -1    # rightmost column of door
+        _door_top_min  = VH    # topmost pixel of door
+        _door_bot_max  = 0     # bottommost pixel of door
+        _door_h_sum    = 0     # sum of wall_h across door columns (for average)
+        _door_h_count  = 0     # number of door columns rendered
 
         for col in range(VW):
             cam_x    = (2.0 * col / VW) - 1.0
@@ -1551,6 +1533,9 @@ class DungeonUI:
                 _door_bot_this = min(VH, top + wall_h)
                 if _door_top_this < _door_top_min: _door_top_min = _door_top_this
                 if _door_bot_this > _door_bot_max: _door_bot_max = _door_bot_this
+                # Track average height so arch sprite is sized for typical column
+                _door_h_sum   += wall_h
+                _door_h_count += 1
             elif is_stair:
                 # Dedicated stair texture — no sprite overlay needed
                 if hit_tt == DT_STAIRS_DOWN:
@@ -1585,17 +1570,25 @@ class DungeonUI:
         # Only fires when a door was actually visible this frame.
         if _door_col_max >= _door_col_min and _door_bot_max > _door_top_min:
             dw = _door_col_max - _door_col_min + 1
-            dh = _door_bot_max - _door_top_min
+            # Use average door height so arch sizes to center column, not bounding box.
+            # This prevents the arch frame mismatching the door wood when viewed at angle.
+            if _door_h_count > 0:
+                dh = _door_h_sum // _door_h_count
+                avg_top = HH - dh // 2
+            else:
+                dh = _door_bot_max - _door_top_min
+                avg_top = _door_top_min
             if dw >= 6 and dh >= 6:
                 key = (dw, dh)
                 if key not in self._arch_cache:
                     self._arch_cache[key] = _gen_arch_sprite(
                         self.theme_id, self.wall_light, self.wall_dark, dw, dh)
                 arch_surf = self._arch_cache[key]
-                view.blit(arch_surf, (_door_col_min, _door_top_min))
+                view.blit(arch_surf, (_door_col_min, avg_top))
             # Reset bounds for next frame
             _door_col_min = VW; _door_col_max = -1
             _door_top_min = VH; _door_bot_max = 0
+            _door_h_sum = 0; _door_h_count = 0
 
         # ── Sprites ──
         self._render_sprites(view, zbuf)
@@ -1756,15 +1749,10 @@ class DungeonUI:
                 dim = (int(color[0]*0.4), int(color[1]*0.4), int(color[2]*0.4), alpha//2)
 
                 if icon_key == DT_ENTRANCE:
-                    # Golden stone arch
-                    aw = max(6, surf_w * 3 // 4)
-                    ah = max(8, surf_h * 4 // 5)
-                    ox, oy = (surf_w - aw) // 2, surf_h - ah
-                    pygame.draw.rect(spr, dim, (ox, oy, aw, ah), border_radius=aw//2)
-                    pygame.draw.rect(spr, c_a, (ox, oy, aw, ah), 2, border_radius=aw//2)
-                    # Opening
-                    iw, ih = max(2, aw//2), max(3, ah*2//3)
-                    pygame.draw.rect(spr, (0,0,0,200), ((surf_w-iw)//2, surf_h-ih, iw, ih))
+                    # Grand stone archway — dungeon exit with surface light
+                    from ui.dungeon_objects import draw_entrance as _dent
+                    obj_r = pygame.Rect(0, 0, surf_w, surf_h)
+                    _dent(spr, obj_r, self.theme_id)
 
                 elif icon_key == DT_STAIRS_DOWN:
                     obj_r = pygame.Rect(0, 0, surf_w, surf_h)
