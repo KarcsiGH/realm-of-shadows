@@ -354,6 +354,15 @@ def _gen_arch_sprite(theme_id, wall_light, wall_dark, width, height):
     return surf
 
 
+def _gen_entrance_texture(theme_id, wall_light, wall_dark):
+    """Generate the dungeon exit arch wall texture (64×64) using draw_entrance."""
+    from ui.dungeon_objects import draw_entrance as _de
+    surf = pygame.Surface((TEX_W, TEX_H))
+    surf.fill((4, 2, 8))
+    _de(surf, pygame.Rect(0, 0, TEX_W, TEX_H), theme_id)
+    return surf
+
+
 def _gen_stair_texture(going_down=True, light=(180,160,120), dark=(90,75,50)):
     """
     Full-wall stair texture (64×64).
@@ -496,121 +505,89 @@ def _gen_stair_texture(going_down=True, light=(180,160,120), dark=(90,75,50)):
         return surf
 
     # ═══════════════════════════════════════════════════════════
-    #  STAIRS UP — U-shaped alcove (unchanged)
+    #  STAIRS UP — wall face: stairs ascending + near-black rect at top
     # ═══════════════════════════════════════════════════════════
-    lit  = tuple(min(255, int(light[i]*0.90 + dark[i]*0.10)) for i in range(3))
-    shd  = tuple(max(0, int(dark[i]*0.72)) for i in range(3))
-    mid  = tuple((lit[i] + shd[i]) // 2 for i in range(3))
+    # No torch, no door, no U-shape chrome — just the staircase
+    # rising into a near-black rectangle (darkness above).
+    RECT_H_UP = int(H * 0.20)      # near-black rectangle at top
+    y_void_up  = RECT_H_UP          # where steps begin
 
-    MOUTH_Y  = H - 1
-    BACK_Y   = int(H * 0.42)
-    FLOOR_Y  = int(H * 0.80)
-    ARM_W    = int(W * 0.28)
-    BACK_W   = int(W * 0.44)
-    BACK_L   = (W - BACK_W) // 2
-    BACK_R   = BACK_L + BACK_W
+    wall_near_w = int(W * 0.19)
+    wall_far_w  = int(W * 0.46)
 
-    def l_inner(y):
-        t = max(0.0, min(1.0, (y - BACK_Y) / max(1, FLOOR_Y - BACK_Y)))
-        return int(BACK_L + (ARM_W - BACK_L) * t)
+    def lwr(y): return int(wall_far_w + (wall_near_w - wall_far_w) * y / H)
+    def rwl(y): return W - lwr(y)
 
-    def r_inner(y):
-        t = max(0.0, min(1.0, (y - BACK_Y) / max(1, FLOOR_Y - BACK_Y)))
-        return int(BACK_R + ((W - ARM_W) - BACK_R) * t)
+    lit_up = tuple(min(255, int(light[i]*0.90 + dark[i]*0.10)) for i in range(3))
+    shd_up = tuple(max(0, int(dark[i]*0.72)) for i in range(3))
+    mortar_up = tuple(max(0, c - 22) for c in dark)
+    seed_lu = hash(("stex_lu", False)) & 0xFFFFFF
+    seed_ru = hash(("stex_ru", False)) & 0xFFFFFF
 
-    def _stone_strip(lx_fn, rx_fn, y0, y1, base_col, seed):
-        rng2 = random.Random(seed)
-        bh = max(2, H // 14); bw = max(3, W // 9)
-        y = y0; row = 0
-        while y < y1:
-            rh = max(2, min(bh + rng2.randint(-bh//3, bh//2), y1 - y))
-            lx = int(lx_fn(y)); rx = int(rx_fn(y))
+    # Stone walls either side
+    from ui.dungeon_ui import _gen_stair_texture  # not needed — same module
+    # Use same masonry loop pattern as down branch
+    bh = max(3, H // 14); bw = max(4, W // 9)
+    for side in ("left", "right"):
+        get_lx = (lambda y: 0)       if side == "left"  else rwl
+        get_rx = lwr                  if side == "left"  else (lambda y: W)
+        base   = lit_up               if side == "left"  else shd_up
+        seed   = seed_lu              if side == "left"  else seed_ru
+        y = 0; row = 0
+        while y < H:
+            rh = max(2, min(bh + rng.randint(-bh//3, bh//2), H - y))
+            lx = int(get_lx(y)); rx = int(get_rx(y))
             if rx > lx:
-                off = rng2.randint(bw//3, bw*2//3) if row % 2 else 0
-                x = lx - off
+                off = rng.randint(bw//3, bw*2//3) if row % 2 else 0
+                x = lx - off; ci = 0
                 while x < rx:
-                    bwi = max(2, bw + rng2.randint(-bw//3, bw//2))
+                    bwi = max(3, bw + rng.randint(-bw//3, bw//2))
                     bx = max(lx, x); bx2 = min(rx, x + bwi - 1)
                     if bx2 > bx:
-                        v = rng2.randint(-14, 14)
-                        bc = tuple(max(0, min(255, c + v)) for c in base_col)
+                        v = rng.randint(-16, 16)
+                        sp = rng.randint(0, 12)
+                        if sp == 0: v -= 12
+                        elif sp == 1: v += 9
+                        bc = tuple(max(0, min(255, c + v)) for c in base)
                         pygame.draw.rect(surf, bc, (bx, y, bx2 - bx, rh - 1))
-                    x += bwi
-                if y + rh < y1:
-                    pygame.draw.line(surf, mortar, (lx, y + rh - 1), (rx, y + rh - 1), 1)
+                    x += bwi; ci += 1
+                if y + rh < H:
+                    pygame.draw.line(surf, mortar_up,
+                                     (lx, y + rh - 1), (rx, y + rh - 1), 1)
             y += rh; row += 1
 
-    _stone_strip(lambda y: 0, l_inner, BACK_Y, FLOOR_Y, lit, 0xAA01)
-    _stone_strip(r_inner, lambda y: W, BACK_Y, FLOOR_Y, shd, 0xAA02)
+    # Steps: wide at bottom, narrow toward y_void_up
+    STEPS_UP = 7
+    shadow_up = tuple(max(0, c - 18) for c in dark)
+    for i in range(STEPS_UP):
+        near_y = int(H - (H - y_void_up) * (i     / STEPS_UP))
+        far_y  = int(H - (H - y_void_up) * ((i+1) / STEPS_UP))
+        lnear = lwr(near_y); rnear = rwl(near_y)
+        lfar  = lwr(far_y);  rfar  = rwl(far_y)
+        brightness = 0.18 + 0.34 * i / max(1, STEPS_UP - 1)
+        tone = rng.uniform(0.92, 1.08)
+        sv   = rng.randint(-8, 8)
+        sc   = tuple(max(0, min(255, int(dark[j] + (light[j]-dark[j])*brightness*tone) + sv))
+                     for j in range(3))
+        rc   = tuple(max(0, int(sc[j] * 0.55)) for j in range(3))
+        ec   = tuple(min(255, c + 22) for c in sc)
+        pygame.draw.polygon(surf, sc,
+            [(lnear,near_y),(rnear,near_y),(rfar,far_y),(lfar,far_y)])
+        rh2 = max(1, (near_y - far_y) // 3)
+        pygame.draw.polygon(surf, rc,
+            [(lnear,near_y),(rnear,near_y),
+             (rnear,near_y+rh2),(lnear,near_y+rh2)])
+        pygame.draw.polygon(surf, shadow_up,
+            [(lnear,near_y),(rnear,near_y),(rfar,far_y),(lfar,far_y)], 1)
+        pygame.draw.line(surf, ec,
+                         (lnear+1, near_y+1), (rnear-1, near_y+1), 1)
 
-    bw_col = tuple(max(0, int(c * 0.65)) for c in mid)
-    pygame.draw.rect(surf, bw_col, (BACK_L, 0, BACK_W, BACK_Y))
-    rng_bw = random.Random(0xBB03)
-    for _ in range(40):
-        bx = BACK_L + rng_bw.randint(0, BACK_W - 1)
-        by = rng_bw.randint(0, BACK_Y - 1)
-        bwi = rng_bw.randint(3, 8); bhi = rng_bw.randint(1, 3)
-        v = rng_bw.randint(-12, 12)
-        bc = tuple(max(0, min(255, c + v)) for c in bw_col)
-        pygame.draw.rect(surf, bc, (bx, by, min(bwi, BACK_R - bx), bhi))
-
-    floor_col = tuple(max(0, int(c * 0.55)) for c in dark)
-    pygame.draw.polygon(surf, floor_col,
-        [(BACK_L, BACK_Y), (BACK_R, BACK_Y),
-         (r_inner(FLOOR_Y), FLOOR_Y), (l_inner(FLOOR_Y), FLOOR_Y)])
-    for fi in range(3):
-        fy = BACK_Y + (FLOOR_Y - BACK_Y) * (fi + 1) // 4
-        lf = l_inner(fy); rf = r_inner(fy)
-        pygame.draw.line(surf, shadow, (lf, fy), (rf, fy), 1)
-
-    STEPS   = 5
-    step_y0 = BACK_Y; step_y1 = FLOOR_Y
-    step_lx0 = BACK_L + BACK_W // 6; step_rx0 = BACK_R - BACK_W // 6
-    step_lx1 = l_inner(FLOOR_Y) + 2; step_rx1 = r_inner(FLOOR_Y) - 2
-
-    for i in range(STEPS):
-        t_near = (i + 1) / STEPS; t_far = i / STEPS
-        near_y = int(step_y0 + (step_y1 - step_y0) * t_near)
-        far_y  = int(step_y0 + (step_y1 - step_y0) * t_far)
-        lnear  = int(step_lx0 + (step_lx1 - step_lx0) * t_near)
-        rnear  = int(step_rx0 + (step_rx1 - step_rx0) * t_near)
-        lfar   = int(step_lx0 + (step_lx1 - step_lx0) * t_far)
-        rfar   = int(step_rx0 + (step_rx1 - step_rx0) * t_far)
-        brightness = 0.20 + 0.32 * i / max(1, STEPS - 1)
-        sv = rng.randint(-8, 8)
-        step_col  = tuple(max(0, min(255, int(dark[j] + (light[j]-dark[j])*brightness) + sv))
-                          for j in range(3))
-        riser_col = tuple(max(0, int(step_col[j] * 0.52)) for j in range(3))
-        edge_col  = tuple(min(255, c + 20) for c in step_col)
-        if rnear > lnear and near_y > far_y:
-            pygame.draw.polygon(surf, step_col,
-                [(lnear, near_y), (rnear, near_y), (rfar, far_y), (lfar, far_y)])
-            pygame.draw.line(surf, edge_col,
-                             (lnear + 1, near_y), (rnear - 1, near_y), 1)
-            pygame.draw.polygon(surf, shadow,
-                [(lnear, near_y), (rnear, near_y), (rfar, far_y), (lfar, far_y)], 1)
-        riser_h = max(1, (near_y - far_y) // 3)
-        if rnear > lnear:
-            pygame.draw.polygon(surf, riser_col,
-                [(lnear, near_y), (rnear, near_y),
-                 (rnear, min(H - 1, near_y + riser_h)),
-                 (lnear, min(H - 1, near_y + riser_h))])
-
-    ceil_col = tuple(max(0, int(c * 0.35)) for c in light)
-    void_poly = [(BACK_L, 0), (BACK_R, 0),
-                 (step_rx0, step_y0 + 2), (step_lx0, step_y0 + 2)]
-    pygame.draw.polygon(surf, ceil_col, void_poly)
-    tc_x = BACK_R - BACK_W // 5; tc_y = BACK_Y // 3
-    pygame.draw.circle(surf, (220, 140, 50), (tc_x, tc_y), max(2, W // 14))
-    pygame.draw.circle(surf, (255, 200, 100), (tc_x, tc_y), max(1, W // 22))
-    pygame.draw.line(surf, shadow,
-                     (step_lx0, step_y0 + 2), (step_rx0, step_y0 + 2), 2)
-
-    pygame.draw.line(surf, shadow,
-                     (BACK_L, BACK_Y), (l_inner(FLOOR_Y), FLOOR_Y), 2)
-    pygame.draw.line(surf, shadow,
-                     (BACK_R, BACK_Y), (r_inner(FLOOR_Y), FLOOR_Y), 2)
-    pygame.draw.line(surf, shadow, (BACK_L, BACK_Y), (BACK_R, BACK_Y), 1)
+    # Near-black rectangle overlay at top — opening into darkness above
+    lx_t = lwr(y_void_up); rx_t = rwl(y_void_up)
+    rw_t  = rx_t - lx_t
+    if rw_t > 0:
+        pygame.draw.rect(surf, DARK_PIX, (lx_t, 0, rw_t, RECT_H_UP))
+    pygame.draw.line(surf, shadow_up, (lx_t, y_void_up), (rx_t, y_void_up), 2)
 
     return surf
 
@@ -1131,6 +1108,9 @@ class DungeonUI:
         self._tex_stair_up   = _gen_stair_texture(going_down=False, light=_su_l, dark=_su_d)
         self._stair_down_cols = self._bake_tex_cols(self._tex_stair_down)
         self._stair_up_cols   = self._bake_tex_cols(self._tex_stair_up)
+        # Exit arch wall texture
+        self._tex_entrance    = _gen_entrance_texture(self.theme_id, self.wall_light, self.wall_dark)
+        self._entrance_cols   = self._bake_tex_cols(self._tex_entrance)
         _variant_surfs   = _gen_theme_textures(
             self.theme_id, self.wall_light, self.wall_dark)
         self._wall_cols_variants = [
@@ -1231,7 +1211,7 @@ class DungeonUI:
         tt   = tile["type"]
         if tt == DT_SECRET_DOOR and not tile.get("secret_found"):
             return True
-        return tt in (DT_WALL, DT_STAIRS_DOWN, DT_STAIRS_UP)
+        return tt in (DT_WALL, DT_STAIRS_UP, DT_ENTRANCE)
 
     # ─────────────────────────────────────────────────────────
 
@@ -1280,7 +1260,7 @@ class DungeonUI:
             tile = tiles[map_y][map_x]
             tt   = tile["type"]
             is_s     = tt == DT_SECRET_DOOR and not tile.get("secret_found")
-            is_stair = tt in (DT_STAIRS_DOWN, DT_STAIRS_UP)
+            is_stair = tt in (DT_STAIRS_UP, DT_ENTRANCE)   # DOWN is now floor
             is_w     = tt == DT_WALL or is_s or is_stair
             is_d     = tt == DT_DOOR
 
@@ -1537,9 +1517,9 @@ class DungeonUI:
                 _door_h_sum   += wall_h
                 _door_h_count += 1
             elif is_stair:
-                # Dedicated stair texture — no sprite overlay needed
-                if hit_tt == DT_STAIRS_DOWN:
-                    cols_src = self._stair_down_cols[tex_x]
+                # Wall-face stair/entrance textures
+                if hit_tt == DT_ENTRANCE:
+                    cols_src = self._entrance_cols[tex_x]
                 else:
                     cols_src = self._stair_up_cols[tex_x]
             else:
@@ -1616,9 +1596,10 @@ class DungeonUI:
                 tt = tile["type"]
                 icon_key = None
                 enc_key  = None
-                # Stairs are now solid walls in the raycaster — skip as sprites
-                if tt in (DT_STAIRS_DOWN, DT_STAIRS_UP):
-                    pass  # rendered as wall texture — no sprite needed
+                # UP and ENTRANCE are wall tiles — skip sprite rendering
+                # DOWN is now a floor tile — render as floor-anchored sprite
+                if tt in (DT_STAIRS_UP, DT_ENTRANCE):
+                    pass  # rendered as wall face texture — no sprite needed
                 elif tt == DT_TRAP:
                     # Only show trap sprite if the party knows about it
                     ev = tile.get("event", {})
@@ -1682,7 +1663,7 @@ class DungeonUI:
             # objects should sit within it. Enemies stay full-ish, objects smaller.
             _OBJ_SCALE = {
                 DT_TREASURE:     0.35,   # chest — squat, sits on floor
-                DT_STAIRS_DOWN:  0.55,   # stairs — wide, not tall
+                DT_STAIRS_DOWN:  0.88,   # floor stairwell — near-full-width floor tile
                 DT_STAIRS_UP:    0.55,
                 DT_INTERACTABLE: 0.72,   # shrine/fountain — taller, more visible
                 DT_ENTRANCE:     0.80,   # archway — tall but not full wall
@@ -1719,7 +1700,7 @@ class DungeonUI:
             }
             if icon_key in _FLOOR_ANCHORED:
                 # Cap stairs height so they don't run floor-to-ceiling up close
-                if icon_key in (DT_STAIRS_DOWN, DT_STAIRS_UP):
+                if icon_key == DT_STAIRS_UP:
                     sp_h = min(sp_h, VP_H // 3)
                     sp_w = sp_h
                 blit_y = floor_y - sp_h   # bottom of sprite sits on floor
@@ -1748,13 +1729,7 @@ class DungeonUI:
                 c_a = (*color, alpha)
                 dim = (int(color[0]*0.4), int(color[1]*0.4), int(color[2]*0.4), alpha//2)
 
-                if icon_key == DT_ENTRANCE:
-                    # Grand stone archway — dungeon exit with surface light
-                    from ui.dungeon_objects import draw_entrance as _dent
-                    obj_r = pygame.Rect(0, 0, surf_w, surf_h)
-                    _dent(spr, obj_r, self.theme_id)
-
-                elif icon_key == DT_STAIRS_DOWN:
+                if icon_key == DT_STAIRS_DOWN:
                     obj_r = pygame.Rect(0, 0, surf_w, surf_h)
                     from ui.dungeon_objects import draw_stairs_down as _dsd
                     _dsd(spr, obj_r, self.theme_id)

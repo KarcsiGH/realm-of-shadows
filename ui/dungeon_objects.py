@@ -109,10 +109,10 @@ def _draw_torch(surf, wall_x, torch_y, size):
 
 def draw_stairs_up(surf, r, theme=None):
     """
-    Stairs going up — viewed from the base.
-    Wide at bottom (near), narrow at top (far).
-    Steps end in an expanding black void that fans to full image width.
-    Torch sconce on left wall.
+    Stairs going UP — wall face texture for the back wall of a U-alcove.
+    Wide at bottom (near party), narrow toward the top (far).
+    Near-black rectangle at top — the opening ascending into darkness above.
+    No door, no torch. Stairs + near-black void only.
     """
     w, h = r.w, r.h
     ox, oy = r.x, r.y
@@ -121,18 +121,19 @@ def draw_stairs_up(surf, r, theme=None):
     shadow = _clamp(tuple(c - 18 for c in dark))
     mortar = _clamp(tuple(c - 22 for c in dark))
 
-    wall_near_w = int(w * 0.19)   # small wall at near (bottom) → wide corridor
-    wall_far_w  = int(w * 0.46)   # large wall at far  (top)   → narrow corridor
+    wall_near_w = int(w * 0.19)
+    wall_far_w  = int(w * 0.46)
 
     def lwr(y): return ox + int(_lerp(wall_far_w, wall_near_w, (y - oy) / h))
     def rwl(y): return ox + w - int(_lerp(wall_far_w, wall_near_w, (y - oy) / h))
 
-    y_void = oy + int(h * 0.20)   # void starts here
+    RECT_H = int(h * 0.20)        # near-black rectangle at top
+    y_void = oy + RECT_H           # where stairs begin
 
     pygame.draw.rect(surf, DARK, (ox, oy, w, h))
 
-    lit  = _lerp_col(mid, light, 0.55)
-    shd  = _lerp_col(dark, mid,  0.28)
+    lit    = _lerp_col(mid, light, 0.55)
+    shd    = _lerp_col(dark, mid,  0.28)
     seed_l = hash((theme, "ul")) & 0xFFFFFF
     seed_r = hash((theme, "ur")) & 0xFFFFFF
     bh = max(3, w // 15); bw = max(5, w // 9)
@@ -142,7 +143,7 @@ def draw_stairs_up(surf, r, theme=None):
     _draw_masonry(surf, ox, oy, oy + h,
                   rwl, lambda y: ox + w, shd, mortar, bh, bw, seed_r)
 
-    # Steps: wide at bottom, narrow toward y_void
+    # Steps: wide at bottom (near), narrow toward y_void
     STEPS = 7
     for i in range(STEPS):
         near_y = int(_lerp(oy + h, y_void, i / STEPS))
@@ -150,7 +151,7 @@ def draw_stairs_up(surf, r, theme=None):
         lnear = lwr(near_y); rnear = rwl(near_y)
         lfar  = lwr(far_y);  rfar  = rwl(far_y)
 
-        brightness = _lerp(0.18, 0.48, i / (STEPS - 1))
+        brightness = _lerp(0.18, 0.52, i / (STEPS - 1))
         sv = _seeded(hash((theme, "s", i)), 0, 0, -8, 8)
         sc = _clamp(tuple(c + sv for c in _lerp_col(shadow, light, brightness)))
         rc = _clamp(_lerp_col(DARK, shadow, brightness * 0.55))
@@ -166,14 +167,12 @@ def draw_stairs_up(surf, r, theme=None):
         ec = _clamp(tuple(c + 26 for c in sc))
         pygame.draw.line(surf, ec, (lnear + 1, near_y + 1), (rnear - 1, near_y + 1), 1)
 
-    # Expanding black void — starts at corridor width at y_void, fans to full width
-    lx_v = lwr(y_void); rx_v = rwl(y_void)
-    pygame.draw.polygon(surf, DARK,
-        [(ox, oy), (ox + w, oy), (rx_v, y_void), (lx_v, y_void)])
-    pygame.draw.line(surf, shadow, (lx_v, y_void), (rx_v, y_void), 2)
-
-    # Torch on left wall
-    _draw_torch(surf, ox, oy + int(h * 0.35), w)
+    # Near-black rectangle — the opening above the stairs (darkness beyond)
+    lx_top = lwr(y_void); rx_top = rwl(y_void)
+    rect_w  = rx_top - lx_top
+    if rect_w > 0:
+        pygame.draw.rect(surf, (4, 3, 8), (lx_top, oy, rect_w, RECT_H))
+    pygame.draw.line(surf, shadow, (lx_top, y_void), (rx_top, y_void), 2)
 
 
 def draw_stairs_down(surf, r, theme=None):
