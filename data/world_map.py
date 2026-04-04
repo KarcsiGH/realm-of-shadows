@@ -208,7 +208,7 @@ LOCATIONS = {
     },
     "greenwood": {
         "name": "Greenwood", "type": LOC_TOWN,
-        "x": 8, "y": 65, "region": "thornwood",
+        "x": 15, "y": 58, "region": "thornwood",
         "visible": False, "icon": "T",
         "description": "A remote wilderness outpost at the edge of the Thornwood. Few roads lead here.",
         "has_stable": False, "has_teleport": False,
