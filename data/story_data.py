@@ -2339,94 +2339,98 @@ NPC_DIALOGUES = {
     #  OLD PETRA — Briarhollow townsfolk, Spider's Nest hook
     # ─────────────────────────────────────────────────────────
     "old_petra": [
-        # After spiders cleared — grateful
+        # Hearthstone 1 found
         {
-            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
-            "tree": {
-                "id": "old_petra_post_spiders",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Old Petra",
-                        "text": "The Thornwood path is clear again. I walked it myself this morning — "
-                                "first time in weeks I didn't feel watched. "
-                                "Whatever you did in that cave, it worked. "
-                                "Don't let anyone tell you otherwise.",
-                        "on_enter": [{"action": "meet_npc", "npc": "old_petra"}],
-                        "choices": [
-                            {"text": "What was it like when the webs appeared?", "next": "webs_start"},
-                            {"text": "Glad to help.", "next": "bye"},
-                        ],
-                    },
-                    "webs_start": {
-                        "speaker": "Old Petra",
-                        "text": "Overnight, almost. First one morning there was a strand or two — "
-                                "I thought a big garden spider. Next morning the whole northwest hedge "
-                                "was wrapped. Silk thick as my wrist. Something in that cave "
-                                "was growing. Whatever the Fading touches, it doesn't grow natural.",
-                        "next": "start",
-                    },
-                    "bye": {
-                        "speaker": "Old Petra",
-                        "text": "Safe travels. And thank you.",
-                        "end": True,
-                    },
-                },
-            },
+            "conditions": [{"flag": "item.hearthstone.1", "op": "==", "value": True}],
+            "tree": {"id": "petra_hearthstone", "loop": True, "nodes": {
+                "start": {"speaker": "Old Petra",
+                    "text": "A Hearthstone fragment. I heard you found one in the Mine. "
+                            "My grandmother used to speak of them — she said they were "
+                            "older than the kingdom, older than the Warden Order, older "
+                            "than anything she could name. She died before I understood "
+                            "what she meant. I think I understand now.",
+                    "choices": [
+                        {"text": "What did she say about them?", "next": "grandmother"},
+                        {"text": "There are more to find.", "next": None},
+                    ]},
+                "grandmother": {"speaker": "Old Petra",
+                    "text": "She said the Hearthstones don't store power — they store "
+                            "memory. The land's memory. When they fail, the land starts "
+                            "to forget itself. The Fading isn't a disease. It's amnesia.",
+                    "on_enter": [{"action": "discover_lore", "lore": "hearthstone_memory"}],
+                    "choices": [{"text": "That's a remarkable thing to know.", "next": None}]},
+            }},
         },
-        # Default — worried, gives the hook
+        # Act 1 complete
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {"id": "petra_act1_done", "loop": True, "nodes": {
+                "start": {"speaker": "Old Petra",
+                    "text": "Three dungeons cleared. The Warren, the spider cave, the Mine. "
+                            "I've lived here sixty years and the town has never been this safe. "
+                            "I can hear the difference at night — fewer sounds from the forest. "
+                            "Fewer wrong sounds.",
+                    "choices": [
+                        {"text": "The Fading is still spreading though.", "next": "fading"},
+                        {"text": "Stay vigilant. It's not over.", "next": None},
+                    ]},
+                "fading": {"speaker": "Old Petra",
+                    "text": "I know. I can smell it on the east wind. Something burning that "
+                            "isn't fire. It's been getting closer for months. Whatever you're "
+                            "doing — keep doing it.",
+                    "choices": [{"text": "We will.", "next": None}]},
+            }},
+        },
+        # After goblin warren
+        {
+            "conditions": [{"flag": "boss_defeated.goblin_warren", "op": "==", "value": True}],
+            "tree": {"id": "petra_post_warren", "loop": True, "nodes": {
+                "start": {"speaker": "Old Petra",
+                    "text": "I've lived on this square for sixty years. I know every face "
+                            "and every fence post. I saw the goblins start their raids twelve "
+                            "years ago — small thefts first, then worse. "
+                            "You've done what the militia couldn't. "
+                            "What happens to their warren now?",
+                    "choices": [
+                        {"text": "It's cleared. Won't be a problem.", "next": "cleared"},
+                        {"text": "Something was driving them out of it.", "next": "driving"},
+                    ]},
+                "cleared": {"speaker": "Old Petra",
+                    "text": "Good. The Thornwood trail's been impassable for two seasons. "
+                            "My granddaughter lives in Woodhaven — I haven't been able to "
+                            "visit. That matters more to me than any goblin chief.",
+                    "choices": [{"text": "The road should be safer now.", "next": None}]},
+                "driving": {"speaker": "Old Petra",
+                    "text": "Something worse. I worried about that. The forest has been "
+                            "wrong for longer than the goblin trouble. The two are connected.",
+                    "choices": [{"text": "We think so too.", "next": None}]},
+            }},
+        },
+        # Default
         {
             "conditions": [],
-            "tree": {
-                "id": "old_petra_default",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Old Petra",
-                        "text": "I've lived on this square for sixty years. I know every face "
-                                "and every fence post. And I know something's wrong with the "
-                                "eastern path. Head northwest toward the Thornwood if you don't believe an old woman.",
-                        "on_enter": [{"action": "meet_npc", "npc": "old_petra"}],
-                        "choices": [
-                            {"text": "What's wrong with the Thornwood path?", "next": "spiders"},
-                            {"text": "How long has it been like this?", "next": "how_long"},
-                            {"text": "We'll look into it.", "next": "look_into"},
-                            {"text": "I'll keep that in mind.", "next": "bye"},
-                        ],
-                    },
-                    "spiders": {
-                        "speaker": "Old Petra",
-                        "text": "Spider silk. Everywhere. And not small spiders — I found a web "
-                                "yesterday that could catch a horse. The cave to the northwest, "
-                                "the one the children dare each other to enter. Something inside "
-                                "it has grown very large, and very hungry. "
-                                "Nobody will listen because I'm old. Maybe you will.",
-                        "on_enter": [{"action": "start_quest", "quest": "main_spiders_nest"}],
-                        "next": "start",
-                    },
-                    "how_long": {
-                        "speaker": "Old Petra",
-                        "text": "Three weeks, maybe four. It started slow. One morning a strand, "
-                                "the next morning a sheet of it across the hedge. "
-                                "It's the Fading, that's what they're calling it. "
-                                "Whatever it touches doesn't grow the way God intended.",
-                        "next": "start",
-                    },
-                    "look_into": {
-                        "speaker": "Old Petra",
-                        "text": "The cave is northwest, past the old mill. You'll smell it before "
-                                "you see it — like damp earth and something sweet gone wrong. "
-                                "Be careful. Those webs aren't decoration.",
-                        "on_enter": [{"action": "start_quest", "quest": "main_spiders_nest"}],
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Old Petra",
-                        "text": "Mark my words. That cave will swallow someone if you leave it.",
-                        "end": True,
-                    },
-                },
-            },
+            "tree": {"id": "petra_default", "loop": True, "nodes": {
+                "start": {"speaker": "Old Petra",
+                    "text": "I've lived on this square for sixty years. I know every face "
+                            "and every fence post. And I know something's wrong with the "
+                            "Thornwood path east of here.",
+                    "on_enter": [{"action": "meet_npc", "npc": "old_petra"}],
+                    "choices": [
+                        {"text": "What's wrong with the Thornwood path?", "next": "path"},
+                        {"text": "How long has it been like this?", "next": "duration"},
+                        {"text": "We'll look into it.", "next": None},
+                    ]},
+                "path": {"speaker": "Old Petra",
+                    "text": "Goblins, mostly. The Warren east of town has been raiding the "
+                            "road for two seasons. But there's something else — animals "
+                            "acting strange. Too quiet, then too loud. Wrong.",
+                    "choices": [{"text": "We'll investigate.", "next": None}]},
+                "duration": {"speaker": "Old Petra",
+                    "text": "Two seasons for the raids. But the forest has been wrong for "
+                            "longer than that — three years at least. Since the first Fading "
+                            "reports from the east.",
+                    "choices": [{"text": "We'll look into it.", "next": None}]},
+            }},
         },
     ],
 
@@ -2434,50 +2438,102 @@ NPC_DIALOGUES = {
     #  YOUNG TOMAS — Briarhollow townsfolk, world-building
     # ─────────────────────────────────────────────────────────
     "young_tomas": [
+        # Act 1 complete — Mine cleared, he's inspired
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {"id": "tomas_act1_done", "loop": True, "nodes": {
+                "start": {"speaker": "Young Tomas",
+                    "text": "You cleared the mine! And the spider cave AND the goblin warrens? "
+                            "Mister Gareth at the smithy said a party like yours only comes along "
+                            "once a generation. Are you going to keep going? Where are you going next?",
+                    "choices": [
+                        {"text": "East. There are more places like that.", "next": "east"},
+                        {"text": "We go where we're needed.", "next": "needed"},
+                        {"text": "Stay safe, Tomas.", "next": None},
+                    ]},
+                "east": {"speaker": "Young Tomas",
+                    "text": "East is where the Fading is worst. My dad used to say you could see it "
+                            "at night — a darkness that moved wrong. He stopped talking about it. "
+                            "I think it scared him. I think it should scare you too. But I'm glad "
+                            "someone's going.",
+                    "choices": [{"text": "It should scare us. That's healthy.", "next": None}]},
+                "needed": {"speaker": "Young Tomas",
+                    "text": "My mother says that. 'Go where you're needed, Tomas.' She means the "
+                            "market, not abandoned mines full of monsters. I think you're doing "
+                            "it right though.",
+                    "choices": [{"text": "Your mother sounds wise.", "next": None}]},
+            }},
+        },
+        # Spider's Nest cleared
+        {
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "tree": {"id": "tomas_post_spiders", "loop": True, "nodes": {
+                "start": {"speaker": "Young Tomas",
+                    "text": "You killed the spider queen! Old Brennan the cartographer told me "
+                            "she was as big as a house. Is that true? Were you scared?",
+                    "choices": [
+                        {"text": "She was enormous. Yes, we were scared.", "next": "honest"},
+                        {"text": "We've seen worse.", "next": "worse"},
+                    ]},
+                "honest": {"speaker": "Young Tomas",
+                    "text": "Good. My dad says anyone who isn't scared before a fight is either "
+                            "lying or stupid. The brave ones are scared and go anyway. "
+                            "That's what I want to be.",
+                    "choices": [{"text": "That's exactly right.", "next": None}]},
+                "worse": {"speaker": "Young Tomas",
+                    "text": "What's WORSE than a house-sized spider? "
+                            "...Actually don't tell me. I'll have nightmares.",
+                    "choices": [{"text": "Probably for the best.", "next": None}]},
+            }},
+        },
+        # Goblin Warren cleared
+        {
+            "conditions": [{"flag": "boss_defeated.goblin_warren", "op": "==", "value": True}],
+            "tree": {"id": "tomas_post_warren", "loop": True, "nodes": {
+                "start": {"speaker": "Young Tomas",
+                    "text": "I heard you cleared the Goblin Warren! The militia has been trying "
+                            "to do that for a year. Grak was their chief — did he surrender? "
+                            "Or did you have to fight?",
+                    "on_enter": [{"action": "meet_npc", "npc": "young_tomas"}],
+                    "choices": [
+                        {"text": "We fought.", "next": "fought"},
+                        {"text": "It was complicated.", "next": "complicated"},
+                    ]},
+                "fought": {"speaker": "Young Tomas",
+                    "text": "I knew it. The town watch said goblins never surrender, "
+                            "but Mister Harlan said they do if you're scary enough. "
+                            "Were you scary enough?",
+                    "choices": [{"text": "Apparently so.", "next": None}]},
+                "complicated": {"speaker": "Young Tomas",
+                    "text": "My mother says 'it's complicated' means someone made a hard choice "
+                            "and doesn't want to explain it. That's okay. I understand.",
+                    "choices": [{"text": "Smarter than you look, Tomas.", "next": None}]},
+            }},
+        },
+        # Default
         {
             "conditions": [],
-            "tree": {
-                "id": "young_tomas_default",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Young Tomas",
-                        "text": "I'm not supposed to talk to adventurers. My mother says "
-                                "it gives me ideas. She's right, but I don't care.",
-                        "on_enter": [{"action": "meet_npc", "npc": "young_tomas"}],
-                        "choices": [
-                            {"text": "What kind of ideas?", "next": "ideas"},
-                            {"text": "Smart mother.", "next": "smart_mum"},
-                            {"text": "Good luck with that.", "next": "bye"},
-                        ],
-                    },
-                    "ideas": {
-                        "speaker": "Young Tomas",
-                        "text": "Leaving. Seeing something beyond this square. "
-                                "Everyone here's been here their whole life. "
-                                "I want to be somewhere different before I'm too old to enjoy it. "
-                                "Is it as dangerous out there as they say?",
-                        "next": "dangerous",
-                    },
-                    "dangerous": {
-                        "speaker": "Young Tomas",
-                        "text": "Never mind. The way you paused before answering tells me everything.",
-                        "next": "start",
-                    },
-                    "smart_mum": {
-                        "speaker": "Young Tomas",
-                        "text": "She is. She also said the mine was safe, two months before "
-                                "it stopped being safe. Sometimes being smart and being right "
-                                "aren't the same thing.",
-                        "next": "start",
-                    },
-                    "bye": {
-                        "speaker": "Young Tomas",
-                        "text": "Take me with you sometime. Whenever you're ready.",
-                        "end": True,
-                    },
-                },
-            },
+            "tree": {"id": "tomas_default", "loop": True, "nodes": {
+                "start": {"speaker": "Young Tomas",
+                    "text": "I'm not supposed to talk to adventurers. My mother says it gives me ideas. "
+                            "She's right, but I don't see what's wrong with ideas.",
+                    "on_enter": [{"action": "meet_npc", "npc": "young_tomas"}],
+                    "choices": [
+                        {"text": "What kind of ideas?", "next": "ideas"},
+                        {"text": "Smart mother.", "next": "smart"},
+                        {"text": "Good luck with that.", "next": None},
+                    ]},
+                "ideas": {"speaker": "Young Tomas",
+                    "text": "Going somewhere. Doing something. The Goblin Warren east of town — "
+                            "nobody's cleared it out. The militia tried twice. I think someone "
+                            "better should try.",
+                    "choices": [{"text": "We'll look into it.", "next": None}]},
+                "smart": {"speaker": "Young Tomas",
+                    "text": "She is. She survived the first Fading wave three years ago by "
+                            "not doing what everyone else did. She just... stayed calm and stayed put. "
+                            "I want to be brave like the adventurers though. Not calm.",
+                    "choices": [{"text": "Both can save you.", "next": None}]},
+            }},
         },
     ],
 
@@ -2818,83 +2874,83 @@ NPC_DIALOGUES = {
     #  ELDER THERON — Woodhaven (Keeper of the Grove)
     # ─────────────────────────────────────────────────────────
     "elder_theron": [
-        # After learning about the Fading
+        # Act 2 — after visiting Ruins of Ashenmoor
         {
-            "conditions": [
-                {"flag": "lore.fading_basics", "op": "==", "value": True},
-                {"flag": "npc.elder_theron.met", "op": "not_exists"},
-            ],
-            "tree": {
-                "id": "theron_fading",
-                "nodes": {
-                    "start": {
-                        "speaker": "Elder Theron",
-                        "text": "You carry the weight of knowledge, I see. The Fading — yes, "
-                                "we feel it here too. The grove is dying. Trees that stood for "
-                                "a thousand years are dissolving like mist.",
-                        "on_enter": [{"action": "meet_npc", "npc": "elder_theron"}],
-                        "choices": [
-                            {"text": "Can the grove be saved?", "next": "grove"},
-                            {"text": "What do you know about the Wardens?", "next": "wardens"},
-                            {"text": "We're looking for Hearthstones.", "next": "stones"},
-                        ],
-                    },
-                    "grove": {
-                        "speaker": "Elder Theron",
-                        "text": "The grove is connected to the wards — it draws power from the same "
-                                "source. If you restore the Hearthstones, the grove will heal. "
-                                "If you fail... there will be nothing left to heal.",
-                        "end": True,
-                    },
-                    "wardens": {
-                        "speaker": "Elder Theron",
-                        "text": "My grandmother spoke of them. She said they walked among us "
-                                "like ordinary folk, but they could feel the boundaries of the world. "
-                                "When they vanished, we thought the danger had passed. We were wrong.",
-                        "end": True,
-                    },
-                    "stones": {
-                        "speaker": "Elder Theron",
-                        "text": "Hearthstones... the old word is 'ancorae' — anchors. "
-                                "I know of one. The Spider's Nest to the south — something "
-                                "powerful pulses at its heart. The spiders guard it fiercely. "
-                                "Perhaps that is why they've grown so large.",
-                        "on_enter": [{"action": "start_quest", "quest": "main_spiders_nest"}],
-                        "end": True,
-                    },
-                },
-            },
+            "conditions": [{"flag": "boss_defeated.ruins_ashenmoor", "op": "==", "value": True}],
+            "tree": {"id": "theron_act2", "loop": True, "nodes": {
+                "start": {"speaker": "Elder Theron",
+                    "text": "The Ruins of Ashenmoor. Word came from the east — you cleared it. "
+                            "That's the second Hearthstone fragment, if I'm counting right. "
+                            "Woodhaven has been sending prayers to whatever's out there listening. "
+                            "I think something is.",
+                    "choices": [
+                        {"text": "Three more to find.", "next": "three_more"},
+                        {"text": "The Fading is retreating.", "next": "retreating"},
+                    ]},
+                "three_more": {"speaker": "Elder Theron",
+                    "text": "Then go find them. Woodhaven will hold. We've held for two hundred "
+                            "years against worse than this — or at least, against things we "
+                            "understood less. Knowing what hunts you is half the battle.",
+                    "choices": [{"text": "We'll be back.", "next": None}]},
+                "retreating": {"speaker": "Elder Theron",
+                    "text": "I feel it. The eastern grove — the sick trees near the old "
+                            "Warden markers. They're greening again. Slowly. But they are. "
+                            "Thank you for what you've done.",
+                    "choices": [{"text": "There's more to do.", "next": None}]},
+            }},
+        },
+        # Spider's Nest cleared — major local win
+        {
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "tree": {"id": "theron_post_spiders", "loop": True, "nodes": {
+                "start": {"speaker": "Elder Theron",
+                    "text": "The web cave to the north is cleared. I sent a patrol up the "
+                            "Thornwood path this morning for the first time in a season. "
+                            "They came back whole and intact. That hasn't happened in a long time. "
+                            "What's your next move?",
+                    "choices": [
+                        {"text": "The Abandoned Mine north of Ironhearth.", "next": "mine"},
+                        {"text": "We follow where the Fading leads.", "next": "fading"},
+                    ]},
+                "mine": {"speaker": "Elder Theron",
+                    "text": "The Mine. Yes — a Warden garrison held it. Word stopped "
+                            "coming about a month ago. We'd assumed the worst. "
+                            "If you can find out what happened — and if there's a "
+                            "fragment there — then go.",
+                    "choices": [{"text": "We'll go.", "next": None}]},
+                "fading": {"speaker": "Elder Theron",
+                    "text": "Then you lead, and Woodhaven follows in prayers. "
+                            "We are a small place. Our contribution is endurance — "
+                            "surviving long enough for warriors like you to do your work.",
+                    "choices": [{"text": "Survive and thrive.", "next": None}]},
+            }},
         },
         # Default
         {
             "conditions": [],
-            "tree": {
-                "id": "theron_default",
-                "nodes": {
-                    "start": {
-                        "speaker": "Elder Theron",
-                        "text": "Welcome to Woodhaven. The grove provides shelter, but "
-                                "these are troubled times. How may I help you?",
-                        "on_enter": [{"action": "meet_npc", "npc": "elder_theron"}],
-                        "choices": [
-                            {"text": "Tell me about Woodhaven.", "next": "about"},
-                            {"text": "Goodbye.", "next": "bye"},
-                        ],
-                    },
-                    "about": {
-                        "speaker": "Elder Theron",
-                        "text": "Woodhaven has stood in the shadow of the Great Grove for "
-                                "generations. The trees protect us. But lately, even the oldest "
-                                "oaks seem... tired. As if the world itself is exhausted.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Elder Theron",
-                        "text": "Walk gently. The forest remembers those who respect it.",
-                        "end": True,
-                    },
-                },
-            },
+            "tree": {"id": "theron_default", "loop": True, "nodes": {
+                "start": {"speaker": "Elder Theron",
+                    "text": "Welcome to Woodhaven. The grove provides shelter, but "
+                            "these are troubled times. How may I help you?",
+                    "on_enter": [{"action": "meet_npc", "npc": "elder_theron"}],
+                    "choices": [
+                        {"text": "Tell me about Woodhaven.", "next": "woodhaven"},
+                        {"text": "What's the biggest threat here?", "next": "threat"},
+                        {"text": "Goodbye.", "next": None},
+                    ]},
+                "woodhaven": {"speaker": "Elder Theron",
+                    "text": "A lumber town, mostly — but one with a long memory. "
+                            "The old Warden Order had a garrison here during the last Fading, "
+                            "sixty years ago. Some of their records are still in the archive. "
+                            "The Fading is back now. I think those records matter again.",
+                    "choices": [{"text": "We're Warden recruits.", "next": None}]},
+                "threat": {"speaker": "Elder Theron",
+                    "text": "Two threats. The Spider's Nest to the north has been expanding — "
+                            "the colony has grown far beyond its old bounds. "
+                            "And the Fading from the east is killing the old grove trees. "
+                            "Both are getting worse.",
+                    "choices": [{"text": "We'll address both.", "next": None}]},
+            }},
         },
     ],
 
@@ -2902,45 +2958,80 @@ NPC_DIALOGUES = {
     #  SYLLA — Woodhaven Herbalist
     # ─────────────────────────────────────────────────────────
     "sylla": [
+        # Spider's Nest cleared — her herbs are growing back
+        {
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "tree": {"id": "sylla_post_spiders", "loop": True, "nodes": {
+                "start": {"speaker": "Sylla",
+                    "text": "You cleared the web caves to the north. I can already tell — "
+                            "the brambleleaf is coming back along the eastern path. "
+                            "The spiders had been eating the root systems for two seasons. "
+                            "I'd forgotten what the forest smelled like before the webs.",
+                    "choices": [
+                        {"text": "The Queen was changed by the Fading.", "next": "queen"},
+                        {"text": "What do you use brambleleaf for?", "next": "herb"},
+                        {"text": "Good to hear.", "next": None},
+                    ]},
+                "queen": {"speaker": "Sylla",
+                    "text": "I know. The spiders near the Nest weren't hunting normally — "
+                            "they were defending something. The queen had been changed. "
+                            "I've seen the same thing with the wolves further east. "
+                            "The Fading doesn't just kill. It transforms.",
+                    "choices": [{"text": "We're seeing that everywhere.", "next": None}]},
+                "herb": {"speaker": "Sylla",
+                    "text": "Fever reduction, wound poultice, tea for sleeplessness. "
+                            "Half my stock depends on the eastern path being clear. "
+                            "You've done more for my business than you know.",
+                    "choices": [{"text": "A side benefit.", "next": None}]},
+            }},
+        },
+        # Goblin Warren cleared — road safer for travel
+        {
+            "conditions": [{"flag": "boss_defeated.goblin_warren", "op": "==", "value": True}],
+            "tree": {"id": "sylla_post_warren", "loop": True, "nodes": {
+                "start": {"speaker": "Sylla",
+                    "text": "Ah, adventurers — the ones who cleared the Warren? Good. "
+                            "I've been unable to get my southern herb supply for weeks. "
+                            "The goblin raids made the Thornwood trail too dangerous "
+                            "for any merchant to risk it. Mind the dryin' stalks.",
+                    "choices": [
+                        {"text": "What herbs can't you get?", "next": "herbs"},
+                        {"text": "The trail should be clear now.", "next": None},
+                    ]},
+                "herbs": {"speaker": "Sylla",
+                    "text": "Stoneroot from the southern ridge — it's the only thing that "
+                            "works on the Fading-cough the miners keep getting. "
+                            "And silvermoss, for burns. I've been making do with substitutes "
+                            "but they're not as effective.",
+                    "choices": [{"text": "We'll keep the road clear.", "next": None}]},
+            }},
+        },
+        # Default
         {
             "conditions": [],
-            "tree": {
-                "id": "sylla_default",
-                "nodes": {
-                    "start": {
-                        "speaker": "Sylla",
-                        "text": "Ah, adventurers! You look like you could use a poultice. "
-                                "Or three. Come in, come in — mind the drying herbs.",
-                        "on_enter": [{"action": "meet_npc", "npc": "sylla"}],
-                        "choices": [
-                            {"text": "What herbs do you work with?", "next": "herbs"},
-                            {"text": "Have you noticed anything strange?", "next": "strange"},
-                            {"text": "Just browsing.", "next": "bye"},
-                        ],
-                    },
-                    "herbs": {
-                        "speaker": "Sylla",
-                        "text": "Everything the grove provides! Moonpetal for healing, "
-                                "thornroot for poisons, silverbark for wards. Though lately "
-                                "the moonpetal blooms have been... wrong. Grey instead of silver. "
-                                "They still work, but they taste of ash.",
-                        "end": True,
-                    },
-                    "strange": {
-                        "speaker": "Sylla",
-                        "text": "Strange? Ha! Everything is strange. My garden phases in and out "
-                                "some mornings — I can see right through my tomatoes to the ground "
-                                "below. Elder Theron says it's the Fading. I say it's deeply unsettling "
-                                "is what it is.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Sylla",
-                        "text": "Take care out there. And eat something green occasionally!",
-                        "end": True,
-                    },
-                },
-            },
+            "tree": {"id": "sylla_default", "loop": True, "nodes": {
+                "start": {"speaker": "Sylla",
+                    "text": "Ah, adventurers! You look like you could use a poultice. Or three. "
+                            "Come in, come in — mind the drying stalks.",
+                    "on_enter": [{"action": "meet_npc", "npc": "sylla"}],
+                    "choices": [
+                        {"text": "What herbs do you work with?", "next": "herbs"},
+                        {"text": "Have you noticed anything strange?", "next": "strange"},
+                        {"text": "Just browsing.", "next": None},
+                    ]},
+                "herbs": {"speaker": "Sylla",
+                    "text": "Whatever the Thornwood provides. Fewer things every season — "
+                            "the spider infestation north has been eating root systems, "
+                            "and the Fading has blackened half the eastern grove. "
+                            "I make do.",
+                    "choices": [{"text": "We'll look into the spiders.", "next": None}]},
+                "strange": {"speaker": "Sylla",
+                    "text": "The Fading. It's in the plants now — I found a batch of "
+                            "healer's leaf last week that had gone completely grey. "
+                            "No smell, no effect, just grey. The land's forgetting "
+                            "what it's supposed to do.",
+                    "choices": [{"text": "We're trying to stop it.", "next": None}]},
+            }},
         },
     ],
 
@@ -2948,91 +3039,88 @@ NPC_DIALOGUES = {
     #  FORGEMASTER DUNN — Ironhearth
     # ─────────────────────────────────────────────────────────
     "forgemaster_dunn": [
-        # After finding Dwarven Inscription in Abandoned Mine
+        # Mine cleared — supply chains restored
         {
-            "conditions": [
-                {"flag": "quest.main_hearthstone_1.state", "op": ">", "value": 0},
-                {"flag": "npc.forgemaster_dunn.met", "op": "not_exists"},
-            ],
-            "tree": {
-                "id": "dunn_hearthstone",
-                "nodes": {
-                    "start": {
-                        "speaker": "Forgemaster Dunn",
-                        "text": "Hold. I know that look — you've been in the old mine. "
-                                "My grandfather worked those tunnels before they sealed them. "
-                                "Said there was something down there that wasn't ore.",
-                        "on_enter": [{"action": "meet_npc", "npc": "forgemaster_dunn"}],
-                        "choices": [
-                            {"text": "There are Warden runes in the mine.", "next": "runes"},
-                            {"text": "We're looking for a Hearthstone.", "next": "stone"},
-                            {"text": "Just here for supplies.", "next": "bye"},
-                        ],
-                    },
-                    "runes": {
-                        "speaker": "Forgemaster Dunn",
-                        "text": "Warden runes! Grandfather said the same. The dwarves who built "
-                                "those tunnels were partners with the Wardens — they forged the "
-                                "casings for the Hearthstones. Runesteel, they called it. I still "
-                                "have a few ingots if you ever need something... special... forged.",
-                        "end": True,
-                    },
-                    "stone": {
-                        "speaker": "Forgemaster Dunn",
-                        "text": "A Hearthstone? Down in my mine? Well. That explains why the "
-                                "deepest tunnels never collapsed, even when everything else did. "
-                                "There's a vault at the bottom — grandfather said it needed Warden "
-                                "blood to open. Looks like you're the right people for the job.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Forgemaster Dunn",
-                        "text": "Everything I sell is Ironhearth quality. No refunds.",
-                        "end": True,
-                    },
-                },
-            },
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {"id": "dunn_post_mine", "loop": True, "nodes": {
+                "start": {"speaker": "Forgemaster Dunn",
+                    "text": "You cleared the Abandoned Mine. I heard about Warden Korrath — "
+                            "died at his post, holding the anchor. That's the old code. "
+                            "We honour that here. And now the ore carts are moving again. "
+                            "Don't mistake the two — both matter.",
+                    "choices": [
+                        {"text": "What was Korrath's anchor?", "next": "anchor"},
+                        {"text": "How does the ore supply help?", "next": "ore"},
+                    ]},
+                "anchor": {"speaker": "Forgemaster Dunn",
+                    "text": "Ward anchor — a Warden technique. You hold a physical point "
+                            "against the Fading, prevent it from spreading through that "
+                            "location. It requires someone to stay present. Korrath stayed. "
+                            "The Mine's been clean since you went in.",
+                    "choices": [{"text": "He bought us time.", "next": None}]},
+                "ore": {"speaker": "Forgemaster Dunn",
+                    "text": "Iron and coal for weapons, armour, tools. The eastern villages "
+                            "have been starving for metalwork since the Mine went dark. "
+                            "Three months of backlog. We're working through it now. "
+                            "Whatever you need — you've earned a discount.",
+                    "choices": [{"text": "Appreciated.", "next": None}]},
+            }},
+        },
+        # Ironhearth visited — first meeting
+        {
+            "conditions": [{"flag": "town.ironhearth.visited", "op": "!=", "value": True}],
+            "tree": {"id": "dunn_first_visit", "loop": True, "nodes": {
+                "start": {"speaker": "Forgemaster Dunn",
+                    "text": "Welcome to Ironhearth. First time in the forge district? "
+                            "Best steel in Aldenmere. We've kept the fires burning "
+                            "through two Fading waves and we'll burn through a third. "
+                            "What do you need?",
+                    "on_enter": [
+                        {"action": "set_flag", "flag": "town.ironhearth.visited", "value": True},
+                        {"action": "meet_npc", "npc": "forgemaster_dunn"},
+                    ],
+                    "choices": [
+                        {"text": "Tell me about Ironhearth.", "next": "ironhearth"},
+                        {"text": "How's the Mine situation?", "next": "mine"},
+                        {"text": "Just looking.", "next": None},
+                    ]},
+                "ironhearth": {"speaker": "Forgemaster Dunn",
+                    "text": "Dwarven founded, human expanded. The forge district is the oldest "
+                            "quarter — those buildings pre-date the kingdom. The mine north "
+                            "of here used to supply half the region's iron. Used to. "
+                            "Warden garrison went silent a month ago.",
+                    "choices": [{"text": "We'll investigate the mine.", "next": None}]},
+                "mine": {"speaker": "Forgemaster Dunn",
+                    "text": "The Abandoned Mine, they're calling it now. It wasn't abandoned — "
+                            "the Wardens held it as an anchor point. Now we don't know "
+                            "what's in there. And without that ore, we're melting down "
+                            "old tools to keep production going.",
+                    "choices": [{"text": "We'll look into it.", "next": None}]},
+            }},
         },
         # Default
         {
             "conditions": [],
-            "tree": {
-                "id": "dunn_default",
-                "nodes": {
-                    "start": {
-                        "speaker": "Forgemaster Dunn",
-                        "text": "Welcome to the forge. I make the finest steel in Aldenmere. "
-                                "What do you need?",
-                        "on_enter": [{"action": "meet_npc", "npc": "forgemaster_dunn"}],
-                        "choices": [
-                            {"text": "Tell me about Ironhearth.", "next": "about"},
-                            {"text": "How's business?", "next": "business"},
-                            {"text": "Goodbye.", "next": "bye"},
-                        ],
-                    },
-                    "about": {
-                        "speaker": "Forgemaster Dunn",
-                        "text": "Built on iron and stubbornness. The mines run deep under the "
-                                "mountains. We've been forging here since before the old kingdom "
-                                "fell. Good people. Hard workers. Lately though, the ore comes up "
-                                "brittle. Grey. Like the life's been sucked out of it.",
-                        "end": True,
-                    },
-                    "business": {
-                        "speaker": "Forgemaster Dunn",
-                        "text": "Terrible, if you want the truth. The ore quality's dropped off "
-                                "a cliff. I can still make decent steel, but I'm working twice as "
-                                "hard for half the output. Something's wrong underground. "
-                                "Something deeper than mining can reach.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Forgemaster Dunn",
-                        "text": "Stay sharp. Literally.",
-                        "end": True,
-                    },
-                },
-            },
+            "tree": {"id": "dunn_default", "loop": True, "nodes": {
+                "start": {"speaker": "Forgemaster Dunn",
+                    "text": "Welcome to the forge. I make the finest steel in Aldenmere. "
+                            "What do you need?",
+                    "choices": [
+                        {"text": "Tell me about Ironhearth.", "next": "ironhearth"},
+                        {"text": "How's business?", "next": "business"},
+                        {"text": "Goodbye.", "next": None},
+                    ]},
+                "ironhearth": {"speaker": "Forgemaster Dunn",
+                    "text": "Holding on. The Mine north of us went silent — no ore shipments "
+                            "for a month. We're burning through reserves. And the Fading "
+                            "is playing hell with the smelting temperatures. Strange days.",
+                    "choices": [{"text": "We'll look into the mine.", "next": None}]},
+                "business": {"speaker": "Forgemaster Dunn",
+                    "text": "Weapons are selling, which is never a good sign. "
+                            "When times are safe, I sell tools and cookware. "
+                            "When times are bad, I sell blades. Business is very good.",
+                    "choices": [{"text": "We'll need good blades.", "next": None}]},
+            }},
         },
     ],
 
@@ -3040,48 +3128,81 @@ NPC_DIALOGUES = {
     #  KIRA — Traveling Merchant, Ironhearth
     # ─────────────────────────────────────────────────────────
     "merchant_kira": [
+        # After mine + act 1 done — trade routes open
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {"id": "kira_act1_done", "loop": True, "nodes": {
+                "start": {"speaker": "Kira",
+                    "text": "The trade route north is open again. I've already made two runs "
+                            "to Ironhearth and back since the mine cleared. You have no idea "
+                            "what that means for my margins. What can I do for you?",
+                    "choices": [
+                        {"text": "What rare things do you have now?", "next": "rare"},
+                        {"text": "What news from the road?", "next": "road"},
+                        {"text": "Just looking.", "next": None},
+                    ]},
+                "rare": {"speaker": "Kira",
+                    "text": "Eastern goods from past the Ashenmoor — dust crystals, "
+                            "preserved void-moss, a few items I'm not sure what to call. "
+                            "Found them in a cache east of the ruins. Took the risk, "
+                            "figured someone like you would want them.",
+                    "choices": [{"text": "You guessed right.", "next": None}]},
+                "road": {"speaker": "Kira",
+                    "text": "Fewer monsters between here and Woodhaven since you cleared "
+                            "the warren and the spiders. Three caravans came through "
+                            "last week that couldn't have made it a month ago. "
+                            "The common folk are noticing.",
+                    "choices": [{"text": "Good.", "next": None}]},
+            }},
+        },
+        # Spider's Nest cleared — mentions road improvement
+        {
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "tree": {"id": "kira_post_spiders", "loop": True, "nodes": {
+                "start": {"speaker": "Kira",
+                    "text": "Well met, travelers! Kira's Curiosities — I deal in the rare "
+                            "and the unusual. The road between Woodhaven and Ironhearth "
+                            "is passable again now the spider cave is cleared. "
+                            "I made it in one day instead of two. You saved me more "
+                            "than you know.",
+                    "choices": [
+                        {"text": "Any news from the road?", "next": "road"},
+                        {"text": "Just looking.", "next": None},
+                    ]},
+                "road": {"speaker": "Kira",
+                    "text": "Refugees coming in from the east — Fading spreading in the "
+                            "Ashenmoor region. Bring what they can carry. "
+                            "Also: whoever's been burning goblin warrens is a hero. "
+                            "Tell them a trader named Kira says so.",
+                    "choices": [{"text": "Consider it relayed.", "next": None}]},
+            }},
+        },
+        # Default
         {
             "conditions": [],
-            "tree": {
-                "id": "kira_default",
-                "nodes": {
-                    "start": {
-                        "speaker": "Kira",
-                        "text": "Well met, travelers! Kira's Curiosities, at your service. "
-                                "I deal in the rare, the unusual, and the occasionally cursed. "
-                                "What catches your eye?",
-                        "on_enter": [{"action": "meet_npc", "npc": "merchant_kira"}],
-                        "choices": [
-                            {"text": "Where do you travel?", "next": "travel"},
-                            {"text": "Any news from the road?", "next": "news"},
-                            {"text": "Just looking.", "next": "bye"},
-                        ],
-                    },
-                    "travel": {
-                        "speaker": "Kira",
-                        "text": "Everywhere and nowhere, as they say. Briarhollow, Woodhaven, "
-                                "Ironhearth, and sometimes east to the ports — though the "
-                                "eastern roads have been... unpredictable lately. I lost an "
-                                "entire cart last month. Not stolen. Just gone. The road "
-                                "it was on vanished overnight.",
-                        "end": True,
-                    },
-                    "news": {
-                        "speaker": "Kira",
-                        "text": "The roads are dangerous, and I don't mean bandits. Whole "
-                                "stretches disappear and reappear. A merchant I know walked "
-                                "into a fog bank and came out three days later, convinced only "
-                                "minutes had passed. The world is coming apart at the seams, "
-                                "and nobody in charge seems to care.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Kira",
-                        "text": "Come back when you have coin! Or a good story. I accept both.",
-                        "end": True,
-                    },
-                },
-            },
+            "tree": {"id": "kira_default", "loop": True, "nodes": {
+                "start": {"speaker": "Kira",
+                    "text": "Well met, travelers! Kira's Curiosities, at your service. "
+                            "I deal in the rare, the unusual, and the occasionally illegal. "
+                            "Everything's legal here, before you ask.",
+                    "on_enter": [{"action": "meet_npc", "npc": "merchant_kira"}],
+                    "choices": [
+                        {"text": "Where do you travel?", "next": "travel"},
+                        {"text": "Any news from the road?", "next": "road"},
+                        {"text": "Just looking.", "next": None},
+                    ]},
+                "travel": {"speaker": "Kira",
+                    "text": "Everywhere the roads allow. The Warren east of Briarhollow "
+                            "has been a problem — goblins raiding caravans. And the spider "
+                            "cave north of Woodhaven means I have to take the long way "
+                            "around. Bad for business.",
+                    "choices": [{"text": "We'll deal with those.", "next": None}]},
+                "road": {"speaker": "Kira",
+                    "text": "More refugees from the east. The Fading is worse in the "
+                            "Ashenmoor basin than anyone's admitting. I've been watching "
+                            "it for six months. Something's accelerating it.",
+                    "choices": [{"text": "We're looking into it.", "next": None}]},
+            }},
         },
     ],
 
@@ -3089,66 +3210,104 @@ NPC_DIALOGUES = {
     #  SCOUT FERYN — Greenwood, forest warden
     # ─────────────────────────────────────────────────────────
     "priestess_alia": [
+        # Multiple hearthstones found
+        {
+            "conditions": [{"flag": "item.hearthstone.3", "op": "==", "value": True}],
+            "tree": {"id": "alia_hearthstone3", "loop": True, "nodes": {
+                "start": {"speaker": "Priestess Alia",
+                    "text": "Three Hearthstones. Half of them. I feel it even here — "
+                            "the temple's altar has been warmer to the touch these last weeks. "
+                            "The flame responds to the wards being restored. "
+                            "What you're doing is working.",
+                    "choices": [
+                        {"text": "Two more to find.", "next": "two_more"},
+                        {"text": "Tell me about the flame.", "next": "flame"},
+                    ]},
+                "two_more": {"speaker": "Priestess Alia",
+                    "text": "Then go. The flame will be here when you return. "
+                            "Speak to it if you need strength — prayer is not weakness, "
+                            "it's focusing what you already have.",
+                    "choices": [{"text": "Thank you, Priestess.", "next": None}]},
+                "flame": {"speaker": "Priestess Alia",
+                    "text": "The flame predates any god's name. The Warden Order didn't "
+                            "worship it — they tended it, the way you tend a hearth. "
+                            "It doesn't grant miracles. It reminds you that something "
+                            "has burned longer than your fear.",
+                    "choices": [{"text": "That's enough.", "next": None}]},
+            }},
+        },
+        # First hearthstone — she knows what it means
+        {
+            "conditions": [{"flag": "item.hearthstone.1", "op": "==", "value": True}],
+            "tree": {"id": "alia_hearthstone1", "loop": True, "nodes": {
+                "start": {"speaker": "Priestess Alia",
+                    "text": "You've recovered a Hearthstone. I can tell — there's something "
+                            "different in the quality of light around you. "
+                            "The old texts speak of this. The stone remembers what the land "
+                            "has forgotten. Carry it carefully.",
+                    "choices": [
+                        {"text": "What can you tell us about them?", "next": "about"},
+                        {"text": "We'll find the rest.", "next": None},
+                    ]},
+                "about": {"speaker": "Priestess Alia",
+                    "text": "Anchors against forgetting. The Fading is a kind of dissolution — "
+                            "the world losing coherence. The Hearthstones hold pattern. "
+                            "They were placed by the first Wardens in the ancient nodes, "
+                            "the places where reality is thinnest. Restore them all "
+                            "and the Fading can be sealed.",
+                    "choices": [{"text": "We understand.", "next": None}]},
+            }},
+        },
+        # After Spider's Nest
+        {
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "tree": {"id": "alia_post_spiders", "loop": True, "nodes": {
+                "start": {"speaker": "Priestess Alia",
+                    "text": "Blessings upon your path, wanderers. The flame burns for all "
+                            "who seek its light. Word reached me that you cleared the "
+                            "spider cave to the north. Several of my parishioners couldn't "
+                            "reach the temple from Woodhaven. They can come again now.",
+                    "choices": [
+                        {"text": "The Spider Queen was corrupted by the Fading.", "next": "queen"},
+                        {"text": "We're glad the path is clear.", "next": None},
+                    ]},
+                "queen": {"speaker": "Priestess Alia",
+                    "text": "The flame shows what is — including what should not be. "
+                            "Corruption and transformation are not the same thing. "
+                            "Something changed her nature against her nature's will. "
+                            "That is a cruelty I would not wish on anything.",
+                    "choices": [{"text": "We agree.", "next": None}]},
+            }},
+        },
+        # Default
         {
             "conditions": [],
-            "tree": {
-                "id": "alia_default",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Priestess Alia",
-                        "text": "Blessings upon your path, wanderers. The flame of Aldenmere burns "
-                                "for all who seek its light. How may I serve you today?",
-                        "on_enter": [{"action": "meet_npc", "npc": "priestess_alia"}],
-                        "choices": [
-                            {"text": "What do you know about the Fading?", "next": "fading"},
-                            {"text": "Can you heal us?", "next": "healing"},
-                            {"text": "Tell me about this temple.", "next": "temple"},
-                            {"text": "We seek guidance.", "next": "guidance"},
-                            {"text": "Farewell, Priestess.", "next": "bye"},
-                        ],
-                    },
-                    "fading": {
-                        "speaker": "Priestess Alia",
-                        "text": "The Fading... yes. I have felt it in my prayers for months now — "
-                                "a silence where the divine once answered. Something unravels the "
-                                "very fabric of the world. Old texts speak of a Dissolution, a time "
-                                "when the boundary between what is and what is not grows thin. "
-                                "Whatever causes it, I fear it is beyond any one person's power to stop. "
-                                "Find others who understand it. Trust the flame.",
-                        "next": "start",
-                    },
-                    "healing": {
-                        "speaker": "Priestess Alia",
-                        "text": "The temple offers restoration to those who need it — that is what "
-                                "the services at my altar are for. Speak to the altar and the flame "
-                                "will do the rest. I can ease suffering, though I cannot stop what "
-                                "hunts you. Be careful out there.",
-                        "next": "start",
-                    },
-                    "temple": {
-                        "speaker": "Priestess Alia",
-                        "text": "This temple has stood in Woodhaven for three hundred years. It was "
-                                "built by the first settlers as a promise — that even in the wildest "
-                                "frontier, they would tend the light. We serve the flame, which is "
-                                "older than any god's name. It does not demand worship. Only attention.",
-                        "next": "start",
-                    },
-                    "guidance": {
-                        "speaker": "Priestess Alia",
-                        "text": "Guidance I can offer, though it is simple: follow what is true, "
-                                "protect what cannot protect itself, and when the darkness comes — "
-                                "and it will — do not mistake endurance for weakness. The flame "
-                                "does not burn brightly by burning quickly. Steady. Steady.",
-                        "next": "start",
-                    },
-                    "bye": {
-                        "speaker": "Priestess Alia",
-                        "text": "Walk in the light. And if you cannot find it — be it.",
-                        "end": True,
-                    },
-                },
-            },
+            "tree": {"id": "alia_default", "loop": True, "nodes": {
+                "start": {"speaker": "Priestess Alia",
+                    "text": "Blessings upon your path, wanderers. The flame of Aldenmere burns "
+                            "for all who seek its light. How may I serve you today?",
+                    "choices": [
+                        {"text": "What do you know about the Fading?", "next": "fading"},
+                        {"text": "Can you heal us?", "next": "healing"},
+                        {"text": "Tell me about this temple.", "next": "temple"},
+                        {"text": "Farewell, Priestess.", "next": None},
+                    ]},
+                "fading": {"speaker": "Priestess Alia",
+                    "text": "The Fading... yes. I have felt it in my prayers for months — "
+                            "a silence where the divine once answered. Something unravels the "
+                            "very fabric of the world. Find others who understand it. "
+                            "Trust the flame.",
+                    "choices": [{"text": "We're trying.", "next": None}]},
+                "healing": {"speaker": "Priestess Alia",
+                    "text": "The temple offers restoration to those who need it. "
+                            "Speak to the altar — the flame will do the rest.",
+                    "choices": [{"text": "Thank you.", "next": None}]},
+                "temple": {"speaker": "Priestess Alia",
+                    "text": "This temple has stood in Woodhaven for three hundred years. "
+                            "Built by the first settlers as a promise — that even in the "
+                            "wildest frontier, they would tend the light.",
+                    "choices": [{"text": "A good promise.", "next": None}]},
+            }},
         },
     ],
     "ranger_cael": [
@@ -5940,58 +6099,132 @@ _NEW_DIALOGUES = {
     ],
 
     "old_moss": [
+        # Spider's Nest AND Warren cleared — forest recovering
         {
-            "conditions": [],
-            "tree": {
-                "id": "old_moss_default",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Old Moss",
-                        "text": "Mm. Travelers. Sit. These mushrooms won't pick themselves, but they'll wait a moment. You have the look of people carrying more trouble than they admit.",
-                        "on_enter": [{"action": "set_flag", "flag": "npc.old_moss.met", "value": True}],
-                        "choices": [
-                            {"text": "What do you know about the forest dying?", "next": "forest"},
-                            {"text": "What are those mushrooms for?", "next": "mushrooms"},
-                            {"text": "Just passing through.", "next": "passing"},
-                        ],
-                    },
-                    "forest": {
-                        "speaker": "Old Moss",
-                        "text": "I've watched this forest since before your parents were born. The sickness comes from below, not above. The roots feel it before the leaves do. Something underground is draining them. Has been for years.",
-                        "choices": [
-                            {"text": "The mines?", "next": "mines"},
-                            {"text": "Thank you, elder.", "next": None},
-                        ],
-                    },
-                    "mines": {
-                        "speaker": "Old Moss",
-                        "text": "Probably. The old Hearthstone veins. They were sealed for a reason — the miners who dug them three hundred years ago sealed them themselves, which tells you something. Now someone's opened them again.",
-                        "choices": [{"text": "Who?", "next": "who"},
-                                    {"text": "Thank you.", "next": None}],
-                    },
-                    "who": {
-                        "speaker": "Old Moss",
-                        "text": "A name from the capital. Valdris. He sent agents years ago, smooth-talking with Imperial letters. The Guild approved it. Nobody listened to an old herbalist. They never do.",
-                        "choices": [{"text": "We're listening.", "next": "listening"}],
-                    },
-                    "listening": {
-                        "speaker": "Old Moss",
-                        "text": "Then find the stones before he does. Or find them after, and take them away from him. Either works.",
-                        "choices": [{"text": "We will.", "next": None}],
-                    },
-                    "mushrooms": {
-                        "speaker": "Old Moss",
-                        "text": "This one cures fever. This one cures poison if you eat it before the venom sets. This one will kill you in an interesting way if you eat it after dark. I keep them separate.",
-                        "choices": [{"text": "Useful.", "next": None}],
-                    },
-                    "passing": {
-                        "speaker": "Old Moss",
-                        "text": "Nobody just passes through anymore. The roads aren't safe enough. Stay careful.",
-                        "choices": [{"text": "We will.", "next": None}],
-                    },
-                },
-            },
+            "conditions": [
+                {"flag": "boss_defeated.spiders_nest", "op": "==", "value": True},
+                {"flag": "boss_defeated.goblin_warren", "op": "==", "value": True},
+            ],
+            "tree": {"id": "moss_recovery", "loop": True, "nodes": {
+                "start": {"speaker": "Old Moss",
+                    "text": "The western forest breathes easier. The goblins are gone, "
+                            "the spider colony is collapsed. Three hundred years I've "
+                            "watched this forest and it always comes back. "
+                            "But it needs someone to stop the harm first. "
+                            "You stopped the harm. The forest will do the rest.",
+                    "choices": [
+                        {"text": "The Fading is still spreading east.", "next": "east"},
+                        {"text": "The tree you mentioned — the Warden tree.", "next": "tree"},
+                    ]},
+                "east": {"speaker": "Old Moss",
+                    "text": "I know. I feel it every morning. The recovery in the west "
+                            "is real — but it's happening against resistance from the east. "
+                            "Whatever the source is, find it. The forest can endure "
+                            "for a time. Not forever.",
+                    "choices": [{"text": "We're on our way.", "next": None}]},
+                "tree": {"speaker": "Old Moss",
+                    "text": "Still there. Still untouched by the Fading. "
+                            "I've been watching it — it grows toward the east, "
+                            "as if it's reaching for something. "
+                            "Or pointing at something.",
+                    "on_enter": [{"action": "set_flag", "flag": "lore.greenwood_warden_tree", "value": True}],
+                    "choices": [{"text": "The Hearthstones.", "next": None}]},
+            }},
+        },
+        # Spider's Nest cleared alone
+        {
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "tree": {"id": "moss_post_spiders", "loop": True, "nodes": {
+                "start": {"speaker": "Old Moss",
+                    "text": "The spider queen is dead. I felt it — like a knot releasing "
+                            "in the root network. The Fading had her, you know. "
+                            "She wasn't malicious. She was desperate. "
+                            "Desperate creatures do harm. You ended the harm.",
+                    "choices": [
+                        {"text": "How did you feel it in the roots?", "next": "roots"},
+                        {"text": "Is the forest recovering?", "next": "recover"},
+                    ]},
+                "roots": {"speaker": "Old Moss",
+                    "text": "The old trees are connected below ground. Information passes "
+                            "through them — slowly, like sap in winter. I've been reading "
+                            "the roots for two hundred years. You learn to listen.",
+                    "choices": [{"text": "What are they saying now?", "next": None}]},
+                "recover": {"speaker": "Old Moss",
+                    "text": "The western groves, yes. The eastern ones — not yet. "
+                            "The Fading is still feeding from the east. "
+                            "Clearing the spiders was necessary. Not sufficient.",
+                    "choices": [{"text": "We'll keep going.", "next": None}]},
+            }},
+        },
+        # Act 2+ — has felt the Fading spread
+        {
+            "conditions": [
+                {"flag": "quest.main_ashenmoor.state", "op": ">=", "value": 1},
+            ],
+            "tree": {"id": "moss_act2", "nodes": {
+                "start": {"speaker": "Old Moss",
+                    "text": "Three hundred years I've tended this forest. "
+                            "Watched it breathe. Watched it dream. "
+                            "Now it's forgetting itself. The old trees — the ones that remember "
+                            "before the kingdoms — they're the first to go quiet.",
+                    "choices": [
+                        {"text": "Can you feel where the Fading is worst?", "next": "worst"},
+                        {"text": "Is there anything the forest can do?", "next": "forest"},
+                        {"text": "I'm sorry.", "next": "sorry"},
+                    ]},
+                "worst": {"speaker": "Old Moss",
+                    "text": "East. Always east now. There's a silence there that shouldn't exist — "
+                            "no wind, no insects, no sense of time. "
+                            "Whatever broke the wards broke them hardest in that direction.",
+                    "on_enter": [{"action": "discover_lore", "lore": "fading_east_origin"}],
+                    "end": True},
+                "forest": {"speaker": "Old Moss",
+                    "text": "The forest doesn't fight the way soldiers fight. "
+                            "It endures. It waits. It remembers. "
+                            "Restore the wards and it will come back.",
+                    "end": True},
+                "sorry": {"speaker": "Old Moss",
+                    "text": "Don't be sorry. Be effective. "
+                            "The forest doesn't need your grief. It needs the wards back.",
+                    "end": True},
+            }},
+        },
+        # First meeting
+        {
+            "conditions": [
+                {"flag": "npc.old_moss.met", "op": "not_exists"},
+            ],
+            "tree": {"id": "moss_intro", "nodes": {
+                "start": {"speaker": "Old Moss",
+                    "text": "You smell like the road. And something older. "
+                            "Blood from before the kingdoms, if I'm reading you right. "
+                            "Warden blood. Haven't smelled that in a long time.",
+                    "on_enter": [{"action": "meet_npc", "npc": "old_moss"}],
+                    "choices": [
+                        {"text": "You know about the Wardens?", "next": "wardens"},
+                        {"text": "What are you?", "next": "what"},
+                        {"text": "Just passing through.", "next": "bye"},
+                    ]},
+                "wardens": {"speaker": "Old Moss",
+                    "text": "I knew the last generation of them. One planted a tree in the "
+                            "southern grove that still grows. The Fading hasn't touched it. "
+                            "I think it's waiting for someone.",
+                    "on_enter": [{"action": "discover_lore", "lore": "wardens_greenwood_tree"}],
+                    "next": "wardens2"},
+                "wardens2": {"speaker": "Old Moss",
+                    "text": "The tree is still there. Still untouched. I watered it every year, "
+                            "hoping they'd come back for it.",
+                    "on_enter": [{"action": "set_flag", "flag": "lore.greenwood_warden_tree", "value": True}],
+                    "end": True},
+                "what": {"speaker": "Old Moss",
+                    "text": "Old. That's the simplest answer. I've been called a druid, "
+                            "a hermit, a forest spirit. The trees know me. That's enough.",
+                    "end": True},
+                "bye": {"speaker": "Old Moss",
+                    "text": "No one just passes through Greenwood. "
+                            "You came here for a reason. You'll remember it eventually.",
+                    "end": True},
+            }},
         },
     ],
 
@@ -6173,27 +6406,82 @@ _NEW_DIALOGUES = {
     ],
 
     "miner_durk": [
+        # Mine cleared
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {"id": "durk_post_mine", "loop": True, "nodes": {
+                "start": {"speaker": "Miner Durk",
+                    "text": "You cleared the Mine. I worked the second level for eight years. "
+                            "Knew every crossbeam and airshaft. When the Wardens stopped "
+                            "answering, I thought that was it. Gone forever. "
+                            "Can we go back in?",
+                    "choices": [
+                        {"text": "The upper levels should be clear.", "next": "safe"},
+                        {"text": "Be careful. The Fading has changed things.", "next": "changed"},
+                    ]},
+                "safe": {"speaker": "Miner Durk",
+                    "text": "Then I'm going back. Half my crew is waiting on word. "
+                            "We can have ore moving in a week if the shafts are intact. "
+                            "Ironhearth will breathe again. What you've done — "
+                            "it's not nothing.",
+                    "choices": [{"text": "Good luck, Durk.", "next": None}]},
+                "changed": {"speaker": "Miner Durk",
+                    "text": "Changed how? The passages, the rock, the air? "
+                            "I've worked in bad air before. I've worked in collapsing shafts. "
+                            "I haven't worked in Fading-touched stone. "
+                            "...I'll take a priest with me.",
+                    "choices": [{"text": "Wise decision.", "next": None}]},
+            }},
+        },
+        # Explored the mine
+        {
+            "conditions": [{"flag": "explored.abandoned_mine.floor1", "op": "==", "value": True}],
+            "tree": {"id": "durk_explored", "loop": True, "nodes": {
+                "start": {"speaker": "Miner Durk",
+                    "text": "You've been in the Mine? What's in there? The Wardens — "
+                            "are they... is there anything left?",
+                    "choices": [
+                        {"text": "There's a Warden named Korrath holding an anchor.", "next": "korrath"},
+                        {"text": "It's not safe yet.", "next": "not_safe"},
+                    ]},
+                "korrath": {"speaker": "Miner Durk",
+                    "text": "Korrath. I know that name — he was the garrison commander. "
+                            "Old-school Warden, twenty years of service. "
+                            "He's still in there? Holding alone?",
+                    "choices": [{"text": "He held as long as he could.", "next": None}]},
+                "not_safe": {"speaker": "Miner Durk",
+                    "text": "Then we wait. I've been waiting three months — "
+                            "I can wait a bit longer. Come back when it's done.",
+                    "choices": [{"text": "We will.", "next": None}]},
+            }},
+        },
+        # Default
         {
             "conditions": [],
-            "tree": {
-                "id": "durk_default",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Miner Durk",
-                        "text": "Don't ask me about the lower levels. I work the upper shafts, I go home, I sleep, I do it again. That's all. I've got a family.",
-                        "choices": [
-                            {"text": "What happened on the lower levels?", "next": "lower"},
-                            {"text": "Fair enough.", "next": None},
-                        ],
-                    },
-                    "lower": {
-                        "speaker": "Miner Durk",
-                        "text": "Two men I knew. Went down to level five because they heard something. Came up... not right. Quiet. Eyes wrong. They transferred out a week later. Company transfer. That's all I know.",
-                        "choices": [{"text": "We'll leave it at that.", "next": None}],
-                    },
-                },
-            },
+            "tree": {"id": "durk_default", "loop": True, "nodes": {
+                "start": {"speaker": "Miner Durk",
+                    "text": "Waiting for the Mine to reopen. Eight years I worked that mountain. "
+                            "Now nobody'll go near it. The Wardens went in a month ago "
+                            "and haven't come out.",
+                    "on_enter": [{"action": "meet_npc", "npc": "miner_durk"}],
+                    "choices": [
+                        {"text": "What happened to the Wardens?", "next": "wardens"},
+                        {"text": "What's in the mine?", "next": "mine"},
+                        {"text": "We'll look into it.", "next": None},
+                    ]},
+                "wardens": {"speaker": "Miner Durk",
+                    "text": "Twelve of them went in. Commander Korrath, seasoned veterans. "
+                            "We stopped hearing from them after the first week. "
+                            "The Fading's bad in there — you can feel it from the entrance. "
+                            "Like the air's wrong.",
+                    "choices": [{"text": "We're going to investigate.", "next": None}]},
+                "mine": {"speaker": "Miner Durk",
+                    "text": "Iron ore, mainly. Ironhearth runs on it. Three shafts, "
+                            "five levels, been producing for sixty years. "
+                            "The lower levels hit a void-crystal seam two years ago — "
+                            "that's when things started getting strange.",
+                    "choices": [{"text": "Void crystals and the Fading.", "next": None}]},
+            }},
         },
     ],
 
@@ -6399,32 +6687,75 @@ _NEW_DIALOGUES = {
     ],
 
     "trapper_holt": [
+        # After Spider's Nest AND Warren cleared
+        {
+            "conditions": [
+                {"flag": "boss_defeated.spiders_nest", "op": "==", "value": True},
+                {"flag": "boss_defeated.goblin_warren", "op": "==", "value": True},
+            ],
+            "tree": {"id": "holt_both_cleared", "loop": True, "nodes": {
+                "start": {"speaker": "Trapper Holt",
+                    "text": "The spiders are gone and the goblins are gone. I pulled four decent "
+                            "pelts yesterday — first time in two seasons. The animals are "
+                            "calmer. Still some wrong ones further east, but the western "
+                            "Thornwood is recovering. I owe you a drink.",
+                    "choices": [
+                        {"text": "What's still wrong in the east?", "next": "east"},
+                        {"text": "Glad things are improving.", "next": None},
+                    ]},
+                "east": {"speaker": "Trapper Holt",
+                    "text": "Shadow-touched animals. I know the signs now — pupils wrong, "
+                            "movements too deliberate. They don't run from fire. "
+                            "Whatever the Fading is doing to the forest, it's still doing it "
+                            "east of the river. Everything there is changed.",
+                    "choices": [{"text": "We'll follow the Fading east.", "next": None}]},
+            }},
+        },
+        # After Spider's Nest cleared
+        {
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "tree": {"id": "holt_post_spiders", "loop": True, "nodes": {
+                "start": {"speaker": "Trapper Holt",
+                    "text": "The spider cave is cleared? I can go back to the northern trails. "
+                            "I haven't been able to set traps north of the ridge for months. "
+                            "The spiders were taking everything — even my steel traps. "
+                            "I found three of them dissolved in web.",
+                    "choices": [
+                        {"text": "The Queen was enormous.", "next": "queen"},
+                        {"text": "The trail's yours again.", "next": None},
+                    ]},
+                "queen": {"speaker": "Trapper Holt",
+                    "text": "I saw her once, from a distance. Big as a barn. Moving wrong — "
+                            "too intentional for an animal, even a smart one. "
+                            "Whatever changed her, it wasn't natural.",
+                    "choices": [{"text": "The Fading changed her.", "next": None}]},
+            }},
+        },
+        # Default
         {
             "conditions": [],
-            "tree": {
-                "id": "holt_default",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Trapper Holt",
-                        "text": "Haven't pulled a decent pelt in three weeks. Animals are either gone or wrong. Found a fox last Tuesday — twice normal size, moving like a drunk. Left it alone.",
-                        "choices": [
-                            {"text": "Something's affecting the animals?", "next": "animals"},
-                            {"text": "Any idea what's causing it?", "next": "cause"},
-                        ],
-                    },
-                    "animals": {
-                        "speaker": "Trapper Holt",
-                        "text": "Not just size. They're more aggressive. A deer charged me last week. A deer. I've been trapping since I was ten. That doesn't happen.",
-                        "choices": [{"text": "We're looking into it.", "next": None}],
-                    },
-                    "cause": {
-                        "speaker": "Trapper Holt",
-                        "text": "Something underground, I reckon. The animals near the old mine sites go wrong first. I mark them on my trap maps — always the same spots. Close to where the Hearthstone veins run, the old-timers say.",
-                        "choices": [{"text": "Thank you, that's useful.", "next": None}],
-                    },
-                },
-            },
+            "tree": {"id": "holt_default", "loop": True, "nodes": {
+                "start": {"speaker": "Trapper Holt",
+                    "text": "Haven't pulled a decent pelt in three weeks. Animals are either "
+                            "gone or wrong. Found a fox last Tuesday — twice normal size, "
+                            "moving like a drunk. Left it alone.",
+                    "on_enter": [{"action": "meet_npc", "npc": "trapper_holt"}],
+                    "choices": [
+                        {"text": "Something's affecting the animals?", "next": "animals"},
+                        {"text": "Any idea what's causing it?", "next": "cause"},
+                    ]},
+                "animals": {"speaker": "Trapper Holt",
+                    "text": "The spiders north are worst. The colony expanded — they're "
+                            "in territory they've never touched before. And the web trail "
+                            "south suggests they're pushing outward, not just growing. "
+                            "Something's driving them.",
+                    "choices": [{"text": "We'll clear the spider nest.", "next": None}]},
+                "cause": {"speaker": "Trapper Holt",
+                    "text": "The Fading, most likely. I've been a trapper for twenty years — "
+                            "I know what forest sickness looks like. This is different. "
+                            "The animals aren't sick. They're... changed.",
+                    "choices": [{"text": "We're investigating.", "next": None}]},
+            }},
         },
     ],
 
@@ -7411,50 +7742,77 @@ _NEW_DIALOGUES = {
     ],
 
     "barkeep_holt": [
+        # After Act 1 complete
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {"id": "holt_act1_done", "loop": True, "nodes": {
+                "start": {"speaker": "Barkeep Holt",
+                    "text": "Three dungeons, three clearings. You're buying your own drinks "
+                            "for the rest of the month if you come through here again. "
+                            "What else can I get you? I'm hearing things from the east "
+                            "you should probably know.",
+                    "choices": [
+                        {"text": "What are you hearing?", "next": "east_news"},
+                        {"text": "Just the usual.", "next": None},
+                    ]},
+                "east_news": {"speaker": "Barkeep Holt",
+                    "text": "A merchant came through two days ago from the Ashenmoor basin. "
+                            "Said the ruins there are active — Fading energy, he called it. "
+                            "Also said he saw something moving in the marshes south of "
+                            "Crystalspire that was... wrong. His word. I believe him. "
+                            "He's not the type to make things up.",
+                    "choices": [{"text": "We'll investigate both.", "next": None}]},
+            }},
+        },
+        # After goblin warren cleared
+        {
+            "conditions": [{"flag": "boss_defeated.goblin_warren", "op": "==", "value": True}],
+            "tree": {"id": "holt_post_warren", "loop": True, "nodes": {
+                "start": {"speaker": "Barkeep Holt",
+                    "text": "The Warren's cleared? First round's on me. I've had three "
+                            "merchant caravans cancel bookings because of the goblin raids. "
+                            "That's three months of revenue, gone. "
+                            "If you cleared that, you cleared my ledger too.",
+                    "choices": [
+                        {"text": "What's the talk in the tavern?", "next": "talk"},
+                        {"text": "We'll drink to it.", "next": None},
+                    ]},
+                "talk": {"speaker": "Barkeep Holt",
+                    "text": "Mostly about what you've been doing. Stories get bigger "
+                            "every telling — by next week you'll have killed a dragon. "
+                            "But the news that matters: something's wrong north of Woodhaven. "
+                            "Hunters aren't coming back from the spider territory.",
+                    "choices": [{"text": "We'll deal with the spiders next.", "next": None}]},
+            }},
+        },
+        # Default
         {
             "conditions": [],
             "tree": {"id": "holt_default", "loop": True, "nodes": {
-                "start": {
-                    "speaker": "Barkeep Holt",
-                    "text": "Hunter's Horn. Drink's good, company varies.\n"
-                            "Sit down if you're staying, move along if you're not.",
+                "start": {"speaker": "Barkeep Holt",
+                    "text": "What'll it be? The usual, something strong, or something "
+                            "interesting? I keep a shelf of the interesting stuff "
+                            "in the back — trade goods, rare finds, things travelers "
+                            "bring in and don't take back out.",
+                    "on_enter": [{"action": "meet_npc", "npc": "barkeep_holt"}],
                     "choices": [
-                        {"text": "What's the talk lately?", "next": "talk"},
-                        {"text": "Seen anyone come through recently?", "next": "travellers"},
+                        {"text": "What's the news in town?", "next": "news"},
+                        {"text": "Any work available?", "next": "work"},
                         {"text": "Just a drink.", "next": None},
-                    ],
-                },
-                "talk": {
-                    "speaker": "Barkeep Holt",
-                    "text": "Rangers are grumbling about the northwest trail. Spider activity, "
-                            "which is nothing new — but the size of the webs they're describing "
-                            "is. Something in that cave grew. Nobody wants to be the one to "
-                            "find out what.",
-                    "choices": [{"text": "Anyone willing to deal with it?", "next": "deal"},
-                                {"text": "Noted.", "next": None}],
-                },
-                "deal": {
-                    "speaker": "Barkeep Holt",
-                    "text": "Guild's offering coin for it. Talk to Oren. "
-                            "He'll tell you what the job actually pays after "
-                            "he's done lowering your expectations.",
-                    "choices": [{"text": "Thanks for the warning.", "next": None}],
-                },
-                "travellers": {
-                    "speaker": "Barkeep Holt",
-                    "text": "Warden type came through two days ago. Quiet. "
-                            "Nursed one drink for three hours and asked about eastern roads. "
-                            "Left before dark. They always leave before dark.",
-                    "choices": [{"text": "Warden Order?", "next": "warden"},
-                                {"text": "Interesting.", "next": None}],
-                },
-                "warden": {
-                    "speaker": "Barkeep Holt",
-                    "text": "Whatever's left of it. They're spread thin. "
-                            "You see one, there's usually a reason they're in the area. "
-                            "Worth talking to if you can catch one.",
-                    "choices": [{"text": "Thanks.", "next": None}],
-                },
+                    ]},
+                "news": {"speaker": "Barkeep Holt",
+                    "text": "The Warren east of town has the militia worried. Goblin raids "
+                            "on the southern road — three caravans hit this month. "
+                            "And a hunter came in last night who said the spider cave "
+                            "north of Woodhaven is expanding. Wouldn't say how he knew. "
+                            "Walked very carefully.",
+                    "choices": [{"text": "We'll look into both.", "next": None}]},
+                "work": {"speaker": "Barkeep Holt",
+                    "text": "Check the job board outside the guild. I post the overflow "
+                            "here when it's full — which it usually is. "
+                            "Everything pays in gold except the Fading-related ones. "
+                            "Those pay in gratitude. Which is worth less, but there's more of it.",
+                    "choices": [{"text": "Noted.", "next": None}]},
             }},
         },
     ],
@@ -7662,44 +8020,86 @@ _NEW_DIALOGUES = {
     ],
 
     "barkeep_magda": [
+        # After Dragon's Tooth
+        {
+            "conditions": [{"flag": "boss_defeated.dragons_tooth", "op": "==", "value": True}],
+            "tree": {"id": "magda_post_dragon", "loop": True, "nodes": {
+                "start": {"speaker": "Barkeep Magda",
+                    "text": "Dragon's Tooth. You came back from Dragon's Tooth. "
+                            "I've served drinks to twelve people who said they were going there. "
+                            "You're the first I've seen come back. "
+                            "Whatever you want. No charge.",
+                    "choices": [
+                        {"text": "What do you know about the island?", "next": "island"},
+                        {"text": "What's the news from the sea?", "next": "sea"},
+                        {"text": "Just a drink.", "next": None},
+                    ]},
+                "island": {"speaker": "Barkeep Magda",
+                    "text": "Old sailors say the Tooth has always been strange — before "
+                            "the Fading, before the kingdom. The volcano doesn't behave "
+                            "like volcanoes should. And whatever lives in the caldera "
+                            "isn't anything the naturalists have catalogued.",
+                    "choices": [{"text": "We found out what lives there.", "next": None}]},
+                "sea": {"speaker": "Barkeep Magda",
+                    "text": "The Fading is in the water now — the harbormasters have "
+                            "been logging it for months. Tide patterns are wrong. "
+                            "Fish schooling in places they never did. "
+                            "The sea knows something is wrong too.",
+                    "choices": [{"text": "We're trying to fix it.", "next": None}]},
+            }},
+        },
+        # After reaching Saltmere
+        {
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
+            "tree": {"id": "magda_act2", "loop": True, "nodes": {
+                "start": {"speaker": "Barkeep Magda",
+                    "text": "Word from the mainland — three dungeons cleared up north. "
+                            "That'd be you lot, then. Saltmere doesn't get many Warden types. "
+                            "No judgement. We don't get many law-abiding types either. "
+                            "What can I get you?",
+                    "choices": [
+                        {"text": "What's Saltmere like?", "next": "saltmere"},
+                        {"text": "Any news from the sea routes?", "next": "sea"},
+                        {"text": "Just a drink.", "next": None},
+                    ]},
+                "saltmere": {"speaker": "Barkeep Magda",
+                    "text": "No questions asked, reasonable prices, good security if "
+                            "you pay for it. Half the port is Thieves' Guild territory — "
+                            "the other half pretends it isn't. Guildmaster Sable runs "
+                            "a tight operation. If you need passage east, talk to her.",
+                    "choices": [{"text": "We need to reach Dragon's Tooth.", "next": None}]},
+                "sea": {"speaker": "Barkeep Magda",
+                    "text": "Fading in the water. The fishing boats are finding dead zones — "
+                            "patches of ocean where nothing lives. Moving westward slowly. "
+                            "The sailors are scared. Sailors don't scare easy.",
+                    "choices": [{"text": "We're working on it.", "next": None}]},
+            }},
+        },
+        # Default
         {
             "conditions": [],
             "tree": {"id": "magda_default", "loop": True, "nodes": {
-                "start": {
-                    "speaker": "Barkeep Magda",
-                    "text": "Sit. Drink. The Forge Tap serves dwarven ale and "
-                            "doesn't water it down — which is why the city watch "
-                            "drinks here and nobody else gives us trouble.",
+                "start": {"speaker": "Barkeep Magda",
+                    "text": "Welcome to the Salt Anchor. Drinks, food, rooms — "
+                            "no questions asked about any of it. "
+                            "That's the Saltmere way.",
+                    "on_enter": [{"action": "meet_npc", "npc": "barkeep_magda"}],
                     "choices": [
-                        {"text": "What's the mood in the city?", "next": "mood"},
-                        {"text": "Heard anything about the Fading?", "next": "fading"},
+                        {"text": "What's the news in Saltmere?", "next": "news"},
+                        {"text": "Who should we talk to about ship passage?", "next": "passage"},
                         {"text": "Just a drink.", "next": None},
-                    ],
-                },
-                "mood": {
-                    "speaker": "Barkeep Magda",
-                    "text": "Tense. The mine road keeps dropping off caravans that "
-                            "started with more people than they arrived with. "
-                            "The forgemasters are cutting travel and nobody's saying why publicly.\n"
-                            "But privately? They're scared. Dwarves don't scare easily.",
-                    "choices": [{"text": "What do they think is happening?", "next": "think"},
-                                {"text": "Noted.", "next": None}],
-                },
-                "think": {
-                    "speaker": "Barkeep Magda",
-                    "text": "The mine. Whatever's in there, the Fading's been feeding it. "
-                            "They sealed it fifteen years ago and hoped it would stay sealed. "
-                            "It hasn't been staying very well lately.",
-                    "choices": [{"text": "We'll look into it.", "next": None}],
-                },
-                "fading": {
-                    "speaker": "Barkeep Magda",
-                    "text": "Comes up slower here than in the settlements — "
-                            "the old dwarven stonework has some natural resistance, "
-                            "or so the priests say. But it comes. Ore veins going grey. "
-                            "Animals acting wrong near the northern passages. It comes.",
-                    "choices": [{"text": "Thanks.", "next": None}],
-                },
+                    ]},
+                "news": {"speaker": "Barkeep Magda",
+                    "text": "Ships are spooked about the eastern islands. Dragon's Tooth, "
+                            "mainly — something changed there. Three ships didn't make it "
+                            "back this season. The Guildmaster controls passage now. "
+                            "You need to go through her.",
+                    "choices": [{"text": "Where do we find her?", "next": None}]},
+                "passage": {"speaker": "Barkeep Magda",
+                    "text": "Guildmaster Sable, at the Crossed Anchors. You can't miss it — "
+                            "nicest building in a port full of bad buildings. "
+                            "She'll negotiate. Bring something to negotiate with.",
+                    "choices": [{"text": "Thanks.", "next": None}]},
             }},
         },
     ],
@@ -8254,38 +8654,104 @@ _NEW_DIALOGUES = {
     ],
 
     "city_guard_thornhaven": [
+        # After Shadow Valdris defeated
+        {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {"id": "guard_endgame", "loop": True, "nodes": {
+                "start": {"speaker": "City Guard",
+                    "text": "Warden-Commander. The title's been empty for a generation. "
+                            "The watch has orders to give you full passage — anywhere in "
+                            "the city, any time. Governor Aldric's standing orders, "
+                            "before the end. He was many things. At the last, he kept his word.",
+                    "choices": [
+                        {"text": "What's the city's state?", "next": "city"},
+                        {"text": "Thank you.", "next": None},
+                    ]},
+                "city": {"speaker": "City Guard",
+                    "text": "Stable. The Fading is retreating in the eastern districts. "
+                            "Refugees are starting to return to their homes. "
+                            "It'll be months before things are normal, but for the first "
+                            "time since this started — I think normal is possible.",
+                    "choices": [{"text": "That's enough.", "next": None}]},
+            }},
+        },
+        # Thornhaven visited, post-Ashenmoor (Act 2)
+        {
+            "conditions": [
+                {"flag": "town.thornhaven.visited", "op": "==", "value": True},
+                {"flag": "boss_defeated.ruins_ashenmoor", "op": "==", "value": True},
+            ],
+            "tree": {"id": "guard_act2", "loop": True, "nodes": {
+                "start": {"speaker": "City Guard",
+                    "text": "The Ashenmoor report reached the watch. Second Hearthstone recovered. "
+                            "I've been in the city watch for twelve years — I know when news "
+                            "matters. That news matters. The Fading in the eastern quarter "
+                            "is still spreading, but slower now.",
+                    "choices": [
+                        {"text": "Three more to find.", "next": "three"},
+                        {"text": "What's the Governor's position?", "next": "governor"},
+                    ]},
+                "three": {"speaker": "City Guard",
+                    "text": "Then do it. The city watch will hold the capital. "
+                            "You hold whatever's out there. That's the division of labour.",
+                    "choices": [{"text": "Agreed.", "next": None}]},
+                "governor": {"speaker": "City Guard",
+                    "text": "The Governor... officially supports the Warden effort. "
+                            "Off the record, there are questions about what he knows "
+                            "and when he knew it. Questions above my rank. Watch yourself.",
+                    "choices": [{"text": "Noted.", "next": None}]},
+            }},
+        },
+        # First visit to Thornhaven
+        {
+            "conditions": [{"flag": "town.thornhaven.visited", "op": "!=", "value": True}],
+            "tree": {"id": "guard_first_visit", "loop": True, "nodes": {
+                "start": {"speaker": "City Guard",
+                    "text": "Keep your weapons sheathed in the capital. The watch doesn't "
+                            "ask twice. You're registered with the Warden Order, so you "
+                            "get some latitude. Don't abuse it.",
+                    "on_enter": [{"action": "set_flag", "flag": "town.thornhaven.visited", "value": True}],
+                    "choices": [
+                        {"text": "What's the situation in the city?", "next": "situation"},
+                        {"text": "What's happening in the Ashlands?", "next": "ashlands"},
+                        {"text": "We understand.", "next": None},
+                    ]},
+                "situation": {"speaker": "City Guard",
+                    "text": "Tense. The Fading is in the eastern districts now — the old "
+                            "market quarter is half-abandoned. The Governor has the castle "
+                            "locked down. Refugees are coming in from the countryside. "
+                            "The city watch is stretched thin.",
+                    "choices": [{"text": "We're here to help.", "next": None}]},
+                "ashlands": {"speaker": "City Guard",
+                    "text": "Bad. Worse than the official reports say. The eastern roads are "
+                            "impassable — Fading-touched creatures on the main highway. "
+                            "The Ashenmoor ruins are a focal point. Whatever the Fading "
+                            "wants, it wants it there.",
+                    "choices": [{"text": "We'll investigate.", "next": None}]},
+            }},
+        },
+        # Default
         {
             "conditions": [],
-            "tree": {
-                "id": "guard_thornhaven",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "City Guard",
-                        "text": "Keep your weapons sheathed in the capital. The city watch doesn't ask twice. You're registered with the Imperial Guild? Good. That makes this easier.",
-                        "choices": [
-                            {"text": "What's the situation in the city?", "next": "situation"},
-                            {"text": "What's happening in the Ashlands?", "next": "ashlands"},
-                            {"text": "We understand.", "next": None},
-                        ],
-                    },
-                    "situation": {
-                        "speaker": "City Guard",
-                        "text": "Tense. There are refugees from the eastern villages — hundreds came in last month. Nobody knows where the villages went. The Governor is managing public order but it's fragile. Don't start anything.",
-                        "choices": [{"text": "We won't.", "next": None}],
-                    },
-                    "ashlands": {
-                        "speaker": "City Guard",
-                        "text": "Off the record? There is a rebel camp out there — they call it "
-                                "the Holdfast. Northeast of here, deep in the Ashlands fog.\n"
-                                "The Governor calls them insurgents. I call them the only reason "
-                                "the Fading has not taken another fifty miles of ground.\n"
-                                "If you are heading that way — the last Warden initiate runs "
-                                "their supplies. Name is Dael. Worth talking to.",
-                        "choices": [{"text": "Thank you.", "next": None}],
-                    },
-                },
-            },
+            "tree": {"id": "guard_default", "loop": True, "nodes": {
+                "start": {"speaker": "City Guard",
+                    "text": "Keep your weapons sheathed in the capital. The city watch "
+                            "doesn't ask twice. You're registered with the Warden Order, "
+                            "so you get some latitude.",
+                    "choices": [
+                        {"text": "What's the situation in the city?", "next": "situation"},
+                        {"text": "What's happening in the Ashlands?", "next": "ashlands"},
+                        {"text": "We understand.", "next": None},
+                    ]},
+                "situation": {"speaker": "City Guard",
+                    "text": "Tense. The Fading is in the eastern districts. The Governor "
+                            "has the castle locked down. Refugees coming in daily.",
+                    "choices": [{"text": "We'll help.", "next": None}]},
+                "ashlands": {"speaker": "City Guard",
+                    "text": "Bad. Worse than the official reports. The Ashenmoor ruins "
+                            "are a focal point for Fading activity.",
+                    "choices": [{"text": "We'll investigate.", "next": None}]},
+            }},
         },
     ],
 
