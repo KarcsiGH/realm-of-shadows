@@ -162,7 +162,7 @@ LOCATIONS = {
     # ── Mirehollow Region ──
     "sunken_crypt": {
         "name": "Sunken Crypt", "type": LOC_DUNGEON,
-        "x": 85, "y": 78, "region": "mirehollow",
+        "x": 85, "y": 74, "region": "mirehollow",
         "visible": False, "icon": "D",
         "description": "Half-submerged ruins rising from the swamp.",
         "encounter_key": "medium_bandits", "floors": 4, "difficulty": "medium",
@@ -268,7 +268,7 @@ LOCATIONS = {
     },
     "the_anchorage": {
         "name": "The Anchorage", "type": LOC_TOWN,
-        "x": 45, "y": 108, "region": "coastal",
+        "x": 44, "y": 100, "region": "coastal",
         "visible": False, "icon": "T",
         "description": "A windswept outpost of Crystalspire researchers and hardy fisherfolk, ~80 souls.",
         "discovery_radius": 3,
