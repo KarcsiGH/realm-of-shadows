@@ -635,6 +635,49 @@ def _stair_facing(tiles, x, y, width, height):
     return best_dir
 
 
+def _create_stair_alcove(tiles, x, y, facing, width, height, needs_back_wall=False):
+    """
+    Carve a U-shaped alcove around a stair/entrance tile.
+
+    facing  — which direction the party approaches from (the open side of U).
+    needs_back_wall — True for DT_STAIRS_DOWN (floor tile): a back wall must be
+                      added behind the tile.  False for DT_STAIRS_UP / DT_ENTRANCE
+                      (the tile IS the back wall; only arm walls are needed).
+
+    Arm directions by facing:
+      south/north → arms extend east and west  (dx = ±1)
+      east/west   → arms extend north and south (dy = ±1)
+    Back-wall offset is opposite the open/facing direction.
+    """
+    arm_offsets = {
+        "south": [(-1, 0), (1, 0)],
+        "north": [(-1, 0), (1, 0)],
+        "east":  [(0, -1), (0, 1)],
+        "west":  [(0, -1), (0, 1)],
+    }
+    back_offset = {
+        "south": (0, -1),
+        "north": (0,  1),
+        "east":  (-1, 0),
+        "west":  (1,  0),
+    }
+
+    # Arm walls
+    for dx, dy in arm_offsets.get(facing, arm_offsets["south"]):
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < width and 0 <= ny < height:
+            if tiles[ny][nx]["type"] == DT_FLOOR or tiles[ny][nx]["type"] == DT_CORRIDOR:
+                tiles[ny][nx]["type"] = DT_WALL
+
+    # Back wall (only needed when the stair tile itself is a floor tile)
+    if needs_back_wall:
+        boff = back_offset.get(facing, back_offset["south"])
+        bx, by = x + boff[0], y + boff[1]
+        if 0 <= bx < width and 0 <= by < height:
+            if tiles[by][bx]["type"] == DT_FLOOR or tiles[by][bx]["type"] == DT_CORRIDOR:
+                tiles[by][bx]["type"] = DT_WALL
+
+
 def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_id="goblin_warren"):
     """Generate a single dungeon floor grid.
     Returns 2D list of tile dicts and metadata."""
@@ -714,10 +757,20 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
         entrance_y = first_room[1] + first_room[3] // 2
         if floor_num == 1:
             tiles[entrance_y][entrance_x]["type"] = DT_ENTRANCE
+            tiles[entrance_y][entrance_x]["facing"] = _stair_facing(
+                tiles, entrance_x, entrance_y, width, height)
+            _create_stair_alcove(
+                tiles, entrance_x, entrance_y,
+                tiles[entrance_y][entrance_x]["facing"],
+                width, height, needs_back_wall=False)
         else:
             tiles[entrance_y][entrance_x]["type"] = DT_STAIRS_UP
             tiles[entrance_y][entrance_x]["facing"] = _stair_facing(
                 tiles, entrance_x, entrance_y, width, height)
+            _create_stair_alcove(
+                tiles, entrance_x, entrance_y,
+                tiles[entrance_y][entrance_x]["facing"],
+                width, height, needs_back_wall=False)
 
         # ── Place stairs down (except last floor) ──
         stairs_down_pos = None
@@ -728,6 +781,10 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             tiles[sdy][sdx]["type"] = DT_STAIRS_DOWN
             tiles[sdy][sdx]["facing"] = _stair_facing(
                 tiles, sdx, sdy, width, height)
+            _create_stair_alcove(
+                tiles, sdx, sdy,
+                tiles[sdy][sdx]["facing"],
+                width, height, needs_back_wall=True)
             stairs_down_pos = (sdx, sdy)
 
         # ── Place boss encounter on last floor ──

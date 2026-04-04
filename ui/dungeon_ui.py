@@ -1663,7 +1663,7 @@ class DungeonUI:
             # objects should sit within it. Enemies stay full-ish, objects smaller.
             _OBJ_SCALE = {
                 DT_TREASURE:     0.35,   # chest — squat, sits on floor
-                DT_STAIRS_DOWN:  0.88,   # floor stairwell — near-full-width floor tile
+                DT_STAIRS_DOWN:  0.40,   # floor stairwell — small sprite near floor
                 DT_STAIRS_UP:    0.55,
                 DT_INTERACTABLE: 0.72,   # shrine/fountain — taller, more visible
                 DT_ENTRANCE:     0.80,   # archway — tall but not full wall
@@ -1703,6 +1703,11 @@ class DungeonUI:
                 if icon_key == DT_STAIRS_UP:
                     sp_h = min(sp_h, VP_H // 3)
                     sp_w = sp_h
+                elif icon_key == DT_STAIRS_DOWN:
+                    # Floor stairwell: cap height so it never looks like a wall,
+                    # and make it slightly wider than tall (floor perspective)
+                    sp_h = min(sp_h, VP_H // 5)
+                    sp_w = int(sp_h * 1.4)
                 blit_y = floor_y - sp_h   # bottom of sprite sits on floor
             else:
                 blit_y = VP_H // 2 - sp_h // 2   # centered at horizon (enemies)
