@@ -186,13 +186,13 @@ class QuestLogUI:
 
                 if state == -2:
                     draw_text(surface, "✓", ir.x + 6,  ir.y + 5, OBJ_DONE,      11, bold=True)
-                    draw_text(surface, q["name"], ir.x + 20, ir.y + 5, QUEST_COMPLETE, 12)
+                    draw_text(surface, q["name"], ir.x + 20, ir.y + 5, QUEST_COMPLETE, 12, max_width=196)
                 else:
                     dot = "●" if is_main else "◆"
                     dot_col = QUEST_ACTIVE if is_main else SIDE_COL
                     draw_text(surface, dot, ir.x + 6, ir.y + 5, dot_col, 11)
                     draw_text(surface, q["name"], ir.x + 20, ir.y + 5,
-                              QUEST_ACTIVE if is_main else SIDE_COL, 12)
+                              QUEST_ACTIVE if is_main else SIDE_COL, 12, max_width=180)
                     # objective progress badge
                     objs = check_quest_objectives(qid)
                     if objs:
@@ -238,7 +238,7 @@ class QuestLogUI:
         name_col = GOLD if is_main else SIDE_COL
 
         # Title + act badge
-        draw_text(surface, q["name"], x0, y, name_col, 16, bold=True)
+        draw_text(surface, q["name"], x0, y, name_col, 16, bold=True, max_width=rw - 60)
         act_lbl = f"Act {act}"
         aw = get_font(10).size(act_lbl)[0] + 8
         ar = pygame.Rect(dp.right - aw - 12, y + 2, aw, 16)

@@ -228,9 +228,9 @@ class ChestUI:
             pygame.draw.rect(surface, border, crect, 2, border_radius=4)
 
             draw_text(surface, char.name, crect.x + 8, crect.y + 4,
-                      CREAM, 13, bold=True)
+                      CREAM, 13, bold=True, max_width=max(40, cw - 16))
             draw_text(surface, char.class_name, crect.x + 8, crect.y + 22,
-                      GREY, 11)
+                      GREY, 11, max_width=max(40, cw - 16))
             inv_count = len(char.inventory)
             draw_text(surface, f"{inv_count} items", crect.x + 8, crect.y + 38,
                       DARK_GREY, 10)

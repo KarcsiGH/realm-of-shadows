@@ -357,9 +357,9 @@ class TownUI:
                 iw = get_font(22).size(initial)[0]
                 draw_text(surface, initial, pi.x + (44 - iw) // 2, pi.y + 10,
                           WHITE, 22, bold=True)
-                draw_text(surface, npc_data["name"], nr.x + 56, nr.y + 6, CREAM, 16, bold=True)
+                draw_text(surface, npc_data["name"], nr.x + 56, nr.y + 6, CREAM, 16, bold=True, max_width=150)
                 draw_text(surface, npc_data.get("title", ""), nr.x + 56, nr.y + 24,
-                          DARK_GREY, 11)
+                          DARK_GREY, 11, max_width=150)
 
         # Party summary at bottom
         self._draw_party_bar(surface, mx, my)
@@ -375,7 +375,7 @@ class TownUI:
             cx = 20 + i * cw
             cls = CLASSES[c.class_name]
             draw_text(surface, c.name, cx, bar_y + 8, cls["color"], 15, bold=True)
-            draw_text(surface, f"Lv.{c.level} {c.class_name}", cx, bar_y + 24, GREY, 13)
+            draw_text(surface, f"Lv.{c.level} {c.class_name}", cx, bar_y + 24, GREY, 13, max_width=cw - 4)
             hp = c.resources.get("HP", 0)
             draw_text(surface, f"HP: {hp}  Gold: {c.gold}  Items: {len(c.inventory)}",
                       cx, bar_y + 40, DIM_GREEN, 11)
@@ -2595,8 +2595,8 @@ class TownUI:
 
         # Class info
         draw_class_badge(surface, c.class_name, 20, 90, 18)
-        draw_text(surface, f"{c.class_name}  Level {c.level}", 62, 93, col, 18, bold=True)
-        draw_text(surface, cls.get("description",""), 62, 118, GREY, 12)
+        draw_text(surface, f"{c.class_name}  Level {c.level}", 62, 93, col, 18, bold=True, max_width=SCREEN_W - 180)
+        draw_text(surface, cls.get("description",""), 62, 118, GREY, 12, max_width=SCREEN_W - 180)
 
         # Timeline
         all_abs = CLASS_ABILITIES.get(c.class_name, [])
@@ -2699,7 +2699,7 @@ class TownUI:
         # Character context line
         draw_class_badge(surface, c.class_name, 20, 18, 16)
         draw_text(surface, f"{c.name}  —  {c.class_name}  Lv.{c.level}",
-                  52, 20, char_col, 15, bold=True)
+                  52, 20, char_col, 15, bold=True, max_width=SCREEN_W // 2 - 60)
 
         # Guildmaster contextual remark
         dungeon_count = sum(1 for f in ("boss_defeated.goblin_warren",
@@ -2730,7 +2730,7 @@ class TownUI:
             ch_cls  = CLASSES.get(ch.class_name, {})
             ch_col  = ch_cls.get("color", CREAM)
             tw      = max(120, get_font(12).size(ch.name)[0] + 50)
-            tr      = pygame.Rect(tab_x, 72, tw, 22)
+            tr      = pygame.Rect(tab_x, 72, tw, 28)
             self._tc_tab_rects.append((tr, i))
             sel     = (i == self._tc_char_idx)
             has_any = bool(_gat(ch))
@@ -2741,7 +2741,7 @@ class TownUI:
             draw_class_badge(surface, ch.class_name, tr.x + 3, tr.y + 2, 11)
             name_col = ch_col if sel else (CREAM if has_any else GREY)
             draw_text(surface, ch.name, tr.x + 22, tr.y + 4, name_col, 11,
-                      bold=sel)
+                      bold=sel, max_width=tw - 36)
             if has_any and not sel:
                 draw_text(surface, "✦", tr.right - 14, tr.y + 4,
                           (200, 150, 40), 11)

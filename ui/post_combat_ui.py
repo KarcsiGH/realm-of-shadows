@@ -207,7 +207,7 @@ class PostCombatUI:
             draw_text(surface, char.name, rect.x + 12, rect.y + 8,
                       cls["color"], 18, bold=True)
             draw_text(surface, f"Level {char.level}  {char.class_name}",
-                      rect.x + 12, rect.y + 30, GREY, 14)
+                      rect.x + 12, rect.y + 30, GREY, 14, max_width=282)
 
             # XP award
             draw_text(surface, f"+{xp_amt} XP", rect.x + 300, rect.y + 8,
@@ -305,7 +305,7 @@ class PostCombatUI:
             draw_text(surface, char.name, card_rect.x + 10, card_rect.y + 6,
                       name_col, 15, bold=True)
             draw_text(surface, char.class_name, card_rect.x + 10, card_rect.y + 24,
-                      GREY if can_id else DARK_GREY, 12)
+                      GREY if can_id else DARK_GREY, 12, max_width=180)
 
             if can_id and comb:
                 # Show available ID actions and resources
@@ -425,9 +425,9 @@ class PostCombatUI:
 
                     col = GOLD if hover else (CREAM if opt["can_afford"] else DARK_GREY)
                     draw_text(surface, opt["name"], btn_rect.x + 10, btn_rect.y + 4,
-                              col, 15, bold=True)
+                              col, 15, bold=True, max_width=225)
                     draw_text(surface, opt["description"], btn_rect.x + 10,
-                              btn_rect.y + 22, DARK_GREY, 11)
+                              btn_rect.y + 22, DARK_GREY, 11, max_width=225)
                     bx += 252
 
         # ── Identification log ──
@@ -565,7 +565,7 @@ class PostCombatUI:
             draw_text(surface, char.name, card_rect.x + 10, card_rect.y + 6,
                       cls["color"], 15, bold=True)
             draw_text(surface, f"Lv.{char.level} {char.class_name}",
-                      card_rect.x + 10, card_rect.y + 26, GREY, 12)
+                      card_rect.x + 10, card_rect.y + 26, GREY, 12, max_width=card_w - 20)
 
             # Count items assigned to this char
             count = sum(1 for v in self.loot_assignments.values() if v == i)
@@ -602,7 +602,7 @@ class PostCombatUI:
             draw_text(surface, f"{char.name}", 60, y, cls["color"], 18, bold=True)
             draw_text(surface, f"Level {char.level}  {char.class_name}  |  "
                       f"{char.gold} gold  |  {len(char.inventory)} items",
-                      60, y + 24, GREY, 14)
+                      60, y + 24, GREY, 14, max_width=SCREEN_W - 120)
             y += 60
 
         btn = pygame.Rect(SCREEN_W // 2 - 140, SCREEN_H - 80, 280, 50)

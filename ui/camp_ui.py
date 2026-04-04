@@ -235,7 +235,7 @@ class CampUI:
             pygame.draw.rect(surface, ITEM_BG, row, border_radius=3)
 
             draw_text(surface, f"{c.name} ({c.class_name})", row.x + 10, row.y + 3,
-                      CREAM, 13, bold=True)
+                      CREAM, 13, bold=True, max_width=232)
 
             # HP bar
             bar_x, bar_w = row.x + 250, 200
@@ -853,7 +853,7 @@ class CampUI:
         draw_text(surface, c.name, LEFT_X, y, GOLD, 18, bold=True)
         y += 22
         draw_text(surface, f"Level {c.level} {c.race_name} {c.class_name}",
-                  LEFT_X, y, CREAM, 13)
+                  LEFT_X, y, CREAM, 13, max_width=390)
         y += 16
         # XP progress
         from core.progression import xp_for_level
@@ -1095,7 +1095,7 @@ class CampUI:
 
             # Name
             name_col = CREAM if not is_locked else (80,75,90)
-            draw_text(surface, ab.get("name","?"), col_x + 8, ry2 + 5, name_col, 13, bold=not is_locked)
+            draw_text(surface, ab.get("name","?"), col_x + 8, ry2 + 5, name_col, 13, bold=not is_locked, max_width=col_w - 80)
 
             if is_locked:
                 draw_text(surface, f"Unlocks at level {ab.get('level',1)}",

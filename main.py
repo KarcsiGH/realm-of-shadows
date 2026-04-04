@@ -2088,7 +2088,7 @@ class Game:
             y = 80
             for c in self.party:
                 cls_col = CLASSES[c.class_name]["color"]
-                draw_text(self.screen, f"{c.name} — {c.class_name}", 40, y, cls_col, 14)
+                draw_text(self.screen, f"{c.name} — {c.class_name}", 40, y, cls_col, 14, max_width=SCREEN_W // 2 - 60)
                 y += 22
 
         draw_text(self.screen, "Every adventurer has a story.",
@@ -2571,7 +2571,7 @@ class Game:
             draw_class_badge(self.screen, c.class_name, cx + 6, cy + 6, 14)
             draw_text(self.screen, c.name, cx + 44, cy + 8, cls["color"], 16, bold=True)
             race_str = getattr(c, "race_name", "Human")
-            draw_text(self.screen, f"{race_str} {c.class_name}", cx + 44, cy + 28, CREAM, 15)
+            draw_text(self.screen, f"{race_str} {c.class_name}", cx + 44, cy + 28, CREAM, 15, max_width=card_w - por_w - 52)
 
             # Tier badge + level (right of class label)
             from core.progression import PLANAR_TIERS

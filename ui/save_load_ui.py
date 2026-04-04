@@ -317,7 +317,7 @@ class SaveLoadUI:
                              (x + 12, y + 27), (x + w - 12, y + 27))
 
             # Hero line (prominent)
-            draw_text(surface, info["hero"], x + 16, y + 33, HERO_COL, 15, bold=True)
+            draw_text(surface, info["hero"], x + 16, y + 33, HERO_COL, 15, bold=True, max_width=CARD_W - 170)
 
             # Companion pills — single line
             pill_y = y + 56
@@ -331,7 +331,7 @@ class SaveLoadUI:
             loc_str = f"{info['n_locs']} locations explored"
             if info["furthest"]:
                 loc_str += f"  ·  Last: {info['furthest']}"
-            draw_text(surface, loc_str, x + 16, y + 89, META_COL, 12)
+            draw_text(surface, loc_str, x + 16, y + 89, META_COL, 12, max_width=CARD_W - 32)
 
             # Second meta row: gold · key items · travel
             row2_parts = []
@@ -340,7 +340,7 @@ class SaveLoadUI:
             if info["key_items"]:
                 row2_parts.append(info["key_items"])
             row2 = "  ·  ".join(row2_parts)
-            draw_text(surface, row2, x + 16, y + 106, KEY_COL, 11)
+            draw_text(surface, row2, x + 16, y + 106, KEY_COL, 11, max_width=CARD_W - 140)
 
             if info["travel"]:
                 draw_text(surface, info["travel"], x + w - 120, y + 106, ORANGE, 11)
