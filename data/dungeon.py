@@ -639,15 +639,19 @@ def _create_stair_alcove(tiles, x, y, facing, width, height, needs_back_wall=Fal
     """
     Carve a U-shaped alcove around a stair/entrance tile.
 
-    facing  — which direction the party approaches from (the open side of U).
-    needs_back_wall — True for DT_STAIRS_DOWN (floor tile): a back wall must be
-                      added behind the tile.  False for DT_STAIRS_UP / DT_ENTRANCE
-                      (the tile IS the back wall; only arm walls are needed).
+    facing         — direction the party approaches from (the open side of U).
+    needs_back_wall — True  for DT_STAIRS_DOWN (floor tile): the tile stays at
+                      (x, y), a plain back wall is added one step behind it, and
+                      arm walls flank it — giving the cube one tile of depth with
+                      the stairwell texture projected onto the floor.
+                     False for DT_STAIRS_UP / DT_ENTRANCE: the tile is moved ONE
+                      STEP in the back direction so it becomes the FAR wall of the
+                      cube.  The original (x, y) position becomes the open interior
+                      floor.  Arm walls are added at BOTH rows (interior sides AND
+                      back-wall sides) so the cube is fully enclosed on 3 walls.
 
-    Arm directions by facing:
-      south/north → arms extend east and west  (dx = ±1)
-      east/west   → arms extend north and south (dy = ±1)
-    Back-wall offset is opposite the open/facing direction.
+    Arm directions:  south/north → east & west (dx=±1)
+                     east/west   → north & south (dy=±1)
     """
     arm_offsets = {
         "south": [(-1, 0), (1, 0)],
@@ -661,21 +665,54 @@ def _create_stair_alcove(tiles, x, y, facing, width, height, needs_back_wall=Fal
         "east":  (-1, 0),
         "west":  (1,  0),
     }
+    arms = arm_offsets.get(facing, arm_offsets["south"])
+    boff = back_offset.get(facing, back_offset["south"])
 
-    # Arm walls
-    for dx, dy in arm_offsets.get(facing, arm_offsets["south"]):
-        nx, ny = x + dx, y + dy
-        if 0 <= nx < width and 0 <= ny < height:
-            if tiles[ny][nx]["type"] == DT_FLOOR or tiles[ny][nx]["type"] == DT_CORRIDOR:
-                tiles[ny][nx]["type"] = DT_WALL
-
-    # Back wall (only needed when the stair tile itself is a floor tile)
     if needs_back_wall:
-        boff = back_offset.get(facing, back_offset["south"])
+        # ── Stairs DOWN: tile stays at (x,y) as non-blocking floor tile ──────
+        # Arm walls flank it at the same row.
+        for dx, dy in arms:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < width and 0 <= ny < height:
+                if tiles[ny][nx]["type"] in (DT_FLOOR, DT_CORRIDOR):
+                    tiles[ny][nx]["type"] = DT_WALL
+        # Back wall one step behind the stair tile.
         bx, by = x + boff[0], y + boff[1]
         if 0 <= bx < width and 0 <= by < height:
-            if tiles[by][bx]["type"] == DT_FLOOR or tiles[by][bx]["type"] == DT_CORRIDOR:
+            if tiles[by][bx]["type"] in (DT_FLOOR, DT_CORRIDOR):
                 tiles[by][bx]["type"] = DT_WALL
+
+    else:
+        # ── Stairs UP / Entrance: move tile to the FAR wall position ─────────
+        # The tile at (x, y) is the room-centre interior floor — it stays as
+        # DT_FLOOR.  The actual stair/entrance tile is placed one step back.
+        bx, by = x + boff[0], y + boff[1]
+
+        if 0 <= bx < width and 0 <= by < height and                 tiles[by][bx]["type"] in (DT_FLOOR, DT_CORRIDOR):
+            # Move tile type and facing to the back position.
+            tiles[by][bx]["type"]   = tiles[y][x]["type"]
+            tiles[by][bx]["facing"] = tiles[y][x].get("facing", facing)
+            # Restore original position to plain floor (cube interior).
+            tiles[y][x]["type"] = DT_FLOOR
+            tiles[y][x].pop("facing", None)
+        else:
+            # Back position unavailable — keep tile at (x, y) and fall back to
+            # single-row arm walls (alcove without interior depth).
+            bx, by = x, y
+
+        # Arm walls at the INTERIOR row (original position sides).
+        for dx, dy in arms:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < width and 0 <= ny < height:
+                if tiles[ny][nx]["type"] in (DT_FLOOR, DT_CORRIDOR):
+                    tiles[ny][nx]["type"] = DT_WALL
+
+        # Arm walls at the BACK-WALL row (flanking the stair tile).
+        for dx, dy in arms:
+            nx, ny = bx + dx, by + dy
+            if 0 <= nx < width and 0 <= ny < height:
+                if tiles[ny][nx]["type"] in (DT_FLOOR, DT_CORRIDOR):
+                    tiles[ny][nx]["type"] = DT_WALL
 
 
 def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_id="goblin_warren"):
