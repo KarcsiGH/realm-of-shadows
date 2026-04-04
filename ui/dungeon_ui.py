@@ -1108,11 +1108,7 @@ class DungeonUI:
         self._tex_stair_up   = _gen_stair_texture(going_down=False, light=_su_l, dark=_su_d)
         self._stair_down_cols = self._bake_tex_cols(self._tex_stair_down)
         self._stair_up_cols   = self._bake_tex_cols(self._tex_stair_up)
-        # Numpy array of stair-down texture for floor projection
-        import numpy as _np
-        import pygame.surfarray as _sa
-        self._np_stair_down = _sa.array3d(self._tex_stair_down).astype(_np.float32)
-        # shape: (TEX_W, TEX_H, 3) — indexed [tex_u, tex_v]
+
         # Exit arch wall texture
         self._tex_entrance    = _gen_entrance_texture(self.theme_id, self.wall_light, self.wall_dark)
         self._entrance_cols   = self._bake_tex_cols(self._tex_entrance)
@@ -1216,7 +1212,7 @@ class DungeonUI:
         tt   = tile["type"]
         if tt == DT_SECRET_DOOR and not tile.get("secret_found"):
             return True
-        return tt in (DT_WALL, DT_STAIRS_UP, DT_ENTRANCE)
+        return tt in (DT_WALL, DT_STAIRS_DOWN, DT_STAIRS_UP, DT_ENTRANCE)
 
     # ─────────────────────────────────────────────────────────
 
@@ -1265,7 +1261,7 @@ class DungeonUI:
             tile = tiles[map_y][map_x]
             tt   = tile["type"]
             is_s     = tt == DT_SECRET_DOOR and not tile.get("secret_found")
-            is_stair = tt in (DT_STAIRS_UP, DT_ENTRANCE)  # DOWN is floor tile
+            is_stair = tt in (DT_STAIRS_DOWN, DT_STAIRS_UP, DT_ENTRANCE)
             is_w     = tt == DT_WALL or is_s or is_stair
             is_d     = tt == DT_DOOR
 
@@ -1412,113 +1408,7 @@ class DungeonUI:
         if (self.event_message and self.event_timer > 0) or self.event_queue:
             self._draw_events(surface)
 
-    # ─────────────────────────────────────────────────────────
-    #  FLOOR-PROJECTED STAIR TEXTURE
-    # ─────────────────────────────────────────────────────────
 
-    def _render_stair_floor_tiles(self, view):
-        """
-        Perspective-correct floor texture projection for DT_STAIRS_DOWN tiles.
-
-        For every floor scanline (sy > HH), compute the world coordinates each
-        screen pixel maps to (standard raycaster floor-casting math).  Pixels
-        that fall on a discovered DT_STAIRS_DOWN tile are overwritten with a
-        sample from _tex_stair_down, with facing-aware UV mapping so the
-        "near/wide" end of the texture always faces the open side of the U.
-
-        Uses numpy for vectorised per-row computation (~200 rows × VW columns).
-        Called after floor scanlines, before wall columns, so walls render on top.
-        """
-        import numpy as _np
-        import pygame.surfarray as _sa
-
-        VH = VP_H; VW = VP_W; HH = VH // 2
-        FOG = TORCH_DIST
-
-        fl    = self.dungeon.get_current_floor_data()
-        tiles = fl["tiles"]
-        fw, fh = fl["width"], fl["height"]
-        px, py  = self.px, self.py
-
-        # Collect visible DT_STAIRS_DOWN tiles
-        SCAN_R = 10
-        stair_tiles = []
-        for gy in range(max(0, int(py) - SCAN_R), min(fh, int(py) + SCAN_R + 1)):
-            for gx in range(max(0, int(px) - SCAN_R), min(fw, int(px) + SCAN_R + 1)):
-                t = tiles[gy][gx]
-                if (t.get("type") == DT_STAIRS_DOWN
-                        and t.get("discovered", False)):
-                    stair_tiles.append((gx, gy, t.get("facing", "south")))
-        if not stair_tiles:
-            return
-
-        np_tex = self._np_stair_down          # (TEX_W, TEX_H, 3) float32
-        fog_c  = _np.array(self.fog_c, dtype=_np.float32)
-
-        dx, dy     = self.dx, self.dy
-        cx_c, cy_c = self.cx, self.cy
-        # Left-edge ray (cam_x = -1)
-        lrx = dx - cx_c
-        lry = dy - cy_c
-        # Per-pixel world step for unit row_dist
-        sx_u = 2.0 * cx_c / VW
-        sy_u = 2.0 * cy_c / VW
-
-        xs = _np.arange(VW, dtype=_np.float32)
-
-        # Acquire pixel array (locks the surface)
-        sa = _sa.pixels3d(view)   # (VW, VH, 3)
-
-        for G_X, G_Y, facing in stair_tiles:
-            for sy in range(HH + 1, VH):
-                row_dist = float(PROJ_DIST) / (sy - HH)
-
-                # World coords at each screen column for this floor row
-                fx = px + row_dist * lrx + xs * (row_dist * sx_u)
-                fy = py + row_dist * lry + xs * (row_dist * sy_u)
-
-                # Pixels on this tile
-                mask = ((fx >= G_X) & (fx < G_X + 1) &
-                        (fy >= G_Y) & (fy < G_Y + 1))
-                if not _np.any(mask):
-                    continue
-
-                fx_m = fx[mask] - G_X   # 0..1 within tile (x-axis)
-                fy_m = fy[mask] - G_Y   # 0..1 within tile (y-axis)
-
-                # UV mapping — tex_v encodes depth (0=far/void, TEX_H-1=near/wide)
-                # tex_u encodes lateral position
-                if facing == "south":
-                    # Open side south → party from south → high fy = near
-                    tu = _np.clip((fx_m * TEX_W).astype(_np.int32), 0, TEX_W - 1)
-                    tv = _np.clip((fy_m * TEX_H).astype(_np.int32), 0, TEX_H - 1)
-                elif facing == "north":
-                    # Open side north → party from north → low fy = near
-                    tu = _np.clip((fx_m * TEX_W).astype(_np.int32), 0, TEX_W - 1)
-                    tv = _np.clip(((1.0 - fy_m) * TEX_H).astype(_np.int32), 0, TEX_H - 1)
-                elif facing == "east":
-                    # Open side east → party from east → high fx = near
-                    tu = _np.clip((fy_m * TEX_W).astype(_np.int32), 0, TEX_W - 1)
-                    tv = _np.clip((fx_m * TEX_H).astype(_np.int32), 0, TEX_H - 1)
-                else:  # west
-                    # Open side west → party from west → low fx = near
-                    tu = _np.clip((fy_m * TEX_W).astype(_np.int32), 0, TEX_W - 1)
-                    tv = _np.clip(((1.0 - fx_m) * TEX_H).astype(_np.int32), 0, TEX_H - 1)
-
-                # Sample texture
-                colors = np_tex[tu, tv]   # (n, 3)
-
-                # Floor lighting (matches scanline floor formula)
-                horizon_t = float(sy - HH) / HH
-                fog_t     = min(1.0, row_dist * 0.35 / FOG)
-                bright    = 0.45 + 0.55 * horizon_t
-                lit = colors * (bright * (1.0 - fog_t)) + fog_c * fog_t
-                _np.clip(lit, 0, 255, out=lit)
-
-                x_idx = _np.where(mask)[0].astype(_np.int32)
-                sa[x_idx, sy] = lit.astype(_np.uint8)
-
-        del sa   # release surface lock
 
     # ─────────────────────────────────────────────────────────
     #  3D RENDER
@@ -1594,9 +1484,6 @@ class DungeonUI:
                 gc     = tuple(min(255, base_g[i] + alpha) for i in range(3))
                 pygame.draw.line(view, gc, (x_top, sy_top), (x_bot, sy_bot))
 
-        # ── Floor-projected stair textures (before wall columns so walls render on top) ──
-        self._render_stair_floor_tiles(view)
-
         # ── Wall columns ──
         wall_variants = self._wall_cols_variants
         door_cols     = self._door_cols
@@ -1640,6 +1527,8 @@ class DungeonUI:
                 # Wall-face stair/entrance textures
                 if hit_tt == DT_ENTRANCE:
                     cols_src = self._entrance_cols[tex_x]
+                elif hit_tt == DT_STAIRS_DOWN:
+                    cols_src = self._stair_down_cols[tex_x]
                 else:
                     cols_src = self._stair_up_cols[tex_x]
             else:

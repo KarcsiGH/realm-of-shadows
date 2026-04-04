@@ -4391,6 +4391,7 @@ class Game:
             if self.dungeon_state.go_upstairs():
                 sfx.play("stairs")
                 floor = self.dungeon_state.current_floor
+                self.dungeon_ui.on_floor_change()   # sync px/py + angle to new position
                 self.dungeon_ui.show_event(f"Ascended to Floor {floor}.", (80, 180, 220))
 
         elif event["type"] == "spire_descend_throne":

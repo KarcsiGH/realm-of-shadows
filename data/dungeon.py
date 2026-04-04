@@ -811,10 +811,14 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             tiles[sdy][sdx]["type"] = DT_STAIRS_DOWN
             tiles[sdy][sdx]["facing"] = _stair_facing(
                 tiles, sdx, sdy, width, height)
+            # Use needs_back_wall=False so the stair tile moves to the FAR
+            # wall of the alcove (matching stairs-UP behaviour).  The original
+            # position becomes interior floor and the stair tile renders as a
+            # solid wall face — rays stop there, stair texture is wall-face.
             _create_stair_alcove(
                 tiles, sdx, sdy,
                 tiles[sdy][sdx]["facing"],
-                width, height, needs_back_wall=True)
+                width, height, needs_back_wall=False)
             stairs_down_pos = (sdx, sdy)
 
         # ── Place boss encounter on last floor ──
@@ -1148,7 +1152,13 @@ class DungeonState:
 
     def _ensure_floor(self, floor_num):
         if floor_num not in self.floors:
-            rng = random.Random(hash((self.dungeon_id, floor_num)))
+            # Use stable cross-session seed: Python hash() randomises each
+            # launch (PYTHONHASHSEED), so derive a fixed integer from the
+            # dungeon id and floor number instead.
+            _seed = floor_num
+            for _c in self.dungeon_id:
+                _seed = _seed * 31 + ord(_c)
+            rng = random.Random(_seed & 0xFFFFFFFF)
             self.floors[floor_num] = generate_floor(
                 self.definition["width"],
                 self.definition["height"],
