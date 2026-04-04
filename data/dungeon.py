@@ -1499,6 +1499,56 @@ class DungeonState:
         floor = self.floors[self.current_floor]
         return [e for e in floor.get("enemies", []) if e["state"] != "dead"]
 
+    # ── Line-of-sight constants ──────────────────────────────
+    SIGHT_RADIUS = 3      # tiles
+
+    def _has_los(self, floor, x0, y0, x1, y1):
+        """DDA ray from (x0,y0) to (x1,y1). Returns True if unobstructed.
+        Walls and closed doors block LOS. The target tile itself is visible
+        (so the party can see the wall/door that blocks them)."""
+        tiles  = floor["tiles"]
+        fw, fh = floor["width"], floor["height"]
+        dx = x1 - x0
+        dy = y1 - y0
+        steps = max(abs(dx), abs(dy))
+        if steps == 0:
+            return True
+        sx = dx / steps
+        sy = dy / steps
+        cx, cy = float(x0) + 0.5, float(y0) + 0.5
+        for _ in range(steps):
+            cx += sx
+            cy += sy
+            tx, ty = int(cx), int(cy)
+            if tx == x1 and ty == y1:
+                return True          # reached target — it's visible
+            if tx < 0 or ty < 0 or tx >= fw or ty >= fh:
+                return False
+            tt = tiles[ty][tx]["type"]
+            if tt == DT_WALL:
+                return False
+            if tt == DT_SECRET_DOOR and not tiles[ty][tx].get("secret_found"):
+                return False
+            if tt == DT_DOOR:
+                return False         # closed doors block LOS
+        return True
+
+    def _update_fog(self):
+        """Reveal tiles within LOS sight range around the party."""
+        floor  = self.floors[self.current_floor]
+        sight  = self.SIGHT_RADIUS
+        px, py = self.party_x, self.party_y
+        floor["tiles"][py][px]["discovered"] = True
+        for dy in range(-sight, sight + 1):
+            for dx in range(-sight, sight + 1):
+                nx, ny = px + dx, py + dy
+                if nx < 0 or ny < 0 or nx >= floor["width"] or ny >= floor["height"]:
+                    continue
+                if math.sqrt(dx * dx + dy * dy) > sight:
+                    continue
+                if self._has_los(floor, px, py, nx, ny):
+                    floor["tiles"][ny][nx]["discovered"] = True
+
     def kill_enemy_at(self, x, y):
         """Mark enemy at position as dead (called after combat victory)."""
         floor = self.floors[self.current_floor]
