@@ -1499,6 +1499,83 @@ class DungeonState:
         floor = self.floors[self.current_floor]
         return [e for e in floor.get("enemies", []) if e["state"] != "dead"]
 
+    def go_downstairs(self):
+        """Descend to the next floor."""
+        if self.current_floor < self.total_floors:
+            self.current_floor += 1
+            self._ensure_floor(self.current_floor)
+            floor = self.floors[self.current_floor]
+            self.party_x, self.party_y = floor["entrance"]
+            self._update_fog()
+            return True
+        return False
+
+    def go_upstairs(self):
+        """Ascend to the previous floor."""
+        if self.current_floor > 1:
+            self.current_floor -= 1
+            floor = self.floors[self.current_floor]
+            if floor["stairs_down"]:
+                self.party_x, self.party_y = floor["stairs_down"]
+            self._update_fog()
+            return True
+        return False
+
+    def get_encounter_key(self):
+        """Get random encounter key for current floor."""
+        from data.enemies import DUNGEON_ENCOUNTER_TABLES
+        table = DUNGEON_ENCOUNTER_TABLES.get(self.dungeon_id)
+        if table:
+            keys = table.get(self.current_floor, table.get(1, ["tutorial"]))
+            if isinstance(keys, str):
+                return keys
+            if self.fading_level >= 2 and len(keys) > 1 and random.random() < 0.5:
+                keys = keys[1:]
+            return random.choice(keys)
+        table = self.definition["encounter_table"]
+        keys = table.get(self.current_floor, table.get(1, ["tutorial"]))
+        return random.choice(keys)
+
+    def get_current_floor_data(self):
+        return self.floors[self.current_floor]
+
+    def get_tile(self, x, y):
+        floor = self.floors[self.current_floor]
+        if 0 <= x < floor["width"] and 0 <= y < floor["height"]:
+            return floor["tiles"][y][x]
+        return None
+
+    def restore_explored(self, explored_data):
+        """Restore discovered tile state from saved data."""
+        for floor_str, floor_data in explored_data.items():
+            floor_num = int(floor_str)
+            self._ensure_floor(floor_num)
+            floor = self.floors[floor_num]
+            tiles = floor["tiles"]
+            fh = len(tiles)
+            fw = len(tiles[0]) if fh > 0 else 0
+            if isinstance(floor_data, list):
+                coords = floor_data
+                opened_chests = []
+                found_notes   = []
+            else:
+                coords        = floor_data.get("discovered", [])
+                opened_chests = floor_data.get("opened_chests", [])
+                found_notes   = floor_data.get("found_notes", [])
+            for x, y in coords:
+                if 0 <= y < fh and 0 <= x < fw:
+                    tiles[y][x]["discovered"] = True
+            opened_set = {(x, y) for x, y in opened_chests}
+            for ev in floor.get("events", []):
+                if ev.get("type") == "treasure":
+                    if (ev.get("x", -1), ev.get("y", -1)) in opened_set:
+                        ev["opened"] = True
+            found_set = {(x, y) for x, y in found_notes}
+            for ev in floor.get("events", []):
+                if ev.get("type") in ("note", "journal", "scroll"):
+                    if (ev.get("x", -1), ev.get("y", -1)) in found_set:
+                        ev["found"] = True
+
     # ── Line-of-sight constants ──────────────────────────────
     SIGHT_RADIUS = 3      # tiles
 
@@ -1660,6 +1737,97 @@ class DungeonState:
         from core.races import get_passive
         bonus += get_passive(getattr(character, "race_name", "Human"), "trap_detect_bonus", 0)
 
+        needed = max(5, min(95, base + bonus // 2))
+        roll   = random.randint(1, 100)
+        if roll <= needed:
+            trap["detected"] = True
+            return True, roll, needed
+        return False, roll, needed
+
+    def _check_trap_detection(self, px, py):
+        """Roll detection for traps and secret doors near the party."""
+        floor = self.floors[self.current_floor]
+        detect_bonus = 0
+        for c in self.party:
+            if c.class_name == "Thief":
+                detect_bonus += 25 + c.level * 3
+            elif c.class_name == "Ranger":
+                detect_bonus += 15 + c.level * 2
+            detect_bonus += c.stats.get("WIS", 0)
+            detect_bonus += c.stats.get("DEX", 0) // 2
+            from core.races import get_passive
+            trap_bonus = get_passive(getattr(c, "race_name", "Human"), "trap_detect_bonus", 0)
+            detect_bonus += trap_bonus
+        base_chance = 30 + detect_bonus
+        for dy in range(-1, 2):
+            for dx in range(-1, 2):
+                tx, ty = px + dx, py + dy
+                if 0 <= tx < floor["width"] and 0 <= ty < floor["height"]:
+                    tile = floor["tiles"][ty][tx]
+                    if tile["type"] == DT_TRAP and tile.get("event"):
+                        ev = tile["event"]
+                        if not ev.get("detected"):
+                            if random.randint(1, 100) <= min(90, base_chance):
+                                ev["detected"] = True
+        self._check_secret_detection(px, py, floor, detect_bonus)
+
+    def _check_secret_detection(self, px, py, floor, detect_bonus):
+        """Roll to detect secret doors within 2 tiles."""
+        secret_bonus = 0
+        for c in self.party:
+            if c.class_name == "Thief":
+                secret_bonus += 15 + c.level * 3
+            elif c.class_name == "Ranger":
+                secret_bonus += 8 + c.level * 2
+            from core.races import get_passive
+            sd_bonus = get_passive(getattr(c, "race_name", "Human"), "secret_door_bonus", 0)
+            secret_bonus += sd_bonus
+        best_wis = max((c.stats.get("WIS", 0) for c in self.party), default=0)
+        secret_chance = 8 + secret_bonus + best_wis // 3
+        for dy in range(-2, 3):
+            for dx in range(-2, 3):
+                tx, ty = px + dx, py + dy
+                if 0 <= tx < floor["width"] and 0 <= ty < floor["height"]:
+                    tile = floor["tiles"][ty][tx]
+                    if tile["type"] == DT_SECRET_DOOR and not tile.get("secret_found"):
+                        if random.randint(1, 100) <= min(60, secret_chance):
+                            tile["secret_found"] = True
+
+    def disarm_trap(self, x, y):
+        """Attempt to disarm a detected trap. Returns success bool."""
+        floor = self.floors[self.current_floor]
+        if 0 <= x < floor["width"] and 0 <= y < floor["height"]:
+            tile = floor["tiles"][y][x]
+            if tile["type"] == DT_TRAP and tile.get("event"):
+                ev = tile["event"]
+                if ev.get("detected") and not ev.get("disarmed"):
+                    chance = 40
+                    for c in self.party:
+                        if c.class_name == "Thief":
+                            chance += 30 + c.level * 4
+                        chance += c.stats.get("DEX", 0)
+                    if random.randint(1, 100) <= min(95, chance):
+                        ev["disarmed"] = True
+                        return True
+        return False
+
+    # ── Chest interaction ─────────────────────────────────────────
+
+    def search_chest_for_traps(self, chest_ev, character):
+        """Roll to detect a trap on a chest. Returns (found, roll, needed)."""
+        trap = chest_ev.get("trap")
+        if not trap or trap.get("disarmed"):
+            return False, 0, 0
+        base = trap.get("detect_base", 50)
+        bonus = 0
+        if character.class_name == "Thief":
+            bonus += 30 + character.level * 4
+        elif character.class_name == "Ranger":
+            bonus += 15 + character.level * 2
+        bonus += character.stats.get("DEX", 0)
+        bonus += character.stats.get("WIS", 0) // 2
+        from core.races import get_passive
+        bonus += get_passive(getattr(character, "race_name", "Human"), "trap_detect_bonus", 0)
         needed = max(5, min(95, base + bonus // 2))
         roll   = random.randint(1, 100)
         if roll <= needed:
