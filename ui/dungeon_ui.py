@@ -1211,7 +1211,7 @@ class DungeonUI:
         tt   = tile["type"]
         if tt == DT_SECRET_DOOR and not tile.get("secret_found"):
             return True
-        return tt in (DT_WALL, DT_STAIRS_UP, DT_ENTRANCE)
+        return tt in (DT_WALL, DT_STAIRS_DOWN, DT_STAIRS_UP, DT_ENTRANCE)
 
     # ─────────────────────────────────────────────────────────
 
@@ -1260,7 +1260,7 @@ class DungeonUI:
             tile = tiles[map_y][map_x]
             tt   = tile["type"]
             is_s     = tt == DT_SECRET_DOOR and not tile.get("secret_found")
-            is_stair = tt in (DT_STAIRS_UP, DT_ENTRANCE)   # DOWN is now floor
+            is_stair = tt in (DT_STAIRS_DOWN, DT_STAIRS_UP, DT_ENTRANCE)
             is_w     = tt == DT_WALL or is_s or is_stair
             is_d     = tt == DT_DOOR
 
@@ -1520,6 +1520,8 @@ class DungeonUI:
                 # Wall-face stair/entrance textures
                 if hit_tt == DT_ENTRANCE:
                     cols_src = self._entrance_cols[tex_x]
+                elif hit_tt == DT_STAIRS_DOWN:
+                    cols_src = self._stair_down_cols[tex_x]
                 else:
                     cols_src = self._stair_up_cols[tex_x]
             else:
@@ -1598,7 +1600,7 @@ class DungeonUI:
                 enc_key  = None
                 # UP and ENTRANCE are wall tiles — skip sprite rendering
                 # DOWN is now a floor tile — render as floor-anchored sprite
-                if tt in (DT_STAIRS_UP, DT_ENTRANCE):
+                if tt in (DT_STAIRS_DOWN, DT_STAIRS_UP, DT_ENTRANCE):
                     pass  # rendered as wall face texture — no sprite needed
                 elif tt == DT_TRAP:
                     # Only show trap sprite if the party knows about it

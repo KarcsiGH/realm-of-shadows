@@ -784,7 +784,7 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             _create_stair_alcove(
                 tiles, sdx, sdy,
                 tiles[sdy][sdx]["facing"],
-                width, height, needs_back_wall=True)
+                width, height, needs_back_wall=False)
             stairs_down_pos = (sdx, sdy)
 
         # ── Place boss encounter on last floor ──
