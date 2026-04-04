@@ -174,6 +174,55 @@ LEVEL_STAT_GAINS["Necromancer"] = {
 }
 
 
+LEVEL_STAT_GAINS["Strider"] = {
+    # Fighter+Ranger: mobile skirmisher — DEX primary, STR secondary, some WIS
+    "auto": {"DEX": 1, "STR": 1}, "even_bonus": {"WIS": 1},
+    "hp_base": 8, "hp_random": 1, "sp_base": 5, "sp_random": 1,
+    "mp_base": 1, "mp_random": 1,
+}
+LEVEL_STAT_GAINS["Guardian"] = {
+    # Fighter+Monk: armored ki protector — STR+CON, WIS at even levels
+    "auto": {"STR": 1, "CON": 1}, "even_bonus": {"WIS": 1},
+    "hp_base": 10, "hp_random": 2, "sp_base": 3, "sp_random": 1,
+    "mp_base": 2, "mp_random": 1,
+}
+LEVEL_STAT_GAINS["Druid"] = {
+    # Mage+Ranger: nature spellcaster — WIS primary, INT secondary, CON at even
+    "auto": {"WIS": 1, "INT": 1}, "even_bonus": {"CON": 1},
+    "hp_base": 5, "hp_random": 1, "sp_base": 0, "sp_random": 0,
+    "mp_base": 7, "mp_random": 2,
+}
+LEVEL_STAT_GAINS["Mystic"] = {
+    # Mage+Monk: arcane ki master — INT+WIS, DEX at even
+    "auto": {"INT": 1, "WIS": 1}, "even_bonus": {"DEX": 1},
+    "hp_base": 5, "hp_random": 1, "sp_base": 2, "sp_random": 1,
+    "mp_base": 6, "mp_random": 2,
+}
+LEVEL_STAT_GAINS["Inquisitor"] = {
+    # Cleric+Thief: divine shadow hunter — WIS+DEX auto, PIE at odd
+    "auto": {"WIS": 1, "DEX": 1}, "odd_bonus": {"PIE": 1},
+    "hp_base": 6, "hp_random": 1, "sp_base": 4, "sp_random": 1,
+    "mp_base": 3, "mp_random": 1,
+}
+LEVEL_STAT_GAINS["Phantom"] = {
+    # Thief+Monk: ki shadow — DEX+WIS auto, CON at even
+    "auto": {"DEX": 1, "WIS": 1}, "even_bonus": {"CON": 1},
+    "hp_base": 6, "hp_random": 1, "sp_base": 5, "sp_random": 1,
+    "mp_base": 2, "mp_random": 1,
+}
+LEVEL_STAT_GAINS["Shaman"] = {
+    # Ranger+Monk: wilderness spiritualist — WIS primary, DEX secondary, CON even
+    "auto": {"WIS": 1, "DEX": 1}, "even_bonus": {"CON": 1},
+    "hp_base": 7, "hp_random": 1, "sp_base": 3, "sp_random": 1,
+    "mp_base": 5, "mp_random": 1,
+}
+LEVEL_STAT_GAINS["Ascetic"] = {
+    # Monk apex (L15): transcendent ki master — WIS+DEX, CON even, solid HP
+    "auto": {"WIS": 2, "DEX": 1}, "even_bonus": {"CON": 1},
+    "hp_base": 8, "hp_random": 2, "sp_base": 4, "sp_random": 1,
+    "mp_base": 4, "mp_random": 2,
+}
+
 # ═══════════════════════════════════════════════════════════════
 #  CLASS TRANSITIONS
 # ═══════════════════════════════════════════════════════════════
