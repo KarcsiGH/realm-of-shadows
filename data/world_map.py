@@ -78,7 +78,7 @@ LOCATIONS = {
     },
     "briarhollow_dock": {
         "name": "Briarhollow Docks", "type": LOC_PORT,
-        "x": 60, "y": 90, "region": "briarhollow",
+        "x": 60, "y": 105, "region": "briarhollow",
         "visible": True, "icon": "P",
         "description": "A small dock on the southern coast.",
     },
@@ -180,7 +180,7 @@ LOCATIONS = {
     # ── Pale Coast ──
     "pale_coast_dock": {
         "name": "Pale Coast Harbor", "type": LOC_PORT,
-        "x": 35, "y": 88, "region": "pale_coast",
+        "x": 35, "y": 105, "region": "pale_coast",
         "visible": True, "icon": "P",
         "description": "A weathered harbor on the southwestern coast.",
     },
@@ -194,7 +194,7 @@ LOCATIONS = {
     },
     "saltmere": {
         "name": "Saltmere", "type": LOC_TOWN,
-        "x": 18, "y": 98, "region": "pale_coast",
+        "x": 22, "y": 97, "region": "pale_coast",
         "visible": False, "icon": "T",
         "description": "A rough port town where no questions are asked. The Thieves' Guild has a strong presence here.",
         "has_stable": False, "has_teleport": False,
@@ -202,7 +202,7 @@ LOCATIONS = {
     },
     "saltmere_dock": {
         "name": "Saltmere Docks", "type": LOC_PORT,
-        "x": 18, "y": 102, "region": "pale_coast",
+        "x": 20, "y": 96, "region": "pale_coast",
         "visible": False, "icon": "P",
         "description": "A busy dock with ships of questionable registry.",
     },
@@ -225,7 +225,7 @@ LOCATIONS = {
     # ── Eastern Shore ──
     "eastern_dock": {
         "name": "Eastport", "type": LOC_PORT,
-        "x": 100, "y": 60, "region": "ashlands",
+        "x": 106, "y": 60, "region": "ashlands",
         "visible": True, "icon": "P",
         "description": "A fortified port on the eastern coast.",
     },
