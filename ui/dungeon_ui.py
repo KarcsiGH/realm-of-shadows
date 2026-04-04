@@ -1108,6 +1108,10 @@ class DungeonUI:
         self._tex_stair_up   = _gen_stair_texture(going_down=False, light=_su_l, dark=_su_d)
         self._stair_down_cols = self._bake_tex_cols(self._tex_stair_down)
         self._stair_up_cols   = self._bake_tex_cols(self._tex_stair_up)
+        # Numpy array of stair-down texture for floor-perspective projection
+        import numpy as _np
+        import pygame.surfarray as _sa
+        self._np_stair_down = _sa.array3d(self._tex_stair_down).astype(_np.float32)
 
         # Exit arch wall texture
         self._tex_entrance    = _gen_entrance_texture(self.theme_id, self.wall_light, self.wall_dark)
@@ -1212,7 +1216,7 @@ class DungeonUI:
         tt   = tile["type"]
         if tt == DT_SECRET_DOOR and not tile.get("secret_found"):
             return True
-        return tt in (DT_WALL, DT_STAIRS_DOWN, DT_STAIRS_UP, DT_ENTRANCE)
+        return tt in (DT_WALL, DT_STAIRS_UP, DT_ENTRANCE)
 
     # ─────────────────────────────────────────────────────────
 
@@ -1261,7 +1265,7 @@ class DungeonUI:
             tile = tiles[map_y][map_x]
             tt   = tile["type"]
             is_s     = tt == DT_SECRET_DOOR and not tile.get("secret_found")
-            is_stair = tt in (DT_STAIRS_DOWN, DT_STAIRS_UP, DT_ENTRANCE)
+            is_stair = tt in (DT_STAIRS_UP, DT_ENTRANCE)
             is_w     = tt == DT_WALL or is_s or is_stair
             is_d     = tt == DT_DOOR
 
@@ -1411,6 +1415,101 @@ class DungeonUI:
 
 
     # ─────────────────────────────────────────────────────────
+    #  FLOOR-PROJECTED STAIR TEXTURE
+    # ─────────────────────────────────────────────────────────
+
+    def _render_stair_floor_tiles(self, view):
+        """
+        Floor perspective projection for DT_STAIRS_DOWN tiles.
+
+        Standard raycaster floor-casting math: for each floor scanline sy,
+        compute world (fx, fy) each screen pixel maps to.  Pixels on a
+        discovered DT_STAIRS_DOWN tile sample _tex_stair_down with UV
+        mapping that keeps the wide/near end facing the party.
+
+        KEY: uses VP_H//2 as posZ (not PROJ_DIST) so tiles at 1-3 tile
+        distance are actually visible within the 810-pixel viewport.
+        """
+        import numpy as _np
+        import pygame.surfarray as _sa
+
+        VH = VP_H; VW = VP_W; HH = VH // 2
+        posZ = float(HH)   # <-- use VP_H/2, NOT PROJ_DIST
+        FOG  = TORCH_DIST
+
+        fl    = self.dungeon.get_current_floor_data()
+        tiles = fl["tiles"]
+        fw, fh = fl["width"], fl["height"]
+        px, py = self.px, self.py
+
+        # Collect nearby discovered DT_STAIRS_DOWN tiles
+        SCAN_R = 8
+        stair_tiles = []
+        for gy in range(max(0, int(py) - SCAN_R), min(fh, int(py) + SCAN_R + 1)):
+            for gx in range(max(0, int(px) - SCAN_R), min(fw, int(px) + SCAN_R + 1)):
+                t = tiles[gy][gx]
+                if t.get("type") == DT_STAIRS_DOWN and t.get("discovered"):
+                    stair_tiles.append((gx, gy, t.get("facing", "south")))
+        if not stair_tiles:
+            return
+
+        np_tex = self._np_stair_down
+        fog_c  = _np.array(self.fog_c, dtype=_np.float32)
+
+        # Floor-casting basis vectors (standard raycaster floor formula)
+        dx, dy     = self.dx, self.dy
+        cx_c, cy_c = self.cx, self.cy
+        lrx = dx - cx_c   # direction of leftmost ray
+        lry = dy - cy_c
+        sx_u = 2.0 * cx_c / VW   # per-pixel lateral step (scaled by row_dist)
+        sy_u = 2.0 * cy_c / VW
+
+        xs = _np.arange(VW, dtype=_np.float32)
+        sa = _sa.pixels3d(view)   # (VW, VH, 3) — locks surface
+
+        for G_X, G_Y, facing in stair_tiles:
+            for sy in range(HH + 1, VH):
+                row_dist = posZ / (sy - HH)   # uses HH, not PROJ_DIST
+
+                fx = px + row_dist * lrx + xs * (row_dist * sx_u)
+                fy = py + row_dist * lry + xs * (row_dist * sy_u)
+
+                mask = ((fx >= G_X) & (fx < G_X + 1) &
+                        (fy >= G_Y) & (fy < G_Y + 1))
+                if not _np.any(mask):
+                    continue
+
+                fx_m = fx[mask] - G_X
+                fy_m = fy[mask] - G_Y
+
+                # UV: wide/bright end of texture faces the open (approach) side
+                if facing == "south":
+                    tu = _np.clip((fx_m * TEX_W).astype(_np.int32), 0, TEX_W - 1)
+                    tv = _np.clip((fy_m * TEX_H).astype(_np.int32), 0, TEX_H - 1)
+                elif facing == "north":
+                    tu = _np.clip((fx_m * TEX_W).astype(_np.int32), 0, TEX_W - 1)
+                    tv = _np.clip(((1.0 - fy_m) * TEX_H).astype(_np.int32), 0, TEX_H - 1)
+                elif facing == "east":
+                    tu = _np.clip((fy_m * TEX_W).astype(_np.int32), 0, TEX_W - 1)
+                    tv = _np.clip((fx_m * TEX_H).astype(_np.int32), 0, TEX_H - 1)
+                else:  # west
+                    tu = _np.clip((fy_m * TEX_W).astype(_np.int32), 0, TEX_W - 1)
+                    tv = _np.clip(((1.0 - fx_m) * TEX_H).astype(_np.int32), 0, TEX_H - 1)
+
+                colors = np_tex[tu, tv]
+
+                horizon_t = float(sy - HH) / HH
+                fog_t     = min(1.0, row_dist * 0.35 / FOG)
+                bright    = 0.45 + 0.55 * horizon_t
+                lit = colors * (bright * (1.0 - fog_t)) + fog_c * fog_t
+                _np.clip(lit, 0, 255, out=lit)
+
+                x_idx = _np.where(mask)[0].astype(_np.int32)
+                sa[x_idx, sy] = lit.astype(_np.uint8)
+
+        del sa  # release surface lock
+
+    # ─────────────────────────────────────────────────────────
     #  3D RENDER
     # ─────────────────────────────────────────────────────────
 
@@ -1484,6 +1583,9 @@ class DungeonUI:
                 gc     = tuple(min(255, base_g[i] + alpha) for i in range(3))
                 pygame.draw.line(view, gc, (x_top, sy_top), (x_bot, sy_bot))
 
+        # ── Floor-projected stair texture (before wall columns) ──
+        self._render_stair_floor_tiles(view)
+
         # ── Wall columns ──
         wall_variants = self._wall_cols_variants
         door_cols     = self._door_cols
@@ -1527,8 +1629,6 @@ class DungeonUI:
                 # Wall-face stair/entrance textures
                 if hit_tt == DT_ENTRANCE:
                     cols_src = self._entrance_cols[tex_x]
-                elif hit_tt == DT_STAIRS_DOWN:
-                    cols_src = self._stair_down_cols[tex_x]
                 else:
                     cols_src = self._stair_up_cols[tex_x]
             else:
@@ -1625,10 +1725,7 @@ class DungeonUI:
                 if enc and not enc.get("cleared"):
                     icon_key = "boss" if enc.get("is_boss") else "enemy"
                     enc_key  = enc.get("enc_key")
-                # Boss encounter event tile — show pulsing marker before triggered
-                ev_t = tile.get("event") or {}
-                if ev_t.get("type") == "boss_encounter" and not ev_t.get("triggered"):
-                    icon_key = "boss_encounter"
+
                 if tile.get("has_journal") and not tile.get("journal_read"):
                     icon_key = "journal"
                 if icon_key is None:
@@ -1681,7 +1778,6 @@ class DungeonUI:
                 "trap_tripped":  0.20,
                 "journal":       0.30,
                 "enemy":         0.85,
-                "boss_encounter": 0.90,   # boss marker — tall, threatening
                 "boss":          1.00,
             }
             type_scale = _OBJ_SCALE.get(icon_key, 0.60)
@@ -1844,28 +1940,6 @@ class DungeonUI:
                         sx_ = ox + si * pw // max(2, pw // 6)
                         pygame.draw.line(spr, c_a, (sx_, oy - 1), (sx_ + 3, oy - 2), 1)
 
-                elif icon_key == "boss_encounter":
-                    # Pulsing boss marker — column of red-pink light
-                    pulse2 = abs(math.sin(self.t * 2.2))
-                    pulse_a2 = int(alpha * (0.65 + 0.35 * pulse2))
-                    bc = (*color, pulse_a2)
-                    bdc = (int(color[0]*0.4), int(color[1]*0.2), int(color[2]*0.3), pulse_a2//2)
-                    # Central pillar
-                    pw2 = max(4, surf_w // 4)
-                    pygame.draw.rect(spr, bdc, ((surf_w-pw2)//2, 0, pw2, surf_h))
-                    pygame.draw.rect(spr, bc,  ((surf_w-pw2)//2, 0, pw2, surf_h), 1)
-                    # Skull-like top shape
-                    skull_r = max(3, surf_w // 5)
-                    pygame.draw.circle(spr, bc, (surf_w//2, skull_r + 2), skull_r, 1)
-                    # Eye dots
-                    eye_y2 = skull_r + 1
-                    pygame.draw.circle(spr, bc, (surf_w//2 - skull_r//3, eye_y2), max(1, skull_r//4))
-                    pygame.draw.circle(spr, bc, (surf_w//2 + skull_r//3, eye_y2), max(1, skull_r//4))
-                    # Halo glow at top
-                    for hl in range(max(2, skull_r)):
-                        ha2 = int(pulse_a2 * 0.4 * (1 - hl / max(1, skull_r)))
-                        pygame.draw.circle(spr, (*color, ha2),
-                                           (surf_w//2, skull_r + 2), skull_r + hl, 1)
 
                 elif icon_key == "journal":
                     # Book rectangle
@@ -1931,12 +2005,8 @@ class DungeonUI:
                     c = (100, 220, 100, 255)  # green — dungeon exit back to overworld
                 elif tt == DT_TREASURE:
                     c = (255,215,40,255)
-                elif tt == DT_FLOOR and (tile.get("event") or {}).get("type") == "boss_encounter":
-                    ev_be = tile.get("event") or {}
-                    if not ev_be.get("triggered"):
-                        c = (255, 30, 80, 255)    # bright red — boss marker
-                    else:
-                        c = (88, 78, 62, 200)     # floor — already triggered
+                elif tt == DT_FLOOR:
+                    c = (88, 78, 62, 200)
                 elif tt == DT_TRAP:
                     ev_t = tile.get("event") or {}
                     if ev_t.get("disarmed"):

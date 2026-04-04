@@ -3304,6 +3304,10 @@ class Game:
 
     def _grant_boss_rewards(self, dungeon_id):
         """Grant key items and story flags when a boss is defeated."""
+        # Guard: never grant rewards twice for the same dungeon boss.
+        from core.story_flags import get_flag as _gf
+        if _gf(f"boss_defeated.{dungeon_id}"):
+            return  # already granted — prevents double stone/key from double trigger
         # Map dungeon bosses to key rewards
         BOSS_KEY_GRANTS = {
             "goblin_warren":   "thornwood_map",    # unlocks Spider's Nest area

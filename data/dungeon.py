@@ -811,28 +811,34 @@ def generate_floor(width, height, floor_num, total_floors, theme, rng, dungeon_i
             tiles[sdy][sdx]["type"] = DT_STAIRS_DOWN
             tiles[sdy][sdx]["facing"] = _stair_facing(
                 tiles, sdx, sdy, width, height)
-            # Use needs_back_wall=False so the stair tile moves to the FAR
-            # wall of the alcove (matching stairs-UP behaviour).  The original
-            # position becomes interior floor and the stair tile renders as a
-            # solid wall face — rays stop there, stair texture is wall-face.
+            # Use needs_back_wall=False so the stair tile moves ONE step back
+            # inside the alcove; the original position becomes interior floor.
+            # The stair tile stays a passable FLOOR tile (rays pass through),
+            # so we add an explicit wall one more step behind it to stop rays.
+            _stair_facing_dir = tiles[sdy][sdx]["facing"]
             _create_stair_alcove(
                 tiles, sdx, sdy,
-                tiles[sdy][sdx]["facing"],
+                _stair_facing_dir,
                 width, height, needs_back_wall=False)
+            # Place a back wall one step behind the moved stair tile so rays stop.
+            _back_off = {"south":(0,-1),"north":(0,1),"east":(-1,0),"west":(1,0)}
+            _bo = _back_off.get(_stair_facing_dir, (0, 1))
+            # The moved stair tile is at (sdx+_bo[0], sdy+_bo[1]); wall goes one
+            # further step in the same direction.
+            _wx = sdx + _bo[0] * 2
+            _wy = sdy + _bo[1] * 2
+            if 0 <= _wx < width and 0 <= _wy < height:
+                if tiles[_wy][_wx]["type"] in (DT_FLOOR, DT_CORRIDOR):
+                    tiles[_wy][_wx]["type"] = DT_WALL
             stairs_down_pos = (sdx, sdy)
 
-        # ── Place boss encounter on last floor ──
+        # ── Boss position (for enemy spawn — no tile event needed) ──
         boss_pos = None
         if floor_num == total_floors and len(rooms) > 1:
             last_room = rooms[-1]
             bx = last_room[0] + last_room[2] // 2
             by = last_room[1] + last_room[3] // 2
-            if tiles[by][bx]["type"] == DT_FLOOR:
-                tiles[by][bx]["event"] = {
-                    "type": "boss_encounter",
-                    "triggered": False,
-                }
-                boss_pos = (bx, by)
+            boss_pos = (bx, by)
 
         # ── Place treasure ──
         treasure_count = max(1, floor_num)
@@ -1597,295 +1603,6 @@ class DungeonState:
         elif tile.get("event") and tile["event"].get("type") == "interactable":
             if not tile["event"].get("used"):
                 return {"type": "interactable", "data": tile["event"]}
-        elif tile.get("event") and tile["event"].get("type") == "boss_encounter":
-            if not tile["event"].get("triggered"):
-                # Check if boss already resolved (e.g., Grak spared/defeated)
-                from core.story_flags import get_flag
-                boss_flag = f"boss.{self.dungeon_id.split('_')[0]}.defeated"
-                # Grak-specific check
-                if self.dungeon_id == "goblin_warren" and get_flag("boss.grak.defeated"):
-                    tile["event"]["triggered"] = True
-                    return None
-                tile["event"]["triggered"] = True
-                return {
-                    "type": "random_encounter",
-                    "dungeon_id": self.dungeon_id,
-                    "floor": self.current_floor,
-                    "total_floors": self.total_floors,
-                    "is_boss": True,
-                }
-
-        # ── Visible enemy movement + collision ──
-        contact = self._move_enemies()
-        if contact:
-            # Peace path check
-            if self.dungeon_id == "goblin_warren":
-                from core.story_flags import get_flag
-                if get_flag("choice.grak_spared"):
-                    return None  # goblins are friendly
-
-            # Store contacted enemy position for post-combat cleanup
-            self._last_contact_enemy = (contact["x"], contact["y"])
-            enc_event = {
-                "type": "random_encounter",
-                "dungeon_id": self.dungeon_id,
-                "floor": self.current_floor,
-                "total_floors": self.total_floors,
-                "is_boss": contact.get("is_boss", False),
-                "_enc_key": contact["enc_key"],
-            }
-            # Attach any pending door surprise
-            if getattr(self, "_pending_surprise", None):
-                enc_event["surprise"] = self._pending_surprise
-                self._pending_surprise = None
-            return enc_event
-
-        return None
-
-    def go_downstairs(self):
-        """Descend to the next floor."""
-        if self.current_floor < self.total_floors:
-            self.current_floor += 1
-            self._ensure_floor(self.current_floor)
-            floor = self.floors[self.current_floor]
-            self.party_x, self.party_y = floor["entrance"]
-            self._update_fog()
-            return True
-        return False
-
-    def go_upstairs(self):
-        """Ascend to the previous floor."""
-        if self.current_floor > 1:
-            self.current_floor -= 1
-            floor = self.floors[self.current_floor]
-            # Go to stairs down position of upper floor
-            if floor["stairs_down"]:
-                self.party_x, self.party_y = floor["stairs_down"]
-            self._update_fog()
-            return True
-        return False
-
-    def get_encounter_key(self):
-        """Get random encounter key for current floor.
-        When fading_level > 0, bias toward harder encounters on higher floors."""
-        from data.enemies import DUNGEON_ENCOUNTER_TABLES
-        table = DUNGEON_ENCOUNTER_TABLES.get(self.dungeon_id)
-        if table:
-            # NEVER return boss from random encounters — boss only spawns
-            # from the placed boss_encounter event tile on the map
-            keys = table.get(self.current_floor, table.get(1, ["tutorial"]))
-            if isinstance(keys, str):
-                return keys
-            # Fading bias: with fading_level >= 2, skip the first (easiest) entry
-            # roughly 50% of the time so encounters skew harder
-            if self.fading_level >= 2 and len(keys) > 1 and random.random() < 0.5:
-                keys = keys[1:]   # drop the easiest option
-            return random.choice(keys)
-        # Fallback to old embedded table
-        table = self.definition["encounter_table"]
-        keys = table.get(self.current_floor, table.get(1, ["tutorial"]))
-        return random.choice(keys)
-
-    def get_current_floor_data(self):
-        return self.floors[self.current_floor]
-
-    def get_tile(self, x, y):
-        floor = self.floors[self.current_floor]
-        if 0 <= x < floor["width"] and 0 <= y < floor["height"]:
-            return floor["tiles"][y][x]
-        return None
-
-    # ── Line-of-sight constants ──────────────────────────────
-    SIGHT_RADIUS = 3      # tiles
-
-    def _has_los(self, floor, x0, y0, x1, y1):
-        """DDA ray from (x0,y0) to (x1,y1). Returns True if unobstructed.
-        Walls and closed doors block LOS. The target tile itself is visible
-        (so the party can *see* the wall/door that blocks them)."""
-        tiles  = floor["tiles"]
-        fw, fh = floor["width"], floor["height"]
-        dx = x1 - x0
-        dy = y1 - y0
-        steps = max(abs(dx), abs(dy))
-        if steps == 0:
-            return True
-        sx = dx / steps
-        sy = dy / steps
-        cx, cy = float(x0) + 0.5, float(y0) + 0.5
-        for _ in range(steps):
-            cx += sx
-            cy += sy
-            tx, ty = int(cx), int(cy)
-            if tx == x1 and ty == y1:
-                return True          # reached target — it's visible
-            if tx < 0 or ty < 0 or tx >= fw or ty >= fh:
-                return False
-            tt = tiles[ty][tx]["type"]
-            if tt == DT_WALL:
-                return False
-            if tt == DT_SECRET_DOOR and not tiles[ty][tx].get("secret_found"):
-                return False
-            if tt == DT_DOOR:
-                return False         # closed doors block LOS
-        return True
-
-
-    def restore_explored(self, explored_data):
-        """Restore discovered tile state, opened chests, and found notes from saved data.
-        explored_data: {floor_num_str: {discovered: [[x,y],...], opened_chests: [...], found_notes: [...]}}
-        Also accepts the old flat-list format for backward compatibility.
-        """
-        for floor_str, floor_data in explored_data.items():
-            floor_num = int(floor_str)
-            self._ensure_floor(floor_num)
-            floor = self.floors[floor_num]
-            tiles = floor["tiles"]
-            fh = len(tiles)
-            fw = len(tiles[0]) if fh > 0 else 0
-
-            # Handle both old format (list of coords) and new format (dict)
-            if isinstance(floor_data, list):
-                coords = floor_data
-                opened_chests = []
-                found_notes   = []
-            else:
-                coords        = floor_data.get("discovered", [])
-                opened_chests = floor_data.get("opened_chests", [])
-                found_notes   = floor_data.get("found_notes", [])
-
-            # Restore discovered tiles
-            for x, y in coords:
-                if 0 <= y < fh and 0 <= x < fw:
-                    tiles[y][x]["discovered"] = True
-
-            # Restore opened chests
-            opened_set = {(x, y) for x, y in opened_chests}
-            for ev in floor.get("events", []):
-                if ev.get("type") == "treasure":
-                    if (ev.get("x", -1), ev.get("y", -1)) in opened_set:
-                        ev["opened"] = True
-
-            # Restore found notes
-            found_set = {(x, y) for x, y in found_notes}
-            for ev in floor.get("events", []):
-                if ev.get("type") in ("note", "journal", "scroll"):
-                    if (ev.get("x", -1), ev.get("y", -1)) in found_set:
-                        ev["found"] = True
-
-    def _update_fog(self):
-        """Reveal tiles within LOS sight range (3 tiles, walls/doors block)."""
-        floor  = self.floors[self.current_floor]
-        sight  = self.SIGHT_RADIUS
-        px, py = self.party_x, self.party_y
-        # Always reveal the tile the party stands on
-        floor["tiles"][py][px]["discovered"] = True
-        for dy in range(-sight, sight + 1):
-            for dx in range(-sight, sight + 1):
-                nx, ny = px + dx, py + dy
-                if nx < 0 or ny < 0 or nx >= floor["width"] or ny >= floor["height"]:
-                    continue
-                if math.sqrt(dx * dx + dy * dy) > sight:
-                    continue
-                if self._has_los(floor, px, py, nx, ny):
-                    floor["tiles"][ny][nx]["discovered"] = True
-
-    def _check_trap_detection(self, px, py):
-        """Roll detection for traps on current and adjacent tiles.
-        Thief/Ranger get bonuses. Dwarves get racial bonus.
-        Detection just reveals the trap; the trap still fires unless disarmed."""
-        floor = self.floors[self.current_floor]
-        # Detection bonus from party composition
-        detect_bonus = 0
-        for c in self.party:
-            if c.class_name == "Thief":
-                detect_bonus += 25 + c.level * 3
-            elif c.class_name == "Ranger":
-                detect_bonus += 15 + c.level * 2
-            # DEX/WIS contribute
-            detect_bonus += c.stats.get("WIS", 0)
-            detect_bonus += c.stats.get("DEX", 0) // 2
-            # Racial trap bonus (Dwarf)
-            from core.races import get_passive
-            trap_bonus = get_passive(getattr(c, "race_name", "Human"), "trap_detect_bonus", 0)
-            detect_bonus += trap_bonus
-
-        base_chance = 30 + detect_bonus  # base 30% + bonuses
-
-        for dy in range(-1, 2):
-            for dx in range(-1, 2):
-                tx, ty = px + dx, py + dy
-                if 0 <= tx < floor["width"] and 0 <= ty < floor["height"]:
-                    tile = floor["tiles"][ty][tx]
-                    if tile["type"] == DT_TRAP and tile.get("event"):
-                        ev = tile["event"]
-                        if not ev.get("detected"):
-                            if random.randint(1, 100) <= min(90, base_chance):
-                                ev["detected"] = True
-
-        # Also check for secret doors nearby
-        self._check_secret_detection(px, py, floor, detect_bonus)
-
-    def _check_secret_detection(self, px, py, floor, detect_bonus):
-        """Roll to detect secret doors within 2 tiles.
-        Harder than traps — only Thief/Ranger class bonuses count,
-        not raw party stats. Elves get racial bonus. Repeated rolls on each step nearby."""
-        # Only class bonuses matter for secrets (not raw stat stacking)
-        secret_bonus = 0
-        for c in self.party:
-            if c.class_name == "Thief":
-                secret_bonus += 15 + c.level * 3
-            elif c.class_name == "Ranger":
-                secret_bonus += 8 + c.level * 2
-            # Racial secret door bonus (Elf)
-            from core.races import get_passive
-            sd_bonus = get_passive(getattr(c, "race_name", "Human"), "secret_door_bonus", 0)
-            secret_bonus += sd_bonus
-        # Only best WIS in party contributes (not all)
-        best_wis = max((c.stats.get("WIS", 0) for c in self.party), default=0)
-        secret_chance = 8 + secret_bonus + best_wis // 3  # much lower base
-
-        for dy in range(-2, 3):
-            for dx in range(-2, 3):
-                tx, ty = px + dx, py + dy
-                if 0 <= tx < floor["width"] and 0 <= ty < floor["height"]:
-                    tile = floor["tiles"][ty][tx]
-                    if tile["type"] == DT_SECRET_DOOR and not tile.get("secret_found"):
-                        if random.randint(1, 100) <= min(60, secret_chance):
-                            tile["secret_found"] = True
-
-    def disarm_trap(self, x, y):
-        """Attempt to disarm a detected trap. Returns success bool."""
-        floor = self.floors[self.current_floor]
-        if 0 <= x < floor["width"] and 0 <= y < floor["height"]:
-            tile = floor["tiles"][y][x]
-            if tile["type"] == DT_TRAP and tile.get("event"):
-                ev = tile["event"]
-                if ev.get("detected") and not ev.get("disarmed"):
-                    # Disarm chance based on party
-                    chance = 40
-                    for c in self.party:
-                        if c.class_name == "Thief":
-                            chance += 30 + c.level * 4
-                        chance += c.stats.get("DEX", 0)
-                    if random.randint(1, 100) <= min(95, chance):
-                        ev["disarmed"] = True
-                        return True
-        return False
-
-    # ── Chest interaction ─────────────────────────────────────────
-
-    def search_chest_for_traps(self, chest_ev, character):
-        """Roll to detect a trap on a chest using a specific character.
-        Returns (found: bool, roll: int, needed: int).
-        Sets chest_ev['trap']['detected'] = True on success."""
-        trap = chest_ev.get("trap")
-        if not trap or trap.get("disarmed"):
-            return False, 0, 0   # no trap or already dealt with
-
-        base = trap.get("detect_base", 50)
-        bonus = 0
-        if character.class_name == "Thief":
-            bonus += 30 + character.level * 4
         elif character.class_name == "Ranger":
             bonus += 15 + character.level * 2
         bonus += character.stats.get("DEX", 0)
