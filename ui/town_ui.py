@@ -99,6 +99,7 @@ class TownUI:
     VIEW_INN_LEVELUP_RESULT = "inn_levelup_result"   # fanfare screen
     VIEW_BRANCH_CHOICE = "branch_choice"              # ability fork selection
     VIEW_CLASSTREE = "classtree"                      # class progression viewer
+    VIEW_CLASS_CHOOSE = "class_choose"                 # advanced class selection screen
     VIEW_FORGE = "forge"
     VIEW_FORGE_CRAFT = "forge_craft"
     VIEW_JOBBOARD = "jobboard"
@@ -140,6 +141,10 @@ class TownUI:
         self.branch_hover_idx = -1       # hovered option index
         # Class tree viewer
         self.classtree_char_idx = 0  # which party member to show
+        self._tc_char_idx  = 0     # class_choose: which character is transitioning
+        self._tc_selected  = None  # class_choose: currently hovered/selected class name
+        self._tc_confirmed = False # class_choose: confirm button pressed
+        self._tc_card_rects = []   # [(rect, class_name, can)]
         # Trainer state
         self.trainer_char_idx = 0    # which character is training
         self.trainer_scroll = 0      # scroll offset for ability list
@@ -246,6 +251,8 @@ class TownUI:
             self._draw_branch_choice(surface, mx, my)
         elif self.view == self.VIEW_CLASSTREE:
             self._draw_classtree(surface, mx, my)
+        elif self.view == self.VIEW_CLASS_CHOOSE:
+            self._draw_class_choose(surface, mx, my)
         elif self.view in (self.VIEW_FORGE, self.VIEW_FORGE_CRAFT,
                            self.VIEW_FORGE_UPGRADE, self.VIEW_FORGE_ENCHANT,
                            self.VIEW_FORGE_REPAIR):
@@ -1408,6 +1415,9 @@ class TownUI:
                 next_unlock_parts.append(f"{_c.name}: {nxt['name']} ({gap_str})")
         next_unlock_str = "  |  ".join(next_unlock_parts[:3]) if next_unlock_parts                           else "All known abilities trained."
 
+        from core.progression import get_available_transitions
+        chars_ready = [c for c in self.party if get_available_transitions(c)]
+
         options = [
             {
                 "label":   "Take a Job",
@@ -1425,13 +1435,27 @@ class TownUI:
                 "action":  "train",
                 "badge":   len(pending_chars),
             },
+        ]
+        # Insert "Choose Advanced Class" card when anyone qualifies
+        if chars_ready:
+            names_str = ", ".join(c.name for c in chars_ready[:3])
+            options.append({
+                "label":   "Choose Advanced Class  ✦",
+                "sub":     (f"{names_str} {'are' if len(chars_ready)>1 else 'is'} ready "
+                            f"to transcend {'their' if len(chars_ready)>1 else 'their'} "
+                            f"base training. Choose a new path."),
+                "accent":  (220, 160, 60),
+                "action":  "class_choose",
+                "badge":   len(chars_ready),
+            })
+        options.append(
             {
                 "label":   "View Abilities",
                 "sub":     "See your full class progression tree and what unlocks at each level",
                 "accent":  (100, 160, 220),
                 "action":  "classtree",
-            },
-        ]
+            }
+        )
 
         CARD_W = W - 80
         CARD_H = 88
@@ -2637,6 +2661,250 @@ class TownUI:
             self._classtree_transition_rects.append((tr2, tn, can))
             tx += tr2.width + 6
 
+    # ──────────────────────────────────────────────────────────────────────────
+    #  CLASS CHOOSE — Advanced class selection screen
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def _draw_class_choose(self, surface, mx, my):
+        """Full-screen advanced class selection. Shows eligible classes as rich
+        cards with lore, stat requirements, and ability preview. Clicking a card
+        expands it; a second click (or confirm button) commits the transition."""
+        import pygame
+        from core.progression import CLASS_TRANSITIONS, get_available_transitions
+        from core.abilities import CLASS_ABILITIES
+        from core.classes import CLASSES
+
+        if not self.party:
+            self.view = self.VIEW_GUILD
+            return
+
+        self._tc_char_idx = max(0, min(self._tc_char_idx, len(self.party)-1))
+        c   = self.party[self._tc_char_idx]
+        cls = CLASSES.get(c.class_name, {})
+        char_col = cls.get("color", CREAM)
+
+        available = get_available_transitions(c)  # class names the char qualifies for
+        all_possible = [(tn, req) for tn, req in CLASS_TRANSITIONS.items()
+                        if c.class_name in req["base_classes"]]
+
+        # ── Background ────────────────────────────────────────────────────────
+        overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        overlay.fill((6, 4, 12, 220))
+        surface.blit(overlay, (0, 0))
+
+        # ── Header ────────────────────────────────────────────────────────────
+        draw_text(surface, "Choose Your Advanced Class", SCREEN_W//2 - 240, 14,
+                  GOLD, 26, bold=True)
+
+        # Character context line
+        draw_class_badge(surface, c.class_name, 20, 18, 16)
+        draw_text(surface, f"{c.name}  —  {c.class_name}  Lv.{c.level}",
+                  52, 20, char_col, 15, bold=True)
+
+        # Guildmaster contextual remark
+        dungeon_count = sum(1 for f in ("boss_defeated.goblin_warren",
+                                        "boss_defeated.spiders_nest",
+                                        "boss_defeated.abandoned_mine")
+                            if __import__('core.story_flags',
+                                         fromlist=['get_flag']).get_flag(f))
+        if dungeon_count >= 3:
+            gm_line = (f"The Guildmaster studies {c.name} carefully. "
+                       f"\"Three trials behind you. Your {c.class_name} training is complete. "
+                       f"What you become next is your choice — and it cannot be undone.\"")
+        elif dungeon_count >= 1:
+            gm_line = (f"The Guildmaster looks {c.name} over. "
+                       f"\"You've proven yourself in the field. "
+                       f"The paths below are open to you. Choose carefully.\"")
+        else:
+            gm_line = (f"The Guildmaster nods at {c.name}. "
+                       f"\"Your training has reached its limit as a {c.class_name}. "
+                       f"The paths ahead will define what you become.\"")
+        draw_wrapped_text(surface, gm_line, 20, 46, SCREEN_W - 40,
+                          (160, 150, 110), get_font(12))
+
+        # ── Character tabs ────────────────────────────────────────────────────
+        self._tc_tab_rects = []
+        tab_x = 20
+        for i, ch in enumerate(self.party):
+            from core.progression import get_available_transitions as _gat
+            ch_cls  = CLASSES.get(ch.class_name, {})
+            ch_col  = ch_cls.get("color", CREAM)
+            tw      = max(120, get_font(12).size(ch.name)[0] + 50)
+            tr      = pygame.Rect(tab_x, 72, tw, 22)
+            self._tc_tab_rects.append((tr, i))
+            sel     = (i == self._tc_char_idx)
+            has_any = bool(_gat(ch))
+            bg      = (30, 25, 15) if sel else (16, 14, 10)
+            border  = ch_col if sel else ((160, 120, 40) if has_any else (40, 36, 28))
+            pygame.draw.rect(surface, bg, tr, border_radius=3)
+            pygame.draw.rect(surface, border, tr, 2 if sel else 1, border_radius=3)
+            draw_class_badge(surface, ch.class_name, tr.x + 3, tr.y + 2, 11)
+            name_col = ch_col if sel else (CREAM if has_any else GREY)
+            draw_text(surface, ch.name, tr.x + 22, tr.y + 4, name_col, 11,
+                      bold=sel)
+            if has_any and not sel:
+                draw_text(surface, "✦", tr.right - 14, tr.y + 4,
+                          (200, 150, 40), 11)
+            tab_x += tw + 6
+
+        # ── Card grid ─────────────────────────────────────────────────────────
+        GRID_TOP   = 100
+        GRID_BOT   = SCREEN_H - 60  # leave room for back button
+
+        n_cards    = max(1, len(all_possible))
+        # Layout: up to 3 per row
+        COLS       = min(3, n_cards)
+        CARD_GAP   = 14
+        CARD_W     = (SCREEN_W - 40 - CARD_GAP * (COLS - 1)) // COLS
+        CARD_H_BASE= 160   # collapsed height
+        GRID_X     = 20
+
+        self._tc_card_rects = []
+        self._tc_confirm_rect = None
+        self._tc_back_rect    = pygame.Rect(SCREEN_W - 140, SCREEN_H - 48, 120, 36)
+
+        draw_button(surface, self._tc_back_rect, "Back",
+                    hover=self._tc_back_rect.collidepoint(mx, my), size=13)
+
+        for idx, (tn, req) in enumerate(all_possible):
+            col_i  = idx % COLS
+            row_i  = idx // COLS
+            cx     = GRID_X + col_i * (CARD_W + CARD_GAP)
+            cy     = GRID_TOP + row_i * (CARD_H_BASE + CARD_GAP)
+
+            can      = tn in available
+            selected = (self._tc_selected == tn)
+            tc_data  = CLASSES.get(tn, {})
+            tc_col   = tc_data.get("color", CREAM)
+
+            # Expanded card is taller
+            card_h = CARD_H_BASE + 180 if selected else CARD_H_BASE
+            # Clamp so it doesn't go off screen
+            if cy + card_h > GRID_BOT - 4:
+                card_h = max(CARD_H_BASE, GRID_BOT - cy - 4)
+
+            card_r = pygame.Rect(cx, cy, CARD_W, card_h)
+            self._tc_card_rects.append((card_r, tn, can))
+
+            # Card background
+            if selected and can:
+                bg_col  = (22, 35, 20)
+                bd_col  = (80, 200, 120)
+            elif can:
+                bg_col  = (20, 18, 28)
+                bd_col  = tc_col
+            else:
+                bg_col  = (14, 12, 14)
+                bd_col  = (40, 36, 36)
+
+            pygame.draw.rect(surface, bg_col, card_r, border_radius=6)
+            pygame.draw.rect(surface, bd_col, card_r, 2 if not selected else 3,
+                             border_radius=6)
+
+            # Class badge + name
+            badge_x = card_r.x + 10
+            badge_y = card_r.y + 10
+            draw_class_badge(surface, tn, badge_x, badge_y, 20)
+
+            tier_label = "Hybrid" if req["min_level"] == 10 else "Apex"
+            tier_col   = (140, 180, 220) if req["min_level"] == 10 else (220, 160, 80)
+            name_col   = tc_col if can else (60, 54, 50)
+            draw_text(surface, tn, badge_x + 28, badge_y + 2,
+                      name_col, 17, bold=True)
+            draw_text(surface, f"{tier_label}  ·  Level {req['min_level']}",
+                      badge_x + 28, badge_y + 22, tier_col, 11)
+
+            # Stat requirements — green if met, red if not
+            req_y = card_r.y + 56
+            for stat, minimum in req.get("min_stats", {}).items():
+                actual  = c.stats.get(stat, 0)
+                met     = actual >= minimum
+                s_col   = (80, 200, 100) if met else (200, 80, 80)
+                tick    = "✓" if met else "✗"
+                draw_text(surface, f"{tick} {stat} {minimum}  ({actual})",
+                          card_r.x + 10, req_y, s_col, 11)
+                req_y += 16
+
+            # Thematic description
+            desc     = req.get("description", tc_data.get("description", ""))
+            desc_y   = req_y + 4
+            draw_wrapped_text(surface, desc,
+                              card_r.x + 10, desc_y, CARD_W - 20,
+                              (140, 130, 100) if can else (70, 64, 58),
+                              get_font(11))
+
+            # ── Expanded section ──────────────────────────────────────────
+            if selected and can:
+                exp_y  = card_r.y + CARD_H_BASE + 4
+                draw_text(surface, "Abilities you'll gain access to:",
+                          card_r.x + 10, exp_y, (100, 180, 120), 11, bold=True)
+                exp_y += 18
+                class_abs = CLASS_ABILITIES.get(tn, [])[:6]  # show first 6
+                if class_abs:
+                    for ab in class_abs:
+                        ab_col = (120, 160, 200)
+                        ab_str = f"  {ab['name']}  ({ab['cost']} {ab.get('resource','')})"
+                        draw_text(surface, ab_str,
+                                  card_r.x + 10, exp_y, ab_col, 11)
+                        exp_y += 14
+                        if exp_y + 14 > card_r.bottom - 44:
+                            remaining = len(class_abs) - class_abs.index(ab) - 1
+                            if remaining > 0:
+                                draw_text(surface, f"  + {remaining} more abilities...",
+                                          card_r.x + 10, exp_y, (80, 100, 80), 10)
+                            break
+                else:
+                    draw_text(surface, "  (abilities unlocked at the Guild after transition)",
+                              card_r.x + 10, exp_y, (80, 90, 80), 10)
+                    exp_y += 14
+
+                # Confirm button at bottom of expanded card
+                confirm_r = pygame.Rect(card_r.x + 10, card_r.bottom - 38,
+                                        CARD_W - 20, 32)
+                self._tc_confirm_rect = (confirm_r, tn)
+                c_hover = confirm_r.collidepoint(mx, my)
+                pygame.draw.rect(surface, (20, 60, 30) if c_hover else (14, 40, 20),
+                                 confirm_r, border_radius=5)
+                pygame.draw.rect(surface, (80, 200, 120) if c_hover else (50, 140, 80),
+                                 confirm_r, 2, border_radius=5)
+                draw_text(surface, f"Become {tn}  —  This cannot be undone",
+                          confirm_r.x + 10, confirm_r.y + 8,
+                          (140, 230, 150) if c_hover else (100, 180, 110), 12,
+                          bold=c_hover)
+
+            # Locked overlay for ineligible classes
+            if not can:
+                lock_surf = pygame.Surface((CARD_W, CARD_H_BASE), pygame.SRCALPHA)
+                lock_surf.fill((0, 0, 0, 100))
+                surface.blit(lock_surf, (card_r.x, card_r.y))
+                # Show which stat is blocking
+                blocking = [(s, m) for s, m in req.get("min_stats", {}).items()
+                            if c.stats.get(s, 0) < m]
+                if blocking:
+                    stat, need = blocking[0]
+                    have = c.stats.get(stat, 0)
+                    draw_text(surface, f"Requires {stat} {need}  (have {have})",
+                              card_r.x + 10, card_r.y + card_h - 24,
+                              (160, 80, 80), 11)
+                else:
+                    draw_text(surface, f"Requires Level {req['min_level']}",
+                              card_r.x + 10, card_r.y + card_h - 24,
+                              (140, 80, 60), 11)
+
+    def _do_class_transition(self, char_idx, class_name):
+        """Execute the class transition and show confirmation."""
+        import core.sound as sfx
+        from core.progression import apply_class_transition
+        c = self.party[char_idx]
+        success, msg = apply_class_transition(c, class_name)
+        if success:
+            sfx.play("quest_complete")
+            self._msg(msg, (160, 220, 180))
+            self._tc_selected  = None
+            self._tc_confirmed = True
+            self.view = self.VIEW_GUILD
+        else:
+            self._msg(msg, RED)
 
     def _rest_at_inn(self, tier_key, total_cost=None):
         """Process inn rest for the party. total_cost includes room + training."""
@@ -3494,17 +3762,47 @@ class TownUI:
                     self.classtree_char_idx = i
                     return None
                 tab_x += tw + 6
-            # Transition buttons (only available ones are clickable)
+            # Transition buttons → open full class-choose screen
             for tr2, class_name, can in getattr(self, "_classtree_transition_rects", []):
                 if tr2.collidepoint(mx, my) and can:
                     c = self.party[self.classtree_char_idx]
-                    from core.progression import apply_class_transition
-                    success, msg = apply_class_transition(c, class_name)
-                    if success:
-                        sfx.play("quest_complete")
-                        self._msg(msg, (160, 220, 180))
+                    self._tc_char_idx  = self.classtree_char_idx
+                    self._tc_selected  = None
+                    self._tc_confirmed = False
+                    self._tc_card_rects = []
+                    self.view = self.VIEW_CLASS_CHOOSE
+                    return None
+
+        # ── Class Choose ──────────────────────────────────────────────────────
+        elif self.view == self.VIEW_CLASS_CHOOSE:
+            # Back button
+            back_r = pygame.Rect(SCREEN_W - 140, SCREEN_H - 48, 120, 36)
+            if back_r.collidepoint(mx, my):
+                self.view = self.VIEW_CLASSTREE
+                return None
+
+            # Character tabs
+            for tr, tab_idx in getattr(self, "_tc_tab_rects", []):
+                if tr.collidepoint(mx, my):
+                    self._tc_char_idx = tab_idx
+                    self._tc_selected = None   # reset selection on tab switch
+                    return None
+
+            # Confirm button (exists only when a card is selected)
+            confirm_info = getattr(self, "_tc_confirm_rect", None)
+            if confirm_info:
+                confirm_r, cls_name = confirm_info
+                if confirm_r.collidepoint(mx, my):
+                    self._do_class_transition(self._tc_char_idx, cls_name)
+                    return None
+
+            # Card clicks — select / deselect
+            for card_r, cls_name, can in getattr(self, "_tc_card_rects", []):
+                if card_r.collidepoint(mx, my) and can:
+                    if self._tc_selected == cls_name:
+                        self._tc_selected = None   # deselect
                     else:
-                        self._msg(msg, RED)
+                        self._tc_selected = cls_name
                     return None
 
         # ── Tavern ──
@@ -3654,6 +3952,18 @@ class TownUI:
                         self.classtree_char_idx = 0
                         self._guild_classtree_origin = True
                         self.view = self.VIEW_CLASSTREE
+                    elif action == "class_choose":
+                        # Open class-choose for the first eligible character
+                        from core.progression import get_available_transitions
+                        for i, ch in enumerate(self.party):
+                            if get_available_transitions(ch):
+                                self._tc_char_idx  = i
+                                self._tc_selected  = None
+                                self._tc_confirmed = False
+                                self._tc_card_rects = []
+                                self.classtree_char_idx = i
+                                self.view = self.VIEW_CLASS_CHOOSE
+                                break
                     return None
 
         # ── Job Board ──
