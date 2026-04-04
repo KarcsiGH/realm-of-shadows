@@ -915,6 +915,58 @@ NPC_DIALOGUES = {
                 }
             }
         },
+        # ── Rank 1: Scout (1st hearthstone recovered) ───────────────
+        {
+            "conditions": [{"flag": "item.hearthstone.1", "op": "==", "value": True}],
+            "tree": {
+                "id": "warden_rank1",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "You recovered the first Hearthstone. I wasn't sure you'd make it back.\nThe Order recognises your service. Scout rank — take this badge.",
+                        "on_enter": [
+                            {"action": "give_item",
+                             "once_flag": "warden.badge1.given",
+                             "item": {
+                                "name": "Scout Badge",
+                                "type": "misc", "slot": None,
+                                "identified": True, "stack": 1,
+                                "description": "A grey iron badge bearing a single ward-rune. Marks the bearer as a recognised Scout of the Warden Order.",
+                                "rarity": "common",
+                                "warden_rank": 1
+                             }}
+                        ],
+                        "choices": [
+                            {"text": "Where should we go next?", "next": "guidance"},
+                            {"text": "What is the Scout rank?", "next": "rank_info"},
+                            {"text": "Thank you.", "next": None}
+                        ]
+                    },
+                    "guidance": {
+                        "speaker": "Warden Liaison",
+                        "text": "Four Hearthstones remain. Maren will know more than I do about their locations.\nWhat I know: the Spider's Nest near Woodhaven, the Ruins of Ashenmoor south-west, and the Sunken Crypt beneath the Pale Coast. Dangerous places — get stronger first.",
+                        "choices": [{"text": "We'll find them.", "next": None}]
+                    },
+                    "rank_info": {
+                        "speaker": "Warden Liaison",
+                        "text": "Scout rank grants one point to all attributes and a small experience bonus. The Order's mark strengthens those who carry it — the deeper your rank, the stronger the effect.\nProve yourself on the remaining Hearthstones.",
+                        "choices": [
+                            {"text": "We will.", "next": None},
+                            {"text": "How do warriors advance beyond their starting class?", "next": "class_advance"},
+                        ]
+                    },
+                    "class_advance": {
+                        "speaker": "Warden Liaison",
+                        "text": "Around level ten, a warrior's base training is complete. Two paths exist from there.\n"
+                                "The first: deepen into a true apex class — a Fighter becomes a Knight, a Mage becomes an Archmage. Pure mastery.\n"
+                                "The second: merge two disciplines. A Fighter who has trained under a Cleric can become a Paladin — drawing on both, transcending either.\n"
+                                "Visit any Guild and look at the Abilities board. The options appear there when your people are ready.",
+                        "choices": [{"text": "We'll visit the Guild.", "next": None}],
+                    }
+                }
+            }
+        },
         # ── Rank 0.4: Reached Ironhearth — Act 1 late ──────────────
         {
             "conditions": [{"flag": "town.ironhearth.visited", "op": "==", "value": True},
@@ -957,7 +1009,8 @@ NPC_DIALOGUES = {
         },
         # ── Rank 0.3: Spider's Nest cleared ─────────────────────────
         {
-            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True},
+                           {"flag": "boss_defeated.abandoned_mine", "op": "!=", "value": True}],
             "tree": {
                 "id": "warden_post_spiders",
                 "loop": True,
@@ -1082,58 +1135,6 @@ NPC_DIALOGUES = {
                     },
                 },
             },
-        },
-        # ── Rank 1: Scout (1st hearthstone recovered) ───────────────
-        {
-            "conditions": [{"flag": "item.hearthstone.1", "op": "==", "value": True}],
-            "tree": {
-                "id": "warden_rank1",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Warden Liaison",
-                        "text": "You recovered the first Hearthstone. I wasn't sure you'd make it back.\nThe Order recognises your service. Scout rank — take this badge.",
-                        "on_enter": [
-                            {"action": "give_item",
-                             "once_flag": "warden.badge1.given",
-                             "item": {
-                                "name": "Scout Badge",
-                                "type": "misc", "slot": None,
-                                "identified": True, "stack": 1,
-                                "description": "A grey iron badge bearing a single ward-rune. Marks the bearer as a recognised Scout of the Warden Order.",
-                                "rarity": "common",
-                                "warden_rank": 1
-                             }}
-                        ],
-                        "choices": [
-                            {"text": "Where should we go next?", "next": "guidance"},
-                            {"text": "What is the Scout rank?", "next": "rank_info"},
-                            {"text": "Thank you.", "next": None}
-                        ]
-                    },
-                    "guidance": {
-                        "speaker": "Warden Liaison",
-                        "text": "Four Hearthstones remain. Maren will know more than I do about their locations.\nWhat I know: the Spider's Nest near Woodhaven, the Ruins of Ashenmoor south-west, and the Sunken Crypt beneath the Pale Coast. Dangerous places — get stronger first.",
-                        "choices": [{"text": "We'll find them.", "next": None}]
-                    },
-                    "rank_info": {
-                        "speaker": "Warden Liaison",
-                        "text": "Scout rank grants one point to all attributes and a small experience bonus. The Order's mark strengthens those who carry it — the deeper your rank, the stronger the effect.\nProve yourself on the remaining Hearthstones.",
-                        "choices": [
-                            {"text": "We will.", "next": None},
-                            {"text": "How do warriors advance beyond their starting class?", "next": "class_advance"},
-                        ]
-                    },
-                    "class_advance": {
-                        "speaker": "Warden Liaison",
-                        "text": "Around level ten, a warrior's base training is complete. Two paths exist from there.\n"
-                                "The first: deepen into a true apex class — a Fighter becomes a Knight, a Mage becomes an Archmage. Pure mastery.\n"
-                                "The second: merge two disciplines. A Fighter who has trained under a Cleric can become a Paladin — drawing on both, transcending either.\n"
-                                "Visit any Guild and look at the Abilities board. The options appear there when your people are ready.",
-                        "choices": [{"text": "We'll visit the Guild.", "next": None}],
-                    }
-                }
-            }
         },
         # ── Rank 0: Initiate (first meeting, gives starter badge) ───
         {
