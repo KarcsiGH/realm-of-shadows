@@ -145,6 +145,7 @@ class TownUI:
         self._tc_selected  = None  # class_choose: currently hovered/selected class name
         self._tc_confirmed = False # class_choose: confirm button pressed
         self._tc_card_rects = []   # [(rect, class_name, can)]
+        self._tc_close_rect = None # class_choose: close (X) button on expanded card
         # Trainer state
         self.trainer_char_idx = 0    # which character is training
         self.trainer_scroll = 0      # scroll offset for ability list
@@ -2759,131 +2760,152 @@ class TownUI:
         CARD_H_BASE= 160   # collapsed height
         GRID_X     = 20
 
-        self._tc_card_rects = []
+        self._tc_card_rects   = []
         self._tc_confirm_rect = None
+        self._tc_close_rect   = None
         self._tc_back_rect    = pygame.Rect(SCREEN_W - 140, SCREEN_H - 48, 120, 36)
 
         draw_button(surface, self._tc_back_rect, "Back",
                     hover=self._tc_back_rect.collidepoint(mx, my), size=13)
 
+        # ── Pre-compute all card rects (needed for hit-testing) ───────────────
+        card_data = []
         for idx, (tn, req) in enumerate(all_possible):
-            col_i  = idx % COLS
-            row_i  = idx // COLS
-            cx     = GRID_X + col_i * (CARD_W + CARD_GAP)
-            cy     = GRID_TOP + row_i * (CARD_H_BASE + CARD_GAP)
-
+            col_i    = idx % COLS
+            row_i    = idx // COLS
+            cx       = GRID_X + col_i * (CARD_W + CARD_GAP)
+            cy       = GRID_TOP + row_i * (CARD_H_BASE + CARD_GAP)
             can      = tn in available
             selected = (self._tc_selected == tn)
+            card_h   = CARD_H_BASE + 180 if selected else CARD_H_BASE
+            if cy + card_h > GRID_BOT - 4:
+                card_h = max(CARD_H_BASE, GRID_BOT - cy - 4)
+            card_r   = pygame.Rect(cx, cy, CARD_W, card_h)
+            self._tc_card_rects.append((card_r, tn, can))
+            card_data.append(dict(tn=tn, req=req, can=can,
+                                  selected=selected, card_r=card_r,
+                                  card_h=card_h))
+
+        # ── Helper: draw one card ─────────────────────────────────────────────
+        def _draw_card(d):
+            tn       = d['tn']
+            req      = d['req']
+            can      = d['can']
+            selected = d['selected']
+            card_r   = d['card_r']
+            card_h   = d['card_h']
             tc_data  = CLASSES.get(tn, {})
             tc_col   = tc_data.get("color", CREAM)
 
-            # Expanded card is taller
-            card_h = CARD_H_BASE + 180 if selected else CARD_H_BASE
-            # Clamp so it doesn't go off screen
-            if cy + card_h > GRID_BOT - 4:
-                card_h = max(CARD_H_BASE, GRID_BOT - cy - 4)
-
-            card_r = pygame.Rect(cx, cy, CARD_W, card_h)
-            self._tc_card_rects.append((card_r, tn, can))
-
-            # Card background
+            # Background + border
             if selected and can:
-                bg_col  = (22, 35, 20)
-                bd_col  = (80, 200, 120)
+                bg_col = (22, 35, 20);  bd_col = (80, 200, 120)
             elif can:
-                bg_col  = (20, 18, 28)
-                bd_col  = tc_col
+                bg_col = (20, 18, 28);  bd_col = tc_col
             else:
-                bg_col  = (14, 12, 14)
-                bd_col  = (40, 36, 36)
-
+                bg_col = (14, 12, 14);  bd_col = (40, 36, 36)
             pygame.draw.rect(surface, bg_col, card_r, border_radius=6)
-            pygame.draw.rect(surface, bd_col, card_r, 2 if not selected else 3,
-                             border_radius=6)
+            pygame.draw.rect(surface, bd_col, card_r,
+                             2 if not selected else 3, border_radius=6)
+
+            # ── Close (X) button — top-right of card, only when expanded ─────
+            if selected and can:
+                close_r = pygame.Rect(card_r.right - 28, card_r.y + 8, 22, 22)
+                self._tc_close_rect = close_r
+                chov = close_r.collidepoint(mx, my)
+                pygame.draw.rect(surface,
+                                 (70, 20, 20) if chov else (40, 14, 14),
+                                 close_r, border_radius=4)
+                pygame.draw.rect(surface,
+                                 (200, 80, 80) if chov else (120, 50, 50),
+                                 close_r, 1, border_radius=4)
+                draw_text(surface, "X", close_r.x + 5, close_r.y + 3,
+                          (220, 100, 100) if chov else (160, 70, 70), 11, bold=True)
 
             # Class badge + name
             badge_x = card_r.x + 10
             badge_y = card_r.y + 10
+            name_mw = (CARD_W - 70) if selected else (CARD_W - 24)
             draw_class_badge(surface, tn, badge_x, badge_y, 20)
-
             tier_label = "Hybrid" if req["min_level"] == 10 else "Apex"
             tier_col   = (140, 180, 220) if req["min_level"] == 10 else (220, 160, 80)
             name_col   = tc_col if can else (60, 54, 50)
             draw_text(surface, tn, badge_x + 28, badge_y + 2,
-                      name_col, 17, bold=True)
+                      name_col, 17, bold=True, max_width=name_mw)
             draw_text(surface, f"{tier_label}  ·  Level {req['min_level']}",
                       badge_x + 28, badge_y + 22, tier_col, 11)
 
-            # Stat requirements — green if met, red if not
+            # Stat requirements
             req_y = card_r.y + 56
             for stat, minimum in req.get("min_stats", {}).items():
-                actual  = c.stats.get(stat, 0)
-                met     = actual >= minimum
-                s_col   = (80, 200, 100) if met else (200, 80, 80)
-                tick    = "✓" if met else "✗"
-                draw_text(surface, f"{tick} {stat} {minimum}  ({actual})",
-                          card_r.x + 10, req_y, s_col, 11)
+                actual = c.stats.get(stat, 0)
+                met    = actual >= minimum
+                draw_text(surface,
+                          f"{'V' if met else 'X'} {stat} {minimum}  ({actual})",
+                          card_r.x + 10, req_y,
+                          (80, 200, 100) if met else (200, 80, 80), 11)
                 req_y += 16
 
             # Thematic description
-            desc     = req.get("description", tc_data.get("description", ""))
-            desc_y   = req_y + 4
+            desc = req.get("description", tc_data.get("description", ""))
             draw_wrapped_text(surface, desc,
-                              card_r.x + 10, desc_y, CARD_W - 20,
+                              card_r.x + 10, req_y + 4, CARD_W - 20,
                               (140, 130, 100) if can else (70, 64, 58),
                               get_font(11))
 
-            # ── Expanded section ──────────────────────────────────────────
+            # ── Expanded section ──────────────────────────────────────────────
             if selected and can:
-                exp_y  = card_r.y + CARD_H_BASE + 4
+                exp_y = card_r.y + CARD_H_BASE + 4
                 draw_text(surface, "Abilities you'll gain access to:",
                           card_r.x + 10, exp_y, (100, 180, 120), 11, bold=True)
                 exp_y += 18
-                class_abs = CLASS_ABILITIES.get(tn, [])[:6]  # show first 6
+                class_abs = CLASS_ABILITIES.get(tn, [])[:6]
                 if class_abs:
                     for ab in class_abs:
-                        ab_col = (120, 160, 200)
                         ab_str = f"  {ab['name']}  ({ab['cost']} {ab.get('resource','')})"
                         draw_text(surface, ab_str,
-                                  card_r.x + 10, exp_y, ab_col, 11)
+                                  card_r.x + 10, exp_y, (120, 160, 200), 11,
+                                  max_width=CARD_W - 20)
                         exp_y += 14
                         if exp_y + 14 > card_r.bottom - 44:
                             remaining = len(class_abs) - class_abs.index(ab) - 1
                             if remaining > 0:
-                                draw_text(surface, f"  + {remaining} more abilities...",
+                                draw_text(surface,
+                                          f"  + {remaining} more abilities...",
                                           card_r.x + 10, exp_y, (80, 100, 80), 10)
                             break
                 else:
-                    draw_text(surface, "  (abilities unlocked at the Guild after transition)",
+                    draw_text(surface,
+                              "  (abilities unlocked at the Guild after transition)",
                               card_r.x + 10, exp_y, (80, 90, 80), 10)
-                    exp_y += 14
 
-                # Confirm button at bottom of expanded card
+                # Confirm button
                 confirm_r = pygame.Rect(card_r.x + 10, card_r.bottom - 38,
                                         CARD_W - 20, 32)
                 self._tc_confirm_rect = (confirm_r, tn)
                 c_hover = confirm_r.collidepoint(mx, my)
-                pygame.draw.rect(surface, (20, 60, 30) if c_hover else (14, 40, 20),
+                pygame.draw.rect(surface,
+                                 (20, 60, 30) if c_hover else (14, 40, 20),
                                  confirm_r, border_radius=5)
-                pygame.draw.rect(surface, (80, 200, 120) if c_hover else (50, 140, 80),
+                pygame.draw.rect(surface,
+                                 (80, 200, 120) if c_hover else (50, 140, 80),
                                  confirm_r, 2, border_radius=5)
                 draw_text(surface, f"Become {tn}  —  This cannot be undone",
                           confirm_r.x + 10, confirm_r.y + 8,
                           (140, 230, 150) if c_hover else (100, 180, 110), 12,
                           bold=c_hover)
 
-            # Locked overlay for ineligible classes
+            # Locked overlay
             if not can:
                 lock_surf = pygame.Surface((CARD_W, CARD_H_BASE), pygame.SRCALPHA)
                 lock_surf.fill((0, 0, 0, 100))
                 surface.blit(lock_surf, (card_r.x, card_r.y))
-                # Show which stat is blocking
                 blocking = [(s, m) for s, m in req.get("min_stats", {}).items()
                             if c.stats.get(s, 0) < m]
                 if blocking:
                     stat, need = blocking[0]
-                    have = c.stats.get(stat, 0)
-                    draw_text(surface, f"Requires {stat} {need}  (have {have})",
+                    draw_text(surface,
+                              f"Requires {stat} {need}  (have {c.stats.get(stat,0)})",
                               card_r.x + 10, card_r.y + card_h - 24,
                               (160, 80, 80), 11)
                 else:
@@ -2891,6 +2913,15 @@ class TownUI:
                               card_r.x + 10, card_r.y + card_h - 24,
                               (140, 80, 60), 11)
 
+        # ── Pass 1: draw all NON-selected cards ───────────────────────────────
+        for d in card_data:
+            if not d['selected']:
+                _draw_card(d)
+
+        # ── Pass 2: draw selected card LAST so it sits on top ─────────────────
+        for d in card_data:
+            if d['selected'] and d['can']:
+                _draw_card(d)
     def _do_class_transition(self, char_idx, class_name):
         """Execute the class transition and show confirmation."""
         import core.sound as sfx
@@ -3778,6 +3809,7 @@ class TownUI:
             # Back button
             back_r = pygame.Rect(SCREEN_W - 140, SCREEN_H - 48, 120, 36)
             if back_r.collidepoint(mx, my):
+                self._tc_selected = None
                 self.view = self.VIEW_CLASSTREE
                 return None
 
@@ -3785,24 +3817,42 @@ class TownUI:
             for tr, tab_idx in getattr(self, "_tc_tab_rects", []):
                 if tr.collidepoint(mx, my):
                     self._tc_char_idx = tab_idx
-                    self._tc_selected = None   # reset selection on tab switch
+                    self._tc_selected = None
                     return None
 
-            # Confirm button (exists only when a card is selected)
-            confirm_info = getattr(self, "_tc_confirm_rect", None)
-            if confirm_info:
-                confirm_r, cls_name = confirm_info
-                if confirm_r.collidepoint(mx, my):
-                    self._do_class_transition(self._tc_char_idx, cls_name)
+            # ── If a card is expanded, it gets FIRST right of refusal ─────────
+            # Any click within the expanded card's full rect is consumed here
+            # before checking cards below/behind it.
+            selected_card_rect = None
+            for card_r, cls_name, can in getattr(self, "_tc_card_rects", []):
+                if cls_name == self._tc_selected and can:
+                    selected_card_rect = (card_r, cls_name)
+                    break
+
+            if selected_card_rect is not None:
+                card_r, cls_name = selected_card_rect
+                if card_r.collidepoint(mx, my):
+                    # Close (X) button
+                    close_r = getattr(self, "_tc_close_rect", None)
+                    if close_r and close_r.collidepoint(mx, my):
+                        self._tc_selected = None
+                        return None
+                    # Confirm button
+                    confirm_info = getattr(self, "_tc_confirm_rect", None)
+                    if confirm_info:
+                        confirm_r, conf_cls = confirm_info
+                        if confirm_r.collidepoint(mx, my):
+                            self._do_class_transition(self._tc_char_idx, conf_cls)
+                            return None
+                    # Clicking anywhere else inside the expanded card
+                    # collapses it (same-card toggle) — does NOT fall through
+                    self._tc_selected = None
                     return None
 
-            # Card clicks — select / deselect
+            # ── No expanded card owns this click — normal card selection ───────
             for card_r, cls_name, can in getattr(self, "_tc_card_rects", []):
                 if card_r.collidepoint(mx, my) and can:
-                    if self._tc_selected == cls_name:
-                        self._tc_selected = None   # deselect
-                    else:
-                        self._tc_selected = cls_name
+                    self._tc_selected = cls_name
                     return None
 
         # ── Tavern ──
