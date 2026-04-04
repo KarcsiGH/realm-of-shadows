@@ -696,18 +696,11 @@ def _create_stair_alcove(tiles, x, y, facing, width, height, needs_back_wall=Fal
             tiles[y][x]["type"] = DT_FLOOR
             tiles[y][x].pop("facing", None)
         else:
-            # Back position unavailable — keep tile at (x, y) and fall back to
-            # single-row arm walls (alcove without interior depth).
+            # Back position unavailable — keep tile at (x, y).
             bx, by = x, y
 
-        # Arm walls at the INTERIOR row (original position sides).
-        for dx, dy in arms:
-            nx, ny = x + dx, y + dy
-            if 0 <= nx < width and 0 <= ny < height:
-                if tiles[ny][nx]["type"] in (DT_FLOOR, DT_CORRIDOR):
-                    tiles[ny][nx]["type"] = DT_WALL
-
-        # Arm walls at the BACK-WALL row (flanking the stair tile).
+        # Arm walls ONLY at the back-wall row (flanking the stair tile itself).
+        # No interior arm walls — they would block the party's view into the cube.
         for dx, dy in arms:
             nx, ny = bx + dx, by + dy
             if 0 <= nx < width and 0 <= ny < height:

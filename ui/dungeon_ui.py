@@ -1289,7 +1289,11 @@ class DungeonUI:
                         hit_face = "north" if step_y > 0 else "south"
                     else:
                         hit_face = "west"  if step_x > 0 else "east"
-                    show_stair = (hit_face == facing)
+                    # Show texture on both faces along the stair's axis so the
+                # party sees it from either approach direction (north OR south
+                # for a N-S stair, east OR west for an E-W stair).
+                is_ns_facing = facing in ("north", "south")
+                show_stair   = (ns == is_ns_facing)
 
                 return max(0.01, dist), wx, ns, False, map_x, map_y, show_stair, tt, 0.0
 
