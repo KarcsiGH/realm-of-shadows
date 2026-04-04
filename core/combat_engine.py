@@ -1208,6 +1208,23 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             if n in ("bulwark", "ki_deflect", "blade_barrier"): absorb_next = True
             # ── Evasion ──
             if n in ("evasion", "smoke_screen"): evade_chance = max(evade_chance, 0.45)
+            # ── New hybrid/apex class buffs ──
+            if n == "wildshape":             dmg_mult *= 1.60; def_reduce += 8
+            if n == "transcendence":         dmg_mult *= 2.00
+            if n == "ascetic_transcendence": dmg_mult *= 2.00; def_reduce += 30
+            if n == "wraith_form":           absorb_next = True          # physical immunity
+            if n == "spirit_walk":           absorb_next = True          # party physical immunity
+            if n == "shadow_clone":          evade_chance = max(evade_chance, 1.0)  # guaranteed dodge once
+            if n == "vanish":                dmg_mult *= 1.80            # guaranteed crit handled separately
+            if n == "ghost_step":            pass                        # auto-counter handled in hit resolution
+            if n == "guardian_stance":       def_reduce += 12            # heavy defense buff
+            if n == "iron_guard":            def_reduce += 10
+            if n == "rapid_advance":         dmg_mult *= 1.20
+            if n == "pack_tactics":          dmg_mult *= 1.20
+            if n == "stone_skin":            def_reduce += 12
+            if n == "totem_ward":            def_reduce += 8
+            if n == "fortress":              def_reduce += 20
+            if n == "dark_bargain":          dmg_mult *= 1.20
 
         return dmg_mult, def_reduce, evade_chance, absorb_next
 
@@ -1239,6 +1256,12 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         # Defender buff (defense bonus)
         _, def_bonus, _, _ = _active_buff_mods(tgt)
 
+        # armor_pierce: ignore defender's base defense stat entirely
+        if ability.get("armor_pierce"):
+            def_bonus = 0
+            tgt_def_save = tgt.get("defense", 0)
+            tgt["defense"] = 0
+
         dmg = calc_physical_damage(
             attacker, tgt, weapon,
             position_dmg_mod=pos_dmg,
@@ -1246,6 +1269,10 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             is_crit=is_crit, crit_data=crit_data,
         )
         dmg = max(MINIMUM_DAMAGE, int(dmg * atk_mult - def_bonus))
+
+        # Restore defense after armor_pierce calculation
+        if ability.get("armor_pierce"):
+            tgt["defense"] = tgt_def_save
 
         # Mark bonus damage
         for mark in tgt.get("marks", []):
@@ -1266,6 +1293,21 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         if dmg > 0:
             tgt["status_effects"] = [s for s in tgt.get("status_effects", [])
                                      if s["name"] != "Sleep"]
+
+        # lifesteal: attacker heals for % of damage dealt
+        if dmg > 0 and ability.get("lifesteal") and attacker.get("type") == "player":
+            steal_pct = ability["lifesteal"]
+            heal_amt  = min(attacker["max_hp"] - attacker["hp"], int(dmg * steal_pct))
+            if heal_amt > 0:
+                attacker["hp"] = min(attacker["max_hp"], attacker["hp"] + heal_amt)
+
+        # void_touch: permanently reduce target's max HP
+        if dmg > 0 and ability.get("name", "").lower() in ("void touch",) or \
+           "void_touch" in ability.get("name", "").lower().replace(" ", "_"):
+            reduction = max(1, dmg // 3)
+            tgt["max_hp"] = max(1, tgt.get("max_hp", tgt["hp"]) - reduction)
+            tgt["hp"] = min(tgt["hp"], tgt["max_hp"])
+
         crit_str = " CRITICAL!" if is_crit else ""
         return dmg, is_crit, [f"{attacker['name']} uses {ability['name']} on {tgt['name']} for {dmg} damage!{crit_str}"]
 
@@ -1329,6 +1371,12 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         if dmg > 0:
             tgt["status_effects"] = [s for s in tgt.get("status_effects", [])
                                      if s["name"] != "Sleep"]
+        # lifesteal on magic hits
+        if dmg > 0 and ability.get("lifesteal") and attacker.get("type") == "player":
+            steal_pct = ability["lifesteal"]
+            heal_amt  = min(attacker["max_hp"] - attacker["hp"], int(dmg * steal_pct))
+            if heal_amt > 0:
+                attacker["hp"] = min(attacker["max_hp"], attacker["hp"] + heal_amt)
         crit_str = " CRITICAL!" if is_crit else ""
         return dmg, is_crit, [f"{attacker['name']} casts {ability['name']} on {tgt['name']} for {dmg} damage!{crit_str}"]
 
@@ -1459,6 +1507,66 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         duration  = ability.get("duration", 3)
         tgt_spec  = ability.get("targets", "self")
         self_only = ability.get("self_only", False)
+
+        # ── dark_bargain: spend 15% max HP to fully restore MP + boost ──
+        if buff_name == "dark_bargain" and attacker.get("type") == "player":
+            hp_cost = max(1, int(attacker["max_hp"] * 0.15))
+            attacker["hp"] = max(1, attacker["hp"] - hp_cost)
+            for pool in ("INT-MP", "PIE-MP", "WIS-MP"):
+                if pool in attacker.get("resources", {}):
+                    attacker["resources"][pool] = attacker.get("max_resources", {}).get(pool, attacker["resources"][pool])
+            apply_status_effect(attacker, buff_name, duration, 1.0)
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']}! "
+                f"Spent {hp_cost} HP — MP fully restored, spell power boosted for {duration} turns."
+            )
+            return result
+
+        # ── death_pact: mark caster with a one-time auto-revive ──
+        if buff_name == "death_pact" and attacker.get("type") == "player":
+            apply_status_effect(attacker, "death_pact", duration, 1.0)
+            result["messages"].append(
+                f"{attacker['name']} makes a {ability['name']}! "
+                f"Will auto-revive at 50% HP if slain in the next {duration} turns."
+            )
+            return result
+
+        # ── Rejuvenate / aoe_heal with hot_duration: apply HoT status ──
+        if ability.get("hot_duration"):
+            hot_d = ability["hot_duration"]
+            hot_per_tick = ability.get("power", 0.5)
+            # Calculate flat HP regen from caster stats
+            from core.combat_engine import calc_healing  # may need adjustment
+            heal_sp = {"power": cost * hot_per_tick * 0.4}
+            base_tick = max(3, int(cost * hot_per_tick * 0.4))
+            hot_targets = [p for p in (all_players or [attacker]) if p["alive"]]
+            for ht in hot_targets:
+                # immediate small heal + apply Regenerating status
+                imm = min(ht["max_hp"] - ht["hp"], base_tick)
+                if imm > 0:
+                    ht["hp"] += imm
+                apply_status_effect(ht, "Regenerating", hot_d, 1.0)
+                # Store tick amount on the status
+                for st in ht.get("status_effects", []):
+                    if st["name"] == "Regenerating":
+                        st["hot_per_tick"] = base_tick
+                        break
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']}! "
+                f"Party regenerates {base_tick} HP/turn for {hot_d} turns."
+            )
+            return result
+
+        # ── perfect_defense: negate next incoming hit ──
+        if buff_name == "perfect_defense":
+            apply_status_effect(attacker, "perfect_defense", 1, 1.0)
+            # Treat as absorb (ki_deflect-style) — next hit absorbed
+            apply_status_effect(attacker, "ki_deflect", 1, 1.0)
+            result["messages"].append(
+                f"{attacker['name']} achieves {ability['name']}! "
+                f"The next attack will be completely negated."
+            )
+            return result
 
         if self_only or tgt_spec == "self":
             buff_targets = [attacker]
@@ -1767,6 +1875,15 @@ def tick_status_effects(combatant):
 
     for status in combatant.get("status_effects", []):
         name = status["name"]
+
+        # Heal over time (HoT) — Rejuvenate and similar
+        if name == "Regenerating":
+            hot_amt = status.get("hot_per_tick", 0)
+            if hot_amt > 0 and combatant.get("alive", True):
+                actual = min(hot_amt, combatant["max_hp"] - combatant["hp"])
+                if actual > 0:
+                    combatant["hp"] = min(combatant["max_hp"], combatant["hp"] + actual)
+                    messages.append(f"{combatant['name']} regenerates {actual} HP!")
 
         # Tick damage (Poison, Burn, etc.)
         tick_dmg = STATUS_TICK_DAMAGE.get(name, 0)

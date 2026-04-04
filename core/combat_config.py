@@ -293,6 +293,15 @@ STATUS_DURATION_TICK = (
        # New buff names from expanded abilities
        "battle_stance", "arcane_surge", "fortify", "keen_eye",
        "eagle_eye", "iron_will",
+       # Hybrid/apex class new buffs
+       "guardian_stance", "iron_guard", "rapid_advance", "intercept",
+       "last_stand", "fortress", "stone_skin", "wildshape",
+       "Regenerating", "ki_absorb", "shadow_clone", "vanish",
+       "ghost_step", "wraith_form", "spirit_walk",
+       "pack_tactics", "totem_ward",
+       "perfect_defense", "transcendence", "ascetic_transcendence",
+       "dark_bargain", "death_pact",
+       "Hexed", "Withered", "Exposed",
        }
 )
 

@@ -141,6 +141,216 @@ CLASSES = {
     },
 }
 
+
+# ── Hybrid Classes (Level 10 transitions) ─────────────────────
+# These inherit resource pools from both parent classes.
+# ki_formula uses the class's primary casting stat.
+
+_HYBRIDS = {
+    # Fighter hybrids
+    "Paladin": {
+        "description": "Holy warrior combining divine magic and martial power.",
+        "primary": "PIE", "secondary": "STR", "base_hp": 55,
+        "resources": ["HP", "STR-SP", "PIE-MP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["PIE"] * 4) + (s["STR"] * 2) + (lvl * 10),
+        "color": (220, 180, 60), "starting_abilities": [],
+        "starting_stats": {"STR": 14, "DEX": 10, "CON": 12, "INT": 6, "WIS": 10, "PIE": 14},
+        "stat_growth": {"STR": "high", "PIE": "high", "CON": "medium", "DEX": "low", "INT": "low", "WIS": "low"},
+    },
+    "Spellblade": {
+        "description": "Arcane warrior who channels spells through their blade.",
+        "primary": "INT", "secondary": "STR", "base_hp": 48,
+        "resources": ["HP", "STR-SP", "INT-MP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["INT"] * 4) + (s["STR"] * 2) + (lvl * 10),
+        "color": (140, 80, 200), "starting_abilities": [],
+        "starting_stats": {"STR": 12, "DEX": 10, "CON": 10, "INT": 14, "WIS": 8, "PIE": 6},
+        "stat_growth": {"INT": "high", "STR": "high", "DEX": "medium", "CON": "low", "WIS": "low", "PIE": "low"},
+    },
+    "Warder": {
+        "description": "Tactical combatant combining heavy strikes and shadow techniques.",
+        "primary": "STR", "secondary": "DEX", "base_hp": 52,
+        "resources": ["HP", "STR-SP", "DEX-SP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["STR"] * 4) + (s["DEX"] * 2) + (lvl * 10),
+        "color": (60, 160, 100), "starting_abilities": [],
+        "starting_stats": {"STR": 12, "DEX": 14, "CON": 10, "INT": 8, "WIS": 8, "PIE": 4},
+        "stat_growth": {"STR": "high", "DEX": "high", "CON": "medium", "INT": "low", "WIS": "low", "PIE": "low"},
+    },
+    "Strider": {
+        "description": "Mobile skirmisher excelling at rapid movement and precise strikes.",
+        "primary": "DEX", "secondary": "STR", "base_hp": 50,
+        "resources": ["HP", "DEX-SP", "WIS-MP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["DEX"] * 4) + (s["STR"] * 2) + (lvl * 10),
+        "color": (120, 160, 60), "starting_abilities": [],
+        "starting_stats": {"STR": 12, "DEX": 14, "CON": 10, "INT": 8, "WIS": 10, "PIE": 4},
+        "stat_growth": {"DEX": "high", "STR": "high", "WIS": "medium", "CON": "low", "INT": "low", "PIE": "low"},
+    },
+    "Guardian": {
+        "description": "Armored protector channeling ki to defend allies.",
+        "primary": "STR", "secondary": "CON", "base_hp": 62,
+        "resources": ["HP", "STR-SP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["STR"] * 4) + (s["CON"] * 3) + (lvl * 10),
+        "color": (60, 100, 200), "starting_abilities": [],
+        "starting_stats": {"STR": 14, "DEX": 8, "CON": 14, "INT": 6, "WIS": 10, "PIE": 6},
+        "stat_growth": {"STR": "high", "CON": "high", "WIS": "medium", "DEX": "low", "INT": "low", "PIE": "low"},
+    },
+    # Mage hybrids
+    "Witch": {
+        "description": "Dark spellcaster blending arcane and divine powers.",
+        "primary": "INT", "secondary": "PIE", "base_hp": 35,
+        "resources": ["HP", "INT-MP", "PIE-MP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["INT"] * 4) + (s["PIE"] * 2) + (lvl * 10),
+        "color": (160, 60, 180), "starting_abilities": [],
+        "starting_stats": {"STR": 4, "DEX": 8, "CON": 6, "INT": 14, "WIS": 14, "PIE": 12},
+        "stat_growth": {"INT": "high", "WIS": "high", "PIE": "medium", "DEX": "low", "CON": "low", "STR": "low"},
+    },
+    "Necromancer": {
+        "description": "Master of death magic, draining life and raising the fallen.",
+        "primary": "INT", "secondary": "WIS", "base_hp": 36,
+        "resources": ["HP", "INT-MP", "PIE-MP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["INT"] * 5) + (s["WIS"] * 2) + (lvl * 10),
+        "color": (100, 30, 120), "starting_abilities": [],
+        "starting_stats": {"STR": 4, "DEX": 10, "CON": 6, "INT": 16, "WIS": 12, "PIE": 6},
+        "stat_growth": {"INT": "high", "WIS": "medium", "DEX": "medium", "CON": "low", "STR": "low", "PIE": "low"},
+    },
+    "Druid": {
+        "description": "Nature spellcaster harnessing elemental and healing powers.",
+        "primary": "WIS", "secondary": "INT", "base_hp": 40,
+        "resources": ["HP", "WIS-MP", "INT-MP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["WIS"] * 5) + (s["INT"] * 2) + (lvl * 10),
+        "color": (80, 180, 60), "starting_abilities": [],
+        "starting_stats": {"STR": 6, "DEX": 10, "CON": 8, "INT": 12, "WIS": 16, "PIE": 8},
+        "stat_growth": {"WIS": "high", "INT": "high", "CON": "medium", "DEX": "low", "STR": "low", "PIE": "low"},
+    },
+    "Mystic": {
+        "description": "Arcane ki master fusing magical theory with inner discipline.",
+        "primary": "INT", "secondary": "WIS", "base_hp": 40,
+        "resources": ["HP", "INT-MP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["INT"] * 4) + (s["WIS"] * 3) + (lvl * 10),
+        "color": (60, 180, 200), "starting_abilities": [],
+        "starting_stats": {"STR": 6, "DEX": 10, "CON": 8, "INT": 14, "WIS": 12, "PIE": 6},
+        "stat_growth": {"INT": "high", "WIS": "high", "DEX": "medium", "CON": "low", "STR": "low", "PIE": "low"},
+    },
+    # Cleric hybrids
+    "Warden": {
+        "description": "Ancient guardian combining divine protection and nature's power.",
+        "primary": "WIS", "secondary": "PIE", "base_hp": 48,
+        "resources": ["HP", "PIE-MP", "WIS-MP", "DEX-SP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["WIS"] * 4) + (s["PIE"] * 3) + (lvl * 10),
+        "color": (40, 140, 80), "starting_abilities": [],
+        "starting_stats": {"STR": 8, "DEX": 12, "CON": 10, "INT": 8, "WIS": 14, "PIE": 12},
+        "stat_growth": {"WIS": "high", "PIE": "high", "DEX": "medium", "CON": "medium", "INT": "low", "STR": "low"},
+    },
+    "Inquisitor": {
+        "description": "Shadow-wielding divine agent who hunts the corrupt.",
+        "primary": "PIE", "secondary": "DEX", "base_hp": 44,
+        "resources": ["HP", "DEX-SP", "PIE-MP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["PIE"] * 4) + (s["DEX"] * 3) + (lvl * 10),
+        "color": (180, 140, 40), "starting_abilities": [],
+        "starting_stats": {"STR": 8, "DEX": 12, "CON": 8, "INT": 8, "WIS": 12, "PIE": 14},
+        "stat_growth": {"PIE": "high", "DEX": "high", "WIS": "medium", "CON": "low", "STR": "low", "INT": "low"},
+    },
+    "Templar": {
+        "description": "Devoted warrior combining divine faith and physical discipline.",
+        "primary": "PIE", "secondary": "STR", "base_hp": 50,
+        "resources": ["HP", "PIE-MP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["PIE"] * 4) + (s["STR"] * 2) + (lvl * 10),
+        "color": (160, 180, 220), "starting_abilities": [],
+        "starting_stats": {"STR": 10, "DEX": 8, "CON": 14, "INT": 6, "WIS": 10, "PIE": 12},
+        "stat_growth": {"PIE": "high", "STR": "medium", "CON": "high", "DEX": "low", "INT": "low", "WIS": "low"},
+    },
+    # Thief hybrids
+    "Assassin": {
+        "description": "Lethal hunter combining tracking, poisons, and shadow strikes.",
+        "primary": "DEX", "secondary": "WIS", "base_hp": 44,
+        "resources": ["HP", "DEX-SP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["DEX"] * 5) + (s["WIS"] * 2) + (lvl * 10),
+        "color": (180, 40, 60), "starting_abilities": [],
+        "starting_stats": {"STR": 10, "DEX": 16, "CON": 8, "INT": 10, "WIS": 10, "PIE": 4},
+        "stat_growth": {"DEX": "high", "STR": "medium", "WIS": "medium", "CON": "low", "INT": "low", "PIE": "low"},
+    },
+    "Phantom": {
+        "description": "Ki-powered shadow who phases through defenses.",
+        "primary": "DEX", "secondary": "WIS", "base_hp": 44,
+        "resources": ["HP", "DEX-SP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["DEX"] * 4) + (s["WIS"] * 3) + (lvl * 10),
+        "color": (140, 140, 200), "starting_abilities": [],
+        "starting_stats": {"STR": 8, "DEX": 14, "CON": 8, "INT": 8, "WIS": 12, "PIE": 6},
+        "stat_growth": {"DEX": "high", "WIS": "high", "CON": "medium", "STR": "low", "INT": "low", "PIE": "low"},
+    },
+    # Ranger hybrid
+    "Shaman": {
+        "description": "Wilderness spiritualist drawing ki from the natural world.",
+        "primary": "WIS", "secondary": "DEX", "base_hp": 46,
+        "resources": ["HP", "WIS-MP", "DEX-SP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["WIS"] * 5) + (s["DEX"] * 2) + (lvl * 10),
+        "color": (120, 150, 80), "starting_abilities": [],
+        "starting_stats": {"STR": 10, "DEX": 12, "CON": 12, "INT": 8, "WIS": 14, "PIE": 8},
+        "stat_growth": {"WIS": "high", "DEX": "medium", "CON": "medium", "STR": "low", "INT": "low", "PIE": "low"},
+    },
+}
+
+# ── Apex Classes (Level 15 transitions) ───────────────────────
+
+_APEX = {
+    "Knight": {
+        "description": "The pinnacle of martial prowess — legendary defender and warrior.",
+        "primary": "STR", "secondary": "CON", "base_hp": 70,
+        "resources": ["HP", "STR-SP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["STR"] * 5) + (s["CON"] * 4) + (lvl * 12),
+        "color": (220, 100, 80), "starting_abilities": [],
+        "starting_stats": {"STR": 14, "DEX": 10, "CON": 12, "INT": 6, "WIS": 8, "PIE": 4},
+        "stat_growth": {"STR": "high", "CON": "high", "DEX": "medium", "INT": "low", "WIS": "low", "PIE": "low"},
+    },
+    "Archmage": {
+        "description": "Master of all arcane disciplines. Reality bends to their will.",
+        "primary": "INT", "secondary": "WIS", "base_hp": 32,
+        "resources": ["HP", "INT-MP", "WIS-MP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["INT"] * 6) + (s["WIS"] * 3) + (lvl * 12),
+        "color": (60, 100, 240), "starting_abilities": [],
+        "starting_stats": {"STR": 4, "DEX": 8, "CON": 6, "INT": 16, "WIS": 12, "PIE": 6},
+        "stat_growth": {"INT": "high", "WIS": "high", "DEX": "medium", "STR": "low", "CON": "low", "PIE": "low"},
+    },
+    "High Priest": {
+        "description": "Divine conduit of staggering power. Miracles are within reach.",
+        "primary": "PIE", "secondary": "WIS", "base_hp": 48,
+        "resources": ["HP", "PIE-MP", "WIS-MP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["PIE"] * 6) + (s["WIS"] * 3) + (lvl * 12),
+        "color": (240, 220, 80), "starting_abilities": [],
+        "starting_stats": {"STR": 8, "DEX": 8, "CON": 10, "INT": 10, "WIS": 12, "PIE": 16},
+        "stat_growth": {"PIE": "high", "WIS": "high", "CON": "medium", "INT": "medium", "STR": "low", "DEX": "low"},
+    },
+    "Shadow Master": {
+        "description": "Absolute master of shadow. Death comes from darkness unseen.",
+        "primary": "DEX", "secondary": "INT", "base_hp": 42,
+        "resources": ["HP", "DEX-SP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["DEX"] * 6) + (s["INT"] * 3) + (lvl * 12),
+        "color": (80, 60, 110), "starting_abilities": [],
+        "starting_stats": {"STR": 10, "DEX": 16, "CON": 8, "INT": 10, "WIS": 8, "PIE": 4},
+        "stat_growth": {"DEX": "high", "INT": "high", "STR": "medium", "WIS": "low", "CON": "low", "PIE": "low"},
+    },
+    "Beastlord": {
+        "description": "One with the wild. Commands nature and hunts with primal fury.",
+        "primary": "WIS", "secondary": "DEX", "base_hp": 54,
+        "resources": ["HP", "WIS-MP", "DEX-SP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["WIS"] * 6) + (s["DEX"] * 3) + (lvl * 12),
+        "color": (40, 120, 60), "starting_abilities": [],
+        "starting_stats": {"STR": 11, "DEX": 14, "CON": 10, "INT": 10, "WIS": 14, "PIE": 6},
+        "stat_growth": {"WIS": "high", "DEX": "high", "CON": "medium", "STR": "medium", "INT": "low", "PIE": "low"},
+    },
+    "Ascetic": {
+        "description": "Enlightened master of ki. Transcends mortal limitations entirely.",
+        "primary": "WIS", "secondary": "DEX", "base_hp": 52,
+        "resources": ["HP", "Ki"],
+        "ki_formula": lambda s, lvl: (s["WIS"] * 6) + (s["DEX"] * 4) + (lvl * 14),
+        "color": (200, 180, 240), "starting_abilities": [],
+        "starting_stats": {"STR": 12, "DEX": 14, "CON": 10, "INT": 8, "WIS": 16, "PIE": 10},
+        "stat_growth": {"WIS": "high", "DEX": "high", "CON": "medium", "STR": "medium", "INT": "low", "PIE": "low"},
+    },
+}
+
+CLASSES.update(_HYBRIDS)
+CLASSES.update(_APEX)
+
 CLASS_ORDER = ["Fighter", "Mage", "Cleric", "Thief", "Ranger", "Monk"]
 
 
@@ -150,7 +360,8 @@ def calc_hp(base_hp, con, level):
     return base_hp + (con * 2) + (level * 3)
 
 def calc_ki(class_name, stats, level):
-    return CLASSES[class_name]["ki_formula"](stats, level)
+    cls = CLASSES.get(class_name, CLASSES["Fighter"])
+    return cls["ki_formula"](stats, level)
 
 def calc_int_mp(int_val, level):
     return (int_val * 2) + (level * 4)

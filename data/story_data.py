@@ -1119,7 +1119,18 @@ NPC_DIALOGUES = {
                     "rank_info": {
                         "speaker": "Warden Liaison",
                         "text": "Scout rank grants one point to all attributes and a small experience bonus. The Order's mark strengthens those who carry it — the deeper your rank, the stronger the effect.\nProve yourself on the remaining Hearthstones.",
-                        "choices": [{"text": "We will.", "next": None}]
+                        "choices": [
+                            {"text": "We will.", "next": None},
+                            {"text": "How do warriors advance beyond their starting class?", "next": "class_advance"},
+                        ]
+                    },
+                    "class_advance": {
+                        "speaker": "Warden Liaison",
+                        "text": "Around level ten, a warrior's base training is complete. Two paths exist from there.\n"
+                                "The first: deepen into a true apex class — a Fighter becomes a Knight, a Mage becomes an Archmage. Pure mastery.\n"
+                                "The second: merge two disciplines. A Fighter who has trained under a Cleric can become a Paladin — drawing on both, transcending either.\n"
+                                "Visit any Guild and look at the Abilities board. The options appear there when your people are ready.",
+                        "choices": [{"text": "We'll visit the Guild.", "next": None}],
                     }
                 }
             }
@@ -6219,33 +6230,131 @@ _NEW_DIALOGUES = {
     # ── Greenwood ──────────────────────────────────────────
 
     "scout_feryn": [
+        # ── Abandoned Mine cleared (Act 1 complete) ─────────────────
         {
-            "conditions": [{"flag": "quest.main_spiders_nest.state", "op": ">", "value": 0}],
+            "conditions": [{"flag": "boss_defeated.abandoned_mine", "op": "==", "value": True}],
             "tree": {
-                "id": "feryn_spider",
+                "id": "feryn_post_mine",
                 "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Scout Feryn",
-                        "text": "You found the nest? Good. I tried to map it two weeks ago. Got halfway in before the webbing sealed the path behind me. Nearly didn't get out.",
+                        "text": "The Abandoned Mine north of Ironhearth — word came down the trade road. "
+                                "A Warden garrison went in and never came out. You went in and came back. "
+                                "That means something. The eastern forest has been quieter since. "
+                                "Not safe — but quieter.",
                         "choices": [
-                            {"text": "What's in there?", "next": "inside"},
-                            {"text": "We'll handle it.", "next": "handle"},
+                            {"text": "Something in that mine was driving the Fading.", "next": "fading"},
+                            {"text": "We found a Hearthstone fragment.", "next": "stone"},
+                            {"text": "What's your next concern out here?", "next": "next"},
                         ],
                     },
-                    "inside": {
+                    "fading": {
                         "speaker": "Scout Feryn",
-                        "text": "Queen's brood, hundreds of them. And the Queen herself — she's not a normal spider. Something changed her. She moves like she's thinking.",
-                        "choices": [{"text": "We'll go prepared.", "next": None}],
+                        "text": "That tracks with what I've been seeing. The black-root spread slowed around the old stone "
+                                "markers the week after you went in. Didn't know what caused it. Now I do.",
+                        "choices": [{"text": "There are more of them to find.", "next": None}],
                     },
-                    "handle": {
+                    "stone": {
                         "speaker": "Scout Feryn",
-                        "text": "Bring fire. Lots of it. And watch the ceiling.",
-                        "choices": [{"text": "Thanks for the warning.", "next": None}],
+                        "text": "A Hearthstone. I've heard the old stories — the Warden Order used them as anchors. "
+                                "They sealed the Fading last time it came. How many are there?",
+                        "choices": [{"text": "Five. We need all of them.", "next": None}],
+                    },
+                    "next": {
+                        "speaker": "Scout Feryn",
+                        "text": "South. Something is moving in the marshes past the river — big, slow, and wrong. "
+                                "I've been tracking it for two weeks and I still don't know what it is. "
+                                "My guess: it came from the Fading zone to the east.",
+                        "choices": [{"text": "We'll investigate.", "next": None}],
                     },
                 },
             },
         },
+        # ── Spider's Nest cleared ────────────────────────────────────
+        {
+            "conditions": [{"flag": "boss_defeated.spiders_nest", "op": "==", "value": True}],
+            "tree": {
+                "id": "feryn_post_spiders",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Scout Feryn",
+                        "text": "The Spider's Nest is cleared — I confirmed it personally yesterday. "
+                                "The eastern trail is open again. You have no idea what that means for patrol routes. "
+                                "We've been skirting that whole stretch for two seasons.",
+                        "choices": [
+                            {"text": "The Queen was changed by something.", "next": "queen"},
+                            {"text": "What's north of Ironhearth?", "next": "north"},
+                            {"text": "Good. What's next?", "next": "next"},
+                        ],
+                    },
+                    "queen": {
+                        "speaker": "Scout Feryn",
+                        "text": "I know. I saw the body on the way in. That wasn't a natural spider — "
+                                "whatever the Fading touches, it doesn't just kill it. It transforms it. "
+                                "Makes it more. Worse.",
+                        "choices": [{"text": "We're learning that too.", "next": None}],
+                    },
+                    "north": {
+                        "speaker": "Scout Feryn",
+                        "text": "Abandoned Mine, past Ironhearth. A Warden garrison held it until a month ago. "
+                                "No word since. That's where your trail leads next, if you're following the Fading.",
+                        "choices": [{"text": "Thanks.", "next": None}],
+                    },
+                    "next": {
+                        "speaker": "Scout Feryn",
+                        "text": "The Fading is still spreading east. The spiders were a symptom. "
+                                "Clearing them bought us time, not a solution. If you've got the stomach for more — "
+                                "the mine north of Ironhearth needs looking at.",
+                        "choices": [{"text": "We'll go.", "next": None}],
+                    },
+                },
+            },
+        },
+        # ── Goblin Warren cleared, Spider's Nest not yet ─────────────
+        {
+            "conditions": [{"flag": "boss_defeated.goblin_warren", "op": "==", "value": True}],
+            "tree": {
+                "id": "feryn_post_warren",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Scout Feryn",
+                        "text": "Heard about the Goblin Warren. Good. Goblins were the least of the problems "
+                                "but clearing them opened the southern trail. "
+                                "The Spider's Nest to the east is still a problem — a big one.",
+                        "choices": [
+                            {"text": "Tell me about the Spider's Nest.", "next": "spiders"},
+                            {"text": "We have a mine key from the spiders.", "next": "key"},
+                            {"text": "What else is out there?", "next": "else"},
+                        ],
+                    },
+                    "spiders": {
+                        "speaker": "Scout Feryn",
+                        "text": "Massive web cave, northeast of here. The colony is old — been there for decades, "
+                                "mostly harmless. Two months ago they started expanding. Lost two rangers "
+                                "scouting it. Whatever changed them, it came from inside.",
+                        "choices": [{"text": "We'll go in.", "next": None}],
+                    },
+                    "key": {
+                        "speaker": "Scout Feryn",
+                        "text": "A mine key. Then you've been to the Spider's Nest already. "
+                                "That key goes to the Abandoned Mine north of Ironhearth — "
+                                "Warden garrison held it until recently. Something happened to them.",
+                        "choices": [{"text": "We're on it.", "next": None}],
+                    },
+                    "else": {
+                        "speaker": "Scout Feryn",
+                        "text": "The whole eastern forest is wrong. Animals acting strangely, "
+                                "old stone markers going black at the roots. The Fading is "
+                                "coming from somewhere specific — I just can't get close enough to find out.",
+                        "choices": [{"text": "We're working on it.", "next": None}],
+                    },
+                },
+            },
+        },
+        # ── Default (first meeting) ──────────────────────────────────
         {
             "conditions": [],
             "tree": {
@@ -6254,7 +6363,9 @@ _NEW_DIALOGUES = {
                 "nodes": {
                     "start": {
                         "speaker": "Scout Feryn",
-                        "text": "You made it out here. Good. These woods get worse every season — even the birds have been acting strange. I scout this territory and I've been doing it fifteen years. Something has changed.",
+                        "text": "You made it out here. Good. These woods get worse every season — "
+                                "even the birds have been acting strange. I scout this territory "
+                                "and I've been doing it fifteen years. Something has changed.",
                         "on_enter": [{"action": "set_flag", "flag": "npc.feryn.met", "value": True}],
                         "choices": [
                             {"text": "What's changed specifically?", "next": "changed"},
@@ -6263,17 +6374,23 @@ _NEW_DIALOGUES = {
                     },
                     "changed": {
                         "speaker": "Scout Feryn",
-                        "text": "The spider population tripled in two seasons. Wolves are ranging further than I've ever seen. And there's a low sound in the deep forest, just at the edge of hearing. The trees around the old stone sites have all gone black at the root.",
+                        "text": "The spider population tripled in two seasons. Wolves are ranging further than "
+                                "I've ever seen. And there's a low sound in the deep forest, just at the edge "
+                                "of hearing. The trees around the old stone sites have all gone black at the root.",
                         "choices": [{"text": "Old stone sites?", "next": "stones"}],
                     },
                     "stones": {
                         "speaker": "Scout Feryn",
-                        "text": "Places the old settlers marked. Rings of flat stones, mostly grown over now. I leave them alone. Started going wrong around the time workers showed up from the capital. Coincidence, maybe.",
+                        "text": "Places the old settlers marked. Rings of flat stones, mostly grown over now. "
+                                "I leave them alone. Started going wrong around the time workers showed up "
+                                "from the capital. Coincidence, maybe.",
                         "choices": [{"text": "Probably not a coincidence.", "next": None}],
                     },
                     "threats": {
                         "speaker": "Scout Feryn",
-                        "text": "Giant spiders to the east — I mean giant, house-sized. Don't go alone. To the north, wolves that don't run when you shout at them. And something worse I can't pin down, south of the river.",
+                        "text": "Giant spiders to the east — I mean giant, house-sized. Don't go alone. "
+                                "To the north, wolves that don't run when you shout at them. "
+                                "And something worse I can't pin down, south of the river.",
                         "choices": [{"text": "We'll stay sharp.", "next": None}],
                     },
                 },

@@ -2520,6 +2520,19 @@ class TownUI:
         draw_button(surface, cont, "Continue", hover=cont.collidepoint(mx, my), size=16)
         self._lvlresult_cont = cont
 
+        # ── Class transition milestone banner ────────────────────────
+        trans = s.get("class_transitions", [])
+        if trans:
+            banner = pygame.Rect(SCREEN_W//2 - 320, 385, 660, 88)
+            draw_panel(surface, banner, border_color=(220, 160, 60))
+            draw_text(surface, "✦ ADVANCED CLASS AVAILABLE ✦",
+                      banner.x + 14, banner.y + 10, (220, 160, 60), 15, bold=True)
+            names = ", ".join(trans[:4]) + (" +" + str(len(trans)-4) + " more" if len(trans) > 4 else "")
+            draw_text(surface, f"Eligible for: {names}",
+                      banner.x + 14, banner.y + 34, GOLD, 13)
+            draw_text(surface, "Visit the Guild → View Abilities to choose your Advanced Class.",
+                      banner.x + 14, banner.y + 58, (180, 160, 100), 12)
+
     def _draw_classtree(self, surface, mx, my):
         """Full class progression viewer: timeline of abilities with locked/known state."""
         from core.abilities import CLASS_ABILITIES
@@ -3370,12 +3383,18 @@ class TownUI:
                     summary["char_name"]   = c.name
                     summary["class_name"]  = c.class_name
                     summary["stats_after"] = dict(c.stats)
+                    # Flag L10/L15 class transition milestone
+                    from core.progression import get_available_transitions
+                    available_trans = get_available_transitions(c)
+                    summary["class_transitions"] = available_trans
                     self.levelup_summary   = summary
                     gains = ", ".join(f"+{v} {k}" for k, v in summary["stat_gains"].items())
                     ab_str = (" New to train: " + ", ".join(summary["new_abilities"])
                               if summary.get("new_abilities") else "")
                     self.inn_result = (f"{c.name} reached level {c.level}! "
                                       f"{gains}, +{summary['hp_gain']} base HP{ab_str}")
+                    if available_trans:
+                        self.inn_result += f" ✦ Class transition available at the Guild!"
                     sfx.play("level_up")
 
 
