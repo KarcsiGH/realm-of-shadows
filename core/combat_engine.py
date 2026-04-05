@@ -1535,8 +1535,6 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         if ability.get("hot_duration"):
             hot_d = ability["hot_duration"]
             hot_per_tick = ability.get("power", 0.5)
-            # Calculate flat HP regen from caster stats
-            from core.combat_engine import calc_healing  # may need adjustment
             heal_sp = {"power": cost * hot_per_tick * 0.4}
             base_tick = max(3, int(cost * hot_per_tick * 0.4))
             hot_targets = [p for p in (all_players or [attacker]) if p["alive"]]
