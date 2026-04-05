@@ -904,7 +904,11 @@ NPC_DIALOGUES = {
                     },
                     "remaining": {
                         "speaker": "Warden Liaison",
-                        "text": "Two left. The Windswept Isle, off the Pale Coast — sea travel required, probably from Pale Coast Harbor.\nAnd Valdris' Spire to the north-east, but don't approach that until you've secured the Isle. You'll need the strength.",
+                        "text": "Two left. The Windswept Isle, off the Pale Coast — sea travel required, probably from Pale Coast Harbor.\n"
+                                "But before you sail — return to Briarhollow. "
+                                "Something is building there. My scouts have seen shadow-touched activity "
+                                "near the village perimeter. If Briarhollow falls, we lose our earliest "
+                                "supply line. Go back. Secure it. Then the Isle.",
                         "choices": [{"text": "We'll head to the coast.", "next": None}]
                     },
                     "dangers": {
@@ -914,6 +918,50 @@ NPC_DIALOGUES = {
                     }
                 }
             }
+        },
+        # ── Post-Ashenmoor: Ruins cleared, Act 2 mid ────────────────
+        {
+            "conditions": [
+                {"flag": "boss_defeated.ruins_ashenmoor", "op": "==", "value": True},
+                {"flag": "item.hearthstone.3",            "op": "!=", "value": True},
+            ],
+            "tree": {
+                "id": "warden_post_ashenmoor",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Ashenmoor cleared. The Commander's Log confirms what we suspected "
+                                "about Valdris — I've already sent word to the other Liaisons.\n"
+                                "Two Hearthstones remain in Act Two. "
+                                "The Sunken Crypt — it's beneath the Pale Coast, "
+                                "flooded passages, old Warden anchor site. "
+                                "And Dragon's Tooth island, volcanic, off the southern coast. "
+                                "You'll need sea passage for both — Saltmere is your port.",
+                        "choices": [
+                            {"text": "How do we get to Saltmere?",    "next": "saltmere"},
+                            {"text": "What's in the Sunken Crypt?",   "next": "crypt"},
+                            {"text": "We'll head to the coast.",       "next": None},
+                        ],
+                    },
+                    "saltmere": {
+                        "speaker": "Warden Liaison",
+                        "text": "Coastal town south of the Pale Coast highlands. "
+                                "There's a dockhand named Riv who arranges passage — "
+                                "mention the Wardens and he'll know what you need. "
+                                "Don't overpay.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                    "crypt": {
+                        "speaker": "Warden Liaison",
+                        "text": "A drowned Warden stronghold. The garrison there tried to "
+                                "seal the Hearthstone fragment when the Fading reached them — "
+                                "they didn't make it out. "
+                                "Whatever's guarding it now has had centuries to settle in.",
+                        "choices": [{"text": "We'll be ready.", "next": None}],
+                    },
+                },
+            },
         },
         # ── Rank 1: Scout (1st hearthstone recovered) ───────────────
         {
@@ -945,7 +993,7 @@ NPC_DIALOGUES = {
                     },
                     "guidance": {
                         "speaker": "Warden Liaison",
-                        "text": "Four Hearthstones remain. Maren will know more than I do about their locations.\nWhat I know: the Spider's Nest near Woodhaven, the Ruins of Ashenmoor south-west, and the Sunken Crypt beneath the Pale Coast. Dangerous places — get stronger first.",
+                        "text": "Four Hearthstones remain. Maren will know more than I do about their locations.\nWhat I know: the Ruins of Ashenmoor south-west, the Sunken Crypt beneath the Pale Coast, and two sea crossings beyond that.\nBefore any of that — visit Sanctum to the east. High Priest Aldara holds records from the old Order. She knows things about the Hearthstone network that Maren doesn't. Don't skip it.",
                         "choices": [{"text": "We'll find them.", "next": None}]
                     },
                     "rank_info": {
@@ -1468,7 +1516,10 @@ NPC_DIALOGUES = {
                         "speaker": "Maren",
                         "text": "Safe. Yes. But the goblins weren't the real threat, were they? "
                                 "Something drove them from their forest. The Fading. We need to "
-                                "move faster. Head to the Abandoned Mine next — there may be answers there.",
+                                "move faster.\n"
+                                "Head north from Woodhaven to the Spider's Nest next — the colony "
+                                "has been blocking the road to Ironhearth. Clear it, and the way "
+                                "to the Abandoned Mine opens up.",
                         "on_enter": [
                             {"action": "complete_quest", "quest": "main_goblin_warren"},
                             {"action": "start_quest", "quest": "main_hearthstone_1"},
@@ -1527,12 +1578,14 @@ NPC_DIALOGUES = {
                     },
                     "next_steps": {
                         "speaker": "Maren",
-                        "text": "One fragment recovered. Three or four still to go — "
-                                "I'm still not sure of the exact number. "
-                                "The Ruins of Ashenmoor may have answers. "
-                                "Something's been active there. Not alive, exactly — but aware.\n"
-                                "Be careful. Ashenmoor was destroyed by Warden experiments. "
-                                "Whatever's left in those ruins saw what happened.",
+                        "text": "One fragment recovered. Four still to go — I know that now.\n"
+                                "Two things. First: Sanctum, to the east. "
+                                "High Priest Aldara keeps the old Warden records there — "
+                                "she may know the exact location of the remaining fragments "
+                                "and what's guarding them. Don't skip her.\n"
+                                "Second: the Ruins of Ashenmoor. Something's been active there. "
+                                "Not alive, exactly — but aware. "
+                                "Whatever's left in those ruins saw what Valdris did.",
                         "on_enter": [{"action": "start_quest", "quest": "main_ashenmoor"}],
                         "end": True,
                     },
@@ -1598,12 +1651,18 @@ NPC_DIALOGUES = {
                         "text": "When I was a child, I thought my father was the most principled man "
                                 "I'd ever known. Everything he did was for the greater good. "
                                 "He said that a lot.\n"
-                                "I'm beginning to understand what he meant by it.",
+                                "I'm beginning to understand what he meant by it.\n"
+                                "Two Hearthstones left in Act Two — the Sunken Crypt beneath the "
+                                "Pale Coast, and Dragon's Tooth island to the south. "
+                                "Both need sea passage. Saltmere is the port — it's the only place "
+                                "with ships that go that far.",
                         "on_enter": [
                             {"action": "complete_quest", "quest": "main_ashenmoor"},
                             {"action": "set_flag", "flag": "maren.ashenmoor_revelation", "value": True},
                         ],
-                        "end": True,
+                        "choices": [
+                            {"text": "We head to Saltmere.", "next": None},
+                        ],
                     },
                 },
             },
@@ -1657,14 +1716,18 @@ NPC_DIALOGUES = {
                     },
                     "urge": {
                         "speaker": "Maren",
-                        "text": "The Ashenmoor ruins should have answers about what Valdris was actually "
-                                "building. If we understand the plan, we can stop it.\n"
-                                "And there are more Hearthstones to find. I can feel them, dimly — "
-                                "like embers in the dark. We have to reach them before the Fading does.",
+                        "text": "Two Hearthstones left — the Pale Coast and the Windswept Isle. "
+                                "Both need sea passage.\n"
+                                "Saltmere is the port. It's south along the coast road. "
+                                "Find the dockhand there — ask about passage to the Pale Coast first, "
+                                "then the Isle beyond it. "
+                                "We don't have time to do them in the wrong order.\n"
+                                "Move fast. The attack on Briarhollow was a message — "
+                                "Valdris knows we have three fragments and he's running out of patience.",
                         "on_enter": [
                             {"action": "set_flag", "flag": "maren.post_attack_spoken", "value": True},
                         ],
-                        "end": True,
+                        "choices": [{"text": "We head to Saltmere.", "next": None}],
                     },
                 },
             },
@@ -1687,7 +1750,21 @@ NPC_DIALOGUES = {
                         "choices": [
                             {"text": "The queen was enormous. Unnatural.", "next": "unnatural"},
                             {"text": "The corruption is in the animals too?", "next": "animals"},
+                            {"text": "What's our next move?", "next": "mine_nav"},
                         ],
+                    },
+                    "mine_nav": {
+                        "speaker": "Maren",
+                        "text": "The queen had a key on her — an iron mine key. "
+                                "The Abandoned Mine north of Ironhearth. That's where we go next.\n"
+                                "Stock up in Ironhearth before you enter — the dwarves have "
+                                "better provisions than anywhere else at this range, "
+                                "and the mine is deeper than it looks.",
+                        "on_enter": [
+                            {"action": "complete_quest", "quest": "main_spiders_nest"},
+                            {"action": "set_flag", "flag": "maren.spiders_spoken", "value": True},
+                        ],
+                        "end": True,
                     },
                     "unnatural": {
                         "speaker": "Maren",
@@ -1793,11 +1870,16 @@ NPC_DIALOGUES = {
                         "speaker": "Maren",
                         "text": "Ancient and corrupted. That's the Dragon's Tooth in a sentence.\n"
                                 "But you came back with the fragment. That's what matters.\n"
-                                "Three stones. Two more to find.",
+                                "Three stones. Two more to find.\n"
+                                "Before we sail again — we need to go back to Briarhollow. "
+                                "I've been getting reports. Shadow activity near the village, "
+                                "more than the usual Fading pressure. Something is being directed there.\n"
+                                "If we ignore it and it falls, we lose everything behind us. "
+                                "Briarhollow first. Then the Pale Coast.",
                         "on_enter": [
                             {"action": "set_flag", "flag": "maren.post_dragon_spoken", "value": True},
                         ],
-                        "end": True,
+                        "choices": [{"text": "Briarhollow. Then the coast.", "next": None}],
                     },
                 },
             },
@@ -2065,6 +2147,39 @@ NPC_DIALOGUES = {
                             {"action": "complete_quest", "quest": "side_wolf_pelts"},
                         ],
                         "choices": [{"text": "Happy to help.", "next": None}],
+                    },
+                },
+            },
+        },
+        # Post-warren: goblin warren cleared, road to Woodhaven safer
+        {
+            "conditions": [
+                {"flag": "boss_defeated.goblin_warren", "op": "==", "value": True},
+                {"flag": "boss_defeated.abandoned_mine", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "rowan_post_warren",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Captain Rowan",
+                        "text": "The Warren is clear. My scouts confirmed it this morning — "
+                                "the eastern road to Woodhaven is passable again for the first "
+                                "time in months.\n"
+                                "If you're heading north, the road's safer than it was. "
+                                "I'd still travel in daylight.",
+                        "choices": [
+                            {"text": "Good to know.", "next": None},
+                            {"text": "What's in Woodhaven?", "next": "woodhaven"},
+                        ],
+                    },
+                    "woodhaven": {
+                        "speaker": "Captain Rowan",
+                        "text": "Lumber town. Elder Theron runs it — sensible man. "
+                                "They've had their own troubles with the Spider's Nest to the north. "
+                                "If Maren's right about what's in that mine, "
+                                "Woodhaven is your best staging point.",
+                        "choices": [{"text": "We'll head there.", "next": None}],
                     },
                 },
             },
@@ -2914,11 +3029,14 @@ NPC_DIALOGUES = {
                         {"text": "We follow where the Fading leads.", "next": "fading"},
                     ]},
                 "mine": {"speaker": "Elder Theron",
-                    "text": "The Mine. Yes — a Warden garrison held it. Word stopped "
+                    "text": "The Abandoned Mine — north of Ironhearth, in the dwarven hills. "
+                            "A Warden garrison held it. Word stopped "
                             "coming about a month ago. We'd assumed the worst. "
                             "If you can find out what happened — and if there's a "
-                            "fragment there — then go.",
-                    "choices": [{"text": "We'll go.", "next": None}]},
+                            "fragment there — then go.\n"
+                            "Stop in Ironhearth first. The dwarves keep good stock "
+                            "and better steel. You'll want both.",
+                    "choices": [{"text": "We'll head to Ironhearth first.", "next": None}]},
                 "fading": {"speaker": "Elder Theron",
                     "text": "Then you lead, and Woodhaven follows in prayers. "
                             "We are a small place. Our contribution is endurance — "
@@ -10630,3 +10748,22 @@ _TRAINER_DIALOGUES = {
 }
 
 NPC_DIALOGUES.update(_TRAINER_DIALOGUES)
+
+
+# ══════════════════════════════════════════════════════════════
+#  DIALOGUE EXIT PATCHER — added Session 19
+#  Adds a "Farewell." exit option to every choice node that
+#  had choices but no exit path (next=None).  Runs once at
+#  module load.  Do not remove — prevents dialogue dead-ends.
+# ══════════════════════════════════════════════════════════════
+def _patch_dialogue_exits(dialogues):
+    _farewell = {"text": "Farewell.", "next": None}
+    for branches in dialogues.values():
+        for branch in branches:
+            nodes = branch.get("tree", {}).get("nodes", {})
+            for node in nodes.values():
+                choices = node.get("choices")
+                if choices and not any(c.get("next") is None for c in choices):
+                    choices.append(dict(_farewell))
+
+_patch_dialogue_exits(NPC_DIALOGUES)

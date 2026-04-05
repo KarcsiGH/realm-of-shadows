@@ -2675,6 +2675,9 @@ class TownUI:
         from core.abilities import CLASS_ABILITIES
         from core.classes import CLASSES
 
+        # Safety: always clear stale NPC portrait rect so guild clicks can't bleed through
+        self._bld_npc_portrait_rect = None
+
         if not self.party:
             self.view = self.VIEW_GUILD
             return
@@ -3801,6 +3804,7 @@ class TownUI:
                     self._tc_selected  = None
                     self._tc_confirmed = False
                     self._tc_card_rects = []
+                    self._bld_npc_portrait_rect = None  # prevent guild NPC click bleed-through
                     self.view = self.VIEW_CLASS_CHOOSE
                     return None
 
@@ -4012,6 +4016,7 @@ class TownUI:
                                 self._tc_confirmed = False
                                 self._tc_card_rects = []
                                 self.classtree_char_idx = i
+                                self._bld_npc_portrait_rect = None  # prevent click bleed-through
                                 self.view = self.VIEW_CLASS_CHOOSE
                                 break
                     return None
