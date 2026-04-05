@@ -3778,6 +3778,113 @@ NPC_DIALOGUES = {
     #  HIGH PRIEST ALDARA — Sanctum, grand cathedral
     # ─────────────────────────────────────────────────────────
     "high_priest_aldara": [
+        # All 5 Hearthstones found — plot-critical Valdris' Spire dialogue
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.5", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "aldara_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "All five.\nI felt the last one settle into the network — like a bone "
+                                "snapping back into place.\n"
+                                "You must go to Valdris' Spire. To the north-east, beyond the "
+                                "Holdfast. The Hearthstones must be restored to the First Stone "
+                                "at the Spire's heart — together, in sequence. "
+                                "Maren will know the order. Do not attempt it without her.",
+                        "choices": [
+                            {"text": "What will happen when they're restored?", "next": "restoration"},
+                            {"text": "Is Valdris there?",                        "next": "valdris"},
+                            {"text": "We leave at once.",                         "next": None},
+                        ],
+                    },
+                    "restoration": {
+                        "speaker": "High Priest Aldara",
+                        "text": "The wards seal. The wound between planes closes. "
+                                "The Fading stops spreading — and what it has already taken "
+                                "may, slowly, return.\n"
+                                "I said may. I will not promise what is beyond my knowledge.",
+                        "choices": [{"text": "That's enough.", "next": None}],
+                    },
+                    "valdris": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Almost certainly. He's been working from inside the Spire — "
+                                "using its ley anchor to direct the Fading outward while "
+                                "keeping himself shielded.\n"
+                                "He will not step aside. Be ready for that.",
+                        "choices": [{"text": "We're ready.", "next": None}],
+                    },
+                },
+            },
+        },
+        # Hearthstone 1 found — recognition, stone lore, blessing
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.1", "op": "==", "value": True},
+                {"flag": "item.hearthstone.5", "op": "!=", "value": True},
+            ],
+            "tree": {
+                "id": "aldara_knows_fragment",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "You carry it.\nI can feel it from here — the resonance is unmistakable. "
+                                "A Hearthstone fragment.\n"
+                                "Do you understand what you're holding? "
+                                "These stones are the anchors the first Wardens placed "
+                                "when they built the barrier. "
+                                "Every one you recover strengthens what remains.",
+                        "on_enter": [
+                            {"action": "meet_npc", "npc": "high_priest_aldara"},
+                            {"action": "set_flag", "flag": "npc.high_priest_aldara.met", "value": True},
+                            {"action": "discover_lore", "lore": "lore.aldara_relic"},
+                        ],
+                        "choices": [
+                            {"text": "How many are there?",            "next": "count"},
+                            {"text": "Can you tell us more about them?","next": "lore"},
+                            {"text": "We could use a blessing.",        "next": "blessing"},
+                        ],
+                    },
+                    "count": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Five. Scattered when the Order fell — the last Wardens hid them "
+                                "rather than let Valdris consolidate them.\n"
+                                "The Reliquary here holds maps of the old ward-anchor sites. "
+                                "They may narrow your search.",
+                        "choices": [
+                            {"text": "We'll look at the maps.", "next": None},
+                            {"text": "A blessing first.",       "next": "blessing"},
+                        ],
+                    },
+                    "lore": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Each stone is keyed to a ward-anchor point. "
+                                "They don't merely store power — they resonate with each other. "
+                                "As you recover more, the network strengthens, "
+                                "and the Fading slows near the anchor sites.\n"
+                                "You'll feel it. Your people will feel it. That's how you know "
+                                "you're winning.",
+                        "choices": [{"text": "Good to know.", "next": None}],
+                    },
+                    "blessing": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Kneel.\nLight of the First Ward, carried by these five against the dark — "
+                                "let them pass unseen where shadow gathers, "
+                                "let them strike true where it matters most, "
+                                "and let them find their way back when it is done.\n"
+                                "Go. And do not waste it.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "blessing.cathedral", "value": True},
+                        ],
+                        "choices": [{"text": "Thank you.", "next": None}],
+                    },
+                },
+            },
+        },
         # Act 3 — Sanctum under pressure, Aldara near breaking
         {
             "conditions": [
@@ -5156,6 +5263,9 @@ TOWN_NPCS = {
     "crystalspire": ["archmage_solen", "teleport_master", 'warden_liaison'],
     "thornhaven":  ["governor_aldric", "guild_commander_varek", "court_mage_sira",
                    "city_guard_thornhaven", "refugee_elder", "innkeeper_thornhaven", "warden_liaison"],
+    "emberveil":   ["renn_emberveil", "warden_liaison"],
+    "the_anchorage": ["vaethari_anchorage", "warden_liaison"],
+    "the_holdfast":  ["dael_holdfast", "sarev_holdfast", "warden_liaison"],
 }
 
 
