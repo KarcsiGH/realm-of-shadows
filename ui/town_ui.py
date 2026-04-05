@@ -122,6 +122,7 @@ class TownUI:
         # Shop state
         self.shop_tab = "weapons"  # weapons, armor, consumables
         self.shop_scroll = 0
+        self.shop_char_idx = 0    # which character is selected for buying
         self.sell_char = 0
         self.sell_scroll = 0
         self.sold_items = []  # items sold by player, available for buyback
@@ -1683,6 +1684,204 @@ class TownUI:
                 draw_text(surface, "^ scroll up", panel.x + panel.width // 2 - 40, panel.y + 2, DIM_GOLD, 13)
             if end < len(items):
                 draw_text(surface, "v scroll down", panel.x + panel.width // 2 - 45, iy + 2, DIM_GOLD, 13)
+
+    def _draw_shop_buy(self, surface, mx, my):
+        from core.equipment import can_equip
+        draw_text(surface, "Buy Items", 20, 12, GOLD, 22, bold=True)
+
+        # Back button
+        back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
+        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+
+        # ── Character tabs (6a) ───────────────────────────────────────
+        n = len(self.party)
+        tab_w = min(180, (SCREEN_W - 170) // max(n, 1))
+        self._shop_char_tab_rects = []
+        for i, ch in enumerate(self.party):
+            tr = pygame.Rect(20 + i * (tab_w + 4), 50, tab_w, 32)
+            self._shop_char_tab_rects.append(tr)
+            is_sel = (i == self.shop_char_idx)
+            hover  = tr.collidepoint(mx, my)
+            bg     = (50, 40, 85) if is_sel else (35, 30, 60) if hover else (20, 18, 36)
+            border = GOLD if is_sel else HIGHLIGHT if hover else PANEL_BORDER
+            pygame.draw.rect(surface, bg, tr, border_radius=3)
+            pygame.draw.rect(surface, border, tr, 2, border_radius=3)
+            label  = f"{ch.name}  {ch.gold}g"
+            draw_text(surface, label, tr.x + 8, tr.y + 7,
+                      GOLD if is_sel else CREAM, 13, bold=is_sel)
+
+        sel_char = self.party[self.shop_char_idx] if self.party else None
+
+        # ── Category tabs ────────────────────────────────────────────
+        tabs = [("weapons", "Weapons"), ("armor", "Armor"), ("consumables", "Supplies")]
+        for i, (key, label) in enumerate(tabs):
+            tr = pygame.Rect(20 + i * 140, 95, 130, 28)
+            is_sel = (self.shop_tab == key)
+            hover  = tr.collidepoint(mx, my)
+            bg     = (50, 40, 85) if is_sel else (35, 30, 60) if hover else (20, 18, 36)
+            border = GOLD if is_sel else HIGHLIGHT if hover else PANEL_BORDER
+            pygame.draw.rect(surface, bg, tr, border_radius=3)
+            pygame.draw.rect(surface, border, tr, 2, border_radius=3)
+            draw_text(surface, label, tr.x + 10, tr.y + 6,
+                      GOLD if is_sel else CREAM, 13, bold=is_sel)
+
+        # ── Item list panel ──────────────────────────────────────────
+        # Reserve right 240px for comparison panel on weapons/armor tabs
+        is_equip_tab = self.shop_tab in ("weapons", "armor")
+        list_w = SCREEN_W - 40 - (244 if is_equip_tab else 0)
+        panel = pygame.Rect(20, 132, list_w, SCREEN_H - 237)
+        draw_panel(surface, panel, bg_color=SHOP_BG)
+
+        items = list(self.shop.get(self.shop_tab, []))
+        buyback_start = len(items)
+        items.extend(self.sold_items)
+
+        if not items:
+            draw_text(surface, "Nothing in this category.", panel.x + 20, panel.y + 20, DARK_GREY, 15)
+        else:
+            iy = panel.y + 8
+            max_vis = 7
+            start = self.shop_scroll
+            end   = min(len(items), start + max_vis)
+
+            # Track which row is hovered for comparison panel
+            hovered_item = None
+
+            for idx in range(start, end):
+                item = items[idx]
+                is_buyback = idx >= buyback_start
+                row = pygame.Rect(panel.x + 6, iy, panel.width - 12, 64)
+                hover = row.collidepoint(mx, my)
+                if hover:
+                    hovered_item = item
+
+                # ── 6b: equippability check ──────────────────────────
+                equippable = True
+                equip_reason = ""
+                if sel_char and self.shop_tab in ("weapons", "armor"):
+                    ok, reason = can_equip(sel_char, item)
+                    equippable = ok
+                    equip_reason = reason
+
+                # ── 6e: upgrade highlight ────────────────────────────
+                is_upgrade = False
+                if sel_char and equippable and self.shop_tab in ("weapons", "armor"):
+                    slot = item.get("slot")
+                    equipped = sel_char.equipment.get(slot) if sel_char.equipment else None
+                    if equipped:
+                        new_stat = item.get("damage", 0) or item.get("defense", 0)
+                        old_stat = equipped.get("damage", 0) or equipped.get("defense", 0)
+                        is_upgrade = new_stat > old_stat
+
+                if is_buyback:
+                    bg = (30, 28, 18) if hover else (22, 20, 12)
+                elif is_upgrade and equippable:
+                    bg = (28, 26, 10) if hover else (22, 20, 8)
+                else:
+                    bg = ITEM_HOVER if hover else ITEM_BG
+                pygame.draw.rect(surface, bg, row, border_radius=3)
+
+                # Gold border for upgrades (6e)
+                border_col = (160, 130, 20) if is_upgrade and equippable else (HIGHLIGHT if hover else PANEL_BORDER)
+                pygame.draw.rect(surface, border_col, row, 2 if is_upgrade else 1, border_radius=3)
+
+                if is_buyback:
+                    draw_text(surface, "BUYBACK", row.x + row.width - 80, row.y + 4, (180, 150, 60), 10, bold=True)
+
+                rarity  = item.get("rarity", "common")
+                name_col = RARITY_COLORS.get(rarity, CREAM)
+                if not equippable:
+                    name_col = DARK_GREY
+                draw_text(surface, item["name"], row.x + 10, row.y + 4, name_col, 14, bold=True)
+
+                # Can't-use label (6b)
+                if not equippable and equip_reason:
+                    short = equip_reason.split(" cannot ")[-1] if " cannot " in equip_reason else "Not usable"
+                    draw_text(surface, f"✗ {short}", row.x + 10, row.y + 22, (140, 80, 80), 11)
+                else:
+                    desc = item.get("description", "")
+                    if len(desc) > 70: desc = desc[:67] + "..."
+                    draw_text(surface, desc, row.x + 10, row.y + 22, GREY, 12)
+
+                # Stats line
+                parts = []
+                if item.get("damage"):   parts.append(f"DMG {item['damage']}")
+                if item.get("defense", 0): parts.append(f"DEF +{item['defense']}")
+                if item.get("heal_amount"): parts.append(f"Heal {item['heal_amount']}")
+                for stat, val in item.get("stat_bonuses", {}).items():
+                    parts.append(f"{stat}+{val}")
+                if parts:
+                    draw_text(surface, "  ".join(parts), row.x + 10, row.y + 42, GREY, 12)
+
+                # Price — grey if unaffordable (6e), red if can't afford at all
+                price = item.get("buy_price", 0)
+                can_afford = sel_char and sel_char.gold >= price
+                if not sel_char:
+                    price_col = DIM_GOLD
+                elif can_afford:
+                    price_col = BUY_COL if hover else DIM_GOLD
+                else:
+                    price_col = (100, 90, 90)   # greyed price (6e)
+                draw_text(surface, f"{price}g", row.x + row.width - 58, row.y + 4, price_col, 15, bold=True)
+
+                if hover:
+                    if not can_afford:
+                        lbl = "Switch to a character who can afford this." if any(c.gold >= price for c in self.party) else "Not enough gold"
+                    elif not equippable:
+                        lbl = "Not usable by this character"
+                    else:
+                        lbl = "Click to buy"
+                    draw_text(surface, lbl, row.x + 10, row.y + 50,
+                              BUY_COL if (can_afford and equippable) else (180, 120, 60), 10)
+
+                iy += 68
+
+            if self.shop_scroll > 0:
+                draw_text(surface, "▲ scroll", panel.x + 10, panel.y + 2, DIM_GOLD, 11)
+            if end < len(items):
+                draw_text(surface, "▼ scroll", panel.x + 10, iy + 2, DIM_GOLD, 11)
+
+            # ── 6c: Comparison panel ─────────────────────────────────
+            if is_equip_tab and sel_char:
+                cp = pygame.Rect(panel.x + panel.width + 8, 132, 232, SCREEN_H - 237)
+                draw_panel(surface, cp, bg_color=(18, 15, 30))
+                draw_text(surface, "Equipped", cp.x + 8, cp.y + 8, GOLD, 13, bold=True)
+                draw_text(surface, sel_char.name, cp.x + 8, cp.y + 24, GREY, 11)
+
+                compare_item = hovered_item
+                if compare_item and can_equip(sel_char, compare_item)[0]:
+                    slot = compare_item.get("slot")
+                    equipped = sel_char.equipment.get(slot) if sel_char.equipment else None
+                    cy = cp.y + 44
+                    if equipped:
+                        draw_text(surface, equipped.get("name", "Unknown"), cp.x + 8, cy, CREAM, 12, bold=True)
+                        cy += 18
+                        new_dmg = compare_item.get("damage", 0)
+                        old_dmg = equipped.get("damage", 0)
+                        new_def = compare_item.get("defense", 0)
+                        old_def = equipped.get("defense", 0)
+                        if old_dmg or new_dmg:
+                            diff = new_dmg - old_dmg
+                            col  = (80, 200, 80) if diff > 0 else (200, 80, 80) if diff < 0 else GREY
+                            draw_text(surface, f"DMG  {old_dmg} → {new_dmg}  ({'+' if diff>=0 else ''}{diff})",
+                                      cp.x + 8, cy, col, 11)
+                            cy += 16
+                        if old_def or new_def:
+                            diff = new_def - old_def
+                            col  = (80, 200, 80) if diff > 0 else (200, 80, 80) if diff < 0 else GREY
+                            draw_text(surface, f"DEF  {old_def} → {new_def}  ({'+' if diff>=0 else ''}{diff})",
+                                      cp.x + 8, cy, col, 11)
+                            cy += 16
+                    else:
+                        draw_text(surface, "Nothing equipped", cp.x + 8, cy, DARK_GREY, 11)
+                        cy += 18
+                        if compare_item.get("damage"):
+                            draw_text(surface, f"DMG  — → {compare_item['damage']}", cp.x + 8, cy, (80, 200, 80), 11)
+                        elif compare_item.get("defense"):
+                            draw_text(surface, f"DEF  — → +{compare_item['defense']}", cp.x + 8, cy, (80, 200, 80), 11)
+                else:
+                    draw_text(surface, "Hover an item", cp.x + 8, cp.y + 44, DARK_GREY, 11)
+                    draw_text(surface, "to compare",   cp.x + 8, cp.y + 60, DARK_GREY, 11)
 
         self._draw_party_bar(surface, mx, my)
 
@@ -3444,31 +3643,43 @@ class TownUI:
 
         # ── Shop buy ──
         elif self.view == self.VIEW_SHOP_BUY:
-            # Back button — matches draw y=50
+            # Back button
             back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
             if back.collidepoint(mx, my):
                 self.view = self.VIEW_SHOP
                 return None
 
-            # Tab clicks — matches draw y=140
+            # Character tabs (6a) — matches draw y=50
+            n = len(self.party)
+            tab_w = min(180, (SCREEN_W - 170) // max(n, 1))
+            for i in range(n):
+                tr = pygame.Rect(20 + i * (tab_w + 4), 50, tab_w, 32)
+                if tr.collidepoint(mx, my):
+                    self.shop_char_idx = i
+                    self.shop_scroll = 0
+                    return None
+
+            # Category tabs — matches draw y=95
             tabs = ["weapons", "armor", "consumables"]
             for i, key in enumerate(tabs):
-                tr = pygame.Rect(20 + i * 140, 140, 130, 32)
+                tr = pygame.Rect(20 + i * 140, 95, 130, 28)
                 if tr.collidepoint(mx, my):
                     self.shop_tab = key
                     self.shop_scroll = 0
                     return None
 
-            # Item clicks — matches draw panel y=182
+            # Item clicks — matches draw panel y=132, row h=68
+            is_equip_tab = self.shop_tab in ("weapons", "armor")
+            list_w = SCREEN_W - 40 - (244 if is_equip_tab else 0)
             items = list(self.shop.get(self.shop_tab, []))
             buyback_start = len(items)
             items.extend(self.sold_items)
-            panel = pygame.Rect(20, 182, SCREEN_W - 40, SCREEN_H - 287)
-            iy = panel.y + 10
+            panel = pygame.Rect(20, 132, list_w, SCREEN_H - 237)
+            iy = panel.y + 8
             start = self.shop_scroll
-            end = min(len(items), start + 8)
+            end = min(len(items), start + 7)
             for idx in range(start, end):
-                row = pygame.Rect(panel.x + 8, iy, panel.width - 16, 68)
+                row = pygame.Rect(panel.x + 6, iy, panel.width - 12, 64)
                 if row.collidepoint(mx, my):
                     is_buyback = idx >= buyback_start
                     if is_buyback:
@@ -3476,7 +3687,7 @@ class TownUI:
                     else:
                         self._buy_item(items[idx])
                     return None
-                iy += 72
+                iy += 68
 
         # ── Shop sell ──
         elif self.view == self.VIEW_SHOP_SELL:
@@ -4063,64 +4274,64 @@ class TownUI:
     # ─────────────────────────────────────────────────────────
 
     def _buy_item(self, shop_item):
-        """Buy an item. Deducts gold from party (first character who can pay)."""
+        """Buy an item. Gold deducted from the selected character (6d).
+        If they can't afford it but another party member can, show a hint."""
         price = shop_item.get("buy_price", 0)
-        total_gold = sum(c.gold for c in self.party)
+        sel   = self.party[self.shop_char_idx] if self.party else None
 
-        if total_gold < price:
-            self._msg("Not enough gold!", RED)
+        if not sel:
             return
 
-        # Deduct gold across party
-        remaining = price
-        for c in self.party:
-            if remaining <= 0:
-                break
-            take = min(c.gold, remaining)
-            c.gold -= take
-            remaining -= take
+        if sel.gold < price:
+            # Check if another character could afford it
+            if any(c.gold >= price for c in self.party):
+                self._msg("Switch to a character who can afford this.", (200, 150, 60))
+            else:
+                self._msg("Not enough gold!", RED)
+            return
 
-        # Create a copy and give to first character (player can redistribute in inventory)
+        sel.gold -= price
+
         new_item = dict(shop_item)
-        # Remove shop-specific fields
         new_item.pop("buy_price", None)
         new_item.pop("sell_price", None)
-        # Shop items are always identified
         new_item["identified"] = True
         from core.party_knowledge import mark_item_identified
         mark_item_identified(new_item.get("name", ""))
-        self.party[0].inventory.append(new_item)
+        sel.inventory.append(new_item)
 
-        self._msg(f"Bought {shop_item['name']} for {price}g — added to {self.party[0].name}'s inventory", BUY_COL)
+        self._msg(f"Bought {shop_item['name']} for {price}g — added to {sel.name}'s inventory", BUY_COL)
         sfx.play("shop_buy")
 
     def _buy_back_item(self, sold_idx):
-        """Buy back a previously sold item."""
+        """Buy back a previously sold item. Uses selected character's gold."""
         if sold_idx >= len(self.sold_items):
             return
-        item = self.sold_items[sold_idx]
+        item  = self.sold_items[sold_idx]
         price = item.get("buy_price", 0)
-        total_gold = sum(c.gold for c in self.party)
+        sel   = self.party[self.shop_char_idx] if self.party else None
 
-        if total_gold < price:
-            self._msg("Not enough gold!", RED)
+        if not sel:
             return
 
-        # Deduct gold
-        self._deduct_gold(price)
+        if sel.gold < price:
+            if any(c.gold >= price for c in self.party):
+                self._msg("Switch to a character who can afford this.", (200, 150, 60))
+            else:
+                self._msg("Not enough gold!", RED)
+            return
 
-        # Remove from sold list
+        sel.gold -= price
         self.sold_items.pop(sold_idx)
 
-        # Create clean copy for inventory
         new_item = dict(item)
         new_item.pop("buy_price", None)
         new_item.pop("sell_price", None)
         new_item.pop("_buyback", None)
-        self.party[0].add_item(new_item)
+        sel.add_item(new_item)
 
         name = get_item_display_name(new_item)
-        self._msg(f"Bought back {name} for {price}g — added to {self.party[0].name}'s inventory", BUY_COL)
+        self._msg(f"Bought back {name} for {price}g — added to {sel.name}'s inventory", BUY_COL)
 
     def _sell_item(self, char, item_idx):
         """Sell an item from a character's inventory."""
@@ -4391,8 +4602,8 @@ class TownUI:
 
     def handle_scroll(self, direction):
         if self.view == self.VIEW_SHOP_BUY:
-            items = self.shop.get(self.shop_tab, [])
-            max_s = max(0, len(items) - 8)
+            items = list(self.shop.get(self.shop_tab, [])) + self.sold_items
+            max_s = max(0, len(items) - 7)
             if direction > 0:
                 self.shop_scroll = min(max_s, self.shop_scroll + 1)
             else:
