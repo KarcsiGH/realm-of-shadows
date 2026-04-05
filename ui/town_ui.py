@@ -1119,7 +1119,20 @@ class TownUI:
                 self._show_walk_msg("Checking the job board...", DIM_GOLD)
                 self.view = self.VIEW_JOBBOARD
             else:
-                self._show_walk_msg(sign_text, DIM_GOLD)
+                # Show sign as a proper dialogue popup with a Close button
+                from core.dialogue import DialogueState
+                from ui.dialogue_ui import DialogueUI
+                sign_tree = {
+                    "id": "sign",
+                    "nodes": {
+                        "start": {
+                            "speaker": "",
+                            "text": sign_text,
+                            "choices": [{"text": "[ Close ]", "next": None}],
+                        }
+                    },
+                }
+                self.active_dialogue = DialogueUI(DialogueState(sign_tree))
             return None
 
         return None
