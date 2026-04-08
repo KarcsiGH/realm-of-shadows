@@ -2113,20 +2113,30 @@ class Game:
         """Handle clicks on the Adventurers Guild roster screen."""
         sw, sh = SCREEN_W, SCREEN_H
 
-        # [Create Character] button
-        r_create = pygame.Rect(sw // 2 - 220, sh - 80, 200, 48)
-        if r_create.collidepoint(mx, my) and len(self.character_bank) < self.BANK_MAX:
+        can_create = len(self.character_bank) < self.BANK_MAX
+
+        # [Roll Stats] button — 4d6 drop lowest flow
+        r_roll = pygame.Rect(sw // 2 - 340, sh - 80, 180, 48)
+        if r_roll.collidepoint(mx, my) and can_create:
             self.go(S_ROLL)
             return
 
-        # [Assemble Party] button — only if enough characters in bank
-        r_assemble = pygame.Rect(sw // 2 + 20, sh - 80, 200, 48)
+        # [Life Path] button — narrative creation flow
+        r_life = pygame.Rect(sw // 2 - 140, sh - 80, 180, 48)
+        if r_life.collidepoint(mx, my) and can_create:
+            self.quick = False
+            self.new_char()
+            self.go(S_NAME)
+            return
+
+        # [Assemble Party] button
+        r_assemble = pygame.Rect(sw // 2 + 60, sh - 80, 200, 48)
         if r_assemble.collidepoint(mx, my) and len(self.character_bank) >= self.PARTY_MIN:
             self._assemble_sel = []
             self.go(S_PARTY_ASSEMBLE)
             return
 
-        # Character card clicks — select for deletion
+        # Character card delete buttons
         card_w, card_h = 320, 90
         cols = 2
         start_x = sw // 2 - (cols * card_w + 20) // 2
@@ -2136,8 +2146,6 @@ class Game:
             row = i // cols
             cx = start_x + col * (card_w + 20)
             cy = start_y + row * (card_h + 12)
-            r = pygame.Rect(cx, cy, card_w, card_h)
-            # Delete button (small X on right of card)
             r_del = pygame.Rect(cx + card_w - 28, cy + 4, 24, 24)
             if r_del.collidepoint(mx, my):
                 self.character_bank.pop(i)
@@ -2227,28 +2235,42 @@ class Game:
             draw_panel(self.screen, r, border_color=(50, 45, 70), bg_color=(18, 14, 30))
             draw_text(self.screen, "— Empty slot —", cx + card_w // 2 - 55, cy + 34, (60, 55, 80), 13)
 
-        # Bottom buttons
+        # Bottom buttons — Roll Stats | Life Path | Assemble Party
         can_create   = len(self.character_bank) < self.BANK_MAX
         can_assemble = len(self.character_bank) >= self.PARTY_MIN
 
-        r_create = pygame.Rect(sw // 2 - 220, sh - 80, 200, 48)
-        cr_col = (60, 180, 100) if can_create else (50, 60, 50)
-        cr_brd = (100, 220, 140) if can_create else (60, 70, 60)
-        draw_panel(self.screen, r_create, bg_color=cr_col, border_color=cr_brd)
-        draw_text(self.screen, "Create Character",
-                  r_create.x + 18, r_create.y + 14, CREAM if can_create else GREY, 15, bold=True)
+        r_roll = pygame.Rect(sw // 2 - 340, sh - 80, 180, 48)
+        r_life = pygame.Rect(sw // 2 - 140, sh - 80, 180, 48)
+        r_assemble = pygame.Rect(sw // 2 + 60, sh - 80, 200, 48)
 
-        r_assemble = pygame.Rect(sw // 2 + 20, sh - 80, 200, 48)
-        as_col = (60, 100, 200) if can_assemble else (40, 50, 80)
-        as_brd = (100, 150, 255) if can_assemble else (50, 60, 100)
+        # Roll Stats
+        cr_col = (50, 120, 70) if can_create else (35, 50, 35)
+        cr_brd = (80, 200, 110) if can_create else (45, 60, 45)
+        draw_panel(self.screen, r_roll, bg_color=cr_col, border_color=cr_brd)
+        draw_text(self.screen, "⚄ Roll Stats",
+                  r_roll.x + 20, r_roll.y + 14, CREAM if can_create else GREY, 15, bold=can_create)
+        draw_text(self.screen, "4d6 drop lowest",
+                  r_roll.x + 22, r_roll.y + 32, (100, 160, 110) if can_create else GREY, 10)
+
+        # Life Path
+        lp_col = (40, 70, 120) if can_create else (30, 40, 60)
+        lp_brd = (80, 140, 220) if can_create else (40, 55, 80)
+        draw_panel(self.screen, r_life, bg_color=lp_col, border_color=lp_brd)
+        draw_text(self.screen, "✦ Life Path",
+                  r_life.x + 22, r_life.y + 14, CREAM if can_create else GREY, 15, bold=can_create)
+        draw_text(self.screen, "Shape your backstory",
+                  r_life.x + 16, r_life.y + 32, (100, 140, 200) if can_create else GREY, 10)
+
+        # Assemble Party
+        as_col = (70, 50, 140) if can_assemble else (35, 30, 60)
+        as_brd = (140, 100, 255) if can_assemble else (50, 42, 90)
         draw_panel(self.screen, r_assemble, bg_color=as_col, border_color=as_brd)
-        draw_text(self.screen, "Assemble Party",
-                  r_assemble.x + 22, r_assemble.y + 14, CREAM if can_assemble else GREY, 15, bold=True)
-
+        draw_text(self.screen, "→ Assemble Party",
+                  r_assemble.x + 18, r_assemble.y + 14, CREAM if can_assemble else GREY, 15, bold=can_assemble)
         if not can_assemble:
             needed = self.PARTY_MIN - len(self.character_bank)
-            draw_text(self.screen, f"Need {needed} more character{'s' if needed > 1 else ''}",
-                      r_assemble.x + 20, r_assemble.y + 34, (100, 100, 140), 11)
+            draw_text(self.screen, f"Need {needed} more character{'s' if needed != 1 else ''}",
+                      r_assemble.x + 20, r_assemble.y + 32, (80, 65, 120), 10)
 
     # ══════════════════════════════════════════════════════════
     #  STAT ROLLING — 4d6 drop lowest, rerolls, stat swap
