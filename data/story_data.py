@@ -933,11 +933,12 @@ NPC_DIALOGUES = {
                         "speaker": "Warden Liaison",
                         "text": "Ashenmoor cleared. The Commander's Log confirms what we suspected "
                                 "about Valdris — I've already sent word to the other Liaisons.\n"
-                                "Two Hearthstones remain in Act Two. "
-                                "The Sunken Crypt — it's beneath the Pale Coast, "
-                                "flooded passages, old Warden anchor site. "
-                                "And Dragon's Tooth island, volcanic, off the southern coast. "
-                                "You'll need sea passage for both — Saltmere is your port.",
+                                "And you have the Crypt Amulet — the ward-key from the Commander. "
+                                "The Sunken Crypt entrance will open for you now. "
+                                "It's beneath the Pale Coast, flooded passages, old Warden anchor site. "
+                                "Second Hearthstone is inside.\n"
+                                "Dragon's Tooth after that — volcanic island, needs sea passage. "
+                                "Saltmere is your port for both.",
                         "choices": [
                             {"text": "How do we get to Saltmere?",    "next": "saltmere"},
                             {"text": "What's in the Sunken Crypt?",   "next": "crypt"},
@@ -993,7 +994,7 @@ NPC_DIALOGUES = {
                     },
                     "guidance": {
                         "speaker": "Warden Liaison",
-                        "text": "Four Hearthstones remain. Maren will know more than I do about their locations.\nWhat I know: the Ruins of Ashenmoor south-west, the Sunken Crypt beneath the Pale Coast, and two sea crossings beyond that.\nBefore any of that — visit Sanctum to the east. High Priest Aldara holds records from the old Order. She knows things about the Hearthstone network that Maren doesn't. Don't skip it.",
+                        "text": "Four Hearthstones remain. Maren will know more than I do about their locations.\nWhat I know: the Ruins of Ashenmoor first — south-west. Clear it. The Commander there holds a Crypt Amulet — a ward-key the old Order used to seal the Sunken Crypt. Without it, the Crypt entrance won't open, no matter what you try.\nOnce you have the amulet, the Sunken Crypt opens. It's beneath the Pale Coast, flooded passages, dangerous. After that, two sea crossings — Saltmere is the port.\nBefore any of that — visit Sanctum to the east. High Priest Aldara holds records from the old Order. Don't skip her.",
                         "choices": [{"text": "We'll find them.", "next": None}]
                     },
                     "rank_info": {
@@ -1585,7 +1586,11 @@ NPC_DIALOGUES = {
                                 "and what's guarding them. Don't skip her.\n"
                                 "Second: the Ruins of Ashenmoor. Something's been active there. "
                                 "Not alive, exactly — but aware. "
-                                "Whatever's left in those ruins saw what Valdris did.",
+                                "Whatever's left in those ruins saw what Valdris did.\n"
+                                "One more thing — important. The Sunken Crypt is your next Hearthstone after Ashenmoor, "
+                                "but the entrance is warded. Sealed with an old Order lock. "
+                                "The ward-key is a Crypt Amulet — I believe it's still in Ashenmoor. "
+                                "Don't try the Crypt without it. The entrance won't open.",
                         "on_enter": [{"action": "start_quest", "quest": "main_ashenmoor"}],
                         "end": True,
                     },
@@ -1652,10 +1657,11 @@ NPC_DIALOGUES = {
                                 "I'd ever known. Everything he did was for the greater good. "
                                 "He said that a lot.\n"
                                 "I'm beginning to understand what he meant by it.\n"
-                                "Two Hearthstones left in Act Two — the Sunken Crypt beneath the "
-                                "Pale Coast, and Dragon's Tooth island to the south. "
-                                "Both need sea passage. Saltmere is the port — it's the only place "
-                                "with ships that go that far.",
+                                "The Crypt Amulet you recovered from the Commander — that's the ward-key. "
+                                "The Sunken Crypt entrance is sealed with old Order magic; "
+                                "the Amulet is what opens it. You can go there now.\n"
+                                "After the Crypt — Dragon's Tooth, volcanic island to the south. "
+                                "Both need sea passage. Saltmere is the port.",
                         "on_enter": [
                             {"action": "complete_quest", "quest": "main_ashenmoor"},
                             {"action": "set_flag", "flag": "maren.ashenmoor_revelation", "value": True},

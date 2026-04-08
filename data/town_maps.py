@@ -1255,7 +1255,7 @@ CRYSTALSPIRE_NPCS = [
     },
     {
         "name": "Apprentice Mage",
-        "x": 20, "y": 1,       # open area row 1 away from buildings
+        "x": 20, "y": 3,       # open area, visible — was y=1 which is right at the tree border
         "dialogue_id": "apprentice_mage",
         "description": "A student in blue robes practicing gestures under her breath.",
         "color": (160, 180, 240),
@@ -1276,7 +1276,7 @@ CRYSTALSPIRE_NPCS = [
     },
     {
         "name": "Archmage Solen",
-        "x": 12, "y": 5,
+        "x": 10, "y": 5,    # open ground outside academy — was 12,5 (door tile, triggered building entry)
         "service": None,
         "dialogue_id": "archmage_solen",
         "description": "The Archmage of Crystalspire. Ancient, precise, and watching everything.",

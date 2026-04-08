@@ -1010,8 +1010,19 @@ class WorldState:
             return False, "Unknown location"
         req = loc.get("required_key")
         if req and not self.has_key(req):
-            key_name = req.replace("_", " ").title()
-            return False, f"Requires: {key_name}"
+            # Give specific, actionable guidance per dungeon instead of a generic key name
+            LOCKED_MESSAGES = {
+                "spiders_nest":   "The path is overgrown and impassable. Clear the Goblin Warren first — the way through is marked on their maps.",
+                "abandoned_mine": "The mine entrance is padlocked. The Spider Queen carries the key.",
+                "ruins_ashenmoor":"The road east is blocked by Fading corruption. Clear the Abandoned Mine first.",
+                "sunken_crypt":   "The entrance is sealed with old Order ward-magic. You need a Crypt Amulet — last recorded in the Ruins of Ashenmoor. Clear Ashenmoor first.",
+                "dragons_tooth":  "No ship will sail this route. Clear the Sunken Crypt — the passage opens after.",
+                "pale_coast":     "The coastal road is impassable. Clear Dragon's Tooth first.",
+                "valdris_spire":  "The Spire's approach is warded. You need all five Hearthstones.",
+                "shadow_throne":  "The gate is sealed. Clear Valdris' Spire first.",
+            }
+            msg = LOCKED_MESSAGES.get(loc_id, f"Requires: {req.replace('_', ' ').title()}")
+            return False, msg
         return True, "OK"
 
     def get_tile(self, x, y):

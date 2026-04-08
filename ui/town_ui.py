@@ -1710,6 +1710,9 @@ class TownUI:
             draw_text(surface, label, tr.x + 8, tr.y + 7,
                       GOLD if is_sel else CREAM, 13, bold=is_sel)
 
+        # Clamp idx in case party shrank while shop was open
+        if self.party:
+            self.shop_char_idx = min(self.shop_char_idx, len(self.party) - 1)
         sel_char = self.party[self.shop_char_idx] if self.party else None
 
         # ── Category tabs ────────────────────────────────────────────
@@ -4277,7 +4280,8 @@ class TownUI:
         """Buy an item. Gold deducted from the selected character (6d).
         If they can't afford it but another party member can, show a hint."""
         price = shop_item.get("buy_price", 0)
-        sel   = self.party[self.shop_char_idx] if self.party else None
+        idx   = min(self.shop_char_idx, len(self.party) - 1) if self.party else 0
+        sel   = self.party[idx] if self.party else None
 
         if not sel:
             return
@@ -4309,7 +4313,8 @@ class TownUI:
             return
         item  = self.sold_items[sold_idx]
         price = item.get("buy_price", 0)
-        sel   = self.party[self.shop_char_idx] if self.party else None
+        idx   = min(self.shop_char_idx, len(self.party) - 1) if self.party else 0
+        sel   = self.party[idx] if self.party else None
 
         if not sel:
             return
