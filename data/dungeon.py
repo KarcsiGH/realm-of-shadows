@@ -335,103 +335,155 @@ def resolve_trap_saving_throw(character, trap_event):
 
 
 def _place_interactables(tiles, rooms, floor_num, total_floors, rng, dungeon_id):
-    """Place healing pools, MP shrines, and cursed interactables in rooms.
-    
-    Types:
-    - healing_pool: Restores ~30% HP to party. Single use per visit.
-    - mp_shrine: Restores ~25% MP/SP. Single use per visit.
-    - cursed_altar: Risky — 60% chance of buff, 40% chance of curse/damage.
+    """Place Warden Anchors, Healing Springs, and Cursed Altars.
+
+    Reformed shrine system (Momentum update):
+    - warden_anchor       : 20% MP/SP restore. Fixed position per floor (not random).
+    - healing_spring      : 25-37% HP restore. Random placement.
+    - cursed_altar_power  : Red glow — temp HP vs party damage.
+    - cursed_altar_arcane : Blue glow — MP restore vs MP drain.
+    - cursed_altar_void   : Dark — HP+MP vs random debuff.
+    - cursed_altar_warden : Gold — always works, purges status, attracts a fight.
     """
-    # Only place in rooms that don't have events
-    # 1-2 interactables per floor, more on deeper floors
     count = min(3, 1 + floor_num // 2)
-    
-    # Dungeon-specific theming
+
     pool_types = {
-        "goblin_warren":   ["healing_pool", "mp_shrine"],
-        "spiders_nest":    ["healing_pool", "cursed_altar"],
-        "sunken_crypt":    ["mp_shrine", "cursed_altar", "cursed_altar"],
-        "abandoned_mine":  ["healing_pool", "mp_shrine", "cursed_altar"],
-        "ruins_ashenmoor": ["mp_shrine", "cursed_altar"],
-        "valdris_spire":   ["mp_shrine", "cursed_altar", "healing_pool"],
+        "goblin_warren":   ["healing_spring", "healing_spring"],
+        "spiders_nest":    ["healing_spring", "cursed_altar_power"],
+        "sunken_crypt":    ["cursed_altar_arcane", "cursed_altar_void", "healing_spring"],
+        "abandoned_mine":  ["healing_spring", "cursed_altar_power", "cursed_altar_warden"],
+        "ruins_ashenmoor": ["cursed_altar_void", "cursed_altar_arcane"],
+        "dragons_tooth":   ["cursed_altar_power", "healing_spring", "cursed_altar_void"],
+        "pale_coast":      ["healing_spring", "cursed_altar_warden", "cursed_altar_arcane"],
+        "windswept_isle":  ["cursed_altar_warden", "cursed_altar_void", "healing_spring"],
+        "valdris_spire":   ["cursed_altar_void", "cursed_altar_power", "healing_spring"],
+        "shadow_throne":   ["cursed_altar_void", "cursed_altar_void", "healing_spring"],
     }
-    available = pool_types.get(dungeon_id, ["healing_pool", "mp_shrine"])
-    
+    available = pool_types.get(dungeon_id, ["healing_spring", "cursed_altar_arcane"])
+
+    # Place one Warden Anchor on floor 2+ — always in the second-largest room
+    if floor_num >= 2 and len(rooms) >= 3:
+        sorted_rooms = sorted(rooms[1:], key=lambda r: r[2] * r[3], reverse=True)
+        for anchor_room in sorted_rooms[1:2]:
+            rx, ry, rw, rh = anchor_room
+            px, py = rx + rw // 2, ry + rh // 2
+            if (0 <= py < len(tiles) and 0 <= px < len(tiles[0])
+                    and tiles[py][px]["type"] == DT_FLOOR
+                    and not tiles[py][px].get("event")):
+                tiles[py][px]["type"]  = DT_INTERACTABLE
+                tiles[py][px]["event"] = _make_interactable("warden_anchor", floor_num, rng)
+                break
+
+    # Place random interactables in remaining rooms
     placed = 0
-    # Shuffle room order (skip first room which has entrance)
     candidate_rooms = list(rooms[1:])
     rng.shuffle(candidate_rooms)
-    
+
     for room in candidate_rooms:
         if placed >= count:
             break
-        # Find an empty floor tile in this room
         rx, ry, rw, rh = room
         px = rx + rng.randint(1, max(1, rw - 2))
         py = ry + rng.randint(1, max(1, rh - 2))
-        
-        if (0 <= py < len(tiles) and 0 <= px < len(tiles[0]) and 
-            tiles[py][px]["type"] == DT_FLOOR and not tiles[py][px].get("event")):
-            
+
+        if (0 <= py < len(tiles) and 0 <= px < len(tiles[0])
+                and tiles[py][px]["type"] == DT_FLOOR
+                and not tiles[py][px].get("event")):
             itype = rng.choice(available)
-            tiles[py][px]["type"] = DT_INTERACTABLE
+            tiles[py][px]["type"]  = DT_INTERACTABLE
             tiles[py][px]["event"] = _make_interactable(itype, floor_num, rng)
             placed += 1
 
 
 def _make_interactable(itype, floor_num, rng):
     """Create an interactable event dict."""
-    if itype == "healing_pool":
-        names = ["Shimmering Pool", "Healing Spring", "Life Font", 
-                 "Sacred Basin", "Crystal Pool"]
+
+    if itype == "warden_anchor":
+        return {
+            "type":        "interactable",
+            "subtype":     "warden_anchor",
+            "name":        "Warden Anchor",
+            "hint":        "A carved ward-rune glows in the floor. Part of the old network.",
+            "used":        False,
+            "restore_pct": 0.20,
+        }
+
+    if itype == "healing_spring":
+        names = ["Healing Spring", "Life Font", "Sacred Basin",
+                 "Clear Pool", "Seeping Wellspring"]
         hints = [
-            "The water glows with a gentle warmth.",
-            "You feel a soothing presence near the water.",
-            "Faint motes of light drift up from the surface.",
+            "The water catches light from somewhere above.",
+            "You can smell clean water before you see it.",
+            "Faint warmth rises from the surface.",
+            "The stone basin is cool to the touch.",
         ]
         return {
-            "type": "interactable",
-            "subtype": "healing_pool",
-            "name": rng.choice(names),
-            "hint": rng.choice(hints),
-            "used": False,
-            "heal_pct": 0.30 + floor_num * 0.02,  # 30-40% HP
+            "type":     "interactable",
+            "subtype":  "healing_spring",
+            "name":     rng.choice(names),
+            "hint":     rng.choice(hints),
+            "used":     False,
+            "heal_pct": 0.25 + floor_num * 0.02,
         }
-    elif itype == "mp_shrine":
-        names = ["Arcane Shrine", "Mana Wellspring", "Spirit Altar",
-                 "Runic Pillar", "Glowing Obelisk"]
-        hints = [
-            "Arcane energy crackles in the air around it.",
-            "The runes pulse with stored power.",
-            "You feel your mind sharpen near the shrine.",
-        ]
+
+    if itype == "cursed_altar_power":
         return {
-            "type": "interactable",
-            "subtype": "mp_shrine",
-            "name": rng.choice(names),
-            "hint": rng.choice(hints),
-            "used": False,
-            "restore_pct": 0.25 + floor_num * 0.02,  # 25-35% MP/SP
+            "type":       "interactable",
+            "subtype":    "cursed_altar",
+            "altar_type": "power",
+            "color_hint": "red",
+            "name":       rng.choice(["Bloodstone Altar", "Crimson Idol", "Red Warden Stone"]),
+            "hint":       "The stone pulses with a deep red light. Power — at a price.",
+            "used":       False,
+            "buff_chance": 0.60,
+            "buff_hp":    int(20 + floor_num * 6),
+            "curse_dmg":  int(15 + floor_num * 7),
         }
-    elif itype == "cursed_altar":
-        names = ["Dark Altar", "Shadowed Idol", "Twisted Shrine",
-                 "Blood-stained Pillar", "Whispering Monolith"]
-        hints = [
-            "An unsettling aura radiates from it. Touch it?",
-            "Dark whispers seem to emanate from within.",
-            "The stone is warm despite the cold air.",
-        ]
-        # Outcomes determined when used, not at creation
+
+    if itype == "cursed_altar_arcane":
         return {
-            "type": "interactable",
-            "subtype": "cursed_altar",
-            "name": rng.choice(names),
-            "hint": rng.choice(hints),
-            "used": False,
-            "buff_chance": 0.55,  # 55% chance of good outcome
-            "buff_hp": int(15 + floor_num * 5),  # bonus max HP for rest of dungeon
-            "curse_dmg": int(10 + floor_num * 8),  # damage on bad outcome
+            "type":        "interactable",
+            "subtype":     "cursed_altar",
+            "altar_type":  "arcane",
+            "color_hint":  "blue",
+            "name":        rng.choice(["Azure Obelisk", "Blue Runic Pillar", "Sapphire Shrine"]),
+            "hint":        "Cold blue light pulses within. Arcane energy — but unstable.",
+            "used":        False,
+            "buff_chance":  0.65,
+            "restore_pct":  0.30,
+            "drain_pct":    0.20,
         }
+
+    if itype == "cursed_altar_void":
+        return {
+            "type":        "interactable",
+            "subtype":     "cursed_altar",
+            "altar_type":  "void",
+            "color_hint":  "dark",
+            "name":        rng.choice(["Void Monolith", "Shadow Pillar", "Dark Stone"]),
+            "hint":        "No glow at all. The air around it feels absent. Void — unpredictable.",
+            "used":        False,
+            "buff_chance":  0.55,
+            "buff_hp_pct":  0.15,
+            "buff_mp_pct":  0.15,
+            "debuffs":      ["Weakened", "Slowed", "Fear"],
+        }
+
+    if itype == "cursed_altar_warden":
+        return {
+            "type":              "interactable",
+            "subtype":           "cursed_altar",
+            "altar_type":        "warden",
+            "color_hint":        "gold",
+            "name":              rng.choice(["Warden Ward-Stone", "Gold Seal Altar", "Order Beacon"]),
+            "hint":              "Warm gold light. Old Warden work — benevolent, but it draws attention.",
+            "used":              False,
+            "buff_chance":       1.00,
+            "purge_status":      True,
+            "heal_pct":          0.10,
+            "attract_encounter": True,
+        }
+
     return {"type": "interactable", "subtype": itype, "used": False}
 
 

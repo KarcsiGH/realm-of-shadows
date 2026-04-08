@@ -1288,6 +1288,22 @@ for dungeon_id, floors in NEW_FACTION_ENCOUNTER_TABLE_UPDATES.items():
         DUNGEON_ENCOUNTER_TABLES[dungeon_id][floor] = merged
 
 
+# ── Combat Balance Recalibration (Momentum system) ──────────────────────────
+# Applied once after all enemy dicts are assembled.
+# Standard enemies: HP ×0.65, Bosses (HP≥400): HP ×0.75, Attack ×0.80.
+# These multipliers bring the "3-4 basic attacks to kill" design target into range.
+_BOSS_THRESHOLD = 400
+for _en_name, _en in ENEMIES.items():
+    _old_hp = _en.get("hp", 0)
+    _hp_mult = 0.75 if _old_hp >= _BOSS_THRESHOLD else 0.65
+    _en["hp"] = max(12, round(_old_hp * _hp_mult))
+    _old_atk = _en.get("attack_damage", 0)
+    if isinstance(_old_atk, (list, tuple)):
+        _en["attack_damage"] = [max(6, round(v * 0.80)) for v in _old_atk]
+    elif _old_atk:
+        _en["attack_damage"] = max(6, round(_old_atk * 0.80))
+
+
 # ═══════════════════════════════════════════════════════════════
 #  BOSS PHASE DEFINITIONS
 #  Each boss can have up to 3 phases triggered by HP thresholds.

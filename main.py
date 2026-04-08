@@ -4226,9 +4226,32 @@ class Game:
             name = data.get("name", "Strange Object")
             from core.classes import get_all_resources
 
-            if subtype == "healing_pool":
+            # ── Warden Anchor — 20% MP/SP restore ──────────────────────
+            if subtype == "warden_anchor":
                 data["used"] = True
-                heal_pct = data.get("heal_pct", 0.30)
+                restore_pct = data.get("restore_pct", 0.20)
+                restored = []
+                for c in self.party:
+                    max_res = get_all_resources(c.class_name, c.stats, c.level)
+                    for rk, mv in max_res.items():
+                        if rk == "HP" or not mv:
+                            continue
+                        cur = c.resources.get(rk, 0)
+                        c.resources[rk] = min(mv, cur + int(mv * restore_pct))
+                        gained = c.resources[rk] - cur
+                        if gained > 0:
+                            restored.append(f"{c.name} +{gained} {rk}")
+                sfx.play("buff")
+                self.dungeon_ui.show_event(f"✦ {name} — the ward network stirs.", (160, 200, 255))
+                if restored:
+                    self.dungeon_ui.show_event("  ".join(restored[:4]), (140, 180, 255))
+                else:
+                    self.dungeon_ui.show_event("Resources already full.", GREY)
+
+            # ── Healing Spring — 25-37% HP ──────────────────────────────
+            elif subtype == "healing_spring":
+                data["used"] = True
+                heal_pct = data.get("heal_pct", 0.28)
                 healed = []
                 for c in self.party:
                     max_res = get_all_resources(c.class_name, c.stats, c.level)
@@ -4245,44 +4268,141 @@ class Game:
                 else:
                     self.dungeon_ui.show_event("Already at full health.", GREY)
 
+            # ── Cursed Altars — four types ────────────────────────────────
+            elif subtype == "cursed_altar":
+                data["used"] = True
+                altar_type  = data.get("altar_type", "power")
+                buff_chance = data.get("buff_chance", 0.55)
+                success     = random.random() < buff_chance
+
+                if altar_type == "power":
+                    if success:
+                        bonus = data.get("buff_hp", 30)
+                        for c in self.party:
+                            c.resources["HP"] = c.resources.get("HP", 0) + bonus
+                        sfx.play("camp_rest")
+                        self.dungeon_ui.show_event(f"🔴 {name} — raw power surges through you!", (220, 60, 60))
+                        self.dungeon_ui.show_event(f"Party gained +{bonus} temporary HP!", GREEN)
+                    else:
+                        dmg = data.get("curse_dmg", 22)
+                        for c in self.party:
+                            c.resources["HP"] = max(1, c.resources.get("HP", 0) - dmg)
+                        sfx.play("trap_trigger")
+                        self.dungeon_ui.show_event(f"🔴 {name} — the power recoils!", RED)
+                        self.dungeon_ui.show_event(f"Party took {dmg} shadow damage!", ORANGE)
+
+                elif altar_type == "arcane":
+                    if success:
+                        restore_pct = data.get("restore_pct", 0.30)
+                        restored = []
+                        for c in self.party:
+                            max_res = get_all_resources(c.class_name, c.stats, c.level)
+                            for rk, mv in max_res.items():
+                                if rk == "HP" or not mv:
+                                    continue
+                                cur = c.resources.get(rk, 0)
+                                c.resources[rk] = min(mv, cur + int(mv * restore_pct))
+                                gained = c.resources[rk] - cur
+                                if gained > 0:
+                                    restored.append(f"+{gained} {rk}")
+                        sfx.play("buff")
+                        self.dungeon_ui.show_event(f"🔵 {name} — arcane energy flows in.", (80, 120, 255))
+                        if restored:
+                            self.dungeon_ui.show_event("  ".join(restored[:4]), (140, 180, 255))
+                    else:
+                        drain_pct = data.get("drain_pct", 0.20)
+                        drained = []
+                        for c in self.party:
+                            max_res = get_all_resources(c.class_name, c.stats, c.level)
+                            for rk, mv in max_res.items():
+                                if rk == "HP" or not mv:
+                                    continue
+                                cur = c.resources.get(rk, 0)
+                                lost = int(mv * drain_pct)
+                                c.resources[rk] = max(0, cur - lost)
+                                if lost > 0:
+                                    drained.append(f"-{lost} {rk}")
+                        sfx.play("trap_trigger")
+                        self.dungeon_ui.show_event(f"🔵 {name} — the energy reverses!", (80, 80, 200))
+                        if drained:
+                            self.dungeon_ui.show_event("  ".join(drained[:4]), ORANGE)
+
+                elif altar_type == "void":
+                    if success:
+                        hp_pct = data.get("buff_hp_pct", 0.15)
+                        mp_pct = data.get("buff_mp_pct", 0.15)
+                        for c in self.party:
+                            max_res = get_all_resources(c.class_name, c.stats, c.level)
+                            max_hp = max_res.get("HP", 1)
+                            c.resources["HP"] = min(max_hp, c.resources.get("HP", 0) + int(max_hp * hp_pct))
+                            for rk, mv in max_res.items():
+                                if rk == "HP" or not mv:
+                                    continue
+                                c.resources[rk] = min(mv, c.resources.get(rk, 0) + int(mv * mp_pct))
+                        sfx.play("buff")
+                        self.dungeon_ui.show_event(f"⬛ {name} — the void gives back.", (120, 80, 160))
+                        self.dungeon_ui.show_event("Party HP and resources partially restored.", GREEN)
+                    else:
+                        debuffs = data.get("debuffs", ["Weakened"])
+                        chosen  = random.choice(debuffs)
+                        target  = random.choice(self.party)
+                        # Apply as a simple status entry
+                        if not hasattr(target, "status_effects"):
+                            target.status_effects = []
+                        target.status_effects.append({
+                            "id": chosen.lower(), "name": chosen,
+                            "duration": 3, "type": chosen.lower()
+                        })
+                        sfx.play("trap_trigger")
+                        self.dungeon_ui.show_event(f"⬛ {name} — something reaches back.", (80, 50, 120))
+                        self.dungeon_ui.show_event(f"{target.name} is afflicted: {chosen}!", ORANGE)
+
+                elif altar_type == "warden":
+                    # Always succeeds — purge status, heal 10%, but draws a fight
+                    heal_pct = data.get("heal_pct", 0.10)
+                    from core.status_effects import clear_all_statuses as clear_all_status_effects
+                    for c in self.party:
+                        max_res = get_all_resources(c.class_name, c.stats, c.level)
+                        max_hp  = max_res.get("HP", 1)
+                        c.resources["HP"] = min(max_hp, c.resources.get("HP", 0) + int(max_hp * heal_pct))
+                        clear_all_status_effects(c)
+                    sfx.play("buff")
+                    self.dungeon_ui.show_event(f"🟡 {name} — the ward cleanses.", (220, 180, 60))
+                    self.dungeon_ui.show_event("Status effects cleared. Party healed 10% HP.", GREEN)
+                    if data.get("attract_encounter") and self.dungeon_state:
+                        self.dungeon_ui.show_event("The light draws something toward you...", ORANGE)
+                        enc_key = self.dungeon_state.get_encounter_key()
+                        self.pre_dungeon_state = self.state
+                        self.start_combat(enc_key)
+
+                else:
+                    # Fallback for unrecognised altar type
+                    hint = data.get("hint", "")
+                    self.dungeon_ui.show_event(f"{name}: {hint}", CREAM)
+
+            # ── Legacy subtypes (old save compatibility) ─────────────────
+            elif subtype == "healing_pool":
+                data["used"] = True
+                heal_pct = data.get("heal_pct", 0.30)
+                for c in self.party:
+                    max_res = get_all_resources(c.class_name, c.stats, c.level)
+                    max_hp  = max_res.get("HP", 1)
+                    c.resources["HP"] = min(max_hp, c.resources.get("HP", 0) + int(max_hp * heal_pct))
+                sfx.play("heal")
+                self.dungeon_ui.show_event(f"🌊 {name} — restored.", (80, 200, 255))
+
             elif subtype == "mp_shrine":
                 data["used"] = True
                 restore_pct = data.get("restore_pct", 0.25)
-                restored = []
                 for c in self.party:
                     max_res = get_all_resources(c.class_name, c.stats, c.level)
                     for rk, mv in max_res.items():
-                        if rk == "HP":
+                        if rk == "HP" or not mv:
                             continue
-                        cur = c.resources.get(rk, 0)
-                        c.resources[rk] = min(mv, cur + int(mv * restore_pct))
-                        gained = c.resources[rk] - cur
-                        if gained > 0:
-                            restored.append(f"{c.name} +{gained} {rk}")
+                        c.resources[rk] = min(mv, c.resources.get(rk, 0) + int(mv * restore_pct))
                 sfx.play("buff")
-                self.dungeon_ui.show_event(f"✨ {name} — arcane energy flows through you.", (120, 100, 220))
-                if restored:
-                    self.dungeon_ui.show_event("  ".join(restored[:4]), (140, 180, 255))
-                else:
-                    self.dungeon_ui.show_event("Resources already full.", GREY)
+                self.dungeon_ui.show_event(f"✨ {name} — resources restored.", (120, 100, 220))
 
-            elif subtype == "cursed_altar":
-                data["used"] = True
-                buff_chance = data.get("buff_chance", 0.55)
-                if random.random() < buff_chance:
-                    bonus = data.get("buff_hp", 20)
-                    for c in self.party:
-                        c.resources["HP"] = c.resources.get("HP", 0) + bonus
-                    sfx.play("camp_rest")
-                    self.dungeon_ui.show_event(f"🔮 {name} — dark power surges through you!", (180, 120, 255))
-                    self.dungeon_ui.show_event(f"Party gained +{bonus} temporary HP!", GREEN)
-                else:
-                    dmg = data.get("curse_dmg", 15)
-                    for c in self.party:
-                        c.resources["HP"] = max(1, c.resources.get("HP", 0) - dmg)
-                    sfx.play("trap_trigger")
-                    self.dungeon_ui.show_event(f"💀 {name} — a curse lashes out!", RED)
-                    self.dungeon_ui.show_event(f"Party took {dmg} shadow damage!", ORANGE)
             else:
                 hint = data.get("hint", "")
                 self.dungeon_ui.show_event(f"{name}: {hint}", CREAM)

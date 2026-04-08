@@ -458,6 +458,32 @@ class CombatUI:
                     if badge_y + 16 <= r.bottom:   # only draw if it fits
                         _draw_status_badges(surface, se, ix, badge_y, iw, font_size=10)
 
+                # Momentum pips — shown for physical classes (those with momentum abilities)
+                # Draw as small filled/empty diamonds just above the card bottom
+                momentum = p.get("momentum", 0)
+                max_mom  = p.get("max_momentum", 6)
+                has_momentum_ability = any(
+                    a.get("resource") == "momentum"
+                    for a in p.get("abilities", [])
+                )
+                if has_momentum_ability:
+                    MOM_FILLED  = (220, 170, 50)   # gold
+                    MOM_EMPTY   = (60,  50,  30)   # dark
+                    MOM_OUTLINE = (100, 85,  40)
+                    pip_size = 6
+                    pip_gap  = 2
+                    total_w  = max_mom * (pip_size + pip_gap) - pip_gap
+                    pip_x    = ix + (iw - total_w) // 2
+                    pip_y    = r.bottom - pip_size - 3
+                    for idx in range(max_mom):
+                        filled = idx < momentum
+                        col = MOM_FILLED if filled else MOM_EMPTY
+                        pygame.draw.rect(surface, col,
+                                         (pip_x, pip_y, pip_size, pip_size))
+                        pygame.draw.rect(surface, MOM_OUTLINE,
+                                         (pip_x, pip_y, pip_size, pip_size), 1)
+                        pip_x += pip_size + pip_gap
+
                 cy += card_h
 
     # ─────────────────────────────────────────────────────────
@@ -891,8 +917,10 @@ class CombatUI:
                 for a in abilities)
         if label == "Skill":
             abilities = actor.get("abilities", [])
+            momentum  = actor.get("momentum", 0)
             return any(
                 "SP" in a.get("resource","") or "Ki" in a.get("resource","") or "EP" in a.get("resource","")
+                or (a.get("resource","") == "momentum" and momentum >= a.get("cost", 0))
                 or (not a.get("resource","") and a.get("type","skill") not in ("spell","magic","heal","cure","aoe_heal"))
                 for a in abilities)
         if label == "Item":
@@ -999,7 +1027,7 @@ class CombatUI:
                 # Primary signal: resource determines spell vs skill category
                 if "MP" in resource or "INT" in resource or "PIE" in resource:
                     is_spell = True
-                elif "SP" in resource or "Ki" in resource or "EP" in resource:
+                elif "SP" in resource or "Ki" in resource or "EP" in resource or resource == "momentum":
                     is_spell = False
                 else:
                     # Fallback: use type field
@@ -1007,11 +1035,14 @@ class CombatUI:
                     is_spell = ab_type in spell_types
                 if (label == "spell" and is_spell) or (label == "skill" and not is_spell):
                     res_cost = ab.get("cost", ab.get("mp_cost", 0))
-                    res_name = "MP" if is_spell else (resource.split("-")[-1] if resource else "SP")
-                    # Check if actor can afford this ability
-                    cur_res   = actor.get("resources", {}).get(resource, 0)
+                    if resource == "momentum":
+                        res_name = "◆"   # diamond pip symbol for momentum
+                        cur_res  = actor.get("momentum", 0)
+                    else:
+                        res_name = "MP" if is_spell else (resource.split("-")[-1] if resource else "SP")
+                        cur_res  = actor.get("resources", {}).get(resource, 0)
                     can_afford = (cur_res >= res_cost) if res_cost else True
-                    cost = f" [{res_cost} {res_name}]" if res_cost else ""
+                    cost = f" [{res_cost}{res_name}]" if res_cost else ""
                     # Add scope tag for AoE abilities so player knows what they're targeting
                     _ab_scope = ""
                     if ab.get("type") in ("aoe", "special"):
