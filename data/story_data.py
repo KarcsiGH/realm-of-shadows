@@ -919,6 +919,49 @@ NPC_DIALOGUES = {
                 }
             }
         },
+        # ── Post-Sunken Crypt: HS2 recovered, Dragon's Tooth next ────
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.2", "op": "==", "value": True},
+                {"flag": "item.hearthstone.3", "op": "!=", "value": True},
+            ],
+            "tree": {
+                "id": "warden_post_sunken_crypt",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Two Hearthstones. You came back from the Sunken Crypt.\n"
+                                "The Warden who guarded that fragment held for a long time. "
+                                "Longer than anyone had a right to ask.\n"
+                                "Three remain. Dragon's Tooth is next — volcanic island, "
+                                "off the southern coast. Sea passage from Saltmere. "
+                                "The dockhand Riv can arrange the route — mention the Wardens.",
+                        "choices": [
+                            {"text": "What should we expect on Dragon's Tooth?", "next": "dragons_tooth"},
+                            {"text": "Any other threats we should know about?",   "next": "threats"},
+                            {"text": "We head to Saltmere.",                       "next": None},
+                        ],
+                    },
+                    "dragons_tooth": {
+                        "speaker": "Warden Liaison",
+                        "text": "Volcanic. The Fading has been drawn there — heat and shadow "
+                                "make for strange combinations.\n"
+                                "The fragment there predates the Order. Whatever is guarding it "
+                                "is old. Don't assume the rules you've learned still apply.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                    "threats": {
+                        "speaker": "Warden Liaison",
+                        "text": "Imperial patrols have been pushing further east. Someone is "
+                                "directing them — and that someone knows where the Hearthstones are.\n"
+                                "Be careful in Thornhaven. Not everyone the Governor trusts "
+                                "deserves to be trusted.",
+                        "choices": [{"text": "We'll be careful.", "next": None}],
+                    },
+                },
+            },
+        },
         # ── Post-Ashenmoor: Ruins cleared, Act 2 mid ────────────────
         {
             "conditions": [
@@ -1593,6 +1636,59 @@ NPC_DIALOGUES = {
                                 "Don't try the Crypt without it. The entrance won't open.",
                         "on_enter": [{"action": "start_quest", "quest": "main_ashenmoor"}],
                         "end": True,
+                    },
+                },
+            },
+        },
+        # After Sunken Crypt cleared — HS2 found, Dragon's Tooth next
+        {
+            "conditions": [
+                {"flag": "boss_defeated.sunken_crypt",  "op": "==", "value": True},
+                {"flag": "boss_defeated.dragons_tooth", "op": "!=", "value": True},
+            ],
+            "tree": {
+                "id": "maren_post_sunken_crypt",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Maren",
+                        "text": "Two stones. You made it back from the Crypt.\n"
+                                "The Sunken Warden — I've read about the garrison that went down "
+                                "with the crypt. They knew the Fading was coming and they stayed.\n"
+                                "What happened in there?",
+                        "choices": [
+                            {"text": "The Warden guardian was still at his post.",  "next": "warden_held"},
+                            {"text": "The Fading had been there a long time.",      "next": "fading_old"},
+                            {"text": "We have the stone. That's what matters.",     "next": "just_the_stone"},
+                            {"text": "Farewell.",                                   "next": None},
+                        ],
+                    },
+                    "warden_held": {
+                        "speaker": "Maren",
+                        "text": "Of course he did. That's what they did — the old ones. "
+                                "Bound themselves to the anchors and waited.\n"
+                                "I used to think that was heroic. Now I think it was the Order "
+                                "asking too much of people who couldn't say no.\n"
+                                "Dragon's Tooth next. Volcanic island, south of Saltmere. "
+                                "The fragment there is old — older than the Order itself.",
+                        "choices": [{"text": "We sail from Saltmere.", "next": None}],
+                    },
+                    "fading_old": {
+                        "speaker": "Maren",
+                        "text": "The coast took the Fading early. Tidal — it spread along the "
+                                "waterways. The crypt was one of the first places to go dark.\n"
+                                "The fragment survived because the Warden sealed it properly. "
+                                "Whatever else the Order did wrong, they built things that lasted.\n"
+                                "Dragon's Tooth is next. Sea passage from Saltmere — ask for Riv.",
+                        "choices": [{"text": "We head south.", "next": None}],
+                    },
+                    "just_the_stone": {
+                        "speaker": "Maren",
+                        "text": "Fair enough. I'll take what you don't want to talk about.\n"
+                                "Two stones. Three to go. Dragon's Tooth — volcanic island "
+                                "south of here, sea passage from Saltmere.\n"
+                                "I'll be here when you get back.",
+                        "choices": [{"text": "We sail south.", "next": None}],
                     },
                 },
             },
@@ -4336,7 +4432,7 @@ TOWN_NPCS = {
     "greenwood":   ["scout_feryn", "old_moss", "warden_liaison"],
     "saltmere":    ["guildmaster_sable", "tide_priest_oran", "dockhand_riv", "warden_liaison"],
     "sanctum":     ["high_priest_aldara", "warden_liaison"],
-    "crystalspire": ["archmage_solen", "teleport_master", 'warden_liaison'],
+    "crystalspire": ["archmage_solen", "teleport_master", "warden_liaison", "crystalspire_priest"],
     "thornhaven":  ["governor_aldric", "guild_commander_varek", "court_mage_sira",
                    "city_guard_thornhaven", "refugee_elder", "innkeeper_thornhaven", "warden_liaison"],
     "emberveil":   ["renn_emberveil", "warden_liaison"],
@@ -9241,6 +9337,185 @@ _NEW_DIALOGUES = {
                         "choices": [
                             {"text": "Let's go face him.", "next": None},
                         ],
+                    },
+                },
+            },
+        },
+    ],
+
+    "crystalspire_priest": [
+        # Act 3 — all stones found, the Spire is the destination
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.5", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "priest_act3",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Priest Sael",
+                        "text": "Five Hearthstones. I felt the last one settle into the network "
+                                "from here — like a chord completing.\n"
+                                "The Shrine has been quiet for four hundred years. "
+                                "For the first time since I began studying the wards, "
+                                "I believe they can be healed.\n"
+                                "Valdris' Spire is to the north-east, beyond the Holdfast. "
+                                "Whatever you find there — the network is ready. Go.",
+                        "choices": [
+                            {"text": "Will the wards hold once we restore them?", "next": "wards_hold"},
+                            {"text": "What do you know about the Spire?",         "next": "the_spire"},
+                            {"text": "We go.",                                    "next": None},
+                        ],
+                    },
+                    "wards_hold": {
+                        "speaker": "Priest Sael",
+                        "text": "The original architecture was sound. "
+                                "The Fading didn't break the system — it exploited a wound "
+                                "that was already there.\n"
+                                "Seal that wound and the wards will hold. "
+                                "Not forever. Nothing holds forever. "
+                                "But long enough for whatever comes next.",
+                        "end": True,
+                    },
+                    "the_spire": {
+                        "speaker": "Priest Sael",
+                        "text": "It was the anchor point for the whole network — "
+                                "built before the Order, before the towns, before most of what "
+                                "you'd recognize as civilization in this region.\n"
+                                "Valdris made it his seat because he understood what it was. "
+                                "He understood everything about the wards. "
+                                "That's what makes him so dangerous.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Post-HS2 — Sunken Crypt cleared, heading for Dragon's Tooth
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.2", "op": "==", "value": True},
+                {"flag": "item.hearthstone.3", "op": "!=", "value": True},
+            ],
+            "tree": {
+                "id": "priest_post_crypt",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Priest Sael",
+                        "text": "Two stones recovered. The Shrine is more... present than it was. "
+                                "The resonance is building.\n"
+                                "Dragon's Tooth next — the fragment there is the oldest. "
+                                "The Shrine's records call it a 'first anchor.' "
+                                "Whatever that means, it predates everything the Order built.\n"
+                                "Sea passage from Saltmere is your route south.",
+                        "choices": [
+                            {"text": "What do the Shrine's records say about Dragon's Tooth?", "next": "records"},
+                            {"text": "We sail south.",                                         "next": None},
+                        ],
+                    },
+                    "records": {
+                        "speaker": "Priest Sael",
+                        "text": "Very little. The Shrine's records begin with the Order's founding "
+                                "— anything before that is inference and fragment.\n"
+                                "What I can tell you: the first anchor was placed by something "
+                                "that wasn't human and wasn't a Warden. "
+                                "Whatever it was, it understood the Fading before anyone had a name for it.",
+                        "choices": [{"text": "We'll find out.", "next": None}],
+                    },
+                },
+            },
+        },
+        # Post-HS1 — Mine cleared, Ashenmoor/Crypt ahead
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.1", "op": "==", "value": True},
+                {"flag": "item.hearthstone.2", "op": "!=", "value": True},
+            ],
+            "tree": {
+                "id": "priest_post_mine",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Priest Sael",
+                        "text": "The first fragment. I can feel it from here — "
+                                "a faint resonance through the Shrine's foundation stones.\n"
+                                "Four remain. The Ruins of Ashenmoor first — "
+                                "there's a ward-sealed crypt beneath the Pale Coast that "
+                                "cannot be opened without a Crypt Amulet from those ruins. "
+                                "Clear Ashenmoor before you attempt the Crypt.\n"
+                                "The Shrine will be watching.",
+                        "choices": [
+                            {"text": "What can you tell us about the Crypt?",    "next": "about_crypt"},
+                            {"text": "What is the Shrine of Arcane Truth?",      "next": "about_shrine"},
+                            {"text": "We understand. Farewell.",                  "next": None},
+                        ],
+                    },
+                    "about_crypt": {
+                        "speaker": "Priest Sael",
+                        "text": "A drowned Warden stronghold. The garrison sealed the "
+                                "Hearthstone fragment and stayed with it when the Fading came.\n"
+                                "The ward on the entrance is old Order work — "
+                                "almost impossible to break by force. The Crypt Amulet "
+                                "is the correct key. Without it, the entrance will not open.",
+                        "choices": [{"text": "Understood. Ashenmoor first.", "next": None}],
+                    },
+                    "about_shrine": {
+                        "speaker": "Priest Sael",
+                        "text": "We study the ward network as a sacred object — "
+                                "not in the way the Wardens did, as infrastructure, "
+                                "or as the Order did, as duty.\n"
+                                "We study it the way you study a cathedral. "
+                                "As something built by minds that understood things "
+                                "we are still learning to ask questions about.",
+                        "choices": [{"text": "Farewell.", "next": None}],
+                    },
+                },
+            },
+        },
+        # Default — before any hearthstones
+        {
+            "conditions": [],
+            "tree": {
+                "id": "priest_default",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Priest Sael",
+                        "text": "The Shrine of Arcane Truth has studied the ward network "
+                                "for three hundred years.\n"
+                                "We are not the Warden Order — we don't maintain the wards, "
+                                "we don't hold rank, we don't take oaths. "
+                                "We simply try to understand what the wards are and what "
+                                "built them.\n"
+                                "In three hundred years, we've answered perhaps a third "
+                                "of those questions. The Fading is answering some of the rest "
+                                "in ways we would have preferred not to learn.",
+                        "choices": [
+                            {"text": "What do you know about the Hearthstones?", "next": "hearthstones"},
+                            {"text": "What is causing the Fading?",              "next": "fading"},
+                            {"text": "Farewell.",                                "next": None},
+                        ],
+                    },
+                    "hearthstones": {
+                        "speaker": "Priest Sael",
+                        "text": "Anchor points for the ward network. "
+                                "Five of them, distributed across the region. "
+                                "The network functions only when all five are active — "
+                                "like a circuit.\n"
+                                "One failed. We don't know why. "
+                                "The Fading is what happens when the circuit is broken.",
+                        "choices": [{"text": "Farewell.", "next": None}],
+                    },
+                    "fading": {
+                        "speaker": "Priest Sael",
+                        "text": "The honest answer: we don't know. "
+                                "The Shrine's best theory is that something interfered "
+                                "with one of the Hearthstone anchors deliberately.\n"
+                                "The ward network doesn't fail randomly. "
+                                "It was designed not to. "
+                                "Something with knowledge of the system caused this.",
+                        "choices": [{"text": "Farewell.", "next": None}],
                     },
                 },
             },

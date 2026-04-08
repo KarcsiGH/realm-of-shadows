@@ -1303,6 +1303,13 @@ CRYSTALSPIRE_NPCS = [
         "description": "A guard in reinforced robes standing watch at the academy approach.",
         "color": (160, 170, 210),
     },
+    {
+        "name": "Priest Sael",
+        "x": 18, "y": 21,    # outside Shrine of Arcane Truth, clear of door at (19,19)
+        "dialogue_id": "crystalspire_priest",
+        "description": "A scholar-priest of the Shrine of Arcane Truth. Studies the ward network as theology.",
+        "color": (200, 180, 240),
+    },
 ]
 
 CRYSTALSPIRE_SIGNS = {
