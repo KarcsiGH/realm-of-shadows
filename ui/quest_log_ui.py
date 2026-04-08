@@ -76,7 +76,7 @@ class QuestLogUI:
     """Quest journal with sidebar list + detail panel."""
 
     def __init__(self):
-        self.tab           = "quests"   # "quests" | "lore" | "bestiary"
+        self.tab           = "quests"   # "quests" | "lore" | "bestiary" | "guild"
         self.selected_qid  = None
         self.selected_lid  = None
         self.selected_eid  = None       # selected enemy key for bestiary
@@ -94,7 +94,7 @@ class QuestLogUI:
         draw_text(surface, "Journal", SCREEN_W // 2 - 38, 12, GOLD, 21, bold=True)
 
         # Tabs
-        for i, (key, label) in enumerate([("quests", "Quests"), ("lore", "Lore"), ("bestiary", "Bestiary")]):
+        for i, (key, label) in enumerate([("quests", "Quests"), ("lore", "Lore"), ("bestiary", "Bestiary"), ("guild", "Guild")]):
             r = pygame.Rect(20 + i * 116, 48, 108, 30)
             sel   = self.tab == key
             hover = r.collidepoint(mx, my)
@@ -114,6 +114,8 @@ class QuestLogUI:
             self._draw_quests(surface, mx, my)
         elif self.tab == "lore":
             self._draw_lore(surface, mx, my)
+        elif self.tab == "guild":
+            self._draw_guild_tier(surface, mx, my)
         else:
             self._draw_bestiary(surface, mx, my)
 
@@ -419,6 +421,133 @@ class QuestLogUI:
 
     # ─── Bestiary tab ─────────────────────────────────────────────────
 
+    # ─── Guild / Warden Rank tab ──────────────────────────────────────
+
+    def _draw_guild_tier(self, surface, mx, my):
+        """Draw Warden rank progression, active bonuses, and next milestone."""
+        from core.progression import PLANAR_TIERS, get_party_tier
+        from core.story_flags import get_save_data
+
+        story_flags = get_save_data()
+        # Find current tier from story flags (use tier 0 if none)
+        from core.story_flags import get_flag
+        current_tier = 0
+        for tier_idx in sorted(PLANAR_TIERS.keys(), reverse=True):
+            t = PLANAR_TIERS[tier_idx]
+            flag = t.get("unlock_flag")
+            if flag and get_flag(flag):
+                current_tier = tier_idx
+                break
+
+        tier_data = PLANAR_TIERS.get(current_tier, PLANAR_TIERS[0])
+
+        panel_x, panel_y = 20, 86
+        panel_w = SCREEN_W - 40
+        col_w   = panel_w // 2 - 16
+
+        # ── Left panel: current rank ──────────────────────────────────
+        lp = pygame.Rect(panel_x, panel_y, col_w, SCREEN_H - 120)
+        pygame.draw.rect(surface, (18, 14, 30), lp, border_radius=4)
+        pygame.draw.rect(surface, PANEL_BORDER, lp, 1, border_radius=4)
+
+        y = panel_y + 16
+        tier_col = tuple(tier_data["color"])
+
+        draw_text(surface, "Current Rank", lp.x + 16, y, GREY, 11)
+        y += 18
+        draw_text(surface, tier_data["name"], lp.x + 16, y, tier_col, 24, bold=True)
+        y += 32
+
+        # Rank description
+        draw_text(surface, tier_data["description"], lp.x + 16, y, CREAM, 13,
+                  max_width=col_w - 32)
+        y += 48
+
+        # Active bonuses
+        bonus = tier_data.get("bonus", {})
+        if bonus:
+            draw_text(surface, "Active Bonuses", lp.x + 16, y, GOLD, 12, bold=True)
+            y += 20
+            bonus_lines = []
+            if bonus.get("all_stats"):
+                bonus_lines.append(f"+{bonus['all_stats']} to all stats")
+            if bonus.get("max_hp_pct"):
+                bonus_lines.append(f"+{int(bonus['max_hp_pct']*100)}% max HP")
+            if bonus.get("damage_mult"):
+                pct = int((bonus["damage_mult"] - 1) * 100)
+                bonus_lines.append(f"+{pct}% damage dealt")
+            if bonus.get("xp_mult"):
+                pct = int((bonus["xp_mult"] - 1) * 100)
+                bonus_lines.append(f"+{pct}% XP earned")
+            for bl in bonus_lines:
+                draw_text(surface, f"  ◆  {bl}", lp.x + 16, y, (120, 220, 160), 13)
+                y += 18
+        else:
+            draw_text(surface, "No bonuses yet — advance your rank.", lp.x + 16, y, GREY, 12)
+            y += 18
+
+        y += 12
+
+        # Next rank preview
+        next_tier = current_tier + 1
+        if next_tier in PLANAR_TIERS:
+            nt = PLANAR_TIERS[next_tier]
+            pygame.draw.rect(surface, (28, 22, 44),
+                             (lp.x + 10, y, col_w - 20, 90), border_radius=4)
+            pygame.draw.rect(surface, (60, 55, 80),
+                             (lp.x + 10, y, col_w - 20, 90), 1, border_radius=4)
+            y += 10
+            draw_text(surface, "Next Rank", lp.x + 20, y, GREY, 10)
+            y += 14
+            draw_text(surface, nt["name"], lp.x + 20, y, tuple(nt["color"]), 16, bold=True)
+            y += 20
+            flag_needed = nt.get("unlock_flag", "")
+            flag_label  = flag_needed.replace("_", " ").replace("boss defeated.", "Defeat ").replace("item.", "Obtain ").title()
+            draw_text(surface, f"Unlock: {flag_label}", lp.x + 20, y, (160, 140, 100), 11,
+                      max_width=col_w - 40)
+            y += 16
+        else:
+            draw_text(surface, "Maximum rank achieved.", lp.x + 16, y, GOLD, 13, bold=True)
+
+        # ── Right panel: rank ladder ──────────────────────────────────
+        rp = pygame.Rect(panel_x + col_w + 32, panel_y, col_w, SCREEN_H - 120)
+        pygame.draw.rect(surface, (18, 14, 30), rp, border_radius=4)
+        pygame.draw.rect(surface, PANEL_BORDER, rp, 1, border_radius=4)
+
+        draw_text(surface, "Warden Order — All Ranks", rp.x + 16, panel_y + 16, GOLD, 13, bold=True)
+
+        ry = panel_y + 38
+        for tier_idx, t in sorted(PLANAR_TIERS.items()):
+            is_current  = (tier_idx == current_tier)
+            is_unlocked = (tier_idx <= current_tier)
+            tc = tuple(t["color"])
+
+            row_h = 42
+            row_r = pygame.Rect(rp.x + 10, ry, col_w - 20, row_h)
+
+            if is_current:
+                pygame.draw.rect(surface, (30, 50, 35), row_r, border_radius=3)
+                pygame.draw.rect(surface, tc, row_r, 1, border_radius=3)
+            elif is_unlocked:
+                pygame.draw.rect(surface, (24, 22, 36), row_r, border_radius=3)
+                pygame.draw.rect(surface, (50, 48, 65), row_r, 1, border_radius=3)
+            else:
+                pygame.draw.rect(surface, (18, 16, 26), row_r, border_radius=3)
+
+            name_col = tc if is_unlocked else (60, 55, 75)
+            status   = "► CURRENT" if is_current else ("✓" if is_unlocked else "–")
+            st_col   = (100, 220, 130) if is_current else ((160, 160, 180) if is_unlocked else (50, 45, 65))
+
+            draw_text(surface, status,          row_r.x + 8,  ry + 6,  st_col,   10)
+            draw_text(surface, t["name"],       row_r.x + 60, ry + 4,  name_col, 14, bold=is_current)
+            draw_text(surface, t["description"][:50] + ("…" if len(t["description"]) > 50 else ""),
+                      row_r.x + 60, ry + 22, GREY if is_unlocked else (45, 42, 58), 10,
+                      max_width=col_w - 80)
+
+            ry += row_h + 6
+            if ry > rp.bottom - 16:
+                break
+
     def _draw_bestiary(self, surface, mx, my):
         """Bestiary: left sidebar lists known enemy types by region/dungeon.
         Right panel shows full stats, description, and resistance profile."""
@@ -678,7 +807,7 @@ class QuestLogUI:
             self.finished = True
             return "close"
 
-        for i, key in enumerate(["quests", "lore", "bestiary"]):
+        for i, key in enumerate(["quests", "lore", "bestiary", "guild"]):
             r = pygame.Rect(20 + i * 116, 48, 108, 30)
             if r.collidepoint(mx, my):
                 self.tab          = key

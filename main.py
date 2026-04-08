@@ -389,7 +389,7 @@ class Game:
                 and not self.show_menu_overlay
                 and self.party
                 and self.state not in (S_COMBAT, S_SAVE_LOAD, S_SETTINGS,
-                                       S_SPLASH, S_MODE, S_CAMP)):
+                                       S_SPLASH, S_MODE, S_GUILD, S_CAMP)):
             self.show_menu_overlay = True
             return
 
@@ -446,7 +446,7 @@ class Game:
                     # else: click elsewhere on title → do nothing
                 else:
                     # No saves — any click starts a new game
-                    self.go(S_MODE)
+                    self.go(S_GUILD)
             elif e.type == pygame.KEYDOWN:
                 # Any key press goes to new game mode (classic behaviour)
                 self.party = []
@@ -457,18 +457,8 @@ class Game:
                 self.go(S_GUILD)
 
         elif self.state == S_MODE:
-            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
-                # Life Path button
-                r1 = pygame.Rect(SCREEN_W//2 - 220, 350, 440, 60)
-                r2 = pygame.Rect(SCREEN_W//2 - 220, 430, 440, 60)
-                if r1.collidepoint(mx, my):
-                    self.quick = False
-                    self.new_char()
-                    self.go(S_NAME)
-                elif r2.collidepoint(mx, my):
-                    self.quick = True
-                    self.new_char()
-                    self.go(S_NAME)
+            # S_MODE is superseded by S_GUILD — redirect immediately if reached
+            self.go(S_GUILD)
 
         elif self.state == S_NAME:
             if e.type == pygame.KEYDOWN:
@@ -482,7 +472,7 @@ class Game:
                 elif e.key == pygame.K_BACKSPACE:
                     self.name_text = self.name_text[:-1]
                 elif e.key == pygame.K_ESCAPE:
-                    self.go(S_MODE)
+                    self.go(S_GUILD)
                 elif len(self.name_text) < 20 and e.unicode.isprintable():
                     self.name_text += e.unicode
 
@@ -2579,41 +2569,14 @@ class Game:
     # ── Choose Mode ───────────────────────────────────────────
 
     def draw_mode(self, mx, my):
-        draw_text(self.screen, f"Character {self.char_index + 1} of {PARTY_SIZE}",
-                  SCREEN_W//2 - 100, 40, GOLD, 20, bold=True)
-
-        # Existing party
-        if self.party:
-            y = 80
-            for c in self.party:
-                cls_col = CLASSES[c.class_name]["color"]
-                draw_text(self.screen, f"{c.name} — {c.class_name}", 40, y, cls_col, 14, max_width=SCREEN_W // 2 - 60)
-                y += 22
-
-        draw_text(self.screen, "Every adventurer has a story.",
-                  SCREEN_W//2 - 160, 250, CREAM, 18)
-        draw_text(self.screen, "Would you like to discover yours?",
-                  SCREEN_W//2 - 190, 280, GREY, 16)
-
-        r1 = pygame.Rect(SCREEN_W//2 - 220, 350, 440, 60)
-        r2 = pygame.Rect(SCREEN_W//2 - 220, 430, 440, 60)
-        h1 = r1.collidepoint(mx, my)
-        h2 = r2.collidepoint(mx, my)
-
-        draw_button(self.screen, r1, "Tell My Story", hover=h1, size=18)
-        draw_text(self.screen, "Shape your character through life events",
-                  SCREEN_W//2 - 200, 418, GREY, 14)
-
-        draw_button(self.screen, r2, "Quick Roll", hover=h2, size=18)
-        draw_text(self.screen, "Pick a class and start immediately",
-                  SCREEN_W//2 - 175, 498, GREY, 14)
-
-    # ── Name Input ────────────────────────────────────────────
+        """S_MODE is superseded by S_GUILD — this screen is no longer reached."""
+        self.go(S_GUILD)
 
     def draw_name(self):
+        bank_count = len(self.character_bank)
         mode = "Quick Roll" if self.quick else "Life Path"
-        draw_text(self.screen, f"Character {self.char_index + 1} — {mode}",
-                  SCREEN_W//2 - 140, 60, GOLD, 18, bold=True)
+        header = f"New Adventurer — {mode}  ({bank_count}/{self.BANK_MAX} in bank)"
+        draw_text(self.screen, header, SCREEN_W//2 - 220, 60, GOLD, 18, bold=True)
 
         draw_text(self.screen, "What is your name, adventurer?",
                   SCREEN_W//2 - 180, 200, CREAM, 20)
@@ -3021,11 +2984,15 @@ class Game:
         bs = c.get_backstory_text()
         draw_wrapped_text(self.screen, bs, 50, 315, SCREEN_W - 110, GREY, get_font(13))
 
-        # Buttons
-        r_acc = pygame.Rect(SCREEN_W//2 - 230, SCREEN_H - 70, 200, 45)
-        r_redo = pygame.Rect(SCREEN_W//2 + 30, SCREEN_H - 70, 200, 45)
-        draw_button(self.screen, r_acc, "Accept", hover=r_acc.collidepoint(mx,my), size=18)
+        # Buttons — in bank mode, Accept adds to bank roster
+        bank_full = len(self.character_bank) >= self.BANK_MAX
+        r_acc  = pygame.Rect(SCREEN_W//2 - 230, SCREEN_H - 70, 200, 45)
+        r_redo = pygame.Rect(SCREEN_W//2 + 30,  SCREEN_H - 70, 200, 45)
+        acc_label = "Bank Full" if bank_full else "Add to Bank"
+        draw_button(self.screen, r_acc,  acc_label,  hover=r_acc.collidepoint(mx,my)  and not bank_full, size=18)
         draw_button(self.screen, r_redo, "Start Over", hover=r_redo.collidepoint(mx,my), size=16)
+        draw_text(self.screen, f"Bank: {len(self.character_bank)}/{self.BANK_MAX}",
+                  SCREEN_W//2 - 232, SCREEN_H - 20, GREY, 11)
 
     # ── Party Review ──────────────────────────────────────────
 
@@ -3945,9 +3912,9 @@ class Game:
             "boss_defeated.ruins_ashenmoor": "crypt_amulet",
             "boss_defeated.sunken_crypt":    "ship_passage",
             "boss_defeated.dragons_tooth":   "pale_coast_access",
-            "boss_defeated.windswept_isle":  "spire_key",
-            "boss_defeated.pale_coast":      "pale_coast_cleared",
-            "boss_defeated.windswept_isle":  "isle_cleared",
+            "boss_defeated.pale_coast":      "pale_coast_cleared",    # unlocks windswept_isle
+            "boss_defeated.windswept_isle":  "spire_key",             # unlocks valdris_spire
+            "boss_defeated.valdris_spire":   "throne_key",            # unlocks shadow_throne
         }
         for flag, key in FLAG_KEYS.items():
             if get_flag(flag) and not self.world_state.has_key(key):
