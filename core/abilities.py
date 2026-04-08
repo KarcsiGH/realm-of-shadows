@@ -411,6 +411,9 @@ CLASS_ABILITIES = {
     #  Status effects stack. Attrition specialist.
     # ══════════════════════════════════════════════════════════
     "Witch": [
+        {"name": "Hex Bolt",         "cost": 10, "resource": "INT-MP",  "type": "spell",
+         "level": 1, "power": 1.0, "element": "shadow", "status": "Hexed", "status_chance": 0.30,
+         "desc": "A bolt of dark magic. Deals shadow damage, 30% chance to Hex the target."},
         {"name": "Hex",              "cost": 16, "resource": "INT-MP",  "type": "debuff",
          "level": 1, "status": "Hexed", "status_chance": 0.75,
          "desc": "Apply a stacking curse. Hexed enemies take increasing damage."},
@@ -598,6 +601,9 @@ CLASS_ABILITIES = {
     #  The longer the fight, the more spirits answer.
     # ══════════════════════════════════════════════════════════
     "Shaman": [
+        {"name": "Spirit Strike",    "cost": 2,  "resource": "momentum", "type": "attack",
+         "level": 1, "power": 1.4, "element": "spirit",
+         "desc": "A blow guided by ancestral spirits. Physical + spirit damage."},
         {"name": "Spirit Bind",      "cost": 16, "resource": "WIS-MP",  "type": "buff",
          "level": 1, "buff": "spirit_bond", "duration": 3, "targets": "all_allies",
          "desc": "Bind ancestral spirits to the party. Allies gain +6 to all defenses."},

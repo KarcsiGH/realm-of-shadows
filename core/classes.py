@@ -151,7 +151,7 @@ _HYBRIDS = {
     "Paladin": {
         "description": "Holy warrior combining divine magic and martial power.",
         "primary": "PIE", "secondary": "STR", "base_hp": 55,
-        "resources": ["HP", "STR-SP", "PIE-MP", "Ki"],
+        "resources": ["HP", "STR-SP", "PIE-MP"],
         "ki_formula": lambda s, lvl: (s["PIE"] * 4) + (s["STR"] * 2) + (lvl * 10),
         "color": (220, 180, 60), "starting_abilities": [],
         "starting_stats": {"STR": 14, "DEX": 10, "CON": 12, "INT": 6, "WIS": 10, "PIE": 14},
@@ -160,7 +160,7 @@ _HYBRIDS = {
     "Spellblade": {
         "description": "Arcane warrior who channels spells through their blade.",
         "primary": "INT", "secondary": "STR", "base_hp": 48,
-        "resources": ["HP", "STR-SP", "INT-MP", "Ki"],
+        "resources": ["HP", "STR-SP", "INT-MP"],
         "ki_formula": lambda s, lvl: (s["INT"] * 4) + (s["STR"] * 2) + (lvl * 10),
         "color": (140, 80, 200), "starting_abilities": [],
         "starting_stats": {"STR": 12, "DEX": 10, "CON": 10, "INT": 14, "WIS": 8, "PIE": 6},
@@ -197,7 +197,7 @@ _HYBRIDS = {
     "Witch": {
         "description": "Dark spellcaster blending arcane and divine powers.",
         "primary": "INT", "secondary": "PIE", "base_hp": 35,
-        "resources": ["HP", "INT-MP", "PIE-MP", "Ki"],
+        "resources": ["HP", "INT-MP", "PIE-MP"],
         "ki_formula": lambda s, lvl: (s["INT"] * 4) + (s["PIE"] * 2) + (lvl * 10),
         "color": (160, 60, 180), "starting_abilities": [],
         "starting_stats": {"STR": 4, "DEX": 8, "CON": 6, "INT": 14, "WIS": 14, "PIE": 12},
@@ -206,7 +206,7 @@ _HYBRIDS = {
     "Necromancer": {
         "description": "Master of death magic, draining life and raising the fallen.",
         "primary": "INT", "secondary": "WIS", "base_hp": 36,
-        "resources": ["HP", "INT-MP", "PIE-MP", "Ki"],
+        "resources": ["HP", "INT-MP", "PIE-MP"],
         "ki_formula": lambda s, lvl: (s["INT"] * 5) + (s["WIS"] * 2) + (lvl * 10),
         "color": (100, 30, 120), "starting_abilities": [],
         "starting_stats": {"STR": 4, "DEX": 10, "CON": 6, "INT": 16, "WIS": 12, "PIE": 6},
@@ -215,7 +215,7 @@ _HYBRIDS = {
     "Druid": {
         "description": "Nature spellcaster harnessing elemental and healing powers.",
         "primary": "WIS", "secondary": "INT", "base_hp": 40,
-        "resources": ["HP", "WIS-MP", "INT-MP", "Ki"],
+        "resources": ["HP", "WIS-MP", "INT-MP"],
         "ki_formula": lambda s, lvl: (s["WIS"] * 5) + (s["INT"] * 2) + (lvl * 10),
         "color": (80, 180, 60), "starting_abilities": [],
         "starting_stats": {"STR": 6, "DEX": 10, "CON": 8, "INT": 12, "WIS": 16, "PIE": 8},
@@ -270,7 +270,7 @@ _HYBRIDS = {
     "Assassin": {
         "description": "Lethal hunter combining tracking, poisons, and shadow strikes.",
         "primary": "DEX", "secondary": "WIS", "base_hp": 44,
-        "resources": ["HP", "DEX-SP", "Ki"],
+        "resources": ["HP", "DEX-SP"],
         "ki_formula": lambda s, lvl: (s["DEX"] * 5) + (s["WIS"] * 2) + (lvl * 10),
         "color": (180, 40, 60), "starting_abilities": [],
         "starting_stats": {"STR": 10, "DEX": 16, "CON": 8, "INT": 10, "WIS": 10, "PIE": 4},
@@ -289,7 +289,7 @@ _HYBRIDS = {
     "Shaman": {
         "description": "Wilderness spiritualist drawing ki from the natural world.",
         "primary": "WIS", "secondary": "DEX", "base_hp": 46,
-        "resources": ["HP", "WIS-MP", "DEX-SP", "Ki"],
+        "resources": ["HP", "WIS-MP", "DEX-SP"],
         "ki_formula": lambda s, lvl: (s["WIS"] * 5) + (s["DEX"] * 2) + (lvl * 10),
         "color": (120, 150, 80), "starting_abilities": [],
         "starting_stats": {"STR": 10, "DEX": 12, "CON": 12, "INT": 8, "WIS": 14, "PIE": 8},
@@ -437,7 +437,9 @@ def get_all_resources(class_name, stats, level):
     cls = CLASSES[class_name]
     resources = {}
     resources["HP"] = calc_hp(cls["base_hp"], stats["CON"], level)
-    resources["Ki"] = calc_ki(class_name, stats, level)
+
+    if "Ki" in cls["resources"] and "ki_formula" in cls:
+        resources["Ki"] = calc_ki(class_name, stats, level)
 
     if "INT-MP" in cls["resources"]:
         resources["INT-MP"] = calc_int_mp(stats["INT"], level)
