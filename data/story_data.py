@@ -3556,47 +3556,6 @@ NPC_DIALOGUES = {
         },
     ],
 
-    "scout_feryn": [
-        {
-            "conditions": [],
-            "tree": {
-                "id": "scout_feryn_default",
-                "nodes": {
-                    "start": {
-                        "speaker": "Scout Feryn",
-                        "text": "You made it out here in one piece. That already puts you ahead of most. "
-                                "These woods aren't safe — haven't been for months. "
-                                "Something is killing the animals. Not hunters. Something else.",
-                        "on_enter": [{"action": "meet_npc", "npc": "scout_feryn"}],
-                        "choices": [
-                            {"text": "What kind of something?", "next": "threat"},
-                            {"text": "We're looking for work.", "next": "work"},
-                            {"text": "Just passing through.", "next": "bye"},
-                        ],
-                    },
-                    "threat": {
-                        "speaker": "Scout Feryn",
-                        "text": "Shadow-touched beasts. Animals that should be dead — still moving, "
-                                "eyes black as coal. We've lost two wardens to them already. "
-                                "Whatever's doing this is coming from the east. From the Fading zones.",
-                        "next": "work",
-                    },
-                    "work": {
-                        "speaker": "Scout Feryn",
-                        "text": "The outpost pays for information. If you scout the eastern border "
-                                "and come back alive, we'll make it worth your while. "
-                                "Talk to the warden on duty if you want official work.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Scout Feryn",
-                        "text": "Watch the eastern tree line. And don't travel after dark.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-    ],
 
     # ─────────────────────────────────────────────────────────
     #  GUILDMASTER SABLE — Saltmere, Thieves' Guild
@@ -3777,914 +3736,25 @@ NPC_DIALOGUES = {
     # ─────────────────────────────────────────────────────────
     #  HIGH PRIEST ALDARA — Sanctum, grand cathedral
     # ─────────────────────────────────────────────────────────
-    "high_priest_aldara": [
-        # All 5 Hearthstones found — plot-critical Valdris' Spire dialogue
-        {
-            "conditions": [
-                {"flag": "item.hearthstone.5", "op": "==", "value": True},
-            ],
-            "tree": {
-                "id": "aldara_all_stones",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "High Priest Aldara",
-                        "text": "All five.\nI felt the last one settle into the network — like a bone "
-                                "snapping back into place.\n"
-                                "You must go to Valdris' Spire. To the north-east, beyond the "
-                                "Holdfast. The Hearthstones must be restored to the First Stone "
-                                "at the Spire's heart — together, in sequence. "
-                                "Maren will know the order. Do not attempt it without her.",
-                        "choices": [
-                            {"text": "What will happen when they're restored?", "next": "restoration"},
-                            {"text": "Is Valdris there?",                        "next": "valdris"},
-                            {"text": "We leave at once.",                         "next": None},
-                        ],
-                    },
-                    "restoration": {
-                        "speaker": "High Priest Aldara",
-                        "text": "The wards seal. The wound between planes closes. "
-                                "The Fading stops spreading — and what it has already taken "
-                                "may, slowly, return.\n"
-                                "I said may. I will not promise what is beyond my knowledge.",
-                        "choices": [{"text": "That's enough.", "next": None}],
-                    },
-                    "valdris": {
-                        "speaker": "High Priest Aldara",
-                        "text": "Almost certainly. He's been working from inside the Spire — "
-                                "using its ley anchor to direct the Fading outward while "
-                                "keeping himself shielded.\n"
-                                "He will not step aside. Be ready for that.",
-                        "choices": [{"text": "We're ready.", "next": None}],
-                    },
-                },
-            },
-        },
-        # Hearthstone 1 found — recognition, stone lore, blessing
-        {
-            "conditions": [
-                {"flag": "item.hearthstone.1", "op": "==", "value": True},
-                {"flag": "item.hearthstone.5", "op": "!=", "value": True},
-            ],
-            "tree": {
-                "id": "aldara_knows_fragment",
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "High Priest Aldara",
-                        "text": "You carry it.\nI can feel it from here — the resonance is unmistakable. "
-                                "A Hearthstone fragment.\n"
-                                "Do you understand what you're holding? "
-                                "These stones are the anchors the first Wardens placed "
-                                "when they built the barrier. "
-                                "Every one you recover strengthens what remains.",
-                        "on_enter": [
-                            {"action": "meet_npc", "npc": "high_priest_aldara"},
-                            {"action": "set_flag", "flag": "npc.high_priest_aldara.met", "value": True},
-                            {"action": "discover_lore", "lore": "lore.aldara_relic"},
-                        ],
-                        "choices": [
-                            {"text": "How many are there?",            "next": "count"},
-                            {"text": "Can you tell us more about them?","next": "lore"},
-                            {"text": "We could use a blessing.",        "next": "blessing"},
-                        ],
-                    },
-                    "count": {
-                        "speaker": "High Priest Aldara",
-                        "text": "Five. Scattered when the Order fell — the last Wardens hid them "
-                                "rather than let Valdris consolidate them.\n"
-                                "The Reliquary here holds maps of the old ward-anchor sites. "
-                                "They may narrow your search.",
-                        "choices": [
-                            {"text": "We'll look at the maps.", "next": None},
-                            {"text": "A blessing first.",       "next": "blessing"},
-                        ],
-                    },
-                    "lore": {
-                        "speaker": "High Priest Aldara",
-                        "text": "Each stone is keyed to a ward-anchor point. "
-                                "They don't merely store power — they resonate with each other. "
-                                "As you recover more, the network strengthens, "
-                                "and the Fading slows near the anchor sites.\n"
-                                "You'll feel it. Your people will feel it. That's how you know "
-                                "you're winning.",
-                        "choices": [{"text": "Good to know.", "next": None}],
-                    },
-                    "blessing": {
-                        "speaker": "High Priest Aldara",
-                        "text": "Kneel.\nLight of the First Ward, carried by these five against the dark — "
-                                "let them pass unseen where shadow gathers, "
-                                "let them strike true where it matters most, "
-                                "and let them find their way back when it is done.\n"
-                                "Go. And do not waste it.",
-                        "on_enter": [
-                            {"action": "set_flag", "flag": "blessing.cathedral", "value": True},
-                        ],
-                        "choices": [{"text": "Thank you.", "next": None}],
-                    },
-                },
-            },
-        },
-        # Act 3 — Sanctum under pressure, Aldara near breaking
-        {
-            "conditions": [
-                {"flag": "maren.left", "op": "==", "value": True},
-            ],
-            "tree": {
-                "id": "aldara_act3",
-                "nodes": {
-                    "start": {
-                        "speaker": "High Priest Aldara",
-                        "text": "We have seen a thousand pilgrims a day since the eastern sky went dark. "
-                                "People want somewhere to pray. I cannot tell them their prayers will be enough. "
-                                "I can only tell them they are not alone in the dark.",
-                        "choices": [
-                            {"text": "Are you afraid?", "next": "afraid"},
-                            {"text": "We're going to the Spire.", "next": "spire"},
-                            {"text": "We need absolution before we go.", "next": "absolution"},
-                        ],
-                    },
-                    "afraid": {
-                        "speaker": "High Priest Aldara",
-                        "text": "Every day for forty years I have stood in front of people in pain "
-                                "and told them the light holds. Today I believe it more than I ever have. "
-                                "Not because the evidence is good — it isn't. "
-                                "Because you are still standing.",
-                        "end": True,
-                    },
-                    "spire": {
-                        "speaker": "High Priest Aldara",
-                        "text": "Then go. The Cathedral's blessing goes with you, "
-                                "for whatever weight that carries in a place of shadow. "
-                                "Come back. If you can, come back.",
-                        "on_enter": [{"action": "set_flag", "flag": "blessing.cathedral", "value": True}],
-                        "end": True,
-                    },
-                    "absolution": {
-                        "speaker": "High Priest Aldara",
-                        "text": "Kneel, then. All of you. "
-                                "Whatever you have done, whatever choices you made to survive this far — "
-                                "you made them trying to save a world that doesn't deserve saving half as much "
-                                "as it deserves people like you trying to save it. "
-                                "Go. Be absolved.",
-                        "on_enter": [
-                            {"action": "set_flag", "flag": "blessing.absolution", "value": True},
-                            {"action": "discover_lore", "lore": "aldara_absolution"},
-                        ],
-                        "end": True,
-                    },
-                },
-            },
-        },
-        # After party learns about the Fading
-        {
-            "conditions": [
-                {"flag": "lore.fading_basics", "op": "==", "value": True},
-                {"flag": "npc.high_priest_aldara.met", "op": "==", "value": True},
-            ],
-            "tree": {
-                "id": "aldara_fading",
-                "nodes": {
-                    "start": {
-                        "speaker": "High Priest Aldara",
-                        "text": "You've learned the truth of the Fading. Good. Denial is a luxury "
-                                "we can no longer afford. The Cathedral has records you should see — "
-                                "accounts from the last time the wards nearly failed, three centuries ago. "
-                                "The Wardens stopped it then. We must hope they can again.",
-                        "choices": [
-                            {"text": "What do the records say?", "next": "records"},
-                            {"text": "Can the Cathedral help us?", "next": "help"},
-                            {"text": "Thank you.", "next": "bye"},
-                        ],
-                    },
-                    "records": {
-                        "speaker": "High Priest Aldara",
-                        "text": "That the Hearthstones were not merely artifacts — they were promises. "
-                                "Each one placed by a Warden who swore their bloodline would protect it. "
-                                "When the last Warden of a bloodline dies, the stone begins to drift. "
-                                "That is what has been happening. Bloodlines dying. Promises breaking.",
-                        "on_enter": [{"action": "discover_lore", "lore": "hearthstone_bloodlines"}],
-                        "end": True,
-                    },
-                    "help": {
-                        "speaker": "High Priest Aldara",
-                        "text": "We can consecrate your weapons against shadow-touched creatures. "
-                                "We can heal your wounds and restore your spirit. What we cannot do "
-                                "is fight this battle for you. That burden falls on those with Warden blood.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "High Priest Aldara",
-                        "text": "Light guide your steps into the dark.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-        # First meeting
-        {
-            "conditions": [
-                {"flag": "npc.high_priest_aldara.met", "op": "not_exists"},
-            ],
-            "tree": {
-                "id": "aldara_intro",
-                "nodes": {
-                    "start": {
-                        "speaker": "High Priest Aldara",
-                        "text": "Travelers in Sanctum are always welcome, whatever their faith. "
-                                "I am Aldara. I have served this Cathedral for forty years. "
-                                "Something tells me you are not here for pilgrimage.",
-                        "on_enter": [{"action": "meet_npc", "npc": "high_priest_aldara"}],
-                        "choices": [
-                            {"text": "We're looking for information about the Fading.", "next": "fading"},
-                            {"text": "We need healing.", "next": "healing"},
-                            {"text": "We're just passing through.", "next": "passing"},
-                        ],
-                    },
-                    "fading": {
-                        "speaker": "High Priest Aldara",
-                        "text": "Then you already know more than most. Come back when you've "
-                                "learned what you're truly up against. The Cathedral's archives "
-                                "will be open to you.",
-                        "on_enter": [{"action": "set_flag", "flag": "lore.sanctum_archives", "value": True}],
-                        "end": True,
-                    },
-                    "healing": {
-                        "speaker": "High Priest Aldara",
-                        "text": "The shrine is always open. You need only ask.",
-                        "end": True,
-                    },
-                    "passing": {
-                        "speaker": "High Priest Aldara",
-                        "text": "No one passes through Sanctum by accident. Rest, restore yourselves. "
-                                "Whatever you're carrying, you needn't carry it alone.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-        # Default
-        {
-            "conditions": [],
-            "tree": {
-                "id": "aldara_default",
-                "loop": True,
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "High Priest Aldara",
-                        "text": "The light of the Cathedral is always here when you need it.",
-                        "choices": [
-                            {"text": "What have you heard from other pilgrims?", "next": "rumors"},
-                            {"text": "Farewell.", "next": "bye"},
-                        ],
-                    },
-                    "rumors": {
-                        "speaker": "High Priest Aldara",
-                        "text": "That entire villages are vanishing in the east. That the Governor "
-                                "in Thornhaven knows more than he says. That a woman named Maren "
-                                "has been asking about the old Warden bloodlines.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "High Priest Aldara",
-                        "text": "Go with light.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-    ],
 
     # ─────────────────────────────────────────────────────────
     #  OLD MOSS — Greenwood's ancient hermit druid
     #  Knows the forest and the Fading better than anyone.
     #  Doesn't give quest text — gives lore, observation, weight.
     # ─────────────────────────────────────────────────────────
-    "old_moss": [
-        # Act 2+ — has felt the Fading spread
-        {
-            "conditions": [
-                {"flag": "quest.main_ashenmoor.state", "op": ">=", "value": 1},
-            ],
-            "tree": {
-                "id": "moss_act2",
-                "nodes": {
-                    "start": {
-                        "speaker": "Old Moss",
-                        "text": "Three hundred years I've tended this forest. "
-                                "Watched it breathe. Watched it dream. "
-                                "Now it's forgetting itself. The old trees — the ones that remember "
-                                "before the kingdoms — they're the first to go quiet.",
-                        "choices": [
-                            {"text": "Can you feel where the Fading is worst?", "next": "worst"},
-                            {"text": "Is there anything the forest can do?", "next": "forest"},
-                            {"text": "I'm sorry.", "next": "sorry"},
-                        ],
-                    },
-                    "worst": {
-                        "speaker": "Old Moss",
-                        "text": "East. Always east now. There's a silence there that shouldn't exist — "
-                                "no wind, no insects, no sense of time. "
-                                "Whatever broke the wards broke them hardest in that direction. "
-                                "Something is being held there. Or was.",
-                        "on_enter": [{"action": "discover_lore", "lore": "fading_east_origin"}],
-                        "end": True,
-                    },
-                    "forest": {
-                        "speaker": "Old Moss",
-                        "text": "The forest doesn't fight the way soldiers fight. "
-                                "It endures. It waits. It remembers. "
-                                "If you restore the wards, it will come back. "
-                                "The trees have forgiven worse than this.",
-                        "end": True,
-                    },
-                    "sorry": {
-                        "speaker": "Old Moss",
-                        "text": "Mm. Don't be sorry. Be effective. "
-                                "The forest doesn't need your grief. It needs the wards back.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-        # First meeting
-        {
-            "conditions": [
-                {"flag": "npc.old_moss.met", "op": "not_exists"},
-            ],
-            "tree": {
-                "id": "moss_intro",
-                "nodes": {
-                    "start": {
-                        "speaker": "Old Moss",
-                        "text": "You smell like the road. And something older. "
-                                "Blood from before the kingdoms, if I'm reading you right. "
-                                "Warden blood. Haven't smelled that in a long time.",
-                        "on_enter": [{"action": "meet_npc", "npc": "old_moss"}],
-                        "choices": [
-                            {"text": "You know about the Wardens?", "next": "wardens"},
-                            {"text": "What are you?", "next": "what"},
-                            {"text": "Just passing through.", "next": "bye"},
-                        ],
-                    },
-                    "wardens": {
-                        "speaker": "Old Moss",
-                        "text": "I knew the last generation of them. They came through here, "
-                                "long ago, carrying something important. One of them planted a tree "
-                                "in the southern grove that still grows. "
-                                "I watered it every year, hoping they'd come back for it.",
-                        "on_enter": [{"action": "discover_lore", "lore": "wardens_greenwood_tree"}],
-                        "next": "wardens2",
-                    },
-                    "wardens2": {
-                        "speaker": "Old Moss",
-                        "text": "The tree is still there. It's the only one in the forest "
-                                "that the Fading hasn't touched. "
-                                "I think it's waiting for someone.",
-                        "on_enter": [{"action": "set_flag", "flag": "lore.greenwood_warden_tree", "value": True}],
-                        "end": True,
-                    },
-                    "what": {
-                        "speaker": "Old Moss",
-                        "text": "Old. That's the simplest answer. "
-                                "I've been called a druid, a hermit, a forest spirit. "
-                                "I've been called other things that weren't polite. "
-                                "The trees know me. That's enough.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Old Moss",
-                        "text": "Watch the eastern tree line. Something's moving out there "
-                                "that wasn't moving yesterday.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-        # Default
-        {
-            "conditions": [],
-            "tree": {
-                "id": "moss_default",
-                "nodes": {
-                    "start": {
-                        "speaker": "Old Moss",
-                        "text": "The forest is listening. It always is. "
-                                "What do you want to know?",
-                        "choices": [
-                            {"text": "What's happening to the animals?", "next": "animals"},
-                            {"text": "Can you read the Fading somehow?", "next": "fading"},
-                            {"text": "Nothing. Just wanted to say hello.", "next": "bye"},
-                        ],
-                    },
-                    "animals": {
-                        "speaker": "Old Moss",
-                        "text": "Shadow energy gets into them. The ones close to Fading zones "
-                                "start hearing something the rest of us can't — a kind of pulling. "
-                                "It doesn't hurt them at first. Then it changes them. "
-                                "I've been watching it for months. It's getting faster.",
-                        "end": True,
-                    },
-                    "fading": {
-                        "speaker": "Old Moss",
-                        "text": "Not read, exactly. But I can feel where the quiet is wrong. "
-                                "There are places in this forest where even the wind goes still "
-                                "without cause. Those are the edges. Stay away from them. "
-                                "Or don't, if you're the type who moves toward trouble.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Old Moss",
-                        "text": "Hello. "
-                                "The trees say hello too.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-    ],
 
-    "teleport_master": [
-        {
-            "conditions": [],
-            "tree": {
-                "id": "vaen_default",
-                "nodes": {
-                    "start": {
-                        "speaker": "Teleport Master Vaen",
-                        "text": "The circle is operational. I maintain it personally — "
-                                "not the Academy, not the Guild. Me. If it fails, people die "
-                                "mid-transit. So I take the work seriously.",
-                        "on_enter": [{"action": "meet_npc", "npc": "teleport_master"}],
-                        "choices": [
-                            {"text": "How does the teleport network work?", "next": "explain"},
-                            {"text": "Where can we travel from here?", "next": "destinations"},
-                            {"text": "We'd like to travel.", "next": "travel"},
-                        ],
-                    },
-                    "explain": {
-                        "speaker": "Teleport Master Vaen",
-                        "text": "The circles draw from the ley lines beneath the ground. "
-                                "You step in, fix a destination in mind that you've previously "
-                                "attuned to, and the network does the rest. The ley lines have been "
-                                "weakening — the Fading is eating them. Some circles have gone dark permanently.",
-                        "end": True,
-                    },
-                    "destinations": {
-                        "speaker": "Teleport Master Vaen",
-                        "text": "From Crystalspire you can reach Briarhollow, Woodhaven, Ironhearth, "
-                                "and Sanctum — provided you've attuned to their circles. "
-                                "Thornhaven's circle is still active but restricted. "
-                                "Governor's orders.",
-                        "end": True,
-                    },
-                    "travel": {
-                        "speaker": "Teleport Master Vaen",
-                        "text": "Fifty gold per person, per jump. Attunement to the destination "
-                                "circle required — you must have stood in that circle before. "
-                                "Ready when you are.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-    ],
 
     # ─────────────────────────────────────────────────────────
     #  GOVERNOR ALDRIC — Thornhaven capital, Iron tier
     # ─────────────────────────────────────────────────────────
-    "governor_aldric": [
-        # After party has all 5 hearthstones (endgame)
-        {
-            "conditions": [
-                {"flag": "quest.main_hearthstone_5.state", "op": "==", "value": -2},
-            ],
-            "tree": {
-                "id": "governor_endgame",
-                "nodes": {
-                    "start": {
-                        "speaker": "Governor Aldric",
-                        "text": "You've done it. I doubted you — I will admit that freely. "
-                                "The Empire has watched the Wardens fail before. I had no reason "
-                                "to believe this generation would be different. I was wrong. "
-                                "What do you need from me?",
-                        "choices": [
-                            {"text": "We need the castle's archives.", "next": "archives"},
-                            {"text": "We need imperial soldiers.", "next": "soldiers"},
-                            {"text": "Just your blessing.", "next": "blessing"},
-                        ],
-                    },
-                    "archives": {
-                        "speaker": "Governor Aldric",
-                        "text": "Done. Every Warden record we have — and there are more than "
-                                "you might expect. The Empire has been quietly preparing for "
-                                "this possibility for a long time.",
-                        "on_enter": [{"action": "set_flag", "flag": "lore.imperial_archives_unlocked", "value": True}],
-                        "end": True,
-                    },
-                    "soldiers": {
-                        "speaker": "Governor Aldric",
-                        "text": "Against shadow-touched creatures? My soldiers would be slaughtered. "
-                                "Bronze-tier warriors against whatever is driving the Fading — "
-                                "I won't throw their lives away. But I'll secure the roads and "
-                                "keep the population safe. You handle the source.",
-                        "end": True,
-                    },
-                    "blessing": {
-                        "speaker": "Governor Aldric",
-                        "text": "You have it. And more than that — you have my respect. "
-                                "Which, in this empire, is not nothing.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-        # First meeting — cautious, politically careful
-        {
-            "conditions": [
-                {"flag": "npc.governor_aldric.met", "op": "not_exists"},
-            ],
-            "tree": {
-                "id": "governor_intro",
-                "nodes": {
-                    "start": {
-                        "speaker": "Governor Aldric",
-                        "text": "Adventurers in my court. An unusual occurrence. I am told "
-                                "you have been asking questions about the Fading across the realm. "
-                                "I find that... interesting. Tell me — what have you learned?",
-                        "on_enter": [{"action": "meet_npc", "npc": "governor_aldric"}],
-                        "choices": [
-                            {"text": "The Hearthstones are the key to stopping it.", "next": "hearthstones"},
-                            {"text": "We know you have Warden records.", "next": "records"},
-                            {"text": "We're still investigating.", "next": "cautious"},
-                        ],
-                    },
-                    "hearthstones": {
-                        "speaker": "Governor Aldric",
-                        "text": "Yes. The Empire has known about the Hearthstones for some time. "
-                                "The Emperor's stance has been non-intervention — the Wardens "
-                                "made their choices. I have been less certain that policy is wise. "
-                                "What do you need?",
-                        "next": "what_need",
-                    },
-                    "records": {
-                        "speaker": "Governor Aldric",
-                        "text": "Someone has been talking. Yes, we have records. Old ones. "
-                                "The Empire keeps everything. I am not certain you have earned "
-                                "access yet. Show me you can be trusted with what you already know.",
-                        "end": True,
-                    },
-                    "cautious": {
-                        "speaker": "Governor Aldric",
-                        "text": "Honest, at least. Come back when you have more. "
-                                "The Empire does not act on maybes.",
-                        "end": True,
-                    },
-                    "what_need": {
-                        "speaker": "Governor Aldric",
-                        "text": "The castle archives contain records of every Warden bloodline "
-                                "that swore fealty to the Empire. They are yours — on one condition. "
-                                "Recover the Hearthstones. All of them. Whatever it takes.",
-                        "on_enter": [
-                            {"action": "set_flag", "flag": "lore.governor_alliance", "value": True},
-                            {"action": "discover_lore", "lore": "imperial_hearthstone_records"},
-                        ],
-                        "end": True,
-                    },
-                },
-            },
-        },
-        # Default
-        {
-            "conditions": [],
-            "tree": {
-                "id": "governor_default",
-                "nodes": {
-                    "start": {
-                        "speaker": "Governor Aldric",
-                        "text": "The situation in the eastern provinces worsens daily. "
-                                "I hope your work is producing results.",
-                        "choices": [
-                            {"text": "We're making progress.", "next": "progress"},
-                            {"text": "We need access to the archives.", "next": "archives"},
-                            {"text": "Goodbye.", "next": "bye"},
-                        ],
-                    },
-                    "progress": {
-                        "speaker": "Governor Aldric",
-                        "text": "Good. The Empire watches, and waits. Do not take too long.",
-                        "end": True,
-                    },
-                    "archives": {
-                        "speaker": "Governor Aldric",
-                        "text": "Earn it. Bring me a Hearthstone — even one — and the archives "
-                                "open. That is the deal.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Governor Aldric",
-                        "text": "Walk carefully, Warden.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-    ],
 
     # ─────────────────────────────────────────────────────────
     #  GUILD COMMANDER VAREK — Thornhaven adventurers' guild
     # ─────────────────────────────────────────────────────────
-    "guild_commander_varek": [
-        {
-            "conditions": [],
-            "tree": {
-                "id": "varek_default",
-                "loop": True,
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Commander Varek",
-                        "text": "Adventurers registered with the Imperial Guild get access to "
-                                "better contracts, better pay, and the Empire's legal protection. "
-                                "In exchange, you follow our codes and don't embarrass the crown. "
-                                "Interested?",
-                        "on_enter": [{"action": "meet_npc", "npc": "guild_commander_varek"}],
-                        "choices": [
-                            {"text": "Tell us about the best available contracts.", "next": "contracts"},
-                            {"text": "What's the situation in the eastern provinces?", "next": "east"},
-                            {"text": "Not right now.", "next": "bye"},
-                        ],
-                    },
-                    "contracts": {
-                        "speaker": "Commander Varek",
-                        "text": "The high-value work right now is in the east — Fading recovery "
-                                "operations, escort jobs through corrupted zones, creature culling. "
-                                "Pays triple what frontier work does. Also three times the chance "
-                                "you don't come back.",
-                        "end": True,
-                    },
-                    "east": {
-                        "speaker": "Commander Varek",
-                        "text": "Three villages gone in the last month. No bodies, no debris. "
-                                "Just empty land. I've sent twelve scouting parties. Four returned. "
-                                "The Fading isn't just growing — it's accelerating.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Commander Varek",
-                        "text": "The door's open when you're ready.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-    ],
 
     # ─────────────────────────────────────────────────────────
     #  COURT MAGE SIRA — Thornhaven, Maren's Act II reveal
     # ─────────────────────────────────────────────────────────
-    "court_mage_sira": [
-        # Act 3 — the Fading is critical, Sira is doing final calculations
-        {
-            "conditions": [
-                {"flag": "maren.left", "op": "==", "value": True},
-            ],
-            "tree": {
-                "id": "sira_act3",
-                "nodes": {
-                    "start": {
-                        "speaker": "Court Mage Sira",
-                        "text": "I have eight days of barrier integrity left on my projections. "
-                                "Maybe ten if you're lucky. After that the outer wards collapse entirely "
-                                "and the Fading accelerates beyond any ability to reverse it. "
-                                "Whatever Maren is attempting in that Spire — she's running the same "
-                                "numbers I am. She knows this too.",
-                        "choices": [
-                            {"text": "Is there anything you can do from here?", "next": "here"},
-                            {"text": "What happens if she fails?", "next": "fail"},
-                            {"text": "We're heading to the Spire now.", "next": "godspeed"},
-                        ],
-                    },
-                    "here": {
-                        "speaker": "Court Mage Sira",
-                        "text": "I've been feeding power into the ley lines for three days without sleep. "
-                                "It's like patching a crumbling dam with your hands. "
-                                "I can buy you hours, not days. "
-                                "Go. Be faster than the math.",
-                        "end": True,
-                    },
-                    "fail": {
-                        "speaker": "Court Mage Sira",
-                        "text": "If she fails and all five stones are spent? "
-                                "I think the Fading completes. Everything fades — "
-                                "not destroyed, not dead. Unmade. As if it never was. "
-                                "The records suggest it happened to three other worlds before this one.",
-                        "on_enter": [{"action": "discover_lore", "lore": "fading_other_worlds"}],
-                        "next": "godspeed",
-                    },
-                    "godspeed": {
-                        "speaker": "Court Mage Sira",
-                        "text": "For what it's worth — I've been running every calculation, "
-                                "every model, every simulation I know. "
-                                "Every version where the world survives has you at the center of it. "
-                                "That's not prophecy. It's just the only variable that keeps changing. "
-                                "Don't waste it.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-        # After Maren reveal — Sira knows more and can be pressed
-        {
-            "conditions": [
-                {"flag": "lore.maren_origin", "op": "==", "value": True},
-                {"flag": "npc.court_mage_sira.debriefed", "op": "not_exists"},
-            ],
-            "tree": {
-                "id": "sira_post_reveal",
-                "nodes": {
-                    "start": {
-                        "speaker": "Court Mage Sira",
-                        "text": "You know now. Good. I wasn't sure how long I could hold that. "
-                                "Ask what you need to.",
-                        "choices": [
-                            {"text": "What do you know about Valdris's ritual?", "next": "ritual"},
-                            {"text": "Can we trust Maren at all?", "next": "trust"},
-                            {"text": "Why didn't you tell us sooner?", "next": "sooner"},
-                        ],
-                    },
-                    "ritual": {
-                        "speaker": "Court Mage Sira",
-                        "text": "Valdris believed the Hearthstones could be used not just to restore "
-                                "the wards — but to permanently seal the Shadow realm itself. "
-                                "Not just hold it back. End the threat forever. "
-                                "He was right. The mathematics work. "
-                                "What he miscalculated was the cost.",
-                        "next": "ritual2",
-                    },
-                    "ritual2": {
-                        "speaker": "Court Mage Sira",
-                        "text": "The ritual consumes whoever performs it. Not just magically — "
-                                "erased. The stones use the performer's existence as fuel. "
-                                "Valdris lost his nerve at the last moment and broke the ritual. "
-                                "That breaking is what started the Fading.",
-                        "on_enter": [{"action": "discover_lore", "lore": "valdris_ritual_cost"}],
-                        "end": True,
-                    },
-                    "trust": {
-                        "speaker": "Court Mage Sira",
-                        "text": "Maren has spent her entire life trying to fix what her father broke. "
-                                "She genuinely wants to save the world. "
-                                "The question is whether she's decided to sacrifice you to do it, "
-                                "or whether she hasn't made that choice yet. "
-                                "Those are very different problems.",
-                        "on_enter": [{"action": "set_flag", "flag": "npc.court_mage_sira.debriefed", "value": True}],
-                        "end": True,
-                    },
-                    "sooner": {
-                        "speaker": "Court Mage Sira",
-                        "text": "Because I wasn't certain. And because Maren has done more to stop "
-                                "the Fading than anyone else living. I didn't want to burn that "
-                                "before I had to. "
-                                "I'm telling you now because you're close enough to the end that "
-                                "you need every piece of this.",
-                        "on_enter": [{"action": "set_flag", "flag": "npc.court_mage_sira.debriefed", "value": True}],
-                        "end": True,
-                    },
-                },
-            },
-        },
-        # The Maren reveal — she is Valdris's daughter
-        {
-            "conditions": [
-                {"flag": "quest.main_hearthstone_1.state", "op": "==", "value": -2},
-                {"flag": "npc.court_mage_sira.met", "op": "==", "value": True},
-                {"flag": "lore.maren_origin", "op": "not_exists"},
-            ],
-            "tree": {
-                "id": "sira_maren_reveal",
-                "nodes": {
-                    "start": {
-                        "speaker": "Court Mage Sira",
-                        "text": "I've been waiting for the right moment to tell you something. "
-                                "The scholar you've been working with — Maren. "
-                                "I know her real name.",
-                        "choices": [
-                            {"text": "Tell us.", "next": "reveal"},
-                            {"text": "What do you mean, her real name?", "next": "reveal"},
-                        ],
-                    },
-                    "reveal": {
-                        "speaker": "Court Mage Sira",
-                        "text": "Maren Valdris. Daughter of the Traitor Warden. "
-                                "She has been searching for the Hearthstones since she was a child — "
-                                "but not, I fear, to restore the wards as they were. "
-                                "Her father's ritual was incomplete. She means to finish it.",
-                        "on_enter": [{"action": "discover_lore", "lore": "maren_origin"}],
-                        "next": "question",
-                    },
-                    "question": {
-                        "speaker": "Court Mage Sira",
-                        "text": "Whether that means saving the world or consuming it — "
-                                "I genuinely don't know. Valdris believed he was saving it too. "
-                                "I thought you should have this information before you hand her "
-                                "the second stone.",
-                        "on_enter": [{"action": "set_flag", "flag": "lore.maren_revealed", "value": True}],
-                        "end": True,
-                    },
-                },
-            },
-        },
-        # First meeting
-        {
-            "conditions": [
-                {"flag": "npc.court_mage_sira.met", "op": "not_exists"},
-            ],
-            "tree": {
-                "id": "sira_intro",
-                "nodes": {
-                    "start": {
-                        "speaker": "Court Mage Sira",
-                        "text": "Court Mage — the title sounds grander than the reality. "
-                                "I advise the Governor on magical matters. Mostly I sit in this "
-                                "tower and watch the ley line readings get worse. "
-                                "You're the Warden-blooded party, aren't you?",
-                        "on_enter": [{"action": "meet_npc", "npc": "court_mage_sira"}],
-                        "choices": [
-                            {"text": "How do you know about us?", "next": "knows"},
-                            {"text": "What have you learned about the Fading?", "next": "fading"},
-                            {"text": "Just visiting.", "next": "bye"},
-                        ],
-                    },
-                    "knows": {
-                        "speaker": "Court Mage Sira",
-                        "text": "The ley lines carry information as well as power. When someone "
-                                "with Warden blood touches a Hearthstone, it resonates across the "
-                                "entire network. I felt you find the first stone. So did Archmage Solen. "
-                                "So, I suspect, did Maren.",
-                        "end": True,
-                    },
-                    "fading": {
-                        "speaker": "Court Mage Sira",
-                        "text": "That something is driving it. It is not simply entropy — "
-                                "there is intention behind the pattern of which areas Fade first. "
-                                "Always the areas with old Warden presence. Always the anchor points. "
-                                "Whatever is out there wants the wards down.",
-                        "on_enter": [{"action": "discover_lore", "lore": "fading_intention"}],
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Court Mage Sira",
-                        "text": "Come back. I have a feeling we'll have more to discuss.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-        # Default
-        {
-            "conditions": [],
-            "tree": {
-                "id": "sira_default",
-                "loop": True,
-                "loop": True,
-                "nodes": {
-                    "start": {
-                        "speaker": "Court Mage Sira",
-                        "text": "The readings are worse today. I say that every day now, "
-                                "and every day it's true.",
-                        "choices": [
-                            {"text": "What are you tracking?", "next": "tracking"},
-                            {"text": "What does the Governor make of all this?", "next": "governor"},
-                            {"text": "Goodbye.", "next": "bye"},
-                        ],
-                    },
-                    "tracking": {
-                        "speaker": "Court Mage Sira",
-                        "text": "The integrity of the barrier between worlds. Currently at "
-                                "roughly forty percent of its original strength, down from seventy "
-                                "when I started measuring three years ago. At this rate, full "
-                                "collapse in eighteen months. Maybe less.",
-                        "end": True,
-                    },
-                    "governor": {
-                        "speaker": "Court Mage Sira",
-                        "text": "He understands the numbers. That's more than most. "
-                                "What he can't accept is that there is no military solution to this. "
-                                "You cannot march soldiers against entropy. "
-                                "He's still looking for something to fight.",
-                        "end": True,
-                    },
-                    "bye": {
-                        "speaker": "Court Mage Sira",
-                        "text": "Find those stones.",
-                        "end": True,
-                    },
-                },
-            },
-        },
-    ],
 
     # ─────────────────────────────────────────────────────────
     #  DOCKHAND RIV — Ship passage to Dragon's Tooth (Saltmere)
@@ -6455,6 +5525,46 @@ _NEW_DIALOGUES = {
                     "end": True},
             }},
         },
+        {
+            "conditions": [],
+            "tree": {
+                "id": "moss_default",
+                "nodes": {
+                    "start": {
+                        "speaker": "Old Moss",
+                        "text": "The forest is listening. It always is. "
+                                "What do you want to know?",
+                        "choices": [
+                            {"text": "What's happening to the animals?", "next": "animals"},
+                            {"text": "Can you read the Fading somehow?", "next": "fading"},
+                            {"text": "Nothing. Just wanted to say hello.", "next": "bye"},
+                        ],
+                    },
+                    "animals": {
+                        "speaker": "Old Moss",
+                        "text": "Shadow energy gets into them. The ones close to Fading zones "
+                                "start hearing something the rest of us can't — a kind of pulling. "
+                                "It doesn't hurt them at first. Then it changes them. "
+                                "I've been watching it for months. It's getting faster.",
+                        "end": True,
+                    },
+                    "fading": {
+                        "speaker": "Old Moss",
+                        "text": "Not read, exactly. But I can feel where the quiet is wrong. "
+                                "There are places in this forest where even the wind goes still "
+                                "without cause. Those are the edges. Stay away from them. "
+                                "Or don't, if you're the type who moves toward trouble.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Old Moss",
+                        "text": "Hello. "
+                                "The trees say hello too.",
+                        "end": True,
+                    },
+                },
+            },
+        },
     ],
 
     "guildmaster_oren": [
@@ -7241,9 +6351,115 @@ _NEW_DIALOGUES = {
     ],
 
     "high_priest_aldara": [
-        # Act 3 — Sanctum under pressure, maren.left=True is the reliable gate
         {
-            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "conditions": [
+                {"flag": "item.hearthstone.5", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "aldara_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "All five.\nI felt the last one settle into the network — like a bone "
+                                "snapping back into place.\n"
+                                "You must go to Valdris' Spire. To the north-east, beyond the "
+                                "Holdfast. The Hearthstones must be restored to the First Stone "
+                                "at the Spire's heart — together, in sequence. "
+                                "Maren will know the order. Do not attempt it without her.",
+                        "choices": [
+                            {"text": "What will happen when they're restored?", "next": "restoration"},
+                            {"text": "Is Valdris there?",                        "next": "valdris"},
+                            {"text": "We leave at once.",                         "next": None},
+                        ],
+                    },
+                    "restoration": {
+                        "speaker": "High Priest Aldara",
+                        "text": "The wards seal. The wound between planes closes. "
+                                "The Fading stops spreading — and what it has already taken "
+                                "may, slowly, return.\n"
+                                "I said may. I will not promise what is beyond my knowledge.",
+                        "choices": [{"text": "That's enough.", "next": None}],
+                    },
+                    "valdris": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Almost certainly. He's been working from inside the Spire — "
+                                "using its ley anchor to direct the Fading outward while "
+                                "keeping himself shielded.\n"
+                                "He will not step aside. Be ready for that.",
+                        "choices": [{"text": "We're ready.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.1", "op": "==", "value": True},
+                {"flag": "item.hearthstone.5", "op": "!=", "value": True},
+            ],
+            "tree": {
+                "id": "aldara_knows_fragment",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "You carry it.\nI can feel it from here — the resonance is unmistakable. "
+                                "A Hearthstone fragment.\n"
+                                "Do you understand what you're holding? "
+                                "These stones are the anchors the first Wardens placed "
+                                "when they built the barrier. "
+                                "Every one you recover strengthens what remains.",
+                        "on_enter": [
+                            {"action": "meet_npc", "npc": "high_priest_aldara"},
+                            {"action": "set_flag", "flag": "npc.high_priest_aldara.met", "value": True},
+                            {"action": "discover_lore", "lore": "lore.aldara_relic"},
+                        ],
+                        "choices": [
+                            {"text": "How many are there?",            "next": "count"},
+                            {"text": "Can you tell us more about them?","next": "lore"},
+                            {"text": "We could use a blessing.",        "next": "blessing"},
+                        ],
+                    },
+                    "count": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Five. Scattered when the Order fell — the last Wardens hid them "
+                                "rather than let Valdris consolidate them.\n"
+                                "The Reliquary here holds maps of the old ward-anchor sites. "
+                                "They may narrow your search.",
+                        "choices": [
+                            {"text": "We'll look at the maps.", "next": None},
+                            {"text": "A blessing first.",       "next": "blessing"},
+                        ],
+                    },
+                    "lore": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Each stone is keyed to a ward-anchor point. "
+                                "They don't merely store power — they resonate with each other. "
+                                "As you recover more, the network strengthens, "
+                                "and the Fading slows near the anchor sites.\n"
+                                "You'll feel it. Your people will feel it. That's how you know "
+                                "you're winning.",
+                        "choices": [{"text": "Good to know.", "next": None}],
+                    },
+                    "blessing": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Kneel.\nLight of the First Ward, carried by these five against the dark — "
+                                "let them pass unseen where shadow gathers, "
+                                "let them strike true where it matters most, "
+                                "and let them find their way back when it is done.\n"
+                                "Go. And do not waste it.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "blessing.cathedral", "value": True},
+                        ],
+                        "choices": [{"text": "Thank you.", "next": None}],
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [
+                {"flag": "maren.left", "op": "==", "value": True},
+            ],
             "tree": {
                 "id": "aldara_act3",
                 "nodes": {
@@ -7291,6 +6507,91 @@ _NEW_DIALOGUES = {
             },
         },
         {
+            "conditions": [
+                {"flag": "lore.fading_basics", "op": "==", "value": True},
+                {"flag": "npc.high_priest_aldara.met", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "aldara_fading",
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "You've learned the truth of the Fading. Good. Denial is a luxury "
+                                "we can no longer afford. The Cathedral has records you should see — "
+                                "accounts from the last time the wards nearly failed, three centuries ago. "
+                                "The Wardens stopped it then. We must hope they can again.",
+                        "choices": [
+                            {"text": "What do the records say?", "next": "records"},
+                            {"text": "Can the Cathedral help us?", "next": "help"},
+                            {"text": "Thank you.", "next": "bye"},
+                        ],
+                    },
+                    "records": {
+                        "speaker": "High Priest Aldara",
+                        "text": "That the Hearthstones were not merely artifacts — they were promises. "
+                                "Each one placed by a Warden who swore their bloodline would protect it. "
+                                "When the last Warden of a bloodline dies, the stone begins to drift. "
+                                "That is what has been happening. Bloodlines dying. Promises breaking.",
+                        "on_enter": [{"action": "discover_lore", "lore": "hearthstone_bloodlines"}],
+                        "end": True,
+                    },
+                    "help": {
+                        "speaker": "High Priest Aldara",
+                        "text": "We can consecrate your weapons against shadow-touched creatures. "
+                                "We can heal your wounds and restore your spirit. What we cannot do "
+                                "is fight this battle for you. That burden falls on those with Warden blood.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Light guide your steps into the dark.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        {
+            "conditions": [
+                {"flag": "npc.high_priest_aldara.met", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "aldara_intro",
+                "nodes": {
+                    "start": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Travelers in Sanctum are always welcome, whatever their faith. "
+                                "I am Aldara. I have served this Cathedral for forty years. "
+                                "Something tells me you are not here for pilgrimage.",
+                        "on_enter": [{"action": "meet_npc", "npc": "high_priest_aldara"}],
+                        "choices": [
+                            {"text": "We're looking for information about the Fading.", "next": "fading"},
+                            {"text": "We need healing.", "next": "healing"},
+                            {"text": "We're just passing through.", "next": "passing"},
+                        ],
+                    },
+                    "fading": {
+                        "speaker": "High Priest Aldara",
+                        "text": "Then you already know more than most. Come back when you've "
+                                "learned what you're truly up against. The Cathedral's archives "
+                                "will be open to you.",
+                        "on_enter": [{"action": "set_flag", "flag": "lore.sanctum_archives", "value": True}],
+                        "end": True,
+                    },
+                    "healing": {
+                        "speaker": "High Priest Aldara",
+                        "text": "The shrine is always open. You need only ask.",
+                        "end": True,
+                    },
+                    "passing": {
+                        "speaker": "High Priest Aldara",
+                        "text": "No one passes through Sanctum by accident. Rest, restore yourselves. "
+                                "Whatever you're carrying, you needn't carry it alone.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        {
             "conditions": [{"flag": "lore.fading_basics", "op": "==", "value": True}],
             "tree": {
                 "id": "aldara_knows",
@@ -7323,29 +6624,27 @@ _NEW_DIALOGUES = {
             "tree": {
                 "id": "aldara_default",
                 "loop": True,
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "High Priest Aldara",
-                        "text": "Travelers. The Cathedral is open to those who seek the Light. If you seek something else — answers, guidance, healing — I may be able to help. Sanctum has been a place of knowledge longer than it has been a city.",
+                        "text": "The light of the Cathedral is always here when you need it.",
                         "choices": [
-                            {"text": "What do you know about the Fading?", "next": "fading"},
-                            {"text": "We need healing.", "next": "heal"},
+                            {"text": "What have you heard from other pilgrims?", "next": "rumors"},
+                            {"text": "Farewell.", "next": "bye"},
                         ],
                     },
-                    "fading": {
+                    "rumors": {
                         "speaker": "High Priest Aldara",
-                        "text": "Everything. It's been the central concern of the Order for fifty years — we simply haven't had the courage to say so publicly. Come back when you've learned more. I will tell you what I can when I know you're committed.",
-                        "choices": [{"text": "We're committed.", "next": "committed"}],
+                        "text": "That entire villages are vanishing in the east. That the Governor "
+                                "in Thornhaven knows more than he says. That a woman named Maren "
+                                "has been asking about the old Warden bloodlines.",
+                        "end": True,
                     },
-                    "committed": {
+                    "bye": {
                         "speaker": "High Priest Aldara",
-                        "text": "Then pursue the Hearthstones. Find the scholar Maren's research if you haven't already. The truth is all in there. Return when you have it.",
-                        "choices": [{"text": "We will.", "next": None}],
-                    },
-                    "heal": {
-                        "speaker": "High Priest Aldara",
-                        "text": "The temple services are available to all who enter in good faith.",
-                        "choices": [{"text": "Thank you.", "next": None}],
+                        "text": "Go with light.",
+                        "end": True,
                     },
                 },
             },
@@ -9419,9 +8718,11 @@ _NEW_DIALOGUES = {
     ],
 
     "court_mage_sira": [
-        # Act 3 — Fading is critical, Sira doing final calculations
+        # Act 3 — the Fading is critical, Sira is doing final calculations
         {
-            "conditions": [{"flag": "maren.left", "op": "==", "value": True}],
+            "conditions": [
+                {"flag": "maren.left", "op": "==", "value": True},
+            ],
             "tree": {
                 "id": "sira_act3",
                 "nodes": {
@@ -9467,40 +8768,191 @@ _NEW_DIALOGUES = {
                 },
             },
         },
+        # After Maren reveal — Sira knows more and can be pressed
+        {
+            "conditions": [
+                {"flag": "lore.maren_origin", "op": "==", "value": True},
+                {"flag": "npc.court_mage_sira.debriefed", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "sira_post_reveal",
+                "nodes": {
+                    "start": {
+                        "speaker": "Court Mage Sira",
+                        "text": "You know now. Good. I wasn't sure how long I could hold that. "
+                                "Ask what you need to.",
+                        "choices": [
+                            {"text": "What do you know about Valdris's ritual?", "next": "ritual"},
+                            {"text": "Can we trust Maren at all?", "next": "trust"},
+                            {"text": "Why didn't you tell us sooner?", "next": "sooner"},
+                        ],
+                    },
+                    "ritual": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Valdris believed the Hearthstones could be used not just to restore "
+                                "the wards — but to permanently seal the Shadow realm itself. "
+                                "Not just hold it back. End the threat forever. "
+                                "He was right. The mathematics work. "
+                                "What he miscalculated was the cost.",
+                        "next": "ritual2",
+                    },
+                    "ritual2": {
+                        "speaker": "Court Mage Sira",
+                        "text": "The ritual consumes whoever performs it. Not just magically — "
+                                "erased. The stones use the performer's existence as fuel. "
+                                "Valdris lost his nerve at the last moment and broke the ritual. "
+                                "That breaking is what started the Fading.",
+                        "on_enter": [{"action": "discover_lore", "lore": "valdris_ritual_cost"}],
+                        "end": True,
+                    },
+                    "trust": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Maren has spent her entire life trying to fix what her father broke. "
+                                "She genuinely wants to save the world. "
+                                "The question is whether she's decided to sacrifice you to do it, "
+                                "or whether she hasn't made that choice yet. "
+                                "Those are very different problems.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.court_mage_sira.debriefed", "value": True}],
+                        "end": True,
+                    },
+                    "sooner": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Because I wasn't certain. And because Maren has done more to stop "
+                                "the Fading than anyone else living. I didn't want to burn that "
+                                "before I had to. "
+                                "I'm telling you now because you're close enough to the end that "
+                                "you need every piece of this.",
+                        "on_enter": [{"action": "set_flag", "flag": "npc.court_mage_sira.debriefed", "value": True}],
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # The Maren reveal — she is Valdris's daughter
+        {
+            "conditions": [
+                {"flag": "quest.main_hearthstone_1.state", "op": "==", "value": -2},
+                {"flag": "npc.court_mage_sira.met", "op": "==", "value": True},
+                {"flag": "lore.maren_origin", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "sira_maren_reveal",
+                "nodes": {
+                    "start": {
+                        "speaker": "Court Mage Sira",
+                        "text": "I've been waiting for the right moment to tell you something. "
+                                "The scholar you've been working with — Maren. "
+                                "I know her real name.",
+                        "choices": [
+                            {"text": "Tell us.", "next": "reveal"},
+                            {"text": "What do you mean, her real name?", "next": "reveal"},
+                        ],
+                    },
+                    "reveal": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Maren Valdris. Daughter of the Traitor Warden. "
+                                "She has been searching for the Hearthstones since she was a child — "
+                                "but not, I fear, to restore the wards as they were. "
+                                "Her father's ritual was incomplete. She means to finish it.",
+                        "on_enter": [{"action": "discover_lore", "lore": "maren_origin"}],
+                        "next": "question",
+                    },
+                    "question": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Whether that means saving the world or consuming it — "
+                                "I genuinely don't know. Valdris believed he was saving it too. "
+                                "I thought you should have this information before you hand her "
+                                "the second stone.",
+                        "on_enter": [{"action": "set_flag", "flag": "lore.maren_revealed", "value": True}],
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # First meeting
+        {
+            "conditions": [
+                {"flag": "npc.court_mage_sira.met", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "sira_intro",
+                "nodes": {
+                    "start": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Court Mage — the title sounds grander than the reality. "
+                                "I advise the Governor on magical matters. Mostly I sit in this "
+                                "tower and watch the ley line readings get worse. "
+                                "You're the Warden-blooded party, aren't you?",
+                        "on_enter": [{"action": "meet_npc", "npc": "court_mage_sira"}],
+                        "choices": [
+                            {"text": "How do you know about us?", "next": "knows"},
+                            {"text": "What have you learned about the Fading?", "next": "fading"},
+                            {"text": "Just visiting.", "next": "bye"},
+                        ],
+                    },
+                    "knows": {
+                        "speaker": "Court Mage Sira",
+                        "text": "The ley lines carry information as well as power. When someone "
+                                "with Warden blood touches a Hearthstone, it resonates across the "
+                                "entire network. I felt you find the first stone. So did Archmage Solen. "
+                                "So, I suspect, did Maren.",
+                        "end": True,
+                    },
+                    "fading": {
+                        "speaker": "Court Mage Sira",
+                        "text": "That something is driving it. It is not simply entropy — "
+                                "there is intention behind the pattern of which areas Fade first. "
+                                "Always the areas with old Warden presence. Always the anchor points. "
+                                "Whatever is out there wants the wards down.",
+                        "on_enter": [{"action": "discover_lore", "lore": "fading_intention"}],
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Court Mage Sira",
+                        "text": "Come back. I have a feeling we'll have more to discuss.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # Default
         {
             "conditions": [],
             "tree": {
                 "id": "sira_default",
                 "loop": True,
+                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Court Mage Sira",
-                        "text": "I've been waiting for the right moment to tell you something. The scholar you've been working with — Maren — her research is correct. More than she even knows. There's a second network beneath the primary one.",
-                        "on_enter": [{"action": "set_flag", "flag": "npc.sira.met", "value": True}],
+                        "text": "The readings are worse today. I say that every day now, "
+                                "and every day it's true.",
                         "choices": [
-                            {"text": "A second network?", "next": "second"},
-                            {"text": "How do you know?", "next": "how"},
+                            {"text": "What are you tracking?", "next": "tracking"},
+                            {"text": "What does the Governor make of all this?", "next": "governor"},
+                            {"text": "Goodbye.", "next": "bye"},
                         ],
                     },
-                    "second": {
+                    "tracking": {
                         "speaker": "Court Mage Sira",
-                        "text": "The Hearthstone network everyone knows about is the visible layer. Beneath it is an older one — the original ley system, pre-human. Valdris doesn't know about it. Yet. If he discovers it, the primary network becomes irrelevant.",
-                        "choices": [{"text": "What can we do about it?", "next": "do"}],
+                        "text": "The integrity of the barrier between worlds. Currently at "
+                                "roughly forty percent of its original strength, down from seventy "
+                                "when I started measuring three years ago. At this rate, full "
+                                "collapse in eighteen months. Maybe less.",
+                        "end": True,
                     },
-                    "do": {
+                    "governor": {
                         "speaker": "Court Mage Sira",
-                        "text": "Stabilize the primary network before he finds the secondary one. Every Hearthstone you protect buys us time to locate the deep nodes. The Archmage in Crystalspire has a theory about where they are.",
-                        "choices": [{"text": "We've spoken to him.", "next": "solen"}],
+                        "text": "He understands the numbers. That's more than most. "
+                                "What he can't accept is that there is no military solution to this. "
+                                "You cannot march soldiers against entropy. "
+                                "He's still looking for something to fight.",
+                        "end": True,
                     },
-                    "solen": {
+                    "bye": {
                         "speaker": "Court Mage Sira",
-                        "text": "Good. Between his models and my position here, we might actually map the full network before Valdris does. Come back to me when you have all the primary stones accounted for.",
-                        "choices": [{"text": "We will.", "next": None}],
-                    },
-                    "how": {
-                        "speaker": "Court Mage Sira",
-                        "text": "I'm the court mage of the Empire's capital. I have access to archives that haven't been opened in four hundred years. The information was always there. Nobody thought to look.",
-                        "choices": [{"text": "What does it mean for us?", "next": "second"}],
+                        "text": "Find those stones.",
+                        "end": True,
                     },
                 },
             },
