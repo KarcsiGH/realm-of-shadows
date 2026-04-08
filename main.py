@@ -1578,10 +1578,12 @@ class Game:
             self.go(S_LIFEPATH)
 
     def setup_class_choices(self):
-        if not self.quick:
-            fits = self.current_char.get_class_recommendations()
-        else:
-            fits = [(cn, "Available", 0) for cn in CLASS_ORDER]
+        from core.classes import get_class_fit, class_qualifies, CLASS_ORDER
+        # Always use stat gates — both life-path and quick roll
+        fits = get_class_fit(self.current_char.stats)
+        if not fits:
+            # Edge case: no class qualifies (shouldn't happen with base class low gates)
+            fits = [(cn, "Available", 0) for cn in ("Fighter","Mage","Cleric","Thief","Ranger","Monk")]
         self.class_choices = fits
         self.scroll = 0
         self.class_hover = -1
@@ -1682,9 +1684,10 @@ class Game:
         from core.races import RACE_ORDER
         import random
 
+        BASE_CLASSES = ["Fighter", "Mage", "Cleric", "Thief", "Ranger", "Monk"]
         TOTAL = 16
         hero_class = self.party[0].class_name if self.party else None
-        pool = [c for c in CLASS_ORDER if c != hero_class]   # 5 non-hero classes
+        pool = [c for c in BASE_CLASSES if c != hero_class]
         all_races = list(RACE_ORDER)   # all 7 races
 
         # Strategy: 16 slots total.
@@ -2379,6 +2382,10 @@ class Game:
                 fit_col = FIT_COLORS.get(fit, GREY)
                 draw_text(self.screen, f"[ {fit} ]", rect.x + 180, rect.y + 10,
                           fit_col, 13)
+            elif "Hybrid" in fit:
+                # Quick roll — still show hybrid tag
+                draw_text(self.screen, "✦ Hybrid", rect.x + 180, rect.y + 10,
+                          (220, 180, 255), 13, bold=True)
 
             # Description
             draw_text(self.screen, cls["description"], rect.x + 46, rect.y + 32,

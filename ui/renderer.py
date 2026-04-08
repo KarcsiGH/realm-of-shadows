@@ -30,9 +30,10 @@ BUY_COL     = (80, 220, 120)
 SELL_COL    = (220, 180, 80)
 
 FIT_COLORS = {
-    "Natural Fit": GREEN,
-    "Good Fit": HIGHLIGHT,
-    "Unusual Choice": ORANGE,
+    "Natural Fit":       GREEN,
+    "Good Fit":          HIGHLIGHT,
+    "Unusual Choice":    ORANGE,
+    "✦ Hybrid Class":   (220, 180, 255),   # distinctive purple-gold for hybrids
 }
 
 # ── Screen Settings ───────────────────────────────────────────

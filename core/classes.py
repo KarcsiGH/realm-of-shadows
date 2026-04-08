@@ -259,6 +259,14 @@ _HYBRIDS = {
         "stat_growth": {"PIE": "high", "STR": "medium", "CON": "high", "DEX": "low", "INT": "low", "WIS": "low"},
     },
     # Thief hybrids
+    "Duskblade": {
+        "description": "Shadow warrior who channels the Fading itself as a weapon. Grows stronger as enemies become corrupted.",
+        "primary": "STR", "secondary": "DEX", "base_hp": 52,
+        "resources": ["HP", "STR-SP", "DEX-SP"],
+        "color": (90, 60, 120), "starting_abilities": [],
+        "starting_stats": {"STR": 14, "DEX": 14, "CON": 10, "INT": 8, "WIS": 8, "PIE": 4},
+        "stat_growth": {"STR": "high", "DEX": "high", "CON": "medium", "WIS": "low", "INT": "low", "PIE": "low"},
+    },
     "Assassin": {
         "description": "Lethal hunter combining tracking, poisons, and shadow strikes.",
         "primary": "DEX", "secondary": "WIS", "base_hp": 44,
@@ -351,7 +359,52 @@ _APEX = {
 CLASSES.update(_HYBRIDS)
 CLASSES.update(_APEX)
 
-CLASS_ORDER = ["Fighter", "Mage", "Cleric", "Thief", "Ranger", "Monk"]
+CLASS_ORDER = [
+    # Base classes — low stat gates, available to almost anyone
+    "Fighter", "Mage", "Cleric", "Thief", "Ranger", "Monk",
+    # Hybrid classes — two-stat gates, available at creation if qualified
+    "Paladin", "Spellblade", "Duskblade",
+    "Witch", "Necromancer", "Druid", "Mystic",
+    "Assassin", "Shaman",
+]
+
+# Minimum stat requirements for each class.
+# Base classes: single stat, low threshold.
+# Hybrids: two stats, higher thresholds.
+# If a character meets all requirements, the class is available.
+CLASS_STAT_REQUIREMENTS = {
+    # Base classes
+    "Fighter":    {"STR": 11},
+    "Mage":       {"INT": 11},
+    "Cleric":     {"PIE": 11},
+    "Thief":      {"DEX": 11},
+    "Ranger":     {"DEX": 10, "WIS": 10},
+    "Monk":       {"CON": 11, "WIS": 10},
+    # Hybrids — two stats, genuinely high thresholds
+    "Paladin":    {"STR": 13, "PIE": 14},
+    "Spellblade": {"STR": 13, "INT": 14},
+    "Duskblade":  {"STR": 12, "DEX": 15},
+    "Witch":      {"INT": 13, "PIE": 13},
+    "Necromancer":{"INT": 15, "DEX": 12},
+    "Druid":      {"INT": 12, "WIS": 15},
+    "Mystic":     {"INT": 13, "WIS": 12, "CON": 12},
+    "Assassin":   {"DEX": 16, "WIS": 11},
+    "Shaman":     {"WIS": 15, "CON": 13},
+}
+
+def class_qualifies(stats: dict, class_name: str) -> bool:
+    """Return True if the given stats meet the requirements for class_name."""
+    reqs = CLASS_STAT_REQUIREMENTS.get(class_name, {})
+    return all(stats.get(stat, 0) >= minimum for stat, minimum in reqs.items())
+
+def get_available_classes(stats: dict) -> list:
+    """Return list of (class_name, is_hybrid) tuples the character qualifies for."""
+    result = []
+    for cls in CLASS_ORDER:
+        if class_qualifies(stats, cls):
+            is_hybrid = cls not in ("Fighter","Mage","Cleric","Thief","Ranger","Monk")
+            result.append((cls, is_hybrid))
+    return result
 
 
 # ── Resource Calculations ─────────────────────────────────────
@@ -401,37 +454,53 @@ def get_all_resources(class_name, stats, level):
 
 
 def get_class_fit(stats):
-    """Return classes sorted by how well stats fit, with fit category.
-    Scores based on how well your highest stats align with class priorities."""
-    fits = []
+    """Return available classes sorted by fit, respecting stat gate requirements.
+
+    Returns list of (class_name, fit_category, score) tuples.
+    Fit categories:
+      'Hybrid — Qualified'  : meets stat gate for a hybrid class (special!)
+      'Natural Fit'         : base class, primary stat is character's strength
+      'Good Fit'            : base class, reasonable stat alignment
+      'Unusual Choice'      : base class, stats don't align well but still valid
+    """
+    result = []
+
     for name in CLASS_ORDER:
-        cls = CLASSES[name]
-        primary = cls["primary"]
-        secondary = cls["secondary"]
-        # Score: how strong are you in this class's key stats?
-        score = 0
-        score += stats[primary] * 3      # primary stat matters most
-        score += stats[secondary] * 2    # secondary stat matters
-        # Bonus if primary is your highest or near-highest stat
+        cls  = CLASSES.get(name, {})
+        reqs = CLASS_STAT_REQUIREMENTS.get(name, {})
+        is_hybrid = name not in ("Fighter","Mage","Cleric","Thief","Ranger","Monk")
+
+        # Check stat gate — hybrids and base classes both have requirements
+        qualifies = all(stats.get(stat, 0) >= minimum for stat, minimum in reqs.items())
+        if not qualifies:
+            continue  # doesn't qualify — don't show
+
+        primary   = cls.get("primary", "STR")
+        secondary = cls.get("secondary", "STR")
+
+        # Score: alignment of character stats with class priorities
+        score = stats.get(primary, 0) * 3 + stats.get(secondary, 0) * 2
         sorted_stats = sorted(stats.items(), key=lambda x: -x[1])
         top_2 = [s[0] for s in sorted_stats[:2]]
-        if primary in top_2:
-            score += 10
-        if secondary in top_2:
-            score += 5
-        fits.append((name, score))
+        if primary   in top_2: score += 10
+        if secondary in top_2: score += 5
 
-    fits.sort(key=lambda x: -x[1])
-    best = fits[0][1]
-
-    result = []
-    for name, score in fits:
-        diff = best - score
-        if diff <= 8:
-            cat = "Natural Fit"
-        elif diff <= 25:
-            cat = "Good Fit"
+        if is_hybrid:
+            cat = "✦ Hybrid Class"   # special category — highlight in UI
         else:
-            cat = "Unusual Choice"
+            # Fit category based on score
+            max_possible = max(
+                CLASSES[n].get("primary","STR") and
+                stats.get(CLASSES[n]["primary"],0)*3 + stats.get(CLASSES[n]["secondary"],0)*2
+                for n in ("Fighter","Mage","Cleric","Thief","Ranger","Monk")
+            )
+            diff = max_possible - score
+            if diff <= 8:   cat = "Natural Fit"
+            elif diff <= 25: cat = "Good Fit"
+            else:            cat = "Unusual Choice"
+
         result.append((name, cat, score))
+
+    # Sort: hybrids first (they're rare and exciting), then by score
+    result.sort(key=lambda x: (0 if "Hybrid" in x[1] else 1, -x[2]))
     return result

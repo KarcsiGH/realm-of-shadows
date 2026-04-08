@@ -155,14 +155,24 @@ class Character:
         return self.xp, self.xp_to_next_level()
 
     def add_xp(self, amount):
-        """Add XP (with racial multiplier + planar tier bonus). Leveling happens at the inn.
+        """Add XP (with racial multiplier + planar tier bonus + class-transition catch-up).
         Returns True if character is now eligible to level up."""
         from core.races import get_racial_xp_multiplier
         from core.progression import get_tier_xp_mult
-        tier_mult = get_tier_xp_mult(getattr(self, "planar_tier", 0))
-        adjusted = int(amount * get_racial_xp_multiplier(self.race_name) * tier_mult)
-        self.xp += adjusted
-        return self.xp >= self.xp_to_next_level() and self.level < 30
+        tier_mult    = get_tier_xp_mult(getattr(self, "planar_tier", 0))
+        race_mult    = get_racial_xp_multiplier(self.race_name)
+
+        # Class-transition catch-up window: +60% XP until former level re-reached
+        catchup_mult = 1.0
+        target = getattr(self, "_catchup_target_level", 0)
+        if target and self.level < target:
+            catchup_mult = getattr(self, "_catchup_xp_mult", 1.60)
+        elif target and self.level >= target:
+            # Reached former level — clear the window
+            self._catchup_target_level = 0
+            self._catchup_xp_mult      = 1.0
+
+        adjusted = int(amount * race_mult * tier_mult * catchup_mult)
         self.xp += adjusted
         return self.xp >= self.xp_to_next_level() and self.level < 30
 

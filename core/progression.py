@@ -228,96 +228,40 @@ LEVEL_STAT_GAINS["Ascetic"] = {
 # ═══════════════════════════════════════════════════════════════
 
 CLASS_TRANSITIONS = {
-    # ── HYBRID CLASSES (level 10) ────────────────────────────────────────────
-    # Two base classes merge. A character qualifies if their current class is
-    # EITHER parent class and they meet the stat minimums for both sides.
-    # Fighter hybrids
-    "Paladin":      {"base_classes": ["Fighter", "Cleric"],  "min_level": 10,
-                     "min_stats": {"STR": 14, "PIE": 14},
-                     "description": "Holy warrior combining divine magic and combat prowess."},
-    "Spellblade":   {"base_classes": ["Fighter", "Mage"],    "min_level": 10,
-                     "min_stats": {"STR": 12, "INT": 14},
-                     "description": "Arcane warrior who channels spells through their blade."},
-    "Warder":       {"base_classes": ["Fighter", "Thief"],   "min_level": 10,
-                     "min_stats": {"STR": 12, "DEX": 14},
-                     "description": "Tactical combatant combining heavy strikes and shadow techniques."},
-    "Strider":      {"base_classes": ["Fighter", "Ranger"],  "min_level": 10,
-                     "min_stats": {"STR": 12, "DEX": 14},
-                     "description": "Mobile skirmisher excelling at rapid movement and precise strikes."},
-    "Guardian":     {"base_classes": ["Fighter", "Monk"],    "min_level": 10,
-                     "min_stats": {"STR": 14, "CON": 14},
-                     "description": "Armored protector channeling ki to defend allies."},
-    # Mage hybrids
-    "Witch":        {"base_classes": ["Mage", "Cleric"],     "min_level": 10,
-                     "min_stats": {"INT": 14, "PIE": 12, "WIS": 14},
-                     "description": "Dark spellcaster blending arcane and divine powers."},
-    "Necromancer":  {"base_classes": ["Mage", "Thief"],      "min_level": 10,
-                     "min_stats": {"INT": 16, "WIS": 12},
-                     "description": "Master of death magic, draining life and raising the fallen."},
-    "Druid":        {"base_classes": ["Mage", "Ranger"],     "min_level": 10,
-                     "min_stats": {"INT": 12, "WIS": 16},
-                     "description": "Nature spellcaster harnessing elemental and healing powers."},
-    "Mystic":       {"base_classes": ["Mage", "Monk"],       "min_level": 10,
-                     "min_stats": {"INT": 14, "WIS": 12},
-                     "description": "Arcane ki master fusing magical theory with inner discipline."},
-    # Cleric hybrids
-    "Warden":       {"base_classes": ["Cleric", "Ranger"],   "min_level": 10,
-                     "min_stats": {"PIE": 12, "WIS": 14},
-                     "description": "Ancient guardian combining divine protection and nature's power."},
-    "Inquisitor":   {"base_classes": ["Cleric", "Thief"],    "min_level": 10,
-                     "min_stats": {"PIE": 14, "DEX": 12},
-                     "description": "Shadow-wielding divine agent who hunts the corrupt."},
-    "Templar":      {"base_classes": ["Cleric", "Monk"],     "min_level": 10,
-                     "min_stats": {"PIE": 12, "CON": 14},
-                     "description": "Devoted warrior combining divine faith and physical discipline."},
-    # Thief hybrids
-    "Assassin":     {"base_classes": ["Ranger", "Thief"],    "min_level": 10,
-                     "min_stats": {"DEX": 16, "WIS": 10},
-                     "description": "Lethal hunter combining tracking, poisons, and shadow strikes."},
-    "Phantom":      {"base_classes": ["Thief", "Monk"],      "min_level": 10,
-                     "min_stats": {"DEX": 14, "WIS": 12},
-                     "description": "Ki-powered shadow who phases through defenses."},
-    # Ranger hybrid
-    "Shaman":       {"base_classes": ["Ranger", "Monk"],     "min_level": 10,
-                     "min_stats": {"WIS": 14, "CON": 12},
-                     "description": "Wilderness spiritualist drawing ki from the natural world."},
+    # Any-class-to-any-class. stat_req is the only gate.
+    # Mid-game transition: keep top 3 mastered abilities, level resets to 1,
+    # XP gain +60% until former level is re-reached.
 
-    # ── APEX CLASSES (level 15, pure-line) ───────────────────────────────────
-    # One base class perfected. Carries over all learned abilities.
-    "Knight":        {"base_classes": ["Fighter"],     "min_level": 15,
-                      "min_stats": {"STR": 20, "CON": 18},
-                      "description": "The pinnacle of martial prowess — legendary defender and warrior."},
-    "Archmage":      {"base_classes": ["Mage"],        "min_level": 15,
-                      "min_stats": {"INT": 22, "WIS": 16},
-                      "description": "Master of all arcane disciplines. Reality bends to their will."},
-    "High Priest":   {"base_classes": ["Cleric"],      "min_level": 15,
-                      "min_stats": {"PIE": 22, "WIS": 18},
-                      "description": "Divine conduit of staggering power. Miracles are within reach."},
-    "Shadow Master": {"base_classes": ["Thief"],       "min_level": 15,
-                      "min_stats": {"DEX": 22, "WIS": 14},
-                      "description": "Absolute master of shadow. Death comes from darkness unseen."},
-    "Beastlord":     {"base_classes": ["Ranger"],      "min_level": 15,
-                      "min_stats": {"DEX": 18, "WIS": 20},
-                      "description": "One with the wild. Commands nature and hunts with primal fury."},
-    "Ascetic":       {"base_classes": ["Monk"],        "min_level": 15,
-                      "min_stats": {"WIS": 18, "CON": 16},
-                      "description": "Enlightened master of ki. Transcends mortal limitations entirely."},
+    # Base classes
+    "Fighter":    {"stat_req": {"STR": 11},                     "description": "Warrior. Physical combat mastery."},
+    "Mage":       {"stat_req": {"INT": 11},                     "description": "Arcane caster. Spells and control."},
+    "Cleric":     {"stat_req": {"PIE": 11},                     "description": "Divine caster. Healing and faith."},
+    "Thief":      {"stat_req": {"DEX": 11},                     "description": "Rogue. Speed, poison, burst damage."},
+    "Ranger":     {"stat_req": {"DEX": 10, "WIS": 10},          "description": "Ranger. Ranged combat and nature."},
+    "Monk":       {"stat_req": {"CON": 11, "WIS": 10},          "description": "Monk. Ki-fuelled physical mastery."},
+    # Hybrid classes
+    "Paladin":    {"stat_req": {"STR": 13, "PIE": 14},          "description": "Divine warrior. Tanks, heals, smites."},
+    "Spellblade": {"stat_req": {"STR": 13, "INT": 14},          "description": "Arcane melee. Scales STR and INT both."},
+    "Duskblade":  {"stat_req": {"STR": 12, "DEX": 15},          "description": "Shadow warrior. Channels the Fading."},
+    "Witch":      {"stat_req": {"INT": 13, "PIE": 13},          "description": "Curse weaver. Attrition specialist."},
+    "Necromancer":{"stat_req": {"INT": 15, "DEX": 12},          "description": "Death as resource. Raise fallen allies."},
+    "Druid":      {"stat_req": {"INT": 12, "WIS": 15},          "description": "Nature control. Wildshape combat."},
+    "Mystic":     {"stat_req": {"INT": 13, "WIS": 12, "CON": 12},"description": "Arcane Ki fusion. Dual resource loop."},
+    "Assassin":   {"stat_req": {"DEX": 16, "WIS": 11},          "description": "Perfect killer. Setup → instant kill."},
+    "Shaman":     {"stat_req": {"WIS": 15, "CON": 13},          "description": "Ancestral spirits. Bridge of living and dead."},
 }
 
+
 def get_available_transitions(character):
-    """Return list of class names this character can transition to."""
+    """Return list of class names this character can transition to.
+    Any class is reachable from any other — only stat gates matter."""
     available = []
     for cls_name, req in CLASS_TRANSITIONS.items():
-        if character.class_name not in req["base_classes"]:
-            continue
-        if character.level < req["min_level"]:
-            continue
-        meets_stats = True
-        for stat, minimum in req["min_stats"].items():
-            if character.stats.get(stat, 0) < minimum:
-                meets_stats = False
-                break
-        if meets_stats:
+        if cls_name == character.class_name:
+            continue  # already this class
+        stat_req = req.get("stat_req", {})
+        if all(character.stats.get(stat, 0) >= minimum
+               for stat, minimum in stat_req.items()):
             available.append(cls_name)
     return available
 
@@ -675,45 +619,67 @@ def use_training_book(character, item):
 # ═══════════════════════════════════════════════════════════════
 
 def apply_class_transition(character, new_class_name: str) -> tuple:
-    """Apply a class transition to a character.
+    """Apply a mid-game class transition (Wizardry-style with catch-up XP).
+
+    - Must meet stat_req for new class
+    - Keeps top 3 highest-level mastered abilities from old class
+    - Level resets to 1; XP +60% until former level re-reached
+    - Stats preserved; resources recalculated for new class
     Returns (success: bool, message: str).
-    Preserves all currently known abilities; adds new class starters.
-    Resources are recalculated for the new class."""
+    """
     from core.classes import CLASSES, get_all_resources
+    from core.abilities import CLASS_ABILITIES
 
     req = CLASS_TRANSITIONS.get(new_class_name)
     if not req:
         return False, f"Unknown class: {new_class_name}"
-    if character.class_name not in req["base_classes"]:
-        return False, f"{character.name} is not eligible to become {new_class_name}."
-    if character.level < req["min_level"]:
-        return False, f"Requires level {req['min_level']} (you are level {character.level})."
-    for stat, minimum in req["min_stats"].items():
+
+    if character.class_name == new_class_name:
+        return False, f"{character.name} is already a {new_class_name}."
+
+    stat_req = req.get("stat_req", {})
+    for stat, minimum in stat_req.items():
         if character.stats.get(stat, 0) < minimum:
-            return False, (f"Requires {stat} {minimum} "
-                           f"(you have {character.stats.get(stat, 0)}).")
+            return False, (
+                f"Requires {stat} {minimum} "
+                f"(you have {character.stats.get(stat, 0)}, need {minimum - character.stats.get(stat, 0)} more)."
+            )
 
     old_class = character.class_name
-    character.class_name = new_class_name
+    old_level = character.level
 
-    # Keep all existing abilities; merge in new class starting abilities
-    known_names = {a["name"] for a in character.abilities}
-    new_cls = CLASSES.get(new_class_name, {})
-    added = []
-    from core.abilities import CLASS_ABILITIES as _CA
-    full_lookup = {a["name"]: a for a in _CA.get(new_class_name, [])}
-    for ab in new_cls.get("starting_abilities", []):
-        if ab["name"] not in known_names:
-            full = full_lookup.get(ab["name"])
-            character.abilities.append(dict(full) if full else dict(ab))
-            added.append(ab["name"])
+    # Keep top 3 highest-level mastered abilities (not passives)
+    sorted_abs = sorted(character.abilities, key=lambda a: a.get("level", 0), reverse=True)
+    kept, kept_names = [], set()
+    for ab in sorted_abs:
+        if ab.get("type") == "passive":
+            continue
+        if ab["name"] not in kept_names and len(kept) < 3:
+            kept.append(dict(ab))
+            kept_names.add(ab["name"])
 
-    # Recalculate resources for new class
-    # Hybrid/apex classes may not be in CLASSES yet — fall back to first base class
-    resource_class = new_class_name if new_class_name in CLASSES else req["base_classes"][0]
-    character.resources = get_all_resources(resource_class, character.stats, character.level)
+    # New class L1 abilities
+    new_l1 = [a for a in CLASS_ABILITIES.get(new_class_name, []) if a.get("level", 1) <= 1]
+    new_abilities = kept[:]
+    for ab in new_l1:
+        if ab["name"] not in kept_names:
+            new_abilities.append(dict(ab))
 
-    tier_label = "hybrid" if req["min_level"] == 10 else "apex"
-    gained_str = f" Gained: {', '.join(added)}." if added else ""
-    return True, (f"{character.name} has ascended to {new_class_name} "
-                  f"({tier_label} class, from {old_class}).{gained_str}")
+    # Apply transition
+    character.class_name               = new_class_name
+    character.abilities                = new_abilities
+    character.level                    = 1
+    character.xp                       = 0
+    character._catchup_target_level    = old_level   # XP boost window
+    character._catchup_xp_mult         = 1.60        # +60% XP until target level
+
+    # Recalculate resources for new class at level 1
+    new_max = get_all_resources(new_class_name, character.stats, 1)
+    character.resources = dict(new_max)
+
+    kept_str = ", ".join(a["name"] for a in kept) if kept else "none"
+    return True, (
+        f"{character.name} transitions to {new_class_name} (was {old_class} level {old_level}). "
+        f"Mastered abilities kept: {kept_str}. "
+        f"XP +60%% until level {old_level} reached again."
+    )
