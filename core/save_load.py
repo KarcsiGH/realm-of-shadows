@@ -319,7 +319,7 @@ def _serialize_dungeon_explored(dungeon_cache):
         pass
     return result
 
-def save_game(party, world_state=None, slot_name="save1", metadata=None, dungeon_cache=None, dungeon_state=None):
+def save_game(party, world_state=None, slot_name="save1", metadata=None, dungeon_cache=None, dungeon_state=None, character_bank=None, **kwargs):
     """Save the party (and optionally world state) to a JSON file.
     Returns (success, filepath, message)."""
     ensure_save_dir()
@@ -359,6 +359,7 @@ def save_game(party, world_state=None, slot_name="save1", metadata=None, dungeon
         "slot_name": slot_name,
         "metadata": metadata or {},
         "party": [],
+        "character_bank": [],
         "knowledge": knowledge,
         "story_flags": story,
         "runtime_lore": runtime_lore,
@@ -373,6 +374,14 @@ def save_game(party, world_state=None, slot_name="save1", metadata=None, dungeon
             save_data["party"].append(serialize_character(c))
         except Exception as e:
             return False, None, f"Save failed: could not serialize {getattr(c, 'name', f'character {i}')}: {e}"
+
+    # Serialize character bank (Adventurers Guild roster)
+    bank = character_bank or []
+    for i, c in enumerate(bank):
+        try:
+            save_data["character_bank"].append(serialize_character(c))
+        except Exception:
+            pass  # bank serialization is non-critical — skip broken entries
 
     # Add summary metadata
     save_data["metadata"]["party_summary"] = [
@@ -420,6 +429,14 @@ def load_game(slot_name="save1"):
 
         party = [deserialize_character(cd) for cd in save_data["party"]]
 
+        # Restore character bank (Adventurers Guild roster)
+        character_bank = []
+        for cd in save_data.get("character_bank", []):
+            try:
+                character_bank.append(deserialize_character(cd))
+            except Exception:
+                pass  # skip broken bank entries gracefully
+
         # Restore party knowledge
         knowledge = save_data.get("knowledge")
         if knowledge:
@@ -445,9 +462,9 @@ def load_game(slot_name="save1"):
 
         dungeon_explored = save_data.get("dungeon_explored", {})
         dungeon_position = save_data.get("dungeon_position")
-        return True, party, world_state, f"Loaded {slot_name}", dungeon_explored, dungeon_position
+        return True, party, world_state, f"Loaded {slot_name}", dungeon_explored, dungeon_position, character_bank
     except Exception as e:
-        return False, None, None, f"Load failed: {e}", {}, None
+        return False, None, None, f"Load failed: {e}", {}, None, []
 
 
 def list_saves():

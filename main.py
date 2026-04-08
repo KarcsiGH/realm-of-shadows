@@ -67,6 +67,9 @@ S_SETTINGS         = 21  # Volume / settings overlay
 S_INN_RECRUIT      = 23  # Inn: recruit 5 companions after hero creation
 S_SPELL_PICK       = 24  # Choose starting spell for Mage/Cleric/spellcasters
 S_SAVE_LOAD        = 25  # Save / load slot picker
+S_GUILD            = 31  # Adventurers Guild — character bank roster
+S_PARTY_ASSEMBLE   = 32  # Assemble active party from bank
+S_ROLL             = 33  # Roll stats (4d6 drop lowest, rerolls, stat swap)
 
 
 class Game:
@@ -82,6 +85,14 @@ class Game:
         self.party = []
         self.current_char = None
         self.char_index = 0
+        self.character_bank  = []    # Adventurers Guild roster (up to 12)
+        self._bank_hover     = -1    # hovered slot in guild screen
+        self._bank_scroll    = 0     # scroll offset in guild screen
+        self._assemble_sel   = []    # selected indices in party assemble screen
+        self._roll_stats     = {}    # current stat roll being reviewed
+        self._roll_rerolls   = 3     # rerolls remaining
+        self._roll_swap_mode = False # True when waiting for two stats to swap
+        self._roll_swap_first= None  # first stat picked in swap
         self.slot = 1
         self.history = []
         self.name_text = ""
@@ -212,7 +223,8 @@ class Game:
                                 world_state=self.world_state,
                                 slot_name="inn_autosave",
                                 dungeon_cache=self.dungeon_cache,
-                                dungeon_state=self.dungeon_state)
+                                dungeon_state=self.dungeon_state,
+                                character_bank=self.character_bank)
                         except Exception:
                             pass
                     self.running = False
@@ -396,9 +408,10 @@ class Game:
                 result = self.intro.handle_click(mx, my)
                 if result == 'new_game':
                     self.party = []; self.char_index = 0
+                    self.character_bank = []
                     self.world_state = None; self.dungeon_cache = {}
                     self.current_char = None
-                    self.go(S_MODE)
+                    self.go(S_GUILD)
                 elif result == 'continue':
                     from ui.save_load_ui import SaveLoadUI
                     self.save_load_ui = SaveLoadUI("load", dungeon_cache=self.dungeon_cache)
@@ -419,10 +432,11 @@ class Game:
                         # regardless of whether a save was loaded before.
                         self.party = []
                         self.char_index = 0
+                        self.character_bank = []
                         self.world_state = None
                         self.dungeon_cache = {}
                         self.current_char = None
-                        self.go(S_MODE)
+                        self.go(S_GUILD)
                     elif cont_r.collidepoint(mx, my):
                         from ui.save_load_ui import SaveLoadUI
                         self.save_load_ui = SaveLoadUI("load", dungeon_cache=self.dungeon_cache)
@@ -440,7 +454,7 @@ class Game:
                 self.world_state = None
                 self.dungeon_cache = {}
                 self.current_char = None
-                self.go(S_MODE)
+                self.go(S_GUILD)
 
         elif self.state == S_MODE:
             if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
@@ -529,7 +543,10 @@ class Game:
                     self.scroll = min(max_scroll, self.scroll + 1)
                 elif e.button == 1 and self.class_hover >= 0:
                     cn = self.class_choices[self.class_hover][0]
-                    if self.quick:
+                    if self.quick and getattr(self.current_char, "_prerolled", False):
+                        # Stats were set by the roll screen — just finalize, don't overwrite
+                        self.current_char.finalize_with_class(cn)
+                    elif self.quick:
                         self.current_char.quick_roll(cn)
                     else:
                         self.current_char.finalize_with_class(cn)
@@ -583,28 +600,34 @@ class Game:
 
         elif self.state == S_SUMMARY:
             if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
-                r_acc = pygame.Rect(SCREEN_W//2 - 230, SCREEN_H - 70, 200, 45)
-                r_redo = pygame.Rect(SCREEN_W//2 + 30, SCREEN_H - 70, 200, 45)
+                r_acc  = pygame.Rect(SCREEN_W//2 - 230, SCREEN_H - 70, 200, 45)
+                r_redo = pygame.Rect(SCREEN_W//2 + 30,  SCREEN_H - 70, 200, 45)
                 if r_acc.collidepoint(mx, my):
-                    self.party.append(self.current_char)
-                    self.char_index += 1
-                    if self.char_index >= PARTY_SIZE:
-                        self.party_scroll = 0
-                        # Always call _start_opening so flags are cleared.
-                        # _start_opening skips the narrative if already seen.
-                        self._start_opening()
-                    elif self.char_index == 1:
-                        # Hero created — now recruit companions from the Inn
-                        self._gen_inn_recruits()
-                        self._gen_tavern_recruits()  # also pre-roll tavern pool
-                        self.inn_selected = set()
-                        self.inn_max_flash = 0.0
-                        self.inn_hover = -1
-                        self.go(S_INN_RECRUIT)
-                    else:
-                        self.go(S_MODE)
+                    # Add to character bank instead of directly to party
+                    if len(self.character_bank) < 12:
+                        self.character_bank.append(self.current_char)
+                    self.current_char = None
+                    self.go(S_GUILD)
                 elif r_redo.collidepoint(mx, my):
-                    self.go(S_MODE)
+                    self.go(S_GUILD)
+
+        elif self.state == S_GUILD:
+            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                self._handle_guild_click(mx, my)
+            elif e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+                # If bank has no characters yet, can't go back — stay here
+                if self.character_bank:
+                    pass  # stay; Escape does nothing in guild until party assembled
+
+        elif self.state == S_PARTY_ASSEMBLE:
+            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                self._handle_assemble_click(mx, my)
+            elif e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+                self.go(S_GUILD)
+
+        elif self.state == S_ROLL:
+            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                self._handle_roll_click(mx, my)
 
         elif self.state == S_INN_RECRUIT:
             if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
@@ -658,6 +681,7 @@ class Game:
                             "save", party=self.party, world_state=self.world_state,
                             dungeon_cache=self.dungeon_cache,
                             dungeon_state=self.dungeon_state,
+                            character_bank=self.character_bank,
                         )
                         self._save_load_return_state = self.state
                         sfx.play("ui_open")
@@ -756,9 +780,9 @@ class Game:
                         ok, _path, _msg = save_game(
                             self.party,
                             world_state=self.world_state,
-                            slot_name="inn_autosave"
-                        ,
-                            dungeon_cache=self.dungeon_cache
+                            slot_name="inn_autosave",
+                            dungeon_cache=self.dungeon_cache,
+                            character_bank=self.character_bank
                         )
                         toast_col = (80, 200, 120) if ok else (220, 80, 80)
                         toast_msg = "✓ Progress saved at inn." if ok else "✗ Autosave failed."
@@ -779,10 +803,10 @@ class Game:
                             ok, _path, _msg = save_game(
                                 self.party,
                                 world_state=self.world_state,
-                                slot_name="inn_autosave"
-                            ,
-                            dungeon_cache=self.dungeon_cache
-                        )
+                                slot_name="inn_autosave",
+                                dungeon_cache=self.dungeon_cache,
+                                character_bank=self.character_bank
+                            )
                             toast_col = (80, 200, 120) if ok else (220, 80, 80)
                             toast_msg = "✓ Progress saved at inn." if ok else "✗ Autosave failed."
                             self.add_toast(toast_msg, toast_col)
@@ -956,6 +980,7 @@ class Game:
                         _, party, world_state = result[0], result[1], result[2]
                         dungeon_explored  = result[3] if len(result) > 3 else {}
                         dungeon_position  = result[4] if len(result) > 4 else None
+                        self.character_bank = result[5] if len(result) > 5 else []
                         self.party = party
                         if world_state:
                             self.world_state = world_state
@@ -1532,6 +1557,9 @@ class Game:
     def _after_race_picked(self):
         """Called after race is selected — proceed to lifepath or class select."""
         self.human_stat_pick = None
+        # Apply racial stat bonuses now (before showing class choices so gates are accurate)
+        from core.races import apply_racial_stats
+        apply_racial_stats(self.current_char.stats, self.current_char.race_name)
         if self.quick:
             self.setup_class_choices()
             self.go(S_CLASSSELECT)
@@ -1943,6 +1971,9 @@ class Game:
         if self.state == S_SPLASH:     self._draw_splash_intro(mx, my)
         elif self.state == S_TITLE:      self.draw_title(mx, my)
         elif self.state == S_MODE:     self.draw_mode(mx, my)
+        elif self.state == S_GUILD:    self.draw_guild(mx, my)
+        elif self.state == S_PARTY_ASSEMBLE: self.draw_party_assemble(mx, my)
+        elif self.state == S_ROLL:     self.draw_roll_screen(mx, my)
         elif self.state == S_NAME:     self.draw_name()
         elif self.state == S_RACE:     self.draw_race(mx, my)
         elif self.state == S_LIFEPATH: self.draw_lifepath(mx, my)
@@ -2079,6 +2110,471 @@ class Game:
         # ── Version / credit ──
         draw_text(self.screen, "An Advanced Class System RPG",
                   SCREEN_W // 2 - 160, SCREEN_H - 42, GREY, 14)
+
+    # ══════════════════════════════════════════════════════════
+    #  ADVENTURERS GUILD — Character Bank
+    # ══════════════════════════════════════════════════════════
+
+    BANK_MAX = 12     # maximum characters in bank
+    PARTY_MIN = 4     # minimum party size to start game
+    PARTY_MAX = 6     # maximum party size
+
+    def _handle_guild_click(self, mx, my):
+        """Handle clicks on the Adventurers Guild roster screen."""
+        sw, sh = SCREEN_W, SCREEN_H
+
+        # [Create Character] button
+        r_create = pygame.Rect(sw // 2 - 220, sh - 80, 200, 48)
+        if r_create.collidepoint(mx, my) and len(self.character_bank) < self.BANK_MAX:
+            self.go(S_ROLL)
+            return
+
+        # [Assemble Party] button — only if enough characters in bank
+        r_assemble = pygame.Rect(sw // 2 + 20, sh - 80, 200, 48)
+        if r_assemble.collidepoint(mx, my) and len(self.character_bank) >= self.PARTY_MIN:
+            self._assemble_sel = []
+            self.go(S_PARTY_ASSEMBLE)
+            return
+
+        # Character card clicks — select for deletion
+        card_w, card_h = 320, 90
+        cols = 2
+        start_x = sw // 2 - (cols * card_w + 20) // 2
+        start_y = 130
+        for i, c in enumerate(self.character_bank):
+            col = i % cols
+            row = i // cols
+            cx = start_x + col * (card_w + 20)
+            cy = start_y + row * (card_h + 12)
+            r = pygame.Rect(cx, cy, card_w, card_h)
+            # Delete button (small X on right of card)
+            r_del = pygame.Rect(cx + card_w - 28, cy + 4, 24, 24)
+            if r_del.collidepoint(mx, my):
+                self.character_bank.pop(i)
+                return
+
+    def draw_guild(self, mx, my):
+        """Draw the Adventurers Guild character bank screen."""
+        sw, sh = SCREEN_W, SCREEN_H
+        from ui.renderer import (draw_text, draw_panel, get_font,
+                                  GOLD, CREAM, GREY, PANEL_BG, PANEL_BORDER,
+                                  GREEN, ORANGE, RED, HIGHLIGHT, DIM_GOLD,
+                                  FIT_COLORS)
+        from ui.renderer import draw_class_badge
+
+        # Background header
+        draw_text(self.screen, "Adventurers Guild", sw // 2 - 200, 18, GOLD, 28, bold=True)
+        draw_text(self.screen, "Create characters and assemble your party before setting out.",
+                  sw // 2 - 340, 58, GREY, 14)
+        draw_text(self.screen,
+                  f"Bank: {len(self.character_bank)}/{self.BANK_MAX}  ·  "
+                  f"Need {self.PARTY_MIN}-{self.PARTY_MAX} to start",
+                  sw // 2 - 160, 82, HIGHLIGHT, 13)
+
+        # Character cards — 2 columns
+        card_w, card_h = 320, 90
+        cols = 2
+        start_x = sw // 2 - (cols * card_w + 20) // 2
+        start_y = 115
+
+        for i, c in enumerate(self.character_bank):
+            col = i % cols
+            row = i // cols
+            cx = start_x + col * (card_w + 20)
+            cy = start_y + row * (card_h + 12)
+            r = pygame.Rect(cx, cy, card_w, card_h)
+            is_hover = r.collidepoint(mx, my)
+
+            from core.classes import CLASSES
+            cls_data = CLASSES.get(c.class_name, {})
+            cls_col  = cls_data.get("color", (150, 150, 150))
+            is_hybrid = c.class_name not in ("Fighter","Mage","Cleric","Thief","Ranger","Monk")
+
+            bg  = (50, 42, 80) if is_hover else PANEL_BG
+            brd = cls_col if is_hover else (80, 70, 110)
+            draw_panel(self.screen, r, border_color=brd, bg_color=bg)
+
+            # Hybrid accent bar on top
+            if is_hybrid:
+                pygame.draw.rect(self.screen, (140, 100, 220), (cx, cy, card_w, 3))
+
+            # Class badge
+            draw_class_badge(self.screen, c.class_name, cx + 8, cy + card_h // 2 - 16, 12)
+
+            # Name + class
+            name_col = (220, 180, 255) if is_hybrid else CREAM
+            draw_text(self.screen, c.name[:18], cx + 44, cy + 8, name_col, 16, bold=True)
+            class_label = f"✦ {c.class_name}" if is_hybrid else c.class_name
+            draw_text(self.screen, class_label, cx + 44, cy + 28, cls_col, 12)
+
+            # Race + stats summary
+            draw_text(self.screen,
+                      f"{getattr(c,'race_name','Human')}  ·  "
+                      f"STR {c.stats.get('STR',0)} DEX {c.stats.get('DEX',0)} "
+                      f"CON {c.stats.get('CON',0)} INT {c.stats.get('INT',0)} "
+                      f"WIS {c.stats.get('WIS',0)} PIE {c.stats.get('PIE',0)}",
+                      cx + 44, cy + 46, GREY, 11)
+
+            # Stat total
+            total = sum(c.stats.values())
+            total_col = (100, 220, 140) if total >= 72 else (180, 160, 120) if total >= 60 else GREY
+            draw_text(self.screen, f"Total: {total}", cx + 44, cy + 64, total_col, 11)
+
+            # Delete button
+            r_del = pygame.Rect(cx + card_w - 28, cy + 4, 24, 24)
+            del_hover = r_del.collidepoint(mx, my)
+            pygame.draw.rect(self.screen, (160, 60, 60) if del_hover else (80, 40, 40), r_del, border_radius=4)
+            draw_text(self.screen, "✕", cx + card_w - 22, cy + 6, (220, 180, 180), 12, bold=True)
+
+        # Empty slots (visual)
+        shown = len(self.character_bank)
+        for i in range(shown, min(shown + 2, self.BANK_MAX)):
+            col = i % cols
+            row = i // cols
+            cx = start_x + col * (card_w + 20)
+            cy = start_y + row * (card_h + 12)
+            r = pygame.Rect(cx, cy, card_w, card_h)
+            draw_panel(self.screen, r, border_color=(50, 45, 70), bg_color=(18, 14, 30))
+            draw_text(self.screen, "— Empty slot —", cx + card_w // 2 - 55, cy + 34, (60, 55, 80), 13)
+
+        # Bottom buttons
+        can_create   = len(self.character_bank) < self.BANK_MAX
+        can_assemble = len(self.character_bank) >= self.PARTY_MIN
+
+        r_create = pygame.Rect(sw // 2 - 220, sh - 80, 200, 48)
+        cr_col = (60, 180, 100) if can_create else (50, 60, 50)
+        cr_brd = (100, 220, 140) if can_create else (60, 70, 60)
+        draw_panel(self.screen, r_create, bg_color=cr_col, border_color=cr_brd)
+        draw_text(self.screen, "Create Character",
+                  r_create.x + 18, r_create.y + 14, CREAM if can_create else GREY, 15, bold=True)
+
+        r_assemble = pygame.Rect(sw // 2 + 20, sh - 80, 200, 48)
+        as_col = (60, 100, 200) if can_assemble else (40, 50, 80)
+        as_brd = (100, 150, 255) if can_assemble else (50, 60, 100)
+        draw_panel(self.screen, r_assemble, bg_color=as_col, border_color=as_brd)
+        draw_text(self.screen, "Assemble Party",
+                  r_assemble.x + 22, r_assemble.y + 14, CREAM if can_assemble else GREY, 15, bold=True)
+
+        if not can_assemble:
+            needed = self.PARTY_MIN - len(self.character_bank)
+            draw_text(self.screen, f"Need {needed} more character{'s' if needed > 1 else ''}",
+                      r_assemble.x + 20, r_assemble.y + 34, (100, 100, 140), 11)
+
+    # ══════════════════════════════════════════════════════════
+    #  STAT ROLLING — 4d6 drop lowest, rerolls, stat swap
+    # ══════════════════════════════════════════════════════════
+
+    def _roll_4d6_drop_lowest(self):
+        """Roll 4d6, drop the lowest die, return sum."""
+        dice = [random.randint(1, 6) for _ in range(4)]
+        return sum(sorted(dice)[1:])
+
+    def _do_full_roll(self):
+        """Generate a complete stat block — 4d6 drop lowest for each of 6 stats."""
+        from core.classes import STAT_NAMES
+        self._roll_stats = {s: self._roll_4d6_drop_lowest() for s in STAT_NAMES}
+
+    def _handle_roll_click(self, mx, my):
+        """Handle clicks on the stat roll screen."""
+        sw, sh = SCREEN_W, SCREEN_H
+
+        # [Roll / Reroll] button
+        r_roll = pygame.Rect(sw // 2 - 280, sh - 80, 160, 48)
+        if r_roll.collidepoint(mx, my):
+            if not self._roll_stats:
+                # First roll
+                self._do_full_roll()
+                self._roll_rerolls = 3
+                self._roll_swap_mode = False
+                self._roll_swap_first = None
+            elif self._roll_rerolls > 0:
+                self._do_full_roll()
+                self._roll_rerolls -= 1
+                self._roll_swap_mode = False
+                self._roll_swap_first = None
+            return
+
+        # [Swap Stats] button — activate swap mode
+        r_swap = pygame.Rect(sw // 2 - 100, sh - 80, 200, 48)
+        if r_swap.collidepoint(mx, my) and self._roll_stats and not self._roll_swap_mode:
+            self._roll_swap_mode = True
+            self._roll_swap_first = None
+            return
+
+        # Cancel swap
+        r_cancel = pygame.Rect(sw // 2 + 120, sh - 80, 160, 48)
+        if r_cancel.collidepoint(mx, my) and self._roll_swap_mode:
+            self._roll_swap_mode = False
+            self._roll_swap_first = None
+            return
+
+        # Stat box clicks for swap
+        if self._roll_stats and self._roll_swap_mode:
+            from core.classes import STAT_NAMES
+            box_w, box_h = 160, 80
+            start_x = sw // 2 - (3 * box_w + 40) // 2
+            for idx, stat in enumerate(STAT_NAMES):
+                col = idx % 3
+                row = idx // 3
+                bx = start_x + col * (box_w + 20)
+                by = 200 + row * (box_h + 20)
+                r = pygame.Rect(bx, by, box_w, box_h)
+                if r.collidepoint(mx, my):
+                    if self._roll_swap_first is None:
+                        self._roll_swap_first = stat
+                    elif self._roll_swap_first != stat:
+                        # Execute swap
+                        a, b = self._roll_swap_first, stat
+                        self._roll_stats[a], self._roll_stats[b] = self._roll_stats[b], self._roll_stats[a]
+                        self._roll_swap_mode = False
+                        self._roll_swap_first = None
+                    return
+
+        # [Accept] — proceed to character creation with these stats
+        r_accept = pygame.Rect(sw // 2 + 130, sh - 80, 160, 48)
+        if r_accept.collidepoint(mx, my) and self._roll_stats:
+            # Pre-load stats into new character, then go to name → race → class
+            self.quick = True
+            self.new_char()
+            for stat, val in self._roll_stats.items():
+                self.current_char.stats[stat] = val
+            self.current_char._prerolled = True   # flag: don't overwrite with quick_roll
+            self._roll_stats = {}
+            self._roll_swap_mode = False
+            self._roll_swap_first = None
+            self.go(S_RACE)
+            return
+
+        # [Back] to guild
+        r_back = pygame.Rect(sw // 2 - 460, sh - 80, 160, 48)
+        if r_back.collidepoint(mx, my):
+            self._roll_stats = {}
+            self._roll_swap_mode = False
+            self._roll_swap_first = None
+            self.go(S_GUILD)
+
+    def draw_roll_screen(self, mx, my):
+        """Draw the stat rolling screen."""
+        sw, sh = SCREEN_W, SCREEN_H
+        from ui.renderer import (draw_text, draw_panel, get_font,
+                                  GOLD, CREAM, GREY, PANEL_BG, PANEL_BORDER,
+                                  GREEN, ORANGE, HIGHLIGHT, DIM_GOLD, RED)
+        from core.classes import STAT_NAMES, STAT_FULL_NAMES, get_class_fit
+
+        draw_text(self.screen, "Roll Your Character", sw // 2 - 200, 20, GOLD, 26, bold=True)
+        draw_text(self.screen, "4d6 drop lowest × 6 stats.  3 full rerolls.  1 stat swap.",
+                  sw // 2 - 310, 58, GREY, 14)
+
+        if not self._roll_stats:
+            # Pre-roll state — prompt
+            draw_text(self.screen, "Press Roll to generate your stats.",
+                      sw // 2 - 200, 250, HIGHLIGHT, 18)
+        else:
+            # Draw stat boxes
+            from core.classes import STAT_FULL_NAMES
+            box_w, box_h = 160, 80
+            start_x = sw // 2 - (3 * box_w + 40) // 2
+            for idx, stat in enumerate(STAT_NAMES):
+                val = self._roll_stats[stat]
+                col = idx % 3
+                row = idx // 3
+                bx = start_x + col * (box_w + 20)
+                by = 200 + row * (box_h + 20)
+                r = pygame.Rect(bx, by, box_w, box_h)
+
+                is_swap_first = self._roll_swap_mode and self._roll_swap_first == stat
+                is_swap_hover = self._roll_swap_mode and r.collidepoint(mx, my)
+
+                if is_swap_first:
+                    bg, brd = (60, 40, 100), (200, 140, 255)
+                elif is_swap_hover:
+                    bg, brd = (40, 55, 80), (120, 180, 255)
+                elif val >= 15:
+                    bg, brd = (30, 55, 35), (80, 200, 100)
+                elif val >= 13:
+                    bg, brd = (38, 42, 60), (100, 120, 180)
+                else:
+                    bg, brd = PANEL_BG, PANEL_BORDER
+                draw_panel(self.screen, r, bg_color=bg, border_color=brd)
+
+                draw_text(self.screen, stat, bx + 12, by + 8, GREY, 13)
+                draw_text(self.screen, STAT_FULL_NAMES.get(stat, stat), bx + 12, by + 24, (80, 75, 100), 10)
+                val_col = (100, 220, 140) if val >= 15 else (200, 190, 120) if val >= 13 else CREAM
+                draw_text(self.screen, str(val), bx + box_w - 40, by + 22, val_col, 28, bold=True)
+
+            # Stat total
+            total = sum(self._roll_stats.values())
+            total_col = (100, 220, 140) if total >= 78 else (200, 190, 100) if total >= 66 else GREY
+            draw_text(self.screen, f"Total: {total}", sw // 2 - 40, 395, total_col, 16, bold=True)
+
+            # Qualified classes
+            avail = get_class_fit(self._roll_stats)
+            hybrids = [cn for cn, fit, _ in avail if "Hybrid" in fit]
+            base    = [cn for cn, fit, _ in avail if "Hybrid" not in fit]
+            draw_text(self.screen, f"Available: {', '.join(base)}", sw // 2 - 340, 430, GREY, 13)
+            if hybrids:
+                draw_text(self.screen,
+                          f"✦ Hybrid classes unlocked: {', '.join(hybrids)}",
+                          sw // 2 - 340, 452, (220, 180, 255), 14, bold=True)
+
+            # Swap mode instructions
+            if self._roll_swap_mode:
+                msg = (f"Click a stat to swap with {self._roll_swap_first}..."
+                       if self._roll_swap_first else "Click the first stat to swap...")
+                draw_text(self.screen, msg, sw // 2 - 200, 490, (180, 140, 255), 14)
+
+        # Buttons
+        has_roll = bool(self._roll_stats)
+        rerolls  = self._roll_rerolls
+
+        # Back
+        r_back = pygame.Rect(sw // 2 - 460, sh - 80, 160, 48)
+        draw_panel(self.screen, r_back, bg_color=(50, 35, 50), border_color=(100, 70, 100))
+        draw_text(self.screen, "← Back", r_back.x + 38, r_back.y + 14, GREY, 15)
+
+        # Roll / Reroll
+        r_roll = pygame.Rect(sw // 2 - 280, sh - 80, 160, 48)
+        can_roll = not has_roll or rerolls > 0
+        roll_bg  = (60, 100, 60) if can_roll else (40, 50, 40)
+        draw_panel(self.screen, r_roll, bg_color=roll_bg, border_color=(80, 160, 80) if can_roll else PANEL_BORDER)
+        roll_lbl = "Roll!" if not has_roll else f"Reroll ({rerolls} left)"
+        draw_text(self.screen, roll_lbl, r_roll.x + 12, r_roll.y + 14, CREAM if can_roll else GREY, 15, bold=not has_roll)
+
+        # Swap
+        r_swap = pygame.Rect(sw // 2 - 100, sh - 80, 200, 48)
+        can_swap = has_roll and not self._roll_swap_mode
+        swap_bg  = (60, 60, 120) if can_swap else (40, 40, 70)
+        draw_panel(self.screen, r_swap, bg_color=swap_bg, border_color=(100, 100, 200) if can_swap else PANEL_BORDER)
+        swap_lbl = "Cancel Swap" if self._roll_swap_mode else "Swap Two Stats"
+        draw_text(self.screen, swap_lbl, r_swap.x + 20, r_swap.y + 14, CREAM if can_swap else GREY, 15)
+
+        # Accept
+        r_accept = pygame.Rect(sw // 2 + 130, sh - 80, 160, 48)
+        can_acc = has_roll and not self._roll_swap_mode
+        acc_bg  = (100, 60, 160) if can_acc else (50, 40, 70)
+        draw_panel(self.screen, r_accept, bg_color=acc_bg, border_color=(160, 100, 255) if can_acc else PANEL_BORDER)
+        draw_text(self.screen, "Accept →", r_accept.x + 20, r_accept.y + 14, CREAM if can_acc else GREY, 15, bold=can_acc)
+
+    # ══════════════════════════════════════════════════════════
+    #  PARTY ASSEMBLY — Pick 4-6 characters from the bank
+    # ══════════════════════════════════════════════════════════
+
+    def _handle_assemble_click(self, mx, my):
+        """Handle clicks on the party assembly screen."""
+        sw, sh = SCREEN_W, SCREEN_H
+
+        card_w, card_h = 320, 90
+        cols = 2
+        start_x = sw // 2 - (cols * card_w + 20) // 2
+        start_y = 120
+
+        for i, c in enumerate(self.character_bank):
+            col = i % cols
+            row = i // cols
+            cx = start_x + col * (card_w + 20)
+            cy = start_y + row * (card_h + 12)
+            r = pygame.Rect(cx, cy, card_w, card_h)
+            if r.collidepoint(mx, my):
+                if i in self._assemble_sel:
+                    self._assemble_sel.remove(i)
+                elif len(self._assemble_sel) < self.PARTY_MAX:
+                    self._assemble_sel.append(i)
+                return
+
+        # [Begin Adventure] button
+        r_begin = pygame.Rect(sw // 2 - 120, sh - 80, 240, 48)
+        if r_begin.collidepoint(mx, my) and len(self._assemble_sel) >= self.PARTY_MIN:
+            # Build party from selection, set up game
+            self.party = [self.character_bank[i] for i in self._assemble_sel]
+            self.char_index = len(self.party)
+            self._gen_inn_recruits()
+            self._gen_tavern_recruits()
+            self._start_opening()
+            return
+
+        # [Back] to guild
+        r_back = pygame.Rect(sw // 2 - 370, sh - 80, 140, 48)
+        if r_back.collidepoint(mx, my):
+            self._assemble_sel = []
+            self.go(S_GUILD)
+
+    def draw_party_assemble(self, mx, my):
+        """Draw the party assembly screen — pick 4-6 from bank."""
+        sw, sh = SCREEN_W, SCREEN_H
+        from ui.renderer import (draw_text, draw_panel, get_font,
+                                  GOLD, CREAM, GREY, PANEL_BG, PANEL_BORDER,
+                                  GREEN, ORANGE, HIGHLIGHT, DIM_GOLD)
+        from ui.renderer import draw_class_badge
+        from core.classes import CLASSES
+
+        sel_count = len(self._assemble_sel)
+        draw_text(self.screen, "Assemble Your Party", sw // 2 - 220, 18, GOLD, 26, bold=True)
+        draw_text(self.screen,
+                  f"Select {self.PARTY_MIN}-{self.PARTY_MAX} adventurers.  "
+                  f"Selected: {sel_count}/{self.PARTY_MAX}",
+                  sw // 2 - 260, 56, HIGHLIGHT if sel_count >= self.PARTY_MIN else GREY, 14)
+
+        card_w, card_h = 320, 90
+        cols = 2
+        start_x = sw // 2 - (cols * card_w + 20) // 2
+        start_y = 90
+
+        for i, c in enumerate(self.character_bank):
+            col = i % cols
+            row = i // cols
+            cx = start_x + col * (card_w + 20)
+            cy = start_y + row * (card_h + 12)
+            r = pygame.Rect(cx, cy, card_w, card_h)
+
+            is_sel   = i in self._assemble_sel
+            is_hover = r.collidepoint(mx, my)
+            is_hybrid = c.class_name not in ("Fighter","Mage","Cleric","Thief","Ranger","Monk")
+            cls_data = CLASSES.get(c.class_name, {})
+            cls_col  = cls_data.get("color", (150, 150, 150))
+
+            if is_sel:
+                bg  = (35, 60, 40)
+                brd = (80, 200, 100)
+            elif is_hover:
+                bg, brd = (50, 42, 80), cls_col
+            else:
+                bg, brd = PANEL_BG, (60, 55, 85)
+            draw_panel(self.screen, r, bg_color=bg, border_color=brd)
+
+            if is_hybrid:
+                pygame.draw.rect(self.screen, (140, 100, 220), (cx, cy, card_w, 3))
+
+            draw_class_badge(self.screen, c.class_name, cx + 8, cy + card_h // 2 - 16, 12)
+
+            name_col = (220, 180, 255) if is_hybrid else CREAM
+            label = f"✦ {c.class_name}" if is_hybrid else c.class_name
+            draw_text(self.screen, c.name[:18], cx + 44, cy + 8, name_col, 15, bold=True)
+            draw_text(self.screen, label, cx + 44, cy + 26, cls_col, 12)
+            draw_text(self.screen,
+                      f"{getattr(c,'race_name','Human')}  STR {c.stats.get('STR',0)} "
+                      f"DEX {c.stats.get('DEX',0)} CON {c.stats.get('CON',0)} "
+                      f"INT {c.stats.get('INT',0)} WIS {c.stats.get('WIS',0)} "
+                      f"PIE {c.stats.get('PIE',0)}",
+                      cx + 44, cy + 44, GREY, 11)
+
+            if is_sel:
+                draw_text(self.screen, "✓ Selected", cx + card_w - 95, cy + 32, (100, 220, 120), 13, bold=True)
+
+        # Buttons
+        r_back = pygame.Rect(sw // 2 - 370, sh - 80, 140, 48)
+        draw_panel(self.screen, r_back, bg_color=(50, 35, 50), border_color=(100, 70, 100))
+        draw_text(self.screen, "← Back", r_back.x + 28, r_back.y + 14, GREY, 15)
+
+        can_start = sel_count >= self.PARTY_MIN
+        r_begin = pygame.Rect(sw // 2 - 120, sh - 80, 240, 48)
+        bg_b = (60, 140, 60) if can_start else (35, 55, 35)
+        brd_b = (100, 220, 100) if can_start else PANEL_BORDER
+        draw_panel(self.screen, r_begin, bg_color=bg_b, border_color=brd_b)
+        draw_text(self.screen, "Begin Adventure →",
+                  r_begin.x + 28, r_begin.y + 14, CREAM if can_start else GREY, 16, bold=can_start)
+        if not can_start:
+            draw_text(self.screen, f"Select {self.PARTY_MIN - sel_count} more",
+                      r_begin.x + 68, r_begin.y + 34, (80, 110, 80), 11)
 
     # ── Choose Mode ───────────────────────────────────────────
 

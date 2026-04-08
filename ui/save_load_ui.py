@@ -165,12 +165,13 @@ class SaveLoadUI:
     result: None (open) | "cancelled" | ("saved", slot) | ("loaded", party, world_state)
     """
 
-    def __init__(self, mode: str, party=None, world_state=None, dungeon_cache=None, dungeon_state=None):
+    def __init__(self, mode: str, party=None, world_state=None, dungeon_cache=None, dungeon_state=None, character_bank=None):
         self.mode         = mode          # "save" or "load"
         self.party        = party         # current live party (for saving)
         self.world_state  = world_state
         self.dungeon_cache = dungeon_cache
         self.dungeon_state = dungeon_state  # active dungeon state (if saving inside dungeon)
+        self.character_bank = character_bank or []
         self.finished     = False
         self.result       = None
 
@@ -473,6 +474,7 @@ class SaveLoadUI:
                 slot_name=slot,
                 dungeon_cache=getattr(self, "dungeon_cache", None),
                 dungeon_state=getattr(self, "dungeon_state", None),
+                character_bank=self.character_bank,
             )
         except Exception as _e:
             ok  = False
@@ -486,9 +488,9 @@ class SaveLoadUI:
 
     def _do_load(self, idx: int):
         slot = SLOT_NAMES[idx] if idx < len(SLOT_NAMES) else "inn_autosave"
-        ok, party, world_state, msg, dungeon_explored, dungeon_position = load_game(slot)
+        ok, party, world_state, msg, dungeon_explored, dungeon_position, character_bank = load_game(slot)
         if ok:
-            self.result   = ("loaded", party, world_state, dungeon_explored, dungeon_position)
+            self.result   = ("loaded", party, world_state, dungeon_explored, dungeon_position, character_bank)
             self.finished = True
         else:
             self._error_msg   = msg
