@@ -299,7 +299,12 @@ def auto_advance_quests(party=None):
 
 
 def _distribute_quest_rewards(qid, party):
-    """Hand out gold + XP + unique items for a completed quest."""
+    """Hand out gold + XP + unique items for a completed quest.
+
+    XP: full amount to every party member (quest XP is a bonus, not split).
+    Gold: split evenly across party (gold is pooled wealth).
+    Items: unique/magic items via get_unique_item(); consumable dicts given to first member.
+    """
     from data.story_data import QUESTS
     q = QUESTS.get(qid, {})
     gold  = q.get("reward_gold", 0)
@@ -307,35 +312,48 @@ def _distribute_quest_rewards(qid, party):
     items = q.get("reward_items", [])
     if not party:
         return
-    gold_each = gold // len(party) if gold else 0
-    xp_each   = xp   // len(party) if xp   else 0
-    for c in party:
-        if gold_each:
-            if hasattr(c, "add_gold"):
-                c.add_gold(gold_each)
-            else:
-                c.gold += gold_each
-        if xp_each:
-            # Use add_xp so racial/tier multipliers apply correctly
+
+    # XP: full amount to each party member
+    if xp:
+        for c in party:
             if hasattr(c, "add_xp"):
-                c.add_xp(xp_each)
+                c.add_xp(xp)
             else:
-                c.xp += xp_each
-    # Give unique items to the first party member with inventory space
+                c.xp = getattr(c, "xp", 0) + xp
+
+    # Gold: split evenly
+    if gold:
+        gold_each = gold // len(party)
+        remainder = gold - gold_each * len(party)
+        for i, c in enumerate(party):
+            amount = gold_each + (remainder if i == 0 else 0)
+            if hasattr(c, "add_gold"):
+                c.add_gold(amount)
+            else:
+                c.gold = getattr(c, "gold", 0) + amount
+
+    # Items: magic items by id, inline consumable dicts by dict content
     if items:
-        try:
-            from data.magic_items import get_unique_item
-            for reward in items:
-                item_id = reward.get("id") if isinstance(reward, dict) else None
-                if not item_id:
-                    continue
-                item = get_unique_item(item_id, party)
-                if item is None:
-                    continue  # party already has it
-                for c in party:
-                    if hasattr(c, "add_item"):
-                        c.add_item(item)
-                        break  # give to first party member only
-                        break
-        except Exception:
-            pass
+        recipient = next((c for c in party
+                          if getattr(c, "resources", {}).get("HP", 1) > 0),
+                         party[0])
+        for reward in items:
+            if not isinstance(reward, dict):
+                continue
+            item_id = reward.get("id")
+            if item_id:
+                # Named magic item — look up full definition
+                try:
+                    from data.magic_items import get_unique_item
+                    item = get_unique_item(item_id, party)
+                    if item is None:
+                        continue  # party already has it
+                except Exception:
+                    item = dict(reward)
+            else:
+                # Inline consumable/material — use as-is
+                item = dict(reward)
+            if hasattr(recipient, "add_item"):
+                recipient.add_item(item)
+            elif hasattr(recipient, "inventory"):
+                recipient.inventory.append(item)

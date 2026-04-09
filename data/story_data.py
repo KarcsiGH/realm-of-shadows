@@ -50,7 +50,7 @@ QUESTS = {
         "giver_npc": "Elder Thom",
         "turn_in_npc": "Maren",
         "reward_gold": 0,
-        "reward_xp": 50,
+        "reward_xp": 200,
         "reward_items": [],
         "objectives": [
             {
@@ -67,9 +67,9 @@ QUESTS = {
         "act": 1,
         "giver_npc": "Maren",
         "turn_in_npc": "Maren",
-        "reward_gold": 150,
-        "reward_xp": 200,
-        "reward_items": [],
+        "reward_gold": 200,
+        "reward_xp": 750,
+        "reward_items": [{"name": "Healing Potion", "type": "consumable", "subtype": "potion", "heal_amount": 50, "description": "Restores 50 HP to one character.", "buy_price": 25, "sell_price": 10, "identified": True}],
         "objectives": [
             {
                 "text": "Enter the Goblin Warren",
@@ -89,8 +89,8 @@ QUESTS = {
         "act": 1,
         "giver_npc": "Maren",
         "turn_in_npc": "Maren",
-        "reward_gold": 200,
-        "reward_xp": 300,
+        "reward_gold": 275,
+        "reward_xp": 950,
         "reward_items": [],
         "objectives": [
             {
@@ -115,9 +115,9 @@ QUESTS = {
         "act": 1,
         "giver_npc": "Elder Theron",
         "turn_in_npc": "Maren",
-        "reward_gold": 120,
-        "reward_xp": 180,
-        "reward_items": [],
+        "reward_gold": 175,
+        "reward_xp": 650,
+        "reward_items": [{"name": "Antidote", "type": "consumable", "subtype": "potion", "cures": ["Poison"], "description": "Cures poison.", "buy_price": 15, "sell_price": 6, "identified": True}, {"name": "Antidote", "type": "consumable", "subtype": "potion", "cures": ["Poison"], "description": "Cures poison.", "buy_price": 15, "sell_price": 6, "identified": True}],
         "objectives": [
             {
                 "text": "Enter the Spider's Nest",
@@ -137,8 +137,8 @@ QUESTS = {
         "act": 1,
         "giver_npc": "Captain Aldric",
         "turn_in_npc": "Captain Aldric",
-        "reward_gold": 80,
-        "reward_xp": 60,
+        "reward_gold": 120,
+        "reward_xp": 250,
         "reward_items": [],
         "objectives": [
             {
@@ -155,8 +155,8 @@ QUESTS = {
         "act": 1,
         "giver_npc": "Captain Aldric",
         "turn_in_npc": "Captain Aldric",
-        "reward_gold": 100,
-        "reward_xp": 120,
+        "reward_gold": 160,
+        "reward_xp": 380,
         "reward_items": [],
         "objectives": [
             {
@@ -174,9 +174,9 @@ QUESTS = {
         "act": 2,
         "giver_npc": "Maren",
         "turn_in_npc": "Maren",
-        "reward_gold": 250,
-        "reward_xp": 400,
-        "reward_items": [],
+        "reward_gold": 375,
+        "reward_xp": 1200,
+        "reward_items": [{"name": "Healing Potion", "type": "consumable", "subtype": "potion", "heal_amount": 50, "description": "Restores 50 HP to one character.", "buy_price": 25, "sell_price": 10, "identified": True}],
         "objectives": [
             {
                 "text": "Reach the Ruins of Ashenmoor",
@@ -196,8 +196,8 @@ QUESTS = {
         "act": 2,
         "giver_npc": "Tide Priest Oran",
         "turn_in_npc": "Tide Priest Oran",
-        "reward_gold": 300,
-        "reward_xp": 500,
+        "reward_gold": 425,
+        "reward_xp": 1450,
         "reward_items": [],
         "objectives": [
             {
@@ -223,8 +223,8 @@ QUESTS = {
         "giver_npc": "Tide Priest Oran",
         "turn_in_npc": None,
         "auto_complete": True,
-        "reward_gold": 350,
-        "reward_xp": 550,
+        "reward_gold": 475,
+        "reward_xp": 1650,
         "reward_items": [],
         "objectives": [
             {
@@ -253,8 +253,8 @@ QUESTS = {
         "act": 2,
         "giver_npc": "Archmage Solen",
         "turn_in_npc": "Governor Aldric",
-        "reward_gold": 0,
-        "reward_xp": 200,
+        "reward_gold": 300,
+        "reward_xp": 600,
         "reward_items": [],
         "objectives": [
             {
@@ -276,7 +276,7 @@ QUESTS = {
         "giver_npc": "Court Mage Sira",
         "turn_in_npc": "Maren",
         "reward_gold": 0,
-        "reward_xp": 150,
+        "reward_xp": 500,
         "reward_items": [],
         "objectives": [
             {
@@ -295,8 +295,8 @@ QUESTS = {
         "giver_npc": None,
         "turn_in_npc": None,
         "auto_complete": True,
-        "reward_gold": 180,
-        "reward_xp": 350,
+        "reward_gold": 525,
+        "reward_xp": 1800,
         "reward_items": [],
         "objectives": [
             {
@@ -313,8 +313,8 @@ QUESTS = {
         "act": 2,
         "giver_npc": "Guildmaster Oren",
         "turn_in_npc": "Guildmaster Oren",
-        "reward_gold": 200,
-        "reward_xp": 250,
+        "reward_gold": 300,
+        "reward_xp": 600,
         "reward_items": [],
         "objectives": [
             {
@@ -331,8 +331,8 @@ QUESTS = {
         "act": 2,
         "giver_npc": "Archmage Solen",
         "turn_in_npc": "Archmage Solen",
-        "reward_gold": 400,
-        "reward_xp": 350,
+        "reward_gold": 500,
+        "reward_xp": 850,
         "reward_items": [],
         "objectives": [
             {
@@ -360,8 +360,8 @@ QUESTS = {
         "giver_npc": "Guild Commander Varek",
         "turn_in_npc": None,
         "auto_complete": True,
-        "reward_gold": 250,
-        "reward_xp": 500,
+        "reward_gold": 650,
+        "reward_xp": 2200,
         "reward_items": [],
         "objectives": [
             {
@@ -381,8 +381,8 @@ QUESTS = {
         "giver_npc": "Guild Commander Varek",
         "turn_in_npc": None,
         "auto_complete": True,
-        "reward_gold": 500,
-        "reward_xp": 800,
+        "reward_gold": 750,
+        "reward_xp": 2800,
         "reward_items": [{"id": "sirenne_buckler", "name": "Sentinel's Vow"}],
         "objectives": [
             {
@@ -402,8 +402,8 @@ QUESTS = {
         "giver_npc": "Guild Commander Varek",
         "turn_in_npc": None,
         "auto_complete": True,
-        "reward_gold": 500,
-        "reward_xp": 800,
+        "reward_gold": 850,
+        "reward_xp": 3300,
         "reward_items": [{"id": "keeper_pendant", "name": "The Nameless Keeper's Seal"}],
         "objectives": [
             {
@@ -422,8 +422,8 @@ QUESTS = {
         "giver_npc": None,
         "turn_in_npc": None,
         "auto_complete": True,
-        "reward_gold": 1000,
-        "reward_xp": 1500,
+        "reward_gold": 1500,
+        "reward_xp": 5000,
         "reward_items": [{"id": "warden_seal", "name": "The Last Warden's Seal"}],
         "objectives": [
             {

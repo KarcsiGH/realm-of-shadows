@@ -691,7 +691,7 @@ try:
     from core.story_flags import _distribute_quest_rewards
     fc = [_FC(), _FC()]
     _distribute_quest_rewards("main_hearthstone_2", fc)
-    expected_gold = 300 // 2
+    expected_gold = 425 // 2 + (425 % 2)  # remainder goes to first member
     check("quest rewards distributed correctly", fc[0].gold == 100 + expected_gold)
 
     # Quest log UI integrity
