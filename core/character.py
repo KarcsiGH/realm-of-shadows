@@ -52,24 +52,31 @@ class Character:
             self.stats[stat] += random.randint(0, 1)
 
     def quick_roll(self, class_name):
-        """Skip life path: use class starting stats + small random bonus + racial mods."""
+        """Skip life path: use class starting stats + small random bonus + racial mods.
+        Always applies racial stat modifiers — this is the canonical path for quick and inn recruits."""
         self.class_name = class_name
         self.quick_rolled = True
         start = CLASSES[class_name]["starting_stats"]
         for stat in STAT_NAMES:
             self.stats[stat] = start[stat] + random.randint(0, 2)
-        # Apply racial stat modifiers
         from core.races import apply_racial_stats
         apply_racial_stats(self.stats, self.race_name)
         self._finalize()
 
     def finalize_with_class(self, class_name):
-        """After life path is complete, assign class and calculate everything."""
+        """After life path or pre-rolled stats are complete, assign class and calculate everything.
+
+        Racial stat handling:
+        - Life path (_race_applied=True): racial already applied in _after_race_picked. Skip.
+        - Roll screen (_prerolled=True): rolled raw stats, race not yet applied. Apply now.
+        - Any other direct call (e.g. transition): apply racial.
+        """
         self.class_name = class_name
         self.apply_random_seasoning()
-        # Apply racial stat modifiers
-        from core.races import apply_racial_stats
-        apply_racial_stats(self.stats, self.race_name)
+        # Life path already applied racial — don't do it again
+        if not getattr(self, "_race_applied", False):
+            from core.races import apply_racial_stats
+            apply_racial_stats(self.stats, self.race_name)
         self._finalize()
 
     def _finalize(self):

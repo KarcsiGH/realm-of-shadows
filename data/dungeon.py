@@ -1588,6 +1588,7 @@ class DungeonState:
         self.party_y = ny
         self._update_fog()
         self._check_trap_detection(nx, ny)
+        self._check_fading_sense(nx, ny)   # Fading-Touched sense shadow threats
 
         # Surprise check when stepping through a door
         if tile["type"] == DT_DOOR:
@@ -1882,6 +1883,75 @@ class DungeonState:
                     if tile["type"] == DT_SECRET_DOOR and not tile.get("secret_found"):
                         if random.randint(1, 100) <= min(60, secret_chance):
                             tile["secret_found"] = True
+
+    def _check_fading_sense(self, px, py):
+        """Fading-Touched characters can sense shadow corruption nearby.
+        Returns a sense message string if something is detected, or None.
+        The message is stored on self._fading_sense_msg for the dungeon UI to display.
+
+        Detects within a 4-tile radius:
+        - Shadow/Fading-tagged enemy encounters (warns before the fight)
+        - Boss encounter tiles (vague dread, not specific)
+        - Warden Anchors (pulled toward the wards, not repelled)
+        """
+        has_fading_touched = any(
+            getattr(c, "race_name", "") == "Fading-Touched"
+            for c in self.party
+        )
+        if not has_fading_touched:
+            self._fading_sense_msg = None
+            return
+
+        floor = self.floors[self.current_floor]
+        tiles = floor["tiles"]
+        w, h  = floor["width"], floor["height"]
+
+        sense_radius = 4
+        shadow_near  = False
+        boss_near    = False
+        anchor_near  = False
+
+        for dy in range(-sense_radius, sense_radius + 1):
+            for dx in range(-sense_radius, sense_radius + 1):
+                tx, ty = px + dx, py + dy
+                if not (0 <= tx < w and 0 <= ty < h):
+                    continue
+                tile = tiles[ty][tx]
+                ev   = tile.get("event", {}) or {}
+
+                if tile["type"] == DT_ENCOUNTER:
+                    enc_key = ev.get("encounter_key", "")
+                    # Shadow/Fading encounters set fading-tagged encounters
+                    if any(tag in enc_key.lower() for tag in
+                           ("shadow", "shade", "fading", "wraith", "warden", "void")):
+                        shadow_near = True
+                    elif "boss" in enc_key.lower() or ev.get("is_boss"):
+                        boss_near = True
+
+                if tile["type"] == DT_INTERACTABLE:
+                    if ev.get("subtype") == "warden_anchor":
+                        anchor_near = True
+
+        # Build a sense message — only one at a time, priority: boss > shadow > anchor
+        if boss_near and not getattr(self, "_fading_sense_boss_warned", False):
+            self._fading_sense_msg = (
+                "Something vast and corrupted pulses nearby. "
+                "Your Fading-Touched blood recoils.",
+                (180, 80, 200)
+            )
+            self._fading_sense_boss_warned = True
+        elif shadow_near:
+            self._fading_sense_msg = (
+                "Shadow stirs ahead — your blood recognises it.",
+                (140, 100, 200)
+            )
+        elif anchor_near:
+            self._fading_sense_msg = (
+                "A Warden ward-rune hums somewhere nearby. You feel it before you see it.",
+                (120, 160, 220)
+            )
+        else:
+            self._fading_sense_msg = None
 
     def disarm_trap(self, x, y):
         """Attempt to disarm a detected trap. Returns success bool."""

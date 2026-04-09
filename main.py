@@ -1547,13 +1547,19 @@ class Game:
     def _after_race_picked(self):
         """Called after race is selected — proceed to lifepath or class select."""
         self.human_stat_pick = None
-        # Apply racial stat bonuses now (before showing class choices so gates are accurate)
-        from core.races import apply_racial_stats
-        apply_racial_stats(self.current_char.stats, self.current_char.race_name)
         if self.quick:
+            # Quick roll: class selection comes next, which will call quick_roll().
+            # quick_roll() applies racial stats to the class starting stats.
+            # Don't apply racial here — it would be to the wrong (pre-class) stat block.
             self.setup_class_choices()
             self.go(S_CLASSSELECT)
         else:
+            # Life Path: life events build up stats now, then finalize_with_class() later.
+            # Apply racial here so life-path stat choices show accurate values,
+            # and set the guard so finalize_with_class() doesn't double-apply.
+            from core.races import apply_racial_stats
+            apply_racial_stats(self.current_char.stats, self.current_char.race_name)
+            self.current_char._race_applied = True
             self.slot = 1
             self.history = []
             self.setup_slot_choices()
@@ -4619,6 +4625,13 @@ class Game:
             for msg in step_msgs[:3]:  # limit to 3 messages
                 self.dungeon_ui.show_event(msg, (120, 200, 50))  # green for poison
             self.dungeon_state._last_step_messages = []
+
+        # Fading-Touched racial sense — show at most once per location
+        sense = getattr(self.dungeon_state, '_fading_sense_msg', None)
+        if sense:
+            text, colour = sense
+            self.dungeon_ui.show_event(f"👁 {text}", colour)
+            self.dungeon_state._fading_sense_msg = None  # clear so it doesn't repeat
 
         if event is None:
             return
