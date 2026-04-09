@@ -48,6 +48,11 @@ _CHAR_FILES = {
     "High Priest":   "High_Priest",
     "Shadow Master": "Shadow_Master",
     "Templar":       "Templar",
+    # Hybrids without dedicated sprites — best-fit fallbacks until art is made
+    "Duskblade":     "Thief",        # shadow melee → Thief silhouette
+    "Druid":         "Ranger",       # nature class → Ranger silhouette
+    "Mystic":        "Monk",         # Ki/arcane martial → Monk silhouette
+    "Shaman":        "Warden",       # spiritual nature → Warden silhouette
 }
 
 # Maps template_key → PNG filename (without .png)

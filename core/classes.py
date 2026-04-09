@@ -373,23 +373,24 @@ CLASS_ORDER = [
 # Hybrids: two stats, higher thresholds.
 # If a character meets all requirements, the class is available.
 CLASS_STAT_REQUIREMENTS = {
-    # Base classes
+    # Base classes — single stat, low threshold (~95%+ rolls qualify)
     "Fighter":    {"STR": 11},
     "Mage":       {"INT": 11},
     "Cleric":     {"PIE": 11},
     "Thief":      {"DEX": 11},
     "Ranger":     {"DEX": 10, "WIS": 10},
     "Monk":       {"CON": 11, "WIS": 10},
-    # Hybrids — two stats, genuinely high thresholds
-    "Paladin":    {"STR": 13, "PIE": 14},
-    "Spellblade": {"STR": 13, "INT": 14},
-    "Duskblade":  {"STR": 12, "DEX": 15},
-    "Witch":      {"INT": 13, "PIE": 13},
-    "Necromancer":{"INT": 15, "DEX": 12},
-    "Druid":      {"INT": 12, "WIS": 15},
-    "Mystic":     {"INT": 13, "WIS": 12, "CON": 12},
-    "Assassin":   {"DEX": 16, "WIS": 11},
-    "Shaman":     {"WIS": 15, "CON": 13},
+    # Hybrids — ~15% any-hybrid per roll, ~48% across 4 attempts (3 rerolls)
+    # Each individually: 1-3% chance. Rolling one is genuinely memorable.
+    "Paladin":    {"STR": 15, "PIE": 16},   # ~3%  — faith and might at their peak
+    "Spellblade": {"STR": 15, "INT": 16},   # ~3%  — warrior-mage demands both peaks
+    "Duskblade":  {"STR": 14, "DEX": 17},   # ~2%  — shadow warrior: speed is everything
+    "Witch":      {"INT": 15, "PIE": 16},   # ~3%  — dark dual-caster, rare balance
+    "Necromancer":{"INT": 17, "DEX": 14},   # ~2%  — death magic demands exceptional INT
+    "Druid":      {"INT": 14, "WIS": 17},   # ~2%  — WIS 17 is a rare gift
+    "Mystic":     {"INT": 15, "WIS": 15, "CON": 14},  # ~2% — three-stat gate
+    "Assassin":   {"DEX": 18, "WIS": 13},   # ~1%  — the Ninja: DEX 18 is legendary
+    "Shaman":     {"WIS": 17, "CON": 15},   # ~1%  — spirit-walker's demanding call
 }
 
 def class_qualifies(stats: dict, class_name: str) -> bool:

@@ -240,15 +240,15 @@ CLASS_TRANSITIONS = {
     "Ranger":     {"stat_req": {"DEX": 10, "WIS": 10},          "description": "Ranger. Ranged combat and nature."},
     "Monk":       {"stat_req": {"CON": 11, "WIS": 10},          "description": "Monk. Ki-fuelled physical mastery."},
     # Hybrid classes
-    "Paladin":    {"stat_req": {"STR": 13, "PIE": 14},          "description": "Divine warrior. Tanks, heals, smites."},
-    "Spellblade": {"stat_req": {"STR": 13, "INT": 14},          "description": "Arcane melee. Scales STR and INT both."},
-    "Duskblade":  {"stat_req": {"STR": 12, "DEX": 15},          "description": "Shadow warrior. Channels the Fading."},
-    "Witch":      {"stat_req": {"INT": 13, "PIE": 13},          "description": "Curse weaver. Attrition specialist."},
-    "Necromancer":{"stat_req": {"INT": 15, "DEX": 12},          "description": "Death as resource. Raise fallen allies."},
-    "Druid":      {"stat_req": {"INT": 12, "WIS": 15},          "description": "Nature control. Wildshape combat."},
-    "Mystic":     {"stat_req": {"INT": 13, "WIS": 12, "CON": 12},"description": "Arcane Ki fusion. Dual resource loop."},
-    "Assassin":   {"stat_req": {"DEX": 16, "WIS": 11},          "description": "Perfect killer. Setup → instant kill."},
-    "Shaman":     {"stat_req": {"WIS": 15, "CON": 13},          "description": "Ancestral spirits. Bridge of living and dead."},
+    "Paladin":    {"stat_req": {"STR": 15, "PIE": 16},          "description": "Divine warrior. Tanks, heals, smites."},
+    "Spellblade": {"stat_req": {"STR": 15, "INT": 16},          "description": "Arcane melee. Scales STR and INT both."},
+    "Duskblade":  {"stat_req": {"STR": 14, "DEX": 17},          "description": "Shadow warrior. Channels the Fading."},
+    "Witch":      {"stat_req": {"INT": 15, "PIE": 16},          "description": "Curse weaver. Attrition specialist."},
+    "Necromancer":{"stat_req": {"INT": 17, "DEX": 14},          "description": "Death as resource. Raise fallen allies."},
+    "Druid":      {"stat_req": {"INT": 14, "WIS": 17},          "description": "Nature control. Wildshape combat."},
+    "Mystic":     {"stat_req": {"INT": 15, "WIS": 15, "CON": 14},"description": "Arcane Ki fusion. Dual resource loop."},
+    "Assassin":   {"stat_req": {"DEX": 18, "WIS": 13},          "description": "Perfect killer. Setup → instant kill."},
+    "Shaman":     {"stat_req": {"WIS": 17, "CON": 15},          "description": "Ancestral spirits. Bridge of living and dead."},
 }
 
 

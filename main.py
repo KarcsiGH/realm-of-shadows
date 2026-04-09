@@ -2205,18 +2205,19 @@ class Game:
             class_label = f"✦ {c.class_name}" if is_hybrid else c.class_name
             draw_text(self.screen, class_label, cx + 44, cy + 28, cls_col, 12)
 
-            # Race + stats summary
-            draw_text(self.screen,
-                      f"{getattr(c,'race_name','Human')}  ·  "
-                      f"STR {c.stats.get('STR',0)} DEX {c.stats.get('DEX',0)} "
-                      f"CON {c.stats.get('CON',0)} INT {c.stats.get('INT',0)} "
-                      f"WIS {c.stats.get('WIS',0)} PIE {c.stats.get('PIE',0)}",
-                      cx + 44, cy + 46, GREY, 11)
+            # Race on its own line — keeps it short
+            race = getattr(c, 'race_name', 'Human')
+            draw_text(self.screen, race, cx + 44, cy + 44, GREY, 11)
 
-            # Stat total
-            total = sum(c.stats.values())
-            total_col = (100, 220, 140) if total >= 72 else (180, 160, 120) if total >= 60 else GREY
-            draw_text(self.screen, f"Total: {total}", cx + 44, cy + 64, total_col, 11)
+            # Stats in compact 3+3 format — fits within card width
+            s = c.stats
+            stat_line1 = f"STR {s.get('STR',0):>2}  DEX {s.get('DEX',0):>2}  CON {s.get('CON',0):>2}"
+            stat_line2 = f"INT {s.get('INT',0):>2}  WIS {s.get('WIS',0):>2}  PIE {s.get('PIE',0):>2}"
+            draw_text(self.screen, stat_line1, cx + 44, cy + 57, GREY, 10, max_width=card_w - 52)
+            total = sum(s.values())
+            total_col = (100, 220, 140) if total >= 78 else (180, 160, 120) if total >= 66 else GREY
+            draw_text(self.screen, f"Σ{total}", cx + card_w - 44, cy + 57, total_col, 10, bold=True)
+            draw_text(self.screen, stat_line2, cx + 44, cy + 69, GREY, 10, max_width=card_w - 52)
 
             # Delete button
             r_del = pygame.Rect(cx + card_w - 28, cy + 4, 24, 24)
@@ -2354,7 +2355,7 @@ class Game:
             self._roll_stats = {}
             self._roll_swap_mode = False
             self._roll_swap_first = None
-            self.go(S_RACE)
+            self.go(S_NAME)   # name first, then race, then class
             return
 
         # [Back] to guild
@@ -2562,12 +2563,14 @@ class Game:
             label = f"✦ {c.class_name}" if is_hybrid else c.class_name
             draw_text(self.screen, c.name[:18], cx + 44, cy + 8, name_col, 15, bold=True)
             draw_text(self.screen, label, cx + 44, cy + 26, cls_col, 12)
-            draw_text(self.screen,
-                      f"{getattr(c,'race_name','Human')}  STR {c.stats.get('STR',0)} "
-                      f"DEX {c.stats.get('DEX',0)} CON {c.stats.get('CON',0)} "
-                      f"INT {c.stats.get('INT',0)} WIS {c.stats.get('WIS',0)} "
-                      f"PIE {c.stats.get('PIE',0)}",
-                      cx + 44, cy + 44, GREY, 11)
+
+            # Compact stat display — two rows of 3 stats each
+            s = c.stats
+            race = getattr(c, 'race_name', 'Human')
+            stat_line1 = f"{race}  STR {s.get('STR',0):>2}  DEX {s.get('DEX',0):>2}  CON {s.get('CON',0):>2}"
+            stat_line2 = f"{'':14}INT {s.get('INT',0):>2}  WIS {s.get('WIS',0):>2}  PIE {s.get('PIE',0):>2}"
+            draw_text(self.screen, stat_line1, cx + 44, cy + 44, GREY, 10, max_width=card_w - 100)
+            draw_text(self.screen, stat_line2, cx + 44, cy + 56, GREY, 10, max_width=card_w - 52)
 
             if is_sel:
                 draw_text(self.screen, "✓ Selected", cx + card_w - 95, cy + 32, (100, 220, 120), 13, bold=True)
