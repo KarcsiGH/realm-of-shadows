@@ -16,6 +16,7 @@ from core.identification import get_item_display_name
 from data.shop_inventory import (
     GENERAL_STORE, TEMPLE, TAVERN, get_sell_price, get_town_shop,
 )
+from ui.town_backgrounds import get_town_bg, get_building_bg
 
 # ═══════════════════════════════════════════════════════════════
 #  COLORS
@@ -70,6 +71,18 @@ TOWN_DISPLAY = {
     "thornhaven": {
         "name": "Thornhaven — Capital of Aldenmere",
         "desc": "The seat of the Governor's power. The largest city in the realm.",
+    },
+    "emberveil": {
+        "name": "Emberveil",
+        "desc": "A volcanic outpost. The air smells of sulphur. The smith knows things.",
+    },
+    "the_anchorage": {
+        "name": "The Anchorage",
+        "desc": "A fishing village at the edge of the known sea. Researchers and fisherfolk.",
+    },
+    "the_holdfast": {
+        "name": "The Holdfast",
+        "desc": "A fortified ruin in the Ashlands. The last safe ground before the Spire.",
     },
 }
 
@@ -205,6 +218,51 @@ class TownUI:
     #  MAIN DRAW
     # ─────────────────────────────────────────────────────────
 
+    # ─── Background helpers ────────────────────────────────────────────
+
+    def _draw_town_exterior(self, surface):
+        """Draw town exterior background behind the hub menu.
+        Full-screen. Falls back to plain dark fill if no image found."""
+        bg = get_town_bg(self.town_id, SCREEN_W, SCREEN_H)
+        if bg:
+            surface.blit(bg, (0, 0))
+            # Darken slightly so UI text stays readable
+            overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 80))
+            surface.blit(overlay, (0, 0))
+        else:
+            surface.fill((12, 10, 20))
+
+    def _draw_building_interior(self, surface, building_type: str):
+        """Draw split-screen building interior.
+        Left 40% is reserved for the functional UI panel (caller draws on it).
+        Right 60% shows the building interior image, or plain background.
+        Returns the Rect of the left UI panel area."""
+        panel_w = int(SCREEN_W * 0.42)
+        scene_x = panel_w
+        scene_w = SCREEN_W - scene_x
+
+        # Right side — building interior scene
+        bg = get_building_bg(self.town_id, building_type, scene_w, SCREEN_H)
+        if bg:
+            surface.blit(bg, (scene_x, 0))
+            # Subtle vignette on left edge of scene so panel blends in
+            vignette = pygame.Surface((60, SCREEN_H), pygame.SRCALPHA)
+            for x in range(60):
+                alpha = int(180 * (1 - x / 60))
+                pygame.draw.line(vignette, (0, 0, 0, alpha), (x, 0), (x, SCREEN_H))
+            surface.blit(vignette, (scene_x, 0))
+        else:
+            # No image — plain dark right side
+            pygame.draw.rect(surface, (8, 6, 18), (scene_x, 0, scene_w, SCREEN_H))
+
+        # Left side — solid dark panel for functional UI
+        pygame.draw.rect(surface, (10, 8, 22), (0, 0, panel_w, SCREEN_H))
+        # Divider line
+        pygame.draw.line(surface, (40, 36, 60), (panel_w, 0), (panel_w, SCREEN_H), 1)
+
+        return pygame.Rect(0, 0, panel_w, SCREEN_H)
+
     def draw(self, surface, mx, my, dt):
         self.msg_timer = max(0, self.msg_timer - dt)
         if getattr(self, "_inn_save_timer", 0) > 0:
@@ -277,41 +335,157 @@ class TownUI:
     #  HUB — Main town menu
     # ─────────────────────────────────────────────────────────
 
+    def _get_town_locations(self):
+        """Return the list of (loc_key, display_name, desc, bg_tint, accent)
+        for this town's hub — unique names per town, conditional buildings."""
+
+        # Per-town building names and descriptions
+        # Format: town_id → {building_key: (name, desc)}
+        TOWN_BUILDINGS = {
+            "briarhollow": {
+                "inn":      ("The Wanderer's Rest",    "Rest, train, and save your progress"),
+                "shop":     ("Harrow's Trading Post",  "Weapons, armor, and trail supplies"),
+                "forge":    ("Aldric's Smithy",        "Repairs, upgrades, and basic crafting"),
+                "temple":   ("Temple of the Flame",    "Healing, identification, and rites"),
+                "tavern":   ("The Mossy Flagon",       "Rumors, ale, and warmth"),
+                "jobboard": ("Aldric's Notice Board",  "Local work and contracts"),
+            },
+            "woodhaven": {
+                "inn":      ("The Canopy Rest",        "Rest, train, and save your progress"),
+                "shop":     ("Mira's Forest Goods",   "Provisions and wilderness gear"),
+                "forge":    ("Oakbrand Smithy",        "Repairs and ironwork"),
+                "temple":   ("Grove Shrine",           "Healing and nature rites"),
+                "tavern":   ("The Hollow Stump",       "Rumors and forestfolk company"),
+                "jobboard": ("Village Notice Post",    "Work posted by the village elder"),
+            },
+            "ironhearth": {
+                "inn":      ("The Anvil & Hearth",     "Rest and recovery — dwarven hospitality"),
+                "shop":     ("Stonebacker's Goods",    "Dwarven-quality equipment and supplies"),
+                "forge":    ("The Deep Forge",         "Master crafting, upgrades, and enchanting"),
+                "temple":   ("Hall of the Stone Father","Dwarven rites and restoration"),
+                "tavern":   ("The Iron Mug",           "Strong ale and louder rumors"),
+            },
+            "crystalspire": {
+                "inn":      ("The Ley Line Lodge",     "Rest, train, and save your progress"),
+                "shop":     ("Arcane Provisions",      "Rare components and magical supplies"),
+                "forge":    ("Resonance Forge",        "Enchanting and high-tier upgrades"),
+                "temple":   ("The Spire Shrine",       "Healing and arcane identification"),
+                "tavern":   ("The Flickering Glass",   "Rumors among mages and scholars"),
+                "jobboard": ("Academy Commission Board","Research bounties and arcane contracts"),
+            },
+            "thornhaven": {
+                "inn":      ("The Governor's Rest",    "Rest, train, and save your progress"),
+                "shop":     ("Imperial Supply House",  "Well-stocked city equipment"),
+                "forge":    ("Tanner's Armory",        "Imperial-grade crafting and repair"),
+                "temple":   ("Cathedral Annex",        "Full temple services in the capital"),
+                "tavern":   ("The Bronze Lantern",     "Political gossip and city news"),
+                "jobboard": ("Imperial Contracts Office","Imperial-sanctioned work and bounties"),
+            },
+            "sanctum": {
+                "inn":      ("The Pilgrim's House",    "Rest and reflection"),
+                "shop":     ("Cathedral Market",       "Holy goods and supplies"),
+                "temple":   ("The Grand Cathedral",    "Full rites, powerful identification, and restoration"),
+                "tavern":   ("The Quiet Cup",          "Subdued conversation near the cathedral"),
+            },
+            "saltmere": {
+                "inn":      ("The Saltwater Bunk",     "Rest — no questions asked"),
+                "shop":     ("Finn's Dockside Goods",  "Salvage, supplies, and contraband-adjacent wares"),
+                "forge":    ("Harker's Rivet Shop",    "Ship repairs, weapons, no receipts"),
+                "tavern":   ("The Bilge",              "The worst rumors and the best leads"),
+            },
+            "greenwood": {
+                "inn":      ("The Ranger's Post",      "Rest at the outpost"),
+                "shop":     ("Trail Cache",            "Survival gear and expedition supplies"),
+                "temple":   ("Wayside Shrine",         "Basic healing and rites"),
+            },
+            "emberveil": {
+                "inn":      ("The Ash Bunk",           "Rest near the volcano — it's fine"),
+                "shop":     ("Renn's Supplies",        "Volcanic materials and Act 3 provisions"),
+                "forge":    ("Renn's Forge",           "Master-level volcanic-steel crafting"),
+            },
+            "the_anchorage": {
+                "inn":      ("The Researcher's Bunk",  "Rest at the fishing outpost"),
+                "tavern":   ("The Salt & Scholar",     "Fishermen and Crystalspire researchers"),
+            },
+            "the_holdfast": {
+                "inn":      ("The Commander's Quarters","Rest — the last safe ground"),
+            },
+        }
+
+        # Default fallbacks for towns not fully defined
+        DEFAULT_NAMES = {
+            "inn":      ("The Inn",         "Rest, train, and save your progress"),
+            "shop":     ("General Store",   "Buy and sell weapons, armor, and supplies"),
+            "forge":    ("The Forge",       "Craft, upgrade, and enchant equipment"),
+            "temple":   ("Temple",          "Heal, identify items, remove curses"),
+            "tavern":   ("The Tavern",      "Hear rumors and rest your feet"),
+            "jobboard": ("Job Board",       "Browse available quests and contracts"),
+        }
+
+        town_blds = TOWN_BUILDINGS.get(self.town_id, {})
+
+        # Accent colours per building type
+        ACCENTS = {
+            "inn":      (220, 180, 80),
+            "shop":     (140, 200, 120),
+            "forge":    (255, 140, 40),
+            "temple":   (120, 200, 230),
+            "tavern":   (180, 120, 220),
+            "jobboard": (80, 200, 120),
+        }
+        BG_TINTS = {
+            "inn":      (100, 80, 40),
+            "shop":     (60, 100, 60),
+            "forge":    (140, 80, 40),
+            "temple":   (50, 100, 120),
+            "tavern":   (100, 60, 100),
+            "jobboard": (40, 80, 60),
+        }
+
+        # Build location list: only buildings this town has defined
+        locations = []
+        for key in ["inn", "shop", "forge", "temple", "tavern", "jobboard"]:
+            if key in town_blds or self.town_id not in TOWN_BUILDINGS:
+                name, desc = town_blds.get(key, DEFAULT_NAMES.get(key, (key.title(), "")))
+                locations.append((key, name, desc, BG_TINTS[key], ACCENTS[key]))
+
+        # Always append Party and Leave Town
+        locations.append(("party", "Party", "View and manage your characters", (40, 60, 80), (80, 160, 220)))
+        locations.append(("exit",  "Leave Town", "Return to the wilds", (80, 40, 40), (200, 80, 80)))
+
+        return locations
+
     def _draw_hub(self, surface, mx, my):
+        # ── Town exterior background ──────────────────────────────────
+        self._draw_town_exterior(surface)
+
+        # ── Left-side UI panel (semi-transparent) ─────────────────────
+        panel_w = int(SCREEN_W * 0.42)
+        panel = pygame.Surface((panel_w, SCREEN_H), pygame.SRCALPHA)
+        panel.fill((8, 6, 18, 210))
+        surface.blit(panel, (0, 0))
+
         town_info = TOWN_DISPLAY.get(self.town_id, TOWN_DISPLAY["briarhollow"])
-        draw_text(surface, town_info["name"], SCREEN_W // 2 - 130, 30,
-                  GOLD, 28, bold=True)
-        draw_text(surface, town_info["desc"],
-                  SCREEN_W // 2 - 190, 70, GREY, 15)
+        PAD  = 28          # left margin inside panel
+        BTN_W = panel_w - PAD * 2   # button fills panel width minus margins
+
+        draw_text(surface, town_info["name"], PAD, 28, GOLD, 26, bold=True)
+        draw_text(surface, town_info["desc"], PAD, 62, GREY, 13,
+                  max_width=panel_w - PAD * 2)
 
         # Party gold
         total_gold = sum(c.gold for c in self.party)
-        draw_text(surface, f"Party Gold: {total_gold}",
-                  SCREEN_W // 2 - 60, 100, DIM_GOLD, 16)
+        draw_text(surface, f"Party Gold: {total_gold}g",
+                  PAD, 88, DIM_GOLD, 14)
 
-        # Location buttons
-        locations = [
-            ("The Weary Traveler Inn", "Rest, recover, train, and save your progress",
-             (100, 80, 40), (220, 180, 80)),
-            ("General Store", "Buy and sell weapons, armor, and supplies",
-             (120, 100, 50), SELL_COL),
-            ("Dunn's Forge", "Craft, upgrade, and enchant equipment",
-             (140, 80, 40), (255, 140, 40)),
-            ("Temple of Light", "Heal, identify items, remove curses",
-             (50, 100, 120), HEAL_COL),
-            ("The Shadowed Flagon", "Hear rumors and rest your feet",
-             (100, 60, 100), RUMOR_COL),
-            ("Job Board", "Browse available quests and contracts",
-             (40, 80, 60), (80, 200, 120)),
-            ("Party", "View and manage your characters — equip items, trade, check stats",
-             (40, 60, 80), (80, 160, 220)),
-            ("Leave Town", "Return to the wilds",
-             (80, 40, 40), RED),
-        ]
+        # Location buttons — within the left panel
+        locations = self._get_town_locations()
 
-        by = 140
-        for i, (name, desc, bg_tint, accent) in enumerate(locations):
-            btn_rect = pygame.Rect(SCREEN_W // 2 - 300, by + i * 90, 420, 78)
+        by = 116
+        btn_h = 64
+        gap   = 8
+        for i, (loc_key, name, desc, bg_tint, accent) in enumerate(locations):
+            btn_rect = pygame.Rect(PAD, by + i * (btn_h + gap), BTN_W, btn_h)
             hover = btn_rect.collidepoint(mx, my)
 
             bg = (bg_tint[0] + 20, bg_tint[1] + 20, bg_tint[2] + 20) if hover else bg_tint
@@ -320,10 +494,10 @@ class TownUI:
             pygame.draw.rect(surface, bg, btn_rect, border_radius=5)
             pygame.draw.rect(surface, border, btn_rect, 2, border_radius=5)
 
-            draw_text(surface, name, btn_rect.x + 20, btn_rect.y + 12,
-                      accent if hover else CREAM, 20, bold=True)
-            draw_text(surface, desc, btn_rect.x + 20, btn_rect.y + 42,
-                      GREY, 12)
+            draw_text(surface, name, btn_rect.x + 16, btn_rect.y + 10,
+                      accent if hover else CREAM, 17, bold=True)
+            draw_text(surface, desc, btn_rect.x + 16, btn_rect.y + 34,
+                      GREY, 11, max_width=BTN_W - 24)
 
         # ── Menu button (top-right) ──
         menu_r = pygame.Rect(SCREEN_W - 160, 20, 140, 38)
@@ -337,12 +511,18 @@ class TownUI:
         surface.blit(_ms, (menu_r.x + (menu_r.w - _ms.get_width())//2,
                             menu_r.y + (menu_r.h - _ms.get_height())//2))
 
-        # ── NPC panel (right side) ──
+        # ── NPC panel — right side of scene, over background ──────────
         from data.story_data import get_town_npcs
         npcs = get_town_npcs(self.town_id)
         if npcs:
-            npc_x = SCREEN_W // 2 + 150
-            draw_text(surface, "People in Town", npc_x, 140, GOLD, 16, bold=True)
+            npc_x = panel_w + 30
+            # Semi-transparent backing for readability
+            npc_panel_w = 230
+            npc_panel_h = 32 + len(npcs) * 62
+            npc_bg = pygame.Surface((npc_panel_w, npc_panel_h), pygame.SRCALPHA)
+            npc_bg.fill((6, 4, 14, 180))
+            surface.blit(npc_bg, (npc_x - 8, 130))
+            draw_text(surface, "People in Town", npc_x, 136, GOLD, 14, bold=True)
             for j, (npc_id, npc_data) in enumerate(npcs):
                 nr = pygame.Rect(npc_x, 168 + j * 62, 210, 54)
                 hover = nr.collidepoint(mx, my)
@@ -1144,10 +1324,16 @@ class TownUI:
         self.walk_interact_timer = 3000
         self.msg_color = color
 
-    def _draw_bld_npc_header(self, surface, bld_name, subtitle="", mx=0, my=0):
+    def _draw_bld_npc_header(self, surface, bld_name, subtitle="", mx=0, my=0,
+                              building_type: str = ""):
         """Draw building title + indoor NPC portrait card at top of service views.
+        Also draws the split-screen building interior background if an image exists.
         Portrait is on the LEFT so it never overlaps the Back button (top-right).
         Click handling is done in handle_click via self._bld_npc_portrait_rect."""
+        # ── Building interior background (split screen) ──────────────
+        self._draw_building_interior(surface, building_type or
+                                     getattr(self, "_current_bld_type", ""))
+
         draw_text(surface, bld_name, 278, 14, GOLD, 22, bold=True)
         if subtitle:
             draw_text(surface, subtitle, 278, 42, GREY, 13)
@@ -1560,7 +1746,7 @@ class TownUI:
 
     def _draw_shop_menu(self, surface, mx, my):
         bld_name = self.current_bld_name or self.shop.get("name", "General Store")
-        self._draw_bld_npc_header(surface, bld_name, self.shop.get("welcome", ""), mx, my)
+        self._draw_bld_npc_header(surface, bld_name, self.shop.get("welcome", ""), mx, my, building_type="store")
 
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 60, 85, DIM_GOLD, 16)
@@ -1969,7 +2155,7 @@ class TownUI:
 
     def _draw_temple(self, surface, mx, my):
         bld_name = self.current_bld_name or "Temple of Light"
-        self._draw_bld_npc_header(surface, bld_name, TEMPLE.get("welcome", ""), mx, my)
+        self._draw_bld_npc_header(surface, bld_name, TEMPLE.get("welcome", ""), mx, my, building_type="temple")
 
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 60, 85, DIM_GOLD, 16)
@@ -2058,7 +2244,7 @@ class TownUI:
     def _draw_inn(self, surface, mx, my):
         from core.progression import INN_TIERS, INN_TIER_ORDER, can_level_up
         bld_name = self.current_bld_name or "The Inn"
-        self._draw_bld_npc_header(surface, bld_name, "Rest your weary bones, save your progress.", mx, my)
+        self._draw_bld_npc_header(surface, bld_name, "Rest your weary bones, save your progress.", mx, my, building_type="inn")
 
         back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
         draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
@@ -2145,7 +2331,7 @@ class TownUI:
         else:
             bld_name = self.current_bld_name or "The Inn"
             subtitle = "Train your skills — spend gold to master new abilities."
-        self._draw_bld_npc_header(surface, bld_name, subtitle, mx, my)
+        self._draw_bld_npc_header(surface, bld_name, subtitle, mx, my, building_type="inn")
 
         back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
         draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
@@ -3234,6 +3420,7 @@ class TownUI:
         from core.story_flags import get_flag
 
         self._bld_npc_portrait_rect = None   # no portrait card in tavern
+        self._draw_building_interior(surface, "tavern")
         W, H = SCREEN_W, SCREEN_H
         draw_text(surface, TAVERN["name"], W//2 - 130, 28, GOLD, 22, bold=True)
 
@@ -3446,7 +3633,7 @@ class TownUI:
 
     def _draw_jobboard(self, surface, mx, my):
         from data.job_board import get_town_jobs, check_job_ready, get_job_progress, JOBS
-
+        self._draw_building_interior(surface, "jobboard")
         draw_text(surface, "Job Board", SCREEN_W // 2 - 60, 30, GOLD, 24, bold=True)
         draw_text(surface, "Available work in the area.",
                   SCREEN_W // 2 - 100, 65, GREY, 14)
@@ -3580,42 +3767,45 @@ class TownUI:
             if menu_r.collidepoint(mx, my):
                 return "show_menu"
 
-            locations = ["inn", "shop", "forge", "temple", "tavern", "jobboard", "party", "exit"]
-            by = 140
-            for i, loc in enumerate(locations):
-                btn = pygame.Rect(SCREEN_W // 2 - 300, by + i * 90, 420, 78)
+            panel_w = int(SCREEN_W * 0.42)
+            PAD   = 28
+            BTN_W = panel_w - PAD * 2
+            btn_h = 64
+            gap   = 8
+            locations = [loc[0] for loc in self._get_town_locations()]
+            by = 116
+            for i, loc_key in enumerate(locations):
+                btn = pygame.Rect(PAD, by + i * (btn_h + gap), BTN_W, btn_h)
                 if btn.collidepoint(mx, my):
-                    if loc == "exit":
+                    if loc_key == "exit":
                         self.finished = True
                         return "exit"
-                    elif loc == "shop":
+                    elif loc_key == "shop":
                         self.view = self.VIEW_SHOP
-                    elif loc == "forge":
+                    elif loc_key == "forge":
                         self.view = self.VIEW_FORGE
                         self.forge_scroll = 0
-                    elif loc == "temple":
+                    elif loc_key == "temple":
                         self.view = self.VIEW_TEMPLE
-                    elif loc == "tavern":
-                        # Refresh rumor based on current story act
+                    elif loc_key == "tavern":
                         from data.story_data import get_rumor
                         self.current_rumor = get_rumor()
                         self.view = self.VIEW_TAVERN
-                    elif loc == "inn":
+                    elif loc_key == "inn":
                         self.view = self.VIEW_INN
-                    elif loc == "jobboard":
+                    elif loc_key == "jobboard":
                         self.view = self.VIEW_JOBBOARD
-                    elif loc == "party":
-                        # Signal main.py to open the party management screen
+                    elif loc_key == "party":
                         return "open_party_review"
                     return None
 
-            # NPC clicks
+            # NPC clicks — now on the right side of the scene
             from data.story_data import get_town_npcs, NPC_DIALOGUES
             from core.dialogue import select_dialogue
             from core._dialogue_party import set_party
-            set_party(self.party)   # must be before select_dialogue (on_enter fires in __init__)
+            set_party(self.party)
             npcs = get_town_npcs(self.town_id)
-            npc_x = SCREEN_W // 2 + 150
+            npc_x = panel_w + 30
             for j, (npc_id, npc_data) in enumerate(npcs):
                 nr = pygame.Rect(npc_x, 168 + j * 62, 210, 54)
                 if nr.collidepoint(mx, my):
@@ -4643,7 +4833,7 @@ class TownUI:
         FORGE_DIM = (160, 100, 40)
 
         bld_name = self.current_bld_name or "The Forge"
-        self._draw_bld_npc_header(surface, bld_name, "", mx, my)
+        self._draw_bld_npc_header(surface, bld_name, "", mx, my, building_type="forge")
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Gold: {total_gold}", SCREEN_W - 150, 20, DIM_GOLD, 14)
 
