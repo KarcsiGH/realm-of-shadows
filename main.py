@@ -93,6 +93,7 @@ class Game:
         self._roll_rerolls   = 3     # rerolls remaining
         self._roll_swap_mode = False # True when waiting for two stats to swap
         self._roll_swap_first= None  # first stat picked in swap
+        self._roll_swap_used = False # swap is one-time only per roll
         self.slot = 1
         self.history = []
         self.name_text = ""
@@ -2306,16 +2307,18 @@ class Game:
                 self._roll_rerolls = 3
                 self._roll_swap_mode = False
                 self._roll_swap_first = None
+                self._roll_swap_used = False
             elif self._roll_rerolls > 0:
                 self._do_full_roll()
                 self._roll_rerolls -= 1
                 self._roll_swap_mode = False
                 self._roll_swap_first = None
+                self._roll_swap_used = False  # fresh roll resets swap
             return
 
-        # [Swap Stats] button — activate swap mode
+        # [Swap Stats] button — one use per roll
         r_swap = pygame.Rect(sw // 2 - 100, sh - 80, 200, 48)
-        if r_swap.collidepoint(mx, my) and self._roll_stats and not self._roll_swap_mode:
+        if r_swap.collidepoint(mx, my) and self._roll_stats and not self._roll_swap_mode and not self._roll_swap_used:
             self._roll_swap_mode = True
             self._roll_swap_first = None
             return
@@ -2342,11 +2345,12 @@ class Game:
                     if self._roll_swap_first is None:
                         self._roll_swap_first = stat
                     elif self._roll_swap_first != stat:
-                        # Execute swap
+                        # Execute swap — mark used, can't swap again this roll
                         a, b = self._roll_swap_first, stat
                         self._roll_stats[a], self._roll_stats[b] = self._roll_stats[b], self._roll_stats[a]
                         self._roll_swap_mode = False
                         self._roll_swap_first = None
+                        self._roll_swap_used = True
                     return
 
         # [Accept] — proceed to character creation with these stats
@@ -2459,13 +2463,18 @@ class Game:
         roll_lbl = "Roll!" if not has_roll else f"Reroll ({rerolls} left)"
         draw_text(self.screen, roll_lbl, r_roll.x + 12, r_roll.y + 14, CREAM if can_roll else GREY, 15, bold=not has_roll)
 
-        # Swap
+        # Swap — one use per roll
         r_swap = pygame.Rect(sw // 2 - 100, sh - 80, 200, 48)
-        can_swap = has_roll and not self._roll_swap_mode
+        can_swap = has_roll and not self._roll_swap_mode and not self._roll_swap_used
         swap_bg  = (60, 60, 120) if can_swap else (40, 40, 70)
         draw_panel(self.screen, r_swap, bg_color=swap_bg, border_color=(100, 100, 200) if can_swap else PANEL_BORDER)
-        swap_lbl = "Cancel Swap" if self._roll_swap_mode else "Swap Two Stats"
-        draw_text(self.screen, swap_lbl, r_swap.x + 20, r_swap.y + 14, CREAM if can_swap else GREY, 15)
+        if self._roll_swap_mode:
+            swap_lbl = "Cancel Swap"
+        elif self._roll_swap_used:
+            swap_lbl = "Swap Used ✓"
+        else:
+            swap_lbl = "Swap One Stat"
+        draw_text(self.screen, swap_lbl, r_swap.x + 20, r_swap.y + 14, CREAM if can_swap or self._roll_swap_mode else GREY, 15)
 
         # Accept
         r_accept = pygame.Rect(sw // 2 + 130, sh - 80, 160, 48)
