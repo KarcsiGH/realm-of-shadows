@@ -10090,6 +10090,147 @@ _TRAINER_DIALOGUES = {
 
     # ── Emberveil Warden contact ──────────────────────────────────────────────
     "renn_emberveil": [
+        # ── After Shadow Valdris defeated ────────────────────────────────────
+        {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "renn_emberveil_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Master Forger Renn",
+                        "text": "Word came down from the Spire. The Shadow is gone.\n"
+                                "I've been forging in this caldera for twenty years waiting "
+                                "to hear something like that.\n"
+                                "The Fading fog is already lighter on the eastern ridge. "
+                                "Give it a season.",
+                        "choices": [
+                            {"text": "It's over.", "next": "its_over"},
+                            {"text": "Farewell, Renn.", "next": None},
+                        ],
+                    },
+                    "its_over": {
+                        "speaker": "Master Forger Renn",
+                        "text": "For now. The wards need tending, same as always.\n"
+                                "But at least there's someone tending them again.\n"
+                                "My grandmother would've approved of you.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # ── Inside Valdris' Spire ─────────────────────────────────────────────
+        {
+            "conditions": [{"flag": "explored.valdris_spire.floor1", "op": "==", "value": True}],
+            "tree": {
+                "id": "renn_emberveil_in_spire",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Master Forger Renn",
+                        "text": "You're inside the Spire. Or you were.\n"
+                                "I've heard the sounds from the caldera at night — "
+                                "something resonating in the rock itself.\n"
+                                "That's the wards straining. Don't take long.",
+                        "choices": [
+                            {"text": "What's the fastest path through?", "next": "path"},
+                            {"text": "We know what we're doing.", "next": "bye"},
+                        ],
+                    },
+                    "path": {
+                        "speaker": "Master Forger Renn",
+                        "text": "The anchor chamber is at the apex — straight up the central shaft.\n"
+                                "The Shadow will be between you and it. My grandmother "
+                                "never faced a corrupted Warden. I don't know what that means for tactics.\n"
+                                "Trust your instincts. And your Hearthstones.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Master Forger Renn",
+                        "text": "Then go. I'll keep the forge burning until you're back.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # ── All five Hearthstones — ready for the Spire ───────────────────────
+        {
+            "conditions": [{"flag": "item.hearthstone.5", "op": "==", "value": True}],
+            "tree": {
+                "id": "renn_emberveil_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Master Forger Renn",
+                        "text": "Five stones. You actually got all five.\n"
+                                "The Spire is northeast of here — you've probably seen it "
+                                "on the ridge. The entrance is warded, but the Hearthstones "
+                                "will key it open.\n"
+                                "Whatever's inside has been waiting a long time. "
+                                "Don't let it wait any longer.",
+                        "choices": [
+                            {"text": "What do you know about what's inside?", "next": "inside"},
+                            {"text": "We're ready.", "next": "bye"},
+                        ],
+                    },
+                    "inside": {
+                        "speaker": "Master Forger Renn",
+                        "text": "Something that was once a Warden named Valdris.\n"
+                                "Corrupted by the Fading, but not consumed — he chose this.\n"
+                                "My grandmother's notes call it the Shadow Compact: "
+                                "a Warden who fed the Fading instead of fighting it, "
+                                "buying himself a kind of immortality.\n"
+                                "She wrote that the only way out of that bargain is through it.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Master Forger Renn",
+                        "text": "Come back when it's done. I'll have a drink waiting.\n"
+                                "Something from before the volcano started smelling like this.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # ── Dragon's Tooth cleared, knows about Spire ────────────────────────
+        {
+            "conditions": [{"flag": "boss_defeated.dragons_tooth", "op": "==", "value": True}],
+            "tree": {
+                "id": "renn_emberveil_tooth_cleared",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Master Forger Renn",
+                        "text": "Karreth is gone. Good. He was making the caldera unstable — "
+                                "something about a corrupted drake that size absorbing "
+                                "the volcanic heat differently.\n"
+                                "You need the Hearthstones from the remaining dungeons. "
+                                "The Spire is the endgame. "
+                                "Get to Windswept Isle and the Ruins of Ashenmoor — "
+                                "there are stones in both.",
+                        "choices": [
+                            {"text": "Tell me about the Spire.", "next": "spire"},
+                            {"text": "We'll keep moving.", "next": "bye"},
+                        ],
+                    },
+                    "spire": {
+                        "speaker": "Master Forger Renn",
+                        "text": "Valdris' Spire. The old Warden anchor tower — "
+                                "where the great ward network was maintained.\n"
+                                "The Shadow corrupted it from the inside. "
+                                "Five Hearthstones will restore the anchor. "
+                                "Then you face whatever Valdris became.",
+                        "end": True,
+                    },
+                    "bye": {
+                        "speaker": "Master Forger Renn",
+                        "text": "The stones won't collect themselves. Move.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # ── Default ───────────────────────────────────────────────────────────
         {
             "conditions": [],
             "tree": {
@@ -10151,6 +10292,154 @@ _TRAINER_DIALOGUES = {
 
     # ── The Anchorage Warden contact ──────────────────────────────────────────
     "vaethari_anchorage": [
+        # ── After Shadow Valdris defeated ─────────────────────────────────────
+        {
+            "conditions": [{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
+            "tree": {
+                "id": "vaethari_post_valdris",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Vaethari",
+                        "text": "I felt it when it happened. Three hundred years of watching "
+                                "the wards decay, and then — a moment of clarity.\n"
+                                "The anchor holds. The binding is restored.\n"
+                                "You have done what the Wardens could not.",
+                        "choices": [
+                            {"text": "It cost us.", "next": "cost"},
+                            {"text": "The world should know.", "next": "know"},
+                            {"text": "Farewell, Elder.", "next": None},
+                        ],
+                    },
+                    "cost": {
+                        "speaker": "Elder Vaethari",
+                        "text": "It always does. The Fading does not give back what it takes.\n"
+                                "But the debt is settled. The world will not remember — "
+                                "it never does — but I will.\n"
+                                "Three hundred years is long enough to learn what matters.",
+                        "end": True,
+                    },
+                    "know": {
+                        "speaker": "Elder Vaethari",
+                        "text": "The world will know in its own way. The fog will lift. "
+                                "The crops will be better next season. Children will be born "
+                                "without the shadow-sickness.\n"
+                                "They won't know why. That is as it should be.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # ── All five Hearthstones — guidance to the Spire ─────────────────────
+        {
+            "conditions": [{"flag": "item.hearthstone.5", "op": "==", "value": True}],
+            "tree": {
+                "id": "vaethari_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Vaethari",
+                        "text": "All five Hearthstones. The full set — I did not think "
+                                "I would live to see it.\n"
+                                "The Spire anchor chamber is at the tower's apex. "
+                                "Place each stone in the ward array. "
+                                "The binding will begin.\n"
+                                "Valdris will try to prevent it. He has had a long time "
+                                "to prepare.",
+                        "choices": [
+                            {"text": "How do we fight something like him?", "next": "fight"},
+                            {"text": "We're going now.", "next": "going"},
+                        ],
+                    },
+                    "fight": {
+                        "speaker": "Elder Vaethari",
+                        "text": "The corruption is old but the Warden beneath it is older.\n"
+                                "I have read what records survived the Order's fall. "
+                                "Valdris was strongest in his certainty — he believed "
+                                "what he did was necessary. That belief is also his weakness.\n"
+                                "He chose this. Remind him of that, if words are still possible. "
+                                "If not — the Hearthstones will hold him long enough.",
+                        "end": True,
+                    },
+                    "going": {
+                        "speaker": "Elder Vaethari",
+                        "text": "Then go. I have watched this world for three hundred years.\n"
+                                "I would like to see what it looks like without the shadow for a while.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # ── Windswept Isle cleared — heading toward endgame ───────────────────
+        {
+            "conditions": [{"flag": "boss_defeated.windswept_isle", "op": "==", "value": True}],
+            "tree": {
+                "id": "vaethari_isle_cleared",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Vaethari",
+                        "text": "The Keeper is at rest. I felt that too — three hundred "
+                                "years and I still felt her go.\n"
+                                "What remains?\n"
+                                "Ashenmoor, if you haven't cleared it. Then the Spire.",
+                        "choices": [
+                            {"text": "Tell us about Ashenmoor.", "next": "ashenmoor"},
+                            {"text": "We head for the Spire.", "next": "spire"},
+                        ],
+                    },
+                    "ashenmoor": {
+                        "speaker": "Elder Vaethari",
+                        "text": "A ruined Warden outpost in the Ashlands. "
+                                "The last Hearthstone is there, in the commander's vault.\n"
+                                "The Fading has been thick over it for years. "
+                                "I do not know what you will find.\n"
+                                "Go carefully.",
+                        "end": True,
+                    },
+                    "spire": {
+                        "speaker": "Elder Vaethari",
+                        "text": "You will need all five Hearthstones before the anchor "
+                                "will accept your offering. Do not go before you have them all.\n"
+                                "Valdris will be waiting regardless. No need to arrive unprepared.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # ── After meeting Maren — Act 2/3 threshold ───────────────────────────
+        {
+            "conditions": [{"flag": "npc.maren.met", "op": "==", "value": True}],
+            "tree": {
+                "id": "vaethari_maren_met",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Elder Vaethari",
+                        "text": "You've spoken with the scholar. Good.\n"
+                                "Maren understands the Hearthstone mechanism better than "
+                                "anyone living — she has spent twenty years reconstructing "
+                                "what the Order destroyed in its fall.\n"
+                                "Follow where she points. She is rarely wrong about the old things.",
+                        "choices": [
+                            {"text": "What can you tell us about the dungeons ahead?", "next": "dungeons"},
+                            {"text": "Thank you, Elder.", "next": None},
+                        ],
+                    },
+                    "dungeons": {
+                        "speaker": "Elder Vaethari",
+                        "text": "The Spiders' Nest holds a Hearthstone beneath the queen's lair. "
+                                "The Abandoned Mine hides another in its deepest chamber.\n"
+                                "Beyond that — Dragon's Tooth in the Ashlands, "
+                                "Windswept Isle across the grey water, "
+                                "and the Ruins of Ashenmoor where the old Order fell.\n"
+                                "Five stones. Five dungeons. The world does not make things easy.",
+                        "end": True,
+                    },
+                },
+            },
+        },
+        # ── Default ───────────────────────────────────────────────────────────
         {
             "conditions": [],
             "tree": {
