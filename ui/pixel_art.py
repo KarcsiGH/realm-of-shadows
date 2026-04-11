@@ -2029,12 +2029,14 @@ def _find_enemy_grid(key):
 # ═══════════════════════════════════════════════════════════════
 
 def draw_character_silhouette(surface, rect, class_name,
-                               equipped_weapon=None, armor_tier=None, highlight=False):
+                               equipped_weapon=None, armor_tier=None,
+                               highlight=False, gender="male"):
     # Try PNG first, fall back to procedural
     from ui.sprite_loader import draw_character_silhouette as _png_char
     if _png_char(surface, rect, class_name,
                  equipped_weapon=equipped_weapon,
-                 armor_tier=armor_tier, highlight=highlight):
+                 armor_tier=armor_tier, highlight=highlight,
+                 gender=gender):
         return
     from ui.wiz_sprites import draw_wiz_character
     draw_wiz_character(surface, rect, class_name, highlight=highlight)
