@@ -3738,7 +3738,7 @@ class Game:
             set_flag("total_kills", cur + kills)
         # Check achievements after combat
         try:
-            from core.achievement_tracker import check_achievements
+            from achievement_tracker import check_achievements
             newly = check_achievements(self.party)
             self._queue_achievements(newly)
         except Exception:

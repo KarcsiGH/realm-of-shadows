@@ -1223,13 +1223,13 @@ class CombatUI:
         self.flash_messages = [(m, c, t - 16) for m, c, t in self.flash_messages if t > 0]
         font = get_font(16)
         for i, (msg, col, timer) in enumerate(self.flash_messages[-5:]):
-            alpha = max(0, min(255, int(timer / 200 * 255)))
+            alpha = int(max(0, min(255, timer / 200 * 255)))
             ts = font.render(msg, True, col)
             ts.set_alpha(alpha)
             x = RIGHT_X + RIGHT_W // 2 - ts.get_width() // 2
             y = SCREEN_H // 2 - 60 + i * 28
             bg = pygame.Surface((ts.get_width() + 10, ts.get_height() + 4), pygame.SRCALPHA)
-            bg.fill((0, 0, 0, min(160, alpha)))
+            bg.fill((0, 0, 0, int(min(160, alpha))))
             surface.blit(bg, (x - 5, y - 2))
             surface.blit(ts, (x, y))
 

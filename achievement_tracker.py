@@ -10,7 +10,7 @@ Usage:
     # Returns list of achievement dicts for newly earned achievements
 """
 
-from data.achievements import ACHIEVEMENTS
+from achievements import ACHIEVEMENTS
 from core.story_flags import get_flag, set_flag
 
 

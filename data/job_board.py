@@ -165,6 +165,183 @@ JOBS = {
         "repeatable": False,
         "level_req": 3,
     },
+
+    # ── Crystalspire ────────────────────────────────────────────────────────
+    "cs_shadow_samples": {
+        "name": "Fading Specimen Collection",
+        "town": "crystalspire",
+        "description": "The Academy needs samples of shadow-touched material "
+                       "from the Ashenmoor ruins. Bring back 4 Fading Shards "
+                       "for the research archive.",
+        "type": "fetch",
+        "item_name": "Fading Shard",
+        "required": 4,
+        "reward_gold": 280,
+        "reward_xp": 200,
+        "repeatable": False,
+        "level_req": 5,
+    },
+    "cs_crypt_survey": {
+        "name": "Survey the Sunken Crypt",
+        "town": "crystalspire",
+        "description": "The Cathedral has sealed records about the Sunken Crypt. "
+                       "The Academy wants an independent survey. "
+                       "Reach floor 3 and report back.",
+        "type": "explore",
+        "dungeon_id": "sunken_crypt",
+        "floor_required": 3,
+        "reward_gold": 400,
+        "reward_xp": 280,
+        "repeatable": False,
+        "level_req": 6,
+    },
+    "cs_shadow_mages": {
+        "name": "Shadow-Corrupted Mages",
+        "town": "crystalspire",
+        "description": "Three Academy mages went to study the Ashenmoor ruins "
+                       "and did not return. The Academy fears the worst. "
+                       "Eliminate any corrupted mage threats in the ruins.",
+        "type": "bounty",
+        "enemy_name": "Corrupted Mage",
+        "required": 3,
+        "reward_gold": 320,
+        "reward_xp": 240,
+        "repeatable": False,
+        "level_req": 5,
+    },
+
+    # ── Thornhaven ──────────────────────────────────────────────────────────
+    "th_deserter_hunt": {
+        "name": "Imperial Deserters",
+        "town": "thornhaven",
+        "description": "Three Imperial soldiers abandoned their posts on the "
+                       "Pale Coast road. The Governor wants them found — "
+                       "alive or otherwise. Hunt down 3 Deserters.",
+        "type": "bounty",
+        "enemy_name": "Imperial Deserter",
+        "required": 3,
+        "reward_gold": 350,
+        "reward_xp": 260,
+        "repeatable": False,
+        "level_req": 6,
+    },
+    "th_pale_coast_report": {
+        "name": "Pale Coast Intelligence",
+        "town": "thornhaven",
+        "description": "The Governor needs a first-hand report on conditions "
+                       "at the Pale Coast Catacombs. Reach floor 2 and return.",
+        "type": "explore",
+        "dungeon_id": "pale_coast",
+        "floor_required": 2,
+        "reward_gold": 500,
+        "reward_xp": 350,
+        "repeatable": False,
+        "level_req": 7,
+    },
+    "th_undead_suppression": {
+        "name": "Undead Suppression",
+        "town": "thornhaven",
+        "description": "Reports of risen dead near the Pale Coast are alarming "
+                       "the citizenry. Eliminate 5 Risen Soldiers to demonstrate "
+                       "the threat is contained.",
+        "type": "bounty",
+        "enemy_name": "Risen Soldier",
+        "required": 5,
+        "reward_gold": 300,
+        "reward_xp": 220,
+        "repeatable": True,
+        "level_req": 6,
+    },
+
+    # ── Saltmere ────────────────────────────────────────────────────────────
+    "sm_sea_creature_parts": {
+        "name": "Deep Sea Specimen",
+        "town": "saltmere",
+        "description": "Something's been attacking the fishing boats. "
+                       "Bring back a Deep Crawler Claw as proof — "
+                       "the fishermen's guild is paying well.",
+        "type": "fetch",
+        "item_name": "Deep Crawler Claw",
+        "required": 3,
+        "reward_gold": 220,
+        "reward_xp": 160,
+        "repeatable": True,
+        "level_req": 5,
+    },
+    "sm_pirate_bounty": {
+        "name": "Pirate Suppression",
+        "town": "saltmere",
+        "description": "The Dockmaster is paying for pirate scalps — "
+                       "metaphorically. Eliminate 4 Pirates operating "
+                       "near the coast.",
+        "type": "bounty",
+        "enemy_name": "Saltmere Pirate",
+        "required": 4,
+        "reward_gold": 260,
+        "reward_xp": 180,
+        "repeatable": True,
+        "level_req": 4,
+    },
+
+    # ── Sanctum ─────────────────────────────────────────────────────────────
+    "sa_crypt_relics": {
+        "name": "Recover the Holy Relics",
+        "town": "sanctum",
+        "description": "Sacred relics were stored in the Sunken Crypt before "
+                       "it was sealed. The Cathedral wants them recovered. "
+                       "Bring back 2 Sanctified Relics.",
+        "type": "fetch",
+        "item_name": "Sanctified Relic",
+        "required": 2,
+        "reward_gold": 450,
+        "reward_xp": 320,
+        "repeatable": False,
+        "level_req": 7,
+    },
+    "sa_undead_purge": {
+        "name": "Purge the Risen",
+        "town": "sanctum",
+        "description": "The Light demands the undead be put to rest. "
+                       "Destroy 6 Risen in the Sunken Crypt or nearby ruins "
+                       "as an act of holy service.",
+        "type": "bounty",
+        "enemy_name": "Risen",
+        "required": 6,
+        "reward_gold": 340,
+        "reward_xp": 250,
+        "repeatable": True,
+        "level_req": 6,
+    },
+
+    # ── Emberveil ────────────────────────────────────────────────────────────
+    "ev_volcanic_samples": {
+        "name": "Volcanic Reagent Run",
+        "town": "emberveil",
+        "description": "Renn needs volcanic mineral samples from the deeper "
+                       "caldera caves. Collect 5 Magma Cores — the forge "
+                       "work won't wait.",
+        "type": "fetch",
+        "item_name": "Magma Core",
+        "required": 5,
+        "reward_gold": 380,
+        "reward_xp": 280,
+        "repeatable": True,
+        "level_req": 8,
+    },
+    "ev_drake_suppression": {
+        "name": "Drake Culling",
+        "town": "emberveil",
+        "description": "Young drakes from the Dragon's Tooth caldera are "
+                       "raiding the settlement. Eliminate 4 Young Drakes "
+                       "before the next raid.",
+        "type": "bounty",
+        "enemy_name": "Young Drake",
+        "required": 4,
+        "reward_gold": 420,
+        "reward_xp": 300,
+        "repeatable": True,
+        "level_req": 9,
+    },
 }
 
 
