@@ -261,8 +261,23 @@ NEW_ENEMIES = {
     "Shadow Valdris": _e("Shadow Valdris",950,24,26,S(14,14,16,22,18,10),14,52,"ranged","shadow",
         acc=10,row="back",ai="boss",xp=450,gold=(150,300),
         res={"shadow":0.0,"divine":2.0,"arcane":0.5},
-        imm=["Poisoned","Fear","Sleep","Stun"],ab=["Shadow Nova","Dark Ritual","Fading Pulse"],        loot=[],
-
+        imm=["Poisoned","Fear","Sleep","Stun"],ab=["Shadow Nova","Dark Ritual","Fading Pulse"],
+        loot=[
+            {"drop_chance": 1.0, "item": {
+                "name": "Shard of the Broken Ward",
+                "type": "material", "rarity": "rare", "identified": True,
+                "estimated_value": 400,
+                "description": "A fragment of the ward anchor Valdris corrupted. "
+                               "Still faintly warm to the touch, as if something inside "
+                               "remembers what it was supposed to protect."
+            }},
+            {"drop_chance": 0.40, "item": {
+                "name": "Shadow Essence", "type": "material",
+                "rarity": "uncommon", "identified": True, "estimated_value": 120,
+                "description": "Distilled Fading energy. Required for high-tier "
+                               "shadow enchantments. Handle carefully."
+            }},
+        ],
         desc={0:"A dark mirror-image crackling with shadow.",1:"Shadow of Valdris",
               2:"Shadow Valdris — Boss. Echo of the Traitor Warden."}),
 
@@ -989,7 +1004,14 @@ ACT3_ENEMIES = {
         "abilities": [{"name": "Salt Corrode", "type": "debuff",
                        "target": "single_enemy", "effect": {"defense_reduction": 6, "duration": 3},
                        "description": "Saltwater mist corrodes armor and weakens defenses."}],
-        "loot_table": [],
+        "loot_table": [
+            {"drop_chance": 0.30, "item": {
+                "name": "Briny Ectoplasm", "type": "material",
+                "rarity": "common", "identified": True, "estimated_value": 35,
+                "description": "Residue from a shade dissolved by salt and shadow. "
+                               "Used in aquatic enchantments."
+            }},
+        ],
         "description_tiers": {
             0: "A wisp of briny fog shaped like a drowned sailor.",
             1: "Saltwater Shade",
@@ -1044,7 +1066,14 @@ ACT3_ENEMIES = {
                        "target": "single_enemy",
                        "effect": {"speed_penalty": 0.4, "mp_drain": 8, "duration": 3},
                        "description": "Pulls the target under with crushing tidal force, slowing them and draining magic."}],
-        "loot_table": [],
+        "loot_table": [
+            {"drop_chance": 0.25, "item": {
+                "name": "Wraith-Tide Pearl", "type": "material",
+                "rarity": "uncommon", "identified": True, "estimated_value": 80,
+                "description": "A pearl formed at the centre of a Tide Wraith. "
+                               "Cold and faintly luminescent, it pulses with residual shadow energy."
+            }},
+        ],
         "description_tiers": {
             0: "A roiling mass of saltwater and shadow that crests like a wave.",
             1: "Tide Wraith",
@@ -1100,7 +1129,14 @@ ACT3_ENEMIES = {
         "abilities": [{"name": "Gust Burst", "type": "damage",
                        "target": "aoe_enemy", "power": 10, "element": "lightning",
                        "description": "Unleashes a burst of electrified wind."}],
-        "loot_table": [],
+        "loot_table": [
+            {"drop_chance": 0.25, "item": {
+                "name": "Storm Essence", "type": "material",
+                "rarity": "uncommon", "identified": True, "estimated_value": 60,
+                "description": "Compressed lightning energy from a dissolved Wind Wraith. "
+                               "Crackles faintly and smells of ozone."
+            }},
+        ],
         "description_tiers": {
             0: "A howling shape woven from wind and static charge.",
             1: "Wind Wraith",
@@ -1185,7 +1221,14 @@ ACT3_ENEMIES = {
                        "target": "single_enemy",
                        "effect": {"accuracy_reduction": 20, "duration": 2},
                        "description": "Exhales a disorienting sea mist."}],
-        "loot_table": [],
+        "loot_table": [
+            {"drop_chance": 0.30, "item": {
+                "name": "Isle Miasma Crystal", "type": "material",
+                "rarity": "uncommon", "identified": True, "estimated_value": 70,
+                "description": "A crystallised remnant of isle shade energy. "
+                               "Faintly damp and cold. Used in accuracy-reducing enchantments."
+            }},
+        ],
         "description_tiers": {
             0: "A shadow clinging to the island ruins, fed by the Fading.",
             1: "Isle Shade",
@@ -1300,7 +1343,14 @@ ACT3_ENEMIES = {
                         "divine": 2.0, "shadow": 0.0, "nature": 1.0, "arcane": 1.0},
         "status_immunities": ["Poisoned", "Sleep"],
         "abilities": [],
-        "loot_table": [],
+        "loot_table": [
+            {"drop_chance": 0.15, "item": {
+                "name": "Void Ichor", "type": "material",
+                "rarity": "uncommon", "identified": True, "estimated_value": 50,
+                "description": "A viscous droplet of void-matter that remains when a tendril is destroyed. "
+                               "It smells of nothing — literally. Used in shadow-resistance enchantments."
+            }},
+        ],
         "description_tiers": {
             0: "A thrashing tendril of pure void-matter, reaching hungrily from the walls.",
             1: "Void Tendril",
@@ -1323,7 +1373,14 @@ ACT3_ENEMIES = {
                         "divine": 2.0, "shadow": 0.0, "nature": 1.0, "arcane": 0.5},
         "status_immunities": ["Poisoned", "Fear", "Stun", "Sleep", "Charm"],
         "abilities": ["Shadow Nova", "Dark Ritual", "Fading Pulse", "Ward Shatter"],
-        "loot_table": [],  # phase 2 triggers on defeat, no loot yet
+        "loot_table": [
+            {"drop_chance": 0.60, "item": {
+                "name": "Shadow Essence", "type": "material",
+                "rarity": "uncommon", "identified": True, "estimated_value": 120,
+                "description": "Distilled Fading energy. Required for high-tier "
+                               "shadow enchantments. Handle carefully."
+            }},
+        ],  # phase 2 triggers on defeat
         "description_tiers": {
             0: "Valdris — but not the man. A shell of pure shadow wearing his face.",
             1: "Valdris, Shadow Avatar",

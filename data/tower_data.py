@@ -175,6 +175,12 @@ TOWER_ENEMIES = {
         ab=[{"name": "Grasping Pull", "type": "debuff", "target": "single_enemy",
              "effect": {"speed_penalty": 0.5, "duration": 2},
              "description": "Pulls a target, slowing them."}],
+        loot=[{"drop_chance": 0.15, "item": {
+            "name": "Void Ichor", "type": "material",
+            "rarity": "uncommon", "identified": True, "estimated_value": 50,
+            "description": "A viscous droplet of void-matter. "
+                           "Used in shadow-resistance enchantments."
+        }}],
         desc={0: "A writhing tendril of darkness.", 1: "Void Tendril",
               2: "Void Tendril — slows targets. Weak to divine/fire."}),
 
