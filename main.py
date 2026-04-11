@@ -70,6 +70,7 @@ S_SAVE_LOAD        = 25  # Save / load slot picker
 S_GUILD            = 31  # Adventurers Guild — character bank roster
 S_PARTY_ASSEMBLE   = 32  # Assemble active party from bank
 S_ROLL             = 33  # Roll stats (4d6 drop lowest, rerolls, stat swap)
+S_GENDER           = 34  # Gender selection (male / female)
 
 
 class Game:
@@ -390,7 +391,7 @@ class Game:
                 and not self.show_menu_overlay
                 and self.party
                 and self.state not in (S_COMBAT, S_SAVE_LOAD, S_SETTINGS,
-                                       S_SPLASH, S_MODE, S_GUILD, S_CAMP)):
+                                       S_SPLASH, S_MODE, S_GUILD, S_CAMP, S_GENDER)):
             self.show_menu_overlay = True
             return
 
@@ -465,17 +466,27 @@ class Game:
             if e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_RETURN and self.name_text.strip():
                     self.current_char.name = self.name_text.strip()
-                    # Go to race selection
-                    self.race_scroll = 0
-                    self.race_hover = -1
-                    self.human_stat_pick = None
-                    self.go(S_RACE)
+                    # Go to gender selection before race
+                    self.go(S_GENDER)
                 elif e.key == pygame.K_BACKSPACE:
                     self.name_text = self.name_text[:-1]
                 elif e.key == pygame.K_ESCAPE:
                     self.go(S_GUILD)
                 elif len(self.name_text) < 20 and e.unicode.isprintable():
                     self.name_text += e.unicode
+
+        elif self.state == S_GENDER:
+            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                self._handle_gender_click(e.pos[0], e.pos[1])
+            elif e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_RETURN:
+                    self._advance_from_gender()
+                elif e.key == pygame.K_LEFT or e.key == pygame.K_a:
+                    self.current_char.gender = "male"
+                elif e.key == pygame.K_RIGHT or e.key == pygame.K_d:
+                    self.current_char.gender = "female"
+                elif e.key == pygame.K_ESCAPE:
+                    self.go(S_NAME)
 
         elif self.state == S_RACE:
             if e.type == pygame.MOUSEBUTTONDOWN:
@@ -1912,7 +1923,8 @@ class Game:
             # Portrait
             sil_r = pygame.Rect(rx + 4, ry + 4, 68, 90)
             draw_character_silhouette(self.screen, sil_r, c.class_name,
-                                       highlight=selected or hover)
+                                       highlight=selected or hover,
+                                       gender=getattr(c, "gender", "male"))
 
             # Name + race + class
             tx = rx + 82
@@ -1971,6 +1983,7 @@ class Game:
         elif self.state == S_GUILD:    self.draw_guild(mx, my)
         elif self.state == S_PARTY_ASSEMBLE: self.draw_party_assemble(mx, my)
         elif self.state == S_ROLL:     self.draw_roll_screen(mx, my)
+        elif self.state == S_GENDER:   self._draw_gender(mx, my)
         elif self.state == S_NAME:     self.draw_name()
         elif self.state == S_RACE:     self.draw_race(mx, my)
         elif self.state == S_LIFEPATH: self.draw_lifepath(mx, my)
@@ -2632,6 +2645,184 @@ class Game:
         draw_text(self.screen, "Press ENTER to continue",
                   SCREEN_W//2 - 120, 340, GREY, 15)
 
+    # ── Gender Selection ───────────────────────────────────────
+
+    def _draw_gender(self, mx, my):
+        """Simple two-button gender selection screen."""
+        import pygame
+        sw, sh = SCREEN_W, SCREEN_H
+        self.screen.fill(TOWN_BG)
+
+        draw_text(self.screen, f"{self.current_char.name}",
+                  sw // 2 - 200, 60, GOLD, 28, bold=True)
+        draw_text(self.screen, "Choose your character's appearance",
+                  sw // 2 - 220, 100, GREY, 16)
+
+        btn_w, btn_h = 280, 160
+        gap = 60
+        total_w = btn_w * 2 + gap
+        bx = sw // 2 - total_w // 2
+        by = sh // 2 - btn_h // 2 - 20
+
+        options = [("male", "Male"), ("female", "Female")]
+        self._gender_rects = []
+        for i, (key, label) in enumerate(options):
+            rect = pygame.Rect(bx + i * (btn_w + gap), by, btn_w, btn_h)
+            hover = rect.collidepoint(mx, my)
+            selected = getattr(self.current_char, "gender", "male") == key
+
+            bg = (50, 38, 80) if selected else (35, 26, 55) if hover else (22, 16, 38)
+            border = (200, 160, 255) if selected else (160, 120, 220) if hover else PANEL_BORDER
+            pygame.draw.rect(self.screen, bg, rect, border_radius=10)
+            pygame.draw.rect(self.screen, border, rect, 2, border_radius=10)
+
+            # Icon area
+            icon_y = rect.y + 30
+            if key == "male":
+                # Simple male symbol
+                pygame.draw.circle(self.screen, (120, 180, 255),
+                                   (rect.centerx, icon_y + 24), 28, 3)
+                pygame.draw.line(self.screen, (120, 180, 255),
+                                 (rect.centerx + 20, icon_y), (rect.centerx + 38, icon_y - 18), 3)
+                pygame.draw.line(self.screen, (120, 180, 255),
+                                 (rect.centerx + 38, icon_y - 18), (rect.centerx + 22, icon_y - 18), 3)
+                pygame.draw.line(self.screen, (120, 180, 255),
+                                 (rect.centerx + 38, icon_y - 18), (rect.centerx + 38, icon_y - 2), 3)
+            else:
+                # Simple female symbol
+                pygame.draw.circle(self.screen, (255, 160, 220),
+                                   (rect.centerx, icon_y + 20), 28, 3)
+                pygame.draw.line(self.screen, (255, 160, 220),
+                                 (rect.centerx, icon_y + 48), (rect.centerx, icon_y + 72), 3)
+                pygame.draw.line(self.screen, (255, 160, 220),
+                                 (rect.centerx - 14, icon_y + 60), (rect.centerx + 14, icon_y + 60), 3)
+
+            col = (220, 190, 255) if selected else (200, 170, 240) if hover else CREAM
+            draw_text(self.screen, label, rect.centerx - 25, rect.y + btn_h - 36, col, 20, bold=selected)
+            self._gender_rects.append((key, rect))
+
+        # Continue hint
+        draw_text(self.screen, "Click to select — press Enter to continue",
+                  sw // 2 - 200, sh - 70, GREY, 13)
+
+        # Back button
+        back_r = pygame.Rect(30, 30, 100, 34)
+        draw_button(self.screen, back_r, "← Back",
+                    hover=back_r.collidepoint(mx, my), size=13)
+        self._gender_back_rect = back_r
+
+    def _handle_gender_click(self, mx, my):
+        """Handle clicks on the gender selection screen."""
+        import pygame
+        # Back
+        if hasattr(self, "_gender_back_rect") and self._gender_back_rect.collidepoint(mx, my):
+            self.go(S_NAME)
+            return
+
+        # Gender buttons — click once to select, double-click or press Enter to continue
+        for key, rect in getattr(self, "_gender_rects", []):
+            if rect.collidepoint(mx, my):
+                if getattr(self.current_char, "gender", "male") == key:
+                    # Already selected — advance on second click
+                    self._advance_from_gender()
+                else:
+                    self.current_char.gender = key
+                return
+
+    def _advance_from_gender(self):
+        """Proceed from gender selection to race selection."""
+        self.race_scroll = 0
+        self.race_hover = -1
+        self.human_stat_pick = None
+        self.go(S_RACE)
+
+    # ── Gender Selection ────────────────────────────────────────
+
+    def _draw_gender(self, mx, my):
+        """Simple two-button gender selection screen."""
+        from ui.renderer import (SCREEN_W, SCREEN_H, draw_text, draw_panel,
+                                  GOLD, CREAM, GREY, WHITE, PANEL_BG, PANEL_BORDER)
+        self.screen.fill((8, 6, 18))
+
+        name = getattr(self.current_char, "name", "Your character")
+        draw_text(self.screen, f"{name}", SCREEN_W//2 - 200, 80,
+                  GOLD, 28, bold=True)
+        draw_text(self.screen, "Choose your character's appearance",
+                  SCREEN_W//2 - 200, 120, GREY, 16)
+
+        BW, BH = 280, 180
+        gap = 60
+        total = BW * 2 + gap
+        lx = SCREEN_W//2 - total//2
+        rx = lx + BW + gap
+        by = SCREEN_H//2 - BH//2
+
+        # Male button
+        male_r = pygame.Rect(lx, by, BW, BH)
+        male_hov = male_r.collidepoint(mx, my)
+        male_sel = getattr(self.current_char, "gender", "male") == "male"
+        male_bg  = (50, 50, 100) if male_hov or male_sel else (22, 18, 40)
+        male_brd = (140, 140, 255) if male_sel else (80, 80, 160) if male_hov else PANEL_BORDER
+        draw_panel(self.screen, male_r, bg_color=male_bg, border_color=male_brd)
+        draw_text(self.screen, "♂", male_r.centerx - 18, male_r.y + 30,
+                  (140, 180, 255), 48, bold=True)
+        draw_text(self.screen, "Male", male_r.centerx - 28, male_r.y + 100,
+                  CREAM, 22, bold=True)
+        if male_sel:
+            draw_text(self.screen, "✓ Selected", male_r.centerx - 44,
+                      male_r.y + 138, (140, 180, 255), 13)
+
+        # Female button
+        fem_r = pygame.Rect(rx, by, BW, BH)
+        fem_hov = fem_r.collidepoint(mx, my)
+        fem_sel = getattr(self.current_char, "gender", "male") == "female"
+        fem_bg  = (80, 40, 80) if fem_hov or fem_sel else (22, 18, 40)
+        fem_brd = (255, 140, 220) if fem_sel else (180, 80, 160) if fem_hov else PANEL_BORDER
+        draw_panel(self.screen, fem_r, bg_color=fem_bg, border_color=fem_brd)
+        draw_text(self.screen, "♀", fem_r.centerx - 18, fem_r.y + 30,
+                  (255, 160, 220), 48, bold=True)
+        draw_text(self.screen, "Female", fem_r.centerx - 38, fem_r.y + 100,
+                  CREAM, 22, bold=True)
+        if fem_sel:
+            draw_text(self.screen, "✓ Selected", fem_r.centerx - 44,
+                      fem_r.y + 138, (255, 160, 220), 13)
+
+        # Continue button (only active after selection implied — male is default)
+        cont_r = pygame.Rect(SCREEN_W//2 - 100, by + BH + 40, 200, 44)
+        cont_hov = cont_r.collidepoint(mx, my)
+        cont_bg  = (60, 100, 60) if cont_hov else (30, 60, 30)
+        cont_brd = (100, 200, 100) if cont_hov else (60, 120, 60)
+        draw_panel(self.screen, cont_r, bg_color=cont_bg, border_color=cont_brd)
+        draw_text(self.screen, "Continue →", cont_r.x + 32, cont_r.y + 12,
+                  CREAM, 16, bold=True)
+
+        draw_text(self.screen, "← Back", SCREEN_W//2 - 240, cont_r.y + 14,
+                  GREY, 14)
+
+        # Store rects for click handler
+        self._gender_male_r = male_r
+        self._gender_fem_r  = fem_r
+        self._gender_cont_r = cont_r
+
+    def _handle_gender_click(self, mx, my):
+        male_r = getattr(self, "_gender_male_r", None)
+        fem_r  = getattr(self, "_gender_fem_r",  None)
+        cont_r = getattr(self, "_gender_cont_r", None)
+
+        if male_r and male_r.collidepoint(mx, my):
+            self.current_char.gender = "male"
+        elif fem_r and fem_r.collidepoint(mx, my):
+            self.current_char.gender = "female"
+        elif cont_r and cont_r.collidepoint(mx, my):
+            # Proceed to race selection
+            self.race_scroll = 0
+            self.race_hover  = -1
+            self.human_stat_pick = None
+            self.go(S_RACE)
+        else:
+            # Back to name
+            self.go(S_NAME)
+
     # ── Race Selection ─────────────────────────────────────────
 
     def draw_race(self, mx, my):
@@ -2973,7 +3164,8 @@ class Game:
         equip = getattr(c, "equipment", {})
         armor_t = equip.get("armor", {}).get("armor_tier") if equip.get("armor") else None
         _dcs(self.screen, por_r, c.class_name,
-             equipped_weapon=equip.get("weapon"), armor_tier=armor_t, highlight=True)
+             equipped_weapon=equip.get("weapon"), armor_tier=armor_t, highlight=True,
+             gender=getattr(c, "gender", "male"))
 
         draw_text(self.screen, c.name, 80, 25, cls["color"], 26, bold=True)
         # Class badge next to name
@@ -3075,7 +3267,8 @@ class Game:
             equip = getattr(c, "equipment", {})
             armor_t = equip.get("armor", {}).get("armor_tier") if equip.get("armor") else None
             _dcs(self.screen, por_r, c.class_name,
-                 equipped_weapon=equip.get("weapon"), armor_tier=armor_t)
+                 equipped_weapon=equip.get("weapon"), armor_tier=armor_t,
+                 gender=getattr(c, "gender", "male"))
 
             # Class badge + Name and class (left side)
             draw_class_badge(self.screen, c.class_name, cx + 6, cy + 6, 14)

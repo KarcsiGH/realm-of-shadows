@@ -314,7 +314,8 @@ class CombatUI:
                 draw_character_silhouette(surface, sil_r, cls,
                                            equipped_weapon=equip.get("weapon"),
                                            armor_tier=armor_tier,
-                                           highlight=is_cur and not is_dead)
+                                           highlight=is_cur and not is_dead,
+                                           gender=p.get("gender", "male"))
 
                 # Info right of silhouette
                 ix = r.x + sil_w + 8
