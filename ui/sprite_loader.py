@@ -227,15 +227,25 @@ def _load(path: str) -> pygame.Surface | None:
         return None
 
 
-def _get_char(class_name: str) -> pygame.Surface | None:
-    if class_name not in _char_cache:
+def _get_char(class_name: str, gender: str = "male") -> pygame.Surface | None:
+    """Load character sprite. For female, tries <Class>_F.png first, falls back to male."""
+    cache_key = f"{class_name}_{gender}"
+    if cache_key not in _char_cache:
         fname = _CHAR_FILES.get(class_name)
         if fname:
-            _char_cache[class_name] = _load(
-                os.path.join(_CHAR_DIR, fname + '.png'))
+            if gender == "female":
+                female_path = os.path.join(_CHAR_DIR, fname + '_F.png')
+                img = _load(female_path)
+                if img is not None:
+                    _char_cache[cache_key] = img
+                else:
+                    # Fall back to male sprite
+                    _char_cache[cache_key] = _load(os.path.join(_CHAR_DIR, fname + '.png'))
+            else:
+                _char_cache[cache_key] = _load(os.path.join(_CHAR_DIR, fname + '.png'))
         else:
-            _char_cache[class_name] = None
-    return _char_cache[class_name]
+            _char_cache[cache_key] = None
+    return _char_cache[cache_key]
 
 
 def _get_enemy(template_key: str) -> pygame.Surface | None:
@@ -328,12 +338,13 @@ def draw_npc_portrait(surface: pygame.Surface, rect: pygame.Rect,
 
 def draw_character_silhouette(surface: pygame.Surface, rect: pygame.Rect,
                                class_name: str, equipped_weapon=None,
-                               armor_tier=None, highlight=False) -> bool:
+                               armor_tier=None, highlight=False,
+                               gender: str = "male") -> bool:
     """
     Draw character sprite. Returns True if PNG was used, False if fell back.
     Fallback is handled by caller (pixel_art.py delegates here first).
     """
-    src = _get_char(class_name)
+    src = _get_char(class_name, gender)
     if src is None:
         return False
     _draw_png(surface, rect, src,
