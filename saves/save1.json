@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "timestamp": "2026-04-12T16:21:48.288379",
+  "timestamp": "2026-04-12T18:14:42.553648",
   "slot_name": "save1",
   "metadata": {
     "party_summary": [
@@ -11,7 +11,7 @@
       "Marvin Lv.5 Halfling Monk",
       "Roger Lv.5 Half-Orc Ranger"
     ],
-    "total_gold": 154
+    "total_gold": 243
   },
   "party": [
     {
@@ -19,8 +19,8 @@
       "class_name": "Cleric",
       "race_name": "Gnome",
       "level": 5,
-      "xp": 4120,
-      "gold": 17,
+      "xp": 4153,
+      "gold": 32,
       "stats": {
         "STR": 14,
         "DEX": 12,
@@ -193,8 +193,8 @@
       "class_name": "Spellblade",
       "race_name": "Human",
       "level": 5,
-      "xp": 4296,
-      "gold": 17,
+      "xp": 4331,
+      "gold": 32,
       "stats": {
         "STR": 22,
         "DEX": 18,
@@ -381,8 +381,8 @@
       "class_name": "Witch",
       "race_name": "Elf",
       "level": 5,
-      "xp": 4120,
-      "gold": 17,
+      "xp": 4153,
+      "gold": 32,
       "stats": {
         "STR": 15,
         "DEX": 12,
@@ -512,8 +512,8 @@
       "class_name": "Paladin",
       "race_name": "Human",
       "level": 5,
-      "xp": 4296,
-      "gold": 17,
+      "xp": 4331,
+      "gold": 32,
       "stats": {
         "STR": 21,
         "DEX": 19,
@@ -645,8 +645,8 @@
       "class_name": "Monk",
       "race_name": "Halfling",
       "level": 5,
-      "xp": 4039,
-      "gold": 30,
+      "xp": 4072,
+      "gold": 45,
       "stats": {
         "STR": 16,
         "DEX": 22,
@@ -797,7 +797,27 @@
           "source": "Giant Spider",
           "magic_identified": true,
           "material_identified": true,
-          "stack": 3
+          "stack": 4
+        },
+        {
+          "name": "Spider Silk Thread",
+          "type": "material",
+          "subtype": "reagent",
+          "rarity": "common",
+          "tier": 1,
+          "identify_difficulty": 1,
+          "unidentified_name": "Fine Thread",
+          "unidentified_desc": "A wisp of iridescent silk.",
+          "appraised_name": "Phase-Spider Silk Thread",
+          "material_desc": "Silk from a Fading-touched spider. Tier 1 reagent.",
+          "magic_desc": "Faint planar shimmer.",
+          "estimated_value": 5,
+          "description": "A thread of spider silk.",
+          "identified": true,
+          "source": "Spiderling",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
         }
       ],
       "equipment": {
@@ -945,8 +965,8 @@
       "class_name": "Ranger",
       "race_name": "Half-Orc",
       "level": 5,
-      "xp": 4078,
-      "gold": 56,
+      "xp": 4111,
+      "gold": 70,
       "stats": {
         "STR": 20,
         "DEX": 22,
@@ -1103,7 +1123,20 @@
           "description": "Basic leather protection.",
           "identified": true
         },
-        "hands": null,
+        "hands": {
+          "name": "Padded Arm Guards",
+          "appraised_name": "Padded Arm Guards",
+          "type": "armor",
+          "slot": "hands",
+          "subtype": "bracers",
+          "rarity": "common",
+          "defense": 2,
+          "description": "Thick leather wrapped around the forearms. Simple protection.",
+          "identified": true,
+          "estimated_value": 75,
+          "magic_identified": true,
+          "material_identified": true
+        },
         "feet": {
           "name": "Soft Leather Shoes",
           "appraised_name": "Soft Leather Shoes",
@@ -1140,46 +1173,46 @@
   "character_bank": [],
   "knowledge": {
     "identified_items": [
-      "Carved Oak Wand",
-      "Blessed Handwraps",
-      "Leather Vest",
-      "Spider Silk Bundle",
-      "Spider Mandible",
-      "Traveler's Clothes",
-      "Goblin Ear",
-      "Crude Snare Wire",
-      "Iron Javelin",
-      "Goblin Shiv",
-      "Spider Silk",
-      "Wooden Shield",
-      "Light Crossbow",
-      "Longbow",
-      "Minor Healing Potion",
-      "Phase Spider Silk",
-      "Soft Leather Shoes",
-      "Glowing Spore Sac",
-      "Lurker Fang",
-      "Padded Arm Guards",
       "Rat Tail",
-      "Monk Unarmed",
-      "Spider Silk Thread",
-      "Healing Potion",
-      "Rusty Knife",
-      "Scroll of Protection",
+      "Minor Healing Potion",
+      "Lurker Fang",
+      "Spider Silk Bundle",
+      "Soft Leather Shoes",
+      "Blessed Handwraps",
       "Walking Stick",
-      "Crude Knife",
-      "Fading-Touched Pelt",
-      "Iron Ki Beads",
-      "Web Spinner Silk",
-      "Chain Shirt",
-      "Short Bow",
-      "Wooden Club",
-      "Copper Ring of Endurance",
+      "Traveler's Clothes",
       "Bat Wing",
-      "Phase Spider Eye",
       "Mana Crystal",
       "Shadowbind Gauntlets",
-      "Worn Longsword"
+      "Phase Spider Eye",
+      "Glowing Spore Sac",
+      "Iron Javelin",
+      "Scroll of Protection",
+      "Padded Arm Guards",
+      "Phase Spider Silk",
+      "Iron Ki Beads",
+      "Longbow",
+      "Spider Silk",
+      "Goblin Shiv",
+      "Rusty Knife",
+      "Crude Knife",
+      "Fading-Touched Pelt",
+      "Copper Ring of Endurance",
+      "Crude Snare Wire",
+      "Light Crossbow",
+      "Chain Shirt",
+      "Monk Unarmed",
+      "Goblin Ear",
+      "Worn Longsword",
+      "Healing Potion",
+      "Spider Mandible",
+      "Web Spinner Silk",
+      "Short Bow",
+      "Leather Vest",
+      "Wooden Club",
+      "Spider Silk Thread",
+      "Wooden Shield",
+      "Carved Oak Wand"
     ],
     "known_enemies": {
       "Cave Bat": 2,
@@ -1289,9 +1322,9 @@
     }
   },
   "world_state": {
-    "party_x": 21,
+    "party_x": 22,
     "party_y": 42,
-    "step_counter": 10,
+    "step_counter": 13,
     "discovered_locations": [
       "abandoned_mine",
       "briarhollow",
@@ -5649,7 +5682,31 @@
             24
           ]
         ],
+        "opened_chests": [
+          [
+            30,
+            7
+          ],
+          [
+            25,
+            22
+          ]
+        ],
         "trap_states": [
+          [
+            25,
+            7,
+            true,
+            false,
+            true
+          ],
+          [
+            24,
+            8,
+            false,
+            true,
+            false
+          ],
           [
             12,
             12,
@@ -5663,12 +5720,19 @@
             true,
             false,
             true
+          ],
+          [
+            25,
+            19,
+            false,
+            true,
+            false
           ]
         ],
         "dead_enemies": [
           [
-            13,
-            10
+            25,
+            7
           ]
         ]
       },
@@ -7897,12 +7961,6 @@
           [
             28,
             23
-          ]
-        ],
-        "dead_enemies": [
-          [
-            8,
-            8
           ]
         ]
       },
