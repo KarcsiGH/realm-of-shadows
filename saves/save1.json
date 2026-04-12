@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "timestamp": "2026-04-12T13:22:52.550492",
+  "timestamp": "2026-04-12T16:21:48.288379",
   "slot_name": "save1",
   "metadata": {
     "party_summary": [
@@ -11,7 +11,7 @@
       "Marvin Lv.5 Halfling Monk",
       "Roger Lv.5 Half-Orc Ranger"
     ],
-    "total_gold": 53
+    "total_gold": 154
   },
   "party": [
     {
@@ -19,8 +19,8 @@
       "class_name": "Cleric",
       "race_name": "Gnome",
       "level": 5,
-      "xp": 4022,
-      "gold": 0,
+      "xp": 4120,
+      "gold": 17,
       "stats": {
         "STR": 14,
         "DEX": 12,
@@ -193,8 +193,8 @@
       "class_name": "Spellblade",
       "race_name": "Human",
       "level": 5,
-      "xp": 4193,
-      "gold": 0,
+      "xp": 4296,
+      "gold": 17,
       "stats": {
         "STR": 22,
         "DEX": 18,
@@ -381,8 +381,8 @@
       "class_name": "Witch",
       "race_name": "Elf",
       "level": 5,
-      "xp": 4022,
-      "gold": 0,
+      "xp": 4120,
+      "gold": 17,
       "stats": {
         "STR": 15,
         "DEX": 12,
@@ -443,7 +443,7 @@
           "name": "Mass Sleep",
           "cost": 22,
           "resource": "INT-MP",
-          "type": "spell",
+          "type": "aoe",
           "level": 5,
           "power": 0,
           "status": "Sleep",
@@ -512,8 +512,8 @@
       "class_name": "Paladin",
       "race_name": "Human",
       "level": 5,
-      "xp": 4193,
-      "gold": 0,
+      "xp": 4296,
+      "gold": 17,
       "stats": {
         "STR": 21,
         "DEX": 19,
@@ -610,7 +610,20 @@
         "head": null,
         "crown": null,
         "body": null,
-        "hands": null,
+        "hands": {
+          "name": "Padded Arm Guards",
+          "appraised_name": "Padded Arm Guards",
+          "type": "armor",
+          "slot": "hands",
+          "subtype": "bracers",
+          "rarity": "common",
+          "defense": 2,
+          "description": "Thick leather wrapped around the forearms. Simple protection.",
+          "identified": true,
+          "estimated_value": 75,
+          "magic_identified": true,
+          "material_identified": true
+        },
         "feet": null,
         "neck": null,
         "ring1": null,
@@ -632,8 +645,8 @@
       "class_name": "Monk",
       "race_name": "Halfling",
       "level": 5,
-      "xp": 3946,
-      "gold": 13,
+      "xp": 4039,
+      "gold": 30,
       "stats": {
         "STR": 16,
         "DEX": 22,
@@ -713,7 +726,80 @@
           "desc": "Restore HP through deep meditation."
         }
       ],
-      "inventory": [],
+      "inventory": [
+        {
+          "name": "Iron Ki Beads",
+          "appraised_name": "Iron Ki Beads",
+          "type": "accessory",
+          "slot": "ring1",
+          "subtype": "amulet",
+          "rarity": "uncommon",
+          "effect": {
+            "wis_bonus": 1
+          },
+          "magic_resist": 1,
+          "description": "Simple iron beads worn during meditation. Steadies the Ki. +1 WIS.",
+          "identified": true,
+          "estimated_value": 95,
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Web Spinner Silk",
+          "type": "material",
+          "subtype": "reagent",
+          "rarity": "uncommon",
+          "tier": 2,
+          "identify_difficulty": 1,
+          "unidentified_name": "Viscous Silk Bundle",
+          "unidentified_desc": "A clump of sticky glowing web.",
+          "appraised_name": "Fading Web Silk",
+          "material_desc": "Dense silk infused with Fading energy. Tier 2 reagent.",
+          "magic_desc": "Charged with planar energy.",
+          "estimated_value": 18,
+          "description": "A bundle of glowing web silk.",
+          "identified": true,
+          "source": "Web Spinner",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 2
+        },
+        {
+          "name": "Spider Silk Bundle",
+          "type": "material",
+          "subtype": "reagent",
+          "rarity": "common",
+          "tier": 1,
+          "identify_difficulty": 1,
+          "unidentified_name": "Silk Bundle",
+          "unidentified_desc": "A mass of wound silk threads.",
+          "appraised_name": "Spider Egg Silk",
+          "material_desc": "Protective silk from an egg sac. Tier 1 material.",
+          "magic_desc": "No magical properties.",
+          "estimated_value": 5,
+          "description": "Silk from a spider egg sac.",
+          "identified": true,
+          "source": "Egg Sac",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Spider Silk",
+          "type": "material",
+          "subtype": "cloth",
+          "rarity": "common",
+          "tier": 1,
+          "estimated_value": 12,
+          "identified": true,
+          "description": "Tough, lightweight silk from a giant spider.",
+          "source": "Giant Spider",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 3
+        }
+      ],
       "equipment": {
         "weapon": {
           "name": "Blessed Handwraps",
@@ -802,6 +888,7 @@
           "description": "Simple iron beads worn during meditation. Steadies the Ki. +1 WIS.",
           "identified": true,
           "estimated_value": 95,
+          "_wis_bonus": true,
           "magic_identified": true,
           "material_identified": true,
           "stack": 1
@@ -858,8 +945,8 @@
       "class_name": "Ranger",
       "race_name": "Half-Orc",
       "level": 5,
-      "xp": 3980,
-      "gold": 40,
+      "xp": 4078,
+      "gold": 56,
       "stats": {
         "STR": 20,
         "DEX": 22,
@@ -1053,46 +1140,46 @@
   "character_bank": [],
   "knowledge": {
     "identified_items": [
-      "Web Spinner Silk",
-      "Light Crossbow",
-      "Short Bow",
-      "Mana Crystal",
-      "Rat Tail",
-      "Spider Mandible",
+      "Carved Oak Wand",
       "Blessed Handwraps",
-      "Crude Knife",
-      "Scroll of Protection",
-      "Shadowbind Gauntlets",
+      "Leather Vest",
+      "Spider Silk Bundle",
+      "Spider Mandible",
+      "Traveler's Clothes",
       "Goblin Ear",
       "Crude Snare Wire",
-      "Healing Potion",
-      "Walking Stick",
-      "Padded Arm Guards",
-      "Goblin Shiv",
-      "Lurker Fang",
-      "Wooden Club",
-      "Monk Unarmed",
-      "Copper Ring of Endurance",
-      "Soft Leather Shoes",
       "Iron Javelin",
-      "Fading-Touched Pelt",
-      "Worn Longsword",
-      "Glowing Spore Sac",
-      "Phase Spider Silk",
-      "Chain Shirt",
-      "Iron Ki Beads",
+      "Goblin Shiv",
+      "Spider Silk",
       "Wooden Shield",
-      "Bat Wing",
-      "Minor Healing Potion",
-      "Phase Spider Eye",
-      "Carved Oak Wand",
-      "Spider Silk Bundle",
-      "Traveler's Clothes",
+      "Light Crossbow",
       "Longbow",
-      "Rusty Knife",
-      "Leather Vest",
+      "Minor Healing Potion",
+      "Phase Spider Silk",
+      "Soft Leather Shoes",
+      "Glowing Spore Sac",
+      "Lurker Fang",
+      "Padded Arm Guards",
+      "Rat Tail",
+      "Monk Unarmed",
       "Spider Silk Thread",
-      "Spider Silk"
+      "Healing Potion",
+      "Rusty Knife",
+      "Scroll of Protection",
+      "Walking Stick",
+      "Crude Knife",
+      "Fading-Touched Pelt",
+      "Iron Ki Beads",
+      "Web Spinner Silk",
+      "Chain Shirt",
+      "Short Bow",
+      "Wooden Club",
+      "Copper Ring of Endurance",
+      "Bat Wing",
+      "Phase Spider Eye",
+      "Mana Crystal",
+      "Shadowbind Gauntlets",
+      "Worn Longsword"
     ],
     "known_enemies": {
       "Cave Bat": 2,
@@ -1202,9 +1289,9 @@
     }
   },
   "world_state": {
-    "party_x": 25,
-    "party_y": 47,
-    "step_counter": 0,
+    "party_x": 21,
+    "party_y": 42,
+    "step_counter": 10,
     "discovered_locations": [
       "abandoned_mine",
       "briarhollow",
@@ -1224,6 +1311,10 @@
       ],
       [
         21,
+        39
+      ],
+      [
+        22,
         39
       ],
       [
@@ -1547,6 +1638,10 @@
         47
       ],
       [
+        20,
+        48
+      ],
+      [
         21,
         48
       ],
@@ -1593,6 +1688,10 @@
       [
         32,
         48
+      ],
+      [
+        20,
+        49
       ],
       [
         21,
@@ -4562,6 +4661,10 @@
             11
           ],
           [
+            22,
+            11
+          ],
+          [
             23,
             11
           ],
@@ -5544,6 +5647,28 @@
           [
             28,
             24
+          ]
+        ],
+        "trap_states": [
+          [
+            12,
+            12,
+            false,
+            false,
+            true
+          ],
+          [
+            13,
+            12,
+            true,
+            false,
+            true
+          ]
+        ],
+        "dead_enemies": [
+          [
+            13,
+            10
           ]
         ]
       },
@@ -7772,6 +7897,12 @@
           [
             28,
             23
+          ]
+        ],
+        "dead_enemies": [
+          [
+            8,
+            8
           ]
         ]
       },
