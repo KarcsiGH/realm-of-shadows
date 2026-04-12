@@ -227,94 +227,68 @@ LEVEL_STAT_GAINS["Ascetic"] = {
 #  CLASS TRANSITIONS
 # ═══════════════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════════════
+#  CLASS TRANSITIONS
+# ═══════════════════════════════════════════════════════════════
+# Any class can transition to any other — only stat requirements gate it.
+# On transition: level resets to 1, top 3 mastered abilities kept,
+# XP gain +60% until former level is re-reached.
 CLASS_TRANSITIONS = {
-    # ── HYBRID CLASSES (level 10) ────────────────────────────────────────────
-    # Two base classes merge. A character qualifies if their current class is
-    # EITHER parent class and they meet the stat minimums.
-    # Fighter hybrids
-    "Paladin":      {"base_classes": ["Fighter", "Cleric"],  "min_level": 10,
-                     "min_stats": {"STR": 14, "PIE": 14},
+    # ── Advanced / Hybrid classes (stat-gated) ───────────────────────────────
+    "Paladin":      {"stat_req": {"STR": 14, "PIE": 14},
                      "description": "Holy warrior combining divine magic and combat prowess."},
-    "Spellblade":   {"base_classes": ["Fighter", "Mage"],    "min_level": 10,
-                     "min_stats": {"STR": 12, "INT": 14},
+    "Spellblade":   {"stat_req": {"STR": 12, "INT": 14},
                      "description": "Arcane warrior who channels spells through their blade."},
-    "Warder":       {"base_classes": ["Fighter", "Thief"],   "min_level": 10,
-                     "min_stats": {"STR": 12, "DEX": 14},
+    "Warder":       {"stat_req": {"STR": 12, "DEX": 14},
                      "description": "Tactical combatant combining heavy strikes and shadow techniques."},
-    "Duskblade":    {"base_classes": ["Fighter", "Ranger"],  "min_level": 10,
-                     "min_stats": {"STR": 12, "DEX": 14},
+    "Duskblade":    {"stat_req": {"STR": 12, "DEX": 14},
                      "description": "Mobile skirmisher excelling at rapid movement and precise strikes."},
-    "Guardian":     {"base_classes": ["Fighter", "Monk"],    "min_level": 10,
-                     "min_stats": {"STR": 14, "CON": 14},
+    "Guardian":     {"stat_req": {"STR": 14, "CON": 14},
                      "description": "Armored protector channeling ki to defend allies."},
-    # Mage hybrids
-    "Witch":        {"base_classes": ["Mage", "Cleric"],     "min_level": 10,
-                     "min_stats": {"INT": 14, "PIE": 12, "WIS": 14},
+    "Witch":        {"stat_req": {"INT": 14, "PIE": 12},
                      "description": "Dark spellcaster blending arcane and divine powers."},
-    "Necromancer":  {"base_classes": ["Mage", "Thief"],      "min_level": 10,
-                     "min_stats": {"INT": 16, "WIS": 12},
+    "Necromancer":  {"stat_req": {"INT": 16, "WIS": 12},
                      "description": "Master of death magic, draining life and raising the fallen."},
-    "Druid":        {"base_classes": ["Mage", "Ranger"],     "min_level": 10,
-                     "min_stats": {"INT": 12, "WIS": 16},
+    "Druid":        {"stat_req": {"INT": 12, "WIS": 16},
                      "description": "Nature spellcaster harnessing elemental and healing powers."},
-    "Mystic":       {"base_classes": ["Mage", "Monk"],       "min_level": 10,
-                     "min_stats": {"INT": 14, "WIS": 12},
+    "Mystic":       {"stat_req": {"INT": 14, "WIS": 12},
                      "description": "Arcane ki master fusing magical theory with inner discipline."},
-    # Cleric hybrids
-    "Warden":       {"base_classes": ["Cleric", "Ranger"],   "min_level": 10,
-                     "min_stats": {"PIE": 12, "WIS": 14},
+    "Warden":       {"stat_req": {"PIE": 12, "WIS": 14},
                      "description": "Ancient guardian combining divine protection and nature's power."},
-    "Inquisitor":   {"base_classes": ["Cleric", "Thief"],    "min_level": 10,
-                     "min_stats": {"PIE": 14, "DEX": 12},
+    "Inquisitor":   {"stat_req": {"PIE": 14, "DEX": 12},
                      "description": "Shadow-wielding divine agent who hunts the corrupt."},
-    "Templar":      {"base_classes": ["Cleric", "Monk"],     "min_level": 10,
-                     "min_stats": {"PIE": 12, "CON": 14},
+    "Templar":      {"stat_req": {"PIE": 12, "CON": 14},
                      "description": "Devoted warrior combining divine faith and physical discipline."},
-    # Thief/Ranger hybrids
-    "Assassin":     {"base_classes": ["Ranger", "Thief"],    "min_level": 10,
-                     "min_stats": {"DEX": 16, "WIS": 10},
+    "Assassin":     {"stat_req": {"DEX": 16, "WIS": 10},
                      "description": "Lethal hunter combining tracking, poisons, and shadow strikes."},
-    "Shaman":       {"base_classes": ["Ranger", "Monk"],     "min_level": 10,
-                     "min_stats": {"WIS": 14, "CON": 12},
+    "Shaman":       {"stat_req": {"WIS": 14, "CON": 12},
                      "description": "Wilderness spiritualist drawing ki from the natural world."},
-
-    # ── APEX CLASSES (level 15, pure-line) ───────────────────────────────────
-    # One base class perfected. Requires reaching level 15 in that lineage.
-    "Warder":       None,  # placeholder — see above (Warder is also a hybrid)
-    "Archmage":     {"base_classes": ["Mage"],        "min_level": 15,
-                     "min_stats": {"INT": 20, "WIS": 16},
+    # ── Apex classes (higher stat requirements) ──────────────────────────────
+    "Archmage":     {"stat_req": {"INT": 20, "WIS": 16},
                      "description": "Master of all arcane disciplines. Reality bends to their will."},
-    "High Priest":  {"base_classes": ["Cleric"],      "min_level": 15,
-                     "min_stats": {"PIE": 20, "WIS": 18},
+    "High Priest":  {"stat_req": {"PIE": 20, "WIS": 18},
                      "description": "Divine conduit of staggering power. Miracles are within reach."},
-    "Shadow Master":{"base_classes": ["Thief"],       "min_level": 15,
-                     "min_stats": {"DEX": 20, "WIS": 14},
+    "Shadow Master":{"stat_req": {"DEX": 20, "WIS": 14},
                      "description": "Absolute master of shadow. Death comes from darkness unseen."},
-    "Beastlord":    {"base_classes": ["Ranger"],      "min_level": 15,
-                     "min_stats": {"DEX": 18, "WIS": 18},
+    "Beastlord":    {"stat_req": {"DEX": 18, "WIS": 18},
                      "description": "One with the wild. Commands nature and hunts with primal fury."},
 }
-# Remove None placeholders
-CLASS_TRANSITIONS = {k: v for k, v in CLASS_TRANSITIONS.items() if v is not None}
 
 
 def get_available_transitions(character):
-    """Return list of class names this character can transition to."""
+    """Return list of class names this character can transition to.
+    Stat-gated only — any class can reach any other if stats are met.
+    No level requirement; the XP catch-up system handles balance."""
     available = []
     for cls_name, req in CLASS_TRANSITIONS.items():
         if cls_name == character.class_name:
-            continue
-        # Must be from a valid base class
-        if character.class_name not in req.get("base_classes", []):
-            continue
-        # Must meet minimum level
-        if character.level < req.get("min_level", 1):
-            continue
-        # Must meet stat minimums
+            continue  # already this class
+        stat_req = req.get("stat_req", {})
         if all(character.stats.get(stat, 0) >= minimum
-               for stat, minimum in req.get("min_stats", {}).items()):
+               for stat, minimum in stat_req.items()):
             available.append(cls_name)
     return available
+
 
 
 # ═══════════════════════════════════════════════════════════════

@@ -3065,14 +3065,14 @@ class TownUI:
                                       ar.width-12, (100,93,75) if not is_known else (120,125,150), get_font(10))
                     ay += ar.height + 4
 
-        # Transitions bar — show only classes reachable from current class
+        # Transitions bar — show all classes reachable by stat (any class → any class)
         ty = SCREEN_H - 68
         draw_text(surface, "Transitions:", 20, ty, DIM_GOLD, 12)
         tx = 130
         self._classtree_transition_rects = []
         for tn, req in CLASS_TRANSITIONS.items():
-            if c.class_name not in req.get("base_classes", []):
-                continue  # not reachable from current class
+            if tn == c.class_name:
+                continue  # skip current class
             can = tn in get_available_transitions(c)
             tc2 = PURPLE if can else (60,50,50)
             bg2 = (35,16,50) if can else (20,16,16)
@@ -3080,8 +3080,10 @@ class TownUI:
             pygame.draw.rect(surface, bg2, tr2, border_radius=3)
             pygame.draw.rect(surface, tc2, tr2, 1, border_radius=3)
             draw_text(surface, tn, tr2.x+8, tr2.y+4, tc2, 11)
-            _req_lv = req.get("min_level", 10)
-            draw_text(surface, f"Lv{_req_lv}+", tr2.x+4, tr2.y-13, (72,66,50), 10)
+            # Show primary stat requirement
+            stat_req = req.get("stat_req", {})
+            req_str = "/".join(f"{s}{v}" for s, v in list(stat_req.items())[:2])
+            draw_text(surface, req_str, tr2.x+4, tr2.y-13, (72,66,50), 10)
             if can:
                 draw_text(surface, "CLICK", tr2.x+4, tr2.y+tr2.height+2, (90,160,120), 9)
             self._classtree_transition_rects.append((tr2, tn, can))
@@ -3255,27 +3257,24 @@ class TownUI:
             badge_y = card_r.y + 10
             name_mw = (CARD_W - 70) if selected else (CARD_W - 24)
             draw_class_badge(surface, tn, badge_x, badge_y, 20)
-            # Tier from actual min_level
-            min_level = req.get("min_level", 10)
-            if min_level >= 15:
-                tier_label = "Apex"
-                tier_col   = (220, 160, 80)
-            else:
-                tier_label = "Hybrid"
-                tier_col   = (140, 180, 220)
+            stat_req = req.get("stat_req", {})
+            max_req  = max(stat_req.values(), default=0)
+            tier_label = "Apex" if max_req >= 18 else "Advanced"
+            tier_col   = (220, 160, 80) if max_req >= 18 else (140, 180, 220)
+            req_str    = "  ".join(f"{s}≥{v}" for s, v in stat_req.items())
             name_col   = tc_col if can else (60, 54, 50)
             draw_text(surface, tn, badge_x + 28, badge_y + 2,
                       name_col, 17, bold=True, max_width=name_mw)
-            draw_text(surface, f"{tier_label}  ·  Level {min_level}+",
+            draw_text(surface, f"{tier_label}  ·  {req_str}",
                       badge_x + 28, badge_y + 22, tier_col, 11)
 
             # Stat requirements
             req_y = card_r.y + 56
-            for stat, minimum in req.get("min_stats", {}).items():
+            for stat, minimum in req.get("stat_req", {}).items():
                 actual = c.stats.get(stat, 0)
                 met    = actual >= minimum
                 draw_text(surface,
-                          f"{'✓' if met else '✗'} {stat} {minimum}  ({actual})",
+                          f"{'✓' if met else '✗'} {stat} ≥ {minimum}  (have {actual})",
                           card_r.x + 10, req_y,
                           (80, 200, 100) if met else (200, 80, 80), 11)
                 req_y += 16
@@ -3334,18 +3333,18 @@ class TownUI:
                 lock_surf = pygame.Surface((CARD_W, CARD_H_BASE), pygame.SRCALPHA)
                 lock_surf.fill((0, 0, 0, 100))
                 surface.blit(lock_surf, (card_r.x, card_r.y))
-                blocking = [(s, m) for s, m in req.get("min_stats", {}).items()
+                blocking = [(s, m) for s, m in req.get("stat_req", {}).items()
                             if c.stats.get(s, 0) < m]
                 if blocking:
                     stat, need = blocking[0]
                     draw_text(surface,
-                              f"Requires {stat} {need}  (have {c.stats.get(stat,0)})",
+                              f"Need {stat} ≥ {need}  (have {c.stats.get(stat,0)})",
                               card_r.x + 10, card_r.y + card_h - 24,
                               (160, 80, 80), 11)
                 else:
-                    draw_text(surface, f"Requires Level {req.get('min_level', 10)}+",
+                    draw_text(surface, "Meets requirements",
                               card_r.x + 10, card_r.y + card_h - 24,
-                              (140, 80, 60), 11)
+                              (80, 200, 80), 11)
 
         # ── Pass 1: draw all NON-selected cards ───────────────────────────────
         for d in card_data:
