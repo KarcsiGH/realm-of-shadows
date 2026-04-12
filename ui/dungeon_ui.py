@@ -1519,6 +1519,10 @@ class DungeonUI:
         VW    = VP_W
         HH    = VH // 2
         zbuf  = self._zbuf
+        # Reset zbuf every frame — must be fresh before wall columns fill it.
+        # Stale zeros from __init__ (or a dropped frame) make all sprites invisible.
+        for _i in range(VW):
+            zbuf[_i] = 20.0   # default to max torch distance (no wall)
         flick = 0.95 + 0.05 * self.pulse
         FOG   = TORCH_DIST
 
