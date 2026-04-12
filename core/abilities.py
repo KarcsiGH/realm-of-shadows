@@ -634,6 +634,153 @@ CLASS_ABILITIES = {
          "desc": "Call all fallen party members back as ancestor spirits for 1 full round. They act again at full power before departing."},
     ],
 }
+# ─────────────────────────────────────────────────────────────────────────────
+#  ADVANCED CLASS ABILITIES
+# ─────────────────────────────────────────────────────────────────────────────
+
+CLASS_ABILITIES["Guardian"] = [
+    {"name": "Shield Slam",    "level": 1,  "type": "attack",  "cost": 8,  "resource": "SP", "desc": "Slam with your shield, stunning the target briefly."},
+    {"name": "Bulwark Stance", "level": 2,  "type": "buff",    "cost": 6,  "resource": "SP", "desc": "Fortify position — reduce incoming damage by 30%."},
+    {"name": "Guardian's Cry", "level": 3,  "type": "buff",    "cost": 10, "resource": "SP", "desc": "Rally allies, granting +15% damage for 3 rounds."},
+    {"name": "Iron Will",      "level": 5,  "type": "buff",    "cost": 12, "resource": "SP", "desc": "Channel inner strength, becoming immune to fear and stun."},
+    {"name": "Protect",        "level": 6,  "type": "buff",    "cost": 8,  "resource": "SP", "desc": "Intercept the next hit aimed at an ally, taking the damage yourself."},
+    {"name": "Tremor Slam",    "level": 8,  "type": "aoe",     "cost": 18, "resource": "SP", "desc": "Pound the ground, damaging all front-row enemies and knocking them back."},
+    {"name": "Fortress",       "level": 10, "type": "buff",    "cost": 20, "resource": "SP", "desc": "Become an immovable wall — cannot be moved or stunned, defense doubled."},
+    {"name": "Last Guardian",  "level": 12, "type": "buff",    "cost": 25, "resource": "SP", "desc": "When HP falls below 20%, gain a surge of power and protect all allies for 2 rounds."},
+]
+
+CLASS_ABILITIES["Inquisitor"] = [
+    {"name": "Interrogate",     "level": 1,  "type": "debuff",  "cost": 6,  "resource": "SP", "desc": "Weaken enemy defenses through relentless pressure."},
+    {"name": "Holy Blade",      "level": 2,  "type": "attack",  "cost": 8,  "resource": "SP", "desc": "Strike with divine energy, effective against undead and demons."},
+    {"name": "Shadow Mark",     "level": 3,  "type": "debuff",  "cost": 10, "resource": "SP", "desc": "Mark a target — all allies deal +20% damage to it for 3 rounds."},
+    {"name": "Expose Weakness", "level": 5,  "type": "debuff",  "cost": 12, "resource": "SP", "desc": "Shatter armor with precision strikes, reducing enemy defense by 25%."},
+    {"name": "Condemn",         "level": 6,  "type": "attack",  "cost": 14, "resource": "PIE-MP", "desc": "Channel divine wrath, dealing heavy holy damage to a single target."},
+    {"name": "Silence",         "level": 8,  "type": "debuff",  "cost": 16, "resource": "SP", "desc": "Prevent the target from casting spells for 3 rounds."},
+    {"name": "Righteous Hunt",  "level": 10, "type": "buff",    "cost": 20, "resource": "SP", "desc": "Enter a focused state — every attack reveals enemy vulnerabilities."},
+    {"name": "Divine Sentence", "level": 12, "type": "attack",  "cost": 30, "resource": "PIE-MP", "desc": "Final judgment — massive holy damage that ignores magic resistance."},
+]
+
+CLASS_ABILITIES["Warden"] = [
+    {"name": "Thornwall",       "level": 1,  "type": "buff",    "cost": 8,  "resource": "PIE-MP", "desc": "Summon a barrier of thorns that damages attackers."},
+    {"name": "Nature's Ward",   "level": 2,  "type": "heal",    "cost": 10, "resource": "PIE-MP", "desc": "Channel nature's energy to heal a single ally."},
+    {"name": "Ancient Seal",    "level": 3,  "type": "debuff",  "cost": 12, "resource": "PIE-MP", "desc": "Bind an enemy in place with ancient wards."},
+    {"name": "Grove Shield",    "level": 5,  "type": "buff",    "cost": 14, "resource": "PIE-MP", "desc": "Envelop the party in protective bark, reducing all incoming damage."},
+    {"name": "Verdant Pulse",   "level": 6,  "type": "aoe_heal","cost": 18, "resource": "PIE-MP", "desc": "Release healing energy in a pulse, restoring HP to all allies."},
+    {"name": "Petrify",         "level": 8,  "type": "debuff",  "cost": 20, "resource": "PIE-MP", "desc": "Turn an enemy to stone for 2 rounds — completely incapacitated."},
+    {"name": "Call of the Deep", "level": 10, "type": "aoe",    "cost": 24, "resource": "PIE-MP", "desc": "Ancient power erupts — all enemies take heavy nature damage."},
+    {"name": "Warden's Vigil",  "level": 12, "type": "buff",    "cost": 30, "resource": "PIE-MP", "desc": "Grant the party regeneration and damage reduction for 5 rounds."},
+]
+
+CLASS_ABILITIES["Templar"] = [
+    {"name": "Holy Strike",     "level": 1,  "type": "attack",  "cost": 8,  "resource": "SP", "desc": "A righteous blow charged with divine energy."},
+    {"name": "Devotion",        "level": 2,  "type": "buff",    "cost": 10, "resource": "PIE-MP", "desc": "Pray for divine favor — increase party's resistance for 3 rounds."},
+    {"name": "Smite",           "level": 3,  "type": "attack",  "cost": 12, "resource": "PIE-MP", "desc": "Channel divine wrath into a powerful strike."},
+    {"name": "Sacred Ground",   "level": 5,  "type": "buff",    "cost": 14, "resource": "PIE-MP", "desc": "Consecrate the battlefield, weakening undead and demons."},
+    {"name": "Lay on Hands",    "level": 6,  "type": "heal",    "cost": 16, "resource": "PIE-MP", "desc": "Touch an ally to fully restore their HP."},
+    {"name": "Divine Aegis",    "level": 8,  "type": "buff",    "cost": 20, "resource": "PIE-MP", "desc": "Surround a party member with a divine shield absorbing damage."},
+    {"name": "Holy Nova",       "level": 10, "type": "aoe",     "cost": 25, "resource": "PIE-MP", "desc": "Release a burst of divine energy, damaging all enemies."},
+    {"name": "Avatar of Faith", "level": 12, "type": "buff",    "cost": 35, "resource": "PIE-MP", "desc": "Become a conduit of divine power — massively boost all stats for 3 rounds."},
+]
+
+CLASS_ABILITIES["Warder"] = [
+    {"name": "Counter Cut",     "level": 1,  "type": "attack",  "cost": 8,  "resource": "SP", "desc": "Punish missed attacks with a swift counter-strike."},
+    {"name": "Pressure",        "level": 2,  "type": "debuff",  "cost": 6,  "resource": "SP", "desc": "Relentless pressure that forces an enemy to act last this round."},
+    {"name": "Feint",           "level": 3,  "type": "debuff",  "cost": 10, "resource": "SP", "desc": "Misdirect the enemy, causing their next attack to miss."},
+    {"name": "Shadow Dash",     "level": 5,  "type": "attack",  "cost": 12, "resource": "SP", "desc": "Blur across the battlefield, attacking from an unexpected angle."},
+    {"name": "Exploit",         "level": 6,  "type": "attack",  "cost": 14, "resource": "SP", "desc": "Target an enemy's weak point for massive damage."},
+    {"name": "Unbreakable",     "level": 8,  "type": "buff",    "cost": 18, "resource": "SP", "desc": "Shrug off the next crippling hit — remain standing at 1 HP."},
+    {"name": "Bladestorm",      "level": 10, "type": "aoe",     "cost": 22, "resource": "SP", "desc": "Whirl in a deadly storm of blades hitting all enemies."},
+    {"name": "Perfect Form",    "level": 12, "type": "buff",    "cost": 28, "resource": "SP", "desc": "Enter a state of perfection — every attack is a critical hit for 2 rounds."},
+]
+
+CLASS_ABILITIES["Archmage"] = [
+    {"name": "Mana Surge",      "level": 1,  "type": "buff",    "cost": 15, "resource": "INT-MP", "desc": "Overcharge your next spell — deal 50% extra damage but costs additional mana."},
+    {"name": "Arcane Torrent",  "level": 2,  "type": "aoe",     "cost": 20, "resource": "INT-MP", "desc": "Unleash a torrent of raw magical energy at all enemies."},
+    {"name": "Time Stop",       "level": 3,  "type": "debuff",  "cost": 25, "resource": "INT-MP", "desc": "Freeze a single enemy in time for 2 rounds."},
+    {"name": "Meteor",          "level": 5,  "type": "aoe",     "cost": 30, "resource": "INT-MP", "desc": "Call down a devastating meteor, crushing all enemies."},
+    {"name": "Spell Mastery",   "level": 6,  "type": "buff",    "cost": 20, "resource": "INT-MP", "desc": "Amplify your next spell — cast it again for free immediately."},
+    {"name": "Void Rift",       "level": 8,  "type": "aoe",     "cost": 35, "resource": "INT-MP", "desc": "Tear open a rift in reality dealing massive damage to all."},
+    {"name": "Arcane Overload", "level": 10, "type": "attack",  "cost": 40, "resource": "INT-MP", "desc": "Push beyond limits — deal catastrophic damage, exhaust mana pool."},
+    {"name": "Reality Unravel", "level": 12, "type": "aoe",     "cost": 50, "resource": "INT-MP", "desc": "Unravel the fabric of reality — bypass all defenses, devastate all foes."},
+]
+
+CLASS_ABILITIES["High Priest"] = [
+    {"name": "Mass Heal",       "level": 1,  "type": "aoe_heal","cost": 20, "resource": "PIE-MP", "desc": "Restore significant HP to all party members."},
+    {"name": "Divine Intervention","level": 2,"type": "buff",   "cost": 25, "resource": "PIE-MP", "desc": "Prevent one ally from dying — they survive with 1 HP once."},
+    {"name": "Consecrate",      "level": 3,  "type": "aoe",     "cost": 22, "resource": "PIE-MP", "desc": "Consecrate the area, dealing holy damage to all enemies."},
+    {"name": "Miracle",         "level": 5,  "type": "heal",    "cost": 30, "resource": "PIE-MP", "desc": "Restore full HP to one ally and cleanse all negative status effects."},
+    {"name": "Sanctify",        "level": 6,  "type": "buff",    "cost": 28, "resource": "PIE-MP", "desc": "Bless the party — all members gain magic resistance for 4 rounds."},
+    {"name": "Plague Ward",     "level": 8,  "type": "buff",    "cost": 25, "resource": "PIE-MP", "desc": "Create a ward preventing any disease, poison, or curse from affecting the party."},
+    {"name": "Absolution",      "level": 10, "type": "aoe",     "cost": 40, "resource": "PIE-MP", "desc": "Unleash overwhelming divine power — deal massive holy damage to all foes."},
+    {"name": "Ascension",       "level": 12, "type": "buff",    "cost": 50, "resource": "PIE-MP", "desc": "The divine descends — all allies are fully healed and empowered for 3 rounds."},
+]
+
+CLASS_ABILITIES["Shadow Master"] = [
+    {"name": "From Darkness",   "level": 1,  "type": "attack",  "cost": 10, "resource": "SP", "desc": "Strike from complete concealment — impossible to dodge."},
+    {"name": "Shadow Clone",    "level": 2,  "type": "buff",    "cost": 14, "resource": "SP", "desc": "Create a shadow decoy — next attack against you hits the clone instead."},
+    {"name": "Nightmare",       "level": 3,  "type": "debuff",  "cost": 16, "resource": "SP", "desc": "Plunge an enemy into terror — they lose their next action."},
+    {"name": "Death Mark",      "level": 5,  "type": "debuff",  "cost": 18, "resource": "SP", "desc": "Mark a target for death — all damage they receive is doubled."},
+    {"name": "Void Step",       "level": 6,  "type": "buff",    "cost": 20, "resource": "SP", "desc": "Step through shadow — become untargetable for 1 round."},
+    {"name": "Entropy",         "level": 8,  "type": "aoe",     "cost": 24, "resource": "SP", "desc": "Spread shadow energy across all enemies, weakening and damaging each."},
+    {"name": "Heartseeker",     "level": 10, "type": "attack",  "cost": 30, "resource": "SP", "desc": "Find the killing blow — guaranteed critical, ignores armor."},
+    {"name": "Shadow World",    "level": 12, "type": "aoe",     "cost": 40, "resource": "SP", "desc": "Drag all enemies into shadow — devastating multi-target assault."},
+]
+
+CLASS_ABILITIES["Beastlord"] = [
+    {"name": "Primal Roar",     "level": 1,  "type": "debuff",  "cost": 8,  "resource": "SP", "desc": "Terrify enemies with a primal roar, reducing their accuracy."},
+    {"name": "Pack Hunt",       "level": 2,  "type": "attack",  "cost": 10, "resource": "SP", "desc": "Call upon animal instincts — multi-strike attack hitting 2-4 times."},
+    {"name": "Feral Stance",    "level": 3,  "type": "buff",    "cost": 12, "resource": "SP", "desc": "Enter a feral state — increase attack speed and crit chance."},
+    {"name": "Predator's Mark", "level": 5,  "type": "debuff",  "cost": 14, "resource": "SP", "desc": "Mark prey — deal bonus damage proportional to target's missing HP."},
+    {"name": "Wild Surge",      "level": 6,  "type": "buff",    "cost": 16, "resource": "SP", "desc": "Channel primal energy — dramatically increase STR and DEX for 3 rounds."},
+    {"name": "Stampede",        "level": 8,  "type": "aoe",     "cost": 22, "resource": "SP", "desc": "Summon a herd of beasts that trample all enemies."},
+    {"name": "Alpha Strike",    "level": 10, "type": "attack",  "cost": 28, "resource": "SP", "desc": "The apex predator's killing blow — overwhelming single-target devastation."},
+    {"name": "Lord of Beasts",  "level": 12, "type": "buff",    "cost": 35, "resource": "SP", "desc": "Become one with all creatures — enter an unstoppable primal frenzy."},
+]
+
+CLASS_ABILITIES["Phantom"] = [
+    {"name": "Ghost Strike",    "level": 1,  "type": "attack",  "cost": 8,  "resource": "INT-MP", "desc": "Strike through defenses with an ethereal blade."},
+    {"name": "Phase Shift",     "level": 2,  "type": "buff",    "cost": 12, "resource": "INT-MP", "desc": "Partially phase out of reality — take reduced physical damage."},
+    {"name": "Haunt",           "level": 3,  "type": "debuff",  "cost": 14, "resource": "INT-MP", "desc": "Haunt a target, causing them to miss attacks and act erratically."},
+    {"name": "Spectral Form",   "level": 5,  "type": "buff",    "cost": 18, "resource": "INT-MP", "desc": "Become fully ethereal — immune to physical damage for 2 rounds."},
+    {"name": "Soul Rend",       "level": 6,  "type": "attack",  "cost": 20, "resource": "INT-MP", "desc": "Tear at the enemy's essence — deals damage that ignores all resistance."},
+    {"name": "Wraithform",      "level": 8,  "type": "buff",    "cost": 24, "resource": "INT-MP", "desc": "Full wraith form — pass through attacks and strike from any position."},
+    {"name": "Spirit Bomb",     "level": 10, "type": "aoe",     "cost": 32, "resource": "INT-MP", "desc": "Detonate a sphere of spectral energy, hitting all enemies."},
+    {"name": "Death's Embrace", "level": 12, "type": "buff",    "cost": 40, "resource": "INT-MP", "desc": "Embrace undeath temporarily — become invulnerable and deal devastating spirit damage."},
+]
+
+CLASS_ABILITIES["Knight"] = [
+    {"name": "Lance Charge",    "level": 1,  "type": "attack",  "cost": 8,  "resource": "SP", "desc": "Charge the enemy with full momentum — massive impact damage."},
+    {"name": "Heavy Blow",      "level": 2,  "type": "attack",  "cost": 10, "resource": "SP", "desc": "A slow but devastating overhead strike."},
+    {"name": "Inspire",         "level": 3,  "type": "buff",    "cost": 12, "resource": "SP", "desc": "Inspire allies — grant +10% accuracy and +15% damage for 3 rounds."},
+    {"name": "Iron Discipline", "level": 5,  "type": "buff",    "cost": 14, "resource": "SP", "desc": "Steel the party's resolve — grant immunity to fear and confusion."},
+    {"name": "Cavalry Slash",   "level": 6,  "type": "aoe",     "cost": 18, "resource": "SP", "desc": "Sweep your blade in an arc, striking all front-row enemies."},
+    {"name": "Siege Breaker",   "level": 8,  "type": "attack",  "cost": 22, "resource": "SP", "desc": "Crash through enemy formations, hitting front and mid rows."},
+    {"name": "Champion's Stand","level": 10, "type": "buff",    "cost": 28, "resource": "SP", "desc": "Stand firm — all damage reduced by 50% for 3 rounds, cannot be moved."},
+    {"name": "Glory Charge",    "level": 12, "type": "aoe",     "cost": 36, "resource": "SP", "desc": "Lead a devastating charge — all enemies take massive damage."},
+]
+
+CLASS_ABILITIES["Strider"] = [
+    {"name": "Fleet Foot",      "level": 1,  "type": "buff",    "cost": 6,  "resource": "SP", "desc": "Dramatically increase speed — act first every round for 2 rounds."},
+    {"name": "Rapid Shot",      "level": 2,  "type": "attack",  "cost": 8,  "resource": "SP", "desc": "Fire a volley of quick arrows before the enemy can react."},
+    {"name": "Trailblazer",     "level": 3,  "type": "buff",    "cost": 10, "resource": "SP", "desc": "Scout ahead — increase party's speed and evasion."},
+    {"name": "Skirmish",        "level": 5,  "type": "attack",  "cost": 12, "resource": "SP", "desc": "Hit and run — attack then move to a safer position."},
+    {"name": "Wind Walk",       "level": 6,  "type": "buff",    "cost": 14, "resource": "SP", "desc": "Move at impossible speed — avoid all attacks for 1 round."},
+    {"name": "Volley",          "level": 8,  "type": "aoe",     "cost": 18, "resource": "SP", "desc": "Rain arrows on all enemies with remarkable precision."},
+    {"name": "Ghost Runner",    "level": 10, "type": "buff",    "cost": 24, "resource": "SP", "desc": "Become a blur of motion — attacks hit with guaranteed crits."},
+    {"name": "Apex Predator",   "level": 12, "type": "attack",  "cost": 30, "resource": "SP", "desc": "The ultimate hunter's strike — cross any range and kill with precision."},
+]
+
+CLASS_ABILITIES["Ascetic"] = [
+    {"name": "Iron Skin",       "level": 1,  "type": "buff",    "cost": 6,  "resource": "Ki-SP", "desc": "Harden your body — reduce all incoming damage by 20%."},
+    {"name": "Purify",          "level": 2,  "type": "buff",    "cost": 8,  "resource": "Ki-SP", "desc": "Cleanse yourself of all negative status effects."},
+    {"name": "Focused Mind",    "level": 3,  "type": "buff",    "cost": 10, "resource": "Ki-SP", "desc": "Achieve mental clarity — dramatically increase accuracy and resistance."},
+    {"name": "Endure",          "level": 5,  "type": "buff",    "cost": 12, "resource": "Ki-SP", "desc": "Endure suffering — survive lethal damage at 1 HP once."},
+    {"name": "Chi Blast",       "level": 6,  "type": "attack",  "cost": 14, "resource": "Ki-SP", "desc": "Release concentrated chi energy in a devastating burst."},
+    {"name": "Stone Mind",      "level": 8,  "type": "buff",    "cost": 18, "resource": "Ki-SP", "desc": "Total mental fortitude — immune to all mental effects and charm."},
+    {"name": "Transcend Pain",  "level": 10, "type": "buff",    "cost": 22, "resource": "Ki-SP", "desc": "Rise above pain — function at full effectiveness regardless of HP."},
+    {"name": "Enlightenment",   "level": 12, "type": "buff",    "cost": 30, "resource": "Ki-SP", "desc": "Achieve enlightenment — all stats doubled, ultimate form, 3 rounds."},
+]
+
 
 
 
@@ -1189,3 +1336,4 @@ for _cls, _branch_levels in ABILITY_BRANCHES.items():
                 _existing_names.add(_opt["name"])
 
 
+# ── ABILITIES ARE APPENDED BELOW ENEMY_ABILITIES IN MAIN DICT ABOVE ──────────

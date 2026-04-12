@@ -2133,7 +2133,7 @@ class TownUI:
                       panel.x + 20, panel.y + 20, DARK_GREY, 15)
         else:
             iy = panel.y + 10
-            max_vis = 8
+            max_vis = 7  # 8 would overflow past CONTENT_MAX_Y=756
             start = self.sell_scroll
             end = min(len(char.inventory), start + max_vis)
 
