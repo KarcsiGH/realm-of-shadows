@@ -3123,9 +3123,10 @@ class TownUI:
         cls = CLASSES.get(c.class_name, {})
         char_col = cls.get("color", CREAM)
 
-        available = get_available_transitions(c)  # class names the char qualifies for now
+        available = get_available_transitions(c)  # class names the char qualifies for now (stat-gated)
+        # Show ALL transition targets (any class can go to any other — stat-gated only)
         all_possible = [(tn, req) for tn, req in CLASS_TRANSITIONS.items()
-                        if c.class_name in req.get("base_classes", [])]  # reachable from current class
+                        if tn != c.class_name]  # exclude only current class
 
         # ── Background ────────────────────────────────────────────────────────
         overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
@@ -3192,11 +3193,11 @@ class TownUI:
         GRID_BOT   = SCREEN_H - 60  # leave room for back button
 
         n_cards    = max(1, len(all_possible))
-        # 4 columns so 15 classes fit in 4 rows (4×4=16 slots) within screen height
+        # 4 columns — up to 5 rows for all 17 transition targets
         COLS       = min(4, n_cards)
-        CARD_GAP   = 10
+        CARD_GAP   = 8
         CARD_W     = (SCREEN_W - 40 - CARD_GAP * (COLS - 1)) // COLS
-        CARD_H_BASE= 140   # collapsed height
+        CARD_H_BASE= 130   # collapsed height — shorter to fit 5 rows
         GRID_X     = 20
 
         self._tc_card_rects   = []
@@ -3216,7 +3217,7 @@ class TownUI:
             cy       = GRID_TOP + row_i * (CARD_H_BASE + CARD_GAP)
             can      = tn in available
             selected = (self._tc_selected == tn)
-            card_h   = CARD_H_BASE + 180 if selected else CARD_H_BASE
+            card_h   = CARD_H_BASE + 200 if selected else CARD_H_BASE
             if cy + card_h > GRID_BOT - 4:
                 card_h = max(CARD_H_BASE, GRID_BOT - cy - 4)
             card_r   = pygame.Rect(cx, cy, CARD_W, card_h)
@@ -3235,125 +3236,159 @@ class TownUI:
             card_h   = d['card_h']
             tc_data  = CLASSES.get(tn, {})
             tc_col   = tc_data.get("color", CREAM)
+            stat_req = req.get("stat_req", {})
+            max_req  = max(stat_req.values(), default=0)
+            is_apex  = max_req >= 18
 
-            # Background + border
+            # ── Background + border ───────────────────────────────────────────
             if selected and can:
-                bg_col = (22, 35, 20);  bd_col = (80, 200, 120)
+                bg_col = (18, 32, 20);  bd_col = (80, 200, 120)
             elif can:
-                bg_col = (20, 18, 28);  bd_col = tc_col
+                hover_over = card_r.collidepoint(mx, my)
+                bg_col = (26, 22, 36) if hover_over else (18, 16, 26)
+                bd_col = tc_col
             else:
-                bg_col = (14, 12, 14);  bd_col = (40, 36, 36)
+                bg_col = (14, 12, 16);  bd_col = (45, 40, 45)
             pygame.draw.rect(surface, bg_col, card_r, border_radius=6)
             pygame.draw.rect(surface, bd_col, card_r,
-                             2 if not selected else 3, border_radius=6)
+                             3 if selected else 1, border_radius=6)
 
-            # ── Close (X) button — top-right of card, only when expanded ─────
+            # Apex shimmer — gold left-edge strip
+            if is_apex:
+                strip = pygame.Rect(card_r.x, card_r.y + 6, 3, card_r.height - 12)
+                pygame.draw.rect(surface, (220, 160, 60), strip, border_radius=2)
+
+            # ── Close button — only on expanded available card ─────────────────
             if selected and can:
-                close_r = pygame.Rect(card_r.right - 28, card_r.y + 8, 22, 22)
+                close_r = pygame.Rect(card_r.right - 28, card_r.y + 6, 22, 22)
                 self._tc_close_rect = close_r
                 chov = close_r.collidepoint(mx, my)
                 pygame.draw.rect(surface,
-                                 (70, 20, 20) if chov else (40, 14, 14),
-                                 close_r, border_radius=4)
+                                 (80, 20, 20) if chov else (45, 14, 14), close_r, border_radius=4)
                 pygame.draw.rect(surface,
-                                 (200, 80, 80) if chov else (120, 50, 50),
-                                 close_r, 1, border_radius=4)
-                draw_text(surface, "X", close_r.x + 5, close_r.y + 3,
-                          (220, 100, 100) if chov else (160, 70, 70), 11, bold=True)
+                                 (220, 80, 80) if chov else (120, 50, 50), close_r, 1, border_radius=4)
+                draw_text(surface, "✕", close_r.x + 4, close_r.y + 3,
+                          (230, 110, 110) if chov else (160, 70, 70), 11, bold=True)
 
-            # Class badge + name
-            badge_x = card_r.x + 10
-            badge_y = card_r.y + 10
-            name_mw = (CARD_W - 70) if selected else (CARD_W - 24)
-            draw_class_badge(surface, tn, badge_x, badge_y, 20)
-            stat_req = req.get("stat_req", {})
-            max_req  = max(stat_req.values(), default=0)
-            tier_label = "Apex" if max_req >= 18 else "Advanced"
-            tier_col   = (220, 160, 80) if max_req >= 18 else (140, 180, 220)
-            req_str    = "  ".join(f"{s}≥{v}" for s, v in stat_req.items())
-            name_col   = tc_col if can else (60, 54, 50)
-            draw_text(surface, tn, badge_x + 28, badge_y + 2,
-                      name_col, 17, bold=True, max_width=name_mw)
-            draw_text(surface, f"{tier_label}  ·  {req_str}",
-                      badge_x + 28, badge_y + 22, tier_col, 11)
+            # ── Class badge + name ────────────────────────────────────────────
+            badge_x  = card_r.x + 8
+            badge_y  = card_r.y + 8
+            name_mw  = CARD_W - 68 if selected else CARD_W - 24
+            draw_class_badge(surface, tn, badge_x, badge_y, 18)
 
-            # Stat requirements
-            req_y = card_r.y + 56
-            for stat, minimum in req.get("stat_req", {}).items():
+            tier_label = "✦ Apex" if is_apex else "Advanced"
+            tier_col   = (220, 165, 60) if is_apex else (140, 180, 225)
+            name_col   = tc_col if can else (60, 54, 54)
+            draw_text(surface, tn, badge_x + 26, badge_y + 1,
+                      name_col, 15, bold=True, max_width=name_mw)
+            draw_text(surface, tier_label, badge_x + 26, badge_y + 19,
+                      tier_col, 10)
+
+            # ── Stat requirements ─────────────────────────────────────────────
+            req_y = card_r.y + 46
+            for stat, minimum in stat_req.items():
                 actual = c.stats.get(stat, 0)
                 met    = actual >= minimum
+                col    = (90, 210, 110) if met else (210, 80, 80)
+                mark   = "✓" if met else "✗"
                 draw_text(surface,
-                          f"{'✓' if met else '✗'} {stat} ≥ {minimum}  (have {actual})",
-                          card_r.x + 10, req_y,
-                          (80, 200, 100) if met else (200, 80, 80), 11)
-                req_y += 16
+                          f"{mark} {stat} ≥ {minimum} (have {actual})",
+                          card_r.x + 8, req_y, col, 10)
+                req_y += 14
 
-            # Thematic description
+            # ── Class description ─────────────────────────────────────────────
             desc = req.get("description", tc_data.get("description", ""))
-            draw_wrapped_text(surface, desc,
-                              card_r.x + 10, req_y + 4, CARD_W - 20,
-                              (140, 130, 100) if can else (70, 64, 58),
-                              get_font(11))
+            if desc:
+                desc_lines = draw_wrapped_text(surface, desc,
+                                               card_r.x + 8, req_y + 2,
+                                               CARD_W - 16,
+                                               (130, 120, 100) if can else (65, 60, 58),
+                                               get_font(10))
 
-            # ── Expanded section ──────────────────────────────────────────────
-            if selected and can:
-                exp_y = card_r.y + CARD_H_BASE + 4
-                draw_text(surface, "Abilities you'll gain access to:",
-                          card_r.x + 10, exp_y, (100, 180, 120), 11, bold=True)
-                exp_y += 18
-                class_abs = CLASS_ABILITIES.get(tn, [])[:6]
-                if class_abs:
-                    for ab in class_abs:
-                        ab_str = f"  {ab['name']}  ({ab['cost']} {ab.get('resource','')})"
-                        draw_text(surface, ab_str,
-                                  card_r.x + 10, exp_y, (120, 160, 200), 11,
-                                  max_width=CARD_W - 20)
-                        exp_y += 14
-                        if exp_y + 14 > card_r.bottom - 44:
-                            remaining = len(class_abs) - class_abs.index(ab) - 1
-                            if remaining > 0:
-                                draw_text(surface,
-                                          f"  + {remaining} more abilities...",
-                                          card_r.x + 10, exp_y, (80, 100, 80), 10)
-                            break
-                else:
-                    draw_text(surface,
-                              "  (abilities unlocked at the Guild after transition)",
-                              card_r.x + 10, exp_y, (80, 90, 80), 10)
+            # ── "Click to expand" hint on unselected available cards ──────────
+            if can and not selected:
+                draw_text(surface, "↕ Click to preview",
+                          card_r.x + 8, card_r.bottom - 16,
+                          (80, 130, 90), 10)
 
-                # Confirm button
-                confirm_r = pygame.Rect(card_r.x + 10, card_r.bottom - 38,
-                                        CARD_W - 20, 32)
-                self._tc_confirm_rect = (confirm_r, tn)
-                c_hover = confirm_r.collidepoint(mx, my)
-                pygame.draw.rect(surface,
-                                 (20, 60, 30) if c_hover else (14, 40, 20),
-                                 confirm_r, border_radius=5)
-                pygame.draw.rect(surface,
-                                 (80, 200, 120) if c_hover else (50, 140, 80),
-                                 confirm_r, 2, border_radius=5)
-                draw_text(surface, f"Become {tn}  —  This cannot be undone",
-                          confirm_r.x + 10, confirm_r.y + 8,
-                          (140, 230, 150) if c_hover else (100, 180, 110), 12,
-                          bold=c_hover)
-
-            # Locked overlay
+            # ── Locked overlay ────────────────────────────────────────────────
             if not can:
-                lock_surf = pygame.Surface((CARD_W, CARD_H_BASE), pygame.SRCALPHA)
-                lock_surf.fill((0, 0, 0, 100))
+                lock_surf = pygame.Surface((card_r.width, card_r.height), pygame.SRCALPHA)
+                lock_surf.fill((0, 0, 0, 110))
                 surface.blit(lock_surf, (card_r.x, card_r.y))
-                blocking = [(s, m) for s, m in req.get("stat_req", {}).items()
+                blocking = [(s, m) for s, m in stat_req.items()
                             if c.stats.get(s, 0) < m]
                 if blocking:
                     stat, need = blocking[0]
+                    have = c.stats.get(stat, 0)
                     draw_text(surface,
-                              f"Need {stat} ≥ {need}  (have {c.stats.get(stat,0)})",
-                              card_r.x + 10, card_r.y + card_h - 24,
-                              (160, 80, 80), 11)
+                              f"Need {stat} ≥ {need}  (have {have}, need +{need-have})",
+                              card_r.x + 8, card_r.bottom - 16,
+                              (180, 80, 80), 10)
+
+            # ── Expanded detail section ───────────────────────────────────────
+            if selected and can:
+                exp_y = card_r.y + CARD_H_BASE + 6
+
+                # ── What you keep ─────────────────────────────────────────────
+                sorted_abs = sorted(c.abilities, key=lambda a: a.get("level", 0), reverse=True)
+                kept = [ab for ab in sorted_abs if ab.get("type") != "passive"][:3]
+
+                draw_text(surface, "You keep (top 3 abilities):",
+                          card_r.x + 8, exp_y, (80, 180, 120), 10, bold=True)
+                exp_y += 14
+                if kept:
+                    for ab in kept:
+                        draw_text(surface, f"  • {ab['name']}",
+                                  card_r.x + 8, exp_y, (120, 200, 150), 10)
+                        exp_y += 12
                 else:
-                    draw_text(surface, "Meets requirements",
-                              card_r.x + 10, card_r.y + card_h - 24,
-                              (80, 200, 80), 11)
+                    draw_text(surface, "  (no abilities to keep)",
+                              card_r.x + 8, exp_y, (100, 100, 100), 10)
+                    exp_y += 12
+
+                exp_y += 4
+                # ── New class abilities (first 5) ─────────────────────────────
+                new_abs = CLASS_ABILITIES.get(tn, [])
+                draw_text(surface,
+                          f"New abilities ({len(new_abs)} total — first 5 shown):",
+                          card_r.x + 8, exp_y, (80, 150, 220), 10, bold=True)
+                exp_y += 14
+                for ab in new_abs[:5]:
+                    res_short = ab.get("resource", "")
+                    ab_line = f"  • {ab['name']}  [{res_short}]"
+                    draw_text(surface, ab_line, card_r.x + 8, exp_y,
+                              (120, 170, 220), 10)
+                    exp_y += 12
+                    if exp_y > card_r.bottom - 48:
+                        remaining = len(new_abs) - new_abs.index(ab) - 1
+                        if remaining > 0:
+                            draw_text(surface, f"  + {remaining} more...",
+                                      card_r.x + 8, exp_y, (70, 100, 80), 10)
+                        break
+
+                exp_y += 4
+                # ── XP catch-up note ──────────────────────────────────────────
+                draw_text(surface,
+                          f"★ Level resets to 1, but +60% XP until Lv.{c.level} re-reached",
+                          card_r.x + 8, card_r.bottom - 44,
+                          (200, 170, 80), 10)
+
+                # ── Confirm button ────────────────────────────────────────────
+                confirm_r = pygame.Rect(card_r.x + 8, card_r.bottom - 30,
+                                        CARD_W - 16, 26)
+                self._tc_confirm_rect = (confirm_r, tn)
+                c_hov = confirm_r.collidepoint(mx, my)
+                pygame.draw.rect(surface,
+                                 (24, 70, 34) if c_hov else (14, 40, 20),
+                                 confirm_r, border_radius=4)
+                pygame.draw.rect(surface,
+                                 (80, 210, 120) if c_hov else (50, 140, 80),
+                                 confirm_r, 2, border_radius=4)
+                draw_text(surface, f"✦  Become {tn}  —  Cannot be undone",
+                          confirm_r.x + 8, confirm_r.y + 5,
+                          (150, 240, 160) if c_hov else (100, 180, 110),
+                          11, bold=c_hov)
 
         # ── Pass 1: draw all NON-selected cards ───────────────────────────────
         for d in card_data:
