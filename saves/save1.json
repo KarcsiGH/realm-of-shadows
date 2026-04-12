@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "timestamp": "2026-04-12T11:24:12.603632",
+  "timestamp": "2026-04-12T13:22:52.550492",
   "slot_name": "save1",
   "metadata": {
     "party_summary": [
@@ -11,7 +11,7 @@
       "Marvin Lv.5 Halfling Monk",
       "Roger Lv.5 Half-Orc Ranger"
     ],
-    "total_gold": 240
+    "total_gold": 53
   },
   "party": [
     {
@@ -30,10 +30,10 @@
         "PIE": 21
       },
       "resources": {
-        "HP": 89,
-        "Ki": 191,
-        "WIS-MP": 50,
-        "PIE-MP": 56
+        "HP": 96,
+        "Ki": 217,
+        "WIS-MP": 58,
+        "PIE-MP": 64
       },
       "abilities": [
         {
@@ -119,42 +119,29 @@
           "description": "A grey iron badge bearing a single ward-rune. Marks the bearer as a recognised Scout of the Warden Order.",
           "rarity": "common",
           "warden_rank": 1
-        },
-        {
-          "name": "Healing Potion",
-          "type": "consumable",
-          "subtype": "potion",
-          "heal_amount": 50,
-          "identified": true,
-          "estimated_value": 30,
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 1
         }
       ],
       "equipment": {
         "weapon": {
-          "name": "Wooden Club",
-          "type": "Mace",
-          "damage": 14,
-          "damage_stat": {
-            "STR": 0.4
-          },
-          "range": "melee",
-          "speed_mod": -1,
-          "accuracy_mod": -5,
-          "crit_mod": 2,
-          "weight_class": "medium",
-          "phys_type": "blunt",
-          "requirements": {
-            "STR": 8
-          },
-          "spell_bonus": 0,
-          "special": {
-            "armor_bypass": 0.3
+          "name": "Iron Javelin",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Spear",
+          "rarity": "common",
+          "damage": 15,
+          "phys_type": "piercing",
+          "range": "ranged",
+          "stat_bonuses": {
+            "STR": 2,
+            "DEX": 1
           },
           "identified": true,
-          "slot": "weapon"
+          "description": "A throwing spear that works equally well in melee. +2 STR, +1 DEX.",
+          "accuracy_mod": 4,
+          "damage_stat": {
+            "STR": 0.26,
+            "DEX": 0.16
+          }
         },
         "off_hand": {
           "name": "Wooden Shield",
@@ -217,9 +204,9 @@
         "PIE": 11
       },
       "resources": {
-        "HP": 88,
-        "INT-MP": 54,
-        "STR-SP": 58
+        "HP": 93,
+        "INT-MP": 62,
+        "STR-SP": 66
       },
       "abilities": [
         {
@@ -296,16 +283,6 @@
           "rarity": "common",
           "description": "A hand-drawn map of the Thornwood paths. Marks a cave to the northwest.",
           "world_key": "thornwood_map"
-        },
-        {
-          "name": "Healing Potion",
-          "type": "consumable",
-          "subtype": "potion",
-          "heal_amount": 50,
-          "description": "Restores 50 HP to one character.",
-          "buy_price": 25,
-          "sell_price": 10,
-          "identified": true
         },
         {
           "name": "Scout Badge",
@@ -415,9 +392,9 @@
         "PIE": 18
       },
       "resources": {
-        "HP": 77,
-        "INT-MP": 62,
-        "PIE-MP": 52
+        "HP": 82,
+        "INT-MP": 70,
+        "PIE-MP": 58
       },
       "abilities": [
         {
@@ -488,7 +465,27 @@
         }
       ],
       "equipment": {
-        "weapon": null,
+        "weapon": {
+          "name": "Light Crossbow",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Crossbow",
+          "rarity": "uncommon",
+          "damage": 19,
+          "phys_type": "piercing",
+          "range": "ranged",
+          "stat_bonuses": {
+            "DEX": 1
+          },
+          "identified": true,
+          "description": "Compact crossbow used for ambushes. +1 DEX.",
+          "crit_mod": 12,
+          "accuracy_mod": 8,
+          "damage_stat": {
+            "DEX": 0.28,
+            "STR": 0.12
+          }
+        },
         "off_hand": null,
         "head": null,
         "crown": null,
@@ -526,9 +523,9 @@
         "PIE": 20
       },
       "resources": {
-        "HP": 95,
-        "PIE-MP": 54,
-        "STR-SP": 56
+        "HP": 100,
+        "PIE-MP": 62,
+        "STR-SP": 64
       },
       "abilities": [
         {
@@ -593,7 +590,7 @@
           "slot": "weapon",
           "subtype": "Short Sword",
           "rarity": "common",
-          "damage": 14,
+          "damage": 24,
           "phys_type": "slashing",
           "range": "melee",
           "description": "A well-honed blade. Nothing magical, but a cut above the standard issue.",
@@ -603,7 +600,11 @@
           "magic_identified": true,
           "material_identified": true,
           "durability": 100,
-          "max_durability": 100
+          "max_durability": 100,
+          "damage_stat": {
+            "DEX": 0.28,
+            "STR": 0.12
+          }
         },
         "off_hand": null,
         "head": null,
@@ -632,7 +633,7 @@
       "race_name": "Halfling",
       "level": 5,
       "xp": 3946,
-      "gold": 70,
+      "gold": 13,
       "stats": {
         "STR": 16,
         "DEX": 22,
@@ -642,10 +643,10 @@
         "PIE": 14
       },
       "resources": {
-        "HP": 96,
-        "Ki": 72,
-        "WIS-MP": 58,
-        "DEX-SP": 60
+        "HP": 101,
+        "Ki": 86,
+        "WIS-MP": 72,
+        "DEX-SP": 68
       },
       "abilities": [
         {
@@ -712,222 +713,28 @@
           "desc": "Restore HP through deep meditation."
         }
       ],
-      "inventory": [
-        {
-          "name": "Fading-Touched Pelt",
-          "type": "material",
-          "subtype": "leather",
-          "rarity": "uncommon",
-          "identify_difficulty": 2,
-          "unidentified_name": "Diseased Pelt",
-          "unidentified_desc": "A pelt that seems to absorb light.",
-          "appraised_name": "Tier 1 Fading Pelt",
-          "material_desc": "Leather infused with Fading corruption. Tier 1.",
-          "magic_desc": "Fading resonance \u2014 not magical but deeply wrong.",
-          "estimated_value": 12,
-          "description": "A pelt from a creature touched by the Fading. Useful for corruption-resistant gear.",
-          "identified": true,
-          "source": "Fading Wolf",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 1
-        },
-        {
-          "name": "Spider Silk Bundle",
-          "type": "material",
-          "subtype": "reagent",
-          "rarity": "common",
-          "tier": 1,
-          "identify_difficulty": 1,
-          "unidentified_name": "Silk Bundle",
-          "unidentified_desc": "A mass of wound silk threads.",
-          "appraised_name": "Spider Egg Silk",
-          "material_desc": "Protective silk from an egg sac. Tier 1 material.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 5,
-          "description": "Silk from a spider egg sac.",
-          "identified": true,
-          "source": "Egg Sac",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 3
-        },
-        {
-          "name": "Spider Silk",
-          "type": "material",
-          "subtype": "cloth",
-          "rarity": "common",
-          "tier": 1,
-          "estimated_value": 12,
-          "identified": true,
-          "description": "Tough, lightweight silk from a giant spider.",
-          "source": "Giant Spider",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 3
-        },
-        {
-          "name": "Spider Silk Thread",
-          "type": "material",
-          "subtype": "reagent",
-          "rarity": "common",
-          "tier": 1,
-          "identify_difficulty": 1,
-          "unidentified_name": "Fine Thread",
-          "unidentified_desc": "A wisp of iridescent silk.",
-          "appraised_name": "Phase-Spider Silk Thread",
-          "material_desc": "Silk from a Fading-touched spider. Tier 1 reagent.",
-          "magic_desc": "Faint planar shimmer.",
-          "estimated_value": 5,
-          "description": "A thread of spider silk.",
-          "identified": true,
-          "source": "Spiderling",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 5
-        },
-        {
-          "name": "Web Spinner Silk",
-          "type": "material",
-          "subtype": "reagent",
-          "rarity": "uncommon",
-          "tier": 2,
-          "identify_difficulty": 1,
-          "unidentified_name": "Viscous Silk Bundle",
-          "unidentified_desc": "A clump of sticky glowing web.",
-          "appraised_name": "Fading Web Silk",
-          "material_desc": "Dense silk infused with Fading energy. Tier 2 reagent.",
-          "magic_desc": "Charged with planar energy.",
-          "estimated_value": 18,
-          "description": "A bundle of glowing web silk.",
-          "identified": true,
-          "source": "Web Spinner",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 2
-        },
-        {
-          "name": "Shadowbind Gauntlets",
-          "type": "armor",
-          "subtype": "gloves",
-          "armor_slot": "hands",
-          "slot": "hands",
-          "rarity": "rare",
-          "tier": 2,
-          "cursed": true,
-          "identified": true,
-          "defense": 12,
-          "estimated_value": 220,
-          "enchant_element": "shadow",
-          "enchant_bonus": 6,
-          "stat_penalty": {
-            "speed_mod": -4
-          },
-          "description": "Gauntlets that crackle with shadow energy. Powerful, but they slow the wearer's reactions as shadow seeps into the blood. \u2605 CURSED \u2014 cannot be removed without Remove Curse.",
-          "lore": "Used by Valdris's early followers \u2014 gifts that became chains.",
-          "stat_bonus": {
-            "speed_mod": -4
-          },
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Spider Mandible",
-          "type": "material",
-          "subtype": "crafting_part",
-          "rarity": "common",
-          "tier": 1,
-          "identify_difficulty": 1,
-          "unidentified_name": "Curved Fang",
-          "unidentified_desc": "A curved black fang.",
-          "appraised_name": "Web Spinner Mandible",
-          "material_desc": "The cutting tool of a web spinner.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 6,
-          "description": "A spider mandible.",
-          "identified": true,
-          "source": "Web Spinner",
-          "material_identified": true,
-          "magic_identified": true,
-          "stack": 1
-        },
-        {
-          "name": "Padded Arm Guards",
-          "appraised_name": "Padded Arm Guards",
-          "type": "armor",
-          "slot": "hands",
-          "subtype": "bracers",
-          "rarity": "common",
-          "defense": 2,
-          "description": "Thick leather wrapped around the forearms. Simple protection.",
-          "identified": true,
-          "estimated_value": 75,
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Phase Spider Silk",
-          "type": "material",
-          "subtype": "reagent",
-          "rarity": "uncommon",
-          "tier": 2,
-          "identify_difficulty": 1,
-          "unidentified_name": "Shimmering Thread",
-          "unidentified_desc": "A thread that flickers in and out of existence.",
-          "appraised_name": "Phase-Silk",
-          "material_desc": "Silk from a spider between planes. Tier 2 reagent.",
-          "magic_desc": "Strong planar resonance.",
-          "estimated_value": 35,
-          "description": "Silk that shifts between worlds.",
-          "identified": true,
-          "source": "Phase Spider",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 1
-        },
-        {
-          "name": "Phase Spider Eye",
-          "type": "material",
-          "subtype": "reagent",
-          "rarity": "uncommon",
-          "tier": 2,
-          "identify_difficulty": 1,
-          "unidentified_name": "Multifaceted Eye",
-          "unidentified_desc": "A compound eye reflecting things not there.",
-          "appraised_name": "Phase Spider Eye",
-          "material_desc": "Eye of a planar spider. Tier 2 scrying reagent.",
-          "magic_desc": "Planar attunement.",
-          "estimated_value": 28,
-          "description": "A compound eye that sees between planes.",
-          "identified": true,
-          "source": "Phase Spider",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 1
-        }
-      ],
+      "inventory": [],
       "equipment": {
         "weapon": {
-          "name": "Unarmed (Monk)",
-          "type": "Fists",
-          "damage": 9,
-          "damage_stat": {
-            "WIS": 0.3,
-            "DEX": 0.2
-          },
-          "range": "melee",
-          "speed_mod": 2,
-          "accuracy_mod": 5,
-          "crit_mod": 5,
-          "weight_class": "light",
+          "name": "Blessed Handwraps",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Handwraps",
+          "rarity": "uncommon",
+          "damage": 16,
           "phys_type": "blunt",
-          "requirements": {},
-          "spell_bonus": 0,
-          "special": {
-            "monk_scaling": true
+          "range": "melee",
+          "stat_bonuses": {
+            "WIS": 2,
+            "PIE": 1
           },
           "identified": true,
-          "slot": "weapon"
+          "description": "Temple-blessed wraps that channel divine Ki. +2 WIS, +1 PIE.",
+          "spell_bonus": 4,
+          "damage_stat": {
+            "WIS": 0.28,
+            "PIE": 0.1
+          }
         },
         "off_hand": null,
         "head": null,
@@ -1052,7 +859,7 @@
       "race_name": "Half-Orc",
       "level": 5,
       "xp": 3980,
-      "gold": 170,
+      "gold": 40,
       "stats": {
         "STR": 20,
         "DEX": 22,
@@ -1062,10 +869,10 @@
         "PIE": 6
       },
       "resources": {
-        "HP": 96,
-        "Ki": 193,
-        "WIS-MP": 52,
-        "DEX-SP": 58
+        "HP": 101,
+        "Ki": 222,
+        "WIS-MP": 60,
+        "DEX-SP": 68
       },
       "abilities": [
         {
@@ -1167,23 +974,6 @@
           "description": "A grey iron badge bearing a single ward-rune. Marks the bearer as a recognised Scout of the Warden Order.",
           "rarity": "common",
           "warden_rank": 1
-        },
-        {
-          "name": "Soft Leather Shoes",
-          "appraised_name": "Soft Leather Shoes",
-          "type": "armor",
-          "slot": "feet",
-          "subtype": "boots",
-          "rarity": "common",
-          "defense": 1,
-          "effect": {
-            "dex_bonus": 1
-          },
-          "description": "Supple leather shoes that make little noise. +1 DEX.",
-          "identified": true,
-          "estimated_value": 80,
-          "magic_identified": true,
-          "material_identified": true
         }
       ],
       "equipment": {
@@ -1227,7 +1017,23 @@
           "identified": true
         },
         "hands": null,
-        "feet": null,
+        "feet": {
+          "name": "Soft Leather Shoes",
+          "appraised_name": "Soft Leather Shoes",
+          "type": "armor",
+          "slot": "feet",
+          "subtype": "boots",
+          "rarity": "common",
+          "defense": 1,
+          "effect": {
+            "dex_bonus": 1
+          },
+          "description": "Supple leather shoes that make little noise. +1 DEX.",
+          "identified": true,
+          "estimated_value": 80,
+          "magic_identified": true,
+          "material_identified": true
+        },
         "neck": null,
         "ring1": null,
         "ring2": null,
@@ -1247,42 +1053,46 @@
   "character_bank": [],
   "knowledge": {
     "identified_items": [
-      "Traveler's Clothes",
-      "Spider Silk Bundle",
-      "Bat Wing",
-      "Shadowbind Gauntlets",
-      "Goblin Shiv",
-      "Copper Ring of Endurance",
-      "Rat Tail",
-      "Glowing Spore Sac",
-      "Soft Leather Shoes",
-      "Padded Arm Guards",
-      "Spider Silk Thread",
-      "Rusty Knife",
-      "Crude Knife",
-      "Spider Mandible",
-      "Crude Snare Wire",
-      "Leather Vest",
-      "Carved Oak Wand",
-      "Minor Healing Potion",
-      "Fading-Touched Pelt",
-      "Iron Ki Beads",
-      "Scroll of Protection",
-      "Mana Crystal",
-      "Healing Potion",
-      "Wooden Shield",
-      "Walking Stick",
       "Web Spinner Silk",
-      "Wooden Club",
-      "Chain Shirt",
-      "Spider Silk",
-      "Phase Spider Eye",
-      "Phase Spider Silk",
-      "Worn Longsword",
-      "Monk Unarmed",
+      "Light Crossbow",
       "Short Bow",
+      "Mana Crystal",
+      "Rat Tail",
+      "Spider Mandible",
+      "Blessed Handwraps",
+      "Crude Knife",
+      "Scroll of Protection",
+      "Shadowbind Gauntlets",
       "Goblin Ear",
-      "Lurker Fang"
+      "Crude Snare Wire",
+      "Healing Potion",
+      "Walking Stick",
+      "Padded Arm Guards",
+      "Goblin Shiv",
+      "Lurker Fang",
+      "Wooden Club",
+      "Monk Unarmed",
+      "Copper Ring of Endurance",
+      "Soft Leather Shoes",
+      "Iron Javelin",
+      "Fading-Touched Pelt",
+      "Worn Longsword",
+      "Glowing Spore Sac",
+      "Phase Spider Silk",
+      "Chain Shirt",
+      "Iron Ki Beads",
+      "Wooden Shield",
+      "Bat Wing",
+      "Minor Healing Potion",
+      "Phase Spider Eye",
+      "Carved Oak Wand",
+      "Spider Silk Bundle",
+      "Traveler's Clothes",
+      "Longbow",
+      "Rusty Knife",
+      "Leather Vest",
+      "Spider Silk Thread",
+      "Spider Silk"
     ],
     "known_enemies": {
       "Cave Bat": 2,
@@ -1392,9 +1202,9 @@
     }
   },
   "world_state": {
-    "party_x": 28,
-    "party_y": 50,
-    "step_counter": 10,
+    "party_x": 25,
+    "party_y": 47,
+    "step_counter": 0,
     "discovered_locations": [
       "abandoned_mine",
       "briarhollow",

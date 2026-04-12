@@ -1756,7 +1756,20 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             if not aoe_targets and target:
                 aoe_targets = [target]
         else:
-            aoe_targets = [target] if target else []
+            if target:
+                aoe_targets = [target]
+            elif ability.get("pierce_rows") and all_enemies:
+                # pierce_rows auto-targets: pick frontmost alive enemy
+                alive_all = [e for e in all_enemies if e and e["alive"]]
+                for _row in (FRONT, MID, BACK):
+                    front = [e for e in alive_all if e.get("row") == _row]
+                    if front:
+                        aoe_targets = [front[0]]
+                        break
+                else:
+                    aoe_targets = alive_all[:1]
+            else:
+                aoe_targets = []
 
         if not aoe_targets:
             result["hit"] = False
@@ -1766,7 +1779,25 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         total_damage = 0
         any_crit = False
 
+        # Pure-CC abilities (power=0, no damage intended): skip hit roll,
+        # apply status directly to each target. e.g. Mass Sleep, Slumber Spore.
+        is_pure_cc = (ability.get("power", 1.0) == 0 and
+                      (ability.get("status") or ability.get("apply_status")) and
+                      not ability.get("dot"))
+
         for aoe_tgt in aoe_targets:
+            if is_pure_cc:
+                # No accuracy roll, no damage — just attempt the status
+                se_msgs = _inflict_special_effects(aoe_tgt)
+                if not se_msgs:
+                    result["messages"].append(
+                        f"{aoe_tgt['name']} resists {ability['name']}!"
+                    )
+                else:
+                    result["messages"] += se_msgs
+                result["hit"] = True
+                continue
+
             for hit_n in range(n_hits):
                 if is_magic:
                     dmg, is_crit, msgs = _apply_magic_hit(aoe_tgt, hit_power)

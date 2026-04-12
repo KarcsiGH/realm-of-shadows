@@ -1480,6 +1480,10 @@ class CombatUI:
             # Passives: no-op guard
             if ab_type == "passive":
                 return None
+            # Pierce-row abilities (e.g. Splitting Arrow): auto-fire, no target needed
+            # The engine will hit the first available enemy + pierce to back rows
+            if ab.get("pierce_rows"):
+                return {"type": "ability", "ability": ab, "target": None}
             # Everything else (attack, spell, debuff, taunt...): enemy click
             self.selected_ability = ab
             self.action_mode = "target_ability"
