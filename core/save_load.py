@@ -284,7 +284,13 @@ def deserialize_world_state(data, party):
 
 
 def _serialize_dungeon_explored(dungeon_cache):
-    """Serialize discovered tiles, opened chests, and found notes for each dungeon."""
+    """Serialize full dungeon state per floor:
+    - discovered tiles
+    - opened chests (from tile["event"])
+    - found notes   (from tile["event"])
+    - trap states: disarmed, triggered, detected (from tile["event"])
+    - dead patrol enemies (by position)
+    """
     if not dungeon_cache:
         return {}
     result = {}
@@ -293,34 +299,54 @@ def _serialize_dungeon_explored(dungeon_cache):
             try:
                 floors_data = {}
                 for floor_num, floor in dstate.floors.items():
-                    # Discovered tiles
-                    discovered = []
                     tiles = floor.get("tiles", [])
+                    discovered   = []
+                    opened_chests = []
+                    found_notes   = []
+                    trap_states   = []   # [[x, y, disarmed, triggered, detected], ...]
+                    dead_enemies  = []   # [[x, y], ...]
+
                     for ty, row in enumerate(tiles):
                         for tx, tile in enumerate(row):
                             if tile.get("discovered"):
                                 discovered.append([tx, ty])
-                    # Opened chests and found notes
-                    opened_chests = []
-                    found_notes   = []
-                    for ev in floor.get("events", []):
-                        if ev.get("type") == "treasure" and ev.get("opened"):
-                            opened_chests.append((ev.get("x", -1), ev.get("y", -1)))
-                        if ev.get("type") in ("note", "journal", "scroll") and ev.get("found"):
-                            found_notes.append((ev.get("x", -1), ev.get("y", -1)))
+                            # All event state lives in tile["event"], not floor["events"]
+                            ev = tile.get("event")
+                            if ev:
+                                etype = ev.get("type", "")
+                                if etype == "treasure" and ev.get("opened"):
+                                    opened_chests.append([tx, ty])
+                                elif etype in ("note", "journal", "scroll") and ev.get("found"):
+                                    found_notes.append([tx, ty])
+                                elif etype == "trap":
+                                    # Save any non-default trap state
+                                    dis  = bool(ev.get("disarmed", False))
+                                    tri  = bool(ev.get("triggered", False))
+                                    det  = bool(ev.get("detected", False))
+                                    if dis or tri or det:
+                                        trap_states.append([tx, ty, dis, tri, det])
+                                elif etype == "fixed_encounter" and ev.get("triggered"):
+                                    # Triggered fixed encounters — don't re-fire
+                                    trap_states.append([tx, ty, False, True, False])
+
+                    # Dead patrol enemies
+                    for e in floor.get("enemies", []):
+                        if e.get("state") == "dead":
+                            dead_enemies.append([e["x"], e["y"]])
+
                     floor_entry = {}
-                    if discovered:
-                        floor_entry["discovered"] = discovered
-                    if opened_chests:
-                        floor_entry["opened_chests"] = opened_chests
-                    if found_notes:
-                        floor_entry["found_notes"] = found_notes
+                    if discovered:    floor_entry["discovered"]    = discovered
+                    if opened_chests: floor_entry["opened_chests"] = opened_chests
+                    if found_notes:   floor_entry["found_notes"]   = found_notes
+                    if trap_states:   floor_entry["trap_states"]   = trap_states
+                    if dead_enemies:  floor_entry["dead_enemies"]  = dead_enemies
                     if floor_entry:
                         floors_data[str(floor_num)] = floor_entry
+
                 if floors_data:
                     result[dungeon_id] = floors_data
             except Exception:
-                pass   # skip any dungeon that can't be serialized
+                pass
     except Exception:
         pass
     return result

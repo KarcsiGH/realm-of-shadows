@@ -1737,13 +1737,13 @@ class DungeonUI:
                     continue
                 sprites.append((d, sx, sy, icon_key, enc_key))
 
-        # Add visible patrol enemies from the floor enemy list
+        # Add visible patrol enemies from the floor enemy list.
+        # Visibility is determined by torch range and zbuf (wall occlusion) only —
+        # NOT by tile discovery. Enemies can move off discovered tiles but are still seen.
         for enemy in fl.get("enemies", []):
             if enemy.get("state") == "dead":
                 continue
             ex, ey = enemy["x"], enemy["y"]
-            if not tiles[ey][ex].get("discovered"):
-                continue
             esx = ex + 0.5 - self.px
             esy = ey + 0.5 - self.py
             d   = math.sqrt(esx*esx + esy*esy)

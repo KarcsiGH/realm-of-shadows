@@ -1762,9 +1762,15 @@ class DungeonState:
 
 
     def restore_explored(self, explored_data):
-        """Restore discovered tile state, opened chests, and found notes from saved data.
-        explored_data: {floor_num_str: {discovered: [[x,y],...], opened_chests: [...], found_notes: [...]}}
-        Also accepts the old flat-list format for backward compatibility.
+        """Restore full dungeon floor state from saved data:
+        - discovered tiles
+        - opened chests, found notes (from tile["event"])
+        - trap states: disarmed/triggered/detected
+        - dead patrol enemies
+
+        explored_data: {floor_num_str: {discovered, opened_chests, found_notes,
+                                        trap_states, dead_enemies}}
+        Also accepts old flat-list format for backward compatibility.
         """
         for floor_str, floor_data in explored_data.items():
             floor_num = int(floor_str)
@@ -1774,34 +1780,66 @@ class DungeonState:
             fh = len(tiles)
             fw = len(tiles[0]) if fh > 0 else 0
 
-            # Handle both old format (list of coords) and new format (dict)
+            # Handle old format (plain list of coords)
             if isinstance(floor_data, list):
-                coords = floor_data
+                coords        = floor_data
                 opened_chests = []
                 found_notes   = []
+                trap_states   = []
+                dead_enemies  = []
             else:
-                coords        = floor_data.get("discovered", [])
+                coords        = floor_data.get("discovered",    [])
                 opened_chests = floor_data.get("opened_chests", [])
-                found_notes   = floor_data.get("found_notes", [])
+                found_notes   = floor_data.get("found_notes",   [])
+                trap_states   = floor_data.get("trap_states",   [])
+                dead_enemies  = floor_data.get("dead_enemies",  [])
 
-            # Restore discovered tiles
+            # ── Discovered tiles ──────────────────────────────────────
             for x, y in coords:
                 if 0 <= y < fh and 0 <= x < fw:
                     tiles[y][x]["discovered"] = True
 
-            # Restore opened chests
-            opened_set = {(x, y) for x, y in opened_chests}
-            for ev in floor.get("events", []):
-                if ev.get("type") == "treasure":
-                    if (ev.get("x", -1), ev.get("y", -1)) in opened_set:
+            # ── Opened chests — from tile["event"], keyed by position ─
+            opened_set = {(int(x), int(y)) for x, y in opened_chests}
+            for x, y in opened_chests:
+                ix, iy = int(x), int(y)
+                if 0 <= iy < fh and 0 <= ix < fw:
+                    ev = tiles[iy][ix].get("event")
+                    if ev and ev.get("type") == "treasure":
                         ev["opened"] = True
 
-            # Restore found notes
-            found_set = {(x, y) for x, y in found_notes}
-            for ev in floor.get("events", []):
-                if ev.get("type") in ("note", "journal", "scroll"):
-                    if (ev.get("x", -1), ev.get("y", -1)) in found_set:
+            # ── Found notes — from tile["event"] ─────────────────────
+            for x, y in found_notes:
+                ix, iy = int(x), int(y)
+                if 0 <= iy < fh and 0 <= ix < fw:
+                    ev = tiles[iy][ix].get("event")
+                    if ev and ev.get("type") in ("note", "journal", "scroll"):
                         ev["found"] = True
+
+            # ── Trap states ───────────────────────────────────────────
+            for entry in trap_states:
+                if len(entry) < 2:
+                    continue
+                tx, ty = int(entry[0]), int(entry[1])
+                dis = bool(entry[2]) if len(entry) > 2 else False
+                tri = bool(entry[3]) if len(entry) > 3 else False
+                det = bool(entry[4]) if len(entry) > 4 else False
+                if 0 <= ty < fh and 0 <= tx < fw:
+                    ev = tiles[ty][tx].get("event")
+                    if ev:
+                        if dis: ev["disarmed"]  = True
+                        if tri: ev["triggered"] = True
+                        if det: ev["detected"]  = True
+                        # Update tile type to reflect trap visual state
+                        if dis or tri:
+                            # Keep tile type as trap so sprite renders correctly
+                            pass
+
+            # ── Dead patrol enemies ───────────────────────────────────
+            dead_set = {(int(x), int(y)) for x, y in dead_enemies}
+            for e in floor.get("enemies", []):
+                if (e.get("x"), e.get("y")) in dead_set:
+                    e["state"] = "dead"
 
     def _update_fog(self):
         """Reveal tiles within LOS sight range (3 tiles, walls/doors block)."""
