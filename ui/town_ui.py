@@ -91,70 +91,81 @@ TOWN_DISPLAY = {
 # Format: town_id → {building_type: {"name", "npc_type", "color", "dialogue_id"}}
 BUILDING_NPCS = {
     "briarhollow": {
-        "inn":     {"name":"Innkeeper Bess",     "npc_type":"innkeeper", "color":(180,140,60)},
-        "shop":    {"name":"Merchant Gilda",     "npc_type":"merchant",  "color":(120,180,80)},
-        "forge":   {"name":"Forgemaster Dunn",   "npc_type":"forger",    "color":(200,120,40)},
-        "temple":  {"name":"Priest Korvan",      "npc_type":"priest",    "color":(100,180,220)},
-        "tavern":  {"name":"Barkeep Holt",       "npc_type":"barkeep",   "color":(160,100,180)},
+        "inn":      {"name":"Innkeeper Bess",     "npc_type":"innkeeper", "color":(180,140,60),  "dialogue_id":"bess"},
+        "shop":     {"name":"Merchant Gilda",     "npc_type":"merchant",  "color":(120,180,80),  "dialogue_id":"merchant_gilda"},
+        "forge":    {"name":"Forgemaster Dunn",   "npc_type":"forger",    "color":(200,120,40),  "dialogue_id":"forgemaster_dunn"},
+        "temple":   {"name":"Priest Korvan",      "npc_type":"priest",    "color":(100,180,220), "dialogue_id":"priest_korvan"},
+        "tavern":   {"name":"Barkeep Holt",       "npc_type":"barkeep",   "color":(160,100,180), "dialogue_id":"barkeep_holt"},
+        "guild":    {"name":"Warden Liaison",     "npc_type":"warden",    "color":(120,180,120), "dialogue_id":"warden_liaison"},
     },
     "woodhaven": {
-        "inn":     {"name":"Innkeeper Jessa",    "npc_type":"innkeeper", "color":(160,140,80)},
-        "shop":    {"name":"Merchant Kira",      "npc_type":"merchant",  "color":(120,160,80)},
-        "forge":   {"name":"Smith Wren",         "npc_type":"forger",    "color":(200,140,60)},
-        "temple":  {"name":"Druid Rowan",        "npc_type":"priest",    "color":(80,180,100)},
-        "tavern":  {"name":"Barkeep Magda",      "npc_type":"barkeep",   "color":(160,80,120)},
+        "inn":      {"name":"Innkeeper Jessa",    "npc_type":"innkeeper", "color":(160,140,80),  "dialogue_id":"innkeeper_jessa"},
+        "shop":     {"name":"Merchant Kira",      "npc_type":"merchant",  "color":(120,160,80),  "dialogue_id":"merchant_kira"},
+        "forge":    {"name":"Smith Wren",         "npc_type":"forger",    "color":(200,140,60),  "dialogue_id":"smith_wren"},
+        "temple":   {"name":"Druid Rowan",        "npc_type":"priest",    "color":(80,180,100),  "dialogue_id":"druid_rowan"},
+        "tavern":   {"name":"Barkeep Magda",      "npc_type":"barkeep",   "color":(160,80,120),  "dialogue_id":"barkeep_magda"},
+        "guild":    {"name":"Warden Liaison",     "npc_type":"warden",    "color":(120,180,120), "dialogue_id":"warden_liaison"},
     },
     "ironhearth": {
-        "inn":     {"name":"Innkeeper Bron",     "npc_type":"innkeeper", "color":(140,120,80)},
-        "shop":    {"name":"Armorer Ygrith",     "npc_type":"merchant",  "color":(140,140,160)},
-        "forge":   {"name":"Master Smith Thardin","npc_type":"forger",   "color":(220,100,40)},
-        "temple":  {"name":"Elder Thom",         "npc_type":"elder",     "color":(160,160,200)},
-        "tavern":  {"name":"Barkeep Sylla",      "npc_type":"barkeep",   "color":(180,100,60)},
+        "inn":      {"name":"Innkeeper Bron",     "npc_type":"innkeeper", "color":(140,120,80),  "dialogue_id":"innkeeper_bron"},
+        "shop":     {"name":"Armorer Ygrith",     "npc_type":"merchant",  "color":(140,140,160), "dialogue_id":"armorer_ygrith"},
+        "forge":    {"name":"Master Smith Thardin","npc_type":"forger",   "color":(220,100,40),  "dialogue_id":"master_smith_thardin"},
+        "temple":   {"name":"Elder Thom",         "npc_type":"elder",     "color":(160,160,200), "dialogue_id":"elder_thom"},
+        "tavern":   {"name":"Barkeep Sylla",      "npc_type":"barkeep",   "color":(180,100,60),  "dialogue_id":"sylla"},
+        "guild":    {"name":"Guildmaster",        "npc_type":"guildmaster","color":(180,160,60), "dialogue_id":"guildmaster_ironhearth"},
     },
     "crystalspire": {
-        "inn":     {"name":"Innkeeper Bron",     "npc_type":"innkeeper", "color":(100,120,200)},
-        "shop":    {"name":"Arcanist Veleth",    "npc_type":"mage",      "color":(120,100,220)},
-        "forge":   {"name":"Forgemaster Dunn",   "npc_type":"forger",    "color":(160,120,220)},
-        "temple":  {"name":"Oracle Thessaly",    "npc_type":"priestess", "color":(140,180,220)},
-        "tavern":  {"name":"Barkeep Holt",       "npc_type":"barkeep",   "color":(100,120,180)},
-        "jobboard":{"name":"Guild Secretary Hald","npc_type":"merchant", "color":(100,160,200)},
+        "inn":      {"name":"Innkeeper Bron",     "npc_type":"innkeeper", "color":(100,120,200), "dialogue_id":"innkeeper_bron"},
+        "shop":     {"name":"Arcanist Veleth",    "npc_type":"mage",      "color":(120,100,220), "dialogue_id":"crystal_scholar"},
+        "forge":    {"name":"Forgemaster Dunn",   "npc_type":"forger",    "color":(160,120,220), "dialogue_id":"forgemaster_dunn"},
+        "temple":   {"name":"Oracle Thessaly",    "npc_type":"priestess", "color":(140,180,220), "dialogue_id":"crystalspire_priest"},
+        "tavern":   {"name":"Barkeep Holt",       "npc_type":"barkeep",   "color":(100,120,180), "dialogue_id":"barkeep_holt"},
+        "jobboard": {"name":"Guild Secretary Hald","npc_type":"merchant",  "color":(100,160,200), "dialogue_id":"apprentice_mage"},
+        "guild":    {"name":"Warden Liaison",     "npc_type":"warden",    "color":(120,180,120), "dialogue_id":"warden_liaison"},
     },
     "thornhaven": {
-        "inn":     {"name":"Innkeeper Jessa",    "npc_type":"innkeeper", "color":(180,160,80)},
-        "shop":    {"name":"Trader Finn",        "npc_type":"merchant",  "color":(160,140,80)},
-        "forge":   {"name":"Armorer Ygrith",     "npc_type":"forger",    "color":(180,140,60)},
-        "temple":  {"name":"Priestess Alia",     "npc_type":"priestess", "color":(200,180,100)},
-        "tavern":  {"name":"Barkeep Magda",      "npc_type":"barkeep",   "color":(160,140,80)},
-        "jobboard":{"name":"Chapter Master Aldren","npc_type":"guildmaster","color":(180,120,60)},
+        "inn":      {"name":"Innkeeper Jessa",    "npc_type":"innkeeper", "color":(180,160,80),  "dialogue_id":"innkeeper_thornhaven"},
+        "shop":     {"name":"Trader Finn",        "npc_type":"merchant",  "color":(160,140,80),  "dialogue_id":"trader_finn"},
+        "forge":    {"name":"Armorer Ygrith",     "npc_type":"forger",    "color":(180,140,60),  "dialogue_id":"armorer_ygrith"},
+        "temple":   {"name":"Priestess Alia",     "npc_type":"priestess", "color":(200,180,100), "dialogue_id":"priestess_alia"},
+        "tavern":   {"name":"Barkeep Magda",      "npc_type":"barkeep",   "color":(160,140,80),  "dialogue_id":"barkeep_magda"},
+        "jobboard": {"name":"Chapter Master Aldren","npc_type":"guildmaster","color":(180,120,60),"dialogue_id":"guildmaster_oren"},
+        "guild":    {"name":"Warden Liaison",     "npc_type":"warden",    "color":(120,180,120), "dialogue_id":"warden_liaison"},
     },
     "sanctum": {
-        "inn":     {"name":"Innkeeper Bess",     "npc_type":"innkeeper", "color":(200,200,180)},
-        "shop":    {"name":"Merchant Kira",      "npc_type":"merchant",  "color":(180,180,160)},
-        "temple":  {"name":"Priestess Alia",     "npc_type":"priestess", "color":(220,200,140)},
-        "tavern":  {"name":"Barkeep Holt",       "npc_type":"barkeep",   "color":(180,160,120)},
+        "inn":      {"name":"Innkeeper Bess",     "npc_type":"innkeeper", "color":(200,200,180), "dialogue_id":"innkeeper_bron"},
+        "shop":     {"name":"Merchant Kira",      "npc_type":"merchant",  "color":(180,180,160), "dialogue_id":"merchant_kira"},
+        "temple":   {"name":"Priestess Alia",     "npc_type":"priestess", "color":(220,200,140), "dialogue_id":"priestess_alia"},
+        "tavern":   {"name":"Barkeep Holt",       "npc_type":"barkeep",   "color":(180,160,120), "dialogue_id":"barkeep_holt"},
+        "guild":    {"name":"Holy Knight",        "npc_type":"guard",     "color":(200,200,160), "dialogue_id":"holy_knight"},
     },
     "saltmere": {
-        "inn":     {"name":"Innkeeper Bron",     "npc_type":"innkeeper", "color":(100,140,160)},
-        "shop":    {"name":"Trader Finn",        "npc_type":"merchant",  "color":(120,140,160)},
-        "forge":   {"name":"Foreman Drek",       "npc_type":"forger",    "color":(140,160,160)},
-        "tavern":  {"name":"Barkeep Sylla",      "npc_type":"barkeep",   "color":(100,160,180)},
+        "inn":      {"name":"Innkeeper Bron",     "npc_type":"innkeeper", "color":(100,140,160), "dialogue_id":"innkeeper_bron"},
+        "shop":     {"name":"Trader Finn",        "npc_type":"merchant",  "color":(120,140,160), "dialogue_id":"trader_finn"},
+        "forge":    {"name":"Foreman Drek",       "npc_type":"forger",    "color":(140,160,160), "dialogue_id":"foreman_drek"},
+        "tavern":   {"name":"Barkeep Sylla",      "npc_type":"barkeep",   "color":(100,160,180), "dialogue_id":"sylla"},
+        "guild":    {"name":"Guildmaster Sable",  "npc_type":"guildmaster","color":(100,180,160),"dialogue_id":"guildmaster_sable"},
     },
     "greenwood": {
-        "inn":     {"name":"Ranger Cael",        "npc_type":"ranger",    "color":(80,160,80)},
-        "shop":    {"name":"Merchant Gilda",     "npc_type":"merchant",  "color":(100,160,80)},
-        "temple":  {"name":"Druid Rowan",        "npc_type":"priest",    "color":(80,180,100)},
+        "inn":      {"name":"Ranger Cael",        "npc_type":"ranger",    "color":(80,160,80),   "dialogue_id":"ranger_cael"},
+        "shop":     {"name":"Merchant Gilda",     "npc_type":"merchant",  "color":(100,160,80),  "dialogue_id":"merchant_gilda"},
+        "temple":   {"name":"Druid Rowan",        "npc_type":"priest",    "color":(80,180,100),  "dialogue_id":"druid_rowan"},
+        "guild":    {"name":"Scout Feryn",        "npc_type":"ranger",    "color":(100,160,80),  "dialogue_id":"scout_feryn"},
     },
     "emberveil": {
-        "inn":     {"name":"Innkeeper Bess",     "npc_type":"innkeeper", "color":(180,120,60)},
-        "shop":    {"name":"Foreman Drek",       "npc_type":"merchant",  "color":(160,120,80)},
-        "forge":   {"name":"Master Smith Thardin","npc_type":"forger",   "color":(220,100,20)},
+        "inn":      {"name":"Innkeeper Bess",     "npc_type":"innkeeper", "color":(180,120,60),  "dialogue_id":"innkeeper_bron"},
+        "shop":     {"name":"Foreman Drek",       "npc_type":"merchant",  "color":(160,120,80),  "dialogue_id":"foreman_drek"},
+        "forge":    {"name":"Master Smith Thardin","npc_type":"forger",   "color":(220,100,20),  "dialogue_id":"master_smith_thardin"},
+        "guild":    {"name":"Warden Liaison",     "npc_type":"warden",    "color":(120,180,120), "dialogue_id":"warden_liaison"},
     },
     "the_anchorage": {
-        "inn":     {"name":"Innkeeper Bron",     "npc_type":"innkeeper", "color":(100,160,180)},
-        "tavern":  {"name":"Barkeep Holt",       "npc_type":"barkeep",   "color":(100,140,180)},
+        "inn":      {"name":"Innkeeper Bron",     "npc_type":"innkeeper", "color":(100,160,180), "dialogue_id":"innkeeper_bron"},
+        "tavern":   {"name":"Barkeep Holt",       "npc_type":"barkeep",   "color":(100,140,180), "dialogue_id":"barkeep_holt"},
+        "guild":    {"name":"Warden Liaison",     "npc_type":"warden",    "color":(120,180,120), "dialogue_id":"warden_liaison"},
     },
     "the_holdfast": {
-        "inn":     {"name":"Ranger Warden",      "npc_type":"ranger",    "color":(140,120,80)},
+        "inn":      {"name":"Ranger Warden",      "npc_type":"ranger",    "color":(140,120,80),  "dialogue_id":"warden_liaison"},
+        "guild":    {"name":"Warden Liaison",     "npc_type":"warden",    "color":(120,180,120), "dialogue_id":"warden_liaison"},
     },
 }
 
@@ -421,6 +432,7 @@ class TownUI:
                 "temple":   ("Temple of the Flame",    "Healing, identification, and rites"),
                 "tavern":   ("The Mossy Flagon",       "Rumors, ale, and warmth"),
                 "jobboard": ("Aldric's Notice Board",  "Local work and contracts"),
+                "guild":    ("Wardens' Post",          "Register with the Guild, train, and advance"),
             },
             "woodhaven": {
                 "inn":      ("The Canopy Rest",        "Rest, train, and save your progress"),
@@ -429,6 +441,7 @@ class TownUI:
                 "temple":   ("Grove Shrine",           "Healing and nature rites"),
                 "tavern":   ("The Hollow Stump",       "Rumors and forestfolk company"),
                 "jobboard": ("Village Notice Post",    "Work posted by the village elder"),
+                "guild":    ("Wardens' Post",          "Register with the Guild, train, and advance"),
             },
             "ironhearth": {
                 "inn":      ("The Anvil & Hearth",     "Rest and recovery — dwarven hospitality"),
@@ -436,6 +449,7 @@ class TownUI:
                 "forge":    ("The Deep Forge",         "Master crafting, upgrades, and enchanting"),
                 "temple":   ("Hall of the Stone Father","Dwarven rites and restoration"),
                 "tavern":   ("The Iron Mug",           "Strong ale and louder rumors"),
+                "guild":    ("Wardens' Post",          "Register with the Guild, train, and advance"),
             },
             "crystalspire": {
                 "inn":      ("The Ley Line Lodge",     "Rest, train, and save your progress"),
@@ -458,29 +472,35 @@ class TownUI:
                 "shop":     ("Cathedral Market",       "Holy goods and supplies"),
                 "temple":   ("The Grand Cathedral",    "Full rites, powerful identification, and restoration"),
                 "tavern":   ("The Quiet Cup",          "Subdued conversation near the cathedral"),
+                "guild":    ("Wardens' Post",          "Register with the Guild, train, and advance"),
             },
             "saltmere": {
                 "inn":      ("The Saltwater Bunk",     "Rest — no questions asked"),
                 "shop":     ("Finn's Dockside Goods",  "Salvage, supplies, and contraband-adjacent wares"),
                 "forge":    ("Harker's Rivet Shop",    "Ship repairs, weapons, no receipts"),
                 "tavern":   ("The Bilge",              "The worst rumors and the best leads"),
+                "guild":    ("Wardens' Post",          "Register with the Guild, train, and advance"),
             },
             "greenwood": {
                 "inn":      ("The Ranger's Post",      "Rest at the outpost"),
                 "shop":     ("Trail Cache",            "Survival gear and expedition supplies"),
                 "temple":   ("Wayside Shrine",         "Basic healing and rites"),
+                "guild":    ("Wardens' Post",          "Register with the Guild, train, and advance"),
             },
             "emberveil": {
                 "inn":      ("The Ash Bunk",           "Rest near the volcano — it's fine"),
                 "shop":     ("Renn's Supplies",        "Volcanic materials and Act 3 provisions"),
                 "forge":    ("Renn's Forge",           "Master-level volcanic-steel crafting"),
+                "guild":    ("Wardens' Post",          "Register with the Guild, train, and advance"),
             },
             "the_anchorage": {
                 "inn":      ("The Researcher's Bunk",  "Rest at the fishing outpost"),
                 "tavern":   ("The Salt & Scholar",     "Fishermen and Crystalspire researchers"),
+                "guild":    ("Wardens' Post",          "Register with the Guild, train, and advance"),
             },
             "the_holdfast": {
                 "inn":      ("The Commander's Quarters","Rest — the last safe ground"),
+                "guild":    ("Wardens' Command Post",  "The final Guild post before the Spire"),
             },
         }
 
@@ -1859,8 +1879,8 @@ class TownUI:
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W - 220, 15, DIM_GOLD, 16)
 
         # Back button
-        back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
-        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+        back = pygame.Rect(470, 14, 120, 34)
+        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Category tabs — start below the NPC portrait card (card bottom = ~134px)
         tabs = [("weapons", "Weapons"), ("armor", "Armor"), ("consumables", "Supplies")]
@@ -1956,8 +1976,8 @@ class TownUI:
         draw_text(surface, "Buy Items", 20, 12, GOLD, 22, bold=True)
 
         # Back button
-        back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
-        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+        back = pygame.Rect(470, 14, 120, 34)
+        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # ── Character tabs (6a) ───────────────────────────────────────
         n = len(self.party)
@@ -2165,8 +2185,8 @@ class TownUI:
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 80, 15, DIM_GOLD, 16)
 
         # Back button in top-right, clear of character tabs
-        back = pygame.Rect(SCREEN_W - 140, 14, 120, 30)
-        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+        back = pygame.Rect(470, 14, 120, 34)
+        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Character tabs — below NPC portrait card (card bottom ~134px), clear of back button
         tab_area_w = SCREEN_W - 170  # leave 170px for back button
@@ -2240,8 +2260,8 @@ class TownUI:
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 60, 85, DIM_GOLD, 16)
 
-        back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
-        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+        back = pygame.Rect(470, 14, 120, 34)
+        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Services
         services = list(TEMPLE["services"].values())
@@ -2326,8 +2346,8 @@ class TownUI:
         bld_name = self.current_bld_name or "The Inn"
         self._draw_bld_npc_header(surface, bld_name, "Rest your weary bones, save your progress.", mx, my, building_type="inn")
 
-        back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
-        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+        back = pygame.Rect(470, 14, 120, 34)
+        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Save button — top right, next to Back
         save_btn = pygame.Rect(SCREEN_W - 280, 20, 128, 34)
@@ -2413,8 +2433,8 @@ class TownUI:
             subtitle = "Train your skills — spend gold to master new abilities."
         self._draw_bld_npc_header(surface, bld_name, subtitle, mx, my, building_type="inn")
 
-        back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
-        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+        back = pygame.Rect(470, 14, 120, 34)
+        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Party Gold: {total_gold}g", SCREEN_W // 2 - 60, 80, DIM_GOLD, 14)
@@ -2519,8 +2539,8 @@ class TownUI:
             return
 
         # Back button
-        back = pygame.Rect(SCREEN_W - 140, 14, 120, 34)
-        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+        back = pygame.Rect(470, 14, 120, 34)
+        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Character navigation arrows
         n = len(self.party)
@@ -3523,7 +3543,7 @@ class TownUI:
             self._tavern_tab_rects.append((key, tr))
             tx += tw2 + 8
 
-        back = pygame.Rect(PW - 130, 28, 120, 34)
+        back = pygame.Rect(470, 14, 120, 34)
         draw_button(surface, back, "Leave", hover=back.collidepoint(mx, my), size=13)
 
         # ── PATRONS tab ───────────────────────────────────────────────────────
@@ -3685,8 +3705,8 @@ class TownUI:
         draw_text(surface, "Job Board", 20, 28, GOLD, 22, bold=True)
         draw_text(surface, "Available contracts in the area.", 20, 58, GREY, 13)
 
-        back = pygame.Rect(PW - 130, 28, 118, 34)
-        draw_button(surface, back, "Back", hover=back.collidepoint(mx, my), size=13)
+        back = pygame.Rect(470, 14, 120, 34)
+        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         jobs = get_town_jobs(self.town_id)
         if not jobs:
@@ -3873,7 +3893,7 @@ class TownUI:
         # ── Shop buy ──
         elif self.view == self.VIEW_SHOP_BUY:
             # Back button
-            back = pygame.Rect(SCREEN_W - 140, 50, 120, 34)
+            back = pygame.Rect(470, 14, 120, 34)
             if back.collidepoint(mx, my):
                 self.view = self.VIEW_SHOP
                 return None
@@ -3920,7 +3940,7 @@ class TownUI:
 
         # ── Shop sell ──
         elif self.view == self.VIEW_SHOP_SELL:
-            back = pygame.Rect(SCREEN_W - 140, 14, 120, 30)
+            back = pygame.Rect(470, 14, 120, 34)
             if back.collidepoint(mx, my):
                 self.view = self.VIEW_SHOP
                 return None
@@ -3950,7 +3970,7 @@ class TownUI:
 
         # ── Temple ──
         elif self.view == self.VIEW_TEMPLE:
-            back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
+            back = pygame.Rect(470, 14, 120, 34)
             if back.collidepoint(mx, my):
                 self._return_to_town()
                 return None
@@ -3991,7 +4011,7 @@ class TownUI:
         elif self.view == self.VIEW_INN:
             from core.progression import INN_TIERS, INN_TIER_ORDER
 
-            back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
+            back = pygame.Rect(470, 14, 120, 34)
             if back.collidepoint(mx, my):
                 self._return_to_town()
                 self.inn_result = None
@@ -4041,7 +4061,7 @@ class TownUI:
         elif self.view == self.VIEW_INN_TRAINER:
             from core.abilities import get_unlearned_abilities, learn_ability
 
-            back = pygame.Rect(SCREEN_W - 140, 20, 120, 34)
+            back = pygame.Rect(470, 14, 120, 34)
             if back.collidepoint(mx, my):
                 if getattr(self, "_trainer_origin", "inn") == "guild":
                     self._trainer_origin = "inn"
@@ -4088,7 +4108,7 @@ class TownUI:
         elif self.view == self.VIEW_INN_CHARSHEET:
             n = len(self.party)
 
-            back = pygame.Rect(SCREEN_W - 140, 14, 120, 34)
+            back = pygame.Rect(470, 14, 120, 34)
             if back.collidepoint(mx, my):
                 self.view = self.VIEW_INN
                 return None
@@ -4476,7 +4496,8 @@ class TownUI:
 
         # ── Job Board ──
         elif self.view == self.VIEW_JOBBOARD:
-            back = pygame.Rect(SCREEN_W - 140, 30, 120, 34)
+            PW = int(SCREEN_W * 0.42)
+            back = pygame.Rect(470, 14, 120, 34)
             if back.collidepoint(mx, my):
                 self._return_to_town()
                 return None
@@ -4887,9 +4908,8 @@ class TownUI:
             draw_text(surface, label, tr.x + 35, tr.y + 7, tc, 15, bold=active)
 
         # Back button — aligned with tabs
-        back = pygame.Rect(SCREEN_W - 140, 140, 120, 34)
-        pygame.draw.rect(surface, (100, 60, 60), back, 1, 4)
-        draw_text(surface, "Back", back.x + 40, back.y + 8, RED, 14)
+        back = pygame.Rect(470, 14, 120, 34)
+        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Materials summary bar (below tabs)
         draw_text(surface, "Materials:", 20, 180, GREY, 12)
@@ -5074,7 +5094,7 @@ class TownUI:
         )
 
         # Back button — matches draw y=140
-        back = pygame.Rect(SCREEN_W - 140, 140, 120, 34)
+        back = pygame.Rect(470, 14, 120, 34)
         if back.collidepoint(mx, my):
             self._return_to_town()
             self.forge_selected_item = None
