@@ -3948,9 +3948,8 @@ class Game:
             ach = self._achievement_queue.pop(0)
             self._achievement_toast = {"ach": ach, "timer": 4.0}
             try:
-                from core.sfx import SFXManager
-                sfx = SFXManager.instance()
-                if sfx: sfx.play("quest_complete")
+                import core.sound as sfx
+                sfx.play("quest_complete")
             except Exception:
                 pass
 

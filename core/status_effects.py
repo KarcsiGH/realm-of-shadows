@@ -129,6 +129,11 @@ def remove_all_poison(character):
     effects = get_status_effects(character)
     character.status_effects = [s for s in effects if s.get("type") != "poison"]
 
+def remove_all_disease(character):
+    """Remove all disease effects."""
+    effects = get_status_effects(character)
+    character.status_effects = [s for s in effects if s.get("type") != "disease"]
+
 def remove_all_curses(character):
     """Remove all curse effects."""
     effects = get_status_effects(character)

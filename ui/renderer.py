@@ -74,6 +74,9 @@ def draw_text_shadowed(surface, text, x, y, color=CREAM, size=16, bold=False,
     surface.blit(rendered, (x, y))
     return rendered.get_height()
 
+# Alias used by dungeon_ui
+draw_text_shadow = draw_text_shadowed
+
 
 def draw_text_on_panel(surface, text, x, y, color=CREAM, size=16, bold=False,
                        max_width=None, pad=4):

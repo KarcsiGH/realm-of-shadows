@@ -10074,14 +10074,16 @@ _TRAINER_DIALOGUES = {
     ],
     # ── Ambient NPC types for new settlements ───────────────────────────────
     "ambient_fisher": [
-        {"condition": None, "lines": [
-            "The currents have been strange lately. Something under the water is restless.",
-        ]},
+        {"conditions": [], "tree": {"id": "ambient_fisher_default", "loop": True, "nodes": {
+            "start": {"speaker": "Fisher", "text": "The currents have been strange lately. Something under the water is restless.",
+                      "choices": [{"text": "Stay safe.", "next": None}]},
+        }}},
     ],
     "ambient_miner": [
-        {"condition": None, "lines": [
-            "Dragon's Tooth has been groaning for weeks. I give it a month before she blows.",
-        ]},
+        {"conditions": [], "tree": {"id": "ambient_miner_default", "loop": True, "nodes": {
+            "start": {"speaker": "Miner", "text": "Dragon's Tooth has been groaning for weeks. I give it a month before she blows.",
+                      "choices": [{"text": "Take care.", "next": None}]},
+        }}},
     ],
     "ambient_rebel": [
         {"condition": None, "lines": [

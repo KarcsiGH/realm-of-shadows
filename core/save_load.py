@@ -121,6 +121,7 @@ def serialize_character(char):
         "human_bonus_stat": getattr(char, "human_bonus_stat", None),
         "planar_tier": getattr(char, "planar_tier", 0),
         "combat_row":  getattr(char, "combat_row", "front"),
+        "gender":      getattr(char, "gender", "male"),
     }
 
 
@@ -196,6 +197,7 @@ def deserialize_character(data):
     char.human_bonus_stat = data.get("human_bonus_stat", None)
     char.planar_tier = data.get("planar_tier", 0)
     char.combat_row  = data.get("combat_row", "front")
+    char.gender      = data.get("gender", "male")
     # Migrate old save weapons that lack damage_stat
     _migrate_character_items(char)
     return char
@@ -493,3 +495,26 @@ def delete_save(slot_name):
         os.remove(filepath)
         return True, f"Deleted {slot_name}"
     return False, f"Save not found: {slot_name}"
+
+
+def export_party(party):
+    """Export party summary to a text file at game end.
+    Returns (success: bool, path: str|None, message: str)."""
+    import datetime
+    try:
+        ensure_save_dir()
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"party_export_{timestamp}.txt"
+        filepath = os.path.join(SAVE_DIR, filename)
+        lines = ["=" * 50, "REALM OF SHADOWS — PARTY EXPORT", "=" * 50, ""]
+        for c in party:
+            lines.append(f"{c.name}  —  Lv.{c.level} {getattr(c, 'race_name', 'Human')} {c.class_name}")
+            lines.append(f"  Stats: " + "  ".join(f"{k}:{v}" for k, v in c.stats.items()))
+            lines.append(f"  Gold: {c.gold}g")
+            lines.append(f"  Abilities: {', '.join(a['name'] for a in c.abilities[:5])}")
+            lines.append("")
+        with open(filepath, "w") as f:
+            f.write("\n".join(lines))
+        return True, filepath, f"Party exported to {filename}"
+    except Exception as e:
+        return False, None, f"Export failed: {e}"

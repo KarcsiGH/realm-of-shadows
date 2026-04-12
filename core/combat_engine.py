@@ -79,6 +79,7 @@ def make_player_combatant(character, row=FRONT):
         "name": character.name,
         "class_name": character.class_name,
         "race_name": getattr(character, "race_name", "Human"),
+        "gender":    getattr(character, "gender", "male"),
         "level": character.level,
         "stats": stats,
         "hp": character.resources.get("HP", max_hp),

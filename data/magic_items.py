@@ -838,3 +838,23 @@ for _lst in [SECRET_ITEMS_DA1, SECRET_ITEMS_T1, SECRET_ITEMS_T2, SECRET_ITEMS_T3
     _fix_items(_lst)
 for _items in ITEM_SETS.values():
     _fix_items(_items)
+
+
+def get_random_training_book():
+    """Return a random training book item (grants +1 to a stat on use)."""
+    import random
+    stats = ["STR", "DEX", "CON", "INT", "WIS", "PIE"]
+    stat = random.choice(stats)
+    return {
+        "name": f"Tome of {stat}",
+        "type": "consumable",
+        "slot": "consumable",
+        "subtype": "training_book",
+        "stat": stat,
+        "bonus": 1,
+        "rarity": "uncommon",
+        "description": f"A training manual that permanently increases {stat} by 1.",
+        "identified": True,
+        "estimated_value": 200,
+        "use_effect": "train_stat",
+    }
