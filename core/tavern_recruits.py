@@ -86,7 +86,7 @@ def _make_recruit_char(name, cls, race, target_level):
     base_cls = cls
     if cls not in CLASSES:
         trans = CLASS_TRANSITIONS.get(cls)
-        base_cls = trans["base_classes"][0] if trans else "Fighter"
+        base_cls = trans["base_classes"][0] if trans and trans.get("base_classes") else "Fighter"
 
     c = Character(name, base_cls, race)
     c.quick_roll(base_cls)

@@ -3061,13 +3061,14 @@ class TownUI:
                                       ar.width-12, (100,93,75) if not is_known else (120,125,150), get_font(10))
                     ay += ar.height + 4
 
-        # Transitions bar
+        # Transitions bar — show only classes reachable from current class
         ty = SCREEN_H - 68
         draw_text(surface, "Transitions:", 20, ty, DIM_GOLD, 12)
         tx = 130
-        self._classtree_transition_rects = []   # [(rect, class_name, can_transition)]
+        self._classtree_transition_rects = []
         for tn, req in CLASS_TRANSITIONS.items():
-            if c.class_name not in req["base_classes"]: continue
+            if c.class_name not in req.get("base_classes", []):
+                continue  # not reachable from current class
             can = tn in get_available_transitions(c)
             tc2 = PURPLE if can else (60,50,50)
             bg2 = (35,16,50) if can else (20,16,16)
@@ -3075,7 +3076,7 @@ class TownUI:
             pygame.draw.rect(surface, bg2, tr2, border_radius=3)
             pygame.draw.rect(surface, tc2, tr2, 1, border_radius=3)
             draw_text(surface, tn, tr2.x+8, tr2.y+4, tc2, 11)
-            _req_lv = 20 if max(req.get("stat_req", {}).values(), default=0) >= 15 else 10
+            _req_lv = req.get("min_level", 10)
             draw_text(surface, f"Lv{_req_lv}+", tr2.x+4, tr2.y-13, (72,66,50), 10)
             if can:
                 draw_text(surface, "CLICK", tr2.x+4, tr2.y+tr2.height+2, (90,160,120), 9)
@@ -3107,9 +3108,9 @@ class TownUI:
         cls = CLASSES.get(c.class_name, {})
         char_col = cls.get("color", CREAM)
 
-        available = get_available_transitions(c)  # class names the char qualifies for
+        available = get_available_transitions(c)  # class names the char qualifies for now
         all_possible = [(tn, req) for tn, req in CLASS_TRANSITIONS.items()
-                        if tn != c.class_name]  # show all transitions except current class
+                        if c.class_name in req.get("base_classes", [])]  # reachable from current class
 
         # ── Background ────────────────────────────────────────────────────────
         overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
@@ -3176,11 +3177,11 @@ class TownUI:
         GRID_BOT   = SCREEN_H - 60  # leave room for back button
 
         n_cards    = max(1, len(all_possible))
-        # Layout: up to 3 per row
-        COLS       = min(3, n_cards)
-        CARD_GAP   = 14
+        # 4 columns so 15 classes fit in 4 rows (4×4=16 slots) within screen height
+        COLS       = min(4, n_cards)
+        CARD_GAP   = 10
         CARD_W     = (SCREEN_W - 40 - CARD_GAP * (COLS - 1)) // COLS
-        CARD_H_BASE= 160   # collapsed height
+        CARD_H_BASE= 140   # collapsed height
         GRID_X     = 20
 
         self._tc_card_rects   = []
@@ -3250,22 +3251,14 @@ class TownUI:
             badge_y = card_r.y + 10
             name_mw = (CARD_W - 70) if selected else (CARD_W - 24)
             draw_class_badge(surface, tn, badge_x, badge_y, 20)
-            # Derive tier label from stat requirements (no min_level key in data)
-            stat_req = req.get("stat_req", {})
-            max_req  = max(stat_req.values(), default=0)
-            num_reqs = len(stat_req)
-            if max_req >= 15:
+            # Tier from actual min_level
+            min_level = req.get("min_level", 10)
+            if min_level >= 15:
                 tier_label = "Apex"
                 tier_col   = (220, 160, 80)
-                min_level  = 20
-            elif num_reqs >= 2:
+            else:
                 tier_label = "Hybrid"
                 tier_col   = (140, 180, 220)
-                min_level  = 10
-            else:
-                tier_label = "Advanced"
-                tier_col   = (160, 220, 160)
-                min_level  = 5
             name_col   = tc_col if can else (60, 54, 50)
             draw_text(surface, tn, badge_x + 28, badge_y + 2,
                       name_col, 17, bold=True, max_width=name_mw)
@@ -3278,7 +3271,7 @@ class TownUI:
                 actual = c.stats.get(stat, 0)
                 met    = actual >= minimum
                 draw_text(surface,
-                          f"{'V' if met else 'X'} {stat} {minimum}  ({actual})",
+                          f"{'✓' if met else '✗'} {stat} {minimum}  ({actual})",
                           card_r.x + 10, req_y,
                           (80, 200, 100) if met else (200, 80, 80), 11)
                 req_y += 16
@@ -3346,8 +3339,7 @@ class TownUI:
                               card_r.x + 10, card_r.y + card_h - 24,
                               (160, 80, 80), 11)
                 else:
-                    _ml = 20 if max(req.get("stat_req", {}).values(), default=0) >= 15 else 10
-                    draw_text(surface, f"Requires Level {_ml}+",
+                    draw_text(surface, f"Requires Level {req.get('min_level', 10)}+",
                               card_r.x + 10, card_r.y + card_h - 24,
                               (140, 80, 60), 11)
 
