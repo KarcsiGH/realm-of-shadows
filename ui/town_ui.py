@@ -1431,20 +1431,20 @@ class TownUI:
         self._draw_building_interior(surface, building_type or
                                      getattr(self, "_current_bld_type", ""))
 
-        # ── Back button — top-right of left panel ──────────────────────
-        back = pygame.Rect(PW - 130, 8, 120, 34)
+        # ── Back button — bottom of left panel, above party bar ──────────────
+        # Party bar starts at SCREEN_H-100; button ends at SCREEN_H-106 (6px gap)
+        back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
         draw_button(surface, back, "← Back",
                     hover=back.collidepoint(mx, my), size=13,
                     bg=(50, 35, 70), border=(120, 90, 160), color=(220, 200, 255))
         self._back_btn = back
 
-        # ── Title text — left of back button, right of NPC card ──────
-        # max_width keeps it from running into the back button
+        # ── Title text — full left panel width right of NPC card ──────────────
         draw_text(surface, bld_name, 278, 14, GOLD, 22, bold=True,
-                  max_width=PW - 130 - 278 - 10)
+                  max_width=PW - 290)
         if subtitle:
             draw_text(surface, subtitle, 278, 42, GREY, 13,
-                      max_width=PW - 130 - 278 - 10)
+                      max_width=PW - 290)
 
         npc = self.current_bld_indoor_npc
         self._bld_npc_portrait_rect = None
@@ -1890,107 +1890,14 @@ class TownUI:
     # ─────────────────────────────────────────────────────────
 
     def _draw_shop_buy(self, surface, mx, my):
-        draw_text(surface, "Buy Items", 20, 12, GOLD, 22, bold=True)
-
-        total_gold = sum(c.gold for c in self.party)
-        draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W - 220, 15, DIM_GOLD, 16)
-
-        # Back button
-
-        # Category tabs — start below the NPC portrait card (card bottom = ~134px)
-        tabs = [("weapons", "Weapons"), ("armor", "Armor"), ("consumables", "Supplies")]
-        for i, (key, label) in enumerate(tabs):
-            tr = pygame.Rect(20 + i * 140, 140, 130, 32)
-            is_sel = (self.shop_tab == key)
-            hover = tr.collidepoint(mx, my)
-            bg = (50, 40, 85) if is_sel else (35, 30, 60) if hover else (20, 18, 36)
-            border = GOLD if is_sel else HIGHLIGHT if hover else PANEL_BORDER
-            pygame.draw.rect(surface, bg, tr, border_radius=3)
-            pygame.draw.rect(surface, border, tr, 2, border_radius=3)
-            draw_text(surface, label, tr.x + 10, tr.y + 7,
-                      GOLD if is_sel else CREAM, 14, bold=is_sel)
-
-        # Item list — regular shop items + buyback items
-        items = list(self.shop.get(self.shop_tab, []))
-        # Append sold items to current tab (they appear in all tabs under "Buyback")
-        buyback_start = len(items)
-        items.extend(self.sold_items)
-        panel = pygame.Rect(20, 182, SCREEN_W - 40, SCREEN_H - 287)
-        draw_panel(surface, panel, bg_color=SHOP_BG)
-
-        if not items:
-            draw_text(surface, "Nothing in this category.", panel.x + 20, panel.y + 20, DARK_GREY, 15)
-        else:
-            iy = panel.y + 10
-            max_vis = 8
-            start = self.shop_scroll
-            end = min(len(items), start + max_vis)
-
-            for idx in range(start, end):
-                item = items[idx]
-                is_buyback = idx >= buyback_start
-                row = pygame.Rect(panel.x + 8, iy, panel.width - 16, 68)
-                hover = row.collidepoint(mx, my)
-
-                if is_buyback:
-                    bg = (30, 28, 18) if hover else (22, 20, 12)
-                else:
-                    bg = ITEM_HOVER if hover else ITEM_BG
-                pygame.draw.rect(surface, bg, row, border_radius=3)
-                pygame.draw.rect(surface, HIGHLIGHT if hover else PANEL_BORDER, row, 1, border_radius=3)
-
-                # Buyback label
-                if is_buyback:
-                    draw_text(surface, "BUYBACK", row.x + row.width - 170, row.y + 26,
-                              (180, 150, 60), 10, bold=True)
-
-                # Name
-                rarity = item.get("rarity", "common")
-                name_col = RARITY_COLORS.get(rarity, CREAM)
-                draw_text(surface, item["name"], row.x + 10, row.y + 4, name_col, 15, bold=True)
-
-                # Description
-                desc = item.get("description", "")
-                if len(desc) > 80:
-                    desc = desc[:77] + "..."
-                draw_text(surface, desc, row.x + 10, row.y + 24, GREY, 15)
-
-                # Stats
-                parts = []
-                if item.get("damage"):
-                    parts.append(f"DMG {item['damage']}")
-                if item.get("defense", 0):
-                    parts.append(f"DEF +{item['defense']}")
-                if item.get("heal_amount"):
-                    parts.append(f"Heal {item['heal_amount']}")
-                for stat, val in item.get("stat_bonuses", {}).items():
-                    parts.append(f"{stat}+{val}")
-                if parts:
-                    draw_text(surface, "  ".join(parts), row.x + 10, row.y + 44, GREY, 13)
-
-                # Price + buy hint
-                price = item.get("buy_price", 0)
-                can_afford = total_gold >= price
-                price_col = BUY_COL if (hover and can_afford) else DIM_GOLD if can_afford else RED
-                draw_text(surface, f"{price}g", row.x + row.width - 80, row.y + 4, price_col, 16, bold=True)
-                if hover:
-                    lbl = "Click to buy" if can_afford else "Not enough gold"
-                    draw_text(surface, lbl, row.x + row.width - 140, row.y + 48,
-                              BUY_COL if can_afford else RED, 11)
-
-                iy += 72
-
-            # Scroll hints
-            if self.shop_scroll > 0:
-                draw_text(surface, "^ scroll up", panel.x + panel.width // 2 - 40, panel.y + 2, DIM_GOLD, 13)
-            if end < len(items):
-                draw_text(surface, "v scroll down", panel.x + panel.width // 2 - 45, iy + 2, DIM_GOLD, 13)
-
-    def _draw_shop_buy(self, surface, mx, my):
         from core.equipment import can_equip
         draw_text(surface, "Buy Items", 20, 12, GOLD, 22, bold=True)
 
-        # Back button
+        # Back button — bottom of left panel, above party bar
+        _sb_back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
+        draw_button(surface, _sb_back, "← Back",
+                    hover=_sb_back.collidepoint(mx, my), size=13,
+                    bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # ── Character tabs (6a) ───────────────────────────────────────
         n = len(self.party)
@@ -2197,7 +2104,11 @@ class TownUI:
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 80, 15, DIM_GOLD, 16)
 
-        # Back button in top-right, clear of character tabs
+        # Back button — bottom of left panel, above party bar
+        _ss_back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
+        draw_button(surface, _ss_back, "← Back",
+                    hover=_ss_back.collidepoint(mx, my), size=13,
+                    bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Character tabs — below NPC portrait card (card bottom ~134px), clear of back button
         tab_area_w = SCREEN_W - 170  # leave 170px for back button
@@ -2544,7 +2455,7 @@ class TownUI:
             return
 
         # Back button — top-right of left panel area
-        _cs_back = pygame.Rect(474, 8, 120, 34)
+        _cs_back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
         draw_button(surface, _cs_back, "← Back",
                     hover=_cs_back.collidepoint(mx, my), size=13,
                     bg=(50,35,70), border=(120,90,160), color=(220,200,255))
@@ -3551,7 +3462,7 @@ class TownUI:
             tx += tw2 + 8
 
         PW = int(SCREEN_W * 0.42)
-        back = pygame.Rect(PW - 130, 8, 120, 34)
+        back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
         draw_button(surface, back, "← Leave", hover=back.collidepoint(mx, my), size=13,
                     bg=(50,35,70), border=(120,90,160), color=(220,200,255))
         self._back_btn = back
@@ -3715,7 +3626,7 @@ class TownUI:
         draw_text(surface, "Job Board", 20, 28, GOLD, 22, bold=True)
         draw_text(surface, "Available contracts in the area.", 20, 58, GREY, 13)
 
-        back = pygame.Rect(PW - 130, 8, 120, 34)
+        back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
         draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13,
                     bg=(50,35,70), border=(120,90,160), color=(220,200,255))
         self._back_btn = back
@@ -3862,6 +3773,9 @@ class TownUI:
                     elif loc_key == "jobboard":
                         self._enter_building_from_hub("jobboard")
                         self.view = self.VIEW_JOBBOARD
+                    elif loc_key == "guild":
+                        self._enter_building_from_hub("guild")
+                        self._enter_guild(BUILDING_NPCS.get(self.town_id, {}).get("guild", {}))
                     elif loc_key == "party":
                         return "open_party_review"
                     return None
@@ -3904,7 +3818,7 @@ class TownUI:
         # ── Shop buy ──
         elif self.view == self.VIEW_SHOP_BUY:
             # Back button
-            back = pygame.Rect(474, 8, 120, 34)
+            back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
             if back.collidepoint(mx, my):
                 self.view = self.VIEW_SHOP
                 return None
@@ -3951,7 +3865,7 @@ class TownUI:
 
         # ── Shop sell ──
         elif self.view == self.VIEW_SHOP_SELL:
-            back = pygame.Rect(474, 8, 120, 34)
+            back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
             if back.collidepoint(mx, my):
                 self.view = self.VIEW_SHOP
                 return None
@@ -3981,7 +3895,7 @@ class TownUI:
 
         # ── Temple ──
         elif self.view == self.VIEW_TEMPLE:
-            back = pygame.Rect(474, 8, 120, 34)
+            back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
             if back.collidepoint(mx, my):
                 self._return_to_town()
                 return None
@@ -4022,7 +3936,7 @@ class TownUI:
         elif self.view == self.VIEW_INN:
             from core.progression import INN_TIERS, INN_TIER_ORDER
 
-            back = pygame.Rect(474, 8, 120, 34)
+            back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
             if back.collidepoint(mx, my):
                 self._return_to_town()
                 self.inn_result = None
@@ -4072,7 +3986,7 @@ class TownUI:
         elif self.view == self.VIEW_INN_TRAINER:
             from core.abilities import get_unlearned_abilities, learn_ability
 
-            back = pygame.Rect(474, 8, 120, 34)
+            back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
             if back.collidepoint(mx, my):
                 if getattr(self, "_trainer_origin", "inn") == "guild":
                     self._trainer_origin = "inn"
@@ -4119,7 +4033,7 @@ class TownUI:
         elif self.view == self.VIEW_INN_CHARSHEET:
             n = len(self.party)
 
-            back = pygame.Rect(474, 8, 120, 34)
+            back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
             if back.collidepoint(mx, my):
                 self.view = self.VIEW_INN
                 return None
@@ -4508,7 +4422,7 @@ class TownUI:
         # ── Job Board ──
         elif self.view == self.VIEW_JOBBOARD:
             PW = int(SCREEN_W * 0.42)
-            back = pygame.Rect(474, 8, 120, 34)
+            back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
             if back.collidepoint(mx, my):
                 self._return_to_town()
                 return None
@@ -5103,7 +5017,7 @@ class TownUI:
         )
 
         # Back button — matches draw y=140
-        back = pygame.Rect(474, 8, 120, 34)
+        back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
         if back.collidepoint(mx, my):
             self._return_to_town()
             self.forge_selected_item = None
