@@ -1,38 +1,38 @@
 {
   "version": 4,
-  "timestamp": "2026-04-11T19:10:07.582265",
+  "timestamp": "2026-04-11T19:20:23.805572",
   "slot_name": "save1",
   "metadata": {
     "party_summary": [
-      "Scott Lv.3 Human Spellblade",
-      "Polly Lv.3 Gnome Cleric",
-      "Petra Lv.3 Human Paladin",
-      "Wanda Lv.3 Elf Witch",
-      "Marvin Lv.3 Halfling Monk",
-      "Roger Lv.3 Half-Orc Ranger"
+      "Scott Lv.4 Human Spellblade",
+      "Polly Lv.4 Gnome Cleric",
+      "Petra Lv.4 Human Paladin",
+      "Wanda Lv.4 Elf Witch",
+      "Marvin Lv.4 Halfling Monk",
+      "Roger Lv.4 Half-Orc Ranger"
     ],
-    "total_gold": 993
+    "total_gold": 897
   },
   "party": [
     {
       "name": "Scott",
       "class_name": "Spellblade",
       "race_name": "Human",
-      "level": 3,
-      "xp": 2958,
+      "level": 4,
+      "xp": 2969,
       "gold": 0,
       "stats": {
-        "STR": 20,
-        "DEX": 15,
+        "STR": 21,
+        "DEX": 17,
         "CON": 14,
-        "INT": 18,
+        "INT": 19,
         "WIS": 17,
         "PIE": 11
       },
       "resources": {
-        "HP": 82,
-        "INT-MP": 42,
-        "STR-SP": 46
+        "HP": 85,
+        "INT-MP": 48,
+        "STR-SP": 52
       },
       "abilities": [
         {
@@ -176,22 +176,22 @@
       "name": "Polly",
       "class_name": "Cleric",
       "race_name": "Gnome",
-      "level": 3,
-      "xp": 2832,
-      "gold": 178,
+      "level": 4,
+      "xp": 2843,
+      "gold": 66,
       "stats": {
         "STR": 14,
         "DEX": 11,
         "CON": 16,
         "INT": 18,
-        "WIS": 15,
-        "PIE": 19
+        "WIS": 17,
+        "PIE": 20
       },
       "resources": {
-        "HP": 81,
-        "Ki": 152,
-        "WIS-MP": 36,
-        "PIE-MP": 44
+        "HP": 86,
+        "Ki": 170,
+        "WIS-MP": 42,
+        "PIE-MP": 50
       },
       "abilities": [
         {
@@ -285,21 +285,21 @@
       "name": "Petra",
       "class_name": "Paladin",
       "race_name": "Human",
-      "level": 3,
-      "xp": 2958,
-      "gold": 206,
+      "level": 4,
+      "xp": 2969,
+      "gold": 210,
       "stats": {
-        "STR": 19,
-        "DEX": 17,
+        "STR": 20,
+        "DEX": 18,
         "CON": 14,
         "INT": 12,
-        "WIS": 11,
-        "PIE": 18
+        "WIS": 12,
+        "PIE": 19
       },
       "resources": {
-        "HP": 89,
-        "PIE-MP": 42,
-        "STR-SP": 44
+        "HP": 92,
+        "PIE-MP": 48,
+        "STR-SP": 50
       },
       "abilities": [
         {
@@ -347,21 +347,21 @@
       "name": "Wanda",
       "class_name": "Witch",
       "race_name": "Elf",
-      "level": 3,
-      "xp": 2832,
-      "gold": 205,
+      "level": 4,
+      "xp": 2843,
+      "gold": 209,
       "stats": {
         "STR": 15,
-        "DEX": 10,
+        "DEX": 11,
         "CON": 15,
-        "INT": 22,
-        "WIS": 17,
-        "PIE": 17
+        "INT": 23,
+        "WIS": 18,
+        "PIE": 18
       },
       "resources": {
-        "HP": 71,
-        "INT-MP": 50,
-        "PIE-MP": 42
+        "HP": 74,
+        "INT-MP": 56,
+        "PIE-MP": 46
       },
       "abilities": [
         {
@@ -412,22 +412,22 @@
       "name": "Marvin",
       "class_name": "Monk",
       "race_name": "Halfling",
-      "level": 3,
-      "xp": 2832,
-      "gold": 202,
+      "level": 4,
+      "xp": 2843,
+      "gold": 206,
       "stats": {
-        "STR": 15,
-        "DEX": 20,
-        "CON": 15,
+        "STR": 16,
+        "DEX": 21,
+        "CON": 16,
         "INT": 15,
-        "WIS": 18,
+        "WIS": 19,
         "PIE": 14
       },
       "resources": {
-        "HP": 86,
-        "Ki": 58,
-        "WIS-MP": 42,
-        "DEX-SP": 48
+        "HP": 88,
+        "Ki": 63,
+        "WIS-MP": 48,
+        "DEX-SP": 54
       },
       "abilities": [
         {
@@ -791,22 +791,22 @@
       "name": "Roger",
       "class_name": "Ranger",
       "race_name": "Half-Orc",
-      "level": 3,
-      "xp": 2832,
-      "gold": 202,
+      "level": 4,
+      "xp": 2843,
+      "gold": 206,
       "stats": {
         "STR": 19,
-        "DEX": 20,
-        "CON": 16,
+        "DEX": 21,
+        "CON": 17,
         "INT": 12,
-        "WIS": 16,
+        "WIS": 18,
         "PIE": 6
       },
       "resources": {
-        "HP": 88,
-        "Ki": 149,
-        "WIS-MP": 38,
-        "DEX-SP": 44
+        "HP": 91,
+        "Ki": 170,
+        "WIS-MP": 44,
+        "DEX-SP": 52
       },
       "abilities": [
         {
@@ -884,30 +884,30 @@
   "character_bank": [],
   "knowledge": {
     "identified_items": [
-      "Crude Snare Wire",
-      "Short Bow",
-      "Wooden Club",
-      "Leather Vest",
-      "Wooden Shield",
-      "Scroll of Protection",
-      "Worn Longsword",
-      "Rusty Knife",
-      "Goblin Shiv",
-      "Goblin Ear",
       "Rat Tail",
+      "Rusty Knife",
+      "Crude Snare Wire",
+      "Chain Shirt",
       "Carved Oak Wand",
+      "Glowing Spore Sac",
       "Walking Stick",
+      "Fading-Touched Pelt",
       "Iron Ki Beads",
-      "Monk Unarmed",
+      "Worn Longsword",
       "Minor Healing Potion",
+      "Monk Unarmed",
+      "Bat Wing",
+      "Wooden Club",
+      "Lurker Fang",
+      "Goblin Ear",
+      "Leather Vest",
       "Crude Knife",
       "Traveler's Clothes",
-      "Chain Shirt",
-      "Fading-Touched Pelt",
-      "Glowing Spore Sac",
-      "Bat Wing",
       "Soft Leather Shoes",
-      "Lurker Fang"
+      "Scroll of Protection",
+      "Short Bow",
+      "Goblin Shiv",
+      "Wooden Shield"
     ],
     "known_enemies": {
       "Cave Bat": 2,

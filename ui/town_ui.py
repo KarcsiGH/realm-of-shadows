@@ -1422,15 +1422,29 @@ class TownUI:
                               building_type: str = ""):
         """Draw building title + indoor NPC portrait card at top of service views.
         Also draws the split-screen building interior background if an image exists.
-        Portrait is on the LEFT so it never overlaps the Back button (top-right).
-        Click handling is done in handle_click via self._bld_npc_portrait_rect."""
+        Draws the Back button at top-right of the left panel and stores it as
+        self._back_btn for click handlers.
+        """
+        PW = int(SCREEN_W * 0.42)   # left panel width
+
         # ── Building interior background (split screen) ──────────────
         self._draw_building_interior(surface, building_type or
                                      getattr(self, "_current_bld_type", ""))
 
-        draw_text(surface, bld_name, 278, 14, GOLD, 22, bold=True)
+        # ── Back button — top-right of left panel ──────────────────────
+        back = pygame.Rect(PW - 130, 8, 120, 34)
+        draw_button(surface, back, "← Back",
+                    hover=back.collidepoint(mx, my), size=13,
+                    bg=(50, 35, 70), border=(120, 90, 160), color=(220, 200, 255))
+        self._back_btn = back
+
+        # ── Title text — left of back button, right of NPC card ──────
+        # max_width keeps it from running into the back button
+        draw_text(surface, bld_name, 278, 14, GOLD, 22, bold=True,
+                  max_width=PW - 130 - 278 - 10)
         if subtitle:
-            draw_text(surface, subtitle, 278, 42, GREY, 13)
+            draw_text(surface, subtitle, 278, 42, GREY, 13,
+                      max_width=PW - 130 - 278 - 10)
 
         npc = self.current_bld_indoor_npc
         self._bld_npc_portrait_rect = None
@@ -1684,9 +1698,10 @@ class TownUI:
         except Exception:
             pass
 
-        # Back button
-        back = pygame.Rect(W - 140, 18, 120, 36)
-        draw_button(surface, back, "← Leave", hover=back.collidepoint(mx, my), size=13)
+        # Back button — top-right of header bar, stays within header height
+        back = pygame.Rect(W - 150, 18, 120, 36)
+        draw_button(surface, back, "← Leave", hover=back.collidepoint(mx, my),
+                    size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
         self._guild_back_btn = back
 
         # ── Pending badge ───────────────────────────────────────────
@@ -1881,8 +1896,6 @@ class TownUI:
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W - 220, 15, DIM_GOLD, 16)
 
         # Back button
-        back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
-        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Category tabs — start below the NPC portrait card (card bottom = ~134px)
         tabs = [("weapons", "Weapons"), ("armor", "Armor"), ("consumables", "Supplies")]
@@ -1978,8 +1991,6 @@ class TownUI:
         draw_text(surface, "Buy Items", 20, 12, GOLD, 22, bold=True)
 
         # Back button
-        back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
-        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # ── Character tabs (6a) ───────────────────────────────────────
         n = len(self.party)
@@ -2187,8 +2198,6 @@ class TownUI:
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 80, 15, DIM_GOLD, 16)
 
         # Back button in top-right, clear of character tabs
-        back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
-        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Character tabs — below NPC portrait card (card bottom ~134px), clear of back button
         tab_area_w = SCREEN_W - 170  # leave 170px for back button
@@ -2262,8 +2271,6 @@ class TownUI:
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 60, 85, DIM_GOLD, 16)
 
-        back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
-        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Services
         services = list(TEMPLE["services"].values())
@@ -2348,8 +2355,6 @@ class TownUI:
         bld_name = self.current_bld_name or "The Inn"
         self._draw_bld_npc_header(surface, bld_name, "Rest your weary bones, save your progress.", mx, my, building_type="inn")
 
-        back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
-        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Save button — top right, next to Back
         save_btn = pygame.Rect(SCREEN_W - 280, 20, 128, 34)
@@ -2435,8 +2440,6 @@ class TownUI:
             subtitle = "Train your skills — spend gold to master new abilities."
         self._draw_bld_npc_header(surface, bld_name, subtitle, mx, my, building_type="inn")
 
-        back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
-        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Party Gold: {total_gold}g", SCREEN_W // 2 - 60, 80, DIM_GOLD, 14)
@@ -2540,9 +2543,11 @@ class TownUI:
         if not self.party:
             return
 
-        # Back button
-        back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
-        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
+        # Back button — top-right of left panel area
+        _cs_back = pygame.Rect(474, 8, 120, 34)
+        draw_button(surface, _cs_back, "← Back",
+                    hover=_cs_back.collidepoint(mx, my), size=13,
+                    bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Character navigation arrows
         n = len(self.party)
@@ -3545,8 +3550,11 @@ class TownUI:
             self._tavern_tab_rects.append((key, tr))
             tx += tw2 + 8
 
-        back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
-        draw_button(surface, back, "Leave", hover=back.collidepoint(mx, my), size=13)
+        PW = int(SCREEN_W * 0.42)
+        back = pygame.Rect(PW - 130, 8, 120, 34)
+        draw_button(surface, back, "← Leave", hover=back.collidepoint(mx, my), size=13,
+                    bg=(50,35,70), border=(120,90,160), color=(220,200,255))
+        self._back_btn = back
 
         # ── PATRONS tab ───────────────────────────────────────────────────────
         if self.tavern_tab == "patrons":
@@ -3707,9 +3715,10 @@ class TownUI:
         draw_text(surface, "Job Board", 20, 28, GOLD, 22, bold=True)
         draw_text(surface, "Available contracts in the area.", 20, 58, GREY, 13)
 
-        back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
-        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
-
+        back = pygame.Rect(PW - 130, 8, 120, 34)
+        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13,
+                    bg=(50,35,70), border=(120,90,160), color=(220,200,255))
+        self._back_btn = back
         jobs = get_town_jobs(self.town_id)
         if not jobs:
             draw_text(surface, "No jobs posted.", 20, 140, GREY, 16)
@@ -3895,7 +3904,7 @@ class TownUI:
         # ── Shop buy ──
         elif self.view == self.VIEW_SHOP_BUY:
             # Back button
-            back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
+            back = pygame.Rect(474, 8, 120, 34)
             if back.collidepoint(mx, my):
                 self.view = self.VIEW_SHOP
                 return None
@@ -3942,7 +3951,7 @@ class TownUI:
 
         # ── Shop sell ──
         elif self.view == self.VIEW_SHOP_SELL:
-            back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
+            back = pygame.Rect(474, 8, 120, 34)
             if back.collidepoint(mx, my):
                 self.view = self.VIEW_SHOP
                 return None
@@ -3972,7 +3981,7 @@ class TownUI:
 
         # ── Temple ──
         elif self.view == self.VIEW_TEMPLE:
-            back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
+            back = pygame.Rect(474, 8, 120, 34)
             if back.collidepoint(mx, my):
                 self._return_to_town()
                 return None
@@ -4013,7 +4022,7 @@ class TownUI:
         elif self.view == self.VIEW_INN:
             from core.progression import INN_TIERS, INN_TIER_ORDER
 
-            back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
+            back = pygame.Rect(474, 8, 120, 34)
             if back.collidepoint(mx, my):
                 self._return_to_town()
                 self.inn_result = None
@@ -4063,7 +4072,7 @@ class TownUI:
         elif self.view == self.VIEW_INN_TRAINER:
             from core.abilities import get_unlearned_abilities, learn_ability
 
-            back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
+            back = pygame.Rect(474, 8, 120, 34)
             if back.collidepoint(mx, my):
                 if getattr(self, "_trainer_origin", "inn") == "guild":
                     self._trainer_origin = "inn"
@@ -4110,7 +4119,7 @@ class TownUI:
         elif self.view == self.VIEW_INN_CHARSHEET:
             n = len(self.party)
 
-            back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
+            back = pygame.Rect(474, 8, 120, 34)
             if back.collidepoint(mx, my):
                 self.view = self.VIEW_INN
                 return None
@@ -4499,7 +4508,7 @@ class TownUI:
         # ── Job Board ──
         elif self.view == self.VIEW_JOBBOARD:
             PW = int(SCREEN_W * 0.42)
-            back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
+            back = pygame.Rect(474, 8, 120, 34)
             if back.collidepoint(mx, my):
                 self._return_to_town()
                 return None
@@ -4910,8 +4919,6 @@ class TownUI:
             draw_text(surface, label, tr.x + 35, tr.y + 7, tc, 15, bold=active)
 
         # Back button — aligned with tabs
-        back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
-        draw_button(surface, back, "← Back", hover=back.collidepoint(mx, my), size=13, bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Materials summary bar (below tabs)
         draw_text(surface, "Materials:", 20, 180, GREY, 12)
@@ -5096,7 +5103,7 @@ class TownUI:
         )
 
         # Back button — matches draw y=140
-        back = pygame.Rect(20, SCREEN_H - 52, 120, 34)
+        back = pygame.Rect(474, 8, 120, 34)
         if back.collidepoint(mx, my):
             self._return_to_town()
             self.forge_selected_item = None
