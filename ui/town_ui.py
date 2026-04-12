@@ -3249,12 +3249,26 @@ class TownUI:
             badge_y = card_r.y + 10
             name_mw = (CARD_W - 70) if selected else (CARD_W - 24)
             draw_class_badge(surface, tn, badge_x, badge_y, 20)
-            tier_label = "Hybrid" if req["min_level"] == 10 else "Apex"
-            tier_col   = (140, 180, 220) if req["min_level"] == 10 else (220, 160, 80)
+            # Derive tier label from stat requirements (no min_level key in data)
+            stat_req = req.get("stat_req", {})
+            max_req  = max(stat_req.values(), default=0)
+            num_reqs = len(stat_req)
+            if max_req >= 15:
+                tier_label = "Apex"
+                tier_col   = (220, 160, 80)
+                min_level  = 20
+            elif num_reqs >= 2:
+                tier_label = "Hybrid"
+                tier_col   = (140, 180, 220)
+                min_level  = 10
+            else:
+                tier_label = "Advanced"
+                tier_col   = (160, 220, 160)
+                min_level  = 5
             name_col   = tc_col if can else (60, 54, 50)
             draw_text(surface, tn, badge_x + 28, badge_y + 2,
                       name_col, 17, bold=True, max_width=name_mw)
-            draw_text(surface, f"{tier_label}  ·  Level {req['min_level']}",
+            draw_text(surface, f"{tier_label}  ·  Level {min_level}+",
                       badge_x + 28, badge_y + 22, tier_col, 11)
 
             # Stat requirements
