@@ -1959,6 +1959,9 @@ class TownUI:
         panel = pygame.Rect(20, 140, list_w, CONTENT_MAX_Y - 140)  # starts below portrait
         draw_panel(surface, panel, bg_color=SHOP_BG)
 
+        # Party total gold — used for affordability checks
+        total_gold = sum(c.gold for c in self.party)
+
         items = list(self.shop.get(self.shop_tab, []))
         buyback_start = len(items)
         items.extend(self.sold_items)
@@ -2643,7 +2646,7 @@ class TownUI:
                     draw_text(surface, f"[{cost} {short}]",
                               L2 + 190, ay, STAT_LABEL, 11)
                 ay += 17
-                if ay > SCREEN_H - 80:
+                if ay > SCREEN_H - 200:  # stop before gold summary section at y=715
                     draw_text(surface, "…", L2, ay, GREY, 11)
                     break
         else:
@@ -2688,7 +2691,7 @@ class TownUI:
             ey += 17
 
         # ── Gold summary row at bottom ────────────────────────────────────────
-        gold_y = SCREEN_H - 130
+        gold_y = SCREEN_H - 185  # section bottom at y=750; back button at y=760; 10px gap
         total_gold = sum(ch.gold for ch in self.party)
         pygame.draw.line(surface, (50, 46, 70), (40, gold_y - 4), (SCREEN_W - 40, gold_y - 4), 1)
         draw_text(surface, f"Party Gold: {total_gold}g", 48, gold_y, DIM_GOLD, 14, bold=True)

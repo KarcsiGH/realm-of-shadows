@@ -2283,9 +2283,9 @@ class CampUI:
         self._camp_split_btn = split_btn
         self._camp_give10_btn = give10_btn
 
-        # ── Status message ──
+        # ── Status message — below gold section ──────────────────────────────
         if self.message and self.msg_timer > 0:
-            draw_text(surface, self.message, left_x, list_top + 14 * item_h + 30,
+            draw_text(surface, self.message, left_x, gold_y + 46,
                       self.msg_color, 14)
 
         # store for click handler
