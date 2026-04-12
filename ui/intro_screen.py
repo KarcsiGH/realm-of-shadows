@@ -25,6 +25,7 @@ BLACK = (0, 0, 0)
 _ASSETS = os.path.dirname(os.path.dirname(__file__)) + "/assets/"
 _LOGO_JPG = _ASSETS + "bad_bat_logo.jpg"
 _LOGO_PNG = _ASSETS + "bad_bat_logo.png"
+_TITLE_BG = _ASSETS + "title_screen.png"
 
 # ── timing (ms) ──────────────────────────────────────────────────────────────
 T_HIRES_FADE_IN   =  900
@@ -331,6 +332,15 @@ class IntroScreen:
                         rng.randint(1,2),rng.uniform(0.3,1.2),rng.random()*6.28)
                        for _ in range(120)]
 
+        # Title screen background image (pixel art — replaces procedural dungeon)
+        self._title_bg = None
+        if os.path.exists(_TITLE_BG):
+            try:
+                raw = pygame.image.load(_TITLE_BG).convert_alpha()
+                self._title_bg = pygame.transform.scale(raw, (SCREEN_W, 530))
+            except Exception:
+                self._title_bg = None
+
     # ── public ───────────────────────────────────────────────────────────────
 
     def update(self, dt_ms):
@@ -614,7 +624,10 @@ class IntroScreen:
         # Starts just below title text, fills to just above tagline
         ART_Y=160; ART_W=SCREEN_W; ART_H=530
         art_rect=pygame.Rect(0, ART_Y, ART_W, ART_H)
-        _dungeon_art(surf, t, art_rect)
+        if self._title_bg is not None:
+            surf.blit(self._title_bg, (0, ART_Y))
+        else:
+            _dungeon_art(surf, t, art_rect)
 
         # ── Below-art text ────────────────────────────────────────────────────
         draw_text(surf,"The Fading comes for all things.",

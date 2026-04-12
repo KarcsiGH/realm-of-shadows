@@ -1475,6 +1475,7 @@ NPC_DIALOGUES = {
             "conditions": [
                 {"flag": "choice.grak_spared",          "op": "==", "value": True},
                 {"flag": "boss_defeated.goblin_warren",  "op": "==", "value": True},
+                {"flag": "quest.main_goblin_warren.state", "op": "!=", "value": -2},
             ],
             "tree": {
                 "id": "maren_post_warren_peaceful",
@@ -1529,6 +1530,7 @@ NPC_DIALOGUES = {
             "conditions": [
                 {"flag": "choice.grak_killed",          "op": "==", "value": True},
                 {"flag": "boss_defeated.goblin_warren",  "op": "==", "value": True},
+                {"flag": "quest.main_goblin_warren.state", "op": "!=", "value": -2},
             ],
             "tree": {
                 "id": "maren_post_warren",
@@ -1576,7 +1578,8 @@ NPC_DIALOGUES = {
         # After Abandoned Mine cleared — Korrath defeated, Hearthstone 1 recovered
         {
             "conditions": [
-                {"flag": "boss.korrath.defeated", "op": "==", "value": True},
+                {"flag": "boss.korrath.defeated",      "op": "==",        "value": True},
+                {"flag": "maren.post_mine_spoken",     "op": "not_exists"},
             ],
             "tree": {
                 "id": "maren_post_mine",
@@ -1586,6 +1589,9 @@ NPC_DIALOGUES = {
                         "text": "You made it back from the mine. I felt something shift — "
                                 "in the air, in the wards. You found it, didn't you?\n"
                                 "A Hearthstone fragment.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "maren.post_mine_spoken", "value": True},
+                        ],
                         "choices": [
                             {"text": "Yes. The dwarven Warden — Korrath — he was still there.",
                              "next": "korrath_truth",
@@ -1643,12 +1649,12 @@ NPC_DIALOGUES = {
         # After Sunken Crypt cleared — HS2 found, Dragon's Tooth next
         {
             "conditions": [
-                {"flag": "boss_defeated.sunken_crypt",  "op": "==", "value": True},
-                {"flag": "boss_defeated.dragons_tooth", "op": "!=", "value": True},
+                {"flag": "boss_defeated.sunken_crypt",  "op": "==",        "value": True},
+                {"flag": "boss_defeated.dragons_tooth", "op": "!=",        "value": True},
+                {"flag": "maren.post_crypt_spoken",     "op": "not_exists"},
             ],
             "tree": {
                 "id": "maren_post_sunken_crypt",
-                "loop": True,
                 "nodes": {
                     "start": {
                         "speaker": "Maren",
@@ -1656,6 +1662,9 @@ NPC_DIALOGUES = {
                                 "The Sunken Warden — I've read about the garrison that went down "
                                 "with the crypt. They knew the Fading was coming and they stayed.\n"
                                 "What happened in there?",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "maren.post_crypt_spoken", "value": True},
+                        ],
                         "choices": [
                             {"text": "The Warden guardian was still at his post.",  "next": "warden_held"},
                             {"text": "The Fading had been there a long time.",      "next": "fading_old"},
@@ -1696,7 +1705,8 @@ NPC_DIALOGUES = {
         # After Ruins of Ashenmoor cleared — Ashvar defeated, Valdris betrayal confirmed
         {
             "conditions": [
-                {"flag": "boss.ashvar.defeated", "op": "==", "value": True},
+                {"flag": "boss.ashvar.defeated",        "op": "==",        "value": True},
+                {"flag": "maren.post_ashvar_spoken",    "op": "not_exists"},
             ],
             "tree": {
                 "id": "maren_post_ashenmoor",
@@ -1705,6 +1715,9 @@ NPC_DIALOGUES = {
                         "speaker": "Maren",
                         "text": "You've been to Ashenmoor. I can see it in how you're standing.\n"
                                 "What did you find?",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "maren.post_ashvar_spoken", "value": True},
+                        ],
                         "choices": [
                             {"text": "A bound Warden commander. He knew Valdris.",
                              "next": "ashvar",
@@ -1837,7 +1850,8 @@ NPC_DIALOGUES = {
         # After Spider's Nest cleared — turn-in for main_spiders_nest
         {
             "conditions": [
-                {"flag": "boss_defeated.spiders_nest", "op": "==", "value": True},
+                {"flag": "boss_defeated.spiders_nest", "op": "==",        "value": True},
+                {"flag": "maren.spiders_spoken",       "op": "not_exists"},
             ],
             "tree": {
                 "id": "maren_post_spiders",
@@ -1849,6 +1863,10 @@ NPC_DIALOGUES = {
                                 "accelerated the whole colony's growth. "
                                 "It's spreading through anything living near the ley lines. "
                                 "You stopped one thread. There are more.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "maren.spiders_spoken", "value": True},
+                            {"action": "complete_quest", "quest": "main_spiders_nest"},
+                        ],
                         "choices": [
                             {"text": "The queen was enormous. Unnatural.", "next": "unnatural"},
                             {"text": "The corruption is in the animals too?", "next": "animals"},
@@ -1862,10 +1880,6 @@ NPC_DIALOGUES = {
                                 "Stock up in Ironhearth before you enter — the dwarves have "
                                 "better provisions than anywhere else at this range, "
                                 "and the mine is deeper than it looks.",
-                        "on_enter": [
-                            {"action": "complete_quest", "quest": "main_spiders_nest"},
-                            {"action": "set_flag", "flag": "maren.spiders_spoken", "value": True},
-                        ],
                         "end": True,
                     },
                     "unnatural": {
@@ -1875,10 +1889,6 @@ NPC_DIALOGUES = {
                                 "feeds on the energy they produce, then collapses them. "
                                 "Like a fire that burns its own fuel. "
                                 "The mine will be the same if we don't act.",
-                        "on_enter": [
-                            {"action": "complete_quest", "quest": "main_spiders_nest"},
-                            {"action": "set_flag", "flag": "maren.spiders_spoken", "value": True},
-                        ],
                         "end": True,
                     },
                     "animals": {
@@ -1888,10 +1898,6 @@ NPC_DIALOGUES = {
                                 "they're corrupted. Driven by something they can't understand "
                                 "or escape. That's what makes this worse than a plague. "
                                 "A plague you can quarantine.",
-                        "on_enter": [
-                            {"action": "complete_quest", "quest": "main_spiders_nest"},
-                            {"action": "set_flag", "flag": "maren.spiders_spoken", "value": True},
-                        ],
                         "end": True,
                     },
                 },

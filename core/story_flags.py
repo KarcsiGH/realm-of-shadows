@@ -282,7 +282,10 @@ def auto_advance_quests(party=None):
             _distribute_quest_rewards(qid, party)
             _flags[rewarded_key] = True
             completed_now.append(qid)
-
+        elif state < 2:
+            # Turn-in quest: objectives done but needs NPC — advance to state 2
+            # so dialogue conditions using ">= 2" know it's ready to hand in
+            _flags[f"quest.{qid}.state"] = 2
     # ── Advance act flag based on story milestones ─────────────────────────
     # Act 1→2: first Hearthstone recovered (Abandoned Mine boss dead)
     # Act 2→3: Maren takes the stones and leaves

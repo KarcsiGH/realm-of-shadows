@@ -1145,13 +1145,13 @@ def choose_branch(character, chosen_ability):
     if chosen_ability["name"] not in known_names:
         character.abilities.append(chosen_ability.copy())
     return True
+
+
 def get_new_abilities_at_level(class_name: str, level: int) -> list:
     """Return list of abilities that unlock at exactly the given level for a class."""
     return [a for a in CLASS_ABILITIES.get(class_name, [])
             if a.get("level", 1) == level]
 
-
-# ── Merge branch abilities into CLASS_ABILITIES ──────────────────────────────
 # Since branching is removed, all branch-choice abilities are now regular
 # trainable abilities available at the guild at the appropriate level.
 for _cls, _branch_levels in ABILITY_BRANCHES.items():
