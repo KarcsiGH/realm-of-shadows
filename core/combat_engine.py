@@ -711,6 +711,29 @@ def resolve_basic_attack(attacker, defender, enemies=None):
     msg = f"{attacker['name']} attacks {defender['name']} with {weapon['name']} for {damage} damage!{crit_str}"
     result["messages"].append(msg)
 
+    # ── Weapon enchant on-hit proc ─────────────────────────────────────────
+    # Fire, ice, lightning enchants have a chance to apply status on hit.
+    if damage > 0:
+        enchant_elem = weapon.get("enchant_element", "") if weapon else ""
+        if enchant_elem:
+            ENCHANT_PROCS = {
+                "fire":      ("Burning",  0.30, 2),
+                "ice":       ("Slowed",   0.35, 2),
+                "lightning": ("Stunned",  0.20, 1),
+                "shadow":    ("Weakened", 0.30, 2),
+                "holy":      ("Fear",     0.25, 1),
+                "nature":    ("Poisoned", 0.25, 2),
+                "arcane":    ("Confused", 0.20, 2),
+            }
+            if enchant_elem in ENCHANT_PROCS:
+                proc_status, proc_chance, proc_dur = ENCHANT_PROCS[enchant_elem]
+                if random.random() < proc_chance:
+                    if apply_status_effect(defender, proc_status, proc_dur, 1.0):
+                        result["messages"].append(
+                            f"  {weapon.get('name','Weapon')} {enchant_elem} enchant: "
+                            f"{defender['name']} is {proc_status}! ({proc_dur} turns)"
+                        )
+
     # ── Momentum generation ────────────────────────────────────────────────
     # Basic attacks build Momentum for physical ability use.
     # Only player characters generate Momentum; enemies don't use the system.
@@ -1662,15 +1685,24 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             )
             return result
 
-        debuff_name = ability.get("debuff", ability["name"])
-        duration    = ability.get("slow_duration", ability.get("duration", 2))
-        apply_status_effect(target, debuff_name, duration, 1.0)
-        result["messages"].append(
-            f"{attacker['name']} uses {ability['name']} on {target['name']}! "
-            f"{target['name']} is {debuff_name}."
-        )
-        # Secondary effects
-        result["messages"] += _inflict_special_effects(target)
+        # Only apply debuff_name if there's an explicit "debuff" field.
+        # If the ability uses the "status" field instead (via _inflict_special_effects),
+        # skip the fallback to ability["name"] which would be a no-op status.
+        if ability.get("debuff"):
+            debuff_name = ability["debuff"]
+            duration    = ability.get("slow_duration", ability.get("duration", 2))
+            apply_status_effect(target, debuff_name, duration, 1.0)
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']} on {target['name']}! "
+                f"{target['name']} is {debuff_name}."
+            )
+        else:
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']} on {target['name']}!"
+            )
+        # Secondary effects (status, armor_shred, slow_chance, mark_duration, etc.)
+        se_msgs = _inflict_special_effects(target)
+        result["messages"] += se_msgs
         return result
 
     # ── HEAL / AOE_HEAL ────────────────────────────────────────
