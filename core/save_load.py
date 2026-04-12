@@ -121,7 +121,9 @@ def serialize_character(char):
         "human_bonus_stat": getattr(char, "human_bonus_stat", None),
         "planar_tier": getattr(char, "planar_tier", 0),
         "combat_row":  getattr(char, "combat_row", "front"),
-        "gender":      getattr(char, "gender", "male"),
+        "gender":             getattr(char, "gender", "male"),
+        "catchup_target_level": getattr(char, "_catchup_target_level", 0),
+        "catchup_xp_mult":      getattr(char, "_catchup_xp_mult", 1.0),
     }
 
 
@@ -197,7 +199,9 @@ def deserialize_character(data):
     char.human_bonus_stat = data.get("human_bonus_stat", None)
     char.planar_tier = data.get("planar_tier", 0)
     char.combat_row  = data.get("combat_row", "front")
-    char.gender      = data.get("gender", "male")
+    char.gender                = data.get("gender", "male")
+    char._catchup_target_level = data.get("catchup_target_level", 0)
+    char._catchup_xp_mult      = data.get("catchup_xp_mult", 1.0)
     # Migrate old save weapons that lack damage_stat
     _migrate_character_items(char)
     return char

@@ -4582,11 +4582,15 @@ class TownUI:
         found_any = False
         btn_w, btn_h = 120, 30
         row_h = 52
+        _overflow = False
 
         for ci, char in enumerate(self.party):
+            if _overflow:
+                break
             for slot, item in list((char.equipment or {}).items()):
                 if y + row_h > CONTENT_MAX_Y:
                     draw_text(surface, "▼ More items...", 20, y, (100,90,80), 11)
+                    _overflow = True
                     break
                 if not item or not has_durability(item):
                     continue
