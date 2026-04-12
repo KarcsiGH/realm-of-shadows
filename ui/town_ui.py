@@ -3075,7 +3075,8 @@ class TownUI:
             pygame.draw.rect(surface, bg2, tr2, border_radius=3)
             pygame.draw.rect(surface, tc2, tr2, 1, border_radius=3)
             draw_text(surface, tn, tr2.x+8, tr2.y+4, tc2, 11)
-            draw_text(surface, f"Lv{req['min_level']}", tr2.x+4, tr2.y-13, (72,66,50), 10)
+            _req_lv = 20 if max(req.get("stat_req", {}).values(), default=0) >= 15 else 10
+            draw_text(surface, f"Lv{_req_lv}+", tr2.x+4, tr2.y-13, (72,66,50), 10)
             if can:
                 draw_text(surface, "CLICK", tr2.x+4, tr2.y+tr2.height+2, (90,160,120), 9)
             self._classtree_transition_rects.append((tr2, tn, can))
@@ -3345,7 +3346,8 @@ class TownUI:
                               card_r.x + 10, card_r.y + card_h - 24,
                               (160, 80, 80), 11)
                 else:
-                    draw_text(surface, f"Requires Level {req['min_level']}",
+                    _ml = 20 if max(req.get("stat_req", {}).values(), default=0) >= 15 else 10
+                    draw_text(surface, f"Requires Level {_ml}+",
                               card_r.x + 10, card_r.y + card_h - 24,
                               (140, 80, 60), 11)
 
