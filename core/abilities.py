@@ -1152,6 +1152,30 @@ def get_new_abilities_at_level(class_name: str, level: int) -> list:
     return [a for a in CLASS_ABILITIES.get(class_name, [])
             if a.get("level", 1) == level]
 
+
+def get_unlearned_abilities(character) -> list:
+    """Return abilities available to this character's class that they haven't learned yet,
+    up to and including their current level."""
+    known_names = {a["name"] for a in character.abilities}
+    return [
+        a for a in CLASS_ABILITIES.get(character.class_name, [])
+        if a["name"] not in known_names
+        and a.get("level", 1) <= character.level
+    ]
+
+
+def learn_ability(character, ability_name: str) -> bool:
+    """Add an ability to a character by name. Returns True if learned, False if already known."""
+    known_names = {a["name"] for a in character.abilities}
+    if ability_name in known_names:
+        return False
+    # Find the ability definition in CLASS_ABILITIES
+    for ab in CLASS_ABILITIES.get(character.class_name, []):
+        if ab["name"] == ability_name:
+            character.abilities.append(dict(ab))
+            return True
+    return False
+
 # Since branching is removed, all branch-choice abilities are now regular
 # trainable abilities available at the guild at the appropriate level.
 for _cls, _branch_levels in ABILITY_BRANCHES.items():
