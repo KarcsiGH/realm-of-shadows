@@ -639,24 +639,24 @@ CLASS_ABILITIES = {
 # ─────────────────────────────────────────────────────────────────────────────
 
 CLASS_ABILITIES["Guardian"] = [
-    {"name": "Shield Slam",    "level": 1,  "type": "attack",  "cost": 8,  "resource": "SP", "desc": "Slam with your shield, stunning the target briefly."},
-    {"name": "Bulwark Stance", "level": 2,  "type": "buff",    "cost": 6,  "resource": "SP", "desc": "Fortify position — reduce incoming damage by 30%."},
-    {"name": "Guardian's Cry", "level": 3,  "type": "buff",    "cost": 10, "resource": "SP", "desc": "Rally allies, granting +15% damage for 3 rounds."},
-    {"name": "Iron Will",      "level": 5,  "type": "buff",    "cost": 12, "resource": "SP", "desc": "Channel inner strength, becoming immune to fear and stun."},
-    {"name": "Protect",        "level": 6,  "type": "buff",    "cost": 8,  "resource": "SP", "desc": "Intercept the next hit aimed at an ally, taking the damage yourself."},
-    {"name": "Tremor Slam",    "level": 8,  "type": "aoe",     "cost": 18, "resource": "SP", "desc": "Pound the ground, damaging all front-row enemies and knocking them back."},
-    {"name": "Fortress",       "level": 10, "type": "buff",    "cost": 20, "resource": "SP", "desc": "Become an immovable wall — cannot be moved or stunned, defense doubled."},
-    {"name": "Last Guardian",  "level": 12, "type": "buff",    "cost": 25, "resource": "SP", "desc": "When HP falls below 20%, gain a surge of power and protect all allies for 2 rounds."},
+    {"name": "Shield Slam",    "level": 1,  "type": "attack",  "cost": 8,  "resource": "STR-SP", "desc": "Slam with your shield, stunning the target briefly."},
+    {"name": "Bulwark Stance", "level": 2,  "type": "buff",    "cost": 6,  "resource": "STR-SP", "desc": "Fortify position — reduce incoming damage by 30%."},
+    {"name": "Guardian's Cry", "level": 3,  "type": "buff",    "cost": 10, "resource": "STR-SP", "desc": "Rally allies, granting +15% damage for 3 rounds."},
+    {"name": "Iron Will",      "level": 5,  "type": "buff",    "cost": 12, "resource": "STR-SP", "desc": "Channel inner strength, becoming immune to fear and stun."},
+    {"name": "Protect",        "level": 6,  "type": "buff",    "cost": 8,  "resource": "STR-SP", "desc": "Intercept the next hit aimed at an ally, taking the damage yourself."},
+    {"name": "Tremor Slam",    "level": 8,  "type": "aoe",     "cost": 18, "resource": "STR-SP", "desc": "Pound the ground, damaging all front-row enemies and knocking them back."},
+    {"name": "Fortress",       "level": 10, "type": "buff",    "cost": 20, "resource": "STR-SP", "desc": "Become an immovable wall — cannot be moved or stunned, defense doubled."},
+    {"name": "Last Guardian",  "level": 12, "type": "buff",    "cost": 25, "resource": "STR-SP", "desc": "When HP falls below 20%, gain a surge of power and protect all allies for 2 rounds."},
 ]
 
 CLASS_ABILITIES["Inquisitor"] = [
-    {"name": "Interrogate",     "level": 1,  "type": "debuff",  "cost": 6,  "resource": "SP", "desc": "Weaken enemy defenses through relentless pressure."},
-    {"name": "Holy Blade",      "level": 2,  "type": "attack",  "cost": 8,  "resource": "SP", "desc": "Strike with divine energy, effective against undead and demons."},
-    {"name": "Shadow Mark",     "level": 3,  "type": "debuff",  "cost": 10, "resource": "SP", "desc": "Mark a target — all allies deal +20% damage to it for 3 rounds."},
-    {"name": "Expose Weakness", "level": 5,  "type": "debuff",  "cost": 12, "resource": "SP", "desc": "Shatter armor with precision strikes, reducing enemy defense by 25%."},
+    {"name": "Interrogate",     "level": 1,  "type": "debuff",  "cost": 6,  "resource": "DEX-SP", "desc": "Weaken enemy defenses through relentless pressure."},
+    {"name": "Holy Blade",      "level": 2,  "type": "attack",  "cost": 8,  "resource": "DEX-SP", "desc": "Strike with divine energy, effective against undead and demons."},
+    {"name": "Shadow Mark",     "level": 3,  "type": "debuff",  "cost": 10, "resource": "DEX-SP", "desc": "Mark a target — all allies deal +20% damage to it for 3 rounds."},
+    {"name": "Expose Weakness", "level": 5,  "type": "debuff",  "cost": 12, "resource": "DEX-SP", "desc": "Shatter armor with precision strikes, reducing enemy defense by 25%."},
     {"name": "Condemn",         "level": 6,  "type": "attack",  "cost": 14, "resource": "PIE-MP", "desc": "Channel divine wrath, dealing heavy holy damage to a single target."},
-    {"name": "Silence",         "level": 8,  "type": "debuff",  "cost": 16, "resource": "SP", "desc": "Prevent the target from casting spells for 3 rounds."},
-    {"name": "Righteous Hunt",  "level": 10, "type": "buff",    "cost": 20, "resource": "SP", "desc": "Enter a focused state — every attack reveals enemy vulnerabilities."},
+    {"name": "Silence",         "level": 8,  "type": "debuff",  "cost": 16, "resource": "DEX-SP", "desc": "Prevent the target from casting spells for 3 rounds."},
+    {"name": "Righteous Hunt",  "level": 10, "type": "buff",    "cost": 20, "resource": "DEX-SP", "desc": "Enter a focused state — every attack reveals enemy vulnerabilities."},
     {"name": "Divine Sentence", "level": 12, "type": "attack",  "cost": 30, "resource": "PIE-MP", "desc": "Final judgment — massive holy damage that ignores magic resistance."},
 ]
 
@@ -672,7 +672,7 @@ CLASS_ABILITIES["Warden"] = [
 ]
 
 CLASS_ABILITIES["Templar"] = [
-    {"name": "Holy Strike",     "level": 1,  "type": "attack",  "cost": 8,  "resource": "SP", "desc": "A righteous blow charged with divine energy."},
+    {"name": "Holy Strike",     "level": 1,  "type": "attack",  "cost": 8,  "resource": "PIE-MP", "desc": "A righteous blow charged with divine energy."},
     {"name": "Devotion",        "level": 2,  "type": "buff",    "cost": 10, "resource": "PIE-MP", "desc": "Pray for divine favor — increase party's resistance for 3 rounds."},
     {"name": "Smite",           "level": 3,  "type": "attack",  "cost": 12, "resource": "PIE-MP", "desc": "Channel divine wrath into a powerful strike."},
     {"name": "Sacred Ground",   "level": 5,  "type": "buff",    "cost": 14, "resource": "PIE-MP", "desc": "Consecrate the battlefield, weakening undead and demons."},
@@ -683,14 +683,14 @@ CLASS_ABILITIES["Templar"] = [
 ]
 
 CLASS_ABILITIES["Warder"] = [
-    {"name": "Counter Cut",     "level": 1,  "type": "attack",  "cost": 8,  "resource": "SP", "desc": "Punish missed attacks with a swift counter-strike."},
-    {"name": "Pressure",        "level": 2,  "type": "debuff",  "cost": 6,  "resource": "SP", "desc": "Relentless pressure that forces an enemy to act last this round."},
-    {"name": "Feint",           "level": 3,  "type": "debuff",  "cost": 10, "resource": "SP", "desc": "Misdirect the enemy, causing their next attack to miss."},
-    {"name": "Shadow Dash",     "level": 5,  "type": "attack",  "cost": 12, "resource": "SP", "desc": "Blur across the battlefield, attacking from an unexpected angle."},
-    {"name": "Exploit",         "level": 6,  "type": "attack",  "cost": 14, "resource": "SP", "desc": "Target an enemy's weak point for massive damage."},
-    {"name": "Unbreakable",     "level": 8,  "type": "buff",    "cost": 18, "resource": "SP", "desc": "Shrug off the next crippling hit — remain standing at 1 HP."},
-    {"name": "Bladestorm",      "level": 10, "type": "aoe",     "cost": 22, "resource": "SP", "desc": "Whirl in a deadly storm of blades hitting all enemies."},
-    {"name": "Perfect Form",    "level": 12, "type": "buff",    "cost": 28, "resource": "SP", "desc": "Enter a state of perfection — every attack is a critical hit for 2 rounds."},
+    {"name": "Counter Cut",     "level": 1,  "type": "attack",  "cost": 8,  "resource": "DEX-SP", "desc": "Punish missed attacks with a swift counter-strike."},
+    {"name": "Pressure",        "level": 2,  "type": "debuff",  "cost": 6,  "resource": "DEX-SP", "desc": "Relentless pressure that forces an enemy to act last this round."},
+    {"name": "Feint",           "level": 3,  "type": "debuff",  "cost": 10, "resource": "DEX-SP", "desc": "Misdirect the enemy, causing their next attack to miss."},
+    {"name": "Shadow Dash",     "level": 5,  "type": "attack",  "cost": 12, "resource": "DEX-SP", "desc": "Blur across the battlefield, attacking from an unexpected angle."},
+    {"name": "Exploit",         "level": 6,  "type": "attack",  "cost": 14, "resource": "DEX-SP", "desc": "Target an enemy's weak point for massive damage."},
+    {"name": "Unbreakable",     "level": 8,  "type": "buff",    "cost": 18, "resource": "DEX-SP", "desc": "Shrug off the next crippling hit — remain standing at 1 HP."},
+    {"name": "Bladestorm",      "level": 10, "type": "aoe",     "cost": 22, "resource": "DEX-SP", "desc": "Whirl in a deadly storm of blades hitting all enemies."},
+    {"name": "Perfect Form",    "level": 12, "type": "buff",    "cost": 28, "resource": "DEX-SP", "desc": "Enter a state of perfection — every attack is a critical hit for 2 rounds."},
 ]
 
 CLASS_ABILITIES["Archmage"] = [
@@ -716,69 +716,69 @@ CLASS_ABILITIES["High Priest"] = [
 ]
 
 CLASS_ABILITIES["Shadow Master"] = [
-    {"name": "From Darkness",   "level": 1,  "type": "attack",  "cost": 10, "resource": "SP", "desc": "Strike from complete concealment — impossible to dodge."},
-    {"name": "Shadow Clone",    "level": 2,  "type": "buff",    "cost": 14, "resource": "SP", "desc": "Create a shadow decoy — next attack against you hits the clone instead."},
-    {"name": "Nightmare",       "level": 3,  "type": "debuff",  "cost": 16, "resource": "SP", "desc": "Plunge an enemy into terror — they lose their next action."},
-    {"name": "Death Mark",      "level": 5,  "type": "debuff",  "cost": 18, "resource": "SP", "desc": "Mark a target for death — all damage they receive is doubled."},
-    {"name": "Void Step",       "level": 6,  "type": "buff",    "cost": 20, "resource": "SP", "desc": "Step through shadow — become untargetable for 1 round."},
-    {"name": "Entropy",         "level": 8,  "type": "aoe",     "cost": 24, "resource": "SP", "desc": "Spread shadow energy across all enemies, weakening and damaging each."},
-    {"name": "Heartseeker",     "level": 10, "type": "attack",  "cost": 30, "resource": "SP", "desc": "Find the killing blow — guaranteed critical, ignores armor."},
-    {"name": "Shadow World",    "level": 12, "type": "aoe",     "cost": 40, "resource": "SP", "desc": "Drag all enemies into shadow — devastating multi-target assault."},
+    {"name": "From Darkness",   "level": 1,  "type": "attack",  "cost": 10, "resource": "DEX-SP", "desc": "Strike from complete concealment — impossible to dodge."},
+    {"name": "Shadow Clone",    "level": 2,  "type": "buff",    "cost": 14, "resource": "DEX-SP", "desc": "Create a shadow decoy — next attack against you hits the clone instead."},
+    {"name": "Nightmare",       "level": 3,  "type": "debuff",  "cost": 16, "resource": "DEX-SP", "desc": "Plunge an enemy into terror — they lose their next action."},
+    {"name": "Death Mark",      "level": 5,  "type": "debuff",  "cost": 18, "resource": "DEX-SP", "desc": "Mark a target for death — all damage they receive is doubled."},
+    {"name": "Void Step",       "level": 6,  "type": "buff",    "cost": 20, "resource": "DEX-SP", "desc": "Step through shadow — become untargetable for 1 round."},
+    {"name": "Entropy",         "level": 8,  "type": "aoe",     "cost": 24, "resource": "DEX-SP", "desc": "Spread shadow energy across all enemies, weakening and damaging each."},
+    {"name": "Heartseeker",     "level": 10, "type": "attack",  "cost": 30, "resource": "DEX-SP", "desc": "Find the killing blow — guaranteed critical, ignores armor."},
+    {"name": "Shadow World",    "level": 12, "type": "aoe",     "cost": 40, "resource": "DEX-SP", "desc": "Drag all enemies into shadow — devastating multi-target assault."},
 ]
 
 CLASS_ABILITIES["Beastlord"] = [
-    {"name": "Primal Roar",     "level": 1,  "type": "debuff",  "cost": 8,  "resource": "SP", "desc": "Terrify enemies with a primal roar, reducing their accuracy."},
-    {"name": "Pack Hunt",       "level": 2,  "type": "attack",  "cost": 10, "resource": "SP", "desc": "Call upon animal instincts — multi-strike attack hitting 2-4 times."},
-    {"name": "Feral Stance",    "level": 3,  "type": "buff",    "cost": 12, "resource": "SP", "desc": "Enter a feral state — increase attack speed and crit chance."},
-    {"name": "Predator's Mark", "level": 5,  "type": "debuff",  "cost": 14, "resource": "SP", "desc": "Mark prey — deal bonus damage proportional to target's missing HP."},
-    {"name": "Wild Surge",      "level": 6,  "type": "buff",    "cost": 16, "resource": "SP", "desc": "Channel primal energy — dramatically increase STR and DEX for 3 rounds."},
-    {"name": "Stampede",        "level": 8,  "type": "aoe",     "cost": 22, "resource": "SP", "desc": "Summon a herd of beasts that trample all enemies."},
-    {"name": "Alpha Strike",    "level": 10, "type": "attack",  "cost": 28, "resource": "SP", "desc": "The apex predator's killing blow — overwhelming single-target devastation."},
-    {"name": "Lord of Beasts",  "level": 12, "type": "buff",    "cost": 35, "resource": "SP", "desc": "Become one with all creatures — enter an unstoppable primal frenzy."},
+    {"name": "Primal Roar",     "level": 1,  "type": "debuff",  "cost": 8,  "resource": "DEX-SP", "desc": "Terrify enemies with a primal roar, reducing their accuracy."},
+    {"name": "Pack Hunt",       "level": 2,  "type": "attack",  "cost": 10, "resource": "DEX-SP", "desc": "Call upon animal instincts — multi-strike attack hitting 2-4 times."},
+    {"name": "Feral Stance",    "level": 3,  "type": "buff",    "cost": 12, "resource": "DEX-SP", "desc": "Enter a feral state — increase attack speed and crit chance."},
+    {"name": "Predator's Mark", "level": 5,  "type": "debuff",  "cost": 14, "resource": "DEX-SP", "desc": "Mark prey — deal bonus damage proportional to target's missing HP."},
+    {"name": "Wild Surge",      "level": 6,  "type": "buff",    "cost": 16, "resource": "DEX-SP", "desc": "Channel primal energy — dramatically increase STR and DEX for 3 rounds."},
+    {"name": "Stampede",        "level": 8,  "type": "aoe",     "cost": 22, "resource": "DEX-SP", "desc": "Summon a herd of beasts that trample all enemies."},
+    {"name": "Alpha Strike",    "level": 10, "type": "attack",  "cost": 28, "resource": "DEX-SP", "desc": "The apex predator's killing blow — overwhelming single-target devastation."},
+    {"name": "Lord of Beasts",  "level": 12, "type": "buff",    "cost": 35, "resource": "DEX-SP", "desc": "Become one with all creatures — enter an unstoppable primal frenzy."},
 ]
 
 CLASS_ABILITIES["Phantom"] = [
-    {"name": "Ghost Strike",    "level": 1,  "type": "attack",  "cost": 8,  "resource": "INT-MP", "desc": "Strike through defenses with an ethereal blade."},
-    {"name": "Phase Shift",     "level": 2,  "type": "buff",    "cost": 12, "resource": "INT-MP", "desc": "Partially phase out of reality — take reduced physical damage."},
-    {"name": "Haunt",           "level": 3,  "type": "debuff",  "cost": 14, "resource": "INT-MP", "desc": "Haunt a target, causing them to miss attacks and act erratically."},
-    {"name": "Spectral Form",   "level": 5,  "type": "buff",    "cost": 18, "resource": "INT-MP", "desc": "Become fully ethereal — immune to physical damage for 2 rounds."},
-    {"name": "Soul Rend",       "level": 6,  "type": "attack",  "cost": 20, "resource": "INT-MP", "desc": "Tear at the enemy's essence — deals damage that ignores all resistance."},
-    {"name": "Wraithform",      "level": 8,  "type": "buff",    "cost": 24, "resource": "INT-MP", "desc": "Full wraith form — pass through attacks and strike from any position."},
-    {"name": "Spirit Bomb",     "level": 10, "type": "aoe",     "cost": 32, "resource": "INT-MP", "desc": "Detonate a sphere of spectral energy, hitting all enemies."},
-    {"name": "Death's Embrace", "level": 12, "type": "buff",    "cost": 40, "resource": "INT-MP", "desc": "Embrace undeath temporarily — become invulnerable and deal devastating spirit damage."},
+    {"name": "Ghost Strike",    "level": 1,  "type": "attack",  "cost": 8,  "resource": "DEX-SP", "desc": "Strike through defenses with an ethereal blade."},
+    {"name": "Phase Shift",     "level": 2,  "type": "buff",    "cost": 12, "resource": "DEX-SP", "desc": "Partially phase out of reality — take reduced physical damage."},
+    {"name": "Haunt",           "level": 3,  "type": "debuff",  "cost": 14, "resource": "DEX-SP", "desc": "Haunt a target, causing them to miss attacks and act erratically."},
+    {"name": "Spectral Form",   "level": 5,  "type": "buff",    "cost": 18, "resource": "DEX-SP", "desc": "Become fully ethereal — immune to physical damage for 2 rounds."},
+    {"name": "Soul Rend",       "level": 6,  "type": "attack",  "cost": 20, "resource": "DEX-SP", "desc": "Tear at the enemy's essence — deals damage that ignores all resistance."},
+    {"name": "Wraithform",      "level": 8,  "type": "buff",    "cost": 24, "resource": "DEX-SP", "desc": "Full wraith form — pass through attacks and strike from any position."},
+    {"name": "Spirit Bomb",     "level": 10, "type": "aoe",     "cost": 32, "resource": "DEX-SP", "desc": "Detonate a sphere of spectral energy, hitting all enemies."},
+    {"name": "Death's Embrace", "level": 12, "type": "buff",    "cost": 40, "resource": "DEX-SP", "desc": "Embrace undeath temporarily — become invulnerable and deal devastating spirit damage."},
 ]
 
 CLASS_ABILITIES["Knight"] = [
-    {"name": "Lance Charge",    "level": 1,  "type": "attack",  "cost": 8,  "resource": "SP", "desc": "Charge the enemy with full momentum — massive impact damage."},
-    {"name": "Heavy Blow",      "level": 2,  "type": "attack",  "cost": 10, "resource": "SP", "desc": "A slow but devastating overhead strike."},
-    {"name": "Inspire",         "level": 3,  "type": "buff",    "cost": 12, "resource": "SP", "desc": "Inspire allies — grant +10% accuracy and +15% damage for 3 rounds."},
-    {"name": "Iron Discipline", "level": 5,  "type": "buff",    "cost": 14, "resource": "SP", "desc": "Steel the party's resolve — grant immunity to fear and confusion."},
-    {"name": "Cavalry Slash",   "level": 6,  "type": "aoe",     "cost": 18, "resource": "SP", "desc": "Sweep your blade in an arc, striking all front-row enemies."},
-    {"name": "Siege Breaker",   "level": 8,  "type": "attack",  "cost": 22, "resource": "SP", "desc": "Crash through enemy formations, hitting front and mid rows."},
-    {"name": "Champion's Stand","level": 10, "type": "buff",    "cost": 28, "resource": "SP", "desc": "Stand firm — all damage reduced by 50% for 3 rounds, cannot be moved."},
-    {"name": "Glory Charge",    "level": 12, "type": "aoe",     "cost": 36, "resource": "SP", "desc": "Lead a devastating charge — all enemies take massive damage."},
+    {"name": "Lance Charge",    "level": 1,  "type": "attack",  "cost": 8,  "resource": "STR-SP", "desc": "Charge the enemy with full momentum — massive impact damage."},
+    {"name": "Heavy Blow",      "level": 2,  "type": "attack",  "cost": 10, "resource": "STR-SP", "desc": "A slow but devastating overhead strike."},
+    {"name": "Inspire",         "level": 3,  "type": "buff",    "cost": 12, "resource": "STR-SP", "desc": "Inspire allies — grant +10% accuracy and +15% damage for 3 rounds."},
+    {"name": "Iron Discipline", "level": 5,  "type": "buff",    "cost": 14, "resource": "STR-SP", "desc": "Steel the party's resolve — grant immunity to fear and confusion."},
+    {"name": "Cavalry Slash",   "level": 6,  "type": "aoe",     "cost": 18, "resource": "STR-SP", "desc": "Sweep your blade in an arc, striking all front-row enemies."},
+    {"name": "Siege Breaker",   "level": 8,  "type": "attack",  "cost": 22, "resource": "STR-SP", "desc": "Crash through enemy formations, hitting front and mid rows."},
+    {"name": "Champion's Stand","level": 10, "type": "buff",    "cost": 28, "resource": "STR-SP", "desc": "Stand firm — all damage reduced by 50% for 3 rounds, cannot be moved."},
+    {"name": "Glory Charge",    "level": 12, "type": "aoe",     "cost": 36, "resource": "STR-SP", "desc": "Lead a devastating charge — all enemies take massive damage."},
 ]
 
 CLASS_ABILITIES["Strider"] = [
-    {"name": "Fleet Foot",      "level": 1,  "type": "buff",    "cost": 6,  "resource": "SP", "desc": "Dramatically increase speed — act first every round for 2 rounds."},
-    {"name": "Rapid Shot",      "level": 2,  "type": "attack",  "cost": 8,  "resource": "SP", "desc": "Fire a volley of quick arrows before the enemy can react."},
-    {"name": "Trailblazer",     "level": 3,  "type": "buff",    "cost": 10, "resource": "SP", "desc": "Scout ahead — increase party's speed and evasion."},
-    {"name": "Skirmish",        "level": 5,  "type": "attack",  "cost": 12, "resource": "SP", "desc": "Hit and run — attack then move to a safer position."},
-    {"name": "Wind Walk",       "level": 6,  "type": "buff",    "cost": 14, "resource": "SP", "desc": "Move at impossible speed — avoid all attacks for 1 round."},
-    {"name": "Volley",          "level": 8,  "type": "aoe",     "cost": 18, "resource": "SP", "desc": "Rain arrows on all enemies with remarkable precision."},
-    {"name": "Ghost Runner",    "level": 10, "type": "buff",    "cost": 24, "resource": "SP", "desc": "Become a blur of motion — attacks hit with guaranteed crits."},
-    {"name": "Apex Predator",   "level": 12, "type": "attack",  "cost": 30, "resource": "SP", "desc": "The ultimate hunter's strike — cross any range and kill with precision."},
+    {"name": "Fleet Foot",      "level": 1,  "type": "buff",    "cost": 6,  "resource": "DEX-SP", "desc": "Dramatically increase speed — act first every round for 2 rounds."},
+    {"name": "Rapid Shot",      "level": 2,  "type": "attack",  "cost": 8,  "resource": "DEX-SP", "desc": "Fire a volley of quick arrows before the enemy can react."},
+    {"name": "Trailblazer",     "level": 3,  "type": "buff",    "cost": 10, "resource": "DEX-SP", "desc": "Scout ahead — increase party's speed and evasion."},
+    {"name": "Skirmish",        "level": 5,  "type": "attack",  "cost": 12, "resource": "DEX-SP", "desc": "Hit and run — attack then move to a safer position."},
+    {"name": "Wind Walk",       "level": 6,  "type": "buff",    "cost": 14, "resource": "DEX-SP", "desc": "Move at impossible speed — avoid all attacks for 1 round."},
+    {"name": "Volley",          "level": 8,  "type": "aoe",     "cost": 18, "resource": "DEX-SP", "desc": "Rain arrows on all enemies with remarkable precision."},
+    {"name": "Ghost Runner",    "level": 10, "type": "buff",    "cost": 24, "resource": "DEX-SP", "desc": "Become a blur of motion — attacks hit with guaranteed crits."},
+    {"name": "Apex Predator",   "level": 12, "type": "attack",  "cost": 30, "resource": "DEX-SP", "desc": "The ultimate hunter's strike — cross any range and kill with precision."},
 ]
 
 CLASS_ABILITIES["Ascetic"] = [
-    {"name": "Iron Skin",       "level": 1,  "type": "buff",    "cost": 6,  "resource": "Ki-SP", "desc": "Harden your body — reduce all incoming damage by 20%."},
-    {"name": "Purify",          "level": 2,  "type": "buff",    "cost": 8,  "resource": "Ki-SP", "desc": "Cleanse yourself of all negative status effects."},
-    {"name": "Focused Mind",    "level": 3,  "type": "buff",    "cost": 10, "resource": "Ki-SP", "desc": "Achieve mental clarity — dramatically increase accuracy and resistance."},
-    {"name": "Endure",          "level": 5,  "type": "buff",    "cost": 12, "resource": "Ki-SP", "desc": "Endure suffering — survive lethal damage at 1 HP once."},
-    {"name": "Chi Blast",       "level": 6,  "type": "attack",  "cost": 14, "resource": "Ki-SP", "desc": "Release concentrated chi energy in a devastating burst."},
-    {"name": "Stone Mind",      "level": 8,  "type": "buff",    "cost": 18, "resource": "Ki-SP", "desc": "Total mental fortitude — immune to all mental effects and charm."},
-    {"name": "Transcend Pain",  "level": 10, "type": "buff",    "cost": 22, "resource": "Ki-SP", "desc": "Rise above pain — function at full effectiveness regardless of HP."},
-    {"name": "Enlightenment",   "level": 12, "type": "buff",    "cost": 30, "resource": "Ki-SP", "desc": "Achieve enlightenment — all stats doubled, ultimate form, 3 rounds."},
+    {"name": "Iron Skin",       "level": 1,  "type": "buff",    "cost": 6,  "resource": "Ki", "desc": "Harden your body — reduce all incoming damage by 20%."},
+    {"name": "Purify",          "level": 2,  "type": "buff",    "cost": 8,  "resource": "Ki", "desc": "Cleanse yourself of all negative status effects."},
+    {"name": "Focused Mind",    "level": 3,  "type": "buff",    "cost": 10, "resource": "Ki", "desc": "Achieve mental clarity — dramatically increase accuracy and resistance."},
+    {"name": "Endure",          "level": 5,  "type": "buff",    "cost": 12, "resource": "Ki", "desc": "Endure suffering — survive lethal damage at 1 HP once."},
+    {"name": "Chi Blast",       "level": 6,  "type": "attack",  "cost": 14, "resource": "Ki", "desc": "Release concentrated chi energy in a devastating burst."},
+    {"name": "Stone Mind",      "level": 8,  "type": "buff",    "cost": 18, "resource": "Ki", "desc": "Total mental fortitude — immune to all mental effects and charm."},
+    {"name": "Transcend Pain",  "level": 10, "type": "buff",    "cost": 22, "resource": "Ki", "desc": "Rise above pain — function at full effectiveness regardless of HP."},
+    {"name": "Enlightenment",   "level": 12, "type": "buff",    "cost": 30, "resource": "Ki", "desc": "Achieve enlightenment — all stats doubled, ultimate form, 3 rounds."},
 ]
 
 
