@@ -1895,13 +1895,8 @@ class TownUI:
 
     def _draw_shop_buy(self, surface, mx, my):
         from core.equipment import can_equip
+        CONTENT_MAX_Y = SCREEN_H - 144   # 756 — stop here; back button is at y=760
         draw_text(surface, "Buy Items", 20, 12, GOLD, 22, bold=True)
-
-        # Back button — bottom of left panel, above party bar
-        _sb_back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
-        draw_button(surface, _sb_back, "← Back",
-                    hover=_sb_back.collidepoint(mx, my), size=13,
-                    bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # ── Character tabs (6a) ───────────────────────────────────────
         n = len(self.party)
@@ -1942,7 +1937,7 @@ class TownUI:
         # Reserve right 240px for comparison panel on weapons/armor tabs
         is_equip_tab = self.shop_tab in ("weapons", "armor")
         list_w = SCREEN_W - 40 - (244 if is_equip_tab else 0)
-        panel = pygame.Rect(20, 132, list_w, SCREEN_H - 237)
+        panel = pygame.Rect(20, 132, list_w, CONTENT_MAX_Y - 132)  # stops at y=756
         draw_panel(surface, panel, bg_color=SHOP_BG)
 
         items = list(self.shop.get(self.shop_tab, []))
@@ -2056,7 +2051,7 @@ class TownUI:
 
             # ── 6c: Comparison panel ─────────────────────────────────
             if is_equip_tab and sel_char:
-                cp = pygame.Rect(panel.x + panel.width + 8, 132, 232, SCREEN_H - 237)
+                cp = pygame.Rect(panel.x + panel.width + 8, 132, 232, CONTENT_MAX_Y - 132)
                 draw_panel(surface, cp, bg_color=(18, 15, 30))
                 draw_text(surface, "Equipped", cp.x + 8, cp.y + 8, GOLD, 13, bold=True)
                 draw_text(surface, sel_char.name, cp.x + 8, cp.y + 24, GREY, 11)
@@ -2096,6 +2091,11 @@ class TownUI:
                     draw_text(surface, "Hover an item", cp.x + 8, cp.y + 44, DARK_GREY, 11)
                     draw_text(surface, "to compare",   cp.x + 8, cp.y + 60, DARK_GREY, 11)
 
+        # Back button drawn LAST so it's always on top of item panels
+        _sb_back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
+        draw_button(surface, _sb_back, "← Back",
+                    hover=_sb_back.collidepoint(mx, my), size=13,
+                    bg=(50,35,70), border=(120,90,160), color=(220,200,255))
         self._draw_party_bar(surface, mx, my)
 
     # ─────────────────────────────────────────────────────────
@@ -2103,16 +2103,11 @@ class TownUI:
     # ─────────────────────────────────────────────────────────
 
     def _draw_shop_sell(self, surface, mx, my):
+        CONTENT_MAX_Y = SCREEN_H - 144   # 756 — back button at y=760
         draw_text(surface, "Sell Items", 20, 12, GOLD, 22, bold=True)
 
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 80, 15, DIM_GOLD, 16)
-
-        # Back button — bottom of left panel, above party bar
-        _ss_back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
-        draw_button(surface, _ss_back, "← Back",
-                    hover=_ss_back.collidepoint(mx, my), size=13,
-                    bg=(50,35,70), border=(120,90,160), color=(220,200,255))
 
         # Character tabs — below NPC portrait card (card bottom ~134px), clear of back button
         tab_area_w = SCREEN_W - 170  # leave 170px for back button
@@ -2130,7 +2125,7 @@ class TownUI:
                       tr.x + 8, tr.y + 7, cls["color"] if is_sel else GREY, 13, bold=is_sel)
 
         char = self.party[self.sell_char]
-        panel = pygame.Rect(20, 182, SCREEN_W - 40, SCREEN_H - 287)
+        panel = pygame.Rect(20, 182, SCREEN_W - 40, CONTENT_MAX_Y - 182)  # stops at y=756
         draw_panel(surface, panel, bg_color=SHOP_BG)
 
         if not char.inventory:
@@ -2173,6 +2168,11 @@ class TownUI:
             if end < len(char.inventory):
                 draw_text(surface, "v scroll down", panel.x + panel.width // 2 - 45, iy + 2, DIM_GOLD, 13)
 
+        # Back button drawn LAST so it's always on top
+        _ss_back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
+        draw_button(surface, _ss_back, "← Back",
+                    hover=_ss_back.collidepoint(mx, my), size=13,
+                    bg=(50,35,70), border=(120,90,160), color=(220,200,255))
         self._draw_party_bar(surface, mx, my)
 
     # ─────────────────────────────────────────────────────────
@@ -2236,12 +2236,13 @@ class TownUI:
                 if needs_identification(item):
                     unid_items.append((ci, ii, item, c))
 
+        CONTENT_MAX_Y = SCREEN_H - 144  # 756
         if unid_items:
             uy = by + len(services) * 80 + 20
             draw_text(surface, f"Unidentified items ({len(unid_items)}):",
                       SCREEN_W // 2 - 250, uy, DIM_GOLD, 14)
             uy += 25
-            for ui_idx, (ci, ii, item, char) in enumerate(unid_items[:5]):
+            for ui_idx, (ci, ii, item, char) in enumerate(unid_items[:4]):  # max 4 rows to avoid overlap
                 row = pygame.Rect(SCREEN_W // 2 - 250, uy, 500, 40)
                 hover = row.collidepoint(mx, my)
                 bg = ITEM_HOVER if hover else ITEM_BG
@@ -2259,6 +2260,11 @@ class TownUI:
 
                 uy += 44
 
+        # Redraw back button on top of any identify rows that might be close
+        _tm_back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
+        draw_button(surface, _tm_back, "← Back",
+                    hover=_tm_back.collidepoint(mx, my), size=13,
+                    bg=(50,35,70), border=(120,90,160), color=(220,200,255))
         self._draw_party_bar(surface, mx, my)
 
     # ─────────────────────────────────────────────────────────
@@ -2384,6 +2390,7 @@ class TownUI:
                 40, y + 20, GREY, 14)
             draw_text(surface, "Level up at the inn to unlock more skills.",
                       40, y + 44, STAT_LABEL, 12)
+            self._draw_party_bar(surface, mx, my)
             return
 
         draw_text(surface,
@@ -2441,6 +2448,8 @@ class TownUI:
         if start + VISIBLE < len(unlearned):
             draw_text(surface, "▼ More below",
                       SCREEN_W // 2 - 40, y + VISIBLE * 74 + 2, GREY, 11)
+
+        self._draw_party_bar(surface, mx, my)
 
     # ─────────────────────────────────────────────────────────
     #  CHARACTER SHEET
@@ -3519,7 +3528,7 @@ class TownUI:
                 draw_text(surface, f'"{rumor_text}"',
                           rumor_panel.x + 10, rumor_panel.y + 24,
                           (200, 185, 230), 10, max_width=rumor_panel.width - 20)
-                hear_btn = pygame.Rect(rumor_panel.x + 10, H - 110, rumor_panel.width - 20, 28)
+                hear_btn = pygame.Rect(rumor_panel.x + 10, H - 152, rumor_panel.width - 20, 28)
                 draw_button(surface, hear_btn, "Hear another (1g)",
                             hover=hear_btn.collidepoint(mx, my), size=10)
                 self._tavern_hear_btn = hear_btn
@@ -3554,7 +3563,7 @@ class TownUI:
                 self._tavern_drink_btn = drink_btn
                 self._tavern_drink_patron = p["name"]
                 hint = "Buy them a drink to loosen their tongue." if drinks == 0 else "Another drink might reveal more..."
-                draw_text(surface, hint, dlg_panel.x + 16, H - 142, DIM_GOLD, 11)
+                draw_text(surface, hint, dlg_panel.x + 16, H - 198, DIM_GOLD, 11)
             else:
                 self._tavern_drink_btn = None
                 self._tavern_hear_btn = None
@@ -3621,6 +3630,9 @@ class TownUI:
                     self._leave_rects.append((i, lbtn))
 
         self._tavern_back_btn = back
+        # Redraw back button last so it's always on top
+        draw_button(surface, back, "← Leave", hover=back.collidepoint(mx, my), size=13,
+                    bg=(50,35,70), border=(120,90,160), color=(220,200,255))
         self._draw_party_bar(surface, mx, my)
 
 
@@ -3647,10 +3659,15 @@ class TownUI:
             self._draw_party_bar(surface, mx, my)
             return
 
+        CONTENT_MAX_Y = SCREEN_H - 144   # 756 — back button at y=760
+        MAX_VISIBLE_JOBS = (CONTENT_MAX_Y - 92) // 84  # how many fit without overlapping back button
         y = 92
         self._job_buttons = []
         panel_w = PW - 28
-        for job_id, job, state in jobs:
+        visible_jobs = jobs[:MAX_VISIBLE_JOBS]
+        if len(jobs) > MAX_VISIBLE_JOBS:
+            draw_text(surface, f"Showing {MAX_VISIBLE_JOBS} of {len(jobs)} jobs.", 20, 72, GREY, 11)
+        for job_id, job, state in visible_jobs:
             panel = pygame.Rect(14, y, panel_w, 76)
             draw_panel(surface, panel, bg_color=(25, 20, 35))
 
@@ -3709,6 +3726,10 @@ class TownUI:
 
             y += 84
 
+        # Redraw back button last so it's always on top of job panels
+        _jb_back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
+        draw_button(surface, _jb_back, "← Back", hover=_jb_back.collidepoint(mx, my), size=13,
+                    bg=(50,35,70), border=(120,90,160), color=(220,200,255))
         self._draw_party_bar(surface, mx, my)
 
     # ─────────────────────────────────────────────────────────
@@ -4557,12 +4578,16 @@ class TownUI:
         draw_text(surface, "(Repairs all durability for a fixed gold cost)", 20, y + 18, GREY, 11)
         y += 40
 
+        CONTENT_MAX_Y = SCREEN_H - 144  # 756
         found_any = False
         btn_w, btn_h = 120, 30
         row_h = 52
 
         for ci, char in enumerate(self.party):
             for slot, item in list((char.equipment or {}).items()):
+                if y + row_h > CONTENT_MAX_Y:
+                    draw_text(surface, "▼ More items...", 20, y, (100,90,80), 11)
+                    break
                 if not item or not has_durability(item):
                     continue
                 init_durability(item)
@@ -4871,6 +4896,12 @@ class TownUI:
         elif active_view == self.VIEW_FORGE_REPAIR:
             self._draw_forge_repair(surface, mx, my, y, total_gold, FORGE_ORANGE)
 
+        # Redraw back button last so forge content never covers it
+        _fg_back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
+        draw_button(surface, _fg_back, "← Back",
+                    hover=_fg_back.collidepoint(mx, my), size=13,
+                    bg=(50,35,70), border=(120,90,160), color=(220,200,255))
+
     def _draw_forge_craft(self, surface, mx, my, y, recipes, total_gold, accent):
         from core.crafting import can_afford_recipe, count_material
         visible = recipes[self.forge_scroll:self.forge_scroll + 7]
@@ -4978,7 +5009,9 @@ class TownUI:
 
             enchants = get_applicable_enchants(item)
             y += 26
-            for i, ench_name in enumerate(enchants):
+            CONTENT_MAX_Y = SCREEN_H - 144
+            max_ench = (CONTENT_MAX_Y - y) // 52
+            for i, ench_name in enumerate(enchants[:max_ench]):
                 ench = ENCHANTMENTS[ench_name]
                 ry = y + i * 52
                 # Check affordability

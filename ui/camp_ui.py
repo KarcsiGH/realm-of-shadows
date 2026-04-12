@@ -194,7 +194,10 @@ class CampUI:
         # Message bar
         if self.msg_timer > 0:
             self.msg_timer -= dt
-            draw_text(surface, self.message, SCREEN_W // 2 - 200, SCREEN_H - 30,
+            # Message bar drawn above manual button (manual is at y=SCREEN_H-48=852)
+            msg_bg = pygame.Rect(SCREEN_W//2 - 220, SCREEN_H - 62, 440, 22)
+            pygame.draw.rect(surface, (18, 14, 28), msg_bg, border_radius=3)
+            draw_text(surface, self.message, SCREEN_W // 2 - 200, SCREEN_H - 60,
                       self.msg_color, 13)
 
     # ──────────────────────────────────────────────────────────
