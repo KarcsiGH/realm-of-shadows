@@ -1608,7 +1608,11 @@ class TownUI:
                 next_ready   = False
 
             # Draw panel — taller for richer display
-            PANEL_Y = 110 + 3 * (88 + 16) + 10
+            # Dynamic: compute num_options to avoid overlapping cards
+            from core.progression import get_available_transitions as _gat2
+            _n_ready = sum(1 for _ch in self.party if _gat2(_ch))
+            _n_opts = 3 + (1 if _n_ready > 0 else 0)
+            PANEL_Y = 110 + _n_opts * (88 + 16) + 10
             panel_r = pygame.Rect(40, PANEL_Y, W - 80, 110)
             pygame.draw.rect(surface, (22, 16, 36), panel_r, border_radius=6)
             pygame.draw.rect(surface, rank_col, panel_r, 1, border_radius=6)
