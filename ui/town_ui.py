@@ -2053,26 +2053,26 @@ class TownUI:
                 if parts:
                     draw_text(surface, "  ".join(parts), row.x + 10, row.y + 42, GREY, 12)
 
-                # Price — grey if unaffordable (6e), red if can't afford at all
+                # Price — uses PARTY total gold (gold is pooled for purchases)
                 price = item.get("buy_price", 0)
-                can_afford = sel_char and sel_char.gold >= price
-                if not sel_char:
+                can_afford = total_gold >= price
+                if not self.party:
                     price_col = DIM_GOLD
                 elif can_afford:
                     price_col = BUY_COL if hover else DIM_GOLD
                 else:
-                    price_col = (100, 90, 90)   # greyed price (6e)
+                    price_col = (180, 60, 60)   # red — party can't afford
                 draw_text(surface, f"{price}g", row.x + row.width - 58, row.y + 4, price_col, 15, bold=True)
 
                 if hover:
                     if not can_afford:
-                        lbl = "Switch to a character who can afford this." if any(c.gold >= price for c in self.party) else "Not enough gold"
+                        lbl = "Not enough party gold"
                     elif not equippable:
                         lbl = "Not usable by this character"
                     else:
-                        lbl = "Click to buy"
+                        lbl = "Click to buy (party gold)"
                     draw_text(surface, lbl, row.x + 10, row.y + 50,
-                              BUY_COL if (can_afford and equippable) else (180, 120, 60), 10)
+                              BUY_COL if (can_afford and equippable) else (180, 80, 60), 10)
 
                 iy += 68
 
@@ -3675,26 +3675,77 @@ class TownUI:
 
         # ── MY PARTY tab ──────────────────────────────────────────────────────
         elif self.tavern_tab == "party":
-            draw_text(surface, "Leave a member here (they wait safely):", 16, 100, DIM_GOLD, 13)
-            draw_text(surface, "You must keep at least 1 member.", 16, 118, GREY, 11)
-            self._leave_rects = []
-            card_w = (PW - 40) // 3
+            total_gold = sum(c.gold for c in self.party)
+
+            # ── Gold management header ────────────────────────────────────────
+            draw_text(surface, "Party Gold Management", 16, 98, GOLD, 15, bold=True)
+            draw_text(surface, f"Total: {total_gold}g", 16, 118, DIM_GOLD, 13)
+
+            # Pool All Gold button — redistributes evenly
+            pool_btn = pygame.Rect(130, 114, 140, 26)
+            draw_button(surface, pool_btn, "Pool All Gold",
+                        hover=pool_btn.collidepoint(mx, my), size=11)
+            self._pool_gold_btn = pool_btn
+
+            # Even Split button
+            split_btn = pygame.Rect(280, 114, 130, 26)
+            draw_button(surface, split_btn, "Split Evenly",
+                        hover=split_btn.collidepoint(mx, my), size=11)
+            self._split_gold_btn = split_btn
+
+            # ── Character gold cards ──────────────────────────────────────────
+            self._leave_rects    = []
+            self._give_gold_btns = []
+            card_w = (PW - 40) // min(3, max(1, len(self.party)))
             for i, char in enumerate(self.party):
                 px3 = 16 + (i % 3) * (card_w + 8)
-                py3 = 140 + (i // 3) * 155
-                panel = pygame.Rect(px3, py3, card_w, 140)
+                py3 = 148 + (i // 3) * 175
+                panel = pygame.Rect(px3, py3, card_w, 162)
                 draw_panel(surface, panel, bg_color=(22, 16, 8))
                 cc = getattr(char, "_walk_color", (180, 160, 120))
                 pygame.draw.circle(surface, cc, (panel.x + 18, panel.y + 20), 13)
-                draw_text(surface, char.name, panel.x + 38, panel.y + 8, CREAM, 13, bold=True, max_width=card_w - 44)
+                draw_text(surface, char.name, panel.x + 38, panel.y + 8,
+                          CREAM, 13, bold=True, max_width=card_w - 44)
                 draw_text(surface, f"Lv.{char.level} {getattr(char,'class_name','?')}",
                           panel.x + 38, panel.y + 26, GREY, 11)
-                draw_text(surface, f"HP: {char.resources.get('HP',0)}", panel.x + 10, panel.y + 50, CREAM, 11)
-                draw_text(surface, f"Gold: {char.gold}g", panel.x + 10, panel.y + 66, DIM_GOLD, 11)
+                draw_text(surface, f"HP: {char.resources.get('HP',0)}",
+                          panel.x + 10, panel.y + 50, CREAM, 11)
+
+                # Gold display — prominent
+                draw_text(surface, f"Gold: {char.gold}g",
+                          panel.x + 10, panel.y + 68, DIM_GOLD, 13, bold=True)
+
+                # Transfer buttons — only if more than 1 party member
                 if len(self.party) > 1:
-                    lbtn = pygame.Rect(panel.x + 10, panel.y + 106, 110, 24)
+                    # Give 10g to next member
+                    give10 = pygame.Rect(panel.x + 8, panel.y + 90, 60, 22)
+                    give_all = pygame.Rect(panel.x + 74, panel.y + 90, 60, 22)
+                    pygame.draw.rect(surface,
+                        (30, 40, 20) if give10.collidepoint(mx,my) else (20, 28, 14),
+                        give10, border_radius=3)
+                    pygame.draw.rect(surface,
+                        (80, 160, 60) if give10.collidepoint(mx,my) else (50, 100, 40),
+                        give10, 1, border_radius=3)
+                    draw_text(surface, "Give 10g", give10.x + 3, give10.y + 4,
+                              (120, 200, 80), 9)
+                    pygame.draw.rect(surface,
+                        (30, 40, 20) if give_all.collidepoint(mx,my) else (20, 28, 14),
+                        give_all, border_radius=3)
+                    pygame.draw.rect(surface,
+                        (80, 160, 60) if give_all.collidepoint(mx,my) else (50, 100, 40),
+                        give_all, 1, border_radius=3)
+                    draw_text(surface, "Give All", give_all.x + 5, give_all.y + 4,
+                              (120, 200, 80), 9)
+                    draw_text(surface, "→ next", give10.x + 3, give10.y + 14,
+                              (80, 130, 60), 8)
+                    draw_text(surface, "→ next", give_all.x + 5, give_all.y + 14,
+                              (80, 130, 60), 8)
+                    self._give_gold_btns.append((i, "give10",  give10))
+                    self._give_gold_btns.append((i, "give_all", give_all))
+
+                    lbtn = pygame.Rect(panel.x + 8, panel.y + 132, 110, 24)
                     draw_button(surface, lbtn, "Leave here",
-                                hover=lbtn.collidepoint(mx, my), size=11)
+                                hover=lbtn.collidepoint(mx, my), size=10)
                     self._leave_rects.append((i, lbtn))
 
         self._tavern_back_btn = back
@@ -4464,6 +4515,51 @@ class TownUI:
 
             # ── PARTY tab ─────────────────────────────────────────────────────
             elif self.tavern_tab == "party":
+                # Pool All Gold
+                if getattr(self, "_pool_gold_btn", None) and self._pool_gold_btn.collidepoint(mx, my):
+                    total = sum(c.gold for c in self.party)
+                    # Give it all to party[0] (leader holds the purse)
+                    for c in self.party:
+                        c.gold = 0
+                    self.party[0].gold = total
+                    sfx.play("ui_click")
+                    self._msg(f"All gold ({total}g) moved to {self.party[0].name}.", DIM_GOLD)
+                    return None
+
+                # Split Evenly
+                if getattr(self, "_split_gold_btn", None) and self._split_gold_btn.collidepoint(mx, my):
+                    if self.party:
+                        total = sum(c.gold for c in self.party)
+                        share = total // len(self.party)
+                        remainder = total - share * len(self.party)
+                        for j, c in enumerate(self.party):
+                            c.gold = share + (remainder if j == 0 else 0)
+                        sfx.play("ui_click")
+                        self._msg(f"Gold split: {share}g each.", DIM_GOLD)
+                    return None
+
+                # Give gold buttons
+                for src_idx, action, btn in getattr(self, "_give_gold_btns", []):
+                    if btn.collidepoint(mx, my):
+                        if len(self.party) < 2:
+                            return None
+                        src = self.party[src_idx]
+                        dst_idx = (src_idx + 1) % len(self.party)
+                        dst = self.party[dst_idx]
+                        if action == "give10":
+                            amount = min(10, src.gold)
+                        else:  # give_all
+                            amount = src.gold
+                        if amount <= 0:
+                            self._msg(f"{src.name} has no gold to give.", GREY)
+                        else:
+                            src.gold -= amount
+                            dst.gold += amount
+                            sfx.play("ui_click")
+                            self._msg(f"{src.name} gave {amount}g to {dst.name}.", DIM_GOLD)
+                        return None
+
+                # Leave here
                 for i, lbtn in getattr(self, '_leave_rects', []):
                     if lbtn.collidepoint(mx, my):
                         if len(self.party) <= 1:
@@ -4553,8 +4649,7 @@ class TownUI:
     # ─────────────────────────────────────────────────────────
 
     def _buy_item(self, shop_item):
-        """Buy an item. Gold deducted from the selected character (6d).
-        If they can't afford it but another party member can, show a hint."""
+        """Buy an item using party-pooled gold. Item goes to selected character."""
         price = shop_item.get("buy_price", 0)
         idx   = min(self.shop_char_idx, len(self.party) - 1) if self.party else 0
         sel   = self.party[idx] if self.party else None
@@ -4562,15 +4657,12 @@ class TownUI:
         if not sel:
             return
 
-        if sel.gold < price:
-            # Check if another character could afford it
-            if any(c.gold >= price for c in self.party):
-                self._msg("Switch to a character who can afford this.", (200, 150, 60))
-            else:
-                self._msg("Not enough gold!", RED)
+        total_gold = sum(c.gold for c in self.party)
+        if total_gold < price:
+            self._msg("Not enough party gold!", RED)
             return
 
-        sel.gold -= price
+        self._deduct_gold(price)
 
         new_item = dict(shop_item)
         new_item.pop("buy_price", None)
@@ -4584,7 +4676,7 @@ class TownUI:
         sfx.play("shop_buy")
 
     def _buy_back_item(self, sold_idx):
-        """Buy back a previously sold item. Uses selected character's gold."""
+        """Buy back a previously sold item using party-pooled gold."""
         if sold_idx >= len(self.sold_items):
             return
         item  = self.sold_items[sold_idx]
@@ -4595,14 +4687,12 @@ class TownUI:
         if not sel:
             return
 
-        if sel.gold < price:
-            if any(c.gold >= price for c in self.party):
-                self._msg("Switch to a character who can afford this.", (200, 150, 60))
-            else:
-                self._msg("Not enough gold!", RED)
+        total_gold = sum(c.gold for c in self.party)
+        if total_gold < price:
+            self._msg("Not enough party gold!", RED)
             return
 
-        sel.gold -= price
+        self._deduct_gold(price)
         self.sold_items.pop(sold_idx)
 
         new_item = dict(item)
