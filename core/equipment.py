@@ -56,33 +56,64 @@ ARMOR_TIERS = ["clothing", "light", "medium", "heavy"]
 
 # Max armor tier each class can wear without penalty
 CLASS_ARMOR_PROF = {
-    "Fighter":  "heavy",
-    "Cleric":   "heavy",
-    "Ranger":   "medium",
-    "Thief":    "light",
-    "Monk":     "clothing",
-    "Mage":     "clothing",
-    # Hybrid classes (future)
-    "Battlemage":  "light",
-    "Paladin":     "heavy",
-    "Knight":      "heavy",
-    "Assassin":    "light",
-    "Spellthief":  "light",
-    "Sage":        "clothing",
-    "Warlock":     "light",
-    "Ki Master":   "clothing",
-    "Merchant":    "medium",
+    # ── Base classes ────────────────────────────────────────────────────────
+    "Fighter":      "heavy",
+    "Cleric":       "heavy",
+    "Ranger":       "medium",
+    "Thief":        "light",
+    "Monk":         "clothing",
+    "Mage":         "clothing",
+    # ── Advanced classes ─────────────────────────────────────────────────────
+    "Paladin":      "heavy",    # Fighter+Cleric
+    "Spellblade":   "medium",   # Fighter+Mage
+    "Warder":       "light",    # Fighter+Thief
+    "Duskblade":    "medium",   # Fighter+Ranger
+    "Guardian":     "heavy",    # Fighter+Monk
+    "Witch":        "clothing", # Mage+Cleric
+    "Necromancer":  "clothing", # Mage+Thief
+    "Druid":        "light",    # Mage+Ranger
+    "Mystic":       "clothing", # Mage+Monk
+    "Warden":       "light",    # Cleric+Ranger
+    "Inquisitor":   "light",    # Cleric+Thief
+    "Templar":      "heavy",    # Cleric+Monk
+    "Assassin":     "light",    # Ranger+Thief
+    "Shaman":       "light",    # Ranger+Monk
+    # ── Apex classes ─────────────────────────────────────────────────────────
+    "Archmage":     "clothing",
+    "High Priest":  "medium",
+    "Shadow Master":"light",
+    "Beastlord":    "medium",
+    # ── Other classes ─────────────────────────────────────────────────────────
+    "Knight":       "heavy",
+    "Strider":      "medium",
+    "Phantom":      "light",
+    "Ascetic":      "clothing",
+    "Warder":       "light",
+    # Legacy names kept for backwards compat
+    "Battlemage":   "light",
+    "Spellthief":   "light",
+    "Sage":         "clothing",
+    "Warlock":      "light",
+    "Ki Master":    "clothing",
+    "Merchant":     "medium",
 }
 
 # Classes that can use shields
-SHIELD_CLASSES = {"Fighter", "Cleric", "Paladin", "Knight", "Warder", "Templar"}
+SHIELD_CLASSES = {
+    "Fighter", "Cleric", "Paladin", "Knight", "Templar",  # heavy-armor types
+    "Guardian", "Warden",                                   # monk/ranger hybrids
+}
 
-# Classes that can use focus items (wands, rods, orbs) as a weapon or off-hand
+# Classes that can use focus items (wands, rods, orbs) as weapon or off-hand
 FOCUS_CLASSES = {
-    "Mage", "Cleric", "Ranger",           # base casters
-    "Spellblade", "Warder", "Templar",     # hybrid casters
-    "Archmage", "High Priest",             # apex casters
-    "Sage", "Warlock", "Battlemage",       # other hybrids
+    "Mage", "Cleric",                          # base casters
+    "Spellblade", "Witch", "Necromancer",      # mage hybrids
+    "Druid", "Mystic", "Warden",               # nature/monk casters
+    "Inquisitor", "Templar",                   # cleric hybrids
+    "Archmage", "High Priest",                 # apex casters
+    "Phantom",                                 # arcane rogue
+    # Legacy names
+    "Warder", "Sage", "Warlock", "Battlemage",
 }
 
 # Non-proficient penalties

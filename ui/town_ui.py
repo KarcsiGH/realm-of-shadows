@@ -1898,12 +1898,17 @@ class TownUI:
         CONTENT_MAX_Y = SCREEN_H - 144   # 756 — stop here; back button is at y=760
         draw_text(surface, "Buy Items", 20, 12, GOLD, 22, bold=True)
 
-        # ── Character tabs (6a) ───────────────────────────────────────
+        # Portrait card: Rect(8,8,260,126) — right edge x=268, bottom y=134
+        # All tabs/controls MUST start to the right (x>=275) or below (y>=140)
+        PORTRAIT_RIGHT = 275  # safe x start — clear of NPC portrait card
+
+        # ── Character tabs — right of portrait, row 1 ─────────────────
         n = len(self.party)
-        tab_w = min(180, (SCREEN_W - 170) // max(n, 1))
+        avail_tab_w = SCREEN_W - PORTRAIT_RIGHT - 10
+        tab_w = min(160, avail_tab_w // max(n, 1))
         self._shop_char_tab_rects = []
         for i, ch in enumerate(self.party):
-            tr = pygame.Rect(20 + i * (tab_w + 4), 50, tab_w, 32)
+            tr = pygame.Rect(PORTRAIT_RIGHT + i * (tab_w + 4), 12, tab_w, 32)
             self._shop_char_tab_rects.append(tr)
             is_sel = (i == self.shop_char_idx)
             hover  = tr.collidepoint(mx, my)
@@ -1920,10 +1925,10 @@ class TownUI:
             self.shop_char_idx = min(self.shop_char_idx, len(self.party) - 1)
         sel_char = self.party[self.shop_char_idx] if self.party else None
 
-        # ── Category tabs ────────────────────────────────────────────
+        # ── Category tabs — right of portrait, row 2 ─────────────────
         tabs = [("weapons", "Weapons"), ("armor", "Armor"), ("consumables", "Supplies")]
         for i, (key, label) in enumerate(tabs):
-            tr = pygame.Rect(20 + i * 140, 95, 130, 28)
+            tr = pygame.Rect(PORTRAIT_RIGHT + i * 120, 52, 114, 28)
             is_sel = (self.shop_tab == key)
             hover  = tr.collidepoint(mx, my)
             bg     = (50, 40, 85) if is_sel else (35, 30, 60) if hover else (20, 18, 36)
@@ -1933,11 +1938,25 @@ class TownUI:
             draw_text(surface, label, tr.x + 10, tr.y + 6,
                       GOLD if is_sel else CREAM, 13, bold=is_sel)
 
-        # ── Item list panel ──────────────────────────────────────────
-        # Reserve right 240px for comparison panel on weapons/armor tabs
+        # ── Class restrictions banner — right of portrait, row 3 ──────
+        if sel_char:
+            from core.equipment import CLASS_ARMOR_PROF, SHIELD_CLASSES
+            if self.shop_tab == "armor":
+                max_tier = CLASS_ARMOR_PROF.get(sel_char.class_name, "light")
+                can_shield = sel_char.class_name in SHIELD_CLASSES
+                shield_str = " + shields" if can_shield else ""
+                draw_text(surface,
+                          f"✦ {sel_char.name} ({sel_char.class_name}) can wear: {max_tier} armor{shield_str}",
+                          PORTRAIT_RIGHT, 88, (140, 200, 140), 11)
+            elif self.shop_tab == "weapons":
+                draw_text(surface,
+                          f"✦ {sel_char.name} ({sel_char.class_name}) — all weapon types available",
+                          PORTRAIT_RIGHT, 88, (140, 200, 140), 11)
+
+        # ── Item list panel — starts BELOW portrait card ──────────────
         is_equip_tab = self.shop_tab in ("weapons", "armor")
         list_w = SCREEN_W - 40 - (244 if is_equip_tab else 0)
-        panel = pygame.Rect(20, 132, list_w, CONTENT_MAX_Y - 132)  # stops at y=756
+        panel = pygame.Rect(20, 140, list_w, CONTENT_MAX_Y - 140)  # starts below portrait
         draw_panel(surface, panel, bg_color=SHOP_BG)
 
         items = list(self.shop.get(self.shop_tab, []))
@@ -1983,15 +2002,22 @@ class TownUI:
 
                 if is_buyback:
                     bg = (30, 28, 18) if hover else (22, 20, 12)
+                elif not equippable:
+                    bg = (32, 14, 14) if hover else (24, 10, 10)  # red tint for unusable
                 elif is_upgrade and equippable:
                     bg = (28, 26, 10) if hover else (22, 20, 8)
                 else:
                     bg = ITEM_HOVER if hover else ITEM_BG
                 pygame.draw.rect(surface, bg, row, border_radius=3)
 
-                # Gold border for upgrades (6e)
-                border_col = (160, 130, 20) if is_upgrade and equippable else (HIGHLIGHT if hover else PANEL_BORDER)
-                pygame.draw.rect(surface, border_col, row, 2 if is_upgrade else 1, border_radius=3)
+                # Border: red for can't equip, gold for upgrade, normal otherwise
+                if not equippable:
+                    border_col = (160, 50, 50) if hover else (100, 40, 40)
+                elif is_upgrade and equippable:
+                    border_col = (160, 130, 20)
+                else:
+                    border_col = HIGHLIGHT if hover else PANEL_BORDER
+                pygame.draw.rect(surface, border_col, row, 2 if (not equippable or is_upgrade) else 1, border_radius=3)
 
                 if is_buyback:
                     draw_text(surface, "BUYBACK", row.x + row.width - 80, row.y + 4, (180, 150, 60), 10, bold=True)
@@ -1999,13 +2025,19 @@ class TownUI:
                 rarity  = item.get("rarity", "common")
                 name_col = RARITY_COLORS.get(rarity, CREAM)
                 if not equippable:
-                    name_col = DARK_GREY
+                    name_col = (160, 80, 80)  # muted red — clearly restricted
                 draw_text(surface, item["name"], row.x + 10, row.y + 4, name_col, 14, bold=True)
 
-                # Can't-use label (6b)
+                # ── Class restriction label — prominent and clear ──────
                 if not equippable and equip_reason:
-                    short = equip_reason.split(" cannot ")[-1] if " cannot " in equip_reason else "Not usable"
-                    draw_text(surface, f"✗ {short}", row.x + 10, row.y + 22, (140, 80, 80), 11)
+                    # Full reason: "Fighter is not proficient with heavy armor"
+                    draw_text(surface, f"✗  {equip_reason}", row.x + 10, row.y + 22,
+                              (210, 90, 90), 11, bold=True)
+                    # Also show armor tier of item for context
+                    armor_tier = item.get("armor_tier", "")
+                    if armor_tier:
+                        draw_text(surface, f"[{armor_tier.upper()} armor]",
+                                  row.x + row.width - 120, row.y + 22, (160, 80, 80), 10)
                 else:
                     desc = item.get("description", "")
                     if len(desc) > 70: desc = desc[:67] + "..."
@@ -2109,12 +2141,13 @@ class TownUI:
         total_gold = sum(c.gold for c in self.party)
         draw_text(surface, f"Party Gold: {total_gold}", SCREEN_W // 2 - 80, 15, DIM_GOLD, 16)
 
-        # Character tabs — below NPC portrait card (card bottom ~134px), clear of back button
-        tab_area_w = SCREEN_W - 170  # leave 170px for back button
+        # Portrait card: Rect(8,8,260,126). Tabs MUST be right of x=268 or below y=134.
+        PORTRAIT_RIGHT = 275
+        avail_tw = SCREEN_W - PORTRAIT_RIGHT - 10
+        sell_tw = min(160, avail_tw // max(len(self.party), 1))
         for i, c in enumerate(self.party):
             cls = CLASSES[c.class_name]
-            tw = tab_area_w // len(self.party)
-            tr = pygame.Rect(20 + i * tw, 140, tw - 4, 32)
+            tr = pygame.Rect(PORTRAIT_RIGHT + i * (sell_tw + 4), 12, sell_tw, 32)
             is_sel = (i == self.sell_char)
             hover = tr.collidepoint(mx, my)
             bg = (50, 40, 85) if is_sel else (35, 30, 60) if hover else (20, 18, 36)
@@ -2125,7 +2158,7 @@ class TownUI:
                       tr.x + 8, tr.y + 7, cls["color"] if is_sel else GREY, 13, bold=is_sel)
 
         char = self.party[self.sell_char]
-        panel = pygame.Rect(20, 182, SCREEN_W - 40, CONTENT_MAX_Y - 182)  # stops at y=756
+        panel = pygame.Rect(20, 140, SCREEN_W - 40, CONTENT_MAX_Y - 140)  # starts below portrait
         draw_panel(surface, panel, bg_color=SHOP_BG)
 
         if not char.inventory:
@@ -3189,15 +3222,15 @@ class TownUI:
             tab_x += tw + 6
 
         # ── Card grid ─────────────────────────────────────────────────────────
-        GRID_TOP   = 100
-        GRID_BOT   = SCREEN_H - 60  # leave room for back button
+        GRID_TOP   = 106   # just below character tabs at y=72-100
+        GRID_BOT   = SCREEN_H - 56  # 844 — back button at y=852
 
         n_cards    = max(1, len(all_possible))
-        # 4 columns — up to 5 rows for all 17 transition targets
-        COLS       = min(4, n_cards)
+        # 5 columns → 4 rows max for all 17 targets — everything fits on screen
+        COLS       = min(5, n_cards)
         CARD_GAP   = 8
         CARD_W     = (SCREEN_W - 40 - CARD_GAP * (COLS - 1)) // COLS
-        CARD_H_BASE= 130   # collapsed height — shorter to fit 5 rows
+        CARD_H_BASE= 120   # collapsed height (4 rows × 128 = 512, easily fits)
         GRID_X     = 20
 
         self._tc_card_rects   = []
@@ -3217,7 +3250,7 @@ class TownUI:
             cy       = GRID_TOP + row_i * (CARD_H_BASE + CARD_GAP)
             can      = tn in available
             selected = (self._tc_selected == tn)
-            card_h   = CARD_H_BASE + 200 if selected else CARD_H_BASE
+            card_h   = min(CARD_H_BASE + 220, GRID_BOT - cy - 4) if selected else CARD_H_BASE
             if cy + card_h > GRID_BOT - 4:
                 card_h = max(CARD_H_BASE, GRID_BOT - cy - 4)
             card_r   = pygame.Rect(cx, cy, CARD_W, card_h)
@@ -3890,32 +3923,34 @@ class TownUI:
                 self.view = self.VIEW_SHOP
                 return None
 
-            # Character tabs (6a) — matches draw y=50
+            # Character tabs — matches draw: PORTRAIT_RIGHT=275, y=12
+            PORTRAIT_RIGHT = 275
             n = len(self.party)
-            tab_w = min(180, (SCREEN_W - 170) // max(n, 1))
+            avail_tab_w = SCREEN_W - PORTRAIT_RIGHT - 10
+            tab_w = min(160, avail_tab_w // max(n, 1))
             for i in range(n):
-                tr = pygame.Rect(20 + i * (tab_w + 4), 50, tab_w, 32)
+                tr = pygame.Rect(PORTRAIT_RIGHT + i * (tab_w + 4), 12, tab_w, 32)
                 if tr.collidepoint(mx, my):
                     self.shop_char_idx = i
                     self.shop_scroll = 0
                     return None
 
-            # Category tabs — matches draw y=95
+            # Category tabs — matches draw: PORTRAIT_RIGHT, y=52
             tabs = ["weapons", "armor", "consumables"]
             for i, key in enumerate(tabs):
-                tr = pygame.Rect(20 + i * 140, 95, 130, 28)
+                tr = pygame.Rect(PORTRAIT_RIGHT + i * 120, 52, 114, 28)
                 if tr.collidepoint(mx, my):
                     self.shop_tab = key
                     self.shop_scroll = 0
                     return None
 
-            # Item clicks — matches draw panel y=132, row h=68
+            # Item clicks — matches draw panel y=140, row h=68
             is_equip_tab = self.shop_tab in ("weapons", "armor")
             list_w = SCREEN_W - 40 - (244 if is_equip_tab else 0)
             items = list(self.shop.get(self.shop_tab, []))
             buyback_start = len(items)
             items.extend(self.sold_items)
-            panel = pygame.Rect(20, 132, list_w, SCREEN_H - 237)
+            panel = pygame.Rect(20, 140, list_w, SCREEN_H - 240)
             iy = panel.y + 8
             start = self.shop_scroll
             end = min(len(items), start + 7)
@@ -3937,19 +3972,21 @@ class TownUI:
                 self.view = self.VIEW_SHOP
                 return None
 
-            # Character tabs — matches draw y=140
-            for i in range(len(self.party)):
-                tab_area_w = SCREEN_W - 170
-                tw = tab_area_w // len(self.party)
-                tr = pygame.Rect(20 + i * tw, 140, tw - 4, 32)
+            # Character tabs — matches draw: PORTRAIT_RIGHT=275, y=12
+            PORTRAIT_RIGHT = 275
+            n_sell = len(self.party)
+            avail_tw = SCREEN_W - PORTRAIT_RIGHT - 10
+            sell_tw = min(160, avail_tw // max(n_sell, 1))
+            for i in range(n_sell):
+                tr = pygame.Rect(PORTRAIT_RIGHT + i * (sell_tw + 4), 12, sell_tw, 32)
                 if tr.collidepoint(mx, my):
                     self.sell_char = i
                     self.sell_scroll = 0
                     return None
 
-            # Item clicks — matches draw panel y=182
+            # Item clicks — matches draw panel y=140
             char = self.party[self.sell_char]
-            panel = pygame.Rect(20, 182, SCREEN_W - 40, SCREEN_H - 287)
+            panel = pygame.Rect(20, 140, SCREEN_W - 40, SCREEN_H - 240)
             iy = panel.y + 10
             start = self.sell_scroll
             end = min(len(char.inventory), start + 8)
@@ -4275,11 +4312,11 @@ class TownUI:
 
         # ── Class Choose ──────────────────────────────────────────────────────
         elif self.view == self.VIEW_CLASS_CHOOSE:
-            # Back button
+            # Back button → return to Guild (not classtree)
             back_r = pygame.Rect(SCREEN_W - 140, SCREEN_H - 48, 120, 36)
             if back_r.collidepoint(mx, my):
                 self._tc_selected = None
-                self.view = self.VIEW_CLASSTREE
+                self.view = self.VIEW_GUILD
                 return None
 
             # Character tabs
