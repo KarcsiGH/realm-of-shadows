@@ -117,7 +117,7 @@ SECRET_ITEMS_T1 = [
      "description": "A silver owl pendant. +2 WIS, +1 INT.",
      "identified": False, "estimated_value": 115},
     {"name": "Scroll of Remove Curse", "appraised_name": "Scroll of Remove Curse",
-     "type": "consumable", "subtype": "scroll", "effect": "remove_curse",
+     "type": "consumable", "slot": "consumable", "subtype": "scroll", "effect": "remove_curse",
      "rarity": "uncommon",
      "description": "Lifts all curses from one character, freeing any cursed equipment.",
      "identified": True, "estimated_value": 75},

@@ -244,7 +244,7 @@ CLASS_TRANSITIONS = {
     "Duskblade":    {"base_classes": ["Fighter", "Ranger"],  "min_level": 10,
                      "min_stats": {"STR": 12, "DEX": 14},
                      "description": "Mobile skirmisher excelling at rapid movement and precise strikes."},
-    "Champion":     {"base_classes": ["Fighter", "Monk"],    "min_level": 10,
+    "Guardian":     {"base_classes": ["Fighter", "Monk"],    "min_level": 10,
                      "min_stats": {"STR": 14, "CON": 14},
                      "description": "Armored protector channeling ki to defend allies."},
     # Mage hybrids
@@ -264,7 +264,7 @@ CLASS_TRANSITIONS = {
     "Warden":       {"base_classes": ["Cleric", "Ranger"],   "min_level": 10,
                      "min_stats": {"PIE": 12, "WIS": 14},
                      "description": "Ancient guardian combining divine protection and nature's power."},
-    "Crusader":     {"base_classes": ["Cleric", "Thief"],    "min_level": 10,
+    "Inquisitor":   {"base_classes": ["Cleric", "Thief"],    "min_level": 10,
                      "min_stats": {"PIE": 14, "DEX": 12},
                      "description": "Shadow-wielding divine agent who hunts the corrupt."},
     "Templar":      {"base_classes": ["Cleric", "Monk"],     "min_level": 10,
