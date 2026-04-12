@@ -2252,6 +2252,37 @@ class CampUI:
             slot_tag = f" [EQ:{item.get('_equipped_slot','').upper()}]" if "_equipped_slot" in item else ""
             draw_text(surface, f"{name}{slot_tag}", right_x + 6, dy + idx * item_h + 7, GREY, 13)
 
+        # ── Gold transfer section ────────────────────────────────────────────
+        gold_y = list_top + 14 * item_h + 12
+        total_gold = sum(c.gold for c in self.party)
+        draw_text(surface, f"Party Gold: {total_gold}g",
+                  left_x, gold_y, DIM_GOLD, 13, bold=True)
+
+        # Pool All / Split Evenly / Give 10g buttons
+        pool_btn  = pygame.Rect(left_x + 160, gold_y - 2, 100, 22)
+        split_btn = pygame.Rect(left_x + 268, gold_y - 2, 100, 22)
+        give10_btn = pygame.Rect(left_x + 376, gold_y - 2, 90, 22)
+
+        for btn, label, active in [
+            (pool_btn,  "Pool All",    True),
+            (split_btn, "Split Even",  len(self.party) > 1),
+            (give10_btn, "Give 10g →", src.gold >= 10 and self.transfer_src_char != self.transfer_dst_char),
+        ]:
+            hov = btn.collidepoint(mx, my) and active
+            pygame.draw.rect(surface, (30,40,20) if hov else (20,28,14), btn, border_radius=3)
+            pygame.draw.rect(surface, (80,160,60) if active else DARK_GREY, btn, 1, border_radius=3)
+            draw_text(surface, label, btn.x + 5, btn.y + 4,
+                      (140, 220, 100) if active else DARK_GREY, 10)
+
+        # Per-char gold display
+        for i, ch in enumerate(self.party):
+            draw_text(surface, f"{ch.name}: {ch.gold}g",
+                      left_x + i * 180, gold_y + 26, DIM_GOLD, 11)
+
+        self._camp_pool_btn  = pool_btn
+        self._camp_split_btn = split_btn
+        self._camp_give10_btn = give10_btn
+
         # ── Status message ──
         if self.message and self.msg_timer > 0:
             draw_text(surface, self.message, left_x, list_top + 14 * item_h + 30,
@@ -2267,6 +2298,42 @@ class CampUI:
 
     def _handle_transfer_click(self, mx, my):
         if len(self.party) < 2:
+            return None
+
+        # ── Gold transfer buttons ─────────────────────────────────────────────
+        if getattr(self, "_camp_pool_btn", None) and self._camp_pool_btn.collidepoint(mx, my):
+            total = sum(c.gold for c in self.party)
+            for c in self.party: c.gold = 0
+            self.party[0].gold = total
+            self.message = f"All gold ({total}g) held by {self.party[0].name}."
+            self.msg_color = (200, 170, 60)
+            self.msg_timer = 3000
+            return None
+
+        if getattr(self, "_camp_split_btn", None) and self._camp_split_btn.collidepoint(mx, my):
+            total = sum(c.gold for c in self.party)
+            share = total // len(self.party)
+            rem   = total - share * len(self.party)
+            for j, c in enumerate(self.party):
+                c.gold = share + (rem if j == 0 else 0)
+            self.message = f"Gold split: {share}g each."
+            self.msg_color = (200, 170, 60)
+            self.msg_timer = 3000
+            return None
+
+        if getattr(self, "_camp_give10_btn", None) and self._camp_give10_btn.collidepoint(mx, my):
+            src_idx = self.transfer_src_char
+            dst_idx = self.transfer_dst_char
+            if src_idx != dst_idx:
+                src = self.party[src_idx]
+                dst = self.party[dst_idx]
+                amount = min(10, src.gold)
+                if amount > 0:
+                    src.gold -= amount
+                    dst.gold += amount
+                    self.message = f"{src.name} gave {amount}g to {dst.name}."
+                    self.msg_color = (200, 170, 60)
+                    self.msg_timer = 3000
             return None
 
         top = 80

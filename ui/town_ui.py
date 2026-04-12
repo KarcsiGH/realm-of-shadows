@@ -2687,6 +2687,32 @@ class TownUI:
                 draw_text(surface, "—", L3 + 110, ey, (50, 45, 65), 11)
             ey += 17
 
+        # ── Gold summary row at bottom ────────────────────────────────────────
+        gold_y = SCREEN_H - 130
+        total_gold = sum(ch.gold for ch in self.party)
+        pygame.draw.line(surface, (50, 46, 70), (40, gold_y - 4), (SCREEN_W - 40, gold_y - 4), 1)
+        draw_text(surface, f"Party Gold: {total_gold}g", 48, gold_y, DIM_GOLD, 14, bold=True)
+
+        # Quick gold buttons — always available from party screen
+        if len(self.party) > 1:
+            pb = pygame.Rect(220, gold_y - 2, 100, 22)
+            sb = pygame.Rect(328, gold_y - 2, 100, 22)
+            for btn, label in [(pb, "Pool All"), (sb, "Split Even")]:
+                hov = btn.collidepoint(mx, my)
+                pygame.draw.rect(surface, (30,40,20) if hov else (20,28,14), btn, border_radius=3)
+                pygame.draw.rect(surface, (80,160,60), btn, 1, border_radius=3)
+                draw_text(surface, label, btn.x + 6, btn.y + 4, (130, 210, 90), 10)
+            self._cs_pool_btn  = pb
+            self._cs_split_btn = sb
+
+            # Per-character gold display
+            for i, ch in enumerate(self.party):
+                draw_text(surface, f"{ch.name}: {ch.gold}g",
+                          48 + i * 180, gold_y + 24, (140, 130, 100), 11)
+        else:
+            self._cs_pool_btn  = None
+            self._cs_split_btn = None
+
     def _draw_inn_levelup(self, surface, mx, my):
         """
         Level-up screen: left panel = stat picker, right panel = full ability tree.
@@ -4201,6 +4227,22 @@ class TownUI:
                     return None
                 if rarr.collidepoint(mx, my):
                     self.charsheet_idx = (self.charsheet_idx + 1) % n
+                    return None
+
+                # Gold management buttons (drawn at bottom of charsheet)
+                if getattr(self, "_cs_pool_btn", None) and self._cs_pool_btn.collidepoint(mx, my):
+                    total = sum(c.gold for c in self.party)
+                    for c in self.party: c.gold = 0
+                    self.party[0].gold = total
+                    self._msg(f"All gold ({total}g) held by {self.party[0].name}.", DIM_GOLD)
+                    return None
+                if getattr(self, "_cs_split_btn", None) and self._cs_split_btn.collidepoint(mx, my):
+                    total = sum(c.gold for c in self.party)
+                    share = total // len(self.party)
+                    rem   = total - share * len(self.party)
+                    for j, c in enumerate(self.party):
+                        c.gold = share + (rem if j == 0 else 0)
+                    self._msg(f"Gold split evenly: {share}g each.", DIM_GOLD)
                     return None
 
         # ── Inn Level Up ──
