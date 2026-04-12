@@ -1685,16 +1685,27 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             )
             return result
 
-        # Only apply debuff_name if there's an explicit "debuff" field.
-        # If the ability uses the "status" field instead (via _inflict_special_effects),
-        # skip the fallback to ability["name"] which would be a no-op status.
+        # Apply the named debuff status if an explicit "debuff" field is present.
+        # Also apply "Slowed" directly if slow_duration is set (e.g. Entangle, Cripple).
+        # For abilities using only the "status" field, _inflict_special_effects handles it.
+        applied_any = False
         if ability.get("debuff"):
             debuff_name = ability["debuff"]
             duration    = ability.get("slow_duration", ability.get("duration", 2))
-            apply_status_effect(target, debuff_name, duration, 1.0)
+            if apply_status_effect(target, debuff_name, duration, 1.0):
+                applied_any = True
             result["messages"].append(
                 f"{attacker['name']} uses {ability['name']} on {target['name']}! "
                 f"{target['name']} is {debuff_name}."
+            )
+        elif ability.get("slow_duration") and not ability.get("status"):
+            # slow_duration without a debuff name → apply Slowed directly
+            dur = ability["slow_duration"]
+            if apply_status_effect(target, "Slowed", dur, 1.0):
+                applied_any = True
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']} on {target['name']}! "
+                f"{target['name']} is Slowed for {dur} turns."
             )
         else:
             result["messages"].append(
@@ -1739,6 +1750,22 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                 result["messages"].append(f"{attacker['name']} uses {ability['name']} — {ht['name']} revived for {actual} HP!{crit_str}")
             else:
                 result["messages"].append(f"{attacker['name']} uses {ability['name']} on {ht['name']} — heals {actual} HP.{crit_str}")
+
+            # Heal+Cleanse: if ability has "cures" field, remove status effects too
+            if ability.get("cures") and ht.get("type") == "player":
+                cures_type = ability["cures"]
+                CURE_MAP = {"poison": {"Poisoned", "Burning"}, "any": None}
+                cure_set = CURE_MAP.get(cures_type)
+                removed = []
+                for se in list(ht.get("status_effects", [])):
+                    if cure_set is None or se["name"] in cure_set:
+                        ht["status_effects"].remove(se)
+                        removed.append(se["name"])
+                if removed:
+                    result["messages"].append(
+                        f"  {ht['name']} is cleansed of: {', '.join(removed)}."
+                    )
+
         result["healing"] = total_healed
         result["is_crit"] = is_crit
         return result
