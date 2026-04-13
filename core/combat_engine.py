@@ -712,6 +712,15 @@ def resolve_basic_attack(attacker, defender, enemies=None):
     result["messages"].append(msg)
 
     # ── Weapon enchant on-hit proc ─────────────────────────────────────────
+    # Explicit poison_chance field on weapon (e.g. Venomstrike Fang)
+    if damage > 0 and weapon and weapon.get("poison_chance"):
+        if random.random() < weapon["poison_chance"]:
+            if apply_status_effect(defender, "Poisoned", 3, 1.0):
+                result["messages"].append(
+                    f"  {weapon.get('name','Weapon')}: "
+                    f"{defender['name']} is Poisoned! (3 turns)"
+                )
+
     # Fire, ice, lightning enchants have a chance to apply status on hit.
     if damage > 0:
         enchant_elem = weapon.get("enchant_element", "") if weapon else ""
@@ -1818,7 +1827,8 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             if target:
                 aoe_targets = [target]
             elif ability.get("pierce_rows") and all_enemies:
-                # pierce_rows auto-targets: pick frontmost alive enemy
+                # pierce_rows MUST target front row first — it pierces through to back rows.
+                # Targeting a mid/back enemy first would mean there's no-one behind to pierce.
                 alive_all = [e for e in all_enemies if e and e["alive"]]
                 for _row in (FRONT, MID, BACK):
                     front = [e for e in alive_all if e.get("row") == _row]
@@ -1827,6 +1837,8 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                         break
                 else:
                     aoe_targets = alive_all[:1]
+                # If we picked a MID/BACK enemy (no FRONT alive), pierce still fires
+                # against any row behind the target, handled below.
             else:
                 aoe_targets = []
 
@@ -1888,12 +1900,16 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         result["is_crit"] = any_crit
         result["hit"]     = total_damage > 0 or any_crit
 
-        # Splitting Arrow: pierce through front row and hit mid/back enemies
+        # Splitting Arrow: pierce through to enemies in rows BEHIND the primary target
         if ability.get("pierce_rows") and total_damage > 0 and all_enemies:
+            # Determine which rows are "behind" the primary target
+            primary_row = aoe_targets[0].get("row", FRONT) if aoe_targets else FRONT
+            rows_behind = {FRONT: (MID, BACK), MID: (BACK,), BACK: ()}.get(primary_row, ())
             pierced = [e for e in all_enemies
-                       if e["alive"] and e["row"] in (MID, BACK) and e not in aoe_targets]
+                       if e["alive"] and e.get("row") in rows_behind
+                       and e not in aoe_targets]
             if pierced:
-                result["messages"].append(f"The arrow pierces through!")
+                result["messages"].append("The arrow pierces through!")
                 for ptgt in pierced[:2]:
                     pdmg, _, pmsgs = _apply_physical_hit(ptgt, 0.6)
                     result["messages"].extend(pmsgs)
@@ -1901,7 +1917,7 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                     if not ptgt["alive"]:
                         _log_death(ptgt)
             else:
-                result["messages"].append(f"No enemies in back rows to pierce.")
+                result["messages"].append("The arrow pierces — no enemies behind to hit.")
 
         # Self-damage recoil (Reckless Charge)
         if ability.get("self_damage_pct") and total_damage > 0:

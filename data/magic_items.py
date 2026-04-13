@@ -268,8 +268,9 @@ BOSS_BONUS_LOOT = {
             "subtype": "Dagger", "rarity": "rare", "damage": 15,
             "phys_type": "piercing", "range": "melee",
             "enchant_element": "nature", "enchant_bonus": 4, "enchant_name": "Venom",
+            "poison_chance": 0.40,
             "effect": {"dex_bonus": 2},
-            "description": "A dagger carved from the Spider Queen's fang. +2 DEX, poison damage.",
+            "description": "A dagger carved from the Spider Queen's fang. +2 DEX. 40% chance to poison on hit.",
             "identified": False, "estimated_value": 140}},
     ],
     "Undead Foreman": [

@@ -1127,6 +1127,7 @@ class DungeonUI:
 
         # Z-buffer
         self._zbuf = [0.0] * VP_W
+        self._sprite_cache = {}   # (template_key, w, h) → Surface with colorkey set
 
         # Render surface
         self._view = pygame.Surface((VP_W, VP_H))
@@ -1836,7 +1837,17 @@ class DungeonUI:
             cy_s = (start_y + end_y) // 2
             r    = max(4, sp_h // 4)
 
-            if 0 <= cx_s < VP_W and ty_ < zbuf[cx_s]:
+            # Use the projected screen_x (not clipped cx_s) for zbuf depth test.
+            # Clipping shifts cx_s away from the true projection centre, causing
+            # wrong depth comparisons against walls in other directions.
+            # When zbuf < 1.0, a stair/entrance tile is right next to the player —
+            # treat it as no wall (use 20.0) so sprites deeper in the dungeon render.
+            # A wall at perpendicular dist < 1.0 is always the player's adjacent tile,
+            # never truly between the player and a distant enemy.
+            _zbuf_col = max(0, min(VP_W-1, screen_x))
+            _zbuf_raw = zbuf[_zbuf_col]
+            _zbuf_val = _zbuf_raw if _zbuf_raw >= 1.0 else 20.0
+            if 0 <= cx_s < VP_W and ty_ < _zbuf_val:
                 surf_w = max(8, sp_w)
                 surf_h = max(8, sp_h)
                 spr = pygame.Surface((surf_w, surf_h), pygame.SRCALPHA)
@@ -1875,11 +1886,8 @@ class DungeonUI:
                     draw_dungeon_object(spr, obj_r, "chest", self.theme_id)
 
                 elif icon_key in ("enemy", "boss"):
-                    # Draw faction-specific enemy silhouette from pixel_art
                     from ui.pixel_art import draw_enemy_silhouette
                     from ui.wiz_sprites import BG as _WIZ_BG
-                    obj_r = pygame.Rect(0, 0, surf_w, surf_h)
-                    # Resolve enc_key → template name via ENCOUNTERS if needed
                     template_key = enc_key or "Goblin Warrior"
                     try:
                         from data.enemies import ENCOUNTERS
@@ -1889,20 +1897,17 @@ class DungeonUI:
                                 template_key = grps[0]["enemy"]
                     except Exception:
                         pass
-                    # Draw onto an SRCALPHA surface so the BG becomes truly transparent.
-                    # _apply_effect shifts near-black pixels slightly, so colorkey alone
-                    # is unreliable — use per-pixel alpha instead.
-                    enemy_surf = pygame.Surface((surf_w, surf_h), pygame.SRCALPHA)
-                    enemy_surf.fill((0, 0, 0, 0))          # fully transparent base
-                    # Draw sprite onto a scratch surface first (wiz_sprites needs opaque)
-                    scratch = pygame.Surface((surf_w, surf_h))
-                    scratch.fill(_WIZ_BG)
-                    draw_enemy_silhouette(scratch, obj_r, template_key, knowledge_tier=1)
-                    scratch.set_colorkey(_WIZ_BG)
-                    # Blit colorkeyed scratch onto SRCALPHA surface for clean transparency
-                    enemy_surf.blit(scratch, (0, 0))
-                    view.blit(enemy_surf, (cx_s - surf_w//2, blit_y))
-                    continue  # skip the generic spr blit below
+                    # Use cached scaled sprite — avoids re-rendering 1024px PNG every frame
+                    _cache_key = (template_key, surf_w, surf_h)
+                    if _cache_key not in self._sprite_cache:
+                        _scratch = pygame.Surface((surf_w, surf_h))
+                        _scratch.fill(_WIZ_BG)
+                        draw_enemy_silhouette(_scratch, pygame.Rect(0,0,surf_w,surf_h),
+                                              template_key, knowledge_tier=1)
+                        _scratch.set_colorkey(_WIZ_BG)
+                        self._sprite_cache[_cache_key] = _scratch
+                    view.blit(self._sprite_cache[_cache_key], (cx_s - surf_w//2, blit_y))
+                    continue
 
                 elif icon_key == DT_TRAP:
                     # Armed trap — dark summoning glyph burned into floor

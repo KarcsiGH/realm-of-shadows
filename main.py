@@ -410,9 +410,10 @@ class Game:
                 result = self.intro.handle_click(mx, my)
                 if result == 'new_game':
                     self.party = []; self.char_index = 0
-                    self.character_bank = []
                     self.world_state = None; self.dungeon_cache = {}
                     self.current_char = None
+                    # Preserve banked characters so they can be reused in new party
+                    self._load_bank_for_new_game()
                     self.go(S_GUILD)
                 elif result == 'continue':
                     from ui.save_load_ui import SaveLoadUI
@@ -434,10 +435,11 @@ class Game:
                         # regardless of whether a save was loaded before.
                         self.party = []
                         self.char_index = 0
-                        self.character_bank = []
                         self.world_state = None
                         self.dungeon_cache = {}
                         self.current_char = None
+                        # Preserve banked characters so they can be reused in new party
+                        self._load_bank_for_new_game()
                         self.go(S_GUILD)
                     elif cont_r.collidepoint(mx, my):
                         from ui.save_load_ui import SaveLoadUI
@@ -3373,6 +3375,30 @@ class Game:
     # ══════════════════════════════════════════════════════════
     #  OPENING NARRATIVE
     # ══════════════════════════════════════════════════════════
+
+    def _load_bank_for_new_game(self):
+        """Populate character_bank from the most recent save for New Game.
+        Only includes banked characters NOT already in self.party.
+        If no save exists, starts with an empty bank.
+        """
+        try:
+            from core.save_load import list_saves, load_game
+            saves = list_saves()
+            if not saves:
+                self.character_bank = []
+                return
+            # Use the most recently saved slot
+            latest_slot = saves[-1][0]
+            ok, _party, _ws, _msg, _de, _dp, loaded_bank = load_game(latest_slot)
+            if ok and loaded_bank:
+                # Exclude any characters already in the active party (by name)
+                party_names = {c.name for c in self.party}
+                self.character_bank = [c for c in loaded_bank
+                                       if c.name not in party_names]
+            else:
+                self.character_bank = []
+        except Exception:
+            self.character_bank = []
 
     def _start_opening(self):
         """Begin the opening narrative sequence (or skip if already seen).
