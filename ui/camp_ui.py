@@ -1980,6 +1980,40 @@ class CampUI:
         if found_depleted and not self._recharge_btns:
             draw_text(surface, "No Mana Crystals in inventory.", 80, recharge_y, GREY, 12)
 
+        # ── Venom reservoir refill section ──────────────────────────
+        from core.venom_charges import (is_venom_weapon, init_venom_charges,
+                                         vials_needed, get_venom_label, VENOM_VIAL_NAME)
+        self._venom_refill_btns = []
+        for ch in self.party:
+            for slot, item in (ch.equipment or {}).items():
+                if not item or not is_venom_weapon(item):
+                    continue
+                init_venom_charges(item)
+                cur = item.get("venom_charges", 0)
+                mx_v = item.get("max_venom_charges", 10)
+                if cur >= mx_v:
+                    continue
+                needed_v = vials_needed(item)
+                have_v   = count_material(self.party, VENOM_VIAL_NAME)
+                can_refill = have_v >= needed_v > 0
+                row_r = pygame.Rect(80, recharge_y, SCREEN_W // 2 - 60, 44)
+                pygame.draw.rect(surface, (18, 30, 22), row_r, border_radius=4)
+                pygame.draw.rect(surface, (60, 160, 80), row_r, 1, border_radius=4)
+                draw_text(surface, f"{item.get('name','?')} {get_venom_label(item)}",
+                          row_r.x + 10, row_r.y + 5, CREAM, 13, bold=True)
+                lc = (120, 220, 140) if can_refill else GREY
+                draw_text(surface,
+                          f"{ch.name}  ·  Need {needed_v} Venom Vial{'s' if needed_v>1 else ''} (have {have_v})",
+                          row_r.x + 10, row_r.y + 24, lc, 11)
+                btn_r = pygame.Rect(row_r.right + 10, recharge_y + 7, 130, 30)
+                bc = (60, 180, 80) if can_refill else (55, 55, 70)
+                pygame.draw.rect(surface, (12, 24, 14) if can_refill else (18, 18, 28), btn_r, border_radius=4)
+                pygame.draw.rect(surface, bc, btn_r, 1, border_radius=4)
+                lbl = "Refill Venom" if can_refill else "No Vials"
+                draw_text(surface, lbl, btn_r.x + 10, btn_r.y + 7, bc, 12)
+                self._venom_refill_btns.append((btn_r, item, ch))
+                recharge_y += 50
+
         # ── Arcane Containment Crystal — expand max_charges ──────────
         from core.focus_charges import (ACC_NAME, ACC_CHARGES_BONUS, ACC_MAX_EXPANSIONS,
                                          can_expand)
@@ -2070,6 +2104,19 @@ class CampUI:
                 gained, used = recharge_with_crystals(item, self.party)
                 self._msg(f"{item.get('name','Wand')} recharged: +{gained} charges "
                           f"({used} crystal{'s' if used>1 else ''} used).")
+                return None
+
+        # Venom refill buttons
+        from core.venom_charges import refill_with_vials, VENOM_VIAL_NAME
+        from core.crafting import count_material as _cm2
+        for btn_r, item, ch in getattr(self, "_venom_refill_btns", []):
+            if btn_r.collidepoint(mx, my):
+                gained, used = refill_with_vials(item, self.party)
+                if gained:
+                    self._msg(f"{item.get('name','Weapon')} refilled: +{gained} venom charges "
+                              f"({used} vial{'s' if used>1 else ''} used).")
+                else:
+                    self._msg(f"No {VENOM_VIAL_NAME}s in inventory.", (220, 80, 80))
                 return None
 
         # ACC expand buttons

@@ -16,7 +16,8 @@ inventory, and combat systems.
 def _w(name, subtype, damage, phys, stat_bonuses, buy, rarity, desc,
        allowed=None, spell_bonus=0, crit_mod=0, accuracy_mod=0,
        speed_mod=0, enchant_element=None, enchant_bonus=0, enchant_name="",
-       range_="melee", special=None, damage_stat=None):
+       range_="melee", special=None, damage_stat=None,
+       poison_chance=0.0, venom_reservoir=False):
     item = {
         "name": name, "type": "weapon", "slot": "weapon",
         "subtype": subtype, "rarity": rarity, "damage": damage,
@@ -25,17 +26,19 @@ def _w(name, subtype, damage, phys, stat_bonuses, buy, rarity, desc,
         "buy_price": buy, "sell_price": int(buy * 0.40),
         "identified": True, "description": desc,
     }
-    if allowed:       item["allowed_classes"] = allowed
-    if spell_bonus:   item["spell_bonus"] = spell_bonus
-    if crit_mod:      item["crit_mod"] = crit_mod
-    if accuracy_mod:  item["accuracy_mod"] = accuracy_mod
-    if speed_mod:     item["speed_mod"] = speed_mod
+    if allowed:            item["allowed_classes"] = allowed
+    if spell_bonus:        item["spell_bonus"] = spell_bonus
+    if crit_mod:           item["crit_mod"] = crit_mod
+    if accuracy_mod:       item["accuracy_mod"] = accuracy_mod
+    if speed_mod:          item["speed_mod"] = speed_mod
     if enchant_element:
         item["enchant_element"] = enchant_element
         item["enchant_bonus"] = enchant_bonus
         item["enchant_name"] = enchant_name
-    if special:       item["special"] = special
-    if damage_stat:   item["damage_stat"] = damage_stat
+    if special:            item["special"] = special
+    if damage_stat:        item["damage_stat"] = damage_stat
+    if poison_chance:      item["poison_chance"] = poison_chance
+    if venom_reservoir:    item["venom_reservoir"] = True
     return item
 
 def _a(name, subtype, slot, defense, stat_bonuses, buy, rarity, desc,
@@ -622,10 +625,11 @@ THIEF_WEAPONS = [
        crit_mod=10, accuracy_mod=8, speed_mod=1,
        damage_stat={"DEX": 0.44}),
     _w("Viper Rapier",       "Rapier", 20, "piercing", {"DEX": 3, "INT": 1},
-       420, "rare",    "A rapier etched with serpent scales. Venomous tip. +3 DEX, +1 INT.",
+       420, "rare",    "A rapier etched with serpent scales. Venom reservoir: 35% poison on hit while loaded. Refill with Venom Vials. +3 DEX, +1 INT.",
        crit_mod=12, accuracy_mod=10, speed_mod=1,
        enchant_element="nature", enchant_bonus=3, enchant_name="Venomed",
-       damage_stat={"DEX": 0.44, "INT": 0.06}),
+       damage_stat={"DEX": 0.44, "INT": 0.06},
+       venom_reservoir=True),
     _w("Shadowstrike",       "Rapier", 25, "piercing", {"DEX": 4, "INT": 2},
        1500, "epic",    "A rapier forged in shadow-steel. Strikes before the eye can follow. +4 DEX, +2 INT.",
        crit_mod=16, accuracy_mod=14, speed_mod=2,
@@ -661,10 +665,11 @@ THIEF_WEAPONS = [
        range_="ranged", accuracy_mod=4, speed_mod=1,
        damage_stat={"DEX": 0.36}),
     _w("Assassin's Crossbow","Crossbow", 21, "piercing", {"DEX": 3, "INT": 1},
-       170, "uncommon", "A repeating hand crossbow with a venom reservoir. +3 DEX, +1 INT.",
+       170, "uncommon", "A repeating hand crossbow with a venom reservoir. 35% poison on hit while loaded. Refill with Venom Vials. +3 DEX, +1 INT.",
        range_="ranged", accuracy_mod=6, speed_mod=1,
        enchant_element="nature", enchant_bonus=3, enchant_name="Envenomed",
-       damage_stat={"DEX": 0.36, "INT": 0.06}),
+       damage_stat={"DEX": 0.36, "INT": 0.06},
+       venom_reservoir=True),
     _w("Shadow Crossbow",    "Crossbow", 30, "piercing", {"DEX": 4},
        640, "rare",    "A crossbow of shadow-forged steel. Silent, fast, deadly. +4 DEX.",
        range_="ranged", accuracy_mod=10, speed_mod=2, crit_mod=8,

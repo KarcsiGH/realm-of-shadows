@@ -17,12 +17,13 @@ DUR_DAMAGED   = 60    # below this: "Damaged" — minor stat penalty
 DUR_WORN      = 30    # below this: "Worn" — moderate stat penalty
 DUR_BROKEN    = 0     # "Broken" — unusable / heavy penalties
 
-# Damage dealt to weapon per successful hit
-DUR_DECAY_WEAPON_HIT  = 3   # ~33 hits to reach Damaged — meaningful without being punishing
-# Damage dealt to armor per hit received
-DUR_DECAY_ARMOR_HIT   = 2   # armor degrades a bit slower than weapons
-# Accelerated decay for critical hits
-DUR_DECAY_CRIT_MULT   = 2
+# Durability decay — probabilistic so gear lasts across multiple dungeon runs
+DUR_DECAY_WEAPON_HIT  = 1       # 1 point lost per proc
+DUR_DECAY_ARMOR_HIT   = 1       # 1 point lost per proc
+DUR_DECAY_WEAPON_CHANCE = 0.50  # 50% chance weapon degrades per hit dealt
+DUR_DECAY_ARMOR_CHANCE  = 0.25  # 25% chance armor degrades per hit received
+# Crits still deal same 1 point — chance alone determines frequency
+DUR_DECAY_CRIT_MULT   = 1
 
 # Stat penalties when degraded
 # Keys match what combat_engine reads from item stats
@@ -102,22 +103,26 @@ def get_durability_label(item):
 
 
 def degrade_weapon(item, is_crit=False):
-    """Reduce weapon durability after a hit. Returns True if item broke."""
+    """Reduce weapon durability after a hit. Returns True if item broke.
+    Uses probabilistic decay — 50% chance of 1 point loss per hit."""
     if not has_durability(item):
         return False
     init_durability(item)
-    decay = DUR_DECAY_WEAPON_HIT * (DUR_DECAY_CRIT_MULT if is_crit else 1)
-    item["durability"] = max(0, item.get("durability", DUR_FULL) - decay)
+    import random
+    if random.random() < DUR_DECAY_WEAPON_CHANCE:
+        item["durability"] = max(0, item.get("durability", DUR_FULL) - DUR_DECAY_WEAPON_HIT)
     return item["durability"] <= 0
 
 
 def degrade_armor(item, is_crit=False):
-    """Reduce armor durability after being hit. Returns True if item broke."""
+    """Reduce armor durability after being hit. Returns True if item broke.
+    Uses probabilistic decay — 25% chance of 1 point loss per hit received."""
     if not has_durability(item):
         return False
     init_durability(item)
-    decay = DUR_DECAY_ARMOR_HIT * (DUR_DECAY_CRIT_MULT if is_crit else 1)
-    item["durability"] = max(0, item.get("durability", DUR_FULL) - decay)
+    import random
+    if random.random() < DUR_DECAY_ARMOR_CHANCE:
+        item["durability"] = max(0, item.get("durability", DUR_FULL) - DUR_DECAY_ARMOR_HIT)
     return item["durability"] <= 0
 
 

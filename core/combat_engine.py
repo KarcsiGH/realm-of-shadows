@@ -674,29 +674,34 @@ def resolve_basic_attack(attacker, defender, enemies=None):
         defender["alive"] = False
 
     # Durability degradation — attacker's weapon and defender's armor
+    # Uses write-back through char_ref: combat dicts hold a shallow copy of the
+    # weapon/armor, so changes must be synced back to the real character item.
     try:
         from core.durability import degrade_weapon, degrade_armor, init_durability
         # Weapon wears on successful hits
         if weapon and weapon.get("name") != "Unarmed":
             init_durability(weapon)
             broke = degrade_weapon(weapon, is_crit=is_crit)
-            # Also update character_ref's equipment if available
+            # Write durability back to the real item via char_ref
             char_ref = attacker.get("character_ref")
-            if char_ref and char_ref.equipment.get("weapon") is weapon:
-                pass  # same object, already updated
+            if char_ref and hasattr(char_ref, "equipment"):
+                real_wpn = char_ref.equipment.get("weapon")
+                if real_wpn and real_wpn.get("name") == weapon.get("name"):
+                    real_wpn["durability"]     = weapon.get("durability", 100)
+                    real_wpn["max_durability"] = weapon.get("max_durability", 100)
             if broke:
                 result["messages"].append(
                     f"  {attacker['name']}'s {weapon['name']} is now broken!"
                 )
-        # Defender's equipped armor degrades
+        # Defender's equipped armor degrades — armor IS the real item (accessed via def_ref)
         def_ref = defender.get("character_ref")
-        if def_ref:
+        if def_ref and hasattr(def_ref, "equipment"):
             import random as _r
-            armor_slots = [s for s in ("body", "head", "hands", "feet") 
+            armor_slots = [s for s in ("body", "head", "hands", "feet")
                            if def_ref.equipment.get(s)]
             if armor_slots:
-                hit_slot = _r.choice(armor_slots)
-                hit_armor = def_ref.equipment[hit_slot]
+                hit_slot  = _r.choice(armor_slots)
+                hit_armor = def_ref.equipment[hit_slot]   # real item, no copy
                 init_durability(hit_armor)
                 broke = degrade_armor(hit_armor, is_crit=is_crit)
                 if broke:
@@ -720,6 +725,33 @@ def resolve_basic_attack(attacker, defender, enemies=None):
                     f"  {weapon.get('name','Weapon')}: "
                     f"{defender['name']} is Poisoned! (3 turns)"
                 )
+
+    # Venom reservoir weapons (Viper Rapier, Assassin's Crossbow)
+    # Each hit consumes a charge and has a 35% chance to poison the target.
+    # Write charge back to real item via char_ref after consumption.
+    if damage > 0 and weapon and weapon.get("venom_reservoir"):
+        try:
+            from core.venom_charges import (has_venom, consume_venom_charge,
+                                            VENOM_PROC_CHANCE, VENOM_POISON_TURNS,
+                                            init_venom_charges)
+            init_venom_charges(weapon)
+            if has_venom(weapon):
+                consume_venom_charge(weapon)
+                # Write back to real item
+                char_ref = attacker.get("character_ref")
+                if char_ref and hasattr(char_ref, "equipment"):
+                    real_wpn = char_ref.equipment.get("weapon")
+                    if real_wpn and real_wpn.get("name") == weapon.get("name"):
+                        real_wpn["venom_charges"]     = weapon.get("venom_charges", 0)
+                        real_wpn["max_venom_charges"] = weapon.get("max_venom_charges", 10)
+                if random.random() < VENOM_PROC_CHANCE:
+                    if apply_status_effect(defender, "Poisoned", VENOM_POISON_TURNS, 1.0):
+                        result["messages"].append(
+                            f"  {weapon.get('name','Weapon')} venom: "
+                            f"{defender['name']} is Poisoned! ({VENOM_POISON_TURNS} turns)"
+                        )
+        except Exception:
+            pass
 
     # Fire, ice, lightning enchants have a chance to apply status on hit.
     if damage > 0:
@@ -2833,6 +2865,14 @@ class CombatState:
                 if not consume_charge(weapon):
                     return {"messages": [f"{actor['name']}'s {weapon.get('name','wand')} is depleted! Recharge at camp or a forge."],
                             "hit": False, "_resource_failed": True}
+                # Write charge count back to real item via char_ref
+                # (combat dict holds a shallow copy of the weapon)
+                char_ref = actor.get("character_ref")
+                if char_ref and hasattr(char_ref, "equipment"):
+                    real_wpn = char_ref.equipment.get("weapon")
+                    if real_wpn and real_wpn.get("name") == weapon.get("name"):
+                        real_wpn["charges"]     = weapon.get("charges", 0)
+                        real_wpn["max_charges"] = weapon.get("max_charges", 20)
         except Exception:
             pass
         name = actor["name"]

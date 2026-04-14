@@ -2169,7 +2169,8 @@ class Game:
             cx = start_x + col * (card_w + 20)
             cy = start_y + row * (card_h + 12)
             r_del = pygame.Rect(cx + card_w - 28, cy + 4, 24, 24)
-            if r_del.collidepoint(mx, my):
+            in_party = any(p is c for p in self.party)
+            if r_del.collidepoint(mx, my) and not in_party:
                 self.character_bank.pop(i)
                 return
 
@@ -2241,11 +2242,18 @@ class Game:
             draw_text(self.screen, f"Σ{total}", cx + card_w - 44, cy + 57, total_col, 10, bold=True)
             draw_text(self.screen, stat_line2, cx + 44, cy + 69, GREY, 10, max_width=card_w - 52)
 
-            # Delete button
+            # Delete button — greyed out if character is in active party
+            in_party = any(p is c for p in self.party)
             r_del = pygame.Rect(cx + card_w - 28, cy + 4, 24, 24)
-            del_hover = r_del.collidepoint(mx, my)
-            pygame.draw.rect(self.screen, (160, 60, 60) if del_hover else (80, 40, 40), r_del, border_radius=4)
-            draw_text(self.screen, "✕", cx + card_w - 22, cy + 6, (220, 180, 180), 12, bold=True)
+            if in_party:
+                pygame.draw.rect(self.screen, (40, 40, 50), r_del, border_radius=4)
+                pygame.draw.rect(self.screen, (60, 60, 80), r_del, 1, border_radius=4)
+                draw_text(self.screen, "✕", cx + card_w - 22, cy + 6, (70, 70, 90), 12, bold=True)
+                draw_text(self.screen, "In Party", cx + card_w - 68, cy + 8, (120, 140, 200), 9)
+            else:
+                del_hover = r_del.collidepoint(mx, my)
+                pygame.draw.rect(self.screen, (160, 60, 60) if del_hover else (80, 40, 40), r_del, border_radius=4)
+                draw_text(self.screen, "✕", cx + card_w - 22, cy + 6, (220, 180, 180), 12, bold=True)
 
         # Empty slots (visual)
         shown = len(self.character_bank)
@@ -3378,7 +3386,6 @@ class Game:
 
     def _load_bank_for_new_game(self):
         """Populate character_bank from the most recent save for New Game.
-        Only includes banked characters NOT already in self.party.
         If no save exists, starts with an empty bank.
         """
         try:
@@ -3387,14 +3394,12 @@ class Game:
             if not saves:
                 self.character_bank = []
                 return
-            # Use the most recently saved slot
-            latest_slot = saves[-1][0]
+            # Sort by timestamp descending to get the most recently saved slot
+            saves_sorted = sorted(saves, key=lambda s: s[2], reverse=True)
+            latest_slot = saves_sorted[0][0]
             ok, _party, _ws, _msg, _de, _dp, loaded_bank = load_game(latest_slot)
             if ok and loaded_bank:
-                # Exclude any characters already in the active party (by name)
-                party_names = {c.name for c in self.party}
-                self.character_bank = [c for c in loaded_bank
-                                       if c.name not in party_names]
+                self.character_bank = list(loaded_bank)
             else:
                 self.character_bank = []
         except Exception:

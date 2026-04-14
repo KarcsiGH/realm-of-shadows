@@ -5355,6 +5355,27 @@ class TownUI:
                                   f"({used} crystal{'s' if used>1 else ''} used).", (120, 200, 255))
                         return None
                     y_rc += 54
+            # Venom reservoir refill buttons (after focus recharge rows)
+            from core.venom_charges import (is_venom_weapon, init_venom_charges,
+                                             vials_needed, refill_with_vials, VENOM_VIAL_NAME)
+            for char in self.party:
+                for slot, item in list((char.equipment or {}).items()):
+                    if not item or not is_venom_weapon(item): continue
+                    init_venom_charges(item)
+                    cur = item.get("venom_charges", 0)
+                    mx_v = item.get("max_venom_charges", 10)
+                    if cur >= mx_v: continue
+                    btn = pygame.Rect(SCREEN_W - 150, y_rc + 9, 120, 30)
+                    if btn.collidepoint(mx, my):
+                        gained, used = refill_with_vials(item, self.party)
+                        if gained:
+                            sfx.play("shop_buy")
+                            self._msg(f"Refilled {item.get('name','weapon')}: +{gained} venom charges "
+                                      f"({used} vial{'s' if used>1 else ''} used).", (120, 220, 140))
+                        else:
+                            self._msg(f"No {VENOM_VIAL_NAME}s in inventory.", RED)
+                        return None
+                    y_rc += 54
             return None
 
         if active_view == self.VIEW_FORGE_CRAFT:
