@@ -4871,6 +4871,40 @@ class TownUI:
         if not found_focus:
             pass  # no depleted focus weapons — nothing to show
 
+        # ── Venom reservoir refill section ───────────────────────────
+        from core.venom_charges import (is_venom_weapon, init_venom_charges,
+                                         vials_needed, get_venom_label, VENOM_VIAL_NAME)
+        for char in self.party:
+            eq = char.equipment or {}
+            for slot, item in eq.items():
+                if not item or not is_venom_weapon(item):
+                    continue
+                init_venom_charges(item)
+                cur = item.get("venom_charges", 0)
+                mx_v = item.get("max_venom_charges", 10)
+                if cur >= mx_v:
+                    continue
+                needed_v = vials_needed(item)
+                have_v   = count_material(self.party, VENOM_VIAL_NAME)
+                can_refill = have_v >= needed_v > 0
+                lbl_col = (120, 220, 140) if can_refill else GREY
+                row = pygame.Rect(20, y, SCREEN_W - 180, 48)
+                pygame.draw.rect(surface, (18, 30, 22), row, border_radius=3)
+                pygame.draw.rect(surface, (60, 160, 80), row, 1, border_radius=3)
+                draw_text(surface, item.get("name","?"), row.x + 10, row.y + 5, CREAM, 13, bold=True)
+                draw_text(surface, f"{char.name} — {slot}", row.x + 10, row.y + 24, GREY, 11)
+                draw_text(surface, get_venom_label(item).strip("()"),
+                          row.x + 320, row.y + 5, lbl_col, 13)
+                draw_text(surface, f"Need {needed_v} Venom Vial{'s' if needed_v>1 else ''} (have {have_v})",
+                          row.x + 320, row.y + 24, lbl_col, 11)
+                btn_col = (60, 180, 80) if can_refill else (60, 60, 80)
+                btn = pygame.Rect(SCREEN_W - 150, y + 9, 120, 30)
+                pygame.draw.rect(surface, (12, 24, 14) if can_refill else (20, 20, 30), btn, border_radius=3)
+                pygame.draw.rect(surface, btn_col, btn, 1, border_radius=3)
+                lbl = "Refill Venom" if can_refill else "No Vials"
+                draw_text(surface, lbl, btn.x + 10, btn.y + 7, btn_col, 12)
+                y += 54
+
     def _pie_disposition_discount(self, base_price: int) -> tuple:
         """Apply PIE-based temple/holy NPC discount.
         High-PIE parties are shown favour by divine servants.

@@ -481,9 +481,14 @@ try:
     check("repair restores full durability", weapon["durability"] == 100)
     check("repair cost is 0 after repair", get_repair_cost(weapon) == 0)
 
-    # degrade_weapon reduces durability
+    # degrade_weapon reduces durability (probabilistic — run many times to guarantee a reduction)
     weapon["durability"] = 100
-    degrade_weapon(weapon)
+    import random as _rnd
+    _rnd.seed(1)
+    for _ in range(20):  # 50% chance per hit — virtually certain to degrade in 20 tries
+        degrade_weapon(weapon)
+        if weapon["durability"] < 100:
+            break
     check("degrade_weapon reduces durability", weapon["durability"] < 100)
 
 except Exception as e:
