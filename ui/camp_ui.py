@@ -2108,7 +2108,6 @@ class CampUI:
 
         # Venom refill buttons
         from core.venom_charges import refill_with_vials, VENOM_VIAL_NAME
-        from core.crafting import count_material as _cm2
         for btn_r, item, ch in getattr(self, "_venom_refill_btns", []):
             if btn_r.collidepoint(mx, my):
                 gained, used = refill_with_vials(item, self.party)
