@@ -1933,23 +1933,30 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         result["hit"]     = total_damage > 0 or any_crit
 
         # Splitting Arrow: pierce through to enemies in rows BEHIND the primary target
-        if ability.get("pierce_rows") and total_damage > 0 and all_enemies:
-            # Determine which rows are "behind" the primary target
+        if ability.get("pierce_rows") and all_enemies:
             primary_row = aoe_targets[0].get("row", FRONT) if aoe_targets else FRONT
             rows_behind = {FRONT: (MID, BACK), MID: (BACK,), BACK: ()}.get(primary_row, ())
             pierced = [e for e in all_enemies
                        if e["alive"] and e.get("row") in rows_behind
                        and e not in aoe_targets]
-            if pierced:
-                result["messages"].append("The arrow pierces through!")
-                for ptgt in pierced[:2]:
-                    pdmg, _, pmsgs = _apply_physical_hit(ptgt, 0.6)
-                    result["messages"].extend(pmsgs)
-                    result["damage"] += pdmg
-                    if not ptgt["alive"]:
-                        _log_death(ptgt)
+            if total_damage > 0:
+                # Primary hit landed — pierce fires
+                if pierced:
+                    result["messages"].append("The arrow pierces through!")
+                    for ptgt in pierced[:2]:
+                        pdmg, _, pmsgs = _apply_physical_hit(ptgt, 0.6)
+                        result["messages"].extend(pmsgs)
+                        result["damage"] += pdmg
+                        if not ptgt["alive"]:
+                            _log_death(ptgt)
+                else:
+                    result["messages"].append("The arrow pierces — no enemies behind to hit.")
             else:
-                result["messages"].append("The arrow pierces — no enemies behind to hit.")
+                # Primary missed — still show pierce context
+                if pierced:
+                    result["messages"].append(
+                        f"Arrow missed — back row ({', '.join(e['name'] for e in pierced[:2])}) unscathed."
+                    )
 
         # Self-damage recoil (Reckless Charge)
         if ability.get("self_damage_pct") and total_damage > 0:

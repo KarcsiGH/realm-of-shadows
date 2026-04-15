@@ -989,6 +989,9 @@ class Game:
                         if world_state:
                             self.world_state = world_state
                             self.world_state.party = self.party
+                            # Force world_map_ui rebuild from the restored world_state
+                            # (stale UI still points at the pre-load fog state)
+                            self.world_map_ui = None
                         # Restore dungeon minimap (explored tiles) from save
                         self.dungeon_cache = {}
                         if dungeon_explored:
@@ -5559,6 +5562,28 @@ class Game:
                             add_poison(target, data["poison"])
                             sfx.play("poison")
                             results.append(f"{target.name} poisoned!")
+
+            # Special trap effects beyond damage
+            from core.status_effects import apply_status_effect as _ase
+            if trap_name == "Fire Jet":
+                for target in targets:
+                    if random.random() < 0.50:
+                        _ase(target, "Burning", 2, 1.0)
+                        results.append(f"{target.name} is Burning!")
+            elif trap_name == "Petrify Glyph":
+                for target in targets:
+                    if random.random() < 0.60:
+                        _ase(target, "Petrified", 2, 1.0)
+                        results.append(f"{target.name} is Petrified!")
+            elif trap_name == "Soul Drain":
+                for target in targets:
+                    # Drain MP/SP in addition to the curse
+                    for rk in list(target.resources.keys()):
+                        if "MP" in rk or "SP" in rk or "Ki" in rk:
+                            drain = max(5, target.resources[rk] // 4)
+                            target.resources[rk] = max(0, target.resources[rk] - drain)
+                            results.append(f"{target.name}: -{drain} {rk}")
+                            break
 
             # Build display message
             if was_detected:

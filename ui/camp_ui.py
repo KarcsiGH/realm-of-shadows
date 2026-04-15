@@ -2076,19 +2076,7 @@ class CampUI:
         for row, i, ab, can in getattr(self, "_spell_rects", []):
             if row.collidepoint(mx, my):
                 self.spell_selected = i
-                # Auto-set target to first valid alive character
-                ab_type = ab.get("type", "")
-                is_revive = (ab_type == "revive")
-                self.spell_target = 0
-                for ji, tgt in enumerate(self.party):
-                    hp = tgt.resources.get("HP", 0)
-                    dead = hp <= 0
-                    if is_revive and dead:
-                        self.spell_target = ji
-                        break
-                    elif not is_revive and not dead:
-                        self.spell_target = ji
-                        break
+                self.spell_target = -1   # no target pre-selected — player must click one
                 return None
 
         # Target clicks
@@ -2172,7 +2160,7 @@ class CampUI:
                 targets = [self.party[self.spell_target]]
 
         if not targets:
-            self._msg("No valid target.", ORANGE)
+            self._msg("Select a target first.", ORANGE)
             return
 
         msgs = []
