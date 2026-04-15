@@ -5507,37 +5507,58 @@ class Game:
             else:
                 targets = [random.choice(self.party)]
 
-            # Apply damage with saving throws
-            results = []
-            for target in targets:
-                save = resolve_trap_saving_throw(target, data)
-                if save == "avoid":
-                    results.append(f"{target.name} dodges!")
-                elif save == "half":
-                    actual_dmg = max(1, dmg_base // 2)
-                    target.resources["HP"] = target.resources.get("HP", 0) - actual_dmg
-                    results.append(f"{target.name}: {actual_dmg} dmg (half)")
-                elif save == "crit_fail":
-                    actual_dmg = dmg_base
-                    target.resources["HP"] = target.resources.get("HP", 0) - actual_dmg
-                    results.append(f"{target.name}: {actual_dmg} dmg!")
-                    # Apply status effects on crit fail
-                    if data.get("poison"):
-                        add_poison(target, data["poison"])
-                        sfx.play("poison")
-                        results.append(f"{target.name} poisoned!")
-                    if data.get("curse"):
-                        add_curse(target, data["curse"])
-                        results.append(f"{target.name} cursed!")
-                else:  # full damage
-                    actual_dmg = dmg_base
-                    target.resources["HP"] = target.resources.get("HP", 0) - actual_dmg
-                    results.append(f"{target.name}: {actual_dmg} dmg")
-                    # Poison traps also apply poison on full hit (50% chance)
-                    if data.get("poison") and random.random() < 0.5:
-                        add_poison(target, data["poison"])
-                        sfx.play("poison")
-                        results.append(f"{target.name} poisoned!")
+            # Teleport Trap — transport party to random walkable position
+            if trap_name == "Teleport Trap":
+                results = []
+                try:
+                    floor_data = self.dungeon_state.get_current_floor_data()
+                    tiles = floor_data["tiles"]
+                    fh, fw = floor_data["height"], floor_data["width"]
+                    from data.dungeon import PASSABLE_TILES
+                    walkable = [(tx, ty) for ty in range(fh) for tx in range(fw)
+                                if tiles[ty][tx].get("type") in PASSABLE_TILES]
+                    if walkable:
+                        tx, ty = random.choice(walkable)
+                        self.dungeon_state.party_x = tx
+                        self.dungeon_state.party_y = ty
+                        self.dungeon_ui.px = float(tx) + 0.5
+                        self.dungeon_ui.py = float(ty) + 0.5
+                        self.dungeon_state._update_fog()
+                        results.append("The party is teleported!")
+                    else:
+                        results.append("Teleport fizzles — no valid destination.")
+                except Exception:
+                    results.append("Teleport trap triggered.")
+            else:
+                # Apply damage with saving throws (all non-teleport traps)
+                results = []
+                for target in targets:
+                    save = resolve_trap_saving_throw(target, data)
+                    if save == "avoid":
+                        results.append(f"{target.name} dodges!")
+                    elif save == "half":
+                        actual_dmg = max(1, dmg_base // 2)
+                        target.resources["HP"] = target.resources.get("HP", 0) - actual_dmg
+                        results.append(f"{target.name}: {actual_dmg} dmg (half)")
+                    elif save == "crit_fail":
+                        actual_dmg = dmg_base
+                        target.resources["HP"] = target.resources.get("HP", 0) - actual_dmg
+                        results.append(f"{target.name}: {actual_dmg} dmg!")
+                        if data.get("poison"):
+                            add_poison(target, data["poison"])
+                            sfx.play("poison")
+                            results.append(f"{target.name} poisoned!")
+                        if data.get("curse"):
+                            add_curse(target, data["curse"])
+                            results.append(f"{target.name} cursed!")
+                    else:  # full damage
+                        actual_dmg = dmg_base
+                        target.resources["HP"] = target.resources.get("HP", 0) - actual_dmg
+                        results.append(f"{target.name}: {actual_dmg} dmg")
+                        if data.get("poison") and random.random() < 0.5:
+                            add_poison(target, data["poison"])
+                            sfx.play("poison")
+                            results.append(f"{target.name} poisoned!")
 
             # Build display message
             if was_detected:

@@ -2296,6 +2296,32 @@ class TownUI:
 
                 uy += 44
 
+        # ── Temple target picker (shown when a service needs target selection) ──
+        pending = getattr(self, "_temple_pending", None)
+        temple_tgts = getattr(self, "_temple_targets", [])
+        if pending and temple_tgts:
+            pick_y = by + len(services) * 80 + 20
+            draw_text(surface, "Select character:", SCREEN_W // 2 - 250, pick_y, GOLD, 14, bold=True)
+            pick_y += 24
+            self._temple_target_rects = []
+            for tgt in temple_tgts:
+                row = pygame.Rect(SCREEN_W // 2 - 250, pick_y, 500, 40)
+                hover = row.collidepoint(mx, my)
+                pygame.draw.rect(surface, ITEM_HOVER if hover else ITEM_BG, row, border_radius=3)
+                pygame.draw.rect(surface, GOLD, row, 1, border_radius=3)
+                draw_text(surface, tgt.name, row.x + 12, row.y + 10, CREAM, 13, bold=True)
+                self._temple_target_rects.append((row, tgt))
+                pick_y += 44
+            # Cancel button
+            cancel_r = pygame.Rect(SCREEN_W // 2 - 250, pick_y + 4, 100, 32)
+            pygame.draw.rect(surface, (60,30,30), cancel_r, border_radius=3)
+            pygame.draw.rect(surface, RED, cancel_r, 1, border_radius=3)
+            draw_text(surface, "Cancel", cancel_r.x + 18, cancel_r.y + 8, RED, 12)
+            self._temple_cancel_rect = cancel_r
+        else:
+            self._temple_target_rects = []
+            self._temple_cancel_rect = None
+
         # Redraw back button on top of any identify rows that might be close
         _tm_back = pygame.Rect(8, SCREEN_H - 140, 120, 34)
         draw_button(surface, _tm_back, "← Back",
@@ -4091,6 +4117,20 @@ class TownUI:
             max_pie = max((c.stats.get("PIE", 0) for c in self.party), default=0)
             if max_pie >= 15:
                 by = 132  # matches _draw_temple PIE discount banner bump
+            # Target picker clicks (shown when service needs target selection)
+            for row, tgt in getattr(self, "_temple_target_rects", []):
+                if row.collidepoint(mx, my):
+                    pending = getattr(self, "_temple_pending", None)
+                    if pending:
+                        self._use_temple_service(pending, target_char=tgt)
+                    return None
+            cancel_r = getattr(self, "_temple_cancel_rect", None)
+            if cancel_r and cancel_r.collidepoint(mx, my):
+                self._temple_pending = None
+                self._temple_targets = []
+                self._msg("Cancelled.", GREY)
+                return None
+
             for i, svc_key in enumerate(services):
                 btn = pygame.Rect(SCREEN_W // 2 - 250, by + i * 80, 500, 68)
                 if btn.collidepoint(mx, my):
@@ -4917,72 +4957,98 @@ class TownUI:
         discounted = max(1, int(base_price * (1.0 - pct / 100)))
         return discounted, pct
 
-    def _use_temple_service(self, service_key):
-        """Use a temple service."""
+    def _use_temple_service(self, service_key, target_char=None):
+        """Use a temple service. If target_char is None, opens target picker for
+        services that apply to specific characters (poison, disease, curse).
+        Resurrect still auto-targets first dead character."""
         svc = TEMPLE["services"][service_key]
         base_cost = svc["cost"]
         cost, pct_off = self._pie_disposition_discount(base_cost)
         total_gold = sum(c.gold for c in self.party)
 
         if service_key == "cure_poison":
-            # Find first poisoned character
             from core.status_effects import get_status_effects, remove_all_poison
-            for c in self.party:
-                effects = get_status_effects(c)
-                if any(s.get("type") == "poison" for s in effects):
-                    if total_gold < cost:
-                        self._msg(f"Not enough gold! Need {cost}g.", RED)
-                        return
-                    self._deduct_gold(cost)
-                    remove_all_poison(c)
-                    self._msg(f"{c.name}'s poison has been purged! ({cost}g)", HEAL_COL)
-                    return
-            self._msg("No one in your party is poisoned.", GREY)
+            # Build list of poisoned characters
+            poisoned = [c for c in self.party
+                        if any(s.get("type") == "poison" for s in get_status_effects(c))]
+            if not poisoned:
+                self._msg("No one in your party is poisoned.", GREY)
+                return
+            if target_char is None:
+                # Show target picker
+                self._temple_pending = service_key
+                self._temple_targets = poisoned
+                self._msg(f"Cure Poison costs {cost}g. Select who to cure.", GOLD)
+                return
+            c = target_char
+            if total_gold < cost:
+                self._msg(f"Not enough gold! Need {cost}g.", RED)
+                return
+            self._deduct_gold(cost)
+            remove_all_poison(c)
+            self._temple_pending = None
+            self._msg(f"{c.name}'s poison has been purged! ({cost}g)", HEAL_COL)
 
         elif service_key == "cure_disease":
             from core.status_effects import get_status_effects, remove_all_disease
-            for c in self.party:
-                effects = get_status_effects(c)
-                if any(s.get("type") == "disease" for s in effects):
-                    if total_gold < cost:
-                        self._msg(f"Not enough gold! Need {cost}g.", RED)
-                        return
-                    self._deduct_gold(cost)
-                    remove_all_disease(c)
-                    self._msg(f"{c.name}'s disease has been cleansed! ({cost}g)", HEAL_COL)
-                    return
-            self._msg("No one in your party is diseased.", GREY)
+            diseased = [c for c in self.party
+                        if any(s.get("type") == "disease" for s in get_status_effects(c))]
+            if not diseased:
+                self._msg("No one in your party is diseased.", GREY)
+                return
+            if target_char is None:
+                self._temple_pending = service_key
+                self._temple_targets = diseased
+                self._msg(f"Cure Disease costs {cost}g. Select who to cure.", GOLD)
+                return
+            c = target_char
+            if total_gold < cost:
+                self._msg(f"Not enough gold! Need {cost}g.", RED)
+                return
+            self._deduct_gold(cost)
+            remove_all_disease(c)
+            self._temple_pending = None
+            self._msg(f"{c.name}'s disease has been cleansed! ({cost}g)", HEAL_COL)
 
         elif service_key == "remove_curse":
             from core.status_effects import get_status_effects, remove_all_curses
-            # Check for cursed status effects OR cursed equipped items
-            for c in self.party:
+            def is_cursed(c):
                 effects = get_status_effects(c)
-                has_curse_effect = any(s.get("type") == "curse" for s in effects)
-                cursed_slots = [
-                    slot for slot, item in (c.equipment or {}).items()
-                    if item and item.get("cursed") and not item.get("curse_lifted")
-                ]
-                if has_curse_effect or cursed_slots:
-                    if total_gold < cost:
-                        self._msg(f"Not enough gold! Need {cost}g.", RED)
-                        return
-                    self._deduct_gold(cost)
-                    if has_curse_effect:
-                        remove_all_curses(c)
-                    # Lift all cursed equipment — mark as removable and unequip
-                    for slot in cursed_slots:
-                        item = c.equipment[slot]
-                        item["curse_lifted"] = True
-                        c.equipment[slot] = None
-                        c.inventory.append(item)
-                    msg = f"{c.name}'s curses have been lifted! ({cost}g)"
-                    if cursed_slots:
-                        names = ", ".join(c.equipment.get(s, {}).get("name", s) or s for s in cursed_slots)
-                        msg = f"{c.name} freed from cursed gear! ({cost}g)"
-                    self._msg(msg, HEAL_COL)
-                    return
-            self._msg("No one in your party is cursed.", GREY)
+                has_curse = any(s.get("type") == "curse" for s in effects)
+                cursed_gear = any(
+                    item and item.get("cursed") and not item.get("curse_lifted")
+                    for item in (c.equipment or {}).values()
+                )
+                return has_curse or cursed_gear
+            cursed_chars = [c for c in self.party if is_cursed(c)]
+            if not cursed_chars:
+                self._msg("No one in your party is cursed.", GREY)
+                return
+            if target_char is None:
+                self._temple_pending = service_key
+                self._temple_targets = cursed_chars
+                self._msg(f"Remove Curse costs {cost}g. Select who to uncurse.", GOLD)
+                return
+            c = target_char
+            if total_gold < cost:
+                self._msg(f"Not enough gold! Need {cost}g.", RED)
+                return
+            self._deduct_gold(cost)
+            effects = get_status_effects(c)
+            if any(s.get("type") == "curse" for s in effects):
+                remove_all_curses(c)
+            cursed_slots = [
+                slot for slot, item in (c.equipment or {}).items()
+                if item and item.get("cursed") and not item.get("curse_lifted")
+            ]
+            for slot in cursed_slots:
+                item = c.equipment[slot]
+                item["curse_lifted"] = True
+                c.equipment[slot] = None
+                c.inventory.append(item)
+            self._temple_pending = None
+            msg = f"{c.name} freed from cursed gear! ({cost}g)" if cursed_slots                   else f"{c.name}'s curses have been lifted! ({cost}g)"
+            self._msg(msg, HEAL_COL)
 
         elif service_key == "resurrect":
             # Find first dead character (HP <= 0 and marked dead)

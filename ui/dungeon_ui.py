@@ -1837,15 +1837,12 @@ class DungeonUI:
             cy_s = (start_y + end_y) // 2
             r    = max(4, sp_h // 4)
 
-            # Use the projected screen_x (not clipped cx_s) for zbuf depth test.
-            # Clipping shifts cx_s away from the true projection centre, causing
-            # wrong depth comparisons against walls in other directions.
-            # When zbuf < 1.0, a stair/entrance tile is right next to the player —
-            # treat it as no wall (use 20.0) so sprites deeper in the dungeon render.
-            # A wall at perpendicular dist < 1.0 is always the player's adjacent tile,
-            # never truly between the player and a distant enemy.
-            _zbuf_col = max(0, min(VP_W-1, screen_x))
-            _zbuf_raw = zbuf[_zbuf_col]
+            # Depth test: use cx_s (centre of visible sprite portion) for zbuf lookup.
+            # This matches the occlusion test for chests/traps (which are never visible
+            # through walls). zbuf < 1.0 means an entrance/stair tile is immediately
+            # adjacent to the player — treat that column as unoccluded so sprites
+            # deeper in the dungeon aren't culled by the adjacent tile.
+            _zbuf_raw = zbuf[cx_s] if 0 <= cx_s < VP_W else 0.0
             _zbuf_val = _zbuf_raw if _zbuf_raw >= 1.0 else 20.0
             if 0 <= cx_s < VP_W and ty_ < _zbuf_val:
                 surf_w = max(8, sp_w)
@@ -1898,6 +1895,8 @@ class DungeonUI:
                     except Exception:
                         pass
                     # Use cached scaled sprite — avoids re-rendering 1024px PNG every frame
+                    # Cache stores SRCALPHA surface so transparent regions are correct
+                    # even if sprite pixels happen to match the colorkey value.
                     _cache_key = (template_key, surf_w, surf_h)
                     if _cache_key not in self._sprite_cache:
                         _scratch = pygame.Surface((surf_w, surf_h))
@@ -1905,7 +1904,11 @@ class DungeonUI:
                         draw_enemy_silhouette(_scratch, pygame.Rect(0,0,surf_w,surf_h),
                                               template_key, knowledge_tier=1)
                         _scratch.set_colorkey(_WIZ_BG)
-                        self._sprite_cache[_cache_key] = _scratch
+                        # Convert to SRCALPHA so colorkey transparency is baked in
+                        _alpha = pygame.Surface((surf_w, surf_h), pygame.SRCALPHA)
+                        _alpha.fill((0, 0, 0, 0))
+                        _alpha.blit(_scratch, (0, 0))
+                        self._sprite_cache[_cache_key] = _alpha
                     view.blit(self._sprite_cache[_cache_key], (cx_s - surf_w//2, blit_y))
                     continue
 

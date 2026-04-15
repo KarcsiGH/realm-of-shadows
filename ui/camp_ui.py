@@ -2076,6 +2076,19 @@ class CampUI:
         for row, i, ab, can in getattr(self, "_spell_rects", []):
             if row.collidepoint(mx, my):
                 self.spell_selected = i
+                # Auto-set target to first valid alive character
+                ab_type = ab.get("type", "")
+                is_revive = (ab_type == "revive")
+                self.spell_target = 0
+                for ji, tgt in enumerate(self.party):
+                    hp = tgt.resources.get("HP", 0)
+                    dead = hp <= 0
+                    if is_revive and dead:
+                        self.spell_target = ji
+                        break
+                    elif not is_revive and not dead:
+                        self.spell_target = ji
+                        break
                 return None
 
         # Target clicks
@@ -2814,6 +2827,48 @@ class CampUI:
                     char.resources[rk] = min(max_val, old + item["restore_mp"])
                     self._msg(f"{char.name} used {name}: +{char.resources[rk] - old} {rk}", MP_BAR)
                     break
+        # ── Spell scroll (subtype="scroll" with a "spell" or "effect" field) ──
+        elif item.get("subtype") == "scroll" and item.get("spell"):
+            spell_name = item["spell"]
+            # Find the spell in any class abilities
+            import abilities as _ab_root
+            from core.abilities import CLASS_ABILITIES as _core_abs
+            spell_ab = None
+            for cls_abs in list(_ab_root.CLASS_ABILITIES.values()) + list(_core_abs.values()):
+                for ab in cls_abs:
+                    if ab.get("name") == spell_name:
+                        spell_ab = dict(ab)
+                        break
+                if spell_ab:
+                    break
+            if not spell_ab:
+                self._msg(f"Unknown spell on scroll: {spell_name}", ORANGE)
+                return
+            # Cast at minimal cost (scrolls bypass resource requirements)
+            ab_type = spell_ab.get("type", "")
+            CAMP_TYPES = ("heal", "aoe_heal", "cure", "revive")
+            if ab_type in CAMP_TYPES:
+                # Use the existing camp spell logic — scrolls cast for free
+                spell_ab["cost"] = 0
+                spell_ab["resource"] = ""
+                self._cast_camp_spell(char, spell_ab)
+            else:
+                self._msg(f"{spell_name}: combat spell — cannot use outside battle.", ORANGE)
+                return
+        # ── Cure (items with "cures" list) ──
+        elif item.get("cures"):
+            from core.status_effects import get_status_effects, remove_status
+            cures = item["cures"] if isinstance(item["cures"], list) else [item["cures"]]
+            tgt = self.party[self.spell_target] if 0 <= self.spell_target < len(self.party) else char
+            effects = get_status_effects(tgt)
+            cured = [e for e in effects if e.get("name") in cures or e.get("type") in cures]
+            if cured:
+                for e in cured:
+                    remove_status(tgt, e["id"])
+                self._msg(f"{tgt.name}: cleared {', '.join(e['name'] for e in cured)}", HEAL_COL)
+            else:
+                self._msg(f"{tgt.name}: nothing to cure.", ORANGE)
+                return
         else:
             self._msg(f"Can't use {name} here.", ORANGE)
             return
