@@ -1700,11 +1700,14 @@ class DungeonUI:
         for ty in range(fh):
             for tx in range(fw):
                 tile = tiles[ty][tx]
-                if not tile.get("discovered"):
-                    continue
                 tt = tile["type"]
                 icon_key = None
                 enc_key  = None
+                # Static terrain sprites (stairs, chests, traps, shrines) only visible
+                # on discovered tiles. Encounters (enemies/bosses) are visible whenever
+                # the torch + zbuf (wall occlusion) let the player see that tile, even
+                # if the tile itself has not yet been stepped near.
+                _tile_discovered = tile.get("discovered", False)
                 # UP and ENTRANCE are wall tiles — skip sprite rendering
                 # DOWN is now a floor tile — render as floor-anchored sprite
                 if tt in (DT_STAIRS_DOWN, DT_STAIRS_UP, DT_ENTRANCE):
@@ -1728,6 +1731,11 @@ class DungeonUI:
 
                 if tile.get("has_journal") and not tile.get("journal_read"):
                     icon_key = "journal"
+
+                # Gate static terrain/object sprites by fog-of-war; allow enemy/boss
+                # sprites through even on undiscovered tiles (torch/LOS handles visibility).
+                if not _tile_discovered and icon_key not in ("enemy", "boss"):
+                    continue
                 if icon_key is None:
                     continue
                 sx = tx + 0.5 - self.px
@@ -1737,13 +1745,13 @@ class DungeonUI:
                     continue
                 sprites.append((d, sx, sy, icon_key, enc_key))
 
-        # Add visible patrol enemies from the floor enemy list
+        # Add visible patrol enemies from the floor enemy list.
+        # Visibility = torch range + zbuf occlusion (NOT tile discovery).
+        # This lets players see enemies down corridors before walking next to them.
         for enemy in fl.get("enemies", []):
             if enemy.get("state") == "dead":
                 continue
             ex, ey = enemy["x"], enemy["y"]
-            if not tiles[ey][ex].get("discovered"):
-                continue
             esx = ex + 0.5 - self.px
             esy = ey + 0.5 - self.py
             d   = math.sqrt(esx*esx + esy*esy)
