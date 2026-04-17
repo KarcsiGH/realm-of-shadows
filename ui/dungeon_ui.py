@@ -1889,20 +1889,26 @@ class DungeonUI:
                                 template_key = grps[0]["enemy"]
                     except Exception:
                         pass
-                    # Use PNG sprite directly with its own alpha channel.
-                    # The previous colorkey approach was unreliable because
-                    # smoothscale + _apply_effects can promote surfaces to
-                    # SRCALPHA, which makes set_colorkey a silent no-op.
+                    # Use PNG sprite directly. Many enemy PNGs lack an alpha
+                    # channel (solid black background), so we apply a colorkey
+                    # for pure black to knock out the background. PNGs that DO
+                    # have alpha keep their native transparency (colorkey on an
+                    # SRCALPHA surface is a no-op, so no harm).
                     from ui.sprite_loader import _get_enemy
                     _png = _get_enemy(template_key)
                     if _png is not None:
-                        # Cache scaled sprite per (template, w, h)
                         if not hasattr(self, "_enemy_scaled_cache"):
                             self._enemy_scaled_cache = {}
                         _ck = (template_key, surf_w, surf_h)
                         _spr = self._enemy_scaled_cache.get(_ck)
                         if _spr is None:
-                            _spr = pygame.transform.smoothscale(_png, (surf_w, surf_h))
+                            # Build scaled sprite with black-background knockout.
+                            # Work on a plain surface so set_colorkey is honoured.
+                            _plain = pygame.Surface((surf_w, surf_h))
+                            _plain.fill((0, 0, 0))
+                            _plain.blit(pygame.transform.smoothscale(_png, (surf_w, surf_h)), (0, 0))
+                            _plain.set_colorkey((0, 0, 0))
+                            _spr = _plain
                             self._enemy_scaled_cache[_ck] = _spr
                         view.blit(_spr, (cx_s - surf_w//2, blit_y))
                     else:
