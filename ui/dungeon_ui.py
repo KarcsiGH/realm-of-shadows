@@ -1759,21 +1759,6 @@ class DungeonUI:
                 continue
             sprites.append((d, esx, esy, "enemy", enemy.get("enc_key")))
 
-        # DEBUG: log sprite collection summary once per second
-        import time as _t
-        _now2 = _t.time()
-        if not hasattr(self, "_last_list_debug") or _now2 - self._last_list_debug > 1.0:
-            self._last_list_debug = _now2
-            try:
-                _enemies = [s for s in sprites if s[3] in ("enemy","boss")]
-                with open("/tmp/dungeon_sprite_debug.log", "a") as _f:
-                    _f.write(f"[{_t.strftime('%H:%M:%S')}] SPRITES COLLECTED: total={len(sprites)} "
-                             f"enemies={len(_enemies)} px={self.px:.2f} py={self.py:.2f}\n")
-                    for _d, _sx, _sy, _ik, _ek in _enemies[:5]:
-                        _f.write(f"  enemy: dist={_d:.2f} sx={_sx:.2f} sy={_sy:.2f} "
-                                 f"icon={_ik} enc={_ek}\n")
-            except Exception:
-                pass
         sprites.sort(key=lambda s: -s[0])
 
         font = get_font(32)
@@ -1894,25 +1879,6 @@ class DungeonUI:
                     draw_dungeon_object(spr, obj_r, "chest", self.theme_id)
 
                 elif icon_key in ("enemy", "boss"):
-                    # Draw faction-specific enemy silhouette from pixel_art
-                    from ui.pixel_art import draw_enemy_silhouette
-                    from ui.wiz_sprites import BG as _WIZ_BG
-                    # DEBUG: log once per second
-                    import time as _t, os as _os
-                    _now = _t.time()
-                    if not hasattr(self, "_last_enemy_debug") or _now - self._last_enemy_debug > 1.0:
-                        self._last_enemy_debug = _now
-                        try:
-                            with open("/tmp/dungeon_sprite_debug.log", "a") as _f:
-                                _f.write(f"[{_t.strftime('%H:%M:%S')}] ENTER enemy branch: "
-                                         f"icon_key={icon_key} enc_key={enc_key} "
-                                         f"dist={dist:.2f} ty_={ty_:.2f} cx_s={cx_s} "
-                                         f"zbuf[cx_s]={zbuf[cx_s]:.2f} "
-                                         f"surf_w={surf_w} surf_h={surf_h} "
-                                         f"blit_y={blit_y} VP_W={VP_W} VP_H={VP_H}\n")
-                        except Exception:
-                            pass
-                    obj_r = pygame.Rect(0, 0, surf_w, surf_h)
                     # Resolve enc_key → template name via ENCOUNTERS if needed
                     template_key = enc_key or "Goblin Warrior"
                     try:
@@ -1923,38 +1889,32 @@ class DungeonUI:
                                 template_key = grps[0]["enemy"]
                     except Exception:
                         pass
-                    # Draw onto an SRCALPHA surface so the BG becomes truly transparent.
-                    # _apply_effect shifts near-black pixels slightly, so colorkey alone
-                    # is unreliable — use per-pixel alpha instead.
-                    enemy_surf = pygame.Surface((surf_w, surf_h), pygame.SRCALPHA)
-                    enemy_surf.fill((0, 0, 0, 0))          # fully transparent base
-                    # Draw sprite onto a scratch surface first (wiz_sprites needs opaque)
-                    scratch = pygame.Surface((surf_w, surf_h))
-                    scratch.fill(_WIZ_BG)
-                    draw_enemy_silhouette(scratch, obj_r, template_key, knowledge_tier=1)
-                    scratch.set_colorkey(_WIZ_BG)
-                    # Blit colorkeyed scratch onto SRCALPHA surface for clean transparency
-                    enemy_surf.blit(scratch, (0, 0))
-                    # DEBUG: verify enemy_surf has visible pixels before final blit
-                    if _now - self._last_enemy_debug < 0.01:   # same debug tick as above
-                        try:
-                            import pygame.surfarray as _sa
-                            _a = _sa.array_alpha(enemy_surf)
-                            _vis = int((_a > 10).sum())
-                            _corner = scratch.get_at((0,0))
-                            _centre = scratch.get_at((surf_w//2, surf_h//2)) if surf_w>1 and surf_h>1 else "n/a"
-                            with open("/tmp/dungeon_sprite_debug.log", "a") as _f:
-                                _f.write(f"  RENDER: template={template_key!r} "
-                                         f"visible_alpha={_vis}/{surf_w*surf_h} "
-                                         f"scratch_corner={_corner} "
-                                         f"scratch_centre={_centre} "
-                                         f"scratch_colorkey={scratch.get_colorkey()} "
-                                         f"scratch_flags={scratch.get_flags()} "
-                                         f"view_flags={view.get_flags()}\n")
-                        except Exception as _e:
-                            with open("/tmp/dungeon_sprite_debug.log", "a") as _f:
-                                _f.write(f"  RENDER ERR: {_e}\n")
-                    view.blit(enemy_surf, (cx_s - surf_w//2, blit_y))
+                    # Use PNG sprite directly with its own alpha channel.
+                    # The previous colorkey approach was unreliable because
+                    # smoothscale + _apply_effects can promote surfaces to
+                    # SRCALPHA, which makes set_colorkey a silent no-op.
+                    from ui.sprite_loader import _get_enemy
+                    _png = _get_enemy(template_key)
+                    if _png is not None:
+                        # Cache scaled sprite per (template, w, h)
+                        if not hasattr(self, "_enemy_scaled_cache"):
+                            self._enemy_scaled_cache = {}
+                        _ck = (template_key, surf_w, surf_h)
+                        _spr = self._enemy_scaled_cache.get(_ck)
+                        if _spr is None:
+                            _spr = pygame.transform.smoothscale(_png, (surf_w, surf_h))
+                            self._enemy_scaled_cache[_ck] = _spr
+                        view.blit(_spr, (cx_s - surf_w//2, blit_y))
+                    else:
+                        # Fallback: procedural silhouette via colorkey
+                        from ui.pixel_art import draw_enemy_silhouette
+                        from ui.wiz_sprites import BG as _WIZ_BG
+                        _scratch = pygame.Surface((surf_w, surf_h))
+                        _scratch.fill(_WIZ_BG)
+                        draw_enemy_silhouette(_scratch, pygame.Rect(0,0,surf_w,surf_h),
+                                              template_key, knowledge_tier=1)
+                        _scratch.set_colorkey(_WIZ_BG)
+                        view.blit(_scratch, (cx_s - surf_w//2, blit_y))
                     continue  # skip the generic spr blit below
 
                 elif icon_key == DT_TRAP:
