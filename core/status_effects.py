@@ -155,48 +155,69 @@ def clear_all_statuses(character):
 
 def tick_step(character):
     """Process one movement step for status effects.
-    Returns list of message strings describing what happened."""
+    Returns list of message strings describing what happened.
+    Defensive against malformed status entries — one bad dict cannot
+    crash party movement."""
     messages = []
     effects = get_status_effects(character)
     to_remove = []
 
-    for s in effects:
-        _stype = s.get("type")
-        if _stype is None:
-            # Combat-style status (e.g. Burning, Petrified from traps) — no overland tick
-            continue
-        if _stype == "poison":
-            s["steps_since_tick"] = s.get("steps_since_tick", 0) + 1
-            if s["steps_since_tick"] >= s["tick_every"]:
-                s["steps_since_tick"] = 0
-                s["ticks_left"] -= 1
-                dmg = s["dmg"]
-                character.resources["HP"] = character.resources.get("HP", 0) - dmg
-                messages.append(f"{character.name} takes {dmg} {s['name']} damage! ({s['ticks_left']} ticks left)")
+    for s in list(effects):   # iterate a copy for safety
+        try:
+            if not isinstance(s, dict):
+                continue
+            _stype = s.get("type")
+            if _stype is None:
+                # Combat-style status (Burning, Petrified, etc) — no overland tick
+                continue
 
-                if character.resources["HP"] <= 0:
-                    messages.append(f"{character.name} collapses from poison!")
+            if _stype == "poison":
+                tick_every = s.get("tick_every")
+                if tick_every is None:
+                    continue   # not a ticking poison
+                s["steps_since_tick"] = s.get("steps_since_tick", 0) + 1
+                if s["steps_since_tick"] >= tick_every:
+                    s["steps_since_tick"] = 0
+                    s["ticks_left"] = s.get("ticks_left", 1) - 1
+                    dmg = s.get("dmg", 0)
+                    if dmg > 0:
+                        character.resources["HP"] = character.resources.get("HP", 0) - dmg
+                        messages.append(
+                            f"{character.name} takes {dmg} {s.get('name','poison')} damage! "
+                            f"({s['ticks_left']} ticks left)"
+                        )
+                        if character.resources["HP"] <= 0:
+                            messages.append(f"{character.name} collapses from poison!")
+                    if s["ticks_left"] <= 0:
+                        _sid = s.get("id")
+                        if _sid:
+                            to_remove.append(_sid)
+                        messages.append(f"{character.name}'s {s.get('name','poison')} wears off.")
 
-                if s["ticks_left"] <= 0:
-                    to_remove.append(s["id"])
-                    messages.append(f"{character.name}'s {s['name']} wears off.")
-
-        elif _stype == "curse":
-            s["steps_active"] = s.get("steps_active", 0) + 1
-            # Doom curse: drain HP periodically
-            if s.get("effect") == "hp_drain":
-                drain_every = s.get("drain_steps", 10)
-                if s["steps_active"] % drain_every == 0:
-                    character.resources["HP"] = character.resources.get("HP", 0) - s["value"]
-                    messages.append(f"{character.name} feels the Doom curse drain their life...")
-            # All curses expire after duration_steps
-            dur = s.get("duration_steps", 0)
-            if dur > 0 and s["steps_active"] >= dur:
-                to_remove.append(s["id"])
-                messages.append(f"{character.name}'s {s['name']} curse fades.")
+            elif _stype == "curse":
+                s["steps_active"] = s.get("steps_active", 0) + 1
+                # Doom curse: drain HP periodically
+                if s.get("effect") == "hp_drain":
+                    drain_every = s.get("drain_steps", 10)
+                    if s["steps_active"] % drain_every == 0:
+                        character.resources["HP"] = character.resources.get("HP", 0) - s.get("value", 0)
+                        messages.append(f"{character.name} feels the Doom curse drain their life...")
+                # All curses expire after duration_steps
+                dur = s.get("duration_steps", 0)
+                if dur > 0 and s["steps_active"] >= dur:
+                    _sid = s.get("id")
+                    if _sid:
+                        to_remove.append(_sid)
+                    messages.append(f"{character.name}'s {s.get('name','curse')} curse fades.")
+        except Exception:
+            # Never let a malformed status entry crash overland movement
+            pass
 
     for rid in to_remove:
-        remove_status(character, rid)
+        try:
+            remove_status(character, rid)
+        except Exception:
+            pass
 
     return messages
 
