@@ -5563,17 +5563,26 @@ class Game:
                             sfx.play("poison")
                             results.append(f"{target.name} poisoned!")
 
-            # Special trap effects beyond damage
-            from core.status_effects import apply_status_effect as _ase
+            # Special trap effects beyond damage — apply status directly to Character
+            from core.status_effects import get_status_effects as _gse
+            def _add_char_status(char, name, duration):
+                """Add a named status effect to a Character object."""
+                effects = _gse(char)
+                # Don't stack; refresh duration if already present
+                for s in effects:
+                    if s.get("name") == name:
+                        s["duration"] = max(s.get("duration", 0), duration)
+                        return
+                effects.append({"name": name, "duration": duration})
             if trap_name == "Fire Jet":
                 for target in targets:
                     if random.random() < 0.50:
-                        _ase(target, "Burning", 2, 1.0)
+                        _add_char_status(target, "Burning", 2)
                         results.append(f"{target.name} is Burning!")
             elif trap_name == "Petrify Glyph":
                 for target in targets:
                     if random.random() < 0.60:
-                        _ase(target, "Petrified", 2, 1.0)
+                        _add_char_status(target, "Petrified", 2)
                         results.append(f"{target.name} is Petrified!")
             elif trap_name == "Soul Drain":
                 for target in targets:
