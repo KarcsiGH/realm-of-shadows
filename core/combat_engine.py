@@ -1156,6 +1156,50 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             # Log the resource spend so the player can see it clearly
             result["_resource_spent"] = (resource_key, cost, attacker["resources"][resource_key])
 
+    # ── Secondary resource cost (dual-resource abilities: Fist of Heaven, etc) ──
+    resource_key2 = ability.get("resource2", "")
+    cost2 = ability.get("cost2", 0)
+    if resource_key2 and cost2 and attacker["type"] == "player":
+        if resource_key2 == "momentum":
+            current2 = attacker.get("momentum", 0)
+            if current2 < cost2:
+                # Refund primary cost since we can't pay secondary
+                if resource_key == "momentum":
+                    attacker["momentum"] = attacker.get("momentum", 0) + cost
+                elif resource_key:
+                    attacker["resources"][resource_key] =                         attacker["resources"].get(resource_key, 0) + cost
+                    _cr = attacker.get("character_ref")
+                    if _cr:
+                        _cr.resources[resource_key] = attacker["resources"][resource_key]
+                result["hit"] = False
+                result["_resource_failed"] = True
+                result["messages"].append(
+                    f"{attacker['name']} needs {cost2} Momentum but only has {current2}!"
+                )
+                return result
+            attacker["momentum"] = current2 - cost2
+        else:
+            current2 = attacker["resources"].get(resource_key2, 0)
+            if current2 < cost2:
+                # Refund primary
+                if resource_key == "momentum":
+                    attacker["momentum"] = attacker.get("momentum", 0) + cost
+                elif resource_key:
+                    attacker["resources"][resource_key] =                         attacker["resources"].get(resource_key, 0) + cost
+                    _cr = attacker.get("character_ref")
+                    if _cr:
+                        _cr.resources[resource_key] = attacker["resources"][resource_key]
+                result["hit"] = False
+                result["_resource_failed"] = True
+                result["messages"].append(
+                    f"{attacker['name']} needs {cost2} {resource_key2} but only has {current2}!"
+                )
+                return result
+            attacker["resources"][resource_key2] -= cost2
+            _char_ref2 = attacker.get("character_ref")
+            if _char_ref2:
+                _char_ref2.resources[resource_key2] = attacker["resources"][resource_key2]
+
     # Passives are always-on — never directly executable
     if ability.get("type") == "passive":
         result["hit"] = False
@@ -1948,6 +1992,29 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         result["damage"]  = total_damage
         result["is_crit"] = any_crit
         result["hit"]     = total_damage > 0 or any_crit
+
+        # heal_power: caster's party heals for (total_damage * heal_power)
+        # Used by Divine Reckoning, etc. — shared between allies.
+        if ability.get("heal_power") and total_damage > 0 and all_players:
+            heal_pool = int(total_damage * ability["heal_power"])
+            alive_allies = [p for p in all_players if p.get("alive")]
+            if alive_allies and heal_pool > 0:
+                per_ally = max(1, heal_pool // len(alive_allies))
+                heal_msgs = []
+                for ally in alive_allies:
+                    old_hp = ally.get("hp", 0)
+                    ally["hp"] = min(ally.get("max_hp", old_hp), old_hp + per_ally)
+                    gained = ally["hp"] - old_hp
+                    if gained > 0:
+                        # Sync back to character_ref
+                        ref = ally.get("character_ref")
+                        if ref and hasattr(ref, "resources"):
+                            ref.resources["HP"] = ally["hp"]
+                        heal_msgs.append(f"{ally['name']} +{gained} HP")
+                if heal_msgs:
+                    result["messages"].append(
+                        f"Divine light heals the party: {', '.join(heal_msgs)}"
+                    )
 
         # Splitting Arrow: pierce through to enemies in rows BEHIND the primary target
         if ability.get("pierce_rows") and all_enemies:

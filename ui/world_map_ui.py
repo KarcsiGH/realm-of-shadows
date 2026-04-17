@@ -439,8 +439,12 @@ class WorldMapUI:
                     draw_text(surface, "Press ENTER to enter dungeon",
                               SCREEN_W // 2 - 130, SCREEN_H - 90, LOC_DUNGEON_COL, 15)
                 else:
-                    draw_text(surface, reason,
-                              SCREEN_W // 2 - 100, SCREEN_H - 90, RED, 15)
+                    # Word-wrap long lock messages so they don't run off the right edge.
+                    # Use a centered block with a max width of 720px.
+                    _msg_w = 720
+                    _msg_x = SCREEN_W // 2 - _msg_w // 2
+                    draw_text(surface, reason, _msg_x, SCREEN_H - 90, RED, 14,
+                              max_width=_msg_w)
             elif loc["type"] == LOC_PORT:
                 draw_text(surface, "Press ENTER to access port",
                           SCREEN_W // 2 - 120, SCREEN_H - 90, LOC_PORT_COL, 15)
