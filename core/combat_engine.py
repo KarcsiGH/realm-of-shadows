@@ -72,6 +72,11 @@ def make_player_combatant(character, row=FRONT):
     safe_class = character.class_name or "Fighter"
     actual_max = get_all_resources(safe_class, stats, character.level)
     max_hp = actual_max.get("HP", character.resources.get("HP", 50))
+    # Curse: Fragility reduces max HP by 20%
+    for s in getattr(character, "status_effects", []):
+        if s.get("type") == "curse" and s.get("effect") == "max_hp_mult":
+            max_hp = max(1, int(max_hp * s.get("value", 1.0)))
+            break
 
     return {
         "type": "player",
@@ -249,6 +254,12 @@ def calc_physical_accuracy(attacker, defender, weapon, position_acc_mod=0):
         if status["name"] == "blessed":
             acc += 10  # Bless grants +10 accuracy
 
+    # Curse: Jinx reduces accuracy by 15% (multiplicative)
+    for s in attacker.get("status_effects", []):
+        if s.get("type") == "curse" and s.get("effect") == "accuracy_penalty":
+            acc = int(acc * s.get("value", 1.0))
+            break
+
     return max(ACCURACY_MIN, min(ACCURACY_MAX, acc))
 
 
@@ -367,6 +378,12 @@ def calc_physical_damage(attacker, defender, weapon, position_dmg_mod=1.0,
     phys_type = weapon.get("phys_type", "slashing")
     type_mod = defender.get("resistances", {}).get(phys_type, NEUTRAL)
     raw *= type_mod
+
+    # Curse: Weakness reduces damage dealt by 20%
+    for s in attacker.get("status_effects", []):
+        if s.get("type") == "curse" and s.get("effect") == "dmg_dealt_mult":
+            raw *= s.get("value", 1.0)
+            break
 
     # Defense calculation
     defense = defender.get("defense", 0)
@@ -2788,8 +2805,13 @@ class CombatState:
             result = resolve_defend(actor)
 
         elif action_type == "ability":
-            # Silenced actors cannot use abilities (spells, skills)
-            if any(s["name"] == "Silenced" for s in actor.get("status_effects", [])):
+            # Silenced status OR Silence curse blocks ability use
+            _silenced = any(s["name"] == "Silenced" for s in actor.get("status_effects", []))
+            _cursed_silent = any(
+                s.get("type") == "curse" and s.get("effect") == "no_spells"
+                for s in actor.get("status_effects", [])
+            )
+            if _silenced or _cursed_silent:
                 self.log(f"{actor['name']} is Silenced and cannot use abilities!")
                 self.advance_turn()
                 return {}

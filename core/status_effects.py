@@ -33,11 +33,11 @@ POISON_EFFECTS = {
 }
 
 CURSE_EFFECTS = {
-    "curse_weakness":  {"name": "Weakness",  "effect": "dmg_dealt_mult",  "value": 0.80, "tier": 2},
-    "curse_fragility": {"name": "Fragility", "effect": "max_hp_mult",     "value": 0.80, "tier": 2},
-    "curse_silence":   {"name": "Silence",   "effect": "no_spells",       "value": True,  "tier": 3},
-    "curse_jinx":      {"name": "Jinx",      "effect": "accuracy_penalty","value": 0.85, "tier": 2},
-    "curse_doom":      {"name": "Doom",       "effect": "hp_drain",       "value": 1, "drain_steps": 10, "tier": 4},
+    "curse_weakness":  {"name": "Weakness",  "effect": "dmg_dealt_mult",  "value": 0.80, "tier": 2, "duration_steps": 100},
+    "curse_fragility": {"name": "Fragility", "effect": "max_hp_mult",     "value": 0.80, "tier": 2, "duration_steps": 100},
+    "curse_silence":   {"name": "Silence",   "effect": "no_spells",       "value": True, "tier": 3, "duration_steps": 120},
+    "curse_jinx":      {"name": "Jinx",      "effect": "accuracy_penalty","value": 0.85, "tier": 2, "duration_steps": 100},
+    "curse_doom":      {"name": "Doom",       "effect": "hp_drain",       "value": 1, "drain_steps": 10, "tier": 4, "duration_steps": 150},
 }
 
 
@@ -104,6 +104,7 @@ def add_curse(character, curse_id):
         "name": cdef["name"], "tier": cdef["tier"],
         "effect": cdef["effect"], "value": cdef["value"],
         "steps_active": 0,
+        "duration_steps": cdef.get("duration_steps", 100),
     })
     return True
 
@@ -176,12 +177,19 @@ def tick_step(character):
                     to_remove.append(s["id"])
                     messages.append(f"{character.name}'s {s['name']} wears off.")
 
-        elif s["type"] == "curse" and s.get("effect") == "hp_drain":
+        elif s["type"] == "curse":
             s["steps_active"] = s.get("steps_active", 0) + 1
-            drain_every = s.get("drain_steps", 10)
-            if s["steps_active"] % drain_every == 0:
-                character.resources["HP"] = character.resources.get("HP", 0) - s["value"]
-                messages.append(f"{character.name} feels the Doom curse drain their life...")
+            # Doom curse: drain HP periodically
+            if s.get("effect") == "hp_drain":
+                drain_every = s.get("drain_steps", 10)
+                if s["steps_active"] % drain_every == 0:
+                    character.resources["HP"] = character.resources.get("HP", 0) - s["value"]
+                    messages.append(f"{character.name} feels the Doom curse drain their life...")
+            # All curses expire after duration_steps
+            dur = s.get("duration_steps", 0)
+            if dur > 0 and s["steps_active"] >= dur:
+                to_remove.append(s["id"])
+                messages.append(f"{character.name}'s {s['name']} curse fades.")
 
     for rid in to_remove:
         remove_status(character, rid)
