@@ -2065,6 +2065,9 @@ class CampUI:
                 self.selected_char = i
                 self.spell_selected = -1
                 self.spell_target   = 0
+                self._stats_inv_sel = -1    # clear cross-tab inv selection
+                self.selected_item = -1
+                self._give_mode = False
                 return None
             cx += w + 6
 
@@ -2444,9 +2447,30 @@ class CampUI:
                     dst.inventory.append(clean)
                     self.message = f"Unequipped & gave {clean.get('name','item')} to {dst.name}"
                 else:
-                    src.inventory.remove(item)
-                    dst.inventory.append(item)
-                    self.message = f"Gave {item.get('name','item')} to {dst.name}"
+                    # Identity-based removal: two stack-1 items with same fields are
+                    # == equal to list.remove, so we must pop by identity match.
+                    removed = False
+                    for idx, inv_item in enumerate(src.inventory):
+                        if inv_item is item:
+                            src.inventory.pop(idx)
+                            removed = True
+                            break
+                    if not removed:
+                        # Fallback: nothing matched by identity — use equality once
+                        try:
+                            src.inventory.remove(item)
+                            removed = True
+                        except ValueError:
+                            pass
+                    if removed:
+                        dst.inventory.append(item)
+                        self.message = f"Gave {item.get('name','item')} to {dst.name}"
+                    else:
+                        self.message = f"Transfer failed — item not found in inventory."
+                        self.msg_color = (200, 80, 80)
+                        self.msg_timer = 180
+                        self.transfer_selected_item = -1
+                        return None
                 self.msg_color = GREEN
                 self.msg_timer = 180
                 self.transfer_selected_item = -1
@@ -2492,12 +2516,16 @@ class CampUI:
             if i > 0:
                 self.party[i], self.party[i-1] = self.party[i-1], self.party[i]
                 self.selected_char = i - 1
+                self._stats_inv_sel = -1
+                self.selected_item = -1
             return None
         if getattr(self, "_reorder_right_rect", None) and self._reorder_right_rect.collidepoint(mx, my):
             i = self.selected_char
             if i < len(self.party) - 1:
                 self.party[i], self.party[i+1] = self.party[i+1], self.party[i]
                 self.selected_char = i + 1
+                self._stats_inv_sel = -1
+                self.selected_item = -1
             return None
 
         # Character selector (tabs that have it)
@@ -2509,6 +2537,7 @@ class CampUI:
                 if r.collidepoint(mx, my):
                     self.selected_char = i
                     self.selected_item = -1
+                    self._stats_inv_sel = -1   # reset inv selection — stale index would point at wrong character's item
                     self.scroll_offset = 0
                     self._give_mode = False
                     return None
