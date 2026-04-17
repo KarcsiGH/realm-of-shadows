@@ -161,7 +161,11 @@ def tick_step(character):
     to_remove = []
 
     for s in effects:
-        if s["type"] == "poison":
+        _stype = s.get("type")
+        if _stype is None:
+            # Combat-style status (e.g. Burning, Petrified from traps) — no overland tick
+            continue
+        if _stype == "poison":
             s["steps_since_tick"] = s.get("steps_since_tick", 0) + 1
             if s["steps_since_tick"] >= s["tick_every"]:
                 s["steps_since_tick"] = 0
@@ -177,7 +181,7 @@ def tick_step(character):
                     to_remove.append(s["id"])
                     messages.append(f"{character.name}'s {s['name']} wears off.")
 
-        elif s["type"] == "curse":
+        elif _stype == "curse":
             s["steps_active"] = s.get("steps_active", 0) + 1
             # Doom curse: drain HP periodically
             if s.get("effect") == "hp_drain":
@@ -205,11 +209,13 @@ def get_status_display(character):
     """Return list of (name, color) for UI display."""
     display = []
     for s in get_status_effects(character):
-        if s["type"] == "poison":
-            display.append((s["name"], (120, 200, 50)))  # green
-        elif s["type"] == "curse":
-            display.append((s["name"], (180, 50, 180)))  # purple
-        elif s["id"] == "resurrection_sickness":
+        _stype = s.get("type", "")
+        _sid   = s.get("id", "")
+        if _stype == "poison":
+            display.append((s.get("name","Poison"), (120, 200, 50)))  # green
+        elif _stype == "curse":
+            display.append((s.get("name","Curse"), (180, 50, 180)))  # purple
+        elif _sid == "resurrection_sickness":
             display.append(("Res. Sickness", (150, 150, 100)))  # tan
         elif s.get("name") == "Stun" or s.get("name") == "Stunned":
             display.append(("Stunned", (255, 220, 50)))  # yellow

@@ -5566,14 +5566,17 @@ class Game:
             # Special trap effects beyond damage — apply status directly to Character
             from core.status_effects import get_status_effects as _gse
             def _add_char_status(char, name, duration):
-                """Add a named status effect to a Character object."""
+                """Add a named combat-style status effect to a Character object.
+                These have no 'type' field (unlike poison/curse entries) so the
+                overland tick_step ignores them. Combat's tick_status_effects picks
+                them up when the character enters combat."""
                 effects = _gse(char)
                 # Don't stack; refresh duration if already present
                 for s in effects:
                     if s.get("name") == name:
                         s["duration"] = max(s.get("duration", 0), duration)
                         return
-                effects.append({"name": name, "duration": duration})
+                effects.append({"name": name, "duration": duration, "type": "combat_status"})
             if trap_name == "Fire Jet":
                 for target in targets:
                     if random.random() < 0.50:
