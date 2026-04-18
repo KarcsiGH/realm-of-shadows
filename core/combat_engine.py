@@ -810,6 +810,23 @@ def resolve_basic_attack(attacker, defender, enemies=None):
                             f"{defender['name']} is {proc_status}! ({proc_dur} turns)"
                         )
 
+    # ── Weapon on_hit_effect (explicit, not element-inferred) ──────────────
+    # Used by weapons with a specific intended proc (e.g. Tower Shield Bash
+    # stuns, Wooden Staff slows) that don't match the enchant table above.
+    # Fires independently of elemental enchant procs.
+    if damage > 0 and weapon:
+        _ohe = weapon.get("on_hit_effect", {})
+        if _ohe and isinstance(_ohe, dict):
+            _ohe_status = _ohe.get("status")
+            _ohe_chance = _ohe.get("chance", 0.0)
+            _ohe_dur    = _ohe.get("duration", 1)
+            if _ohe_status and random.random() < _ohe_chance:
+                if apply_status_effect(defender, _ohe_status, _ohe_dur, 1.0):
+                    result["messages"].append(
+                        f"  {weapon.get('name','Weapon')}: "
+                        f"{defender['name']} is {_ohe_status}! ({_ohe_dur} turns)"
+                    )
+
     # ── Momentum generation ────────────────────────────────────────────────
     # Basic attacks build Momentum for physical ability use.
     # Only player characters generate Momentum; enemies don't use the system.
@@ -2703,7 +2720,6 @@ class CombatState:
         alive_enemies = [e for e in self.enemies if e.get("alive", True)]
         rows_used = {e["row"] for e in alive_enemies}
         if rows_used and FRONT not in rows_used:
-            # Find the "closest" occupied row and promote it to FRONT
             promote = MID if MID in rows_used else BACK
             for e in self.enemies:
                 if e["row"] == promote:

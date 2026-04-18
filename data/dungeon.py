@@ -91,10 +91,12 @@ DUNGEONS = {
         "floors": 4,
         "width": 35, "height": 28,
         "encounter_table": {
-            1: ["crypt_easy", "medium_goblins"],
-            2: ["crypt_easy", "crypt_medium"],
-            3: ["crypt_medium", "crypt_hard"],
-            4: ["crypt_hard", "hard_mixed"],
+            # Legacy fallback — real table is DUNGEON_ENCOUNTER_TABLES in enemies.py
+            # Updated 2026 to match actual encounter keys (old crypt_easy etc. removed).
+            1: ["sc_zombies", "sc_skel_patrol", "sc_mixed_easy"],
+            2: ["sc_skel_patrol", "sc_ghoul_pack", "sc_wailing"],
+            3: ["sc_ghoul_pack", "sc_shade_haunt", "sc_death_knight"],
+            4: ["sc_shade_haunt", "sc_bone_elite", "sc_undead_horde"],
         },
         "boss_floor": 4,
         "boss_encounter": "boss_warden",
