@@ -1,130 +1,62 @@
 {
   "version": 4,
-  "timestamp": "2026-04-17T08:33:19.051592",
+  "timestamp": "2026-04-18T14:34:02.570793",
   "slot_name": "save1",
   "metadata": {
     "party_summary": [
-      "Polly Lv.11 Gnome Cleric",
-      "Scott Lv.11 Human Spellblade",
-      "Petra Lv.11 Human Paladin",
-      "Wanda Lv.11 Elf Witch",
-      "Marvin Lv.11 Halfling Monk",
-      "Roger Lv.11 Half-Orc Ranger"
+      "Polly Lv.7 Gnome High Priest",
+      "Scott Lv.13 Human Spellblade",
+      "Petra Lv.13 Human Paladin",
+      "Wanda Lv.7 Elf Archmage",
+      "Marvin Lv.7 Halfling Mystic",
+      "Roger Lv.7 Half-Orc Shadow Master"
     ],
-    "total_gold": 6458
+    "total_gold": 11885
   },
   "party": [
     {
       "name": "Polly",
-      "class_name": "Cleric",
+      "class_name": "High Priest",
       "race_name": "Gnome",
-      "level": 11,
-      "xp": 27544,
-      "gold": 403,
+      "level": 7,
+      "xp": 9252,
+      "gold": 434,
       "stats": {
-        "STR": 14,
-        "DEX": 16,
-        "CON": 20,
-        "INT": 19,
-        "WIS": 25,
-        "PIE": 27
+        "STR": 15,
+        "DEX": 17,
+        "CON": 23,
+        "INT": 23,
+        "WIS": 33,
+        "PIE": 40
       },
       "resources": {
-        "HP": 120,
-        "Ki": 343,
+        "HP": 117,
+        "Ki": 447,
         "WIS-MP": 106,
-        "PIE-MP": 77
+        "PIE-MP": 110
       },
       "abilities": [
         {
-          "name": "Heal",
-          "cost": 10,
-          "resource": "PIE-MP",
-          "type": "heal",
-          "level": 1,
-          "power": 1.0,
-          "desc": "Restore HP to one ally."
-        },
-        {
-          "name": "Smite",
-          "cost": 12,
-          "resource": "PIE-MP",
-          "type": "spell",
-          "level": 1,
-          "power": 1.4,
-          "element": "divine",
-          "desc": "Channel divine wrath at an enemy."
-        },
-        {
-          "name": "Bless",
-          "cost": 8,
-          "resource": "PIE-MP",
-          "type": "buff",
-          "level": 2,
-          "buff": "blessed",
-          "duration": 3,
-          "targets": "all_allies",
-          "desc": "Bless the party: +10% damage and defense for 3 turns."
-        },
-        {
-          "name": "Cure Poison",
-          "cost": 8,
-          "resource": "PIE-MP",
-          "type": "cure",
-          "level": 3,
-          "cures": "poison",
-          "desc": "Cure poison from one ally."
-        },
-        {
-          "name": "Consecrate",
-          "cost": 16,
+          "name": "Divine Wrath",
+          "cost": 30,
           "resource": "PIE-MP",
           "type": "aoe",
-          "level": 4,
-          "power": 1.0,
-          "element": "divine",
-          "target": "all_enemies",
-          "desc": "Consecrate the ground, dealing divine damage to all enemies."
-        },
-        {
-          "name": "Smite Evil",
-          "cost": 14,
-          "resource": "PIE-MP",
-          "type": "spell",
-          "level": 3,
+          "level": 11,
           "power": 1.8,
           "element": "divine",
-          "targets": "undead_extra",
-          "desc": "Radiant strike. Triple damage against undead and shadow enemies.",
-          "branch_label": "Crusader",
-          "branch_desc": "Destroy undead and shadow creatures."
+          "target": "all_enemies",
+          "desc": "Devastating divine blast hitting all enemies."
         },
         {
-          "name": "Prayer of Healing",
-          "cost": 20,
-          "resource": "PIE-MP",
-          "type": "aoe_heal",
-          "level": 5,
-          "power": 1.0,
-          "desc": "Restore HP to all party members."
-        },
-        {
-          "name": "Revive",
-          "cost": 24,
+          "name": "Resurrection",
+          "cost": 35,
           "resource": "PIE-MP",
           "type": "revive",
-          "level": 6,
-          "desc": "Revive a fallen ally at 25% HP."
-        },
-        {
-          "name": "Turn Undead",
-          "cost": 15,
-          "resource": "PIE-MP",
-          "type": "debuff",
-          "level": 7,
-          "status": "Turned",
-          "status_chance": 0.7,
-          "desc": "Command undead enemies to flee. 70% success."
+          "level": 10,
+          "revive_hp_pct": 0.5,
+          "desc": "Call a fallen ally back from death at 50% HP.",
+          "branch_label": "Life Warden",
+          "branch_desc": "No ally stays down when you watch over them."
         },
         {
           "name": "Mass Cure",
@@ -137,24 +69,47 @@
           "desc": "Cure all status effects from the entire party."
         },
         {
-          "name": "Remove Curse",
-          "cost": 18,
+          "name": "Mass Heal",
+          "level": 1,
+          "type": "aoe_heal",
+          "cost": 20,
           "resource": "PIE-MP",
-          "type": "cure",
-          "level": 7,
-          "cures": "curse",
-          "desc": "Lift a curse from one ally. Required to remove cursed equipment."
+          "desc": "Restore significant HP to all party members.",
+          "power": 1.5
         },
         {
-          "name": "Resurrection",
-          "cost": 35,
+          "name": "Divine Intervention",
+          "level": 2,
+          "type": "buff",
+          "cost": 25,
           "resource": "PIE-MP",
-          "type": "revive",
-          "level": 10,
-          "revive_hp_pct": 0.5,
-          "desc": "Call a fallen ally back from death at 50% HP.",
-          "branch_label": "Life Warden",
-          "branch_desc": "No ally stays down when you watch over them."
+          "desc": "Prevent one ally from dying \u2014 they survive with 1 HP once."
+        },
+        {
+          "name": "Consecrate",
+          "level": 3,
+          "type": "aoe",
+          "cost": 22,
+          "resource": "PIE-MP",
+          "desc": "Consecrate the area, dealing holy damage to all enemies."
+        },
+        {
+          "name": "Miracle",
+          "level": 5,
+          "type": "heal",
+          "cost": 30,
+          "resource": "PIE-MP",
+          "power": 4.0,
+          "cures": "any",
+          "desc": "Restore full HP to one ally and cleanse all negative status effects."
+        },
+        {
+          "name": "Sanctify",
+          "level": 6,
+          "type": "buff",
+          "cost": 28,
+          "resource": "PIE-MP",
+          "desc": "Bless the party \u2014 all members gain magic resistance for 4 rounds."
         }
       ],
       "inventory": [
@@ -176,26 +131,6 @@
           "rarity": "common",
           "description": "A heavy iron key for the Abandoned Mine north of Ironhearth.",
           "world_key": "mine_key"
-        },
-        {
-          "name": "Mana Shard",
-          "type": "material",
-          "subtype": "arcane",
-          "rarity": "uncommon",
-          "tier": 1,
-          "identify_difficulty": 2,
-          "unidentified_name": "Glowing Shard",
-          "unidentified_desc": "A fragment that hums with energy.",
-          "appraised_name": "Raw Mana Shard",
-          "material_desc": "Unstable arcane crystal. Tier 1.",
-          "magic_desc": "Strong magical resonance.",
-          "estimated_value": 22,
-          "description": "A crystallized fragment of raw magical energy.",
-          "identified": true,
-          "source": "Bandit Mage",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 2
         },
         {
           "name": "Vial of Holy Water",
@@ -232,29 +167,6 @@
           "stack": 1
         },
         {
-          "name": "Iron Javelin",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Spear",
-          "rarity": "common",
-          "damage": 15,
-          "phys_type": "piercing",
-          "range": "ranged",
-          "stat_bonuses": {
-            "STR": 2,
-            "DEX": 1
-          },
-          "identified": true,
-          "description": "A throwing spear that works equally well in melee. +2 STR, +1 DEX.",
-          "accuracy_mod": 4,
-          "damage_stat": {
-            "STR": 0.26,
-            "DEX": 0.16
-          },
-          "durability": 100,
-          "max_durability": 100
-        },
-        {
           "name": "Mana Crystal",
           "type": "material",
           "subtype": "reagent",
@@ -265,7 +177,7 @@
           "source": "Cultist Initiate",
           "magic_identified": true,
           "material_identified": true,
-          "stack": 2
+          "stack": 4
         },
         {
           "name": "Venom Vial",
@@ -286,115 +198,13 @@
           "identified": true
         },
         {
-          "name": "Smoke Bomb",
-          "type": "consumable",
-          "subtype": "thrown",
+          "name": "Crypt Amulet",
+          "type": "key_item",
+          "slot": null,
+          "identified": true,
           "rarity": "common",
-          "description": "Fills an area with smoke. Enemies lose accuracy for 2 turns.",
-          "identified": true
-        },
-        {
-          "name": "Bandit Mail Patch",
-          "type": "armor",
-          "slot": "body",
-          "subtype": "body_armor",
-          "rarity": "common",
-          "armor_tier": "light",
-          "defense": 3,
-          "identify_difficulty": 1,
-          "unidentified_name": "Scrap Mail",
-          "unidentified_desc": "A patch of chain links sewn to leather.",
-          "appraised_name": "Scrap Chainmail Vest",
-          "material_desc": "Mixed scrap metal and leather.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 70,
-          "description": "Patched mail from a bandit.",
-          "identified": true,
-          "source": "Ashenmoor Bandit",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Bandit Mail Patch",
-          "type": "armor",
-          "slot": "body",
-          "subtype": "body_armor",
-          "rarity": "common",
-          "armor_tier": "light",
-          "defense": 3,
-          "identify_difficulty": 1,
-          "unidentified_name": "Scrap Mail",
-          "unidentified_desc": "A patch of chain links sewn to leather.",
-          "appraised_name": "Scrap Chainmail Vest",
-          "material_desc": "Mixed scrap metal and leather.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 70,
-          "description": "Patched mail from a bandit.",
-          "identified": true,
-          "source": "Ashenmoor Bandit",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Bandit Mail Patch",
-          "type": "armor",
-          "slot": "body",
-          "subtype": "body_armor",
-          "rarity": "common",
-          "armor_tier": "light",
-          "defense": 3,
-          "identify_difficulty": 1,
-          "unidentified_name": "Scrap Mail",
-          "unidentified_desc": "A patch of chain links sewn to leather.",
-          "appraised_name": "Scrap Chainmail Vest",
-          "material_desc": "Mixed scrap metal and leather.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 70,
-          "description": "Patched mail from a bandit.",
-          "identified": true,
-          "source": "Ashenmoor Bandit",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Fading-Touched Heartwood",
-          "type": "material",
-          "subtype": "reagent",
-          "rarity": "uncommon",
-          "tier": 2,
-          "identify_difficulty": 1,
-          "unidentified_name": "Dark Wood Core",
-          "unidentified_desc": "A chunk of wood pulsing with void-light.",
-          "appraised_name": "Fading-Touched Heartwood",
-          "material_desc": "Core wood from a corrupted treant. Tier 2 reagent.",
-          "magic_desc": "Dual nature and void energy.",
-          "estimated_value": 40,
-          "description": "Heartwood from a corrupted treant.",
-          "identified": true,
-          "source": "Corrupted Treant",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 1
-        },
-        {
-          "name": "Cultist Grimoire Page",
-          "type": "material",
-          "subtype": "reagent",
-          "rarity": "uncommon",
-          "tier": 2,
-          "identify_difficulty": 1,
-          "unidentified_name": "Dark Scroll Page",
-          "unidentified_desc": "A torn page in backwards script.",
-          "appraised_name": "Fading Cultist Grimoire Page",
-          "material_desc": "Page from a cultist's spell-notes. Tier 2 reagent.",
-          "magic_desc": "Fading-magic resonance.",
-          "estimated_value": 28,
-          "description": "A page of cultist notes on the Fading.",
-          "identified": true,
-          "source": "Fading Cultist",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 1
+          "description": "A warden-sealed amulet that unlocks the wards on the Sunken Crypt entrance.",
+          "world_key": "crypt_amulet"
         }
       ],
       "equipment": {
@@ -422,7 +232,7 @@
             "STR": 0.24,
             "DEX": 0.2
           },
-          "durability": 88,
+          "durability": 68,
           "max_durability": 100,
           "upgrade_level": 1,
           "base_name": "Warden Javelin"
@@ -456,7 +266,27 @@
           "identified": true
         },
         "hands": null,
-        "feet": null,
+        "feet": {
+          "name": "Boots of Quiet Steps",
+          "appraised_name": "Boots of Quiet Steps",
+          "type": "armor",
+          "slot": "feet",
+          "subtype": "boots",
+          "rarity": "uncommon",
+          "defense": 1,
+          "speed_bonus": 2,
+          "effect": {
+            "dex_bonus": 1
+          },
+          "description": "Soft leather boots. +1 DEX, +2 speed. Helps avoid encounters.",
+          "identified": true,
+          "estimated_value": 145,
+          "_wis_bonus": true,
+          "magic_identified": true,
+          "material_identified": true,
+          "durability": 100,
+          "max_durability": 100
+        },
         "neck": null,
         "ring1": {
           "name": "Amulet of the Owl",
@@ -503,28 +333,28 @@
       "planar_tier": 1,
       "combat_row": "back",
       "gender": "male",
-      "catchup_target_level": 0,
-      "catchup_xp_mult": 1.0
+      "catchup_target_level": 12,
+      "catchup_xp_mult": 1.6
     },
     {
       "name": "Scott",
       "class_name": "Spellblade",
       "race_name": "Human",
-      "level": 11,
-      "xp": 28874,
-      "gold": 618,
+      "level": 13,
+      "xp": 36133,
+      "gold": 245,
       "stats": {
-        "STR": 28,
-        "DEX": 24,
+        "STR": 30,
+        "DEX": 27,
         "CON": 14,
-        "INT": 28,
+        "INT": 30,
         "WIS": 17,
         "PIE": 12
       },
       "resources": {
-        "HP": 111,
-        "INT-MP": 45,
-        "STR-SP": 104
+        "HP": 117,
+        "INT-MP": 120,
+        "STR-SP": 116
       },
       "abilities": [
         {
@@ -579,6 +409,16 @@
           "element": "arcane",
           "target": "front_row",
           "desc": "Melee AOE that chains lightning between struck targets."
+        },
+        {
+          "name": "Mana Burn",
+          "cost": 30,
+          "resource": "INT-MP",
+          "type": "attack",
+          "level": 11,
+          "power": 0,
+          "special": "mana_burn",
+          "desc": "Deals damage equal to 2\u00d7 the target's current MP."
         }
       ],
       "inventory": [
@@ -632,7 +472,7 @@
           "estimated_value": 35,
           "magic_identified": true,
           "material_identified": true,
-          "stack": 5
+          "stack": 6
         },
         {
           "name": "Scroll of Fireball",
@@ -666,26 +506,6 @@
           "stack": 1
         },
         {
-          "name": "Soft Leather Shoes",
-          "appraised_name": "Soft Leather Shoes",
-          "type": "armor",
-          "slot": "feet",
-          "subtype": "boots",
-          "rarity": "common",
-          "defense": 1,
-          "effect": {
-            "dex_bonus": 1
-          },
-          "description": "Supple leather shoes that make little noise. +1 DEX.",
-          "identified": true,
-          "estimated_value": 80,
-          "_wis_bonus": true,
-          "magic_identified": true,
-          "material_identified": true,
-          "durability": 100,
-          "max_durability": 100
-        },
-        {
           "name": "Healing Potion",
           "type": "consumable",
           "subtype": "potion",
@@ -695,137 +515,6 @@
           "magic_identified": true,
           "material_identified": true,
           "stack": 1
-        },
-        {
-          "name": "Lockpick Set",
-          "type": "consumable",
-          "subtype": "tool",
-          "rarity": "uncommon",
-          "description": "Professional lockpicks. Opens most locked chests.",
-          "identified": true
-        },
-        {
-          "name": "Lockpick Set",
-          "type": "consumable",
-          "subtype": "tool",
-          "rarity": "uncommon",
-          "description": "Professional lockpicks. Opens most locked chests.",
-          "identified": true
-        },
-        {
-          "name": "Lockpick Set",
-          "type": "consumable",
-          "subtype": "tool",
-          "rarity": "uncommon",
-          "description": "Professional lockpicks. Opens most locked chests.",
-          "identified": true
-        },
-        {
-          "name": "Lockpick Set",
-          "type": "consumable",
-          "subtype": "tool",
-          "rarity": "uncommon",
-          "description": "Professional lockpicks. Opens most locked chests.",
-          "identified": true
-        },
-        {
-          "name": "Lockpick Set",
-          "type": "consumable",
-          "subtype": "tool",
-          "rarity": "uncommon",
-          "description": "Professional lockpicks. Opens most locked chests.",
-          "identified": true
-        },
-        {
-          "name": "Lockpick Set",
-          "type": "consumable",
-          "subtype": "tool",
-          "rarity": "uncommon",
-          "description": "Professional lockpicks. Opens most locked chests.",
-          "identified": true
-        },
-        {
-          "name": "Lockpick Set",
-          "type": "consumable",
-          "subtype": "tool",
-          "rarity": "uncommon",
-          "description": "Professional lockpicks. Opens most locked chests.",
-          "identified": true
-        },
-        {
-          "name": "Lockpick Set",
-          "type": "consumable",
-          "subtype": "tool",
-          "rarity": "uncommon",
-          "description": "Professional lockpicks. Opens most locked chests.",
-          "identified": true
-        },
-        {
-          "name": "Smoke Bomb",
-          "type": "consumable",
-          "subtype": "thrown",
-          "rarity": "common",
-          "description": "Fills an area with smoke. Enemies lose accuracy for 2 turns.",
-          "identified": true
-        },
-        {
-          "name": "Ember Wand",
-          "appraised_name": "Ember Wand",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Wand",
-          "max_charges": 20,
-          "rarity": "uncommon",
-          "damage": 24,
-          "phys_type": "fire",
-          "range": "ranged",
-          "spell_bonus": 3,
-          "enchant_element": "fire",
-          "on_hit_effect": {
-            "status": "Burning",
-            "chance": 0.3,
-            "duration": 2
-          },
-          "unidentified_name": "Scorched Wand",
-          "unidentified_desc": "A wand warm to the touch, with char marks on the tip.",
-          "description": "A wand infused with ember-magic. Fires fire bolts \u2014 30% chance to Burn target for 2 turns. +3 spell power.",
-          "identified": true,
-          "estimated_value": 200,
-          "_wis_bonus": true,
-          "magic_identified": true,
-          "charges": 20,
-          "no_durability": true,
-          "damage_stat": {
-            "INT": 0.32
-          }
-        },
-        {
-          "name": "Ember Wand",
-          "appraised_name": "Ember Wand",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Wand",
-          "max_charges": 20,
-          "rarity": "uncommon",
-          "damage": 14,
-          "phys_type": "fire",
-          "range": "ranged",
-          "spell_bonus": 3,
-          "enchant_element": "fire",
-          "on_hit_effect": {
-            "status": "Burning",
-            "chance": 0.3,
-            "duration": 2
-          },
-          "unidentified_name": "Scorched Wand",
-          "unidentified_desc": "A wand warm to the touch, with char marks on the tip.",
-          "description": "A wand infused with ember-magic. Fires fire bolts \u2014 30% chance to Burn target for 2 turns. +3 spell power.",
-          "identified": true,
-          "estimated_value": 200,
-          "magic_identified": true,
-          "material_identified": true,
-          "charges": 20,
-          "no_durability": true
         }
       ],
       "equipment": {
@@ -867,25 +556,22 @@
         "body": null,
         "hands": null,
         "feet": {
-          "name": "Boots of Quiet Steps",
-          "appraised_name": "Boots of Quiet Steps",
+          "name": "Boots of the Wind",
+          "appraised_name": "Boots of the Wind",
           "type": "armor",
           "slot": "feet",
           "subtype": "boots",
-          "rarity": "uncommon",
-          "defense": 1,
-          "speed_bonus": 2,
+          "rarity": "rare",
+          "defense": 2,
+          "speed_bonus": 4,
           "effect": {
-            "dex_bonus": 1
+            "dex_bonus": 2
           },
-          "description": "Soft leather boots. +1 DEX, +2 speed. Helps avoid encounters.",
+          "description": "Enchanted boots that make the wearer swift as wind. +2 DEX, +4 speed.",
           "identified": true,
-          "estimated_value": 145,
+          "estimated_value": 340,
           "_wis_bonus": true,
-          "magic_identified": true,
-          "material_identified": true,
-          "durability": 100,
-          "max_durability": 100
+          "magic_identified": true
         },
         "neck": null,
         "ring1": {
@@ -922,21 +608,21 @@
       "name": "Petra",
       "class_name": "Paladin",
       "race_name": "Human",
-      "level": 11,
-      "xp": 28874,
-      "gold": 1153,
+      "level": 13,
+      "xp": 36133,
+      "gold": 1861,
       "stats": {
-        "STR": 27,
+        "STR": 29,
         "DEX": 20,
-        "CON": 17,
+        "CON": 19,
         "INT": 13,
-        "WIS": 15,
-        "PIE": 27
+        "WIS": 16,
+        "PIE": 29
       },
       "resources": {
-        "HP": 136,
-        "PIE-MP": 108,
-        "STR-SP": 102
+        "HP": 146,
+        "PIE-MP": 120,
+        "STR-SP": 114
       },
       "abilities": [
         {
@@ -1009,6 +695,17 @@
           "power": 2.2,
           "element": "divine",
           "desc": "Righteous strike. Double damage against shadow-corrupted enemies."
+        },
+        {
+          "name": "Sacred Ground",
+          "cost": 30,
+          "resource": "PIE-MP",
+          "type": "buff",
+          "level": 12,
+          "buff": "sacred_ground",
+          "duration": 3,
+          "targets": "all_allies",
+          "desc": "Consecrate the battlefield. Enemies take divine damage each turn they act."
         }
       ],
       "inventory": [
@@ -1034,81 +731,37 @@
           "stack": 1
         },
         {
-          "name": "Smoke Bomb",
-          "type": "consumable",
-          "subtype": "thrown",
-          "rarity": "common",
-          "description": "Fills an area with smoke. Enemies lose accuracy for 2 turns.",
-          "identified": true
-        },
-        {
-          "name": "Firebrand Blade",
-          "appraised_name": "Firebrand Blade",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Longsword",
-          "rarity": "rare",
-          "damage": 24,
-          "phys_type": "slashing",
-          "range": "melee",
-          "enchant_element": "fire",
-          "enchant_bonus": 5,
-          "enchant_name": "Flame",
-          "description": "A longsword wreathed in faint flames. Deals bonus fire damage.",
-          "identified": true,
-          "estimated_value": 385,
-          "_wis_bonus": true,
-          "magic_identified": true,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          }
-        },
-        {
-          "name": "Hexblade Saber",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Long Sword",
+          "name": "Mana Crystal",
+          "type": "material",
+          "subtype": "reagent",
           "rarity": "uncommon",
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "damage": 19,
-          "phys_type": "slashing",
-          "identify_difficulty": 3,
-          "element": "shadow",
-          "unidentified_name": "Dark-stained Blade",
-          "unidentified_desc": "A sword with an oil-dark blade that seems to absorb light.",
-          "appraised_name": "Shadow-Etched Saber",
-          "material_desc": "Steel blade treated with shadow essence.",
-          "magic_desc": "Shadow enchantment \u2014 weakens divine resistance.",
-          "estimated_value": 170,
-          "description": "A saber that inflicts shadow-infused wounds.",
+          "quantity": 1,
           "identified": true,
-          "source": "Cultist Hexblade",
+          "description": "A dense crystal of condensed arcane energy. Recharges 5 charges on a focus weapon.",
+          "source": "High Cultist",
           "magic_identified": true,
-          "material_identified": true
+          "material_identified": true,
+          "stack": 3
         },
         {
-          "name": "Cultist's Sigil",
+          "name": "Shadow Essence",
           "type": "material",
           "subtype": "arcane",
           "rarity": "uncommon",
-          "tier": 1,
-          "identify_difficulty": 2,
-          "unidentified_name": "Carved Token",
-          "unidentified_desc": "A carved stone with strange markings.",
-          "appraised_name": "Shadow Sigil",
-          "material_desc": "Stone imbued with shadow energy.",
-          "magic_desc": "Dark magical resonance.",
-          "estimated_value": 18,
-          "description": "A token of cult membership. Still hums with shadow energy.",
+          "tier": 2,
+          "identify_difficulty": 3,
+          "unidentified_name": "Dark Vial",
+          "unidentified_desc": "A small vial of darkness that doesn't dissipate.",
+          "appraised_name": "Bottled Shadow Essence",
+          "material_desc": "Distilled shadow energy. Tier 2 enchanting material.",
+          "magic_desc": "Strong shadow resonance.",
+          "estimated_value": 40,
+          "description": "Refined shadow essence used for dark enchantments.",
           "identified": true,
-          "source": "Cultist Initiate",
+          "source": "Cult Sorcerer",
           "magic_identified": true,
           "material_identified": true,
-          "stack": 1
+          "stack": 2
         }
       ],
       "equipment": {
@@ -1132,7 +785,7 @@
           "source": "Korrath the Stone Warden",
           "magic_identified": true,
           "material_identified": true,
-          "durability": 85,
+          "durability": 74,
           "max_durability": 100
         },
         "off_hand": {
@@ -1241,78 +894,47 @@
     },
     {
       "name": "Wanda",
-      "class_name": "Witch",
+      "class_name": "Archmage",
       "race_name": "Elf",
-      "level": 11,
-      "xp": 27544,
-      "gold": 1091,
+      "level": 7,
+      "xp": 9252,
+      "gold": 2589,
       "stats": {
         "STR": 15,
-        "DEX": 16,
+        "DEX": 18,
         "CON": 15,
-        "INT": 30,
-        "WIS": 25,
-        "PIE": 23
+        "INT": 43,
+        "WIS": 36,
+        "PIE": 28
       },
       "resources": {
-        "HP": 102,
-        "INT-MP": 71,
-        "PIE-MP": 92
+        "HP": 87,
+        "Ki": 498,
+        "INT-MP": 126,
+        "WIS-MP": 108
       },
       "abilities": [
         {
-          "name": "Hex Bolt",
-          "cost": 10,
-          "resource": "INT-MP",
-          "type": "spell",
-          "level": 1,
-          "power": 1.0,
-          "element": "shadow",
-          "status": "Hexed",
-          "status_chance": 0.3,
-          "desc": "A bolt of dark magic. Deals shadow damage, 30% chance to Hex the target."
-        },
-        {
-          "name": "Dark Bargain",
-          "cost": 0,
-          "resource": "INT-MP",
-          "type": "buff",
-          "level": 1,
-          "buff": "dark_bargain",
-          "self_only": true,
-          "desc": "Sacrifice 15% HP to restore 30% MP. The Witch's core economy."
-        },
-        {
-          "name": "Hex",
-          "cost": 16,
-          "resource": "INT-MP",
-          "type": "debuff",
-          "level": 1,
-          "status": "Hexed",
-          "status_chance": 0.75,
-          "desc": "Apply a stacking curse. Hexed enemies take increasing damage."
-        },
-        {
-          "name": "Soul Siphon",
-          "cost": 18,
-          "resource": "PIE-MP",
-          "type": "attack",
-          "level": 3,
-          "power": 1.4,
-          "special": "drain_buff",
-          "desc": "Drain enemy buffs. Each stolen buff restores Witch's MP."
-        },
-        {
-          "name": "Mass Sleep",
-          "cost": 22,
+          "name": "Coven's Curse",
+          "cost": 30,
           "resource": "INT-MP",
           "type": "aoe",
-          "level": 5,
-          "power": 0,
-          "status": "Sleep",
-          "status_chance": 0.5,
+          "level": 11,
+          "status": "Cursed",
+          "status_chance": 0.65,
           "target": "all_enemies",
-          "desc": "Attempt to put all enemies to sleep. 50% chance per enemy."
+          "desc": "All enemies gain a stacking curse: each hit they take deals double damage."
+        },
+        {
+          "name": "Wither",
+          "cost": 28,
+          "resource": "INT-MP",
+          "type": "debuff",
+          "level": 8,
+          "status": "Withered",
+          "status_chance": 0.7,
+          "status_duration": 99,
+          "desc": "Permanent stat drain for the duration of the fight. Does not expire."
         },
         {
           "name": "Plague",
@@ -1326,15 +948,49 @@
           "desc": "Infect all enemies with virulent poison that spreads."
         },
         {
-          "name": "Wither",
-          "cost": 28,
+          "name": "Mana Surge",
+          "level": 1,
+          "type": "buff",
+          "cost": 15,
           "resource": "INT-MP",
+          "desc": "Overcharge your next spell \u2014 deal 50% extra damage but costs additional mana."
+        },
+        {
+          "name": "Arcane Torrent",
+          "level": 2,
+          "type": "aoe",
+          "cost": 20,
+          "resource": "INT-MP",
+          "desc": "Unleash a torrent of raw magical energy at all enemies."
+        },
+        {
+          "name": "Time Stop",
+          "level": 3,
           "type": "debuff",
-          "level": 8,
-          "status": "Withered",
-          "status_chance": 0.7,
-          "status_duration": 99,
-          "desc": "Permanent stat drain for the duration of the fight. Does not expire."
+          "cost": 25,
+          "resource": "INT-MP",
+          "status": "Stunned",
+          "status_duration": 2,
+          "status_chance": 1.0,
+          "desc": "Freeze a single enemy in time for 2 rounds."
+        },
+        {
+          "name": "Meteor",
+          "level": 5,
+          "type": "aoe",
+          "cost": 30,
+          "resource": "INT-MP",
+          "desc": "Call down a devastating meteor, crushing all enemies.",
+          "dot": "burning",
+          "dot_duration": 3
+        },
+        {
+          "name": "Spell Mastery",
+          "level": 6,
+          "type": "buff",
+          "cost": 20,
+          "resource": "INT-MP",
+          "desc": "Amplify your next spell \u2014 cast it again for free immediately."
         }
       ],
       "inventory": [
@@ -1349,26 +1005,6 @@
           "warden_rank": 1
         },
         {
-          "name": "Mana Shard",
-          "type": "material",
-          "subtype": "arcane",
-          "rarity": "uncommon",
-          "tier": 1,
-          "identify_difficulty": 2,
-          "unidentified_name": "Glowing Shard",
-          "unidentified_desc": "A fragment that hums with energy.",
-          "appraised_name": "Raw Mana Shard",
-          "material_desc": "Unstable arcane crystal. Tier 1.",
-          "magic_desc": "Strong magical resonance.",
-          "estimated_value": 22,
-          "description": "A crystallized fragment of raw magical energy.",
-          "identified": true,
-          "source": "Bandit Mage",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 2
-        },
-        {
           "name": "Mana Crystal",
           "type": "consumable",
           "subtype": "crystal",
@@ -1377,30 +1013,7 @@
           "estimated_value": 35,
           "magic_identified": true,
           "material_identified": true,
-          "stack": 2
-        },
-        {
-          "name": "Light Crossbow",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Crossbow",
-          "rarity": "uncommon",
-          "damage": 19,
-          "phys_type": "piercing",
-          "range": "ranged",
-          "stat_bonuses": {
-            "DEX": 1
-          },
-          "identified": true,
-          "description": "Compact crossbow used for ambushes. +1 DEX.",
-          "crit_mod": 12,
-          "accuracy_mod": 8,
-          "damage_stat": {
-            "DEX": 0.28,
-            "STR": 0.12
-          },
-          "durability": 95,
-          "max_durability": 100
+          "stack": 4
         },
         {
           "name": "Elixir of Focus",
@@ -1413,33 +1026,6 @@
           "magic_identified": true,
           "material_identified": true,
           "stack": 1
-        },
-        {
-          "name": "Silk Robes",
-          "slot": "body",
-          "armor_tier": "clothing",
-          "defense": 2,
-          "magic_resist": 4,
-          "speed_mod": 1,
-          "stat_bonuses": {
-            "INT": 1,
-            "WIS": 1
-          },
-          "rarity": "uncommon",
-          "value": 45,
-          "description": "Fine silk that shimmers with subtle enchantment. +1 INT, +1 WIS.",
-          "type": "armor",
-          "identified": true,
-          "durability": 100,
-          "max_durability": 100
-        },
-        {
-          "name": "Smoke Bomb",
-          "type": "consumable",
-          "subtype": "thrown",
-          "rarity": "common",
-          "description": "Fills an area with smoke. Enemies lose accuracy for 2 turns.",
-          "identified": true
         },
         {
           "name": "Fading Boar Tusk",
@@ -1499,7 +1085,7 @@
           "subtype": "Wand",
           "max_charges": 20,
           "rarity": "uncommon",
-          "damage": 16,
+          "damage": 26,
           "phys_type": "lightning",
           "range": "ranged",
           "spell_bonus": 4,
@@ -1515,33 +1101,38 @@
           "magic_identified": true,
           "material_identified": true,
           "charges": 20,
-          "no_durability": true
+          "no_durability": true,
+          "damage_stat": {
+            "INT": 0.32
+          }
         },
         {
-          "name": "Ruin-Black Blade",
+          "name": "Tempest Rod",
+          "appraised_name": "Tempest Rod",
           "type": "weapon",
           "slot": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "common",
-          "damage": 19,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
+          "subtype": "Rod",
+          "max_charges": 25,
+          "rarity": "rare",
+          "damage": 22,
+          "phys_type": "lightning",
+          "range": "ranged",
+          "spell_bonus": 5,
+          "enchant_element": "lightning",
+          "on_hit_effect": {
+            "status": "Stunned",
+            "chance": 0.25,
+            "duration": 1
           },
-          "phys_type": "slashing",
-          "range": "melee",
-          "identify_difficulty": 1,
-          "unidentified_name": "Dark Sword",
-          "unidentified_desc": "A serviceable blade.",
-          "appraised_name": "Ruin-Black Blade",
-          "material_desc": "Common steel.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 95,
-          "description": "Blackened iron blade engraved with cult markings.",
+          "unidentified_name": "Crackling Rod",
+          "unidentified_desc": "A rod that hums and occasionally sparks.",
+          "description": "A rod charged with storm-magic. Fires lightning bolts \u2014 25% chance to Stun for 1 turn. +5 spell power.",
           "identified": true,
-          "source": "Cultist Warrior",
+          "estimated_value": 410,
+          "_wis_bonus": true,
           "magic_identified": true,
-          "material_identified": true
+          "charges": 25,
+          "no_durability": true
         }
       ],
       "equipment": {
@@ -1709,115 +1300,51 @@
       "planar_tier": 1,
       "combat_row": "back",
       "gender": "male",
-      "catchup_target_level": 0,
-      "catchup_xp_mult": 1.0
+      "catchup_target_level": 12,
+      "catchup_xp_mult": 1.6
     },
     {
       "name": "Marvin",
-      "class_name": "Monk",
+      "class_name": "Mystic",
       "race_name": "Halfling",
-      "level": 11,
-      "xp": 26998,
-      "gold": 2054,
+      "level": 7,
+      "xp": 9252,
+      "gold": 3751,
       "stats": {
         "STR": 20,
-        "DEX": 28,
-        "CON": 19,
-        "INT": 17,
-        "WIS": 27,
+        "DEX": 32,
+        "CON": 21,
+        "INT": 29,
+        "WIS": 34,
         "PIE": 14
       },
       "resources": {
-        "HP": 127,
-        "Ki": 143,
-        "WIS-MP": 130,
-        "DEX-SP": 114
+        "HP": 109,
+        "Ki": 340,
+        "INT-MP": 88
       },
       "abilities": [
         {
-          "name": "Flurry of Blows",
-          "cost": 2,
+          "name": "Void Fist",
+          "cost": 4,
           "resource": "momentum",
           "type": "attack",
-          "level": 1,
-          "power": 0.6,
-          "hits": 3,
-          "desc": "Three rapid strikes. Each hit builds Momentum."
+          "level": 11,
+          "power": 2.2,
+          "armor_pierce": true,
+          "desc": "Strike through all armor. Completely ignores physical defense."
         },
         {
-          "name": "Iron Skin",
-          "cost": 5,
+          "name": "Empty Mind",
+          "cost": 10,
           "resource": "Ki",
           "type": "buff",
-          "level": 1,
-          "buff": "iron_skin",
+          "level": 10,
+          "buff": "empty_mind",
           "duration": 3,
-          "self_only": true,
-          "desc": "Harden the body. Reduce physical damage by 8 for 3 turns."
-        },
-        {
-          "name": "Stunning Fist",
-          "cost": 3,
-          "resource": "momentum",
-          "type": "attack",
-          "level": 3,
-          "power": 1.3,
-          "stun_chance": 0.45,
-          "desc": "Strike a pressure point. 45% chance to stun."
-        },
-        {
-          "name": "Earth Strike",
-          "cost": 3,
-          "resource": "momentum",
-          "type": "attack",
-          "level": 4,
-          "power": 1.5,
-          "element": "earth",
-          "desc": "Channel earth energy through a powerful strike."
-        },
-        {
-          "name": "Ki Deflect",
-          "cost": 5,
-          "resource": "Ki",
-          "type": "buff",
-          "level": 3,
-          "buff": "ki_deflect",
-          "duration": 2,
-          "desc": "Channel Ki to deflect the next physical attack entirely.",
-          "branch_label": "Guardian",
-          "branch_desc": "Protect yourself and allies through Ki mastery."
-        },
-        {
-          "name": "Inner Peace",
-          "cost": 7,
-          "resource": "Ki",
-          "type": "heal",
-          "level": 5,
-          "power": 1.2,
-          "self_only": true,
-          "desc": "Restore HP through deep meditation."
-        },
-        {
-          "name": "Ki Barrier",
-          "cost": 7,
-          "resource": "Ki",
-          "type": "buff",
-          "level": 6,
-          "buff": "ki_deflect",
-          "duration": 3,
-          "self_only": true,
-          "desc": "Erect a Ki barrier. +8 magic resistance for 3 turns."
-        },
-        {
-          "name": "Pressure Point",
-          "cost": 9,
-          "resource": "Ki",
-          "type": "debuff",
-          "level": 8,
-          "status": "Weakened",
-          "status_chance": 0.65,
-          "status_duration": 3,
-          "desc": "Strike a nerve cluster. 65% chance to weaken for 3 turns."
+          "desc": "Achieve perfect clarity: immune to debuffs, +2 actions per turn.",
+          "branch_label": "Void Walker",
+          "branch_desc": "Transcend combat through perfect emptiness."
         },
         {
           "name": "Thunderous Clap",
@@ -1831,16 +1358,58 @@
           "desc": "Concussive clap. Hits front row, 25% stun chance."
         },
         {
-          "name": "Empty Mind",
-          "cost": 10,
+          "name": "Force Pulse",
+          "cost": 16,
+          "resource": "INT-MP",
+          "type": "aoe",
+          "level": 1,
+          "power": 1.0,
+          "element": "arcane",
+          "target": "front_row",
+          "desc": "Release a pulse of pure force hitting the front row."
+        },
+        {
+          "name": "Ki Absorption",
+          "cost": 7,
           "resource": "Ki",
           "type": "buff",
-          "level": 10,
-          "buff": "empty_mind",
-          "duration": 3,
-          "desc": "Achieve perfect clarity: immune to debuffs, +2 actions per turn.",
-          "branch_label": "Void Walker",
-          "branch_desc": "Transcend combat through perfect emptiness."
+          "level": 1,
+          "buff": "ki_absorption",
+          "duration": 1,
+          "self_only": true,
+          "desc": "Absorb the next spell that hits you, converting it to Ki instead of damage."
+        },
+        {
+          "name": "Arcane Palm",
+          "cost": 18,
+          "resource": "INT-MP",
+          "type": "attack",
+          "level": 3,
+          "power": 1.8,
+          "element": "arcane",
+          "desc": "Deliver concentrated arcane energy through a melee palm strike."
+        },
+        {
+          "name": "Lullaby",
+          "cost": 18,
+          "resource": "INT-MP",
+          "type": "aoe",
+          "level": 4,
+          "power": 0,
+          "status": "Sleep",
+          "status_chance": 0.55,
+          "target": "row",
+          "desc": "A mental lullaby. 55% sleep chance to an entire enemy row."
+        },
+        {
+          "name": "Mindstrike",
+          "cost": 20,
+          "resource": "INT-MP",
+          "type": "attack",
+          "level": 6,
+          "power": 1.6,
+          "armor_pierce": true,
+          "desc": "Pure mental force strike. Ignores all physical defense."
         }
       ],
       "inventory": [
@@ -1925,7 +1494,7 @@
           "source": "Cultist Hexblade",
           "magic_identified": true,
           "material_identified": true,
-          "stack": 1
+          "stack": 3
         },
         {
           "name": "Cultist's Sigil",
@@ -1967,32 +1536,6 @@
           "stack": 2
         },
         {
-          "name": "Iron Contract Blade",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "common",
-          "damage": 20,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "phys_type": "slashing",
-          "range": "melee",
-          "identify_difficulty": 1,
-          "unidentified_name": "Heavy Longsword",
-          "unidentified_desc": "A serviceable blade.",
-          "appraised_name": "Iron Contract Blade",
-          "material_desc": "Common steel.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 100,
-          "description": "Mercenary-issued iron sword. Functional, boring, deadly.",
-          "identified": true,
-          "source": "Sellsword",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
           "name": "Fading Antler Fragment",
           "type": "material",
           "subtype": "arcane",
@@ -2032,68 +1575,6 @@
           "stack": 1
         },
         {
-          "name": "Bundle of Crude Arrows",
-          "type": "consumable",
-          "subtype": "ammunition",
-          "rarity": "common",
-          "identify_difficulty": 1,
-          "unidentified_name": "Handful of Arrows",
-          "unidentified_desc": "A bundle of crooked arrows with chipped stone tips.",
-          "appraised_name": "Crude Stone-Tipped Arrows",
-          "material_desc": "Stone arrowheads on warped shafts. Better than nothing.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 3,
-          "description": "Goblin arrows. Inaccurate but they still hurt.",
-          "identified": true,
-          "source": "Goblin Archer",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 3
-        },
-        {
-          "name": "Captain's Longsword",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "common",
-          "damage": 22,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "phys_type": "slashing",
-          "range": "melee",
-          "identify_difficulty": 1,
-          "unidentified_name": "Fine Sword",
-          "unidentified_desc": "A serviceable blade.",
-          "appraised_name": "Captain's Longsword",
-          "material_desc": "Common steel.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 115,
-          "description": "A proper sword \u2014 well-maintained and obviously the captain's pride.",
-          "identified": true,
-          "source": "Bandit Captain",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Coin Pouch",
-          "type": "consumable",
-          "subtype": "gold",
-          "rarity": "common",
-          "gold_value": [
-            20,
-            50
-          ],
-          "identify_difficulty": 0,
-          "identified": true,
-          "description": "A small pouch of coins.",
-          "source": "Bandit Captain",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 1
-        },
-        {
           "name": "Mana Shard",
           "type": "material",
           "subtype": "arcane",
@@ -2109,51 +1590,6 @@
           "description": "A crystallized fragment of raw magical energy.",
           "identified": true,
           "source": "Bandit Mage",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 1
-        },
-        {
-          "name": "Imperial Sword",
-          "type": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "common",
-          "identify_difficulty": 1,
-          "unidentified_name": "Regulation Blade",
-          "unidentified_desc": "A sword stamped with the Imperial mark.",
-          "appraised_name": "Standard Imperial Longsword",
-          "material_desc": "Mass-produced Imperial steel.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 120,
-          "description": "Standard issue. Well made. They give these to everyone.",
-          "slot": "weapon",
-          "range": "melee",
-          "damage": 19,
-          "phys_type": "slashing",
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "identified": true,
-          "source": "Imperial Soldier",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Imperial Coin",
-          "type": "consumable",
-          "subtype": "gold",
-          "rarity": "common",
-          "identify_difficulty": 1,
-          "unidentified_name": "Coin",
-          "unidentified_desc": "A coin with the Emperor's face.",
-          "appraised_name": "Imperial Gold Coin",
-          "material_desc": "Standard Imperial currency.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 10,
-          "description": "Worth more in some places than others.",
-          "identified": true,
-          "source": "Imperial Soldier",
           "magic_identified": true,
           "material_identified": true,
           "stack": 1
@@ -2179,26 +1615,6 @@
           "stack": 5
         },
         {
-          "name": "Worn Prayer Beads",
-          "type": "accessory",
-          "slot": "neck",
-          "subtype": "trinket",
-          "rarity": "uncommon",
-          "identify_difficulty": 2,
-          "unidentified_name": "Carved Beads",
-          "unidentified_desc": "Smooth wooden beads on a cord.",
-          "appraised_name": "Monk's Focus Beads",
-          "material_desc": "Rosewood beads.",
-          "magic_desc": "Faint calming resonance.",
-          "estimated_value": 90,
-          "description": "Beads used for focus meditation. Still hold traces of ki.",
-          "identified": true,
-          "source": "Mercenary Monk",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 2
-        },
-        {
           "name": "Fading Boar Tusk",
           "type": "material",
           "subtype": "bone",
@@ -2218,361 +1634,6 @@
           "stack": 1
         },
         {
-          "name": "Orcish Blade",
-          "type": "weapon",
-          "subtype": "Broadsword",
-          "rarity": "common",
-          "damage": 19,
-          "phys_type": "slashing",
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "identify_difficulty": 1,
-          "unidentified_name": "Crude Broadsword",
-          "unidentified_desc": "A heavy iron blade with rough hammer marks. Brutally functional.",
-          "appraised_name": "Orcish Iron Broadsword",
-          "material_desc": "Crude orcish ironwork. Heavy but effective. Poor resale value.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 90,
-          "description": "A crude but heavy iron blade favored by orc warriors.",
-          "slot": "weapon",
-          "identified": true,
-          "source": "Orc Fighter",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Ruin-Black Blade",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "common",
-          "damage": 19,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "phys_type": "slashing",
-          "range": "melee",
-          "identify_difficulty": 1,
-          "unidentified_name": "Dark Sword",
-          "unidentified_desc": "A serviceable blade.",
-          "appraised_name": "Ruin-Black Blade",
-          "material_desc": "Common steel.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 95,
-          "description": "Blackened iron blade engraved with cult markings.",
-          "identified": true,
-          "source": "Cultist Warrior",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Ruin-Black Blade",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "common",
-          "damage": 19,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "phys_type": "slashing",
-          "range": "melee",
-          "identify_difficulty": 1,
-          "unidentified_name": "Dark Sword",
-          "unidentified_desc": "A serviceable blade.",
-          "appraised_name": "Ruin-Black Blade",
-          "material_desc": "Common steel.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 95,
-          "description": "Blackened iron blade engraved with cult markings.",
-          "identified": true,
-          "source": "Cultist Warrior",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Imperial Sword",
-          "type": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "common",
-          "identify_difficulty": 1,
-          "unidentified_name": "Regulation Blade",
-          "unidentified_desc": "A sword stamped with the Imperial mark.",
-          "appraised_name": "Standard Imperial Longsword",
-          "material_desc": "Mass-produced Imperial steel.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 120,
-          "description": "Standard issue. Well made. They give these to everyone.",
-          "slot": "weapon",
-          "range": "melee",
-          "damage": 19,
-          "phys_type": "slashing",
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "identified": true,
-          "source": "Imperial Soldier",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Imperial Shortbow",
-          "type": "weapon",
-          "subtype": "Shortbow",
-          "rarity": "common",
-          "identify_difficulty": 1,
-          "unidentified_name": "Regulation Bow",
-          "unidentified_desc": "A bow stamped with the Imperial mark.",
-          "appraised_name": "Standard Imperial Shortbow",
-          "material_desc": "Imperial-issue yew shortbow.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 100,
-          "description": "Better than most. The Empire maintains its equipment.",
-          "slot": "weapon",
-          "range": "melee",
-          "damage": 17,
-          "phys_type": "piercing",
-          "damage_stat": {
-            "DEX": 0.35,
-            "STR": 0.08
-          },
-          "identified": true,
-          "source": "Imperial Archer",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Inquisitor's Blade",
-          "type": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "uncommon",
-          "identify_difficulty": 3,
-          "unidentified_name": "Fine Official Sword",
-          "unidentified_desc": "A sword that has been maintained with religious care.",
-          "appraised_name": "Inquisitor's Judgment Sword",
-          "material_desc": "High-grade Imperial steel.",
-          "magic_desc": "Divine enchantment \u2014 genuine, not institutional.",
-          "estimated_value": 185,
-          "description": "A sword carried by someone who never doubted the cause. It shows.",
-          "slot": "weapon",
-          "range": "melee",
-          "damage": 21,
-          "phys_type": "slashing",
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "element": "divine",
-          "identified": true,
-          "source": "Imperial Inquisitor",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Inquisitor's Blade",
-          "type": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "uncommon",
-          "identify_difficulty": 3,
-          "unidentified_name": "Fine Official Sword",
-          "unidentified_desc": "A sword that has been maintained with religious care.",
-          "appraised_name": "Inquisitor's Judgment Sword",
-          "material_desc": "High-grade Imperial steel.",
-          "magic_desc": "Divine enchantment \u2014 genuine, not institutional.",
-          "estimated_value": 185,
-          "description": "A sword carried by someone who never doubted the cause. It shows.",
-          "slot": "weapon",
-          "range": "melee",
-          "damage": 21,
-          "phys_type": "slashing",
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "element": "divine",
-          "identified": true,
-          "source": "Imperial Inquisitor",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Worn Longsword",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Longsword",
-          "rarity": "common",
-          "damage": 19,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "phys_type": "slashing",
-          "range": "melee",
-          "identify_difficulty": 1,
-          "unidentified_name": "Notched Blade",
-          "unidentified_desc": "A sword with deep notches.",
-          "appraised_name": "Worn Iron Longsword",
-          "material_desc": "Common iron, poorly maintained.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 90,
-          "description": "A bandit's longsword.",
-          "identified": true,
-          "source": "Ashenmoor Bandit",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Bandit Mail Patch",
-          "type": "armor",
-          "slot": "body",
-          "subtype": "body_armor",
-          "rarity": "common",
-          "armor_tier": "light",
-          "defense": 3,
-          "identify_difficulty": 1,
-          "unidentified_name": "Scrap Mail",
-          "unidentified_desc": "A patch of chain links sewn to leather.",
-          "appraised_name": "Scrap Chainmail Vest",
-          "material_desc": "Mixed scrap metal and leather.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 70,
-          "description": "Patched mail from a bandit.",
-          "identified": true,
-          "source": "Ashenmoor Bandit",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Ruin-Black Blade",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "common",
-          "damage": 19,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "phys_type": "slashing",
-          "range": "melee",
-          "identify_difficulty": 1,
-          "unidentified_name": "Dark Sword",
-          "unidentified_desc": "A serviceable blade.",
-          "appraised_name": "Ruin-Black Blade",
-          "material_desc": "Common steel.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 95,
-          "description": "Blackened iron blade engraved with cult markings.",
-          "identified": true,
-          "source": "Cultist Warrior",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Ruin-Black Blade",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "common",
-          "damage": 19,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "phys_type": "slashing",
-          "range": "melee",
-          "identify_difficulty": 1,
-          "unidentified_name": "Dark Sword",
-          "unidentified_desc": "A serviceable blade.",
-          "appraised_name": "Ruin-Black Blade",
-          "material_desc": "Common steel.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 95,
-          "description": "Blackened iron blade engraved with cult markings.",
-          "identified": true,
-          "source": "Cultist Warrior",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Ruin-Black Blade",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "common",
-          "damage": 19,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "phys_type": "slashing",
-          "range": "melee",
-          "identify_difficulty": 1,
-          "unidentified_name": "Dark Sword",
-          "unidentified_desc": "A serviceable blade.",
-          "appraised_name": "Ruin-Black Blade",
-          "material_desc": "Common steel.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 95,
-          "description": "Blackened iron blade engraved with cult markings.",
-          "identified": true,
-          "source": "Cultist Warrior",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Bandit Mail Patch",
-          "type": "armor",
-          "slot": "body",
-          "subtype": "body_armor",
-          "rarity": "common",
-          "armor_tier": "light",
-          "defense": 3,
-          "identify_difficulty": 1,
-          "unidentified_name": "Scrap Mail",
-          "unidentified_desc": "A patch of chain links sewn to leather.",
-          "appraised_name": "Scrap Chainmail Vest",
-          "material_desc": "Mixed scrap metal and leather.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 70,
-          "description": "Patched mail from a bandit.",
-          "identified": true,
-          "source": "Ashenmoor Bandit",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Worn Longsword",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Longsword",
-          "rarity": "common",
-          "damage": 19,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "phys_type": "slashing",
-          "range": "melee",
-          "identify_difficulty": 1,
-          "unidentified_name": "Notched Blade",
-          "unidentified_desc": "A sword with deep notches.",
-          "appraised_name": "Worn Iron Longsword",
-          "material_desc": "Common iron, poorly maintained.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 90,
-          "description": "A bandit's longsword.",
-          "identified": true,
-          "source": "Ashenmoor Bandit",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
           "name": "Animated Armor Fragment",
           "type": "material",
           "subtype": "crafting_part",
@@ -2588,6 +1649,26 @@
           "description": "A shard of sentinel armor.",
           "identified": true,
           "source": "Ruin Sentinel",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Twisted Bark Strip",
+          "type": "material",
+          "subtype": "crafting_part",
+          "rarity": "common",
+          "tier": 1,
+          "identify_difficulty": 1,
+          "unidentified_name": "Dark Bark",
+          "unidentified_desc": "A strip of unnaturally dark bark.",
+          "appraised_name": "Corrupted Bark Strip",
+          "material_desc": "Bark from a corrupted treant. Tier 1 material.",
+          "magic_desc": "Faint corruption.",
+          "estimated_value": 8,
+          "description": "A strip of corrupted bark.",
+          "identified": true,
+          "source": "Corrupted Treant",
           "magic_identified": true,
           "material_identified": true,
           "stack": 1
@@ -2775,154 +1856,30 @@
       "planar_tier": 1,
       "combat_row": "front",
       "gender": "male",
-      "catchup_target_level": 0,
-      "catchup_xp_mult": 1.0
+      "catchup_target_level": 12,
+      "catchup_xp_mult": 1.6
     },
     {
       "name": "Roger",
-      "class_name": "Ranger",
+      "class_name": "Shadow Master",
       "race_name": "Half-Orc",
-      "level": 11,
-      "xp": 27476,
-      "gold": 1139,
+      "level": 7,
+      "xp": 9252,
+      "gold": 3005,
       "stats": {
         "STR": 22,
-        "DEX": 28,
-        "CON": 21,
-        "INT": 13,
-        "WIS": 26,
+        "DEX": 41,
+        "CON": 23,
+        "INT": 22,
+        "WIS": 33,
         "PIE": 7
       },
       "resources": {
-        "HP": 133,
-        "Ki": 359,
-        "WIS-MP": 98,
-        "DEX-SP": 120
+        "HP": 117,
+        "Ki": 459,
+        "DEX-SP": 130
       },
       "abilities": [
-        {
-          "name": "Aimed Shot",
-          "cost": 3,
-          "resource": "momentum",
-          "type": "attack",
-          "level": 1,
-          "power": 1.5,
-          "desc": "Precise ranged attack."
-        },
-        {
-          "name": "Splitting Arrow",
-          "cost": 8,
-          "resource": "DEX-SP",
-          "type": "attack",
-          "level": 1,
-          "power": 0.8,
-          "pierce_rows": true,
-          "desc": "Arrow pierces the front target and continues to hit the row(s) behind. Reduced damage."
-        },
-        {
-          "name": "Hunter's Mark",
-          "cost": 4,
-          "resource": "DEX-SP",
-          "type": "debuff",
-          "level": 2,
-          "mark_duration": 3,
-          "mark_crit_bonus": 0.25,
-          "desc": "Mark a target. +25% critical hit chance against them for 3 turns."
-        },
-        {
-          "name": "Scatter Shot",
-          "cost": 2,
-          "resource": "momentum",
-          "type": "aoe",
-          "level": 3,
-          "power": 0.85,
-          "target": "front_row",
-          "desc": "Wide arrow spray hitting the front row."
-        },
-        {
-          "name": "Snare Trap",
-          "cost": 10,
-          "resource": "WIS-MP",
-          "type": "debuff",
-          "level": 4,
-          "status": "Slowed",
-          "status_chance": 0.7,
-          "desc": "Set a trap. 70% chance to slow and root target."
-        },
-        {
-          "name": "Entangle",
-          "cost": 12,
-          "resource": "WIS-MP",
-          "type": "debuff",
-          "level": 3,
-          "element": "nature",
-          "slow_duration": 2,
-          "desc": "Magical roots slow and hold a target for 2 turns.",
-          "branch_label": "Warden",
-          "branch_desc": "Command nature to restrain and control."
-        },
-        {
-          "name": "Twin Shot",
-          "cost": 2,
-          "resource": "momentum",
-          "type": "attack",
-          "level": 3,
-          "power": 0.9,
-          "hits": 2,
-          "desc": "Loose two arrows in quick succession. Hits twice at 90% power each.",
-          "branch_label": "Sharpshooter",
-          "branch_desc": "Double your arrow output for maximum damage."
-        },
-        {
-          "name": "Barrage",
-          "cost": 2,
-          "resource": "momentum",
-          "type": "aoe",
-          "level": 5,
-          "power": 1.0,
-          "target": "all_enemies",
-          "desc": "Rapid fire into the enemy group."
-        },
-        {
-          "name": "Nature's Balm",
-          "cost": 14,
-          "resource": "WIS-MP",
-          "type": "heal",
-          "level": 5,
-          "power": 1.0,
-          "desc": "Draw on nature's energy to heal an ally."
-        },
-        {
-          "name": "Camouflage",
-          "cost": 6,
-          "resource": "DEX-SP",
-          "type": "buff",
-          "level": 7,
-          "buff": "camouflage",
-          "duration": 2,
-          "self_only": true,
-          "desc": "Become nearly invisible. Enemies are less likely to target Ranger."
-        },
-        {
-          "name": "Poison Arrow",
-          "cost": 3,
-          "resource": "momentum",
-          "type": "attack",
-          "level": 8,
-          "power": 1.1,
-          "apply_poison": "poison_weak",
-          "desc": "Venom-tipped arrow. Deals damage + poison."
-        },
-        {
-          "name": "Rain of Arrows",
-          "cost": 3,
-          "resource": "momentum",
-          "type": "aoe",
-          "level": 9,
-          "power": 1.3,
-          "target": "all_enemies",
-          "desc": "Blanket the entire battlefield with arrows."
-        },
         {
           "name": "Hawk Eye",
           "cost": 20,
@@ -2935,6 +1892,71 @@
           "desc": "Perfect focus: +40% accuracy and +20% damage for 4 turns.",
           "branch_label": "Eagle Eye",
           "branch_desc": "Transcendent marksmanship under focus."
+        },
+        {
+          "name": "Rain of Arrows",
+          "cost": 3,
+          "resource": "momentum",
+          "type": "aoe",
+          "level": 9,
+          "power": 1.3,
+          "target": "all_enemies",
+          "desc": "Blanket the entire battlefield with arrows."
+        },
+        {
+          "name": "Poison Arrow",
+          "cost": 3,
+          "resource": "momentum",
+          "type": "attack",
+          "level": 8,
+          "power": 1.1,
+          "apply_poison": "poison_weak",
+          "desc": "Venom-tipped arrow. Deals damage + poison."
+        },
+        {
+          "name": "From Darkness",
+          "level": 1,
+          "type": "attack",
+          "cost": 10,
+          "resource": "DEX-SP",
+          "desc": "Strike from complete concealment \u2014 impossible to dodge."
+        },
+        {
+          "name": "Shadow Clone",
+          "level": 2,
+          "type": "buff",
+          "cost": 14,
+          "resource": "DEX-SP",
+          "desc": "Create a shadow decoy \u2014 next attack against you hits the clone instead."
+        },
+        {
+          "name": "Nightmare",
+          "level": 3,
+          "type": "debuff",
+          "cost": 16,
+          "resource": "DEX-SP",
+          "status": "Fear",
+          "status_duration": 2,
+          "status_chance": 0.85,
+          "desc": "Plunge an enemy into terror \u2014 they lose their next action."
+        },
+        {
+          "name": "Death Mark",
+          "level": 5,
+          "type": "debuff",
+          "cost": 18,
+          "resource": "DEX-SP",
+          "mark_duration": 3,
+          "mark_crit_bonus": 50,
+          "desc": "Mark a target for death \u2014 all damage they receive is doubled."
+        },
+        {
+          "name": "Void Step",
+          "level": 6,
+          "type": "buff",
+          "cost": 20,
+          "resource": "DEX-SP",
+          "desc": "Step through shadow \u2014 become untargetable for 1 round."
         }
       ],
       "inventory": [
@@ -2957,7 +1979,7 @@
           "estimated_value": 35,
           "magic_identified": true,
           "material_identified": true,
-          "stack": 1
+          "stack": 4
         },
         {
           "name": "Vial of Holy Water",
@@ -3019,56 +2041,6 @@
           "no_durability": true
         },
         {
-          "name": "Short Bow",
-          "type": "Bow",
-          "damage": 14,
-          "damage_stat": {
-            "DEX": 0.35,
-            "STR": 0.08
-          },
-          "range": "ranged",
-          "speed_mod": 0,
-          "accuracy_mod": 5,
-          "crit_mod": 3,
-          "weight_class": "medium",
-          "phys_type": "piercing",
-          "requirements": {
-            "DEX": 10,
-            "STR": 8
-          },
-          "spell_bonus": 0,
-          "special": {},
-          "identified": true,
-          "slot": "weapon",
-          "durability": 100,
-          "max_durability": 100
-        },
-        {
-          "name": "Short Bow",
-          "type": "Bow",
-          "damage": 14,
-          "damage_stat": {
-            "DEX": 0.35,
-            "STR": 0.08
-          },
-          "range": "ranged",
-          "speed_mod": 0,
-          "accuracy_mod": 5,
-          "crit_mod": 3,
-          "weight_class": "medium",
-          "phys_type": "piercing",
-          "requirements": {
-            "DEX": 10,
-            "STR": 8
-          },
-          "spell_bonus": 0,
-          "special": {},
-          "identified": true,
-          "slot": "weapon",
-          "durability": 100,
-          "max_durability": 100
-        },
-        {
           "name": "Venom Vial",
           "type": "material",
           "subtype": "reagent",
@@ -3085,97 +2057,6 @@
           "quantity": 1,
           "description": "A sealed vial of concentrated venom. Refills 5 charges on a venom reservoir weapon.",
           "identified": true
-        },
-        {
-          "name": "Smoke Bomb",
-          "type": "consumable",
-          "subtype": "thrown",
-          "rarity": "common",
-          "description": "Fills an area with smoke. Enemies lose accuracy for 2 turns.",
-          "identified": true
-        },
-        {
-          "name": "Minor Healing Potion",
-          "type": "consumable",
-          "subtype": "potion",
-          "heal_amount": 25,
-          "identified": true,
-          "estimated_value": 15,
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 1
-        },
-        {
-          "name": "Ruin-Black Blade",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "common",
-          "damage": 19,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "phys_type": "slashing",
-          "range": "melee",
-          "identify_difficulty": 1,
-          "unidentified_name": "Dark Sword",
-          "unidentified_desc": "A serviceable blade.",
-          "appraised_name": "Ruin-Black Blade",
-          "material_desc": "Common steel.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 95,
-          "description": "Blackened iron blade engraved with cult markings.",
-          "identified": true,
-          "source": "Cultist Warrior",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Ruin-Black Blade",
-          "type": "weapon",
-          "slot": "weapon",
-          "subtype": "Long Sword",
-          "rarity": "common",
-          "damage": 19,
-          "damage_stat": {
-            "STR": 0.3,
-            "DEX": 0.12
-          },
-          "phys_type": "slashing",
-          "range": "melee",
-          "identify_difficulty": 1,
-          "unidentified_name": "Dark Sword",
-          "unidentified_desc": "A serviceable blade.",
-          "appraised_name": "Ruin-Black Blade",
-          "material_desc": "Common steel.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 95,
-          "description": "Blackened iron blade engraved with cult markings.",
-          "identified": true,
-          "source": "Cultist Warrior",
-          "magic_identified": true,
-          "material_identified": true
-        },
-        {
-          "name": "Worn Prayer Beads",
-          "type": "accessory",
-          "slot": "neck",
-          "subtype": "trinket",
-          "rarity": "uncommon",
-          "identify_difficulty": 2,
-          "unidentified_name": "Carved Beads",
-          "unidentified_desc": "Smooth wooden beads on a cord.",
-          "appraised_name": "Monk's Focus Beads",
-          "material_desc": "Rosewood beads.",
-          "magic_desc": "Faint calming resonance.",
-          "estimated_value": 90,
-          "description": "Beads used for focus meditation. Still hold traces of ki.",
-          "identified": true,
-          "source": "Mercenary Monk",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 1
         },
         {
           "name": "Animated Armor Fragment",
@@ -3195,7 +2076,7 @@
           "source": "Ruin Sentinel",
           "magic_identified": true,
           "material_identified": true,
-          "stack": 1
+          "stack": 3
         },
         {
           "name": "Old Iron Plate",
@@ -3235,7 +2116,7 @@
           "source": "Fading Cultist",
           "magic_identified": true,
           "material_identified": true,
-          "stack": 2
+          "stack": 9
         },
         {
           "name": "Shadow Talisman",
@@ -3255,7 +2136,256 @@
           "source": "Fading Cultist",
           "magic_identified": true,
           "material_identified": true,
+          "stack": 3
+        },
+        {
+          "name": "Cultist's Sigil",
+          "type": "material",
+          "subtype": "arcane",
+          "rarity": "uncommon",
+          "tier": 1,
+          "identify_difficulty": 2,
+          "unidentified_name": "Carved Token",
+          "unidentified_desc": "A carved stone with strange markings.",
+          "appraised_name": "Shadow Sigil",
+          "material_desc": "Stone imbued with shadow energy.",
+          "magic_desc": "Dark magical resonance.",
+          "estimated_value": 18,
+          "description": "A token of cult membership. Still hums with shadow energy.",
+          "identified": true,
+          "source": "Cultist Initiate",
+          "magic_identified": true,
+          "material_identified": true,
           "stack": 1
+        },
+        {
+          "name": "Fading-Touched Pelt",
+          "type": "material",
+          "subtype": "leather",
+          "rarity": "uncommon",
+          "identify_difficulty": 2,
+          "unidentified_name": "Diseased Pelt",
+          "unidentified_desc": "A pelt that seems to absorb light.",
+          "appraised_name": "Tier 1 Fading Pelt",
+          "material_desc": "Leather infused with Fading corruption. Tier 1.",
+          "magic_desc": "Fading resonance \u2014 not magical but deeply wrong.",
+          "estimated_value": 12,
+          "description": "A pelt from a creature touched by the Fading. Useful for corruption-resistant gear.",
+          "identified": true,
+          "source": "Fading Wolf",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Gargoyle Stone",
+          "type": "material",
+          "subtype": "stone",
+          "rarity": "uncommon",
+          "tier": 2,
+          "identified": true,
+          "estimated_value": 18,
+          "description": "Enchanted stone from a gargoyle.",
+          "source": "Gargoyle",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Shadow Essence",
+          "type": "material",
+          "subtype": "arcane",
+          "rarity": "uncommon",
+          "tier": 2,
+          "identify_difficulty": 3,
+          "unidentified_name": "Dark Vial",
+          "unidentified_desc": "A small vial of darkness that doesn't dissipate.",
+          "appraised_name": "Bottled Shadow Essence",
+          "material_desc": "Distilled shadow energy. Tier 2 enchanting material.",
+          "magic_desc": "Strong shadow resonance.",
+          "estimated_value": 40,
+          "description": "Refined shadow essence used for dark enchantments.",
+          "identified": true,
+          "source": "Cult Sorcerer",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "High Cultist's Grimoire",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Staff",
+          "max_charges": 30,
+          "rarity": "rare",
+          "damage_stat": {
+            "STR": 0.16,
+            "INT": 0.24
+          },
+          "damage": 18,
+          "phys_type": "shadow",
+          "identify_difficulty": 4,
+          "element": "shadow",
+          "unidentified_name": "Black Tome",
+          "unidentified_desc": "A heavy book sealed with dark sigils.",
+          "appraised_name": "Tome of Unmaking",
+          "material_desc": "Bound in shadow-cured leather.",
+          "magic_desc": "Shadow enchantment \u2014 amplifies dark magic.",
+          "estimated_value": 320,
+          "description": "A grimoire of shadow rituals.",
+          "identified": true,
+          "source": "High Cultist",
+          "charges": 30,
+          "no_durability": true,
+          "magic_identified": true,
+          "material_identified": true
+        },
+        {
+          "name": "Ashenmoor Cinder",
+          "type": "material",
+          "rarity": "uncommon",
+          "identified": true,
+          "estimated_value": 38,
+          "description": "Ash compacted into a dense, still-warm lump. Reeks of old magic.",
+          "source": "Ash Revenant",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Fading-Touched Heartwood",
+          "type": "material",
+          "subtype": "reagent",
+          "rarity": "uncommon",
+          "tier": 2,
+          "identify_difficulty": 1,
+          "unidentified_name": "Dark Wood Core",
+          "unidentified_desc": "A chunk of wood pulsing with void-light.",
+          "appraised_name": "Fading-Touched Heartwood",
+          "material_desc": "Core wood from a corrupted treant. Tier 2 reagent.",
+          "magic_desc": "Dual nature and void energy.",
+          "estimated_value": 40,
+          "description": "Heartwood from a corrupted treant.",
+          "identified": true,
+          "source": "Corrupted Treant",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Crown of Clarity",
+          "appraised_name": "Crown of Clarity",
+          "type": "armor",
+          "slot": "head",
+          "subtype": "circlet",
+          "rarity": "rare",
+          "defense": 2,
+          "magic_resist": 6,
+          "effect": {
+            "wis_bonus": 3
+          },
+          "description": "A silver circlet that clears the mind. +3 WIS, +6 magic resist.",
+          "identified": true,
+          "estimated_value": 370,
+          "_wis_bonus": true,
+          "magic_identified": true
+        },
+        {
+          "name": "Imperial Coin",
+          "type": "consumable",
+          "subtype": "gold",
+          "rarity": "common",
+          "identify_difficulty": 1,
+          "unidentified_name": "Coin",
+          "unidentified_desc": "A coin with the Emperor's face.",
+          "appraised_name": "Imperial Gold Coin",
+          "material_desc": "Standard Imperial currency.",
+          "magic_desc": "No magical properties.",
+          "estimated_value": 10,
+          "description": "Worth more in some places than others.",
+          "identified": true,
+          "source": "Imperial Soldier",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Imperial Sword",
+          "type": "weapon",
+          "subtype": "Long Sword",
+          "rarity": "common",
+          "identify_difficulty": 1,
+          "unidentified_name": "Regulation Blade",
+          "unidentified_desc": "A sword stamped with the Imperial mark.",
+          "appraised_name": "Standard Imperial Longsword",
+          "material_desc": "Mass-produced Imperial steel.",
+          "magic_desc": "No magical properties.",
+          "estimated_value": 120,
+          "description": "Standard issue. Well made. They give these to everyone.",
+          "slot": "weapon",
+          "range": "melee",
+          "damage": 19,
+          "phys_type": "slashing",
+          "damage_stat": {
+            "STR": 0.3,
+            "DEX": 0.12
+          },
+          "identified": true,
+          "source": "Imperial Soldier",
+          "magic_identified": true,
+          "material_identified": true
+        },
+        {
+          "name": "Imperial Sword",
+          "type": "weapon",
+          "subtype": "Long Sword",
+          "rarity": "common",
+          "identify_difficulty": 1,
+          "unidentified_name": "Regulation Blade",
+          "unidentified_desc": "A sword stamped with the Imperial mark.",
+          "appraised_name": "Standard Imperial Longsword",
+          "material_desc": "Mass-produced Imperial steel.",
+          "magic_desc": "No magical properties.",
+          "estimated_value": 120,
+          "description": "Standard issue. Well made. They give these to everyone.",
+          "slot": "weapon",
+          "range": "melee",
+          "damage": 19,
+          "phys_type": "slashing",
+          "damage_stat": {
+            "STR": 0.3,
+            "DEX": 0.12
+          },
+          "identified": true,
+          "source": "Imperial Soldier",
+          "magic_identified": true,
+          "material_identified": true
+        },
+        {
+          "name": "Iron Contract Blade",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Long Sword",
+          "rarity": "common",
+          "damage": 20,
+          "damage_stat": {
+            "STR": 0.3,
+            "DEX": 0.12
+          },
+          "phys_type": "slashing",
+          "range": "melee",
+          "identify_difficulty": 1,
+          "unidentified_name": "Heavy Longsword",
+          "unidentified_desc": "A serviceable blade.",
+          "appraised_name": "Iron Contract Blade",
+          "material_desc": "Common steel.",
+          "magic_desc": "No magical properties.",
+          "estimated_value": 100,
+          "description": "Mercenary-issued iron sword. Functional, boring, deadly.",
+          "identified": true,
+          "source": "Sellsword",
+          "magic_identified": true,
+          "material_identified": true
         }
       ],
       "equipment": {
@@ -3282,7 +2412,7 @@
           "damage_stat": {
             "DEX": 0.4
           },
-          "durability": 36,
+          "durability": 6,
           "max_durability": 100
         },
         "off_hand": null,
@@ -3396,149 +2526,161 @@
       "planar_tier": 1,
       "combat_row": "mid",
       "gender": "male",
-      "catchup_target_level": 0,
-      "catchup_xp_mult": 1.0
+      "catchup_target_level": 12,
+      "catchup_xp_mult": 1.6
     }
   ],
   "character_bank": [],
   "knowledge": {
     "identified_items": [
-      "Crude Knife",
-      "Spider Mandible",
-      "Greater Healing Potion",
-      "Silver Circlet",
-      "Inquisitor's Blade",
-      "Rough Ashwood Staff",
-      "Blessed Handwraps",
-      "Ring of Minor Fortitude",
-      "Rusty Knife",
-      "Dwarven Forge Plate Fragment",
       "Wolf Fang (Corrupted)",
-      "Orcish Blade",
-      "Silk Gloves",
-      "Paladin's Greathelm",
-      "Holy Sabatons",
-      "Archer's Glove",
-      "Fading-Touched Pelt",
-      "Iron Pick",
-      "Leather Vest",
-      "Chain Shirt",
-      "Holy Gauntlets",
-      "Grave Dust",
-      "Mana Shard",
-      "Animated Armor Fragment",
-      "Worn Prayer Beads",
-      "Padded Arm Guards",
+      "Web Spinner Silk",
+      "Ring of Minor Fortitude",
+      "Fading Bear Claw",
+      "Carved Oak Wand",
       "Venomfang Sac",
-      "Scout Leathers",
-      "Walking Stick",
-      "Shadowbind Gauntlets",
-      "Radiant Armour",
-      "Spider Silk Thread",
-      "Dwarven Gear Assembly",
-      "Cultist Grimoire Page",
+      "Ember Wand",
+      "Scroll of Recall",
+      "Grandmaster's Vestments",
+      "Fading-Touched Heartwood",
       "Leather Hauberk",
-      "Wizard's Robe",
-      "Bundle of Arrows",
-      "Forge Guard Hammer",
-      "Chain Coif",
-      "Warden Javelin",
-      "Healing Potion",
-      "Coin Pouch",
-      "Leather Scraps",
-      "Monk Unarmed",
-      "Venom Vial",
-      "Shadow Stalker Boots",
-      "Hexblade Saber",
-      "Fading Antler Fragment",
-      "Amulet of the Owl",
-      "Goblin Shiv",
-      "Imperial Sword",
       "Shadow Crossbow",
-      "Ember Stone",
+      "Beetle Carapace",
+      "Archer's Glove",
+      "Ancestor's Staff",
+      "Amulet of the Owl",
+      "Copper Chain",
       "Phase Spider Eye",
-      "Cultist's Sigil",
-      "Copper Ring of Endurance",
+      "Coin Pouch",
+      "Forge Guard Hammer",
+      "Iron Ore Chunk",
+      "Spider Silk Bundle",
+      "Shadow Talisman",
+      "Silk Gloves",
+      "Greater Healing Potion",
+      "Tempest Rod",
+      "Ruin-Black Blade",
+      "Warden's Stone Hammer",
+      "Smoke Bomb",
+      "Crude Shortbow",
+      "Light Crossbow",
+      "Shadow Wand",
+      "Leather Scraps",
+      "Monk's Third Eye",
+      "Reinforced Shortbow",
+      "Iron Core",
+      "Shadow Stalker Boots",
+      "Gargoyle Stone",
+      "Dwarven Gear Assembly",
+      "Quarried Stone Block",
+      "Worn Longsword",
+      "Phase Spider Silk",
+      "Wooden Shield",
+      "Grandmaster's Crown",
+      "Gauntlets",
+      "Dwarven Forge Plate Fragment",
+      "Stone Warden Rune",
+      "Paladin's Greathelm",
+      "Ashenmoor Commander's Seal",
+      "Vial of Holy Water",
+      "Walking Stick",
+      "Healing Potion",
+      "Goblin Ear",
+      "Rough Ashwood Staff",
+      "Shaman's Herb Pouch",
+      "Wand of Sparks",
+      "Imperial Shortbow",
+      "Bandit Mail Patch",
+      "Scout Leathers",
+      "Radiant Armour",
+      "Scroll of Protection",
+      "Spider Mandible",
+      "Grave Dust",
+      "Worn Prayer Beads",
+      "Goblin Shiv",
+      "Holy Sabatons",
+      "Shadow Wisp Fragment",
+      "Orc Hide Scraps",
+      "Twisted Bark Strip",
+      "Old Iron Plate",
+      "Wooden Club",
+      "Mana Shard",
+      "Wizard's Robe",
+      "Silk Robes",
+      "Rusty Knife",
+      "Iron Ki Beads",
+      "Imperial Sword",
+      "Fading-Touched Pelt",
       "Imperial Coin",
+      "Firebrand Blade",
+      "Venom Vial",
+      "Cultist's Sigil",
+      "Inquisitor's Blade",
+      "Short Bow",
+      "Shadow Essence",
+      "Minor Healing Potion",
+      "Longbow",
+      "Spider Silk",
+      "Rat Tail",
+      "Cloak of Shadows",
+      "Ward-Carved Stone",
+      "Spider Silk Thread",
+      "Ashenmoor Cinder",
+      "Hearthstone Fragment (Mine)",
+      "Padded Arm Guards",
+      "Hexblade Saber",
+      "Iron Greaves",
+      "Crude Snare Wire",
+      "Animated Armor Fragment",
+      "Traveler's Clothes",
+      "Bandit Broadsword",
+      "Knight's Bulwark",
+      "Crown of Dominion",
+      "Blessed Handwraps",
+      "Soft Leather Shoes",
+      "Leather Vest",
+      "Ember Stone",
+      "Iron Ridge Token",
+      "Crystal Shard",
+      "Fading Boar Tusk",
+      "Fading Antler Fragment",
+      "Lurker Fang",
+      "Iron Javelin",
+      "Orcish Blade",
+      "Rune-Etched Sword",
+      "Studded Leather",
+      "Boots of the Wind",
+      "Lockpick Set",
+      "Thought Orb",
+      "Copper Ring of Endurance",
+      "High Cultist's Grimoire",
+      "Frostbite Dagger",
+      "Iron Contract Blade",
+      "Mercenary's Iron Mace",
+      "Witch's Hat",
+      "Monk Unarmed",
+      "Stolen Map Fragment",
+      "Captain's Longsword",
       "Bundle of Crude Arrows",
       "Commander's Longsword",
-      "Fading Bear Claw",
-      "Cloak of Shadows",
-      "Lockpick Set",
-      "Soft Leather Shoes",
-      "Spider Silk",
-      "Iron Ki Beads",
-      "Carved Oak Wand",
-      "Imperial Shortbow",
-      "Beetle Carapace",
-      "Shadow Talisman",
-      "Kobold Scale",
-      "Bandit Mail Patch",
-      "Ember Wand",
-      "Wand of Sparks",
-      "Shadow Wisp Fragment",
-      "Rat Tail",
-      "Firebrand Blade",
-      "Worn Longsword",
-      "Trap Components",
-      "Iron Ridge Token",
-      "Orc Hide Scraps",
-      "Wooden Shield",
-      "Knight's Bulwark",
-      "Light Crossbow",
-      "Crystal Shard",
-      "Web Spinner Silk",
-      "Monk's Third Eye",
-      "Iron Contract Blade",
-      "Grandmaster's Vestments",
-      "Ward-Carved Stone",
-      "Spider Silk Bundle",
-      "Gauntlets",
-      "Wooden Club",
       "Scroll of Fireball",
-      "Traveler's Clothes",
-      "Iron Javelin",
-      "Witch's Hat",
-      "Short Bow",
-      "Bandit Broadsword",
-      "Smoke Bomb",
-      "Crude Snare Wire",
-      "Copper Chain",
-      "Silk Robes",
-      "Lurker Fang",
-      "Goblin Ear",
-      "Iron Ore Chunk",
-      "Scroll of Protection",
-      "Boots of the Wind",
-      "Tempest Rod",
-      "Golem Stone Core",
+      "Crude Knife",
+      "Kobold Scale",
+      "Shadowbind Gauntlets",
+      "Glowing Spore Sac",
+      "Trap Components",
+      "Warden Javelin",
+      "Bundle of Arrows",
+      "Iron Pick",
       "Mana Crystal",
+      "Chain Coif",
       "Elixir of Focus",
-      "Minor Healing Potion",
-      "Quarried Stone Block",
-      "Shaman's Herb Pouch",
-      "Hearthstone Fragment (Mine)",
-      "Longbow",
-      "Stone Warden Rune",
-      "Warden's Stone Hammer",
-      "Old Iron Plate",
-      "Fading Boar Tusk",
-      "Studded Leather",
-      "Ruin-Black Blade",
-      "Fading-Touched Heartwood",
-      "Iron Core",
-      "Stolen Map Fragment",
-      "Grandmaster's Crown",
-      "Iron Greaves",
-      "Vial of Holy Water",
-      "Reinforced Shortbow",
-      "Phase Spider Silk",
-      "Thought Orb",
+      "Golem Stone Core",
       "Bat Wing",
-      "Captain's Longsword",
-      "Crude Shortbow",
-      "Ancestor's Staff",
-      "Glowing Spore Sac"
+      "Cultist Grimoire Page",
+      "Silver Circlet",
+      "Holy Gauntlets",
+      "Chain Shirt"
     ],
     "known_enemies": {
       "Cave Bat": 2,
@@ -3577,7 +2719,7 @@
       "Dust Wraith": 2,
       "Sellsword": 2,
       "Mercenary Monk": 1,
-      "Mercenary Scout": 1,
+      "Mercenary Scout": 2,
       "Dwarven Forge Guard": 2,
       "Mine Golem": 2,
       "Mercenary War-Cleric": 2,
@@ -3588,7 +2730,7 @@
       "Imperial Soldier": 2,
       "Wolf": 1,
       "Bandit": 1,
-      "Cultist Initiate": 1,
+      "Cultist Initiate": 2,
       "Cultist Warrior": 2,
       "Imperial Inquisitor": 2,
       "Imperial Archer": 2,
@@ -3599,10 +2741,14 @@
       "Ashenmoor Bandit": 2,
       "Ruin Archer": 1,
       "Ashenmoor Crossbowman": 1,
-      "Gargoyle": 1,
+      "Gargoyle": 2,
       "Ruin Sentinel": 2,
-      "Fading Cultist": 1,
-      "Corrupted Treant": 1
+      "Fading Cultist": 2,
+      "Corrupted Treant": 2,
+      "High Cultist": 2,
+      "Cult Sorcerer": 2,
+      "Commander Ashvar": 1,
+      "Ash Revenant": 1
     }
   },
   "story_flags": {
@@ -3631,7 +2777,7 @@
     "floor_cleared.goblin_warren.1": true,
     "explored.goblin_warren.floor2": true,
     "hint.shown.back_row": true,
-    "wolf_pelts_quest.count": 28,
+    "wolf_pelts_quest.count": 29,
     "hint.shown.identification": true,
     "floor_cleared.goblin_warren.2": true,
     "explored.goblin_warren.floor3": true,
@@ -3759,7 +2905,16 @@
     "explored.ruins_ashenmoor.floor2": true,
     "lore.valdris_betrayal": true,
     "floor_cleared.ruins_ashenmoor.2": true,
-    "explored.ruins_ashenmoor.floor3": true
+    "explored.ruins_ashenmoor.floor3": true,
+    "lore.ashenmoor_fall": true,
+    "achievement.unlocked.apex_class": true,
+    "floor_cleared.ruins_ashenmoor.3": true,
+    "explored.ruins_ashenmoor.floor4": true,
+    "lore.ashvar_truth": true,
+    "boss_defeated.ruins_ashenmoor": true,
+    "boss.ashvar.defeated": true,
+    "lore.ashvar_doubt": true,
+    "explored.sunken_crypt.floor1": true
   },
   "runtime_lore": {
     "note_scratched_note": {
@@ -3780,9 +2935,9 @@
     }
   },
   "world_state": {
-    "party_x": 95,
-    "party_y": 40,
-    "step_counter": 10,
+    "party_x": 85,
+    "party_y": 74,
+    "step_counter": 11,
     "discovered_locations": [
       "abandoned_mine",
       "briarhollow",
@@ -9917,6 +9072,10 @@
         31
       ],
       [
+        99,
+        31
+      ],
+      [
         13,
         32
       ],
@@ -10266,6 +9425,14 @@
       ],
       [
         100,
+        32
+      ],
+      [
+        101,
+        32
+      ],
+      [
+        102,
         32
       ],
       [
@@ -10622,6 +9789,14 @@
       ],
       [
         101,
+        33
+      ],
+      [
+        102,
+        33
+      ],
+      [
+        103,
         33
       ],
       [
@@ -15933,6 +15108,10 @@
         47
       ],
       [
+        89,
+        47
+      ],
+      [
         90,
         47
       ],
@@ -16325,6 +15504,10 @@
         48
       ],
       [
+        89,
+        48
+      ],
+      [
         90,
         48
       ],
@@ -16717,6 +15900,10 @@
         49
       ],
       [
+        89,
+        49
+      ],
+      [
         90,
         49
       ],
@@ -17102,6 +16289,10 @@
       ],
       [
         88,
+        50
+      ],
+      [
+        89,
         50
       ],
       [
@@ -20190,6 +19381,10 @@
       ],
       [
         70,
+        58
+      ],
+      [
+        71,
         58
       ],
       [
@@ -35340,7 +34535,8 @@
     "key_items": [
       "thornwood_map",
       "mine_key",
-      "ashenmoor_seal"
+      "ashenmoor_seal",
+      "crypt_amulet"
     ],
     "seed": 42,
     "travel": {
@@ -52660,14 +51856,14 @@
         "dead_enemies": [
           [
             23,
+            10
+          ],
+          [
+            23,
             9
           ],
           [
             20,
-            11
-          ],
-          [
-            15,
             11
           ]
         ]
@@ -55281,31 +54477,19 @@
         ],
         "dead_enemies": [
           [
-            19,
-            20
+            23,
+            21
           ],
           [
-            22,
-            22
+            11,
+            16
           ],
           [
-            15,
-            25
+            11,
+            18
           ],
           [
-            19,
-            11
-          ],
-          [
-            20,
-            10
-          ],
-          [
-            8,
-            14
-          ],
-          [
-            10,
+            12,
             9
           ]
         ]
@@ -55313,11 +54497,179 @@
       "3": {
         "discovered": [
           [
+            8,
+            3
+          ],
+          [
+            9,
+            3
+          ],
+          [
+            10,
+            3
+          ],
+          [
+            11,
+            3
+          ],
+          [
+            12,
+            3
+          ],
+          [
+            13,
+            3
+          ],
+          [
+            14,
+            3
+          ],
+          [
+            15,
+            3
+          ],
+          [
+            16,
+            3
+          ],
+          [
+            17,
+            3
+          ],
+          [
             18,
+            3
+          ],
+          [
+            19,
+            3
+          ],
+          [
+            8,
+            4
+          ],
+          [
+            9,
+            4
+          ],
+          [
+            10,
+            4
+          ],
+          [
+            11,
+            4
+          ],
+          [
+            12,
+            4
+          ],
+          [
+            13,
             4
           ],
           [
             14,
+            4
+          ],
+          [
+            15,
+            4
+          ],
+          [
+            16,
+            4
+          ],
+          [
+            17,
+            4
+          ],
+          [
+            18,
+            4
+          ],
+          [
+            19,
+            4
+          ],
+          [
+            22,
+            4
+          ],
+          [
+            23,
+            4
+          ],
+          [
+            24,
+            4
+          ],
+          [
+            25,
+            4
+          ],
+          [
+            26,
+            4
+          ],
+          [
+            27,
+            4
+          ],
+          [
+            28,
+            4
+          ],
+          [
+            29,
+            4
+          ],
+          [
+            30,
+            4
+          ],
+          [
+            31,
+            4
+          ],
+          [
+            32,
+            4
+          ],
+          [
+            33,
+            4
+          ],
+          [
+            8,
+            5
+          ],
+          [
+            9,
+            5
+          ],
+          [
+            10,
+            5
+          ],
+          [
+            11,
+            5
+          ],
+          [
+            12,
+            5
+          ],
+          [
+            13,
+            5
+          ],
+          [
+            14,
+            5
+          ],
+          [
+            15,
             5
           ],
           [
@@ -55331,6 +54683,78 @@
           [
             18,
             5
+          ],
+          [
+            19,
+            5
+          ],
+          [
+            22,
+            5
+          ],
+          [
+            23,
+            5
+          ],
+          [
+            24,
+            5
+          ],
+          [
+            25,
+            5
+          ],
+          [
+            26,
+            5
+          ],
+          [
+            27,
+            5
+          ],
+          [
+            28,
+            5
+          ],
+          [
+            29,
+            5
+          ],
+          [
+            30,
+            5
+          ],
+          [
+            31,
+            5
+          ],
+          [
+            32,
+            5
+          ],
+          [
+            33,
+            5
+          ],
+          [
+            8,
+            6
+          ],
+          [
+            9,
+            6
+          ],
+          [
+            10,
+            6
+          ],
+          [
+            11,
+            6
+          ],
+          [
+            12,
+            6
           ],
           [
             13,
@@ -55359,6 +54783,70 @@
           [
             19,
             6
+          ],
+          [
+            22,
+            6
+          ],
+          [
+            23,
+            6
+          ],
+          [
+            24,
+            6
+          ],
+          [
+            25,
+            6
+          ],
+          [
+            26,
+            6
+          ],
+          [
+            27,
+            6
+          ],
+          [
+            28,
+            6
+          ],
+          [
+            29,
+            6
+          ],
+          [
+            30,
+            6
+          ],
+          [
+            31,
+            6
+          ],
+          [
+            32,
+            6
+          ],
+          [
+            33,
+            6
+          ],
+          [
+            8,
+            7
+          ],
+          [
+            9,
+            7
+          ],
+          [
+            10,
+            7
+          ],
+          [
+            11,
+            7
           ],
           [
             12,
@@ -55395,6 +54883,70 @@
           [
             20,
             7
+          ],
+          [
+            21,
+            7
+          ],
+          [
+            22,
+            7
+          ],
+          [
+            23,
+            7
+          ],
+          [
+            24,
+            7
+          ],
+          [
+            25,
+            7
+          ],
+          [
+            26,
+            7
+          ],
+          [
+            27,
+            7
+          ],
+          [
+            28,
+            7
+          ],
+          [
+            29,
+            7
+          ],
+          [
+            30,
+            7
+          ],
+          [
+            31,
+            7
+          ],
+          [
+            32,
+            7
+          ],
+          [
+            33,
+            7
+          ],
+          [
+            8,
+            8
+          ],
+          [
+            9,
+            8
+          ],
+          [
+            10,
+            8
           ],
           [
             11,
@@ -55441,6 +54993,70 @@
             8
           ],
           [
+            22,
+            8
+          ],
+          [
+            23,
+            8
+          ],
+          [
+            24,
+            8
+          ],
+          [
+            25,
+            8
+          ],
+          [
+            26,
+            8
+          ],
+          [
+            27,
+            8
+          ],
+          [
+            28,
+            8
+          ],
+          [
+            29,
+            8
+          ],
+          [
+            30,
+            8
+          ],
+          [
+            31,
+            8
+          ],
+          [
+            32,
+            8
+          ],
+          [
+            33,
+            8
+          ],
+          [
+            8,
+            9
+          ],
+          [
+            9,
+            9
+          ],
+          [
+            10,
+            9
+          ],
+          [
+            11,
+            9
+          ],
+          [
             12,
             9
           ],
@@ -55477,6 +55093,70 @@
             9
           ],
           [
+            21,
+            9
+          ],
+          [
+            22,
+            9
+          ],
+          [
+            23,
+            9
+          ],
+          [
+            24,
+            9
+          ],
+          [
+            25,
+            9
+          ],
+          [
+            26,
+            9
+          ],
+          [
+            27,
+            9
+          ],
+          [
+            28,
+            9
+          ],
+          [
+            29,
+            9
+          ],
+          [
+            30,
+            9
+          ],
+          [
+            31,
+            9
+          ],
+          [
+            32,
+            9
+          ],
+          [
+            33,
+            9
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            9,
+            10
+          ],
+          [
+            10,
+            10
+          ],
+          [
             11,
             10
           ],
@@ -55513,6 +55193,66 @@
             10
           ],
           [
+            22,
+            10
+          ],
+          [
+            23,
+            10
+          ],
+          [
+            24,
+            10
+          ],
+          [
+            25,
+            10
+          ],
+          [
+            26,
+            10
+          ],
+          [
+            27,
+            10
+          ],
+          [
+            28,
+            10
+          ],
+          [
+            29,
+            10
+          ],
+          [
+            30,
+            10
+          ],
+          [
+            31,
+            10
+          ],
+          [
+            32,
+            10
+          ],
+          [
+            33,
+            10
+          ],
+          [
+            8,
+            11
+          ],
+          [
+            9,
+            11
+          ],
+          [
+            10,
+            11
+          ],
+          [
             11,
             11
           ],
@@ -55549,6 +55289,82 @@
             11
           ],
           [
+            22,
+            11
+          ],
+          [
+            23,
+            11
+          ],
+          [
+            24,
+            11
+          ],
+          [
+            25,
+            11
+          ],
+          [
+            26,
+            11
+          ],
+          [
+            27,
+            11
+          ],
+          [
+            28,
+            11
+          ],
+          [
+            29,
+            11
+          ],
+          [
+            30,
+            11
+          ],
+          [
+            31,
+            11
+          ],
+          [
+            32,
+            11
+          ],
+          [
+            33,
+            11
+          ],
+          [
+            5,
+            12
+          ],
+          [
+            6,
+            12
+          ],
+          [
+            7,
+            12
+          ],
+          [
+            8,
+            12
+          ],
+          [
+            9,
+            12
+          ],
+          [
+            10,
+            12
+          ],
+          [
+            11,
+            12
+          ],
+          [
             12,
             12
           ],
@@ -55579,33 +55395,4690 @@
           [
             19,
             12
+          ],
+          [
+            22,
+            12
+          ],
+          [
+            23,
+            12
+          ],
+          [
+            24,
+            12
+          ],
+          [
+            25,
+            12
+          ],
+          [
+            26,
+            12
+          ],
+          [
+            27,
+            12
+          ],
+          [
+            28,
+            12
+          ],
+          [
+            29,
+            12
+          ],
+          [
+            30,
+            12
+          ],
+          [
+            31,
+            12
+          ],
+          [
+            32,
+            12
+          ],
+          [
+            33,
+            12
+          ],
+          [
+            5,
+            13
+          ],
+          [
+            6,
+            13
+          ],
+          [
+            7,
+            13
+          ],
+          [
+            8,
+            13
+          ],
+          [
+            9,
+            13
+          ],
+          [
+            10,
+            13
+          ],
+          [
+            11,
+            13
           ],
           [
             12,
             13
+          ],
+          [
+            13,
+            13
+          ],
+          [
+            14,
+            13
+          ],
+          [
+            15,
+            13
+          ],
+          [
+            16,
+            13
+          ],
+          [
+            24,
+            13
+          ],
+          [
+            25,
+            13
+          ],
+          [
+            26,
+            13
+          ],
+          [
+            5,
+            14
+          ],
+          [
+            6,
+            14
+          ],
+          [
+            7,
+            14
+          ],
+          [
+            8,
+            14
+          ],
+          [
+            9,
+            14
+          ],
+          [
+            10,
+            14
+          ],
+          [
+            11,
+            14
+          ],
+          [
+            12,
+            14
+          ],
+          [
+            13,
+            14
+          ],
+          [
+            14,
+            14
+          ],
+          [
+            15,
+            14
+          ],
+          [
+            16,
+            14
+          ],
+          [
+            17,
+            14
+          ],
+          [
+            18,
+            14
+          ],
+          [
+            19,
+            14
+          ],
+          [
+            20,
+            14
+          ],
+          [
+            21,
+            14
+          ],
+          [
+            22,
+            14
+          ],
+          [
+            23,
+            14
+          ],
+          [
+            24,
+            14
+          ],
+          [
+            25,
+            14
+          ],
+          [
+            26,
+            14
+          ],
+          [
+            5,
+            15
+          ],
+          [
+            6,
+            15
+          ],
+          [
+            7,
+            15
+          ],
+          [
+            8,
+            15
+          ],
+          [
+            9,
+            15
+          ],
+          [
+            10,
+            15
+          ],
+          [
+            11,
+            15
+          ],
+          [
+            12,
+            15
+          ],
+          [
+            13,
+            15
+          ],
+          [
+            14,
+            15
+          ],
+          [
+            15,
+            15
+          ],
+          [
+            16,
+            15
+          ],
+          [
+            17,
+            15
+          ],
+          [
+            18,
+            15
+          ],
+          [
+            19,
+            15
+          ],
+          [
+            20,
+            15
+          ],
+          [
+            21,
+            15
+          ],
+          [
+            22,
+            15
+          ],
+          [
+            23,
+            15
+          ],
+          [
+            24,
+            15
+          ],
+          [
+            25,
+            15
+          ],
+          [
+            26,
+            15
+          ],
+          [
+            5,
+            16
+          ],
+          [
+            6,
+            16
+          ],
+          [
+            7,
+            16
+          ],
+          [
+            8,
+            16
+          ],
+          [
+            9,
+            16
+          ],
+          [
+            10,
+            16
+          ],
+          [
+            11,
+            16
+          ],
+          [
+            12,
+            16
+          ],
+          [
+            13,
+            16
+          ],
+          [
+            14,
+            16
+          ],
+          [
+            15,
+            16
+          ],
+          [
+            16,
+            16
+          ],
+          [
+            17,
+            16
+          ],
+          [
+            18,
+            16
+          ],
+          [
+            19,
+            16
+          ],
+          [
+            20,
+            16
+          ],
+          [
+            21,
+            16
+          ],
+          [
+            22,
+            16
+          ],
+          [
+            23,
+            16
+          ],
+          [
+            24,
+            16
+          ],
+          [
+            25,
+            16
+          ],
+          [
+            26,
+            16
+          ],
+          [
+            5,
+            17
+          ],
+          [
+            6,
+            17
+          ],
+          [
+            7,
+            17
+          ],
+          [
+            8,
+            17
+          ],
+          [
+            9,
+            17
+          ],
+          [
+            10,
+            17
+          ],
+          [
+            11,
+            17
+          ],
+          [
+            12,
+            17
+          ],
+          [
+            13,
+            17
+          ],
+          [
+            14,
+            17
+          ],
+          [
+            15,
+            17
+          ],
+          [
+            16,
+            17
+          ],
+          [
+            24,
+            17
+          ],
+          [
+            25,
+            17
+          ],
+          [
+            26,
+            17
+          ],
+          [
+            7,
+            18
+          ],
+          [
+            8,
+            18
+          ],
+          [
+            9,
+            18
+          ],
+          [
+            10,
+            18
+          ],
+          [
+            11,
+            18
+          ],
+          [
+            12,
+            18
+          ],
+          [
+            13,
+            18
+          ],
+          [
+            14,
+            18
+          ],
+          [
+            15,
+            18
+          ],
+          [
+            16,
+            18
+          ],
+          [
+            17,
+            18
+          ],
+          [
+            18,
+            18
+          ],
+          [
+            24,
+            18
+          ],
+          [
+            25,
+            18
+          ],
+          [
+            26,
+            18
+          ],
+          [
+            29,
+            18
+          ],
+          [
+            30,
+            18
+          ],
+          [
+            31,
+            18
+          ],
+          [
+            32,
+            18
+          ],
+          [
+            33,
+            18
+          ],
+          [
+            34,
+            18
+          ],
+          [
+            35,
+            18
+          ],
+          [
+            36,
+            18
+          ],
+          [
+            7,
+            19
+          ],
+          [
+            8,
+            19
+          ],
+          [
+            9,
+            19
+          ],
+          [
+            10,
+            19
+          ],
+          [
+            11,
+            19
+          ],
+          [
+            12,
+            19
+          ],
+          [
+            13,
+            19
+          ],
+          [
+            14,
+            19
+          ],
+          [
+            15,
+            19
+          ],
+          [
+            16,
+            19
+          ],
+          [
+            17,
+            19
+          ],
+          [
+            18,
+            19
+          ],
+          [
+            24,
+            19
+          ],
+          [
+            25,
+            19
+          ],
+          [
+            26,
+            19
+          ],
+          [
+            29,
+            19
+          ],
+          [
+            30,
+            19
+          ],
+          [
+            31,
+            19
+          ],
+          [
+            32,
+            19
+          ],
+          [
+            33,
+            19
+          ],
+          [
+            34,
+            19
+          ],
+          [
+            35,
+            19
+          ],
+          [
+            36,
+            19
+          ],
+          [
+            3,
+            20
+          ],
+          [
+            4,
+            20
+          ],
+          [
+            5,
+            20
+          ],
+          [
+            6,
+            20
+          ],
+          [
+            7,
+            20
+          ],
+          [
+            8,
+            20
+          ],
+          [
+            9,
+            20
+          ],
+          [
+            10,
+            20
+          ],
+          [
+            11,
+            20
+          ],
+          [
+            12,
+            20
+          ],
+          [
+            13,
+            20
+          ],
+          [
+            14,
+            20
+          ],
+          [
+            15,
+            20
+          ],
+          [
+            16,
+            20
+          ],
+          [
+            17,
+            20
+          ],
+          [
+            18,
+            20
+          ],
+          [
+            21,
+            20
+          ],
+          [
+            22,
+            20
+          ],
+          [
+            23,
+            20
+          ],
+          [
+            24,
+            20
+          ],
+          [
+            25,
+            20
+          ],
+          [
+            26,
+            20
+          ],
+          [
+            27,
+            20
+          ],
+          [
+            28,
+            20
+          ],
+          [
+            29,
+            20
+          ],
+          [
+            30,
+            20
+          ],
+          [
+            31,
+            20
+          ],
+          [
+            32,
+            20
+          ],
+          [
+            33,
+            20
+          ],
+          [
+            34,
+            20
+          ],
+          [
+            35,
+            20
+          ],
+          [
+            36,
+            20
+          ],
+          [
+            3,
+            21
+          ],
+          [
+            4,
+            21
+          ],
+          [
+            5,
+            21
+          ],
+          [
+            6,
+            21
+          ],
+          [
+            7,
+            21
+          ],
+          [
+            8,
+            21
+          ],
+          [
+            9,
+            21
+          ],
+          [
+            10,
+            21
+          ],
+          [
+            11,
+            21
+          ],
+          [
+            12,
+            21
+          ],
+          [
+            13,
+            21
+          ],
+          [
+            14,
+            21
+          ],
+          [
+            15,
+            21
+          ],
+          [
+            16,
+            21
+          ],
+          [
+            17,
+            21
+          ],
+          [
+            18,
+            21
+          ],
+          [
+            19,
+            21
+          ],
+          [
+            20,
+            21
+          ],
+          [
+            21,
+            21
+          ],
+          [
+            22,
+            21
+          ],
+          [
+            23,
+            21
+          ],
+          [
+            24,
+            21
+          ],
+          [
+            25,
+            21
+          ],
+          [
+            26,
+            21
+          ],
+          [
+            27,
+            21
+          ],
+          [
+            28,
+            21
+          ],
+          [
+            29,
+            21
+          ],
+          [
+            30,
+            21
+          ],
+          [
+            31,
+            21
+          ],
+          [
+            32,
+            21
+          ],
+          [
+            33,
+            21
+          ],
+          [
+            34,
+            21
+          ],
+          [
+            35,
+            21
+          ],
+          [
+            36,
+            21
+          ],
+          [
+            3,
+            22
+          ],
+          [
+            4,
+            22
+          ],
+          [
+            5,
+            22
+          ],
+          [
+            6,
+            22
+          ],
+          [
+            7,
+            22
+          ],
+          [
+            8,
+            22
+          ],
+          [
+            9,
+            22
+          ],
+          [
+            10,
+            22
+          ],
+          [
+            11,
+            22
+          ],
+          [
+            12,
+            22
+          ],
+          [
+            13,
+            22
+          ],
+          [
+            14,
+            22
+          ],
+          [
+            15,
+            22
+          ],
+          [
+            16,
+            22
+          ],
+          [
+            17,
+            22
+          ],
+          [
+            18,
+            22
+          ],
+          [
+            19,
+            22
+          ],
+          [
+            20,
+            22
+          ],
+          [
+            21,
+            22
+          ],
+          [
+            22,
+            22
+          ],
+          [
+            23,
+            22
+          ],
+          [
+            24,
+            22
+          ],
+          [
+            25,
+            22
+          ],
+          [
+            26,
+            22
+          ],
+          [
+            27,
+            22
+          ],
+          [
+            28,
+            22
+          ],
+          [
+            29,
+            22
+          ],
+          [
+            30,
+            22
+          ],
+          [
+            31,
+            22
+          ],
+          [
+            32,
+            22
+          ],
+          [
+            33,
+            22
+          ],
+          [
+            34,
+            22
+          ],
+          [
+            35,
+            22
+          ],
+          [
+            36,
+            22
+          ],
+          [
+            3,
+            23
+          ],
+          [
+            4,
+            23
+          ],
+          [
+            5,
+            23
+          ],
+          [
+            6,
+            23
+          ],
+          [
+            7,
+            23
+          ],
+          [
+            8,
+            23
+          ],
+          [
+            9,
+            23
+          ],
+          [
+            10,
+            23
+          ],
+          [
+            11,
+            23
+          ],
+          [
+            12,
+            23
+          ],
+          [
+            13,
+            23
+          ],
+          [
+            14,
+            23
+          ],
+          [
+            15,
+            23
+          ],
+          [
+            16,
+            23
+          ],
+          [
+            17,
+            23
+          ],
+          [
+            18,
+            23
+          ],
+          [
+            19,
+            23
+          ],
+          [
+            20,
+            23
+          ],
+          [
+            21,
+            23
+          ],
+          [
+            22,
+            23
+          ],
+          [
+            23,
+            23
+          ],
+          [
+            24,
+            23
+          ],
+          [
+            25,
+            23
+          ],
+          [
+            26,
+            23
+          ],
+          [
+            27,
+            23
+          ],
+          [
+            28,
+            23
+          ],
+          [
+            29,
+            23
+          ],
+          [
+            30,
+            23
+          ],
+          [
+            31,
+            23
+          ],
+          [
+            32,
+            23
+          ],
+          [
+            33,
+            23
+          ],
+          [
+            34,
+            23
+          ],
+          [
+            35,
+            23
+          ],
+          [
+            36,
+            23
+          ],
+          [
+            3,
+            24
+          ],
+          [
+            4,
+            24
+          ],
+          [
+            5,
+            24
+          ],
+          [
+            6,
+            24
+          ],
+          [
+            7,
+            24
+          ],
+          [
+            8,
+            24
+          ],
+          [
+            9,
+            24
+          ],
+          [
+            10,
+            24
+          ],
+          [
+            11,
+            24
+          ],
+          [
+            12,
+            24
+          ],
+          [
+            13,
+            24
+          ],
+          [
+            14,
+            24
+          ],
+          [
+            15,
+            24
+          ],
+          [
+            16,
+            24
+          ],
+          [
+            17,
+            24
+          ],
+          [
+            18,
+            24
+          ],
+          [
+            21,
+            24
+          ],
+          [
+            22,
+            24
+          ],
+          [
+            23,
+            24
+          ],
+          [
+            24,
+            24
+          ],
+          [
+            25,
+            24
+          ],
+          [
+            26,
+            24
+          ],
+          [
+            27,
+            24
+          ],
+          [
+            28,
+            24
+          ],
+          [
+            29,
+            24
+          ],
+          [
+            30,
+            24
+          ],
+          [
+            31,
+            24
+          ],
+          [
+            32,
+            24
+          ],
+          [
+            33,
+            24
+          ],
+          [
+            34,
+            24
+          ],
+          [
+            35,
+            24
+          ],
+          [
+            36,
+            24
+          ],
+          [
+            7,
+            25
+          ],
+          [
+            8,
+            25
+          ],
+          [
+            9,
+            25
+          ],
+          [
+            10,
+            25
+          ],
+          [
+            11,
+            25
+          ],
+          [
+            12,
+            25
+          ],
+          [
+            13,
+            25
+          ],
+          [
+            14,
+            25
+          ],
+          [
+            15,
+            25
+          ],
+          [
+            16,
+            25
+          ],
+          [
+            17,
+            25
+          ],
+          [
+            18,
+            25
+          ],
+          [
+            21,
+            25
+          ],
+          [
+            22,
+            25
+          ],
+          [
+            23,
+            25
+          ],
+          [
+            24,
+            25
+          ],
+          [
+            25,
+            25
+          ],
+          [
+            26,
+            25
+          ],
+          [
+            27,
+            25
+          ],
+          [
+            28,
+            25
+          ],
+          [
+            29,
+            25
+          ],
+          [
+            30,
+            25
+          ],
+          [
+            31,
+            25
+          ],
+          [
+            32,
+            25
+          ],
+          [
+            33,
+            25
+          ],
+          [
+            34,
+            25
+          ],
+          [
+            35,
+            25
+          ],
+          [
+            36,
+            25
+          ],
+          [
+            21,
+            26
+          ],
+          [
+            22,
+            26
+          ],
+          [
+            23,
+            26
+          ],
+          [
+            24,
+            26
+          ],
+          [
+            25,
+            26
+          ],
+          [
+            26,
+            26
+          ],
+          [
+            27,
+            26
+          ],
+          [
+            28,
+            26
+          ],
+          [
+            29,
+            26
+          ],
+          [
+            30,
+            26
+          ],
+          [
+            31,
+            26
+          ],
+          [
+            32,
+            26
+          ],
+          [
+            33,
+            26
+          ],
+          [
+            34,
+            26
+          ],
+          [
+            35,
+            26
+          ],
+          [
+            36,
+            26
+          ],
+          [
+            21,
+            27
+          ],
+          [
+            22,
+            27
+          ],
+          [
+            23,
+            27
+          ],
+          [
+            24,
+            27
+          ],
+          [
+            25,
+            27
+          ],
+          [
+            26,
+            27
+          ],
+          [
+            27,
+            27
+          ],
+          [
+            28,
+            27
+          ],
+          [
+            29,
+            27
+          ],
+          [
+            21,
+            28
+          ],
+          [
+            22,
+            28
+          ],
+          [
+            23,
+            28
+          ],
+          [
+            24,
+            28
+          ],
+          [
+            25,
+            28
+          ],
+          [
+            26,
+            28
+          ],
+          [
+            27,
+            28
+          ],
+          [
+            28,
+            28
+          ],
+          [
+            29,
+            28
+          ]
+        ],
+        "opened_chests": [
+          [
+            25,
+            7
+          ],
+          [
+            8,
+            15
+          ],
+          [
+            13,
+            16
+          ],
+          [
+            5,
+            22
+          ],
+          [
+            27,
+            23
+          ]
+        ],
+        "trap_states": [
+          [
+            10,
+            11,
+            true,
+            false,
+            true
+          ],
+          [
+            29,
+            11,
+            true,
+            false,
+            true
+          ],
+          [
+            22,
+            15,
+            true,
+            false,
+            true
+          ],
+          [
+            25,
+            15,
+            true,
+            false,
+            true
+          ],
+          [
+            15,
+            21,
+            true,
+            false,
+            true
+          ],
+          [
+            27,
+            24,
+            true,
+            false,
+            true
+          ],
+          [
+            31,
+            25,
+            true,
+            false,
+            true
           ]
         ],
         "dead_enemies": [
           [
+            27,
+            8
+          ],
+          [
+            12,
+            20
+          ],
+          [
+            25,
+            17
+          ],
+          [
+            19,
+            8
+          ],
+          [
+            15,
+            21
+          ],
+          [
             18,
             8
+          ],
+          [
+            25,
+            14
+          ],
+          [
+            13,
+            12
+          ],
+          [
+            18,
+            6
+          ]
+        ]
+      },
+      "4": {
+        "discovered": [
+          [
+            23,
+            2
+          ],
+          [
+            24,
+            2
+          ],
+          [
+            25,
+            2
+          ],
+          [
+            26,
+            2
+          ],
+          [
+            27,
+            2
+          ],
+          [
+            28,
+            2
+          ],
+          [
+            29,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            3
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            5,
+            3
+          ],
+          [
+            6,
+            3
+          ],
+          [
+            7,
+            3
+          ],
+          [
+            9,
+            3
+          ],
+          [
+            10,
+            3
+          ],
+          [
+            11,
+            3
+          ],
+          [
+            12,
+            3
+          ],
+          [
+            13,
+            3
+          ],
+          [
+            14,
+            3
+          ],
+          [
+            15,
+            3
+          ],
+          [
+            16,
+            3
+          ],
+          [
+            23,
+            3
+          ],
+          [
+            24,
+            3
+          ],
+          [
+            25,
+            3
+          ],
+          [
+            26,
+            3
+          ],
+          [
+            27,
+            3
+          ],
+          [
+            28,
+            3
+          ],
+          [
+            29,
+            3
+          ],
+          [
+            2,
+            4
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            4
+          ],
+          [
+            5,
+            4
+          ],
+          [
+            6,
+            4
+          ],
+          [
+            7,
+            4
+          ],
+          [
+            9,
+            4
+          ],
+          [
+            10,
+            4
+          ],
+          [
+            11,
+            4
+          ],
+          [
+            12,
+            4
+          ],
+          [
+            13,
+            4
+          ],
+          [
+            14,
+            4
+          ],
+          [
+            15,
+            4
+          ],
+          [
+            16,
+            4
+          ],
+          [
+            23,
+            4
+          ],
+          [
+            24,
+            4
+          ],
+          [
+            25,
+            4
+          ],
+          [
+            26,
+            4
+          ],
+          [
+            27,
+            4
+          ],
+          [
+            28,
+            4
+          ],
+          [
+            29,
+            4
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            4,
+            5
+          ],
+          [
+            5,
+            5
+          ],
+          [
+            6,
+            5
+          ],
+          [
+            7,
+            5
+          ],
+          [
+            9,
+            5
+          ],
+          [
+            10,
+            5
+          ],
+          [
+            11,
+            5
+          ],
+          [
+            12,
+            5
+          ],
+          [
+            13,
+            5
+          ],
+          [
+            14,
+            5
+          ],
+          [
+            15,
+            5
+          ],
+          [
+            16,
+            5
+          ],
+          [
+            23,
+            5
+          ],
+          [
+            24,
+            5
+          ],
+          [
+            25,
+            5
+          ],
+          [
+            26,
+            5
+          ],
+          [
+            27,
+            5
+          ],
+          [
+            28,
+            5
+          ],
+          [
+            29,
+            5
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            3,
+            6
+          ],
+          [
+            4,
+            6
+          ],
+          [
+            5,
+            6
+          ],
+          [
+            6,
+            6
+          ],
+          [
+            7,
+            6
+          ],
+          [
+            9,
+            6
+          ],
+          [
+            10,
+            6
+          ],
+          [
+            11,
+            6
+          ],
+          [
+            12,
+            6
+          ],
+          [
+            13,
+            6
+          ],
+          [
+            14,
+            6
+          ],
+          [
+            15,
+            6
+          ],
+          [
+            16,
+            6
+          ],
+          [
+            23,
+            6
+          ],
+          [
+            24,
+            6
+          ],
+          [
+            25,
+            6
+          ],
+          [
+            26,
+            6
+          ],
+          [
+            27,
+            6
+          ],
+          [
+            28,
+            6
+          ],
+          [
+            29,
+            6
+          ],
+          [
+            2,
+            7
+          ],
+          [
+            3,
+            7
+          ],
+          [
+            4,
+            7
+          ],
+          [
+            5,
+            7
+          ],
+          [
+            6,
+            7
+          ],
+          [
+            7,
+            7
+          ],
+          [
+            9,
+            7
+          ],
+          [
+            10,
+            7
+          ],
+          [
+            11,
+            7
+          ],
+          [
+            12,
+            7
+          ],
+          [
+            13,
+            7
+          ],
+          [
+            14,
+            7
+          ],
+          [
+            15,
+            7
+          ],
+          [
+            16,
+            7
+          ],
+          [
+            17,
+            7
+          ],
+          [
+            18,
+            7
+          ],
+          [
+            19,
+            7
+          ],
+          [
+            20,
+            7
+          ],
+          [
+            21,
+            7
+          ],
+          [
+            22,
+            7
+          ],
+          [
+            23,
+            7
+          ],
+          [
+            24,
+            7
+          ],
+          [
+            25,
+            7
+          ],
+          [
+            26,
+            7
+          ],
+          [
+            27,
+            7
+          ],
+          [
+            28,
+            7
+          ],
+          [
+            29,
+            7
+          ],
+          [
+            1,
+            8
+          ],
+          [
+            2,
+            8
+          ],
+          [
+            3,
+            8
+          ],
+          [
+            4,
+            8
+          ],
+          [
+            5,
+            8
+          ],
+          [
+            6,
+            8
+          ],
+          [
+            7,
+            8
+          ],
+          [
+            8,
+            8
+          ],
+          [
+            9,
+            8
+          ],
+          [
+            10,
+            8
+          ],
+          [
+            11,
+            8
+          ],
+          [
+            12,
+            8
+          ],
+          [
+            13,
+            8
+          ],
+          [
+            14,
+            8
+          ],
+          [
+            15,
+            8
+          ],
+          [
+            16,
+            8
+          ],
+          [
+            17,
+            8
+          ],
+          [
+            18,
+            8
+          ],
+          [
+            19,
+            8
+          ],
+          [
+            20,
+            8
+          ],
+          [
+            21,
+            8
+          ],
+          [
+            22,
+            8
+          ],
+          [
+            23,
+            8
+          ],
+          [
+            24,
+            8
+          ],
+          [
+            25,
+            8
+          ],
+          [
+            26,
+            8
+          ],
+          [
+            27,
+            8
+          ],
+          [
+            28,
+            8
+          ],
+          [
+            1,
+            9
+          ],
+          [
+            2,
+            9
+          ],
+          [
+            3,
+            9
+          ],
+          [
+            4,
+            9
+          ],
+          [
+            5,
+            9
+          ],
+          [
+            6,
+            9
+          ],
+          [
+            7,
+            9
+          ],
+          [
+            8,
+            9
+          ],
+          [
+            9,
+            9
+          ],
+          [
+            10,
+            9
+          ],
+          [
+            11,
+            9
+          ],
+          [
+            12,
+            9
+          ],
+          [
+            13,
+            9
+          ],
+          [
+            14,
+            9
+          ],
+          [
+            15,
+            9
+          ],
+          [
+            16,
+            9
           ],
           [
             17,
             9
           ],
           [
+            18,
+            9
+          ],
+          [
+            19,
+            9
+          ],
+          [
+            20,
+            9
+          ],
+          [
+            21,
+            9
+          ],
+          [
+            22,
+            9
+          ],
+          [
+            23,
+            9
+          ],
+          [
+            24,
+            9
+          ],
+          [
+            25,
+            9
+          ],
+          [
+            26,
+            9
+          ],
+          [
+            27,
+            9
+          ],
+          [
+            1,
+            10
+          ],
+          [
+            2,
+            10
+          ],
+          [
+            3,
+            10
+          ],
+          [
+            4,
+            10
+          ],
+          [
+            5,
+            10
+          ],
+          [
+            6,
+            10
+          ],
+          [
+            7,
+            10
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            9,
+            10
+          ],
+          [
+            10,
+            10
+          ],
+          [
+            11,
+            10
+          ],
+          [
+            12,
+            10
+          ],
+          [
+            13,
+            10
+          ],
+          [
+            14,
+            10
+          ],
+          [
+            15,
+            10
+          ],
+          [
+            16,
+            10
+          ],
+          [
+            18,
+            10
+          ],
+          [
+            19,
+            10
+          ],
+          [
+            20,
+            10
+          ],
+          [
+            21,
+            10
+          ],
+          [
+            22,
+            10
+          ],
+          [
+            23,
+            10
+          ],
+          [
+            24,
+            10
+          ],
+          [
+            25,
+            10
+          ],
+          [
+            26,
+            10
+          ],
+          [
+            27,
+            10
+          ],
+          [
+            1,
+            11
+          ],
+          [
+            2,
+            11
+          ],
+          [
+            3,
+            11
+          ],
+          [
+            4,
+            11
+          ],
+          [
+            5,
+            11
+          ],
+          [
+            6,
+            11
+          ],
+          [
+            7,
+            11
+          ],
+          [
+            8,
+            11
+          ],
+          [
+            9,
+            11
+          ],
+          [
+            10,
+            11
+          ],
+          [
+            11,
+            11
+          ],
+          [
+            12,
+            11
+          ],
+          [
+            13,
+            11
+          ],
+          [
+            14,
+            11
+          ],
+          [
+            15,
+            11
+          ],
+          [
+            16,
+            11
+          ],
+          [
             17,
+            11
+          ],
+          [
+            18,
+            11
+          ],
+          [
+            19,
+            11
+          ],
+          [
+            20,
+            11
+          ],
+          [
+            21,
+            11
+          ],
+          [
+            22,
+            11
+          ],
+          [
+            23,
+            11
+          ],
+          [
+            24,
+            11
+          ],
+          [
+            25,
+            11
+          ],
+          [
+            26,
+            11
+          ],
+          [
+            27,
+            11
+          ],
+          [
+            1,
+            12
+          ],
+          [
+            2,
+            12
+          ],
+          [
+            3,
+            12
+          ],
+          [
+            4,
+            12
+          ],
+          [
+            5,
+            12
+          ],
+          [
+            6,
+            12
+          ],
+          [
+            7,
+            12
+          ],
+          [
+            8,
+            12
+          ],
+          [
+            9,
+            12
+          ],
+          [
+            10,
+            12
+          ],
+          [
+            11,
+            12
+          ],
+          [
+            12,
+            12
+          ],
+          [
+            13,
+            12
+          ],
+          [
+            14,
+            12
+          ],
+          [
+            15,
+            12
+          ],
+          [
+            16,
+            12
+          ],
+          [
+            17,
+            12
+          ],
+          [
+            18,
+            12
+          ],
+          [
+            19,
+            12
+          ],
+          [
+            20,
+            12
+          ],
+          [
+            21,
+            12
+          ],
+          [
+            22,
+            12
+          ],
+          [
+            23,
+            12
+          ],
+          [
+            24,
+            12
+          ],
+          [
+            25,
+            12
+          ],
+          [
+            26,
+            12
+          ],
+          [
+            27,
+            12
+          ],
+          [
+            1,
+            13
+          ],
+          [
+            2,
+            13
+          ],
+          [
+            3,
+            13
+          ],
+          [
+            4,
+            13
+          ],
+          [
+            5,
+            13
+          ],
+          [
+            6,
+            13
+          ],
+          [
+            7,
+            13
+          ],
+          [
+            8,
+            13
+          ],
+          [
+            9,
+            13
+          ],
+          [
+            10,
+            13
+          ],
+          [
+            11,
+            13
+          ],
+          [
+            12,
+            13
+          ],
+          [
+            13,
+            13
+          ],
+          [
+            14,
+            13
+          ],
+          [
+            15,
+            13
+          ],
+          [
+            16,
+            13
+          ],
+          [
+            17,
+            13
+          ],
+          [
+            18,
+            13
+          ],
+          [
+            19,
+            13
+          ],
+          [
+            20,
+            13
+          ],
+          [
+            21,
+            13
+          ],
+          [
+            22,
+            13
+          ],
+          [
+            23,
+            13
+          ],
+          [
+            24,
+            13
+          ],
+          [
+            25,
+            13
+          ],
+          [
+            26,
+            13
+          ],
+          [
+            27,
+            13
+          ],
+          [
+            1,
+            14
+          ],
+          [
+            2,
+            14
+          ],
+          [
+            3,
+            14
+          ],
+          [
+            4,
+            14
+          ],
+          [
+            5,
+            14
+          ],
+          [
+            6,
+            14
+          ],
+          [
+            7,
+            14
+          ],
+          [
+            8,
+            14
+          ],
+          [
+            9,
+            14
+          ],
+          [
+            12,
+            14
+          ],
+          [
+            13,
+            14
+          ],
+          [
+            14,
+            14
+          ],
+          [
+            18,
+            14
+          ],
+          [
+            19,
+            14
+          ],
+          [
+            20,
+            14
+          ],
+          [
+            21,
+            14
+          ],
+          [
+            22,
+            14
+          ],
+          [
+            23,
+            14
+          ],
+          [
+            24,
+            14
+          ],
+          [
+            25,
+            14
+          ],
+          [
+            26,
+            14
+          ],
+          [
+            1,
+            15
+          ],
+          [
+            2,
+            15
+          ],
+          [
+            3,
+            15
+          ],
+          [
+            4,
+            15
+          ],
+          [
+            5,
+            15
+          ],
+          [
+            6,
+            15
+          ],
+          [
+            7,
+            15
+          ],
+          [
+            8,
+            15
+          ],
+          [
+            9,
+            15
+          ],
+          [
+            12,
+            15
+          ],
+          [
+            13,
+            15
+          ],
+          [
+            14,
+            15
+          ],
+          [
+            17,
+            15
+          ],
+          [
+            18,
+            15
+          ],
+          [
+            19,
+            15
+          ],
+          [
+            20,
+            15
+          ],
+          [
+            21,
+            15
+          ],
+          [
+            22,
+            15
+          ],
+          [
+            23,
+            15
+          ],
+          [
+            24,
+            15
+          ],
+          [
+            25,
+            15
+          ],
+          [
+            26,
+            15
+          ],
+          [
+            1,
+            16
+          ],
+          [
+            2,
+            16
+          ],
+          [
+            3,
+            16
+          ],
+          [
+            4,
+            16
+          ],
+          [
+            5,
+            16
+          ],
+          [
+            6,
+            16
+          ],
+          [
+            7,
+            16
+          ],
+          [
+            8,
+            16
+          ],
+          [
+            9,
+            16
+          ],
+          [
+            12,
+            16
+          ],
+          [
+            13,
+            16
+          ],
+          [
+            14,
+            16
+          ],
+          [
+            17,
+            16
+          ],
+          [
+            18,
+            16
+          ],
+          [
+            19,
+            16
+          ],
+          [
+            20,
+            16
+          ],
+          [
+            21,
+            16
+          ],
+          [
+            22,
+            16
+          ],
+          [
+            23,
+            16
+          ],
+          [
+            4,
+            17
+          ],
+          [
+            5,
+            17
+          ],
+          [
+            6,
+            17
+          ],
+          [
+            7,
+            17
+          ],
+          [
+            8,
+            17
+          ],
+          [
+            12,
+            17
+          ],
+          [
+            13,
+            17
+          ],
+          [
+            14,
+            17
+          ],
+          [
+            17,
+            17
+          ],
+          [
+            18,
+            17
+          ],
+          [
+            19,
+            17
+          ],
+          [
+            20,
+            17
+          ],
+          [
+            21,
+            17
+          ],
+          [
+            22,
+            17
+          ],
+          [
+            23,
+            17
+          ],
+          [
+            28,
+            17
+          ],
+          [
+            29,
+            17
+          ],
+          [
+            30,
+            17
+          ],
+          [
+            31,
+            17
+          ],
+          [
+            32,
+            17
+          ],
+          [
+            33,
+            17
+          ],
+          [
+            34,
+            17
+          ],
+          [
+            35,
+            17
+          ],
+          [
+            4,
+            18
+          ],
+          [
+            5,
+            18
+          ],
+          [
+            6,
+            18
+          ],
+          [
+            7,
+            18
+          ],
+          [
+            8,
+            18
+          ],
+          [
+            12,
+            18
+          ],
+          [
+            13,
+            18
+          ],
+          [
+            14,
+            18
+          ],
+          [
+            17,
+            18
+          ],
+          [
+            18,
+            18
+          ],
+          [
+            19,
+            18
+          ],
+          [
+            20,
+            18
+          ],
+          [
+            21,
+            18
+          ],
+          [
+            22,
+            18
+          ],
+          [
+            23,
+            18
+          ],
+          [
+            28,
+            18
+          ],
+          [
+            29,
+            18
+          ],
+          [
+            30,
+            18
+          ],
+          [
+            31,
+            18
+          ],
+          [
+            32,
+            18
+          ],
+          [
+            33,
+            18
+          ],
+          [
+            34,
+            18
+          ],
+          [
+            35,
+            18
+          ],
+          [
+            4,
+            19
+          ],
+          [
+            5,
+            19
+          ],
+          [
+            6,
+            19
+          ],
+          [
+            7,
+            19
+          ],
+          [
+            8,
+            19
+          ],
+          [
+            9,
+            19
+          ],
+          [
+            10,
+            19
+          ],
+          [
+            11,
+            19
+          ],
+          [
+            12,
+            19
+          ],
+          [
+            13,
+            19
+          ],
+          [
+            14,
+            19
+          ],
+          [
+            15,
+            19
+          ],
+          [
+            16,
+            19
+          ],
+          [
+            17,
+            19
+          ],
+          [
+            18,
+            19
+          ],
+          [
+            19,
+            19
+          ],
+          [
+            20,
+            19
+          ],
+          [
+            21,
+            19
+          ],
+          [
+            22,
+            19
+          ],
+          [
+            23,
+            19
+          ],
+          [
+            24,
+            19
+          ],
+          [
+            25,
+            19
+          ],
+          [
+            26,
+            19
+          ],
+          [
+            27,
+            19
+          ],
+          [
+            28,
+            19
+          ],
+          [
+            29,
+            19
+          ],
+          [
+            30,
+            19
+          ],
+          [
+            31,
+            19
+          ],
+          [
+            32,
+            19
+          ],
+          [
+            33,
+            19
+          ],
+          [
+            34,
+            19
+          ],
+          [
+            35,
+            19
+          ],
+          [
+            1,
+            20
+          ],
+          [
+            2,
+            20
+          ],
+          [
+            3,
+            20
+          ],
+          [
+            4,
+            20
+          ],
+          [
+            5,
+            20
+          ],
+          [
+            6,
+            20
+          ],
+          [
+            7,
+            20
+          ],
+          [
+            8,
+            20
+          ],
+          [
+            9,
+            20
+          ],
+          [
+            10,
+            20
+          ],
+          [
+            11,
+            20
+          ],
+          [
+            12,
+            20
+          ],
+          [
+            13,
+            20
+          ],
+          [
+            14,
+            20
+          ],
+          [
+            15,
+            20
+          ],
+          [
+            16,
+            20
+          ],
+          [
+            17,
+            20
+          ],
+          [
+            18,
+            20
+          ],
+          [
+            19,
+            20
+          ],
+          [
+            20,
+            20
+          ],
+          [
+            21,
+            20
+          ],
+          [
+            22,
+            20
+          ],
+          [
+            23,
+            20
+          ],
+          [
+            24,
+            20
+          ],
+          [
+            25,
+            20
+          ],
+          [
+            26,
+            20
+          ],
+          [
+            27,
+            20
+          ],
+          [
+            28,
+            20
+          ],
+          [
+            29,
+            20
+          ],
+          [
+            30,
+            20
+          ],
+          [
+            31,
+            20
+          ],
+          [
+            32,
+            20
+          ],
+          [
+            33,
+            20
+          ],
+          [
+            34,
+            20
+          ],
+          [
+            35,
+            20
+          ],
+          [
+            1,
+            21
+          ],
+          [
+            2,
+            21
+          ],
+          [
+            3,
+            21
+          ],
+          [
+            4,
+            21
+          ],
+          [
+            5,
+            21
+          ],
+          [
+            6,
+            21
+          ],
+          [
+            7,
+            21
+          ],
+          [
+            8,
+            21
+          ],
+          [
+            9,
+            21
+          ],
+          [
+            10,
+            21
+          ],
+          [
+            11,
+            21
+          ],
+          [
+            12,
+            21
+          ],
+          [
+            13,
+            21
+          ],
+          [
+            14,
+            21
+          ],
+          [
+            15,
+            21
+          ],
+          [
+            16,
+            21
+          ],
+          [
+            17,
+            21
+          ],
+          [
+            18,
+            21
+          ],
+          [
+            19,
+            21
+          ],
+          [
+            20,
+            21
+          ],
+          [
+            21,
+            21
+          ],
+          [
+            22,
+            21
+          ],
+          [
+            23,
+            21
+          ],
+          [
+            24,
+            21
+          ],
+          [
+            25,
+            21
+          ],
+          [
+            26,
+            21
+          ],
+          [
+            27,
+            21
+          ],
+          [
+            28,
+            21
+          ],
+          [
+            29,
+            21
+          ],
+          [
+            30,
+            21
+          ],
+          [
+            31,
+            21
+          ],
+          [
+            32,
+            21
+          ],
+          [
+            33,
+            21
+          ],
+          [
+            34,
+            21
+          ],
+          [
+            35,
+            21
+          ],
+          [
+            1,
+            22
+          ],
+          [
+            2,
+            22
+          ],
+          [
+            3,
+            22
+          ],
+          [
+            4,
+            22
+          ],
+          [
+            5,
+            22
+          ],
+          [
+            6,
+            22
+          ],
+          [
+            7,
+            22
+          ],
+          [
+            8,
+            22
+          ],
+          [
+            9,
+            22
+          ],
+          [
+            10,
+            22
+          ],
+          [
+            11,
+            22
+          ],
+          [
+            12,
+            22
+          ],
+          [
+            13,
+            22
+          ],
+          [
+            14,
+            22
+          ],
+          [
+            15,
+            22
+          ],
+          [
+            16,
+            22
+          ],
+          [
+            17,
+            22
+          ],
+          [
+            18,
+            22
+          ],
+          [
+            19,
+            22
+          ],
+          [
+            20,
+            22
+          ],
+          [
+            21,
+            22
+          ],
+          [
+            22,
+            22
+          ],
+          [
+            23,
+            22
+          ],
+          [
+            28,
+            22
+          ],
+          [
+            29,
+            22
+          ],
+          [
+            30,
+            22
+          ],
+          [
+            31,
+            22
+          ],
+          [
+            32,
+            22
+          ],
+          [
+            33,
+            22
+          ],
+          [
+            34,
+            22
+          ],
+          [
+            35,
+            22
+          ],
+          [
+            1,
+            23
+          ],
+          [
+            2,
+            23
+          ],
+          [
+            3,
+            23
+          ],
+          [
+            4,
+            23
+          ],
+          [
+            5,
+            23
+          ],
+          [
+            6,
+            23
+          ],
+          [
+            7,
+            23
+          ],
+          [
+            8,
+            23
+          ],
+          [
+            9,
+            23
+          ],
+          [
+            10,
+            23
+          ],
+          [
+            11,
+            23
+          ],
+          [
+            12,
+            23
+          ],
+          [
+            13,
+            23
+          ],
+          [
+            14,
+            23
+          ],
+          [
+            15,
+            23
+          ],
+          [
+            16,
+            23
+          ],
+          [
+            17,
+            23
+          ],
+          [
+            18,
+            23
+          ],
+          [
+            19,
+            23
+          ],
+          [
+            20,
+            23
+          ],
+          [
+            21,
+            23
+          ],
+          [
+            22,
+            23
+          ],
+          [
+            23,
+            23
+          ],
+          [
+            28,
+            23
+          ],
+          [
+            29,
+            23
+          ],
+          [
+            30,
+            23
+          ],
+          [
+            31,
+            23
+          ],
+          [
+            32,
+            23
+          ],
+          [
+            33,
+            23
+          ],
+          [
+            34,
+            23
+          ],
+          [
+            35,
+            23
+          ],
+          [
+            1,
+            24
+          ],
+          [
+            2,
+            24
+          ],
+          [
+            3,
+            24
+          ],
+          [
+            4,
+            24
+          ],
+          [
+            5,
+            24
+          ],
+          [
+            6,
+            24
+          ],
+          [
+            7,
+            24
+          ],
+          [
+            8,
+            24
+          ],
+          [
+            9,
+            24
+          ],
+          [
+            10,
+            24
+          ],
+          [
+            11,
+            24
+          ],
+          [
+            12,
+            24
+          ],
+          [
+            13,
+            24
+          ],
+          [
+            14,
+            24
+          ],
+          [
+            15,
+            24
+          ],
+          [
+            16,
+            24
+          ],
+          [
+            17,
+            24
+          ],
+          [
+            18,
+            24
+          ],
+          [
+            19,
+            24
+          ],
+          [
+            20,
+            24
+          ],
+          [
+            21,
+            24
+          ],
+          [
+            22,
+            24
+          ],
+          [
+            23,
+            24
+          ],
+          [
+            1,
+            25
+          ],
+          [
+            2,
+            25
+          ],
+          [
+            3,
+            25
+          ],
+          [
+            4,
+            25
+          ],
+          [
+            5,
+            25
+          ],
+          [
+            6,
+            25
+          ],
+          [
+            7,
+            25
+          ],
+          [
+            8,
+            25
+          ],
+          [
+            9,
+            25
+          ],
+          [
+            10,
+            25
+          ],
+          [
+            11,
+            25
+          ],
+          [
+            12,
+            25
+          ],
+          [
+            13,
+            25
+          ],
+          [
+            14,
+            25
+          ],
+          [
+            15,
+            25
+          ],
+          [
+            16,
+            25
+          ],
+          [
+            17,
+            25
+          ],
+          [
+            18,
+            25
+          ],
+          [
+            19,
+            25
+          ],
+          [
+            20,
+            25
+          ],
+          [
+            21,
+            25
+          ],
+          [
+            22,
+            25
+          ],
+          [
+            23,
+            25
+          ],
+          [
+            1,
+            26
+          ],
+          [
+            2,
+            26
+          ],
+          [
+            3,
+            26
+          ],
+          [
+            4,
+            26
+          ],
+          [
+            5,
+            26
+          ],
+          [
+            6,
+            26
+          ],
+          [
+            7,
+            26
+          ],
+          [
+            8,
+            26
+          ],
+          [
+            9,
+            26
+          ],
+          [
+            10,
+            26
+          ],
+          [
+            11,
+            26
+          ],
+          [
+            12,
+            26
+          ],
+          [
+            1,
+            27
+          ],
+          [
+            2,
+            27
+          ],
+          [
+            3,
+            27
+          ],
+          [
+            4,
+            27
+          ],
+          [
+            5,
+            27
+          ],
+          [
+            6,
+            27
+          ],
+          [
+            7,
+            27
+          ],
+          [
+            8,
+            27
+          ],
+          [
+            9,
+            27
+          ],
+          [
+            10,
+            27
+          ],
+          [
+            11,
+            27
+          ],
+          [
+            12,
+            27
+          ],
+          [
+            1,
+            28
+          ],
+          [
+            2,
+            28
+          ],
+          [
+            3,
+            28
+          ],
+          [
+            4,
+            28
+          ],
+          [
+            5,
+            28
+          ],
+          [
+            6,
+            28
+          ],
+          [
+            7,
+            28
+          ],
+          [
+            8,
+            28
+          ],
+          [
+            9,
+            28
+          ],
+          [
+            10,
+            28
+          ],
+          [
+            11,
+            28
+          ],
+          [
+            12,
+            28
+          ]
+        ],
+        "opened_chests": [
+          [
+            27,
+            4
+          ],
+          [
+            5,
+            6
+          ],
+          [
+            6,
+            14
+          ],
+          [
+            19,
+            17
+          ]
+        ],
+        "trap_states": [
+          [
+            26,
+            5,
+            false,
+            true,
+            false
+          ],
+          [
+            4,
+            9,
+            true,
+            false,
+            true
+          ],
+          [
+            2,
+            10,
+            true,
+            false,
+            true
+          ],
+          [
+            23,
+            11,
+            true,
+            false,
+            true
+          ],
+          [
+            22,
+            12,
+            false,
+            true,
+            false
+          ],
+          [
+            25,
+            13,
+            true,
+            false,
+            true
+          ],
+          [
+            4,
+            15,
+            true,
+            false,
+            true
+          ],
+          [
+            13,
+            17,
+            true,
+            false,
+            true
+          ],
+          [
+            5,
+            19,
+            true,
+            false,
+            true
+          ],
+          [
+            29,
+            20,
+            true,
+            false,
+            true
+          ],
+          [
+            3,
+            27,
+            true,
+            false,
+            true
+          ],
+          [
+            5,
+            27,
+            true,
+            false,
+            true
+          ]
+        ],
+        "dead_enemies": [
+          [
+            9,
+            26
+          ],
+          [
+            20,
+            23
+          ],
+          [
+            23,
+            20
+          ],
+          [
+            6,
+            20
+          ],
+          [
+            12,
             7
+          ],
+          [
+            3,
+            11
+          ],
+          [
+            17,
+            23
+          ],
+          [
+            5,
+            16
+          ],
+          [
+            5,
+            18
+          ],
+          [
+            4,
+            14
+          ],
+          [
+            10,
+            21
+          ],
+          [
+            12,
+            22
+          ]
+        ]
+      }
+    },
+    "sunken_crypt": {
+      "1": {
+        "discovered": [
+          [
+            28,
+            13
+          ],
+          [
+            27,
+            14
+          ],
+          [
+            28,
+            14
+          ],
+          [
+            29,
+            14
+          ],
+          [
+            24,
+            15
+          ],
+          [
+            25,
+            15
+          ],
+          [
+            26,
+            15
+          ],
+          [
+            27,
+            15
+          ],
+          [
+            28,
+            15
+          ],
+          [
+            29,
+            15
+          ],
+          [
+            30,
+            15
+          ],
+          [
+            31,
+            15
+          ],
+          [
+            24,
+            16
+          ],
+          [
+            25,
+            16
+          ],
+          [
+            26,
+            16
+          ],
+          [
+            27,
+            16
+          ],
+          [
+            28,
+            16
+          ],
+          [
+            29,
+            16
+          ],
+          [
+            30,
+            16
+          ],
+          [
+            31,
+            16
+          ],
+          [
+            24,
+            17
+          ],
+          [
+            25,
+            17
+          ],
+          [
+            26,
+            17
+          ],
+          [
+            27,
+            17
+          ],
+          [
+            28,
+            17
+          ],
+          [
+            29,
+            17
+          ],
+          [
+            30,
+            17
+          ],
+          [
+            31,
+            17
+          ],
+          [
+            24,
+            18
+          ],
+          [
+            25,
+            18
+          ],
+          [
+            26,
+            18
+          ],
+          [
+            27,
+            18
+          ],
+          [
+            28,
+            18
+          ],
+          [
+            29,
+            18
+          ],
+          [
+            30,
+            18
+          ],
+          [
+            31,
+            18
+          ],
+          [
+            24,
+            19
+          ],
+          [
+            25,
+            19
+          ],
+          [
+            26,
+            19
+          ],
+          [
+            27,
+            19
+          ],
+          [
+            28,
+            19
+          ],
+          [
+            29,
+            19
+          ],
+          [
+            30,
+            19
+          ],
+          [
+            31,
+            19
+          ],
+          [
+            24,
+            20
+          ],
+          [
+            25,
+            20
+          ],
+          [
+            26,
+            20
+          ],
+          [
+            27,
+            20
+          ],
+          [
+            28,
+            20
+          ],
+          [
+            29,
+            20
+          ],
+          [
+            30,
+            20
+          ],
+          [
+            31,
+            20
+          ],
+          [
+            24,
+            21
+          ],
+          [
+            25,
+            21
+          ],
+          [
+            26,
+            21
+          ],
+          [
+            27,
+            21
+          ],
+          [
+            28,
+            21
+          ],
+          [
+            29,
+            21
+          ],
+          [
+            30,
+            21
+          ],
+          [
+            31,
+            21
+          ],
+          [
+            24,
+            22
+          ],
+          [
+            25,
+            22
+          ],
+          [
+            26,
+            22
+          ],
+          [
+            27,
+            22
+          ],
+          [
+            28,
+            22
+          ],
+          [
+            29,
+            22
+          ],
+          [
+            30,
+            22
+          ],
+          [
+            31,
+            22
+          ],
+          [
+            24,
+            23
+          ],
+          [
+            25,
+            23
+          ],
+          [
+            26,
+            23
+          ],
+          [
+            27,
+            23
+          ],
+          [
+            28,
+            23
+          ],
+          [
+            29,
+            23
+          ],
+          [
+            30,
+            23
+          ],
+          [
+            31,
+            23
+          ],
+          [
+            24,
+            24
+          ],
+          [
+            25,
+            24
+          ],
+          [
+            26,
+            24
+          ],
+          [
+            27,
+            24
+          ],
+          [
+            28,
+            24
+          ],
+          [
+            29,
+            24
+          ],
+          [
+            30,
+            24
+          ],
+          [
+            31,
+            24
           ]
         ]
       }
     }
   },
   "dungeon_position": {
-    "dungeon_id": "ruins_ashenmoor",
-    "current_floor": 3,
-    "party_x": 18,
-    "party_y": 7
+    "dungeon_id": "sunken_crypt",
+    "current_floor": 1,
+    "party_x": 30,
+    "party_y": 16
   }
 }

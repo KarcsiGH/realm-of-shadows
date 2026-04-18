@@ -581,7 +581,12 @@ def draw_chest(surf, r, theme=None):
     band2_y = lid_y + lid_h * 2 // 5
     pygame.draw.rect(surf, IRON,   (lid_x, band2_y, lid_w, band_h), border_radius=1)
     pygame.draw.rect(surf, IRON_L, (lid_x, band2_y, lid_w, band_h), 1, border_radius=1)
-    pygame.draw.rect(surf, WOOD_D, (lid_x, lid_y, lid_w, lid_h), 2, border_radius=3)
+    # Outline only the rectangular bottom portion of the lid; the curved top
+    # gets its own arc outline on the next line. A rect outline around the full
+    # lid bounds would draw a spurious horizontal bar above the ellipse.
+    pygame.draw.rect(surf, WOOD_D,
+                     (lid_x, lid_y + lid_h // 3, lid_w, lid_h * 2 // 3),
+                     2, border_radius=3)
     pygame.draw.arc(surf, WOOD_L,
                     (lid_x + 3, lid_y + 3, lid_w - 6, lid_h * 2 // 3 - 4), 0, math.pi, 2)
 
