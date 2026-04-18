@@ -3196,6 +3196,70 @@ class CombatState:
             )
             used = True
 
+        # ── Holy Water Flask: damages undead enemies ──────────────
+        elif item.get("damage_undead"):
+            dmg = item["damage_undead"]
+            # If target provided and is undead, full damage; otherwise splash all undead
+            tgt = target if target else None
+            hit_any = False
+            if tgt and "undead" in tgt.get("tags", []) and tgt["alive"]:
+                tgt["hp"] = max(0, tgt["hp"] - dmg)
+                if tgt["hp"] <= 0:
+                    tgt["alive"] = False
+                msgs.append(f"{actor['name']} throws {name} at {tgt['name']}: {dmg} divine damage!")
+                hit_any = True
+            else:
+                # Splash all undead enemies
+                for e in self.enemies:
+                    if e["alive"] and "undead" in e.get("tags", []):
+                        e["hp"] = max(0, e["hp"] - dmg)
+                        if e["hp"] <= 0:
+                            e["alive"] = False
+                        msgs.append(f"  {e['name']}: -{dmg} HP")
+                        hit_any = True
+                if hit_any:
+                    msgs.insert(0, f"{actor['name']} uses {name}: divine radiance bathes the undead!")
+                else:
+                    msgs.append(f"{actor['name']} uses {name}, but there are no undead here.")
+            used = True
+
+        # ── Scroll of Fireball: AOE fire damage to all enemies ────
+        elif item.get("effect") == "fireball" or "Fireball" in name:
+            import random as _rand
+            base = 40
+            hit_count = 0
+            for e in self.enemies:
+                if e["alive"]:
+                    dmg = base + _rand.randint(-5, 10)
+                    e["hp"] = max(0, e["hp"] - dmg)
+                    if e["hp"] <= 0:
+                        e["alive"] = False
+                    msgs.append(f"  {e['name']}: -{dmg} fire damage")
+                    hit_count += 1
+            if hit_count:
+                msgs.insert(0, f"{actor['name']} reads {name}: flames erupt across the battlefield!")
+            else:
+                msgs.append(f"{actor['name']} reads {name}, but there are no enemies to strike.")
+            used = True
+
+        # ── Scroll of Protection: party damage reduction for 3 turns ──
+        elif item.get("effect") == "protection":
+            from core.combat_engine import apply_status_effect as _ase
+            for p in self.players:
+                if p["alive"]:
+                    _ase(p, "Protection", 3, 1.0)
+            msgs.append(f"{actor['name']} reads {name}: the party is warded against harm!")
+            used = True
+
+        # ── Smoke Bomb: enemy accuracy down for 2 turns ──────────
+        elif "Smoke Bomb" in name or item.get("effect") == "smoke":
+            from core.combat_engine import apply_status_effect as _ase
+            for e in self.enemies:
+                if e["alive"]:
+                    _ase(e, "Blinded", 2, 1.0)
+            msgs.append(f"{actor['name']} hurls {name}: enemies are blinded by thick smoke!")
+            used = True
+
         if used and char_ref:
             # Consume item (reduce stack or remove)
             stack = item.get("stack", 1)

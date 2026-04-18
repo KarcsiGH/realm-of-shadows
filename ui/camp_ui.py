@@ -2826,8 +2826,8 @@ class CampUI:
             self._msg("No unidentified items to identify.", ORANGE)
             return
 
-        # Healing items
-        heal = item.get("heal", 0)
+        # Healing items — accept both "heal" and "heal_amount" field conventions
+        heal = item.get("heal", item.get("heal_amount", 0))
         if heal > 0:
             max_res = get_all_resources(char.class_name, char.stats, char.level)
             max_hp = max_res.get("HP", 1)
@@ -2872,6 +2872,65 @@ class CampUI:
             else:
                 self._msg(f"{spell_name}: combat spell — cannot use outside battle.", ORANGE)
                 return
+        # ── Effect-based scrolls (Fireball, Protection, Recall) ──
+        elif item.get("subtype") == "scroll" and item.get("effect"):
+            _eff = item["effect"]
+            if _eff == "fireball":
+                # Out-of-combat fireball scrolls can't meaningfully target enemies here
+                self._msg(f"{name}: must be used in combat.", ORANGE)
+                return
+            elif _eff == "protection":
+                # Apply a party-wide protection buff (damage reduction) for 3 turns in next combat
+                from core.status_effects import get_status_effects as _gse
+                for member in self.party:
+                    effects = _gse(member)
+                    # avoid stacking
+                    if not any(s.get("name") == "Protection" for s in effects):
+                        effects.append({"name": "Protection", "duration": 3,
+                                        "type": "combat_status", "defense_bonus": 0.25})
+                self._msg(f"{name}: party gains Protection for their next battle.", HEAL_COL)
+            elif _eff == "recall":
+                # Dungeon-only: teleport party back to overland. In camp this is ambiguous.
+                self._msg(f"{name}: recall scrolls work only from within a dungeon.", ORANGE)
+                return
+            else:
+                self._msg(f"{name}: unknown scroll effect '{_eff}'.", ORANGE)
+                return
+        # ── Spell Tome: teach a spell to a compatible caster ──
+        elif item.get("teaches_spell"):
+            spell_name = item["teaches_spell"]
+            # Check if char can learn this spell
+            from core.abilities import CLASS_ABILITIES as _core_abs
+            target_spell = None
+            for cls_abs in _core_abs.values():
+                for ab in cls_abs:
+                    if ab.get("name") == spell_name:
+                        target_spell = dict(ab)
+                        break
+                if target_spell:
+                    break
+            if not target_spell:
+                self._msg(f"Unknown spell: {spell_name}", ORANGE)
+                return
+            # Check if character already knows this spell
+            has_spell = any(a.get("name") == spell_name for a in getattr(char, "abilities", []))
+            if has_spell:
+                self._msg(f"{char.name} already knows {spell_name}.", ORANGE)
+                return
+            # Add to character's abilities list
+            if not hasattr(char, "abilities"):
+                char.abilities = []
+            char.abilities.append(target_spell)
+            self._msg(f"{char.name} learns {spell_name}!", HEAL_COL)
+        # ── Gold pouches ──
+        elif item.get("gold_value") or item.get("bonus_gold"):
+            gold = item.get("gold_value", 0) + item.get("bonus_gold", 0)
+            char.gold += gold
+            self._msg(f"{char.name} finds {gold}g!", GOLD)
+        # ── Holy Water: usable in combat only (to damage undead) ──
+        elif item.get("damage_undead"):
+            self._msg(f"{name}: useful only against undead in battle.", ORANGE)
+            return
         # ── Cure (items with "cures" list) ──
         elif item.get("cures"):
             from core.status_effects import get_status_effects, remove_status
