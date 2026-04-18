@@ -159,6 +159,10 @@ def deserialize_character(data):
                 # Use full CLASS_ABILITIES dict as base; overlay saved cost/resource in case
                 # the player had a modified version, but always trust the full dict for type/buff/self_only
                 full = dict(lookup[a["name"]])
+                # Preserve book_learned flag from the saved dict (survives save/load
+                # even when the spell also happens to be in the current class list)
+                if a.get("_book_learned"):
+                    full["_book_learned"] = True
                 merged.append(full)
             else:
                 merged.append(a)

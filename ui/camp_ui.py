@@ -2890,8 +2890,19 @@ class CampUI:
                                         "type": "combat_status", "defense_bonus": 0.25})
                 self._msg(f"{name}: party gains Protection for their next battle.", HEAL_COL)
             elif _eff == "recall":
-                # Dungeon-only: teleport party back to overland. In camp this is ambiguous.
-                self._msg(f"{name}: recall scrolls work only from within a dungeon.", ORANGE)
+                # Dungeon-only: signal main.py to handle state transition.
+                # The camp is closed with result="recall"; main's _end_camp
+                # will transition S_DUNGEON -> S_WORLD_MAP if appropriate.
+                # Consume the scroll first.
+                stack = item.get("stack", 1)
+                if stack > 1:
+                    item["stack"] = stack - 1
+                else:
+                    char.inventory.pop(item_idx)
+                    self.selected_item = -1
+                self._msg(f"{name}: the party vanishes in a flash!", HEAL_COL)
+                self.result = "recall"
+                self.finished = True
                 return
             else:
                 self._msg(f"{name}: unknown scroll effect '{_eff}'.", ORANGE)
@@ -2917,11 +2928,13 @@ class CampUI:
             if has_spell:
                 self._msg(f"{char.name} already knows {spell_name}.", ORANGE)
                 return
-            # Add to character's abilities list
+            # Add to character's abilities list — mark as book-learned so
+            # apply_class_transition preserves it even across class changes.
             if not hasattr(char, "abilities"):
                 char.abilities = []
+            target_spell["_book_learned"] = True
             char.abilities.append(target_spell)
-            self._msg(f"{char.name} learns {spell_name}!", HEAL_COL)
+            self._msg(f"{char.name} learns {spell_name}! (Book-learned — never forgotten.)", HEAL_COL)
         # ── Gold pouches ──
         elif item.get("gold_value") or item.get("bonus_gold"):
             gold = item.get("gold_value", 0) + item.get("bonus_gold", 0)

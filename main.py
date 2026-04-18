@@ -3833,6 +3833,43 @@ class Game:
         self.camp_ui = None
         self.camp_return_state = None
 
+        # ── Scroll of Recall: teleport party out of dungeon to overland ──
+        if result == "recall":
+            if return_state == S_DUNGEON:
+                # Recover overland entry tile if tracked (falls back to current map position)
+                entry = None
+                try:
+                    if self.dungeon_state:
+                        entry = getattr(self.dungeon_state, "overland_entry_tile", None)
+                    if entry is None:
+                        entry = getattr(self, "pre_dungeon_world_pos", None)
+                except Exception:
+                    entry = None
+                # Play sound effect for the recall
+                try:
+                    sfx.play("camp_rest")
+                except Exception:
+                    pass
+                # IMPORTANT: fade first, THEN null dungeon objects — go_fade calls
+                # draw_state during the fade, which would crash on None references.
+                self.go_fade(S_WORLD_MAP)
+                self.dungeon = None if hasattr(self, "dungeon") else None
+                self.dungeon_state = None
+                self.dungeon_ui = None
+                # Restore overland position if we tracked it
+                if entry and self.world_map_ui and hasattr(self.world_map_ui, "player_tile"):
+                    try:
+                        self.world_map_ui.player_tile = entry
+                    except Exception:
+                        pass
+                if self.world_map_ui:
+                    from ui.renderer import GOLD as _GOLD
+                    self.world_map_ui._show_event("The party recalls back to the surface!", _GOLD)
+            else:
+                # Recall outside dungeon — just return normally
+                self.go(return_state)
+            return
+
         if result == "rest":
             # Process the rest execution
             self.go(return_state)

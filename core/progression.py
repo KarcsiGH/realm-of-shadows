@@ -673,19 +673,26 @@ def apply_class_transition(character, new_class_name: str) -> tuple:
     old_class = character.class_name
     old_level = character.level
 
-    # Keep top 3 highest-level mastered abilities (not passives)
+    # Book-learned spells are ALWAYS preserved across class changes
+    book_learned = [dict(a) for a in character.abilities if a.get("_book_learned")]
+    book_learned_names = {a["name"] for a in book_learned}
+
+    # Keep top 3 highest-level mastered abilities (not passives, not already book-learned)
     sorted_abs = sorted(character.abilities, key=lambda a: a.get("level", 0), reverse=True)
-    kept, kept_names = [], set()
+    kept, kept_names = [], set(book_learned_names)   # prevent duplicates
     for ab in sorted_abs:
         if ab.get("type") == "passive":
             continue
+        if ab.get("_book_learned"):
+            continue   # already included in book_learned
         if ab["name"] not in kept_names and len(kept) < 3:
             kept.append(dict(ab))
             kept_names.add(ab["name"])
 
     # New class L1 abilities
     new_l1 = [a for a in CLASS_ABILITIES.get(new_class_name, []) if a.get("level", 1) <= 1]
-    new_abilities = kept[:]
+    # Final list: book-learned spells + top-3 carryover + new class L1
+    new_abilities = book_learned + kept
     for ab in new_l1:
         if ab["name"] not in kept_names:
             new_abilities.append(dict(ab))
