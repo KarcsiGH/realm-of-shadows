@@ -1082,7 +1082,11 @@ class CombatUI:
                         elif heal:         detail = f"+{heal} HP"
                         elif rmp:          detail = f"+{rmp} MP"
                         elif cures:        detail = f"Cures {', '.join(cures)}"
-                        elif eff:          detail = eff.replace("_"," ").title()
+                        elif isinstance(eff, str) and eff:
+                                           detail = eff.replace("_"," ").title()
+                        elif isinstance(eff, dict) and eff:
+                                           # Dict effect — summarise first key or show description
+                                           detail = it.get("description","")[:30] or next(iter(eff)).replace("_"," ").title()
                         else:              detail = it.get("description","")[:30]
                         stack = it.get("stack",1)
                         stk   = f" x{stack}" if stack > 1 else ""
