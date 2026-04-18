@@ -968,6 +968,66 @@ class CombatUI:
                 # Check if depleted
                 _charges = weapon.get("charges", -1)
                 _depleted = (_charges == 0)
+                # ── Spell-bound wand: presents as "Cast <Spell>" ─────
+                # Wands with cast_spell set fire the named spell at static power
+                # and consume one charge per cast (no MP). Uses existing resolve_ability
+                # pipeline with cost=0/resource="" so charges are the only limit.
+                _cast_spell_name = weapon.get("cast_spell")
+                # Wand-cast wand that's depleted: show special depleted message
+                if _cast_spell_name and _depleted:
+                    item_lbl = (f"{w_name}  [DEPLETED — Cast {_cast_spell_name} unavailable · "
+                                f"recharge at camp or forge]")
+                    items = [(item_lbl, {"type": "ability",
+                                         "ability": {"_wand_depleted": True,
+                                                     "name": _cast_spell_name}})]
+                    # Mark as can't afford so click is blocked
+                    items = [(item_lbl, {"type": "noop", "can_afford": False})]
+                    return items
+                if _cast_spell_name and not _depleted:
+                    # Look up spell definition in any class ability list
+                    try:
+                        from core.abilities import CLASS_ABILITIES
+                        _spell = None
+                        for _cls_abs in CLASS_ABILITIES.values():
+                            for _ab in _cls_abs:
+                                if _ab.get("name") == _cast_spell_name:
+                                    _spell = dict(_ab)
+                                    break
+                            if _spell:
+                                break
+                    except Exception:
+                        _spell = None
+                    if _spell:
+                        # Tag the spell so combat_engine uses a wand charge
+                        # instead of MP, and applies static wand-power scaling.
+                        # We do NOT zero cost/resource — the original values are
+                        # needed for power calculation (damage formula uses cost).
+                        _spell_copy = dict(_spell)
+                        _spell_copy["_from_wand"] = weapon
+                        _chg_cur = weapon.get("charges", weapon.get("max_charges", 20))
+                        _chg_max = weapon.get("max_charges", 20)
+                        _spell_type = _spell.get("type", "spell")
+                        _spell_elem = _spell.get("element", "")
+                        _pow = _spell.get("power", 1.0)
+                        ELEM_LABELS = {
+                            "fire": "🔥 Fire", "ice": "❄ Frost", "frost": "❄ Frost",
+                            "lightning": "⚡ Lightning", "shock": "⚡ Lightning",
+                            "shadow": "💀 Shadow", "divine": "✨ Divine",
+                            "arcane": "✦ Arcane", "force": "◈ Force",
+                            "necrotic": "☠ Necrotic", "nature": "🌿 Nature",
+                        }
+                        _elem_label = ELEM_LABELS.get(_spell_elem, _spell_elem.title()) if _spell_elem else ""
+                        _type_hint = " [AoE]" if _spell_type in ("aoe","aoe_heal") else ""
+                        _elem_str = f" · {_elem_label}" if _elem_label else ""
+                        item_lbl = (f"{w_name}  [Cast {_cast_spell_name}{_type_hint}{_elem_str}"
+                                    f" · {_chg_cur}/{_chg_max} charges]")
+                        items = [(item_lbl, {
+                            "type": "ability",
+                            "ability": _spell_copy,
+                        })]
+                        # Skip the rest of the focus-weapon UI
+                        self._combat_items = [("ability", _spell_copy)]
+                        return items
                 if _depleted:
                     # Show as weak melee tap — bolt unavailable
                     item_lbl = f"{w_name}  [DEPLETED — recharge at camp or forge · {w_dmg} dmg tap]"

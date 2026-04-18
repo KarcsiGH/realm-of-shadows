@@ -17,7 +17,9 @@ def _w(name, subtype, damage, phys, stat_bonuses, buy, rarity, desc,
        allowed=None, spell_bonus=0, crit_mod=0, accuracy_mod=0,
        speed_mod=0, enchant_element=None, enchant_bonus=0, enchant_name="",
        range_="melee", special=None, damage_stat=None,
-       poison_chance=0.0, venom_reservoir=False):
+       poison_chance=0.0, venom_reservoir=False,
+       on_hit_effect=None,
+       cast_spell=None, max_charges=None):
     item = {
         "name": name, "type": "weapon", "slot": "weapon",
         "subtype": subtype, "rarity": rarity, "damage": damage,
@@ -39,6 +41,10 @@ def _w(name, subtype, damage, phys, stat_bonuses, buy, rarity, desc,
     if damage_stat:        item["damage_stat"] = damage_stat
     if poison_chance:      item["poison_chance"] = poison_chance
     if venom_reservoir:    item["venom_reservoir"] = True
+    if on_hit_effect:      item["on_hit_effect"] = on_hit_effect
+    # Wand-as-spell: each cast consumes one charge; no MP cost, static spell power.
+    if cast_spell:         item["cast_spell"] = cast_spell
+    if max_charges:        item["max_charges"] = max_charges
     return item
 
 def _a(name, subtype, slot, defense, stat_bonuses, buy, rarity, desc,
@@ -107,9 +113,9 @@ FIGHTER_WEAPONS = [
        110, "uncommon", "Flanges punch through armor gaps. +1 STR, +2 CON.",
        damage_stat={"STR": 0.4}),
     _w("Tower Shield Bash", "Shield", 13, "blunt", {"CON": 3},
-       95, "uncommon", "Used offensively — ram foes with the shield edge. +3 CON.",
-       special="shield_bash",
-       damage_stat={"STR": 0.24, "CON": 0.16}),
+       95, "uncommon", "Used offensively — ram foes with the shield edge. +3 CON. 25% chance to stun.",
+       damage_stat={"STR": 0.24, "CON": 0.16},
+       on_hit_effect={"status": "Stunned", "chance": 0.25, "duration": 1}),
 
     # T3 Rare
     _w("Forgemaster's Blade", "Greatsword", 35, "slashing", {"STR": 3},
@@ -280,9 +286,10 @@ MAGE_WEAPONS = [
        spell_bonus=3,
        damage_stat={"STR": 0.16, "INT": 0.24}),
     _w("Birchwood Wand", "Wand", 5, "blunt", {"INT": 1, "WIS": 1},
-       25, "common", "Light wand for directing magical energy. +1 INT, +1 WIS.",
+       25, "common", "Casts Magic Missile. 15 charges. +1 INT, +1 WIS.",
        spell_bonus=2, speed_mod=1,
-       damage_stat={"INT": 0.32}),
+       damage_stat={"INT": 0.32},
+       cast_spell="Magic Missile", max_charges=15),
 
     # T2
     _w("Arcanist's Staff", "Staff", 11, "blunt", {"INT": 2},
@@ -290,9 +297,10 @@ MAGE_WEAPONS = [
        spell_bonus=6,
        damage_stat={"STR": 0.16, "INT": 0.24}),
     _w("Crystal Wand", "Wand", 8, "blunt", {"INT": 2, "WIS": 1},
-       100, "uncommon", "A wand tipped with a raw spell crystal. +2 INT, +1 WIS.",
+       100, "uncommon", "Casts Frostbolt. 20 charges. +2 INT, +1 WIS.",
        spell_bonus=5, speed_mod=1,
-       damage_stat={"INT": 0.32}),
+       damage_stat={"INT": 0.32},
+       cast_spell="Frostbolt", max_charges=20),
     _w("Spell Orb", "Orb", 6, "blunt", {"INT": 2, "WIS": 2},
        120, "uncommon", "An off-hand focus that enhances all spells. +2 INT, +2 WIS.",
        spell_bonus=7,
@@ -304,10 +312,11 @@ MAGE_WEAPONS = [
        spell_bonus=10, enchant_element="arcane", enchant_bonus=4, enchant_name="Arcane",
        damage_stat={"STR": 0.16, "INT": 0.24}),
     _w("Frostweaver Wand", "Wand", 10, "blunt", {"INT": 3},
-       480, "rare", "Channels cold energy into spells. +3 INT. Ice damage bonus.",
+       480, "rare", "Casts Deep Freeze — may freeze target. 18 charges. +3 INT.",
        spell_bonus=8, enchant_element="ice", enchant_bonus=5, enchant_name="Frost",
        speed_mod=1,
-       damage_stat={"INT": 0.32}),
+       damage_stat={"INT": 0.32},
+       cast_spell="Deep Freeze", max_charges=18),
     _w("Void Orb", "Orb", 8, "blunt", {"INT": 3, "WIS": 2},
        560, "rare", "A dark glass sphere crackling with void energy. +3 INT, +2 WIS.",
        spell_bonus=11, enchant_element="shadow", enchant_bonus=4, enchant_name="Void",
@@ -320,10 +329,11 @@ MAGE_WEAPONS = [
        damage_stat={"STR": 0.16, "INT": 0.24}),
     _w("Starfire Wand", "Wand", 13, "blunt", {"INT": 4, "WIS": 3},
        1680, "epic",
-       "A wand that channels celestial fire. +4 INT, +3 WIS. Fire damage.",
+       "Casts Meteor — massive AoE fire damage. 12 charges. +4 INT, +3 WIS.",
        spell_bonus=14, speed_mod=2,
        enchant_element="fire", enchant_bonus=6, enchant_name="Starfire",
-       damage_stat={"INT": 0.32}),
+       damage_stat={"INT": 0.32},
+       cast_spell="Meteor", max_charges=12),
 
     # ── Rods (common → epic) ──────────────────────────────────────────────
     _w("Apprentice Rod", "Rod", 9, "blunt", {"INT": 1},
@@ -488,16 +498,19 @@ CLERIC_WEAPONS = [
 
     # ── Sacred Wands (PIE-scaled) ────────────────────────────────────────
     _w("Wand of Mending", "Wand", 7, "arcane", {"PIE": 2},
-       40, "common", "A simple wand that channels healing intent. +2 PIE.",
-       spell_bonus=4, damage_stat={"PIE": 0.36}),
+       40, "common", "Casts Heal on an ally. 15 charges. +2 PIE.",
+       spell_bonus=4, damage_stat={"PIE": 0.36},
+       cast_spell="Heal", max_charges=15),
     _w("Wand of Smiting", "Wand", 13, "arcane", {"PIE": 2, "STR": 1},
-       110, "uncommon", "A wand that delivers divine smite strikes. +2 PIE, +1 STR.",
+       110, "uncommon", "Casts Smite — divine strike on one enemy. 20 charges. +2 PIE, +1 STR.",
        enchant_element="divine", enchant_bonus=4, enchant_name="Holy",
-       damage_stat={"PIE": 0.30, "STR": 0.12}),
+       damage_stat={"PIE": 0.30, "STR": 0.12},
+       cast_spell="Smite", max_charges=20),
     _w("Wand of Divine Fury", "Wand", 22, "arcane", {"PIE": 3, "INT": 1},
-       600, "rare", "A wand crackling with righteous energy. +3 PIE, +1 INT.",
+       600, "rare", "Casts Divine Wrath — divine AoE on all enemies. 15 charges. +3 PIE, +1 INT.",
        spell_bonus=8, enchant_element="divine", enchant_bonus=6, enchant_name="Radiant",
-       damage_stat={"PIE": 0.32, "INT": 0.10}),
+       damage_stat={"PIE": 0.32, "INT": 0.10},
+       cast_spell="Divine Wrath", max_charges=15),
 
     # ── Morning Stars (STR+PIE) ──────────────────────────────────────────
     _w("Iron Morning Star", "Morning Star", 14, "blunt", {"STR": 1, "PIE": 1},

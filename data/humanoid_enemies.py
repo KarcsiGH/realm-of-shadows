@@ -346,8 +346,8 @@ HUMANOID_ENEMIES = {
                 "name": "Vial of Holy Water", "type": "consumable", "subtype": "potion",
                 "rarity": "uncommon", "identify_difficulty": 1, "identified": False,
                 "unidentified_name": "Clear Vial", "unidentified_desc": "A sealed vial of colorless liquid.",
-                "appraised_name": "Holy Water", "effect": {"heal": 0, "element": "divine"},
-                "description": "Blessed water. Deals divine damage to undead, purifies curses."}},
+                "appraised_name": "Holy Water", "damage_undead": 40,
+                "description": "Blessed water. Deals divine damage to undead."}},
         ],
         "description_tiers": {
             0: "An armored figure touching a symbol at their neck, eyes lit with battle-calm.",

@@ -29,8 +29,8 @@ SECRET_ITEMS_DA1 = [
      "type": "weapon", "slot": "weapon", "subtype": "Wand", "max_charges": 20,
      "rarity": "uncommon", "damage": 12, "phys_type": "arcane", "range": "ranged",
      "spell_bonus": 3, "enchant_element": "arcane",
-     "on_hit_effect": {"status": "Slowed", "chance": 0.25, "duration": 2},
-     "description": "A wand carved with dampening runes. Fires arcane bolts — 25% chance to Slow target for 2 turns. +3 spell power.",
+     "cast_spell": "Magic Missile",
+     "description": "A wand carved with dampening runes. Casts Magic Missile. 20 charges. +3 spell power.",
      "identified": False, "estimated_value": 190},
 
     # Cleric — modest holy symbol
@@ -107,8 +107,8 @@ SECRET_ITEMS_T1 = [
      "subtype": "Wand", "max_charges": 20, "rarity": "uncommon", "damage": 16,
      "phys_type": "lightning", "range": "ranged",
      "spell_bonus": 4, "enchant_element": "lightning",
-     "on_hit_effect": {"status": "Stunned", "chance": 0.20, "duration": 1},
-     "description": "A wand crackling with static. Fires lightning bolts — 20% chance to Stun for 1 turn. +4 spell power.",
+     "cast_spell": "Chain Lightning",
+     "description": "A wand crackling with static. Casts Chain Lightning. 20 charges. +4 spell power.",
      "identified": False, "estimated_value": 200},
 
     {"name": "Amulet of the Owl", "appraised_name": "Amulet of the Owl", "type": "accessory", "slot": "ring1",
@@ -126,9 +126,9 @@ SECRET_ITEMS_T1 = [
      "type": "weapon", "slot": "weapon", "subtype": "Wand", "max_charges": 20,
      "rarity": "uncommon", "damage": 14, "phys_type": "fire", "range": "ranged",
      "spell_bonus": 3, "enchant_element": "fire",
-     "on_hit_effect": {"status": "Burning", "chance": 0.30, "duration": 2},
+     "cast_spell": "Fireball",
      "unidentified_name": "Scorched Wand", "unidentified_desc": "A wand warm to the touch, with char marks on the tip.",
-     "description": "A wand infused with ember-magic. Fires fire bolts — 30% chance to Burn target for 2 turns. +3 spell power.",
+     "description": "A wand infused with ember-magic. Casts Fireball. 20 charges. +3 spell power.",
      "identified": False, "estimated_value": 200},
 
     {"name": "Frost Rod", "appraised_name": "Frost Rod",
@@ -190,9 +190,9 @@ SECRET_ITEMS_T2 = [
      "type": "weapon", "slot": "weapon", "subtype": "Wand", "max_charges": 20,
      "rarity": "rare", "damage": 18, "phys_type": "shadow", "range": "ranged",
      "spell_bonus": 5, "enchant_element": "shadow",
-     "on_hit_effect": {"status": "Sleep", "chance": 0.25, "duration": 2},
+     "cast_spell": "Void Rift",
      "unidentified_name": "Darkened Wand", "unidentified_desc": "A wand that seems to absorb light near its tip.",
-     "description": "A wand of shadow-essence. Fires shadow bolts — 25% chance to Sleep target for 2 turns. +5 spell power.",
+     "description": "A wand of shadow-essence. Casts Void Rift. 20 charges. +5 spell power.",
      "identified": False, "estimated_value": 390},
 
     {"name": "Tempest Rod", "appraised_name": "Tempest Rod",

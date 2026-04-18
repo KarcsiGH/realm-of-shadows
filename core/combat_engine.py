@@ -446,18 +446,27 @@ def calc_magic_damage(attacker, defender, spell, is_crit=False):
     Stat Damage = Casting Stat × 1.5 + Focus Bonus
     Raw         = Stat Damage + Spell Power
     Final       = (Raw × Variance × ElemTypeMod) - Magic Resist
+
+    WAND EXCEPTION:
+    Wand-cast spells (spell["_from_wand"] set by combat_ui) deal STATIC damage —
+    the wand itself determines the spell's power regardless of caster stats.
+    This means a Fighter with a Meteor wand does the same damage as a Mage with
+    the same wand. Wand tier (common/rare/epic) is the differentiator, not stats.
     """
-    casting_val = get_casting_stat_value(attacker)
-    focus_bonus = attacker.get("focus_bonus", 0)
-
-    # Staff spell bonus
-    if attacker["type"] == "player":
-        weapon = attacker.get("weapon", {})
-        focus_bonus += weapon.get("spell_bonus", 0)
-
-    stat_damage = (casting_val * MAGIC_STAT_MULT) + focus_bonus
     spell_power = spell.get("power", 10)
-    raw = stat_damage + spell_power
+
+    # Static wand-cast damage: skip caster stat scaling entirely
+    if spell.get("_from_wand"):
+        raw = spell_power
+    else:
+        casting_val = get_casting_stat_value(attacker)
+        focus_bonus = attacker.get("focus_bonus", 0)
+        # Staff spell bonus (but not wand spell_bonus — wands are static)
+        if attacker["type"] == "player":
+            weapon = attacker.get("weapon", {})
+            focus_bonus += weapon.get("spell_bonus", 0)
+        stat_damage = (casting_val * MAGIC_STAT_MULT) + focus_bonus
+        raw = stat_damage + spell_power
 
     # Variance
     variance = random.uniform(MAGIC_VARIANCE_MIN, MAGIC_VARIANCE_MAX)
@@ -493,9 +502,18 @@ def calc_magic_damage(attacker, defender, spell, is_crit=False):
 
 
 def calc_healing(healer, spell):
-    """Healing formula: (PIE × 2.0) + Spell Power + Focus + random(0, PIE/2)"""
-    pie = healer["stats"].get("PIE", 0)
+    """Healing formula: (PIE × 2.0) + Spell Power + Focus + random(0, PIE/2)
+
+    WAND EXCEPTION: wand-cast heals (spell["_from_wand"]) use static power only —
+    no PIE scaling, no focus bonus. Wand tier determines effectiveness.
+    """
     spell_power = spell.get("power", 10)
+
+    if spell.get("_from_wand"):
+        # Static wand heal: use spell_power directly plus small variance
+        return int(spell_power + random.randint(0, max(2, spell_power // 10)))
+
+    pie = healer["stats"].get("PIE", 0)
     focus = healer.get("focus_bonus", 0)
 
     # Staff bonus
@@ -1117,10 +1135,38 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         "extra_hits": [],   # list of (damage, target_name) for multi-hit log
     }
 
+    # ── Wand-cast spells: consume a wand charge instead of MP ──
+    # Wands with cast_spell are set up by combat_ui with cost=0, resource="",
+    # and _from_wand pointing at the wand dict. We consume one charge from
+    # the wand and sync back to the character's equipment so save/load and
+    # camp UI see the updated count. If charges are already 0, refuse and
+    # don't advance the turn.
+    _wand = ability.get("_from_wand")
+    if _wand and attacker.get("type") == "player":
+        try:
+            from core.focus_charges import consume_charge as _consume
+            if not _consume(_wand):
+                result["hit"] = False
+                result["_resource_failed"] = True
+                result["messages"].append(
+                    f"{attacker['name']}'s {_wand.get('name','wand')} is depleted!"
+                )
+                return result
+            # Sync the live wand charge count back to the Character's real equipment
+            _char_ref = attacker.get("character_ref")
+            if _char_ref and hasattr(_char_ref, "equipment"):
+                _real_wpn = _char_ref.equipment.get("weapon")
+                if _real_wpn and _real_wpn.get("name") == _wand.get("name"):
+                    _real_wpn["charges"]     = _wand.get("charges", 0)
+                    _real_wpn["max_charges"] = _wand.get("max_charges", 20)
+        except Exception:
+            pass  # non-fatal — fall through to normal resource flow
+
     # ── Resource cost ──────────────────────────────────────────
+    # Wand-cast spells: skip MP/resource check (charge already consumed above)
     resource_key = ability.get("resource", "")
     cost = ability.get("cost", 0)
-    if resource_key and attacker["type"] == "player":
+    if resource_key and attacker["type"] == "player" and not _wand:
         if resource_key == "momentum":
             # Momentum lives directly on the combatant, not in resources dict
             current = attacker.get("momentum", 0)
@@ -1338,6 +1384,7 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             if n == "shadow_step":           dmg_mult *= 1.50
             if n == "battle_stance":         dmg_mult *= 1.20
             if n == "arcane_surge":          dmg_mult *= 1.30
+            if n == "Focus":                 dmg_mult *= 1.30   # Elixir of Focus: +30% spell power
             if n == "keen_eye":              dmg_mult *= 1.15
             if n == "eagle_eye":             dmg_mult *= 1.20
             if n == "blessed":               dmg_mult *= 1.10
@@ -1492,7 +1539,8 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                     element = elem
                     break
 
-        spell = {"power": cost * ab_power, "element": element}
+        spell = {"power": cost * ab_power, "element": element,
+                 "_from_wand": ability.get("_from_wand")}
 
         atk_mult, _, _, _ = _active_buff_mods(attacker)
         _, def_bonus, _, _ = _active_buff_mods(tgt)
@@ -1671,7 +1719,8 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
 
             # Bonus heal (e.g. Nature's Balm, Purify with power)
             if ability.get("power") and cure_tgt["alive"]:
-                heal_sp = {"power": cost * ability.get("power", 0.5)}
+                heal_sp = {"power": cost * ability.get("power", 0.5),
+                           "_from_wand": ability.get("_from_wand")}
                 amount  = min(cure_tgt["max_hp"] - cure_tgt["hp"],
                               calc_healing(attacker, heal_sp))
                 if amount > 0:
@@ -1716,7 +1765,8 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         if ability.get("hot_duration"):
             hot_d = ability["hot_duration"]
             hot_per_tick = ability.get("power", 0.5)
-            heal_sp = {"power": cost * hot_per_tick * 0.4}
+            heal_sp = {"power": cost * hot_per_tick * 0.4,
+                       "_from_wand": ability.get("_from_wand")}
             base_tick = max(3, int(cost * hot_per_tick * 0.4))
             hot_targets = [p for p in (all_players or [attacker]) if p["alive"]]
             for ht in hot_targets:
@@ -1884,7 +1934,8 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
         else:
             heal_targets = [target if target else attacker]
 
-        heal_spell = {"power": cost * ability.get("power", 1.0)}
+        heal_spell = {"power": cost * ability.get("power", 1.0),
+                      "_from_wand": ability.get("_from_wand")}
         is_crit, _ = check_crit(attacker, "heal")
         total_healed = 0
         for ht in heal_targets:
@@ -2659,12 +2710,20 @@ class CombatState:
                     e["row"] = FRONT
                     e["preferred_row"] = FRONT
 
-        # Vary enemy counts ±1-2 for flavour (not for boss encounters)
+        # Vary enemy counts ±1-2 for flavour (not for boss encounters).
+        # Detect boss via the encounter key itself — template-name sniffing
+        # (looking for "boss"/"king"/"queen" substrings) misses named bosses
+        # like "Warden Revenant" and "Korrath the Stone Warden", causing them
+        # to be duplicated. This bug showed up as "two Warden Revenants" in
+        # the Sunken Crypt boss fight.
         import random as _rnd
-        if not any("boss" in e.get("template_key","").lower() or
-                   "king" in e.get("template_key","").lower() or
-                   "queen" in e.get("template_key","").lower()
-                   for e in self.enemies):
+        _is_boss_encounter = encounter_key.startswith("boss_") or any(
+            "boss" in e.get("template_key","").lower() or
+            "king" in e.get("template_key","").lower() or
+            "queen" in e.get("template_key","").lower()
+            for e in self.enemies
+        )
+        if not _is_boss_encounter:
             tweak = _rnd.randint(-1, 2)
             if tweak > 0:
                 # Duplicate a random non-boss enemy
@@ -3126,6 +3185,10 @@ class CombatState:
                     msgs.append(f"{actor['name']} uses {name}: +{actual} {rk}!")
                     used = True
                     break
+            # Elixir of Focus also grants a 3-turn Focus buff (spell power boost)
+            if item.get("effect") == "focus_buff":
+                apply_status_effect(actor, "Focus", 3, 1.0)
+                msgs.append(f"  {actor['name']}'s mind sharpens — +30% spell damage for 3 turns.")
 
         # ── Cure Disease ──────────────────────────────────────────
         elif "Disease" in item.get("cures", []) or item.get("effect") == "cure_disease":

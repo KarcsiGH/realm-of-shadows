@@ -1452,8 +1452,17 @@ def calc_equipment_stat_bonuses(character):
     for slot, item in character.equipment.items():
         if item is None:
             continue
-        # Standard format
+        # Standard format — positive bonuses
         for stat, val in item.get("stat_bonuses", {}).items():
+            bonuses[stat] = bonuses.get(stat, 0) + val
+        # Cursed items: stat_penalty is the negative side. Previously unread,
+        # so cursed items gave their perks with no downside. Now applied as
+        # a negative bonus so cursed gear actually costs something.
+        # Keys map directly to stats (e.g. "LCK": -5) just like stat_bonuses.
+        # Non-stat keys (accuracy_bonus, attack_damage, speed_mod, magic_resist)
+        # aren't handled here — they're applied by separate systems that read
+        # stat_bonuses directly; see below for those.
+        for stat, val in item.get("stat_penalty", {}).items():
             bonuses[stat] = bonuses.get(stat, 0) + val
         # Magic item effect format
         for effect_key, stat in _EFFECT_TO_STAT.items():
