@@ -592,7 +592,7 @@ ENEMIES = {
                 "rarity": "uncommon", "tier": 2, "identified": False,
                 "appraised_name": "Goblin King's Lucky Coin",
                 "estimated_value": 140,
-                "stat_bonus": {"LCK": 2},
+                "stat_bonuses": {"LCK": 2},
                 "description": "A battered gold coin Grak carried for luck. +2 LCK.",
             }},
             {"drop_chance": 0.15, "item": {
@@ -670,10 +670,13 @@ ENEMIES = {
         "loot_table": [
             {"drop_chance": 0.80, "item": {
                 "name": "Foreman's Pickaxe", "type": "weapon", "subtype": "axe",
+                "slot": "weapon",
                 "rarity": "rare", "tier": 3, "damage": 32, "identified": True,
+                "phys_type": "piercing", "range": "melee",
                 "damage_stat": {"STR": 0.4},
+                "stat_bonuses": {"STR": 2, "CON": 1},
                 "estimated_value": 295,
-                "description": "A massive mining pick, still sharp after centuries. +22 base damage.",
+                "description": "A massive mining pick, still sharp after centuries. +2 STR, +1 CON.",
             }},
             {"drop_chance": 0.15, "item": {
                 "_training_book": True,
@@ -724,7 +727,7 @@ ENEMIES = {
                 "estimated_value": 380,
                 "description": "A dwarven war-hammer inscribed with ward-runes. "
                                "+26 base damage, +8 magic resist to wielder.",
-                "stat_bonus": {"magic_resist": 8},
+                "stat_bonuses": {"magic_resist": 8},
             }},
             {"drop_chance": 0.15, "item": {
                 "_training_book": True,
@@ -768,7 +771,7 @@ ENEMIES = {
                 "identified": True, "estimated_value": 300,
                 "description": "A cracked warden seal, still radiating residual authority. "
                                "+12 magic resist, +6 defense.",
-                "stat_bonus": {"magic_resist": 12, "defense": 6},
+                "stat_bonuses": {"magic_resist": 12, "defense": 6},
             }},
             {"drop_chance": 0.60, "item": {
                 "name": "Scorched Warden Blade", "type": "weapon", "subtype": "sword",
@@ -777,7 +780,7 @@ ENEMIES = {
                 "estimated_value": 300,
                 "description": "A warden's sword, blackened by whatever destroyed Ashenmoor. "
                                "+20 base damage, deals bonus fire damage.",
-                "stat_bonus": {"fire_damage_bonus": 6},
+                "stat_bonuses": {"fire_damage_bonus": 6},
             }},
             {"drop_chance": 0.15, "item": {
                 "_training_book": True,

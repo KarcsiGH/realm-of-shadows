@@ -404,16 +404,23 @@ class CampUI:
 
             has_slot   = bool(item.get("slot"))
             if has_slot:
-                # Detail panel: up to 200px — enough for any item (densest ~130px).
-                # Never artificially capped below what content needs.
-                detail_h   = min(avail_h, 200)
+                # Reserve minimum space for the compare panel so it can't slide up
+                # into the detail panel above it. Compare needs ~40-180px depending
+                # on stat row count; reserve 160 as a safe minimum.
+                MIN_COMPARE_RESERVE = 160
+                # Detail panel gets whatever's left, up to a generous 260px cap.
+                # Content-sizing inside _draw_item_details still truncates to what fits.
+                detail_max = max(80, min(260, avail_h - MIN_COMPARE_RESERVE - 6))
                 detail_ph  = self._draw_item_details(surface, item, panel_top,
-                                                     max_h=detail_h)
-                # Compare panel: placed immediately below, self-clamps to screen bottom
+                                                     max_h=detail_max)
+                # Compare panel: placed immediately below. Hard-clamped so it
+                # never renders above (panel_top + detail_ph) — no overlap possible.
                 cmp_top = panel_top + detail_ph + 6
+                cmp_min_top = cmp_top  # anchored — compare can't float up
                 if cmp_top < SCREEN_H - 40:
                     self._draw_equip_compare(surface, item, 80, cmp_top,
-                                             SCREEN_W - 160)
+                                             SCREEN_W - 160,
+                                             min_top=cmp_min_top)
             else:
                 self._draw_item_details(surface, item, panel_top, max_h=avail_h)
 
@@ -480,20 +487,31 @@ class CampUI:
         pygame.draw.rect(surface, EQUIP_SLOT_BORDER, panel, 1, border_radius=5)
 
         dy = panel.y + 8
+        drew_all = True
         for (text, col, size, bold), row_h in zip(lines, lh):
             if dy + size + 2 > panel.bottom - 4:
+                drew_all = False
                 break
             draw_text(surface, text, panel.x + 14, dy, col, size, bold=bold,
                       max_width=pw - 28)
             dy += row_h
 
+        # If content was truncated, show ellipsis hint at bottom so the user
+        # knows more detail exists (rather than silently cutting off).
+        if not drew_all:
+            draw_text(surface, "...", panel.x + 14,
+                      panel.bottom - 14, DIM_GOLD, 11, bold=True)
+
         return ph   # return actual drawn height
 
-    def _draw_equip_compare(self, surface, new_item, px, py, pw):
+    def _draw_equip_compare(self, surface, new_item, px, py, pw, min_top=None):
         """Side-by-side comparison panel: equipped vs new item.
 
         Dynamically sizes to fit stat rows; always clamped so it stays on screen.
         Layout: EQUIPPED (left half)  ↔  NEW (right half), delta highlighted.
+
+        min_top (optional): hard floor for the panel's top coordinate. Prevents
+        the panel from sliding up into a detail panel rendered above it.
         """
         from core.identification import get_item_display_name
         if not self.party or self.selected_char >= len(self.party):
@@ -534,11 +552,14 @@ class CampUI:
         else:
             needed_h = 40
 
-        # Clamp so panel never goes below screen
+        # Clamp so panel never goes below screen — but never slide UP past min_top
+        # (min_top prevents overlap with panels drawn above this one).
         max_y_bottom = SCREEN_H - 8
         if py + needed_h > max_y_bottom:
-            py = max(4, max_y_bottom - needed_h)
-        ph = min(needed_h, max_y_bottom - py)
+            # Would overflow bottom — try to slide up, but not past min_top
+            floor = min_top if min_top is not None else 4
+            py = max(floor, max_y_bottom - needed_h)
+        ph = max(30, min(needed_h, max_y_bottom - py))
 
         panel = pygame.Rect(px, py, pw, ph)
         pygame.draw.rect(surface, (8, 14, 26), panel, border_radius=5)
@@ -673,14 +694,20 @@ class CampUI:
             if hover:
                 draw_text(surface, "[Click to equip]", row.x + row.width - 130,
                           row.y + 6, DIM_GOLD, 11)
-                # Show stat details + compare panel on hover — stack within screen
-                detail_y = min(row.bottom + 4, SCREEN_H - 8)
+                # Show stat details + compare panel on hover — stack within screen.
+                # Reserve 160px at bottom for the compare panel so it never slides
+                # up into the detail panel above.
+                MIN_COMPARE_RESERVE = 160
+                detail_y = min(row.bottom + 4, SCREEN_H - MIN_COMPARE_RESERVE - 100)
                 avail = SCREEN_H - detail_y - 8
+                detail_max = max(60, min(avail - MIN_COMPARE_RESERVE - 6, 220))
                 detail_ph = self._draw_item_details(surface, item, detail_y,
-                                                    max_h=min(avail, 200))
+                                                    max_h=detail_max)
                 if item.get("slot") and detail_y + detail_ph + 6 < SCREEN_H - 40:
+                    cmp_top = detail_y + detail_ph + 6
                     self._draw_equip_compare(surface, item, 80,
-                                             detail_y + detail_ph + 6, SCREEN_W - 160)
+                                             cmp_top, SCREEN_W - 160,
+                                             min_top=cmp_top)
             self._equip_tab_inv_rects.append((i, row))
             ey += 36
             if ey > SCREEN_H - 60:
@@ -1359,16 +1386,20 @@ class CampUI:
 
             # ── Item detail + comparison panel for equippable items ──────
             if ey < BODY_BOT - 30:
-                avail_detail = min(180, BODY_BOT - ey - 8)
+                # Reserve space for compare panel so detail + compare don't overlap
+                avail_total = BODY_BOT - ey - 8
+                MIN_COMPARE = 140
                 if sel_it.get("slot"):
+                    avail_detail = max(60, min(200, avail_total - MIN_COMPARE - 6))
                     detail_ph = self._draw_item_details(surface, sel_it, ey,
                                                         max_h=avail_detail)
                     cmp_top = ey + detail_ph + 4
                     if cmp_top < BODY_BOT - 20:
-                        self._draw_equip_compare(surface, sel_it, ex, cmp_top, COL_W)
+                        self._draw_equip_compare(surface, sel_it, ex, cmp_top, COL_W,
+                                                 min_top=cmp_top)
                 elif sel_it.get("type") in ("consumable","potion","food"):
                     self._draw_item_details(surface, sel_it, ey,
-                                            max_h=avail_detail)
+                                            max_h=min(180, avail_total))
 
         surface.set_clip(None)
 

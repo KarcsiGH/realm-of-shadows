@@ -143,10 +143,12 @@ SECRET_ITEMS_T1 = [
 
 SECRET_ITEMS_T2 = [
     {"name": "Firebrand Blade", "appraised_name": "Firebrand Blade", "type": "weapon", "slot": "weapon",
-     "subtype": "Longsword", "rarity": "rare", "damage": 14,
+     "subtype": "Longsword", "rarity": "rare", "damage": 18,
+     "damage_stat": {"STR": 0.30, "DEX": 0.12},
      "phys_type": "slashing", "range": "melee",
+     "stat_bonuses": {"STR": 1},
      "enchant_element": "fire", "enchant_bonus": 5, "enchant_name": "Flame",
-     "description": "A longsword wreathed in faint flames. Deals bonus fire damage.",
+     "description": "A longsword wreathed in faint flames. +1 STR. Deals bonus fire damage.",
      "identified": False, "estimated_value": 385},
 
     {"name": "Frostbite Dagger", "appraised_name": "Frostbite Dagger", "type": "weapon", "slot": "weapon",
@@ -403,7 +405,7 @@ CURSED_ITEMS = [
         "rarity": "uncommon", "tier": 1,
         "cursed": True, "identified": False,
         "estimated_value": 80,
-        "stat_bonus": {"DEX": 3},
+        "stat_bonuses": {"DEX": 3},
         "stat_penalty": {"LCK": -5, "accuracy_bonus": -8},
         "description": "A silver ring that seems to shimmer with promise. "
                        "It pulls misfortune toward the wearer like a lodestone. "
@@ -464,7 +466,7 @@ CURSED_ITEMS = [
         "cursed": True, "identified": False,
         "defense": 20,
         "estimated_value": 600,
-        "stat_bonus": {"INT": 5, "WIS": 4, "magic_resist": 15},
+        "stat_bonuses": {"INT": 5, "WIS": 4, "magic_resist": 15},
         "stat_penalty": {"CON": -6},
         "description": "A crown of dark iron that amplifies magical power at the "
                        "cost of physical resilience. Those who wear it rarely "
