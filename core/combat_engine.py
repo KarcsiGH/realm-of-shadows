@@ -1547,6 +1547,32 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
 
     # ── REVIVE ─────────────────────────────────────────────────
     if is_revive:
+        # Mass revive: targets: "all_allies" raises every fallen ally
+        if ability.get("targets") == "all_allies" and all_players:
+            fallen = [p for p in all_players if not p["alive"]]
+            if not fallen:
+                result["messages"].append(
+                    f"{attacker['name']} uses {ability['name']} — no fallen allies to revive."
+                )
+                return result
+            revived_names = []
+            revive_pct = ability.get("revive_hp_pct", 0.5)
+            for revive_tgt in fallen:
+                revive_tgt["alive"] = True
+                revive_hp = max(1, int(revive_tgt["max_hp"] * revive_pct))
+                revive_tgt["hp"] = revive_hp
+                ref = revive_tgt.get("character_ref")
+                if ref and hasattr(ref, "resources"):
+                    ref.resources["HP"] = revive_hp
+                revived_names.append(f"{revive_tgt['name']} (+{revive_hp})")
+            result["healing"] = sum(p["hp"] for p in fallen)
+            result["messages"].append(
+                f"{attacker['name']} uses {ability['name']} — "
+                f"revived: {', '.join(revived_names)}"
+            )
+            return result
+
+        # Single revive
         revive_tgt = target if (target and not target["alive"]) else None
         if not revive_tgt and all_players:
             revive_tgt = next((p for p in all_players if not p["alive"]), None)
@@ -1554,6 +1580,9 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
             revive_tgt["alive"] = True
             revive_hp = int(revive_tgt["max_hp"] * ability.get("revive_hp_pct", 0.5))
             revive_tgt["hp"] = revive_hp
+            ref = revive_tgt.get("character_ref")
+            if ref and hasattr(ref, "resources"):
+                ref.resources["HP"] = revive_hp
             result["healing"] = revive_hp
             result["messages"].append(
                 f"{attacker['name']} uses {ability['name']} — "
@@ -1716,6 +1745,36 @@ def resolve_ability(attacker, target, ability, all_players=None, all_enemies=Non
                 f"{attacker['name']} achieves {ability['name']}! "
                 f"The next attack will be completely negated."
             )
+            return result
+
+        # ── restore_pct: restore a fraction of max resources (Void Meditation) ──
+        if ability.get("restore_pct"):
+            restore_map = ability["restore_pct"]
+            char_ref = attacker.get("character_ref")
+            restored = []
+            for res_substr, pct in restore_map.items():
+                # Match any resource whose key contains res_substr (e.g. "MP" matches INT-MP, WIS-MP)
+                for rk in list(attacker.get("resources", {}).keys()):
+                    if res_substr in rk:
+                        max_val = attacker.get("max_resources", {}).get(rk, attacker["resources"][rk])
+                        cur     = attacker["resources"].get(rk, 0)
+                        amount  = int(max_val * pct)
+                        new_val = min(max_val, cur + amount)
+                        gained  = new_val - cur
+                        if gained > 0:
+                            attacker["resources"][rk] = new_val
+                            if char_ref:
+                                char_ref.resources[rk] = new_val
+                            restored.append(f"+{gained} {rk}")
+            apply_status_effect(attacker, buff_name, duration, 1.0)
+            if restored:
+                result["messages"].append(
+                    f"{attacker['name']} uses {ability['name']}: {', '.join(restored)}"
+                )
+            else:
+                result["messages"].append(
+                    f"{attacker['name']} uses {ability['name']} but has nothing to restore."
+                )
             return result
 
         if self_only or tgt_spec == "self":
