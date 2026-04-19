@@ -249,6 +249,31 @@ def serialize_world_state(ws):
         return None
 
 
+def _migrate_save(world_state):
+    """One-shot patches for flag/key mismatches in older builds.
+    All patches must be idempotent — running them on an already-patched save
+    should be a no-op. Best-effort: swallow all exceptions at the caller."""
+    if world_state is None:
+        return
+    from core.story_flags import get_flag
+    from data.world_map import LOCATIONS
+
+    # Patch A: Dragon's Tooth peaceful clear used to grant a dead "dragon_scale"
+    # key instead of "pale_coast_access". If the party has HS3 and Karreth was
+    # spared (or simply boss_defeated.dragons_tooth is set) but pale_coast_access
+    # isn't in their keys, add it so they can unlock the Pale Coast.
+    try:
+        if (get_flag("item.hearthstone.3")
+                and not world_state.has_key("pale_coast_access")):
+            world_state.add_key("pale_coast_access")
+            # Reveal any locations keyed on this
+            for lid, loc in LOCATIONS.items():
+                if loc.get("required_key") == "pale_coast_access":
+                    world_state.discovered_locations.add(lid)
+    except Exception:
+        pass
+
+
 def deserialize_world_state(data, party):
     """Reconstruct a WorldState from saved dict. Returns None on failure."""
     if not data:
@@ -495,6 +520,14 @@ def load_game(slot_name="save1"):
 
         # Restore world state (v4+ saves only)
         world_state = deserialize_world_state(save_data.get("world_state"), party)
+
+        # ── Save migrations ──────────────────────────────────────────────────
+        # One-shot patches for flag/key mismatches introduced in older builds.
+        # Safe to run on every load; each patch is idempotent.
+        try:
+            _migrate_save(world_state)
+        except Exception:
+            pass   # migration is best-effort, never block a load
 
         dungeon_explored = save_data.get("dungeon_explored", {})
         dungeon_position = save_data.get("dungeon_position")

@@ -6643,6 +6643,74 @@ _NEW_DIALOGUES = {
     ],
 
         "tide_priest_oran": [
+        # ── Post-Dragon's Tooth: HS3 recovered ────────────────────
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.3",       "op": "==",        "value": True},
+                {"flag": "oran.post_dragonstooth",   "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "oran_post_dragonstooth",
+                "nodes": {
+                    "start": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Three stones. You've done what I thought no one would manage in my lifetime.\n"
+                                "The tides — I felt them shift this morning before you even walked into the shrine. The sea remembers when the wards were whole. She's starting to remember again.\n"
+                                "Karreth... did the dragon speak to you, at the end?",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "oran.post_dragonstooth", "value": True},
+                        ],
+                        "choices": [
+                            {"text": "We freed it. It remembered its name.",
+                             "next": "spared",
+                             "condition": {"flag": "choice.karreth_spared", "op": "==", "value": True}},
+                            {"text": "We had to fight. It couldn't be reasoned with.",
+                             "next": "killed",
+                             "condition": {"flag": "choice.karreth_spared", "op": "not_exists"}},
+                            {"text": "What should we do next?",
+                             "next": "whats_next"},
+                        ],
+                    },
+                    "spared": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Then it died a guardian, not a weapon. That matters. That will be remembered in the tides for a long time.\n"
+                                "Two stones remain. I've heard whispers — Pale Coast to the southwest, and somewhere farther out in open ocean. Guild Commander Varek in Thornhaven is the one tracking those.",
+                        "choices": [{"text": "We'll speak with Varek.", "next": None}],
+                    },
+                    "killed": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "The Fading had taken too much of it already. Sometimes what looks like death IS mercy.\n"
+                                "Two stones remain. Guild Commander Varek in Thornhaven is coordinating the final push — Pale Coast Catacombs to the southwest, and the Windswept Isle somewhere farther out. He'll know more than I do.",
+                        "choices": [{"text": "We'll find him.", "next": None}],
+                    },
+                    "whats_next": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "The last two stones are beyond my reach. Guild Commander Varek at the Thornhaven guild hall is who you want — he's been prepping teams for the Pale Coast and the Windswept Isle. Tell him Oran sent you; he'll listen.",
+                        "choices": [{"text": "Thornhaven, then.", "next": None}],
+                    },
+                },
+            },
+        },
+        # ── Post-Sunken Crypt loop (fires after first post-DT conversation) ──
+        # Same content as oran_hs3 but acknowledges the party's progress instead
+        # of treating them like first-time visitors.
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.3",     "op": "==", "value": True},
+                {"flag": "oran.post_dragonstooth", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "oran_loop_post_dt",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "The tides remember you now. Two stones left — Pale Coast and the Windswept Isle. Varek in Thornhaven coordinates the approach. The sea wishes you well.",
+                        "choices": [{"text": "Thank you.", "next": None}],
+                    },
+                },
+            },
+        },
         {
             "conditions": [{"flag": "item.hearthstone.2", "op": "==", "value": True}],
             "tree": {
@@ -9072,12 +9140,40 @@ _NEW_DIALOGUES = {
     ],
 
     "guild_commander_varek": [
-        # After 4 stones — final push, one stone left (Dragon's Tooth)
+        # ── After all five stones recovered — send to the Spire ────
         {
             "conditions": [
-                {"flag": "item.hearthstone.4", "op": "==", "value": True},
+                {"flag": "item.hearthstone.5",            "op": "==",        "value": True},
+                {"flag": "boss_defeated.shadow_valdris",  "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "varek_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Five stones. All five.\n"
+                                "I wasn't sure I'd live to see it. The Spire's approach will open to you now — the wards read the stones and let through those who carry them.\n"
+                                "North, through the Ashlands. The road is marked. Whatever's waiting at the summit... end it.",
+                        "choices": [
+                            {"text": "Any last guidance?", "next": "guidance"},
+                            {"text": "We're going.",       "next": None},
+                        ],
+                    },
+                    "guidance": {
+                        "speaker": "Guild Commander Varek",
+                        "text": "Rest first. Stock up. The Spire has six floors — you won't be coming back for supplies. Whatever Maren is doing up there, she's had a head start.\n"
+                                "The Order is with you. What's left of it.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                },
+            },
+        },
+        # ── After 4 stones (HS4 from Pale Coast just collected) — one left (Windswept Isle) ──
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.4", "op": "==",         "value": True},
                 {"flag": "item.hearthstone.5", "op": "not_exists"},
-                {"flag": "boss_defeated.shadow_valdris", "op": "not_exists"},
             ],
             "tree": {
                 "id": "varek_penultimate",
@@ -9085,22 +9181,25 @@ _NEW_DIALOGUES = {
                 "nodes": {
                     "start": {
                         "speaker": "Guild Commander Varek",
-                        "text": "Four stones. One left — the Dragon's Tooth, the volcanic island east of the coast. My operative confirmed the last stone is in the deepest chamber. The guardian there is unlike anything else. Prepare accordingly. After that, the Spire. You're close.",
+                        "text": "Four stones. The Pale Sentinel is the latest to yield — "
+                                "that sets something straight that's been wrong for a long time.\n"
+                                "One stone left: the Windswept Isle, out in open ocean. With "
+                                "the Pale Coast cleared, the storms will settle enough for a "
+                                "ship to make landfall. Any of the three main docks can sail you "
+                                "there — Briarhollow, Saltmere, or Pale Coast Dock.\n"
+                                "Then the Spire. You're close.",
                         "choices": [
-                            {"text": "How do we reach Dragon's Tooth?", "next": "reach"},
-                            {"text": "What do you know about the guardian?", "next": "guardian"},
-                            {"text": "We're ready.", "next": None},
+                            {"text": "What's on the Windswept Isle?",      "next": "isle"},
+                            {"text": "We'll set sail.",                    "next": None},
                         ],
                     },
-                    "reach": {
+                    "isle": {
                         "speaker": "Guild Commander Varek",
-                        "text": "Eastport, then by ship. It's a half-day sail in good weather. The island is active — volcanic vents, unstable ground. The ruins predate the Warden order. Whatever's down there sealed itself in voluntarily.",
+                        "text": "Ruins older than the Warden Order. The guardian is elemental — "
+                                "storm and stone, bound to the place. No 'true name' trick will "
+                                "work there; the binding predates names. Bring weapons that hit "
+                                "hard, and wards that hold.",
                         "choices": [{"text": "Understood.", "next": None}],
-                    },
-                    "guardian": {
-                        "speaker": "Guild Commander Varek",
-                        "text": "Old. Ancient, even by Warden standards. The reports call it Karreth — a name, not a title. It responds to something called a 'true name' — some kind of ancient binding. If you have that, the fight may be shorter. If not, expect it to be very long.",
-                        "choices": [{"text": "We'll find a way.", "next": None}],
                     },
                 },
             },
@@ -10363,7 +10462,7 @@ BOSS_PEACEFUL_RESOLUTIONS = {
         "hearthstone_name": "Hearthstone Fragment (Dragon's Tooth)",
         "bonus_loot":    ["karreth_scale"],
         "boss_npc":      "karreth",
-        "world_key":     "dragon_scale",
+        "world_key":     "pale_coast_access",   # matches combat path — unlocks Pale Coast
     },
     "pale_coast": {
         "flag":          "sentinel.yielded",
