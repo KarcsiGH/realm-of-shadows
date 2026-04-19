@@ -293,10 +293,15 @@ LOCATIONS = {
 
 # Port routes (which ports connect)
 PORT_ROUTES = {
-    "briarhollow_dock": ["pale_coast_dock", "windswept_isle", "saltmere_dock"],
+    "briarhollow_dock": ["pale_coast_dock", "windswept_isle", "saltmere_dock", "eastern_dock"],
     "pale_coast_dock":  ["briarhollow_dock", "windswept_isle", "saltmere_dock"],
-    "saltmere_dock":    ["pale_coast_dock", "briarhollow_dock", "windswept_isle"],
-    "eastern_dock":     ["dragons_tooth"],
+    # Saltmere is the narrative port for Dragon's Tooth (Riv's dialogue).
+    "saltmere_dock":    ["pale_coast_dock", "briarhollow_dock", "windswept_isle", "dragons_tooth", "eastern_dock"],
+    "eastern_dock":     ["dragons_tooth", "saltmere_dock", "briarhollow_dock"],
+    # Dungeon-islands: the party's ship waits at anchor, so they can always
+    # sail back to a mainland port. Prevents stranding.
+    "dragons_tooth":    ["saltmere_dock", "eastern_dock"],
+    "windswept_isle":   ["briarhollow_dock", "pale_coast_dock", "saltmere_dock"],
 }
 
 # Magical rail connections

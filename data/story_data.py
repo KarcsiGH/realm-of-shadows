@@ -617,6 +617,18 @@ NPCS = {
         "location": "briarhollow",
         "portrait_color": (200, 160, 80),  # warm gold
     },
+    "elder_thom": {
+        "name": "Elder Thom",
+        "title": "Village Elder",
+        "location": "briarhollow",
+        "portrait_color": (150, 140, 120),  # aged grey
+    },
+    "captain_aldric": {
+        "name": "Captain Aldric",
+        "title": "Captain of the Briarhollow Patrol",
+        "location": "briarhollow",
+        "portrait_color": (140, 120, 80),  # weathered bronze
+    },
 
     # ─── Woodhaven ───
     "elder_theron": {
@@ -1227,6 +1239,296 @@ NPC_DIALOGUES = {
                     },
                 },
             },
+        },
+        # ── Cross-town quest hints: active main quest → where to go ─
+        # These run BEFORE the rank-0 fallback so players who have wandered
+        # into a different town than the quest giver still get pointed at the
+        # right town and NPC. The first matching tree wins, so they are
+        # ordered from latest quest backward (later quests take priority
+        # if multiple are somehow active at once).
+        #
+        # Pattern per tree:
+        #   conditions: quest state is active (not 0, not -2)
+        #                AND the next prereq flag is not yet set
+        #   tree: one-node hint telling the player where to go next
+        {
+            "conditions": [
+                {"flag": "quest.main_act3_finale.state", "op": ">=", "value": 1},
+                {"flag": "quest.main_act3_finale.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "hint_act3_finale",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "All five Hearthstones recovered. The Spire's approach "
+                                "will let you through now.\n"
+                                "The summit is where it ends. Ascend the Spire — "
+                                "Valdris is waiting. Or what's left of him.",
+                        "choices": [{"text": "We're ready.", "next": None}]
+                    }
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.main_windswept_isle.state", "op": ">=", "value": 1},
+                {"flag": "quest.main_windswept_isle.state", "op": "!=", "value": -2},
+                {"flag": "boss_defeated.windswept_isle",    "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "hint_windswept_isle",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "The fifth Hearthstone lies on the Windswept Isle — "
+                                "storm-battered ruins out in the ocean.\n"
+                                "Sail from Briarhollow Docks, Saltmere Docks, "
+                                "or Pale Coast Dock. Guild Commander Varek in "
+                                "Thornhaven has the charts if you need them.",
+                        "choices": [{"text": "Understood.", "next": None}]
+                    }
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.main_pale_coast.state", "op": ">=", "value": 1},
+                {"flag": "quest.main_pale_coast.state", "op": "!=", "value": -2},
+                {"flag": "boss_defeated.pale_coast",    "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "hint_pale_coast",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "The Pale Coast Catacombs hold the fourth Hearthstone. "
+                                "Cross the peninsula west of Saltmere — Pale Coast Dock "
+                                "is the jumping-off point.\n"
+                                "Guild Commander Varek in Thornhaven can brief you further.",
+                        "choices": [{"text": "We'll head there.", "next": None}]
+                    }
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.main_act3_spire.state", "op": ">=", "value": 1},
+                {"flag": "quest.main_act3_spire.state", "op": "!=", "value": -2},
+                {"flag": "boss_defeated.valdris_spire", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "hint_act3_spire",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Valdris' Spire stands in the Ashlands to the north. "
+                                "You'll need all five Hearthstones before the approach "
+                                "will let you through.\n"
+                                "Speak with Guild Commander Varek in Thornhaven — "
+                                "he's coordinating the Order's final push.",
+                        "choices": [{"text": "We'll see him.", "next": None}]
+                    }
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.main_act2_pursuit.state", "op": ">=", "value": 1},
+                {"flag": "quest.main_act2_pursuit.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "hint_act2_pursuit",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Maren left in a hurry — north, toward Valdris' Spire.\n"
+                                "Whatever she took, she's not planning on giving back. "
+                                "Your fastest route is through Thornhaven — "
+                                "Guild Commander Varek can arrange your next steps.",
+                        "choices": [{"text": "We'll go.", "next": None}]
+                    }
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.main_maren_truth.state", "op": ">=", "value": 1},
+                {"flag": "quest.main_maren_truth.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "hint_maren_truth",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Court Mage Sira in Thornhaven spoke with you — "
+                                "now go back and confront Maren. "
+                                "She'll be at the Wanderer's Rest in Briarhollow, "
+                                "same as always.\n"
+                                "Don't let her leave until she answers.",
+                        "choices": [{"text": "We'll find her.", "next": None}]
+                    }
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.main_thornhaven.state", "op": ">=", "value": 1},
+                {"flag": "quest.main_thornhaven.state", "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "hint_thornhaven",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Archmage Solen in Crystalspire sent you east — "
+                                "Governor Aldric of Thornhaven is waiting for your report.\n"
+                                "Thornhaven is the capital. Take the road east through "
+                                "Crystalspire and the Imperial checkpoints will wave you through "
+                                "once you show the Archmage's seal.",
+                        "choices": [{"text": "We'll travel east.", "next": None}]
+                    }
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.main_hearthstone_3.state",  "op": ">=", "value": 1},
+                {"flag": "quest.main_hearthstone_3.state",  "op": "!=", "value": -2},
+                {"flag": "boss_defeated.dragons_tooth",     "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "hint_hearthstone_3",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Dragon's Tooth — volcanic island to the far east. "
+                                "The third Hearthstone is in the caldera.\n"
+                                "Sea passage only. Speak with Dockhand Riv at "
+                                "Saltmere Docks. He runs the Tiderunner route; "
+                                "he'll take you once you've cleared the Sunken Crypt.",
+                        "choices": [{"text": "We'll find Riv.", "next": None}]
+                    }
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.main_hearthstone_2.state",  "op": ">=", "value": 1},
+                {"flag": "quest.main_hearthstone_2.state",  "op": "!=", "value": -2},
+                {"flag": "boss_defeated.sunken_crypt",      "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "hint_hearthstone_2",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "The Sunken Crypt holds the second Hearthstone.\n"
+                                "Tide Priest Oran in Saltmere is the one to speak with — "
+                                "the crypt is just off the coast there, and he knows "
+                                "the old wards that keep it sealed.",
+                        "choices": [{"text": "Saltmere, then.", "next": None}]
+                    }
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.main_ashenmoor.state",  "op": ">=", "value": 1},
+                {"flag": "quest.main_ashenmoor.state",  "op": "!=", "value": -2},
+                {"flag": "boss_defeated.ruins_ashenmoor", "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "hint_ashenmoor",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "The Ruins of Ashenmoor lie east of the Abandoned Mine — "
+                                "follow the road past Ironhearth until the trees die out.\n"
+                                "Maren in Briarhollow has the context you'll need. "
+                                "Check in with her before and after.",
+                        "choices": [{"text": "We will.", "next": None}]
+                    }
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.main_spiders_nest.state",  "op": ">=", "value": 1},
+                {"flag": "quest.main_spiders_nest.state",  "op": "!=", "value": -2},
+                {"flag": "boss_defeated.spiders_nest",     "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "hint_spiders_nest",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Elder Theron of Woodhaven asked for help with the spiders.\n"
+                                "The Spider's Nest is in the Thornwood west of Woodhaven. "
+                                "When you've cleared it, bring word back to Maren "
+                                "in Briarhollow — she'll want to hear what you saw.",
+                        "choices": [{"text": "Understood.", "next": None}]
+                    }
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.main_hearthstone_1.state",  "op": ">=", "value": 1},
+                {"flag": "quest.main_hearthstone_1.state",  "op": "!=", "value": -2},
+                {"flag": "boss_defeated.abandoned_mine",    "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "hint_hearthstone_1",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Maren sent you after the first Hearthstone. "
+                                "The Abandoned Mine is north of Ironhearth.\n"
+                                "You'll need the Mine Key — the Spider Queen carries it. "
+                                "Clear the Spider's Nest first if you haven't.",
+                        "choices": [{"text": "North of Ironhearth. Got it.", "next": None}]
+                    }
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.main_goblin_warren.state",  "op": ">=", "value": 1},
+                {"flag": "quest.main_goblin_warren.state",  "op": "!=", "value": -2},
+                {"flag": "boss_defeated.goblin_warren",     "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "hint_goblin_warren",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Maren sent you to the Goblin Warren. It's east of "
+                                "Briarhollow, through the forest — the goblins carved "
+                                "tunnels into an old warren.\n"
+                                "Clear it out and return to Maren at the Wanderer's Rest.",
+                        "choices": [{"text": "East of Briarhollow.", "next": None}]
+                    }
+                }
+            }
+        },
+        {
+            "conditions": [
+                {"flag": "quest.main_meet_maren.state",  "op": ">=", "value": 1},
+                {"flag": "quest.main_meet_maren.state",  "op": "!=", "value": -2},
+            ],
+            "tree": {
+                "id": "hint_meet_maren",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "Elder Thom mentioned a scholar — Maren. She's staying "
+                                "at the Wanderer's Rest inn in Briarhollow.\n"
+                                "If you're serious about this work, she's the one to talk to first.",
+                        "choices": [{"text": "Briarhollow, then.", "next": None}]
+                    }
+                }
+            }
         },
         # ── Rank 0: Initiate (first meeting, gives starter badge) ───
         {
@@ -4432,7 +4734,7 @@ NPC_DIALOGUES = {
 # ═══════════════════════════════════════════════════════════════
 
 TOWN_NPCS = {
-    "briarhollow": ["maren", "captain_rowan", "bess", "old_petra", "young_tomas", 'warden_liaison'],
+    "briarhollow": ["maren", "captain_rowan", "bess", "old_petra", "young_tomas", "elder_thom", "captain_aldric", 'warden_liaison'],
     "woodhaven":   ["elder_theron", "sylla", "warden_liaison"],
     "ironhearth":  ["forgemaster_dunn", "merchant_kira", "warden_liaison"],
     "greenwood":   ["scout_feryn", "old_moss", "warden_liaison"],
@@ -5212,6 +5514,62 @@ def get_rumor(act=None):
          "The Fading's stopped. Just... stopped. I woke up this morning and the sky looked right again."),
         ([{"flag": "boss_defeated.shadow_valdris", "op": "==", "value": True}],
          "They came back from the Spire. All of them. That's not supposed to happen."),
+
+        # ── DIRECTIONAL NEXT-STEP RUMORS ────────────────────────────
+        # These fire when a main quest is active but the objective is
+        # elsewhere — giving the player a concrete town/NPC pointer
+        # even if they don't talk to a Warden Liaison.
+        ([{"flag": "quest.main_meet_maren.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_meet_maren.state", "op": "!=", "value": -2}],
+         "That scholar woman — Maren — keeps asking about the old Wardens. She's at the Wanderer's Rest in Briarhollow if you want to hear her out."),
+        ([{"flag": "quest.main_goblin_warren.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_goblin_warren.state", "op": "!=", "value": -2},
+          {"flag": "boss_defeated.goblin_warren",   "op": "not_exists"}],
+         "Maren's been sending folks east of Briarhollow, into the Goblin Warren. Nobody's come back with good news yet."),
+        ([{"flag": "quest.main_hearthstone_1.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_hearthstone_1.state", "op": "!=", "value": -2},
+          {"flag": "boss_defeated.abandoned_mine",   "op": "not_exists"}],
+         "Scholar says the first ward-stone's in the Abandoned Mine — north of Ironhearth. You'll want the mine key the Spider Queen carries."),
+        ([{"flag": "quest.main_spiders_nest.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_spiders_nest.state", "op": "!=", "value": -2},
+          {"flag": "boss_defeated.spiders_nest",    "op": "not_exists"}],
+         "Elder Theron in Woodhaven's offering coin for anyone fool enough to clear the Spider's Nest in the Thornwood. Good luck."),
+        ([{"flag": "quest.main_ashenmoor.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_ashenmoor.state", "op": "!=", "value": -2},
+          {"flag": "boss_defeated.ruins_ashenmoor", "op": "not_exists"}],
+         "The Ruins of Ashenmoor are east past Ironhearth, where the trees die. Maren in Briarhollow knows more — she's the one sending people there."),
+        ([{"flag": "quest.main_hearthstone_2.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_hearthstone_2.state", "op": "!=", "value": -2},
+          {"flag": "boss_defeated.sunken_crypt",     "op": "not_exists"}],
+         "Tide Priest Oran in Saltmere keeps muttering about the Sunken Crypt and old Order wards. If you're headed that way, he's who to ask."),
+        ([{"flag": "quest.main_hearthstone_3.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_hearthstone_3.state", "op": "!=", "value": -2},
+          {"flag": "boss_defeated.dragons_tooth",    "op": "not_exists"}],
+         "Dockhand Riv at Saltmere Docks runs the Tiderunner route. He's the only one fool enough to sail to Dragon's Tooth."),
+        ([{"flag": "quest.main_thornhaven.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_thornhaven.state", "op": "!=", "value": -2}],
+         "Archmage Solen's been sending folks east to Thornhaven — wants them in front of Governor Aldric. Road goes through Crystalspire."),
+        ([{"flag": "quest.main_maren_truth.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_maren_truth.state", "op": "!=", "value": -2}],
+         "The Court Mage in Thornhaven's been digging into old records. Scholar Maren's name keeps coming up. She's still at the Wanderer's Rest in Briarhollow last I heard."),
+        ([{"flag": "quest.main_act2_pursuit.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_act2_pursuit.state", "op": "!=", "value": -2}],
+         "Scholar Maren left in a hurry — headed north toward the Spire. Guild Commander Varek in Thornhaven's coordinating whoever wants to follow."),
+        ([{"flag": "quest.main_act3_spire.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_act3_spire.state", "op": "!=", "value": -2},
+          {"flag": "boss_defeated.valdris_spire",  "op": "not_exists"}],
+         "Guild Commander Varek's taking names at the Thornhaven hall. Says the Spire won't clear itself."),
+        ([{"flag": "quest.main_pale_coast.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_pale_coast.state", "op": "!=", "value": -2},
+          {"flag": "boss_defeated.pale_coast",    "op": "not_exists"}],
+         "They say there's a fourth ward-stone in the Pale Coast Catacombs. Varek's people are prepping at the Thornhaven guild hall."),
+        ([{"flag": "quest.main_windswept_isle.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_windswept_isle.state", "op": "!=", "value": -2},
+          {"flag": "boss_defeated.windswept_isle",    "op": "not_exists"}],
+         "Fifth ward-stone's on the Windswept Isle — ruins out in open ocean. Any of the three main docks can sail you there."),
+        ([{"flag": "quest.main_act3_finale.state", "op": ">=", "value": 1},
+          {"flag": "quest.main_act3_finale.state", "op": "!=", "value": -2}],
+         "All five ward-stones. That's the whole set. If anyone's going up the Spire, it's happening soon."),
     ]
 
     # Build weighted pool: base rumors × 1, matching story rumors × 3

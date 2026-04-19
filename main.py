@@ -3505,13 +3505,28 @@ class Game:
         from data.world_map import PORT_ROUTES
         routes = PORT_ROUTES.get(loc_id, [])
 
-        # Show all connected ports — no discovery filter for sea routes
-        available = [r for r in routes if r in LOCATIONS]
+        # Show all connected ports — but filter out dungeon-destinations the
+        # party can't actually enter yet (prevents one-way trips to locked
+        # islands where they'd be stranded on arrival).
+        available = []
+        locked_hints = []
+        for r in routes:
+            dest = LOCATIONS.get(r)
+            if not dest:
+                continue
+            req_key = dest.get("required_key")
+            if req_key and not self.world_state.has_key(req_key):
+                # Collect a hint so the player knows why this route isn't offered
+                locked_hints.append((dest.get("name", r), req_key))
+                continue
+            available.append(r)
 
         if not available:
-            self.world_map_ui._show_event(
-                f"{loc['name']}: No sea routes charted from here.",
-                (80, 180, 220))
+            msg = f"{loc['name']}: No sea routes available yet."
+            if locked_hints:
+                names = ", ".join(n for n, _ in locked_hints)
+                msg += f" (Locked: {names})"
+            self.world_map_ui._show_event(msg, (80, 180, 220))
             return
 
         # Open the port destination picker modal
@@ -4668,7 +4683,7 @@ class Game:
         """Switch ambient sound to match current terrain biome.
         Only restarts the ambient if the biome has actually changed."""
         if not self.world_state:
-            sfx.play_ambient("world_ambient")
+            pass  # ambient disabled
             return
         try:
             tile = self.world_state.tiles[self.world_state.party_y][self.world_state.party_x]
@@ -4758,7 +4773,10 @@ class Game:
                 if town_id == "thornhaven":
                     start_quest("main_thornhaven")  # safe: no-op if already started
                 if town_id == "briarhollow":
-                    start_quest("main_meet_maren")  # auto-start intro quest (Elder Thom not in TOWN_NPCS)
+                    # Safety net: auto-start intro quest even if the player doesn't
+                    # talk to Elder Thom directly. Elder Thom now also gives this
+                    # quest explicitly from his dialogue, so this is defensive.
+                    start_quest("main_meet_maren")
 
                 # ── Act 1 Climax: Shadow attack on Briarhollow ──
                 # Fires once, after Hearthstone 1 is collected, on next visit to Briarhollow
@@ -4847,6 +4865,13 @@ class Game:
                         fire_dungeon_hints("first_floor", self.dungeon_ui)
                     else:
                         self.world_map_ui._show_event(reason, RED)
+                        # If this dungeon tile also has sea routes (e.g. the
+                        # party sailed to an island and got refused at the
+                        # entrance), offer the port picker as a fallback so
+                        # they are never stranded.
+                        from data.world_map import PORT_ROUTES
+                        if PORT_ROUTES.get(loc_id):
+                            self._handle_port(loc_id, loc)
                 else:
                     # Dungeon not yet defined — generic combat
                     enc_key = loc.get("encounter_key", "tutorial")
