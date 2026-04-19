@@ -2552,19 +2552,24 @@ class DungeonUI:
     #  SPIRE → THRONE CHOICE MODAL
     # ─────────────────────────────────────────────────────────
     def _draw_spire_choice_modal(self, surface, mx, my):
-        """Post-Spire choice: descend to Shadow Throne now or return to surface."""
+        """Post-Spire choice: descend to Shadow Throne now or return to surface.
+
+        Two variants: just-cleared-boss (original) and re-entry (party is
+        walking back into the Spire after having beaten the Lingering Will).
+        """
         import pygame
         from ui.renderer import (SCREEN_W, SCREEN_H, GOLD, CREAM, GREY,
                                  draw_text, draw_button, get_font)
         if not self.spire_choice_modal:
             return
+        is_reentry = self.spire_choice_modal.get("reentry", False)
 
         # Dim overlay
         dim = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
         dim.fill((0, 0, 0, 190))
         surface.blit(dim, (0, 0))
 
-        W, H = 700, 340
+        W, H = 700, 380 if is_reentry else 340
         bx = SCREEN_W // 2 - W // 2
         by = SCREEN_H // 2 - H // 2
         box = pygame.Rect(bx, by, W, H)
@@ -2574,25 +2579,38 @@ class DungeonUI:
         pygame.draw.rect(surface, (180, 140, 40), (bx, by, W, 6), border_radius=10)
 
         # Header
-        header = "✦  THE LINGERING WILL IS BROKEN  ✦"
+        if is_reentry:
+            header = "✦  THE SPIRE STANDS OPEN  ✦"
+        else:
+            header = "✦  THE LINGERING WILL IS BROKEN  ✦"
         hw = get_font(15).size(header)[0]
         draw_text(surface, header, bx + (W - hw) // 2, by + 18, GOLD, 15, bold=True)
 
         pygame.draw.line(surface, (60, 50, 80), (bx + 20, by + 44), (bx + W - 20, by + 44))
 
         # Body text
-        body_lines = [
-            "The Spire's binding is undone. Maren seals the anchor points.",
-            "Ahead, the Shadow Throne lies open — the seat of the Fading itself.",
-            "The wards will hold only as long as the Throne remains uncontested.",
-            "",
-            "You may press on while the path is clear,",
-            "or return to the surface to rest and resupply.",
-        ]
+        if is_reentry:
+            body_lines = [
+                "You stand again in the Spire you have already broken.",
+                "The wards still hold. The stairway down to the Shadow Throne remains open,",
+                "sealed against the Fading only by Maren's work and your resolve.",
+                "",
+                "Descend now to face what remains of Valdris,",
+                "or withdraw to walk the Spire's halls — loot, rest, reconsider.",
+            ]
+        else:
+            body_lines = [
+                "The Spire's binding is undone. Maren seals the anchor points.",
+                "Ahead, the Shadow Throne lies open — the seat of the Fading itself.",
+                "The wards will hold only as long as the Throne remains uncontested.",
+                "",
+                "You may press on while the path is clear,",
+                "or return to the surface to rest and resupply.",
+            ]
         ty = by + 56
         for line in body_lines:
             if line:
-                draw_text(surface, line, bx + 28, ty, CREAM if "You may" not in line else (200, 180, 120),
+                draw_text(surface, line, bx + 28, ty, CREAM if "You may" not in line and "or withdraw" not in line else (200, 180, 120),
                           13, max_width=W - 56)
             ty += 20
 
@@ -2612,10 +2630,10 @@ class DungeonUI:
         draw_text(surface, dlabel, descend_btn.x + (descend_btn.w - dw) // 2,
                   descend_btn.y + 15, (200, 140, 255) if dh else (160, 110, 220), 14, bold=True)
 
-        # Return button
+        # Return/withdraw button
         pygame.draw.rect(surface, (20, 30, 20) if sh else (14, 20, 14), surface_btn, border_radius=6)
         pygame.draw.rect(surface, (100, 180, 100) if sh else (60, 120, 60), surface_btn, 2, border_radius=6)
-        slabel = "↑  Return to surface"
+        slabel = "↑  Walk the Spire" if is_reentry else "↑  Return to surface"
         sw = get_font(14).size(slabel)[0]
         draw_text(surface, slabel, surface_btn.x + (surface_btn.w - sw) // 2,
                   surface_btn.y + 15, (140, 220, 140) if sh else (100, 170, 100), 14, bold=True)
@@ -2627,11 +2645,19 @@ class DungeonUI:
         """Handle clicks on the Spire->Throne choice modal."""
         descend_btn = getattr(self, "_spire_descend_btn", None)
         surface_btn = getattr(self, "_spire_surface_btn", None)
+        is_reentry = self.spire_choice_modal and self.spire_choice_modal.get("reentry", False)
         if descend_btn and descend_btn.collidepoint(mx, my):
             self.spire_choice_modal = None
+            if is_reentry:
+                # Re-entry: skip post-combat XP (nothing to collect) and
+                # route straight to the Shadow Throne via a dedicated event.
+                return {"type": "spire_reentry_descend"}
             return {"type": "spire_descend_throne"}
         if surface_btn and surface_btn.collidepoint(mx, my):
             self.spire_choice_modal = None
+            if is_reentry:
+                # "Walk the Spire" — just close the modal, stay in the dungeon.
+                return None
             return {"type": "spire_return_surface"}
         return None  # click inside modal but not on a button — consume
 

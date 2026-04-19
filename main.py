@@ -894,6 +894,19 @@ class Game:
                             except Exception as _e:
                                 self.add_toast("Shadow Throne not yet accessible.", (200,100,80))
                                 self.go_fade(S_WORLD_MAP)
+                        # Special routing: after Spire, return to surface
+                        # (drops the party at the world map, not back inside
+                        # the dungeon they were trying to leave)
+                        elif get_flag("spire.exit_to_surface"):
+                            set_flag("spire.exit_to_surface", False)
+                            self.dungeon_state = None
+                            self.dungeon_ui = None
+                            if self.world_state:
+                                self.add_toast("You descend from the Spire to the surface.",
+                                               (140, 200, 255))
+                                self.go_fade(S_WORLD_MAP)
+                            else:
+                                self.go_fade(S_PARTY)
                         # Normal routing: story combat that drops into a town
                         elif getattr(self, "_post_combat_town", None):
                             town_id = self._post_combat_town
@@ -4882,6 +4895,15 @@ class Game:
                         # Tutorial hints — first dungeon floor
                         from core.tutorial import fire_dungeon_hints
                         fire_dungeon_hints("first_floor", self.dungeon_ui)
+
+                        # Re-entry Spire: if the Lingering Will is already
+                        # beaten, the party doesn't need to fight their way
+                        # back to the summit. Offer the Shadow Throne descent
+                        # choice immediately on entry. They can still cancel
+                        # (walk the Spire for loot) or accept (jump to Throne).
+                        from core.story_flags import get_flag as _gf_re
+                        if dungeon_id == "valdris_spire" and _gf_re("boss_defeated.valdris_spire"):
+                            self.dungeon_ui.spire_choice_modal = {"active": True, "reentry": True}
                     else:
                         self.world_map_ui._show_event(reason, RED)
                         # If this dungeon tile also has sea routes (e.g. the
@@ -5375,9 +5397,31 @@ class Game:
             from core.story_flags import set_flag
             set_flag("spire.descend_to_throne", True)
 
+        elif event["type"] == "spire_reentry_descend":
+            # Re-entry descent: party already cleared the Spire and returned
+            # for supplies. No post-combat needed — route directly into the
+            # Shadow Throne dungeon.
+            try:
+                from data.dungeon import DungeonState
+                from ui.dungeon_ui import DungeonUI
+                self.dungeon_state = DungeonState("shadow_throne", self.party)
+                self.dungeon_ui = DungeonUI(self.dungeon_state)
+                if self.world_state:
+                    self.world_state.discovered_locations.add("shadow_throne")
+                self.add_toast("Descending to the Shadow Throne...",
+                               (160, 100, 220))
+                self.go_fade(S_DUNGEON)
+            except Exception:
+                self.add_toast("Shadow Throne not yet accessible.", (200, 100, 80))
+
         elif event["type"] == "spire_return_surface":
-            # Player chose to return to surface — normal post-combat then world map
+            # Player chose to return to surface. Set a flag so post-combat
+            # routes them to the world map instead of dumping them back into
+            # the Spire at the boss room (which forced a fight through
+            # respawned enemies on the way out).
             self.start_post_combat()
+            from core.story_flags import set_flag
+            set_flag("spire.exit_to_surface", True)
 
         elif event["type"] == "exit_dungeon":
             # Transition state FIRST so draw_state stops rendering dungeon,
