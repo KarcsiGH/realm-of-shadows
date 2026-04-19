@@ -6643,10 +6643,126 @@ _NEW_DIALOGUES = {
     ],
 
         "tide_priest_oran": [
+        # ══════════════════════════════════════════════════════════════
+        # Priority: most-advanced milestone matches first (first-match-wins).
+        # Order: HS5 → HS4 → HS3 → HS2 → default.
+        # ══════════════════════════════════════════════════════════════
+
+        # ── Post-all-stones (HS5): one-shot ───────────────────────
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.5",     "op": "==",        "value": True},
+                {"flag": "oran.post_all_stones",   "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "oran_post_all_stones",
+                "nodes": {
+                    "start": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "All five stones.\n"
+                                "I felt the tides align just now — they haven't done that since before I was born. The sea knows.\n"
+                                "Valdris' Spire in the Ashlands is where the network converges. Whatever Maren is doing up there — end it. The sea is with you.",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "oran.post_all_stones", "value": True},
+                        ],
+                        "choices": [{"text": "Thank you, Oran.", "next": None}],
+                    },
+                },
+            },
+        },
+        # ── Post-all-stones (HS5): reusable reminder ──────────────
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.5",   "op": "==", "value": True},
+                {"flag": "oran.post_all_stones", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "oran_loop_all_stones",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "The tides run true again — for the first time in my life. Whatever you do at the Spire, know that the sea remembers you.",
+                        "choices": [{"text": "Thank you.", "next": None}],
+                    },
+                },
+            },
+        },
+
+        # ── Post-Pale Coast (HS4): one-shot ───────────────────────
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.4",     "op": "==",        "value": True},
+                {"flag": "item.hearthstone.5",     "op": "not_exists"},
+                {"flag": "oran.post_pale_coast",   "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "oran_post_pale_coast",
+                "nodes": {
+                    "start": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Four stones. Four.\n"
+                                "The Pale Sentinel — Sirenne, her name was, before she became a lock — she held that stone for forty-three years. Did she speak to you?",
+                        "on_enter": [
+                            {"action": "set_flag", "flag": "oran.post_pale_coast", "value": True},
+                        ],
+                        "choices": [
+                            {"text": "She yielded. She called us the ones she was told to wait for.",
+                             "next": "yielded",
+                             "condition": {"flag": "sentinel.yielded", "op": "==", "value": True}},
+                            {"text": "We had to fight her.",
+                             "next": "fought",
+                             "condition": {"flag": "sentinel.yielded", "op": "not_exists"}},
+                            {"text": "What's left?", "next": "whats_left"},
+                        ],
+                    },
+                    "yielded": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Then she got the release she was waiting for. I'm glad.\n"
+                                "One stone left — the Windswept Isle. With the Pale Coast cleared, the storms around the Isle will settle. Ships can make landfall now. Any of the three main docks can sail you there — including ours here at Saltmere.\n"
+                                "The Isle is the last one. Then the Spire.",
+                        "choices": [{"text": "We'll sail for the Isle.", "next": None}],
+                    },
+                    "fought": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "Then she died doing what she was made for. Not the ending I'd have chosen, but not a shameful one either.\n"
+                                "One stone left — the Windswept Isle, out in open ocean. With the Pale Coast cleared, the storms there will have settled. Any of the three docks — Saltmere, Briarhollow, or Pale Coast — can sail you there.",
+                        "choices": [{"text": "We'll set sail.", "next": None}],
+                    },
+                    "whats_left": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "The Windswept Isle. One stone. Then the Spire in the Ashlands. Varek in Thornhaven has more intel on the Isle's guardian than I do.",
+                        "choices": [{"text": "Understood.", "next": None}],
+                    },
+                },
+            },
+        },
+        # ── Post-Pale Coast (HS4): reusable reminder ──────────────
+        {
+            "conditions": [
+                {"flag": "item.hearthstone.4",   "op": "==", "value": True},
+                {"flag": "item.hearthstone.5",   "op": "not_exists"},
+                {"flag": "oran.post_pale_coast", "op": "==", "value": True},
+            ],
+            "tree": {
+                "id": "oran_loop_post_pc",
+                "loop": True,
+                "nodes": {
+                    "start": {
+                        "speaker": "Tide Priest Oran",
+                        "text": "One stone left — the Windswept Isle. The storms there have settled now that the Pale Coast is cleared. Sail when you're ready. The sea is with you.",
+                        "choices": [{"text": "Thank you.", "next": None}],
+                    },
+                },
+            },
+        },
+
         # ── Post-Dragon's Tooth: HS3 recovered ────────────────────
+        # (Gated so it STOPS matching once HS4 is collected.)
         {
             "conditions": [
                 {"flag": "item.hearthstone.3",       "op": "==",        "value": True},
+                {"flag": "item.hearthstone.4",       "op": "not_exists"},
                 {"flag": "oran.post_dragonstooth",   "op": "not_exists"},
             ],
             "tree": {
@@ -6691,13 +6807,12 @@ _NEW_DIALOGUES = {
                 },
             },
         },
-        # ── Post-Sunken Crypt loop (fires after first post-DT conversation) ──
-        # Same content as oran_hs3 but acknowledges the party's progress instead
-        # of treating them like first-time visitors.
+        # ── Post-Dragon's Tooth loop: HS3 done, HS4 not yet ───────
         {
             "conditions": [
-                {"flag": "item.hearthstone.3",     "op": "==", "value": True},
-                {"flag": "oran.post_dragonstooth", "op": "==", "value": True},
+                {"flag": "item.hearthstone.3",     "op": "==",        "value": True},
+                {"flag": "item.hearthstone.4",     "op": "not_exists"},
+                {"flag": "oran.post_dragonstooth", "op": "==",        "value": True},
             ],
             "tree": {
                 "id": "oran_loop_post_dt",
