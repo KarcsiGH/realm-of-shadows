@@ -4793,6 +4793,26 @@ class Game:
                 # Find matching dungeon ID
                 loc_id = event.get("id", "")
                 dungeon_id = loc_id  # location ID matches dungeon ID
+
+                # ── Island dungeons: always offer sail-away option ──
+                # Dungeons that are reachable only by sea (have PORT_ROUTES)
+                # must always give the party a way off the island — otherwise
+                # they are stranded after clearing the dungeon, or on approach
+                # if they lack the key. The island_choice_modal presents:
+                #   [Enter the Dungeon] [Sail Away] [Cancel]
+                # Bypass when _skip_island_choice is set (player already chose
+                # "Enter" from the modal, so we're re-entering this branch).
+                from data.world_map import PORT_ROUTES
+                if (PORT_ROUTES.get(loc_id)
+                        and dungeon_id in DUNGEONS
+                        and not getattr(self, "_skip_island_choice", False)):
+                    self.world_map_ui.island_choice_modal = {
+                        "loc_id": loc_id,
+                        "loc":    loc,
+                    }
+                    # Don't advance — let the modal click handler resolve
+                    return
+
                 if dungeon_id in DUNGEONS:
                     can, reason = self.world_state.can_enter_dungeon(loc_id)
                     if can:
@@ -4903,6 +4923,31 @@ class Game:
                 # Mark destination port as discovered
                 self.world_state.discovered_locations.add(dest_id)
                 sfx.play("stairs")  # repurpose travel sound
+
+        elif event["type"] == "island_enter_dungeon":
+            # Player chose to enter the dungeon from the island choice modal.
+            # Re-dispatch as a normal enter_location event but mark it so we
+            # don't pop the island-choice modal again and cause a loop.
+            loc = event.get("data", {})
+            loc_id = event.get("id", "")
+            # Directly run the LOC_DUNGEON entry flow without the modal
+            # intercept by synthesizing an enter_location event and setting
+            # a one-shot bypass flag.
+            self._skip_island_choice = True
+            try:
+                self._process_world_event({
+                    "type": "enter_location",
+                    "id":   loc_id,
+                    "data": loc,
+                })
+            finally:
+                self._skip_island_choice = False
+
+        elif event["type"] == "island_sail_away":
+            # Player chose to sail away — open the port picker.
+            loc = event.get("data", {})
+            loc_id = event.get("id", "")
+            self._handle_port(loc_id, loc)
 
         elif event["type"] == "discovery":
             sfx.play("discovery")

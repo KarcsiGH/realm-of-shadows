@@ -71,6 +71,7 @@ class WorldMapUI:
         self.event_color = CREAM
         self.show_camp_confirm = False
         self.port_modal        = None   # {"loc_id", "loc", "routes", "hover_idx"}
+        self.island_choice_modal = None # {"loc_id", "loc"}
 
     def draw(self, surface, mx, my, dt):
         self.event_timer = max(0, self.event_timer - dt)
@@ -96,6 +97,10 @@ class WorldMapUI:
         # ── Port destination picker ──
         if self.port_modal:
             self._draw_port_modal(surface, mx, my)
+
+        # ── Island choice modal (dungeon-island: enter or sail away) ──
+        if self.island_choice_modal:
+            self._draw_island_choice_modal(surface, mx, my)
 
         # ── Fading world corruption overlay ──
         self._draw_fading_overlay(surface)
@@ -681,6 +686,93 @@ class WorldMapUI:
 
         return None  # click inside modal but not on a button — consume event
 
+    def _draw_island_choice_modal(self, surface, mx, my):
+        """Draw the Enter-Dungeon / Sail-Away choice for island dungeons."""
+        m = self.island_choice_modal
+        if not m:
+            return
+        loc = m["loc"]
+        loc_id = m["loc_id"]
+
+        # Dim background
+        overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))
+        surface.blit(overlay, (0, 0))
+
+        # Dialog
+        dlg_h = 230
+        dlg = pygame.Rect(SCREEN_W // 2 - 260, SCREEN_H // 2 - dlg_h // 2, 520, dlg_h)
+        pygame.draw.rect(surface, (14, 20, 38), dlg, border_radius=6)
+        pygame.draw.rect(surface, (80, 180, 220), dlg, 2, border_radius=6)
+
+        # Header
+        draw_text(surface, f"⚓ {loc['name']}", dlg.x + 20, dlg.y + 16,
+                  (80, 180, 220), 22, bold=True)
+        draw_text(surface, "You are on the island. What do you want to do?",
+                  dlg.x + 20, dlg.y + 48, CREAM, 14)
+        pygame.draw.line(surface, (40, 80, 110),
+                         (dlg.x + 10, dlg.y + 74), (dlg.right - 10, dlg.y + 74))
+
+        # Enter Dungeon button
+        enter_btn = pygame.Rect(dlg.x + 20, dlg.y + 86, dlg.width - 40, 44)
+        e_hover = enter_btn.collidepoint(mx, my)
+        pygame.draw.rect(surface, (90, 40, 40) if e_hover else (50, 24, 24),
+                         enter_btn, border_radius=4)
+        pygame.draw.rect(surface, (200, 80, 80) if e_hover else (110, 40, 40),
+                         enter_btn, 1, border_radius=4)
+        draw_text(surface, "⚔  Enter the Dungeon", enter_btn.x + 14, enter_btn.y + 6,
+                  (240, 180, 180) if e_hover else CREAM, 14, bold=e_hover)
+        draw_text(surface, "Descend into the ruins/cave/caldera.",
+                  enter_btn.x + 14, enter_btn.y + 26, GREY, 11)
+        m["_enter_rect"] = enter_btn
+
+        # Sail Away button
+        sail_btn = pygame.Rect(dlg.x + 20, dlg.y + 138, dlg.width - 40, 44)
+        s_hover = sail_btn.collidepoint(mx, my)
+        pygame.draw.rect(surface, (40, 90, 130) if s_hover else (20, 40, 65),
+                         sail_btn, border_radius=4)
+        pygame.draw.rect(surface, (80, 180, 220) if s_hover else (40, 80, 110),
+                         sail_btn, 1, border_radius=4)
+        draw_text(surface, "⚓  Sail Away", sail_btn.x + 14, sail_btn.y + 6,
+                  (140, 220, 255) if s_hover else CREAM, 14, bold=s_hover)
+        draw_text(surface, "Return to a mainland port.",
+                  sail_btn.x + 14, sail_btn.y + 26, GREY, 11)
+        m["_sail_rect"] = sail_btn
+
+        # Cancel button
+        cancel_btn = pygame.Rect(dlg.x + dlg.width - 120, dlg.y + dlg_h - 40, 100, 30)
+        pygame.draw.rect(surface, (40, 30, 50), cancel_btn, border_radius=4)
+        pygame.draw.rect(surface, PANEL_BORDER, cancel_btn, 1, border_radius=4)
+        draw_text(surface, "Cancel", cancel_btn.x + 16, cancel_btn.y + 6, GREY, 13)
+        m["_cancel_rect"] = cancel_btn
+
+    def _handle_island_choice_click(self, mx, my):
+        """Handle clicks inside the island choice modal."""
+        m = self.island_choice_modal
+        if not m:
+            return None
+
+        cancel = m.get("_cancel_rect")
+        if cancel and cancel.collidepoint(mx, my):
+            self.island_choice_modal = None
+            return None
+
+        enter = m.get("_enter_rect")
+        if enter and enter.collidepoint(mx, my):
+            loc = m["loc"]; loc_id = m["loc_id"]
+            self.island_choice_modal = None
+            # Return the enter_location event — main.py's LOC_DUNGEON branch
+            # will run the usual entry flow (including the key-gate check)
+            return {"type": "island_enter_dungeon", "id": loc_id, "data": loc}
+
+        sail = m.get("_sail_rect")
+        if sail and sail.collidepoint(mx, my):
+            loc = m["loc"]; loc_id = m["loc_id"]
+            self.island_choice_modal = None
+            return {"type": "island_sail_away", "id": loc_id, "data": loc}
+
+        return None  # click inside modal but not on a button
+
     def _draw_camp_dialog(self, surface, mx, my):
         """Draw camp confirmation dialog."""
         overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
@@ -714,9 +806,11 @@ class WorldMapUI:
 
     def handle_key(self, key):
         """Handle keyboard input. Returns event dict or None."""
-        if self.show_camp_confirm or self.port_modal:
+        if self.show_camp_confirm or self.port_modal or self.island_choice_modal:
             if self.port_modal and key == pygame.K_ESCAPE:
                 self.port_modal = None
+            if self.island_choice_modal and key == pygame.K_ESCAPE:
+                self.island_choice_modal = None
             return None  # handled by click
 
         # Movement
@@ -760,6 +854,10 @@ class WorldMapUI:
 
     def handle_click(self, mx, my):
         """Handle mouse clicks. Returns event dict or None."""
+        # Island choice modal (priority — it's the most recent modal)
+        if self.island_choice_modal:
+            return self._handle_island_choice_click(mx, my)
+
         # Port modal
         if self.port_modal:
             return self._handle_port_modal_click(mx, my)
