@@ -730,16 +730,12 @@ class WorldMapUI:
         elif key in (pygame.K_RIGHT, pygame.K_d):
             dx = 1
         elif key == pygame.K_RETURN:
-            # Enter location
+            # Enter location — let main.py handle the entry-denial path so the
+            # port-picker fallback can fire for stranded parties on islands.
             tile = self.world.get_current_tile()
             loc_id = tile.get("location_id")
             if loc_id and loc_id in LOCATIONS:
                 loc = LOCATIONS[loc_id]
-                if loc["type"] == LOC_DUNGEON:
-                    can, reason = self.world.can_enter_dungeon(loc_id)
-                    if not can:
-                        self._show_event(reason, RED)
-                        return None
                 return {"type": "enter_location", "id": loc_id, "data": loc}
             return None
         elif key == pygame.K_c:
