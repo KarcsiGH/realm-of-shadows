@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "timestamp": "2026-04-19T00:23:51.353603",
+  "timestamp": "2026-04-19T00:53:50.744919",
   "slot_name": "save1",
   "metadata": {
     "party_summary": [
@@ -11,7 +11,7 @@
       "Marvin Lv.17 Halfling Mystic",
       "Roger Lv.17 Half-Orc Shadow Master"
     ],
-    "total_gold": 16639
+    "total_gold": 17243
   },
   "party": [
     {
@@ -19,8 +19,8 @@
       "class_name": "High Priest",
       "race_name": "Gnome",
       "level": 17,
-      "xp": 90988,
-      "gold": 285,
+      "xp": 97048,
+      "gold": 159,
       "stats": {
         "STR": 15,
         "DEX": 17,
@@ -33,7 +33,7 @@
         "HP": 165,
         "Ki": 768,
         "WIS-MP": 188,
-        "PIE-MP": 196
+        "PIE-MP": 176
       },
       "abilities": [
         {
@@ -337,7 +337,7 @@
           "estimated_value": 20,
           "magic_identified": true,
           "material_identified": true,
-          "stack": 1
+          "stack": 2
         },
         {
           "name": "Spire Key",
@@ -347,31 +347,6 @@
           "rarity": "common",
           "description": "An ancient ward-key that opens the approach to Valdris' Spire.",
           "world_key": "spire_key"
-        },
-        {
-          "name": "The Nameless Keeper's Seal",
-          "type": "accessory",
-          "subtype": "amulet",
-          "slot": "neck",
-          "rarity": "legendary",
-          "unique": true,
-          "stat_bonuses": {
-            "INT": 3,
-            "WIS": 3
-          },
-          "magic_resist": 8,
-          "enchant_element": "wind",
-          "enchant_bonus": 5,
-          "enchant_name": "Gale",
-          "identified": false,
-          "estimated_value": 400,
-          "description": "Left on the pedestal when the elemental dispersed. No inscription. The Will chose to be remembered only for its purpose \u2014 but it left this behind anyway. +3 INT, +3 WIS, wind damage bonus, magic resist.",
-          "lore": "The survey record says the keeper requested its name not be recorded. It left no name on this seal either. But it left the seal. Perhaps that was the name.",
-          "stack": 1
-        },
-        {
-          "id": "keeper_pendant",
-          "name": "The Nameless Keeper's Seal"
         },
         {
           "name": "Hearthstone (Windswept Isle)",
@@ -422,6 +397,25 @@
           "magic_identified": true,
           "material_identified": true,
           "stack": 1
+        },
+        {
+          "name": "Cloak of Shadows",
+          "appraised_name": "Cloak of Shadows",
+          "type": "armor",
+          "slot": "body",
+          "subtype": "cloak",
+          "rarity": "uncommon",
+          "armor_tier": "clothing",
+          "defense": 2,
+          "magic_resist": 3,
+          "effect": {
+            "dex_bonus": 1
+          },
+          "description": "A dark cloak that seems to drink in light. +1 DEX, +3 magic resist.",
+          "identified": true,
+          "estimated_value": 155,
+          "magic_identified": true,
+          "material_identified": true
         }
       ],
       "equipment": {
@@ -449,7 +443,7 @@
             "STR": 0.24,
             "DEX": 0.2
           },
-          "durability": 78,
+          "durability": 76,
           "max_durability": 100,
           "upgrade_level": 1,
           "base_name": "Warden Javelin"
@@ -528,7 +522,28 @@
           "durability": 100,
           "max_durability": 100
         },
-        "neck": null,
+        "neck": {
+          "name": "The Nameless Keeper's Seal",
+          "type": "accessory",
+          "subtype": "amulet",
+          "slot": "neck",
+          "rarity": "legendary",
+          "unique": true,
+          "stat_bonuses": {
+            "INT": 3,
+            "WIS": 3
+          },
+          "magic_resist": 8,
+          "enchant_element": "wind",
+          "enchant_bonus": 5,
+          "enchant_name": "Gale",
+          "identified": true,
+          "estimated_value": 400,
+          "description": "Left on the pedestal when the elemental dispersed. No inscription. The Will chose to be remembered only for its purpose \u2014 but it left this behind anyway. +3 INT, +3 WIS, wind damage bonus, magic resist.",
+          "lore": "The survey record says the keeper requested its name not be recorded. It left no name on this seal either. But it left the seal. Perhaps that was the name.",
+          "stack": 1,
+          "magic_identified": true
+        },
         "ring1": {
           "name": "Amulet of the Owl",
           "appraised_name": "Amulet of the Owl",
@@ -582,8 +597,8 @@
       "class_name": "Spellblade",
       "race_name": "Human",
       "level": 18,
-      "xp": 111532,
-      "gold": 1352,
+      "xp": 117894,
+      "gold": 1456,
       "stats": {
         "STR": 35,
         "DEX": 34,
@@ -594,7 +609,7 @@
       },
       "resources": {
         "HP": 146,
-        "INT-MP": 168,
+        "INT-MP": 148,
         "STR-SP": 168
       },
       "abilities": [
@@ -863,6 +878,30 @@
           "description": "A deep green enamel badge bearing three ward-runes. Marks the bearer as a keeper of the deeper wards.",
           "rarity": "rare",
           "warden_rank": 3
+        },
+        {
+          "name": "Dense Shadow Core",
+          "type": "material",
+          "rarity": "rare",
+          "identified": true,
+          "estimated_value": 70,
+          "description": "A fist-sized mass of compacted shadow energy. Cold on one side, burning on the other.",
+          "source": "Shadow Brute",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Shadow Essence",
+          "type": "material",
+          "rarity": "uncommon",
+          "identified": true,
+          "estimated_value": 40,
+          "description": "Dense shadow energy. Warm and unsettling to hold.",
+          "source": "Throne Shade",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
         }
       ],
       "equipment": {
@@ -887,7 +926,7 @@
           "damage_stat": {
             "STR": 0.4
           },
-          "durability": 88,
+          "durability": 87,
           "max_durability": 100
         },
         "off_hand": null,
@@ -1047,8 +1086,8 @@
       "class_name": "Paladin",
       "race_name": "Human",
       "level": 18,
-      "xp": 111532,
-      "gold": 1350,
+      "xp": 117894,
+      "gold": 1508,
       "stats": {
         "STR": 34,
         "DEX": 20,
@@ -1408,7 +1447,7 @@
           "source": "Korrath the Stone Warden",
           "magic_identified": true,
           "material_identified": true,
-          "durability": 46,
+          "durability": 45,
           "max_durability": 100
         },
         "off_hand": {
@@ -1566,8 +1605,8 @@
       "class_name": "Archmage",
       "race_name": "Elf",
       "level": 17,
-      "xp": 90988,
-      "gold": 1348,
+      "xp": 97048,
+      "gold": 1504,
       "stats": {
         "STR": 15,
         "DEX": 23,
@@ -2011,6 +2050,127 @@
           "source": "Lingering Will",
           "magic_identified": true,
           "material_identified": true
+        },
+        {
+          "name": "Ember Wand",
+          "appraised_name": "Ember Wand",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Wand",
+          "max_charges": 20,
+          "rarity": "uncommon",
+          "damage": 14,
+          "phys_type": "fire",
+          "range": "ranged",
+          "spell_bonus": 3,
+          "enchant_element": "fire",
+          "cast_spell": "Fireball",
+          "unidentified_name": "Scorched Wand",
+          "unidentified_desc": "A wand warm to the touch, with char marks on the tip.",
+          "description": "A wand infused with ember-magic. Casts Fireball. 20 charges. +3 spell power.",
+          "identified": true,
+          "estimated_value": 200,
+          "_wis_bonus": true,
+          "magic_identified": true,
+          "charges": 20,
+          "no_durability": true
+        },
+        {
+          "name": "Shadow Essence",
+          "type": "material",
+          "rarity": "uncommon",
+          "identified": true,
+          "estimated_value": 40,
+          "description": "Dense shadow energy. Warm and unsettling to hold.",
+          "source": "Throne Shade",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 2
+        },
+        {
+          "name": "Warden's Remnant Badge",
+          "type": "material",
+          "rarity": "rare",
+          "identified": true,
+          "estimated_value": 80,
+          "description": "The badge of a Warden long since fallen to shadow. The inscription is still legible.",
+          "source": "Corrupted Warden Echo",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 2
+        },
+        {
+          "name": "Orb of Fading Sight",
+          "appraised_name": "Orb of Fading Sight",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Orb",
+          "max_charges": 30,
+          "rarity": "rare",
+          "damage": 20,
+          "phys_type": "shadow",
+          "range": "ranged",
+          "effect": {
+            "int_bonus": 3,
+            "wis_bonus": 2
+          },
+          "spell_bonus": 5,
+          "enchant_element": "shadow",
+          "on_hit_effect": {
+            "status": "Weakened",
+            "chance": 0.3,
+            "duration": 2
+          },
+          "description": "A dark crystal orb swirling with Fading energy. Shadow bolts \u2014 30% chance to Weaken target (reduced damage) for 2 turns. +3 INT, +2 WIS, +5 spell.",
+          "identified": true,
+          "estimated_value": 430,
+          "_wis_bonus": true,
+          "magic_identified": true,
+          "charges": 30,
+          "no_durability": true
+        },
+        {
+          "name": "Tarnished Warden Seal",
+          "type": "material",
+          "subtype": "arcane",
+          "rarity": "rare",
+          "identify_difficulty": 4,
+          "unidentified_name": "Broken Seal",
+          "unidentified_desc": "A seal whose engraving has reversed itself.",
+          "appraised_name": "Corrupted Warden Seal",
+          "material_desc": "Stone that once anchored wards.",
+          "magic_desc": "Shadow resonance \u2014 formerly divine.",
+          "estimated_value": 35,
+          "description": "A Warden's seal, corrupted by prolonged shadow exposure.",
+          "identified": true,
+          "source": "Fallen Warden",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
+        },
+        {
+          "name": "Shadow Wand",
+          "appraised_name": "Shadow Wand",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Wand",
+          "max_charges": 20,
+          "rarity": "rare",
+          "damage": 18,
+          "phys_type": "shadow",
+          "range": "ranged",
+          "spell_bonus": 5,
+          "enchant_element": "shadow",
+          "cast_spell": "Void Rift",
+          "unidentified_name": "Darkened Wand",
+          "unidentified_desc": "A wand that seems to absorb light near its tip.",
+          "description": "A wand of shadow-essence. Casts Void Rift. 20 charges. +5 spell power.",
+          "identified": true,
+          "estimated_value": 390,
+          "_wis_bonus": true,
+          "magic_identified": true,
+          "charges": 20,
+          "no_durability": true
         }
       ],
       "equipment": {
@@ -2236,8 +2396,8 @@
       "class_name": "Mystic",
       "race_name": "Halfling",
       "level": 17,
-      "xp": 90988,
-      "gold": 4556,
+      "xp": 97048,
+      "gold": 4712,
       "stats": {
         "STR": 21,
         "DEX": 41,
@@ -2374,6 +2534,19 @@
             "Ki": 0.4
           },
           "desc": "Skip this turn to restore 40% MP and 40% Ki simultaneously."
+        },
+        {
+          "name": "Fist of Heaven",
+          "cost": 5,
+          "resource": "momentum",
+          "type": "attack",
+          "level": 17,
+          "power": 3.0,
+          "element": "arcane",
+          "special": "dual_resource",
+          "resource2": "INT-MP",
+          "cost2": 30,
+          "desc": "Costs both Momentum AND MP. Deals (INT + WIS) \u00d7 4 damage. The fusion made flesh."
         }
       ],
       "inventory": [
@@ -2557,6 +2730,30 @@
           "description": "A deep green enamel badge bearing three ward-runes. Marks the bearer as a keeper of the deeper wards.",
           "rarity": "rare",
           "warden_rank": 3
+        },
+        {
+          "name": "Shadow Essence",
+          "type": "material",
+          "rarity": "uncommon",
+          "identified": true,
+          "estimated_value": 40,
+          "description": "Dense shadow energy. Warm and unsettling to hold.",
+          "source": "Throne Shade",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 3
+        },
+        {
+          "name": "Dense Shadow Core",
+          "type": "material",
+          "rarity": "rare",
+          "identified": true,
+          "estimated_value": 70,
+          "description": "A fist-sized mass of compacted shadow energy. Cold on one side, burning on the other.",
+          "source": "Shadow Brute",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 1
         }
       ],
       "equipment": {
@@ -2751,8 +2948,8 @@
       "class_name": "Shadow Master",
       "race_name": "Half-Orc",
       "level": 17,
-      "xp": 90988,
-      "gold": 7748,
+      "xp": 97048,
+      "gold": 7904,
       "stats": {
         "STR": 24,
         "DEX": 61,
@@ -3102,86 +3299,6 @@
           "stack": 1
         },
         {
-          "name": "Warden's Oath Ring",
-          "type": "accessory",
-          "subtype": "ring",
-          "slot": "ring1",
-          "rarity": "rare",
-          "unique": true,
-          "stat_bonuses": {
-            "STR": 2,
-            "CON": 2
-          },
-          "magic_resist": 4,
-          "set_id": "warden_set",
-          "identified": true,
-          "estimated_value": 220,
-          "description": "The signet ring of the Warden order, passed down through commanders. Korrath wore it to his death. +2 STR, +2 CON, +4 magic resist.",
-          "lore": "The ring bears the Warden crest \u2014 a torch over crossed blades \u2014 though the crest is worn nearly smooth. Dozens of Wardens have worn this ring. Most died in service. None were murdered by their own.",
-          "source": "Warden Revenant",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 2
-        },
-        {
-          "name": "Mana Shard",
-          "type": "material",
-          "subtype": "arcane",
-          "rarity": "uncommon",
-          "tier": 1,
-          "identify_difficulty": 2,
-          "unidentified_name": "Glowing Shard",
-          "unidentified_desc": "A fragment that hums with energy.",
-          "appraised_name": "Raw Mana Shard",
-          "material_desc": "Unstable arcane crystal. Tier 1.",
-          "magic_desc": "Strong magical resonance.",
-          "estimated_value": 22,
-          "description": "A crystallized fragment of raw magical energy.",
-          "identified": true,
-          "source": "Bandit Mage",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 1
-        },
-        {
-          "name": "Shield of the Sentinel",
-          "appraised_name": "Shield of the Sentinel",
-          "type": "armor",
-          "slot": "off_hand",
-          "subtype": "shield",
-          "rarity": "rare",
-          "defense": 6,
-          "magic_resist": 4,
-          "effect": {
-            "con_bonus": 1
-          },
-          "description": "An ancient shield that still hums with protective magic. +1 CON.",
-          "identified": true,
-          "estimated_value": 355,
-          "_wis_bonus": true,
-          "magic_identified": true
-        },
-        {
-          "name": "Leather Scraps",
-          "type": "material",
-          "subtype": "leather",
-          "rarity": "common",
-          "tier": 1,
-          "identify_difficulty": 1,
-          "unidentified_name": "Leather Scraps",
-          "unidentified_desc": "Worn leather pieces.",
-          "appraised_name": "Boiled Leather Scraps",
-          "material_desc": "Tier 1 crafting material.",
-          "magic_desc": "No magical properties.",
-          "estimated_value": 5,
-          "description": "Scraps of boiled leather, useful for crafting.",
-          "identified": true,
-          "source": "Cultist Warrior",
-          "magic_identified": true,
-          "material_identified": true,
-          "stack": 2
-        },
-        {
           "name": "Ruin-Black Blade",
           "type": "weapon",
           "slot": "weapon",
@@ -3451,6 +3568,28 @@
           "magic_identified": true,
           "material_identified": true,
           "stack": 1
+        },
+        {
+          "name": "Wand of Sparks",
+          "appraised_name": "Wand of Sparks",
+          "type": "weapon",
+          "slot": "weapon",
+          "subtype": "Wand",
+          "max_charges": 20,
+          "rarity": "uncommon",
+          "damage": 16,
+          "phys_type": "lightning",
+          "range": "ranged",
+          "spell_bonus": 4,
+          "enchant_element": "lightning",
+          "cast_spell": "Chain Lightning",
+          "description": "A wand crackling with static. Casts Chain Lightning. 20 charges. +4 spell power.",
+          "identified": true,
+          "estimated_value": 200,
+          "magic_identified": true,
+          "material_identified": true,
+          "charges": 20,
+          "no_durability": true
         }
       ],
       "equipment": {
@@ -3477,10 +3616,27 @@
           "damage_stat": {
             "DEX": 0.4
           },
-          "durability": 54,
+          "durability": 53,
           "max_durability": 100
         },
-        "off_hand": null,
+        "off_hand": {
+          "name": "Shield of the Sentinel",
+          "appraised_name": "Shield of the Sentinel",
+          "type": "armor",
+          "slot": "off_hand",
+          "subtype": "shield",
+          "rarity": "rare",
+          "defense": 6,
+          "magic_resist": 4,
+          "effect": {
+            "con_bonus": 1
+          },
+          "description": "An ancient shield that still hums with protective magic. +1 CON.",
+          "identified": true,
+          "estimated_value": 355,
+          "_wis_bonus": true,
+          "magic_identified": true
+        },
         "head": {
           "name": "Chain Coif",
           "slot": "head",
@@ -3582,7 +3738,28 @@
           "material_identified": true,
           "stack": 1
         },
-        "ring3": null
+        "ring3": {
+          "name": "Warden's Oath Ring",
+          "type": "accessory",
+          "subtype": "ring",
+          "slot": "ring1",
+          "rarity": "rare",
+          "unique": true,
+          "stat_bonuses": {
+            "STR": 2,
+            "CON": 2
+          },
+          "magic_resist": 4,
+          "set_id": "warden_set",
+          "identified": true,
+          "estimated_value": 220,
+          "description": "The signet ring of the Warden order, passed down through commanders. Korrath wore it to his death. +2 STR, +2 CON, +4 magic resist.",
+          "lore": "The ring bears the Warden crest \u2014 a torch over crossed blades \u2014 though the crest is worn nearly smooth. Dozens of Wardens have worn this ring. Most died in service. None were murdered by their own.",
+          "source": "Warden Revenant",
+          "magic_identified": true,
+          "material_identified": true,
+          "stack": 2
+        }
       },
       "life_path": [],
       "backstory_parts": [],
@@ -3598,210 +3775,212 @@
   "character_bank": [],
   "knowledge": {
     "identified_items": [
-      "Crude Shortbow",
-      "Monk's Third Eye",
-      "Mana Crystal",
-      "Archmage's Focus Chain",
-      "Mithral Gauntlets",
-      "Briny Ectoplasm",
-      "Wooden Club",
-      "Beetle Carapace",
-      "Copper Ring of Endurance",
-      "Volcanic Stone",
-      "Ring of the Spire",
-      "Silk Robes",
-      "Lurker Fang",
-      "Hearthstone Fragment",
-      "Grief Shard",
-      "Isle Miasma Crystal",
-      "Frostbite Dagger",
-      "Copper Chain",
-      "Orb of Fading Sight",
-      "Grave Dust",
-      "Scout Leathers",
-      "Light Crossbow",
-      "Phase Spider Silk",
-      "Old Iron Plate",
-      "Cloak of Shadows",
-      "Coin Pouch",
-      "Drake Fire Gland",
-      "Spider Silk Bundle",
-      "Storm Essence",
-      "Leather Hauberk",
-      "Imperial Coin",
-      "Shadow Wisp Fragment",
-      "Fading Antler Fragment",
-      "Orcish Blade",
-      "Animated Armor Fragment",
-      "Fading Bear Claw",
-      "Hearthstone Fragment (Mine)",
-      "Warden's Remnant Badge",
-      "Mana Shard",
-      "Stolen Map Fragment",
-      "Traveler's Clothes",
-      "Ring of Minor Fortitude",
-      "Iron Core",
-      "Scroll of Protection",
-      "Iron Greaves",
-      "Shaman's Herb Pouch",
-      "Forge Guard Hammer",
-      "Sprite Dust",
-      "Scroll of Recall",
-      "Knight's Bulwark",
-      "Rusted Sword",
-      "Imperial Shortbow",
-      "Monk Unarmed",
-      "Cracked Iron Buckler",
-      "Blackened Arrow Bundle",
-      "Warden's Hauberk",
-      "Shadow Stalker Boots",
-      "Longbow",
-      "Short Bow",
-      "Crude Wand",
-      "High Cultist's Grimoire",
-      "Venom Sac",
-      "Minor Healing Potion",
-      "Studded Leather",
-      "Antidote",
-      "Goblin Shiv",
-      "Rune-Etched Sword",
-      "Reinforced Shortbow",
-      "Hexblade Saber",
-      "Fading-Touched Heartwood",
-      "Ring of the Realm",
-      "Bandit Mail Patch",
-      "Crypt Archmage's Orb",
-      "Spider Silk",
-      "Firebrand Blade",
-      "Grandmaster's Crown",
-      "Warden's Stone Hammer",
-      "Ashenmoor Commander's Seal",
       "Wooden Shield",
-      "Lava Carapace Fragment",
-      "First Mate's Saber",
-      "Lockpick Set",
-      "Champion's Glaive",
-      "Stone Warden Rune",
-      "Gauntlets",
-      "Leather Vest",
-      "Blessed Handwraps",
-      "Twisted Bark Strip",
-      "Padded Arm Guards",
-      "Ruin-Black Blade",
-      "Dwarven Gear Assembly",
-      "Corroded Arrowhead",
-      "Wolf Fang (Corrupted)",
-      "Spider Mandible",
-      "Fading-Touched Pelt",
-      "Silk Gloves",
-      "Crude Snare Wire",
-      "Fused Bone Dust",
-      "Wizard's Robe",
-      "Ember Stone",
-      "Shadowbind Gauntlets",
-      "Ashenmoor Cinder",
-      "Worn Longsword",
-      "Shadow Essence",
-      "Bundle of Arrows",
-      "Trap Components",
-      "Iron Ridge Token",
-      "Web Spinner Silk",
-      "Sapphire Ion Stone",
-      "Dwarven Forge Plate Fragment",
-      "Wand of Sparks",
-      "Leather Scraps",
-      "Golem Stone Core",
-      "Warden Javelin",
-      "Archmage's Pendant",
-      "Paladin's Greathelm",
+      "Hearthstone Fragment (Mine)",
+      "Forge Guard Hammer",
+      "Lurker Fang",
+      "Chain Coif",
+      "Dragon Fang Necklace",
+      "Spider Silk Thread",
+      "Traveler's Clothes",
       "Bandit Broadsword",
-      "Orc Hide Scraps",
-      "Ring of Strength",
-      "Hearthstone (Windswept Isle)",
-      "Amulet of the Owl",
-      "Shadow Crossbow",
-      "Sea Crossbow",
-      "Ancestor's Staff",
-      "Battle Rod",
-      "Gargoyle Stone",
-      "Iron Ore Chunk",
-      "Grandmaster's Vestments",
-      "Skeleton Bone Shard",
-      "Rusty Knife",
-      "Iron Javelin",
-      "Korrath's Last Oath",
-      "Iron Contract Blade",
-      "Scroll of Fireball",
+      "Ring of Minor Fortitude",
+      "First Mate's Saber",
+      "Warden's Hauberk",
       "Frost Rod",
-      "Mercenary's Iron Mace",
-      "Rough Ashwood Staff",
-      "Cultist's Sigil",
-      "Tempest Rod",
-      "Iron Ki Beads",
-      "War Helm",
-      "Boots of the Wind",
-      "Commander's Longsword",
-      "Vial of Holy Water",
-      "Phase Spider Eye",
-      "Warden's Oath Ring",
-      "Radiant Armour",
-      "Quarried Stone Block",
-      "Goblin Ear",
-      "Crown of Dominion",
       "Shadow Wand",
-      "Fading Boar Tusk",
+      "Iron Ridge Token",
       "Ward-Carved Stone",
+      "Elixir of Focus",
+      "Spider Silk",
+      "Zombie Flesh",
+      "Witch's Hat",
+      "Rat Tail",
+      "Shadowbind Gauntlets",
+      "Tarnished Warden Seal",
+      "Grief Shard",
+      "Corroded Arrowhead",
+      "Ancestor's Staff",
+      "Fused Bone Dust",
+      "Coin Pouch",
+      "Stone Warden Rune",
+      "Quarried Stone Block",
+      "Warden's Stone Hammer",
+      "Smoke Bomb",
+      "Grave Dirt Clump",
+      "Copper Ring of Endurance",
+      "Battle Rod",
+      "Healing Potion",
+      "Goblin Ear",
+      "Leather Scraps",
+      "Wolf Fang (Corrupted)",
+      "Dragonscale Armour",
+      "Spider Silk Bundle",
+      "Skeleton Bone Shard",
+      "Mithral Gauntlets",
+      "Amulet of the Owl",
+      "Venom Sac",
+      "Soft Leather Shoes",
+      "Frostbite Dagger",
+      "Imperial Sword",
+      "Arcane Vestments",
+      "Wooden Club",
+      "Antidote",
+      "Spider Mandible",
+      "Dragon Helm",
+      "Walking Stick",
+      "Fading Antler Fragment",
+      "Cultist's Sigil",
+      "Gauntlets",
+      "Shadow Stalker Boots",
+      "Crude Wand",
+      "Web Spinner Silk",
+      "Short Bow",
+      "Lockpick Set",
+      "Fading-Touched Pelt",
+      "Sapphire Ion Stone",
+      "Blessed Handwraps",
+      "Archer's Glove",
+      "Korrath's Last Oath",
+      "Monk's Third Eye",
+      "Imperial Shortbow",
+      "Storm Essence",
+      "Old Iron Plate",
+      "Golem Stone Core",
+      "Archmage's Focus Chain",
+      "Ring of Strength",
+      "Iron Javelin",
+      "Crown of Clarity",
+      "Bundle of Crude Arrows",
+      "Hearthstone (Windswept Isle)",
+      "Inquisitor's Blade",
+      "Fading-Touched Heartwood",
+      "War Helm",
+      "Mana Shard",
+      "Mana Crystal",
+      "Shaman's Herb Pouch",
+      "Valdris' Tome of Binding",
+      "Ashenmoor Commander's Seal",
+      "Sea Crossbow",
+      "Iron Core",
+      "Warden Javelin",
+      "Crude Shortbow",
+      "Ring of the Realm",
+      "Greatsword of Bloodlust",
+      "Padded Arm Guards",
+      "Holy Sabatons",
+      "Crystal Shard",
+      "Iron Contract Blade",
+      "Crude Knife",
+      "Cracked Iron Buckler",
+      "Radiant Armour",
+      "Sprite Dust",
+      "Monk Unarmed",
+      "Hexblade Saber",
+      "Scroll of Protection",
+      "Dwarven Forge Plate Fragment",
+      "Leather Hauberk",
+      "Silver Circlet",
+      "Hearthstone Fragment",
+      "Holy Gauntlets",
+      "Shadow Wisp Fragment",
+      "Boots of the Wind",
+      "Imperial Coin",
+      "Corroded Sword",
+      "Wizard's Robe",
+      "Animated Armor Fragment",
+      "Warden's Bracers",
+      "Cloak of Shadows",
+      "Knight's Bulwark",
+      "Chain Shirt",
+      "High Cultist's Grimoire",
+      "Rusted Sword",
+      "Bandit Mail Patch",
+      "Carved Oak Wand",
+      "Venom Vial",
+      "Mercenary's Iron Mace",
+      "Iron Pick",
+      "Kobold Scale",
+      "Ember Wand",
+      "Grandmaster's Crown",
+      "Commander's Longsword",
+      "Warden's Remnant Badge",
+      "Orcish Blade",
+      "Silk Gloves",
+      "Stolen Map Fragment",
+      "Thought Orb",
+      "Scout Leathers",
+      "Tarnished Paladin Shield",
+      "Bone Fragment",
+      "Vial of Holy Water",
+      "Bat Wing",
+      "Beetle Carapace",
+      "Firebrand Blade",
+      "Isle Miasma Crystal",
+      "Leather Vest",
+      "Ember Stone",
+      "Rune-Etched Sword",
+      "Ruin-Black Blade",
+      "Bundle of Arrows",
+      "Twisted Bark Strip",
+      "Phase Spider Eye",
+      "Blackened Arrow Bundle",
+      "Crude Snare Wire",
+      "Iron Ki Beads",
+      "Volcanic Stone",
+      "Lava Carapace Fragment",
+      "Drake Fire Gland",
+      "Dwarven Gear Assembly",
+      "Copper Chain",
+      "Hatchling Scale",
+      "Glowing Spore Sac",
+      "Briny Ectoplasm",
+      "Orb of Fading Sight",
+      "Iron Greaves",
+      "Colossus Rib Shard",
+      "Grave Dust",
+      "Fading Bear Claw",
+      "Silk Robes",
+      "Longbow",
       "Arcane Crystal Shard",
+      "Studded Leather",
+      "Ashenmoor Cinder",
+      "Light Crossbow",
+      "Iron Ore Chunk",
+      "Ring of the Spire",
+      "Worn Prayer Beads",
+      "Phase Spider Silk",
+      "Scroll of Fireball",
+      "Rough Ashwood Staff",
+      "Fading Boar Tusk",
+      "Crypt Archmage's Orb",
+      "Wand of Sparks",
+      "Paladin's Greathelm",
+      "Tempest Rod",
+      "Shadow Talisman",
+      "Goblin Shiv",
+      "Rusty Knife",
+      "Reinforced Shortbow",
+      "Orc Hide Scraps",
+      "Venomfang Sac",
+      "Dense Shadow Core",
+      "Archmage's Pendant",
+      "Trap Components",
+      "Scroll of Recall",
+      "Gargoyle Stone",
+      "Champion's Glaive",
+      "Shadow Crossbow",
+      "Crown of Dominion",
+      "Greater Healing Potion",
+      "Aetheric Cowl",
       "Captain's Longsword",
       "Cutlass",
-      "Holy Gauntlets",
-      "Greater Healing Potion",
-      "Dragon Helm",
-      "Valdris' Tome of Binding",
-      "Dragon Fang Necklace",
-      "Crystal Shard",
-      "Spider Silk Thread",
-      "Tarnished Paladin Shield",
-      "Aetheric Cowl",
-      "Ember Wand",
-      "Bone Fragment",
-      "Glowing Spore Sac",
-      "Smoke Bomb",
-      "Archer's Glove",
-      "Worn Prayer Beads",
-      "Hatchling Scale",
-      "Greatsword of Bloodlust",
-      "Imperial Sword",
-      "Shadow Talisman",
-      "Crown of Clarity",
-      "Elixir of Focus",
-      "Bundle of Crude Arrows",
-      "Holy Sabatons",
-      "Dragonscale Armour",
-      "Arcane Vestments",
-      "Witch's Hat",
-      "Warden's Bracers",
-      "Zombie Flesh",
-      "Carved Oak Wand",
-      "Venomfang Sac",
-      "Walking Stick",
-      "Soft Leather Shoes",
-      "Chain Coif",
       "Cultist Grimoire Page",
-      "Thought Orb",
-      "Inquisitor's Blade",
-      "Iron Pick",
-      "Corroded Sword",
-      "Crude Knife",
-      "Venom Vial",
-      "Chain Shirt",
-      "Grave Dirt Clump",
-      "Silver Circlet",
-      "Rat Tail",
-      "Colossus Rib Shard",
-      "Healing Potion",
-      "Bat Wing",
-      "Kobold Scale"
+      "Worn Longsword",
+      "Warden's Oath Ring",
+      "Shadow Essence",
+      "Grandmaster's Vestments",
+      "Minor Healing Potion"
     ],
     "known_enemies": {
       "Cave Bat": 2,
@@ -3907,7 +4086,12 @@
       "Arcane Sentry": 1,
       "Lingering Will": 2,
       "Fading Wraith": 1,
-      "Tower Rat": 1
+      "Tower Rat": 1,
+      "Throne Shade": 2,
+      "Shadow Brute": 1,
+      "Corrupted Warden Echo": 1,
+      "Fallen Warden": 1,
+      "Warden Shade": 1
     }
   },
   "story_flags": {
@@ -4165,7 +4349,12 @@
     "lore.valdris_true_plan": true,
     "valdris.understood": true,
     "boss_defeated.valdris_spire": true,
-    "boss.valdris.defeated": true
+    "boss.valdris.defeated": true,
+    "lore.valdris_notes_1": true,
+    "floor_cleared.shadow_throne.1": true,
+    "explored.shadow_throne.floor2": true,
+    "floor_cleared.shadow_throne.2": true,
+    "explored.shadow_throne.floor3": true
   },
   "runtime_lore": {
     "note_scratched_note": {
@@ -4209,7 +4398,5903 @@
       "text": "The ink is old but clear: 'I have been here a very long time. The Fading has not reached me \u2014 the stone keeps it at bay. Or perhaps I keep it at bay. We have reached a kind of accord, the stone and I. I no longer know which of us is guardian and which is the guarded. I do not think it matters. What matters is that the next one carries it better than I have.'"
     }
   },
-  "world_state": null,
-  "dungeon_explored": {},
-  "dungeon_position": null
+  "world_state": {
+    "party_x": 98,
+    "party_y": 32,
+    "step_counter": 25,
+    "discovered_locations": [
+      "abandoned_mine",
+      "briarhollow",
+      "briarhollow_dock",
+      "dragons_tooth",
+      "eastern_dock",
+      "emberveil",
+      "goblin_warren",
+      "ironhearth",
+      "pale_coast",
+      "pale_coast_dock",
+      "ruins_ashenmoor",
+      "shadow_throne",
+      "spiders_nest",
+      "sunken_crypt",
+      "the_anchorage",
+      "the_holdfast",
+      "valdris_spire",
+      "windswept_isle",
+      "woodhaven"
+    ],
+    "fog_discovered": [
+      [
+        98,
+        28
+      ],
+      [
+        99,
+        28
+      ],
+      [
+        96,
+        29
+      ],
+      [
+        97,
+        29
+      ],
+      [
+        98,
+        29
+      ],
+      [
+        99,
+        29
+      ],
+      [
+        100,
+        29
+      ],
+      [
+        101,
+        29
+      ],
+      [
+        95,
+        30
+      ],
+      [
+        96,
+        30
+      ],
+      [
+        97,
+        30
+      ],
+      [
+        98,
+        30
+      ],
+      [
+        99,
+        30
+      ],
+      [
+        100,
+        30
+      ],
+      [
+        101,
+        30
+      ],
+      [
+        102,
+        30
+      ],
+      [
+        95,
+        31
+      ],
+      [
+        96,
+        31
+      ],
+      [
+        97,
+        31
+      ],
+      [
+        98,
+        31
+      ],
+      [
+        99,
+        31
+      ],
+      [
+        100,
+        31
+      ],
+      [
+        101,
+        31
+      ],
+      [
+        102,
+        31
+      ],
+      [
+        94,
+        32
+      ],
+      [
+        95,
+        32
+      ],
+      [
+        96,
+        32
+      ],
+      [
+        97,
+        32
+      ],
+      [
+        98,
+        32
+      ],
+      [
+        99,
+        32
+      ],
+      [
+        100,
+        32
+      ],
+      [
+        101,
+        32
+      ],
+      [
+        102,
+        32
+      ],
+      [
+        103,
+        32
+      ],
+      [
+        94,
+        33
+      ],
+      [
+        95,
+        33
+      ],
+      [
+        96,
+        33
+      ],
+      [
+        97,
+        33
+      ],
+      [
+        98,
+        33
+      ],
+      [
+        99,
+        33
+      ],
+      [
+        100,
+        33
+      ],
+      [
+        101,
+        33
+      ],
+      [
+        102,
+        33
+      ],
+      [
+        103,
+        33
+      ],
+      [
+        94,
+        34
+      ],
+      [
+        95,
+        34
+      ],
+      [
+        96,
+        34
+      ],
+      [
+        97,
+        34
+      ],
+      [
+        98,
+        34
+      ],
+      [
+        99,
+        34
+      ],
+      [
+        100,
+        34
+      ],
+      [
+        101,
+        34
+      ],
+      [
+        102,
+        34
+      ],
+      [
+        103,
+        34
+      ],
+      [
+        104,
+        34
+      ],
+      [
+        94,
+        35
+      ],
+      [
+        95,
+        35
+      ],
+      [
+        96,
+        35
+      ],
+      [
+        97,
+        35
+      ],
+      [
+        98,
+        35
+      ],
+      [
+        99,
+        35
+      ],
+      [
+        100,
+        35
+      ],
+      [
+        101,
+        35
+      ],
+      [
+        102,
+        35
+      ],
+      [
+        103,
+        35
+      ],
+      [
+        104,
+        35
+      ],
+      [
+        93,
+        36
+      ],
+      [
+        94,
+        36
+      ],
+      [
+        95,
+        36
+      ],
+      [
+        96,
+        36
+      ],
+      [
+        97,
+        36
+      ],
+      [
+        98,
+        36
+      ],
+      [
+        99,
+        36
+      ],
+      [
+        100,
+        36
+      ],
+      [
+        101,
+        36
+      ],
+      [
+        102,
+        36
+      ],
+      [
+        103,
+        36
+      ],
+      [
+        104,
+        36
+      ],
+      [
+        105,
+        36
+      ],
+      [
+        92,
+        37
+      ],
+      [
+        93,
+        37
+      ],
+      [
+        94,
+        37
+      ],
+      [
+        95,
+        37
+      ],
+      [
+        96,
+        37
+      ],
+      [
+        97,
+        37
+      ],
+      [
+        98,
+        37
+      ],
+      [
+        99,
+        37
+      ],
+      [
+        100,
+        37
+      ],
+      [
+        101,
+        37
+      ],
+      [
+        102,
+        37
+      ],
+      [
+        103,
+        37
+      ],
+      [
+        104,
+        37
+      ],
+      [
+        105,
+        37
+      ],
+      [
+        91,
+        38
+      ],
+      [
+        92,
+        38
+      ],
+      [
+        93,
+        38
+      ],
+      [
+        94,
+        38
+      ],
+      [
+        95,
+        38
+      ],
+      [
+        96,
+        38
+      ],
+      [
+        97,
+        38
+      ],
+      [
+        98,
+        38
+      ],
+      [
+        99,
+        38
+      ],
+      [
+        100,
+        38
+      ],
+      [
+        101,
+        38
+      ],
+      [
+        102,
+        38
+      ],
+      [
+        103,
+        38
+      ],
+      [
+        104,
+        38
+      ],
+      [
+        105,
+        38
+      ],
+      [
+        90,
+        39
+      ],
+      [
+        91,
+        39
+      ],
+      [
+        92,
+        39
+      ],
+      [
+        93,
+        39
+      ],
+      [
+        94,
+        39
+      ],
+      [
+        95,
+        39
+      ],
+      [
+        96,
+        39
+      ],
+      [
+        97,
+        39
+      ],
+      [
+        98,
+        39
+      ],
+      [
+        99,
+        39
+      ],
+      [
+        100,
+        39
+      ],
+      [
+        101,
+        39
+      ],
+      [
+        102,
+        39
+      ],
+      [
+        103,
+        39
+      ],
+      [
+        104,
+        39
+      ],
+      [
+        105,
+        39
+      ],
+      [
+        106,
+        39
+      ],
+      [
+        89,
+        40
+      ],
+      [
+        90,
+        40
+      ],
+      [
+        91,
+        40
+      ],
+      [
+        92,
+        40
+      ],
+      [
+        93,
+        40
+      ],
+      [
+        94,
+        40
+      ],
+      [
+        95,
+        40
+      ],
+      [
+        96,
+        40
+      ],
+      [
+        97,
+        40
+      ],
+      [
+        98,
+        40
+      ],
+      [
+        99,
+        40
+      ],
+      [
+        100,
+        40
+      ],
+      [
+        101,
+        40
+      ],
+      [
+        102,
+        40
+      ],
+      [
+        103,
+        40
+      ],
+      [
+        104,
+        40
+      ],
+      [
+        105,
+        40
+      ],
+      [
+        106,
+        40
+      ],
+      [
+        89,
+        41
+      ],
+      [
+        90,
+        41
+      ],
+      [
+        91,
+        41
+      ],
+      [
+        92,
+        41
+      ],
+      [
+        93,
+        41
+      ],
+      [
+        94,
+        41
+      ],
+      [
+        95,
+        41
+      ],
+      [
+        96,
+        41
+      ],
+      [
+        97,
+        41
+      ],
+      [
+        98,
+        41
+      ],
+      [
+        99,
+        41
+      ],
+      [
+        100,
+        41
+      ],
+      [
+        101,
+        41
+      ],
+      [
+        102,
+        41
+      ],
+      [
+        103,
+        41
+      ],
+      [
+        104,
+        41
+      ],
+      [
+        105,
+        41
+      ],
+      [
+        89,
+        42
+      ],
+      [
+        90,
+        42
+      ],
+      [
+        91,
+        42
+      ],
+      [
+        92,
+        42
+      ],
+      [
+        93,
+        42
+      ],
+      [
+        94,
+        42
+      ],
+      [
+        95,
+        42
+      ],
+      [
+        96,
+        42
+      ],
+      [
+        97,
+        42
+      ],
+      [
+        98,
+        42
+      ],
+      [
+        99,
+        42
+      ],
+      [
+        100,
+        42
+      ],
+      [
+        101,
+        42
+      ],
+      [
+        102,
+        42
+      ],
+      [
+        103,
+        42
+      ],
+      [
+        104,
+        42
+      ],
+      [
+        105,
+        42
+      ],
+      [
+        88,
+        43
+      ],
+      [
+        89,
+        43
+      ],
+      [
+        90,
+        43
+      ],
+      [
+        91,
+        43
+      ],
+      [
+        92,
+        43
+      ],
+      [
+        93,
+        43
+      ],
+      [
+        94,
+        43
+      ],
+      [
+        95,
+        43
+      ],
+      [
+        96,
+        43
+      ],
+      [
+        97,
+        43
+      ],
+      [
+        98,
+        43
+      ],
+      [
+        99,
+        43
+      ],
+      [
+        100,
+        43
+      ],
+      [
+        101,
+        43
+      ],
+      [
+        102,
+        43
+      ],
+      [
+        103,
+        43
+      ],
+      [
+        104,
+        43
+      ],
+      [
+        105,
+        43
+      ],
+      [
+        85,
+        44
+      ],
+      [
+        86,
+        44
+      ],
+      [
+        87,
+        44
+      ],
+      [
+        88,
+        44
+      ],
+      [
+        89,
+        44
+      ],
+      [
+        90,
+        44
+      ],
+      [
+        91,
+        44
+      ],
+      [
+        92,
+        44
+      ],
+      [
+        93,
+        44
+      ],
+      [
+        94,
+        44
+      ],
+      [
+        95,
+        44
+      ],
+      [
+        96,
+        44
+      ],
+      [
+        97,
+        44
+      ],
+      [
+        98,
+        44
+      ],
+      [
+        99,
+        44
+      ],
+      [
+        100,
+        44
+      ],
+      [
+        101,
+        44
+      ],
+      [
+        102,
+        44
+      ],
+      [
+        103,
+        44
+      ],
+      [
+        104,
+        44
+      ],
+      [
+        84,
+        45
+      ],
+      [
+        85,
+        45
+      ],
+      [
+        86,
+        45
+      ],
+      [
+        87,
+        45
+      ],
+      [
+        88,
+        45
+      ],
+      [
+        89,
+        45
+      ],
+      [
+        90,
+        45
+      ],
+      [
+        91,
+        45
+      ],
+      [
+        92,
+        45
+      ],
+      [
+        93,
+        45
+      ],
+      [
+        94,
+        45
+      ],
+      [
+        95,
+        45
+      ],
+      [
+        96,
+        45
+      ],
+      [
+        97,
+        45
+      ],
+      [
+        98,
+        45
+      ],
+      [
+        99,
+        45
+      ],
+      [
+        100,
+        45
+      ],
+      [
+        101,
+        45
+      ],
+      [
+        84,
+        46
+      ],
+      [
+        85,
+        46
+      ],
+      [
+        86,
+        46
+      ],
+      [
+        87,
+        46
+      ],
+      [
+        88,
+        46
+      ],
+      [
+        89,
+        46
+      ],
+      [
+        90,
+        46
+      ],
+      [
+        91,
+        46
+      ],
+      [
+        92,
+        46
+      ],
+      [
+        93,
+        46
+      ],
+      [
+        94,
+        46
+      ],
+      [
+        95,
+        46
+      ],
+      [
+        96,
+        46
+      ],
+      [
+        97,
+        46
+      ],
+      [
+        98,
+        46
+      ],
+      [
+        99,
+        46
+      ],
+      [
+        84,
+        47
+      ],
+      [
+        85,
+        47
+      ],
+      [
+        86,
+        47
+      ],
+      [
+        87,
+        47
+      ],
+      [
+        88,
+        47
+      ],
+      [
+        89,
+        47
+      ],
+      [
+        90,
+        47
+      ],
+      [
+        91,
+        47
+      ],
+      [
+        92,
+        47
+      ],
+      [
+        93,
+        47
+      ],
+      [
+        94,
+        47
+      ],
+      [
+        95,
+        47
+      ],
+      [
+        96,
+        47
+      ],
+      [
+        97,
+        47
+      ],
+      [
+        98,
+        47
+      ],
+      [
+        83,
+        48
+      ],
+      [
+        84,
+        48
+      ],
+      [
+        85,
+        48
+      ],
+      [
+        86,
+        48
+      ],
+      [
+        87,
+        48
+      ],
+      [
+        88,
+        48
+      ],
+      [
+        89,
+        48
+      ],
+      [
+        90,
+        48
+      ],
+      [
+        91,
+        48
+      ],
+      [
+        92,
+        48
+      ],
+      [
+        93,
+        48
+      ],
+      [
+        94,
+        48
+      ],
+      [
+        95,
+        48
+      ],
+      [
+        96,
+        48
+      ],
+      [
+        97,
+        48
+      ],
+      [
+        98,
+        48
+      ],
+      [
+        84,
+        49
+      ],
+      [
+        85,
+        49
+      ],
+      [
+        86,
+        49
+      ],
+      [
+        87,
+        49
+      ],
+      [
+        88,
+        49
+      ],
+      [
+        89,
+        49
+      ],
+      [
+        90,
+        49
+      ],
+      [
+        91,
+        49
+      ],
+      [
+        92,
+        49
+      ],
+      [
+        93,
+        49
+      ],
+      [
+        94,
+        49
+      ],
+      [
+        95,
+        49
+      ],
+      [
+        96,
+        49
+      ],
+      [
+        97,
+        49
+      ],
+      [
+        81,
+        50
+      ],
+      [
+        82,
+        50
+      ],
+      [
+        83,
+        50
+      ],
+      [
+        84,
+        50
+      ],
+      [
+        85,
+        50
+      ],
+      [
+        86,
+        50
+      ],
+      [
+        87,
+        50
+      ],
+      [
+        88,
+        50
+      ],
+      [
+        89,
+        50
+      ],
+      [
+        90,
+        50
+      ],
+      [
+        91,
+        50
+      ],
+      [
+        92,
+        50
+      ],
+      [
+        93,
+        50
+      ],
+      [
+        94,
+        50
+      ],
+      [
+        95,
+        50
+      ],
+      [
+        96,
+        50
+      ],
+      [
+        97,
+        50
+      ],
+      [
+        79,
+        51
+      ],
+      [
+        80,
+        51
+      ],
+      [
+        81,
+        51
+      ],
+      [
+        82,
+        51
+      ],
+      [
+        83,
+        51
+      ],
+      [
+        84,
+        51
+      ],
+      [
+        85,
+        51
+      ],
+      [
+        86,
+        51
+      ],
+      [
+        87,
+        51
+      ],
+      [
+        88,
+        51
+      ],
+      [
+        89,
+        51
+      ],
+      [
+        90,
+        51
+      ],
+      [
+        91,
+        51
+      ],
+      [
+        92,
+        51
+      ],
+      [
+        93,
+        51
+      ],
+      [
+        94,
+        51
+      ],
+      [
+        95,
+        51
+      ],
+      [
+        96,
+        51
+      ],
+      [
+        97,
+        51
+      ],
+      [
+        78,
+        52
+      ],
+      [
+        79,
+        52
+      ],
+      [
+        80,
+        52
+      ],
+      [
+        81,
+        52
+      ],
+      [
+        82,
+        52
+      ],
+      [
+        83,
+        52
+      ],
+      [
+        84,
+        52
+      ],
+      [
+        85,
+        52
+      ],
+      [
+        86,
+        52
+      ],
+      [
+        87,
+        52
+      ],
+      [
+        88,
+        52
+      ],
+      [
+        89,
+        52
+      ],
+      [
+        90,
+        52
+      ],
+      [
+        91,
+        52
+      ],
+      [
+        92,
+        52
+      ],
+      [
+        93,
+        52
+      ],
+      [
+        94,
+        52
+      ],
+      [
+        95,
+        52
+      ],
+      [
+        96,
+        52
+      ],
+      [
+        77,
+        53
+      ],
+      [
+        78,
+        53
+      ],
+      [
+        79,
+        53
+      ],
+      [
+        80,
+        53
+      ],
+      [
+        81,
+        53
+      ],
+      [
+        82,
+        53
+      ],
+      [
+        83,
+        53
+      ],
+      [
+        84,
+        53
+      ],
+      [
+        85,
+        53
+      ],
+      [
+        86,
+        53
+      ],
+      [
+        87,
+        53
+      ],
+      [
+        88,
+        53
+      ],
+      [
+        89,
+        53
+      ],
+      [
+        90,
+        53
+      ],
+      [
+        91,
+        53
+      ],
+      [
+        92,
+        53
+      ],
+      [
+        93,
+        53
+      ],
+      [
+        76,
+        54
+      ],
+      [
+        77,
+        54
+      ],
+      [
+        78,
+        54
+      ],
+      [
+        79,
+        54
+      ],
+      [
+        80,
+        54
+      ],
+      [
+        81,
+        54
+      ],
+      [
+        82,
+        54
+      ],
+      [
+        83,
+        54
+      ],
+      [
+        84,
+        54
+      ],
+      [
+        85,
+        54
+      ],
+      [
+        86,
+        54
+      ],
+      [
+        87,
+        54
+      ],
+      [
+        88,
+        54
+      ],
+      [
+        89,
+        54
+      ],
+      [
+        90,
+        54
+      ],
+      [
+        91,
+        54
+      ],
+      [
+        74,
+        55
+      ],
+      [
+        75,
+        55
+      ],
+      [
+        76,
+        55
+      ],
+      [
+        77,
+        55
+      ],
+      [
+        78,
+        55
+      ],
+      [
+        79,
+        55
+      ],
+      [
+        80,
+        55
+      ],
+      [
+        81,
+        55
+      ],
+      [
+        82,
+        55
+      ],
+      [
+        83,
+        55
+      ],
+      [
+        84,
+        55
+      ],
+      [
+        85,
+        55
+      ],
+      [
+        86,
+        55
+      ],
+      [
+        87,
+        55
+      ],
+      [
+        88,
+        55
+      ],
+      [
+        89,
+        55
+      ],
+      [
+        90,
+        55
+      ],
+      [
+        73,
+        56
+      ],
+      [
+        74,
+        56
+      ],
+      [
+        75,
+        56
+      ],
+      [
+        76,
+        56
+      ],
+      [
+        77,
+        56
+      ],
+      [
+        78,
+        56
+      ],
+      [
+        79,
+        56
+      ],
+      [
+        80,
+        56
+      ],
+      [
+        81,
+        56
+      ],
+      [
+        82,
+        56
+      ],
+      [
+        83,
+        56
+      ],
+      [
+        84,
+        56
+      ],
+      [
+        85,
+        56
+      ],
+      [
+        86,
+        56
+      ],
+      [
+        87,
+        56
+      ],
+      [
+        88,
+        56
+      ],
+      [
+        89,
+        56
+      ],
+      [
+        90,
+        56
+      ],
+      [
+        72,
+        57
+      ],
+      [
+        73,
+        57
+      ],
+      [
+        74,
+        57
+      ],
+      [
+        75,
+        57
+      ],
+      [
+        76,
+        57
+      ],
+      [
+        77,
+        57
+      ],
+      [
+        78,
+        57
+      ],
+      [
+        79,
+        57
+      ],
+      [
+        80,
+        57
+      ],
+      [
+        81,
+        57
+      ],
+      [
+        82,
+        57
+      ],
+      [
+        83,
+        57
+      ],
+      [
+        84,
+        57
+      ],
+      [
+        85,
+        57
+      ],
+      [
+        86,
+        57
+      ],
+      [
+        87,
+        57
+      ],
+      [
+        88,
+        57
+      ],
+      [
+        72,
+        58
+      ],
+      [
+        73,
+        58
+      ],
+      [
+        74,
+        58
+      ],
+      [
+        75,
+        58
+      ],
+      [
+        76,
+        58
+      ],
+      [
+        77,
+        58
+      ],
+      [
+        78,
+        58
+      ],
+      [
+        79,
+        58
+      ],
+      [
+        80,
+        58
+      ],
+      [
+        81,
+        58
+      ],
+      [
+        82,
+        58
+      ],
+      [
+        83,
+        58
+      ],
+      [
+        84,
+        58
+      ],
+      [
+        71,
+        59
+      ],
+      [
+        72,
+        59
+      ],
+      [
+        73,
+        59
+      ],
+      [
+        74,
+        59
+      ],
+      [
+        75,
+        59
+      ],
+      [
+        76,
+        59
+      ],
+      [
+        77,
+        59
+      ],
+      [
+        78,
+        59
+      ],
+      [
+        79,
+        59
+      ],
+      [
+        80,
+        59
+      ],
+      [
+        81,
+        59
+      ],
+      [
+        82,
+        59
+      ],
+      [
+        83,
+        59
+      ],
+      [
+        71,
+        60
+      ],
+      [
+        72,
+        60
+      ],
+      [
+        73,
+        60
+      ],
+      [
+        74,
+        60
+      ],
+      [
+        75,
+        60
+      ],
+      [
+        76,
+        60
+      ],
+      [
+        77,
+        60
+      ],
+      [
+        78,
+        60
+      ],
+      [
+        79,
+        60
+      ],
+      [
+        80,
+        60
+      ],
+      [
+        81,
+        60
+      ],
+      [
+        82,
+        60
+      ],
+      [
+        83,
+        60
+      ],
+      [
+        71,
+        61
+      ],
+      [
+        72,
+        61
+      ],
+      [
+        73,
+        61
+      ],
+      [
+        74,
+        61
+      ],
+      [
+        75,
+        61
+      ],
+      [
+        76,
+        61
+      ],
+      [
+        77,
+        61
+      ],
+      [
+        78,
+        61
+      ],
+      [
+        79,
+        61
+      ],
+      [
+        80,
+        61
+      ],
+      [
+        81,
+        61
+      ],
+      [
+        82,
+        61
+      ],
+      [
+        69,
+        62
+      ],
+      [
+        70,
+        62
+      ],
+      [
+        71,
+        62
+      ],
+      [
+        72,
+        62
+      ],
+      [
+        73,
+        62
+      ],
+      [
+        74,
+        62
+      ],
+      [
+        75,
+        62
+      ],
+      [
+        76,
+        62
+      ],
+      [
+        77,
+        62
+      ],
+      [
+        78,
+        62
+      ],
+      [
+        79,
+        62
+      ],
+      [
+        80,
+        62
+      ],
+      [
+        53,
+        63
+      ],
+      [
+        54,
+        63
+      ],
+      [
+        55,
+        63
+      ],
+      [
+        56,
+        63
+      ],
+      [
+        57,
+        63
+      ],
+      [
+        58,
+        63
+      ],
+      [
+        59,
+        63
+      ],
+      [
+        60,
+        63
+      ],
+      [
+        61,
+        63
+      ],
+      [
+        62,
+        63
+      ],
+      [
+        63,
+        63
+      ],
+      [
+        64,
+        63
+      ],
+      [
+        65,
+        63
+      ],
+      [
+        66,
+        63
+      ],
+      [
+        67,
+        63
+      ],
+      [
+        68,
+        63
+      ],
+      [
+        69,
+        63
+      ],
+      [
+        70,
+        63
+      ],
+      [
+        71,
+        63
+      ],
+      [
+        72,
+        63
+      ],
+      [
+        73,
+        63
+      ],
+      [
+        74,
+        63
+      ],
+      [
+        75,
+        63
+      ],
+      [
+        76,
+        63
+      ],
+      [
+        77,
+        63
+      ],
+      [
+        78,
+        63
+      ],
+      [
+        79,
+        63
+      ],
+      [
+        53,
+        64
+      ],
+      [
+        54,
+        64
+      ],
+      [
+        55,
+        64
+      ],
+      [
+        56,
+        64
+      ],
+      [
+        57,
+        64
+      ],
+      [
+        58,
+        64
+      ],
+      [
+        59,
+        64
+      ],
+      [
+        60,
+        64
+      ],
+      [
+        61,
+        64
+      ],
+      [
+        62,
+        64
+      ],
+      [
+        63,
+        64
+      ],
+      [
+        64,
+        64
+      ],
+      [
+        65,
+        64
+      ],
+      [
+        66,
+        64
+      ],
+      [
+        67,
+        64
+      ],
+      [
+        68,
+        64
+      ],
+      [
+        69,
+        64
+      ],
+      [
+        70,
+        64
+      ],
+      [
+        71,
+        64
+      ],
+      [
+        72,
+        64
+      ],
+      [
+        73,
+        64
+      ],
+      [
+        74,
+        64
+      ],
+      [
+        75,
+        64
+      ],
+      [
+        76,
+        64
+      ],
+      [
+        77,
+        64
+      ],
+      [
+        78,
+        64
+      ],
+      [
+        79,
+        64
+      ],
+      [
+        53,
+        65
+      ],
+      [
+        54,
+        65
+      ],
+      [
+        55,
+        65
+      ],
+      [
+        56,
+        65
+      ],
+      [
+        57,
+        65
+      ],
+      [
+        58,
+        65
+      ],
+      [
+        59,
+        65
+      ],
+      [
+        60,
+        65
+      ],
+      [
+        61,
+        65
+      ],
+      [
+        62,
+        65
+      ],
+      [
+        63,
+        65
+      ],
+      [
+        64,
+        65
+      ],
+      [
+        65,
+        65
+      ],
+      [
+        66,
+        65
+      ],
+      [
+        67,
+        65
+      ],
+      [
+        68,
+        65
+      ],
+      [
+        69,
+        65
+      ],
+      [
+        70,
+        65
+      ],
+      [
+        71,
+        65
+      ],
+      [
+        72,
+        65
+      ],
+      [
+        73,
+        65
+      ],
+      [
+        74,
+        65
+      ],
+      [
+        75,
+        65
+      ],
+      [
+        76,
+        65
+      ],
+      [
+        77,
+        65
+      ],
+      [
+        78,
+        65
+      ],
+      [
+        79,
+        65
+      ],
+      [
+        53,
+        66
+      ],
+      [
+        54,
+        66
+      ],
+      [
+        55,
+        66
+      ],
+      [
+        56,
+        66
+      ],
+      [
+        57,
+        66
+      ],
+      [
+        58,
+        66
+      ],
+      [
+        59,
+        66
+      ],
+      [
+        60,
+        66
+      ],
+      [
+        61,
+        66
+      ],
+      [
+        62,
+        66
+      ],
+      [
+        63,
+        66
+      ],
+      [
+        64,
+        66
+      ],
+      [
+        65,
+        66
+      ],
+      [
+        66,
+        66
+      ],
+      [
+        67,
+        66
+      ],
+      [
+        68,
+        66
+      ],
+      [
+        69,
+        66
+      ],
+      [
+        70,
+        66
+      ],
+      [
+        71,
+        66
+      ],
+      [
+        72,
+        66
+      ],
+      [
+        73,
+        66
+      ],
+      [
+        74,
+        66
+      ],
+      [
+        75,
+        66
+      ],
+      [
+        76,
+        66
+      ],
+      [
+        77,
+        66
+      ],
+      [
+        78,
+        66
+      ],
+      [
+        53,
+        67
+      ],
+      [
+        54,
+        67
+      ],
+      [
+        55,
+        67
+      ],
+      [
+        56,
+        67
+      ],
+      [
+        57,
+        67
+      ],
+      [
+        58,
+        67
+      ],
+      [
+        59,
+        67
+      ],
+      [
+        60,
+        67
+      ],
+      [
+        61,
+        67
+      ],
+      [
+        62,
+        67
+      ],
+      [
+        63,
+        67
+      ],
+      [
+        64,
+        67
+      ],
+      [
+        65,
+        67
+      ],
+      [
+        66,
+        67
+      ],
+      [
+        67,
+        67
+      ],
+      [
+        68,
+        67
+      ],
+      [
+        69,
+        67
+      ],
+      [
+        70,
+        67
+      ],
+      [
+        71,
+        67
+      ],
+      [
+        72,
+        67
+      ],
+      [
+        73,
+        67
+      ],
+      [
+        74,
+        67
+      ],
+      [
+        75,
+        67
+      ],
+      [
+        76,
+        67
+      ],
+      [
+        77,
+        67
+      ],
+      [
+        78,
+        67
+      ],
+      [
+        53,
+        68
+      ],
+      [
+        54,
+        68
+      ],
+      [
+        55,
+        68
+      ],
+      [
+        56,
+        68
+      ],
+      [
+        57,
+        68
+      ],
+      [
+        58,
+        68
+      ],
+      [
+        59,
+        68
+      ],
+      [
+        60,
+        68
+      ],
+      [
+        61,
+        68
+      ],
+      [
+        62,
+        68
+      ],
+      [
+        63,
+        68
+      ],
+      [
+        64,
+        68
+      ],
+      [
+        65,
+        68
+      ],
+      [
+        66,
+        68
+      ],
+      [
+        67,
+        68
+      ],
+      [
+        68,
+        68
+      ],
+      [
+        69,
+        68
+      ],
+      [
+        70,
+        68
+      ],
+      [
+        71,
+        68
+      ],
+      [
+        72,
+        68
+      ],
+      [
+        73,
+        68
+      ],
+      [
+        74,
+        68
+      ],
+      [
+        75,
+        68
+      ],
+      [
+        76,
+        68
+      ],
+      [
+        77,
+        68
+      ],
+      [
+        53,
+        69
+      ],
+      [
+        54,
+        69
+      ],
+      [
+        55,
+        69
+      ],
+      [
+        56,
+        69
+      ],
+      [
+        57,
+        69
+      ],
+      [
+        58,
+        69
+      ],
+      [
+        59,
+        69
+      ],
+      [
+        60,
+        69
+      ],
+      [
+        61,
+        69
+      ],
+      [
+        62,
+        69
+      ],
+      [
+        63,
+        69
+      ],
+      [
+        64,
+        69
+      ],
+      [
+        65,
+        69
+      ],
+      [
+        66,
+        69
+      ],
+      [
+        67,
+        69
+      ],
+      [
+        68,
+        69
+      ],
+      [
+        69,
+        69
+      ],
+      [
+        70,
+        69
+      ],
+      [
+        71,
+        69
+      ],
+      [
+        72,
+        69
+      ],
+      [
+        73,
+        69
+      ],
+      [
+        74,
+        69
+      ],
+      [
+        75,
+        69
+      ],
+      [
+        53,
+        70
+      ],
+      [
+        54,
+        70
+      ],
+      [
+        55,
+        70
+      ],
+      [
+        56,
+        70
+      ],
+      [
+        57,
+        70
+      ],
+      [
+        58,
+        70
+      ],
+      [
+        59,
+        70
+      ],
+      [
+        60,
+        70
+      ],
+      [
+        61,
+        70
+      ],
+      [
+        62,
+        70
+      ],
+      [
+        63,
+        70
+      ],
+      [
+        64,
+        70
+      ],
+      [
+        65,
+        70
+      ],
+      [
+        66,
+        70
+      ],
+      [
+        67,
+        70
+      ],
+      [
+        68,
+        70
+      ],
+      [
+        69,
+        70
+      ],
+      [
+        70,
+        70
+      ],
+      [
+        71,
+        70
+      ],
+      [
+        72,
+        70
+      ],
+      [
+        73,
+        70
+      ],
+      [
+        74,
+        70
+      ],
+      [
+        75,
+        70
+      ],
+      [
+        53,
+        71
+      ],
+      [
+        54,
+        71
+      ],
+      [
+        55,
+        71
+      ],
+      [
+        56,
+        71
+      ],
+      [
+        57,
+        71
+      ],
+      [
+        58,
+        71
+      ],
+      [
+        59,
+        71
+      ],
+      [
+        60,
+        71
+      ],
+      [
+        61,
+        71
+      ],
+      [
+        62,
+        71
+      ],
+      [
+        63,
+        71
+      ],
+      [
+        64,
+        71
+      ],
+      [
+        65,
+        71
+      ],
+      [
+        66,
+        71
+      ],
+      [
+        67,
+        71
+      ],
+      [
+        68,
+        71
+      ],
+      [
+        69,
+        71
+      ],
+      [
+        70,
+        71
+      ],
+      [
+        71,
+        71
+      ],
+      [
+        72,
+        71
+      ],
+      [
+        73,
+        71
+      ],
+      [
+        74,
+        71
+      ],
+      [
+        53,
+        72
+      ],
+      [
+        54,
+        72
+      ],
+      [
+        55,
+        72
+      ],
+      [
+        56,
+        72
+      ],
+      [
+        57,
+        72
+      ],
+      [
+        58,
+        72
+      ],
+      [
+        59,
+        72
+      ],
+      [
+        60,
+        72
+      ],
+      [
+        61,
+        72
+      ],
+      [
+        62,
+        72
+      ],
+      [
+        63,
+        72
+      ],
+      [
+        64,
+        72
+      ],
+      [
+        65,
+        72
+      ],
+      [
+        66,
+        72
+      ],
+      [
+        67,
+        72
+      ],
+      [
+        68,
+        72
+      ],
+      [
+        69,
+        72
+      ],
+      [
+        70,
+        72
+      ],
+      [
+        71,
+        72
+      ],
+      [
+        72,
+        72
+      ],
+      [
+        73,
+        72
+      ],
+      [
+        74,
+        72
+      ],
+      [
+        53,
+        73
+      ],
+      [
+        54,
+        73
+      ],
+      [
+        55,
+        73
+      ],
+      [
+        56,
+        73
+      ],
+      [
+        57,
+        73
+      ],
+      [
+        58,
+        73
+      ],
+      [
+        59,
+        73
+      ],
+      [
+        60,
+        73
+      ],
+      [
+        61,
+        73
+      ],
+      [
+        62,
+        73
+      ],
+      [
+        63,
+        73
+      ],
+      [
+        64,
+        73
+      ],
+      [
+        65,
+        73
+      ],
+      [
+        66,
+        73
+      ],
+      [
+        67,
+        73
+      ],
+      [
+        68,
+        73
+      ],
+      [
+        69,
+        73
+      ],
+      [
+        70,
+        73
+      ],
+      [
+        71,
+        73
+      ],
+      [
+        72,
+        73
+      ],
+      [
+        73,
+        73
+      ],
+      [
+        53,
+        74
+      ],
+      [
+        54,
+        74
+      ],
+      [
+        55,
+        74
+      ],
+      [
+        56,
+        74
+      ],
+      [
+        57,
+        74
+      ],
+      [
+        58,
+        74
+      ],
+      [
+        59,
+        74
+      ],
+      [
+        60,
+        74
+      ],
+      [
+        61,
+        74
+      ],
+      [
+        62,
+        74
+      ],
+      [
+        63,
+        74
+      ],
+      [
+        64,
+        74
+      ],
+      [
+        65,
+        74
+      ],
+      [
+        66,
+        74
+      ],
+      [
+        67,
+        74
+      ],
+      [
+        68,
+        74
+      ],
+      [
+        69,
+        74
+      ],
+      [
+        70,
+        74
+      ],
+      [
+        71,
+        74
+      ],
+      [
+        53,
+        75
+      ],
+      [
+        54,
+        75
+      ],
+      [
+        55,
+        75
+      ],
+      [
+        56,
+        75
+      ],
+      [
+        57,
+        75
+      ],
+      [
+        58,
+        75
+      ],
+      [
+        59,
+        75
+      ],
+      [
+        60,
+        75
+      ],
+      [
+        61,
+        75
+      ],
+      [
+        62,
+        75
+      ],
+      [
+        63,
+        75
+      ],
+      [
+        64,
+        75
+      ],
+      [
+        65,
+        75
+      ],
+      [
+        66,
+        75
+      ],
+      [
+        67,
+        75
+      ],
+      [
+        53,
+        76
+      ],
+      [
+        54,
+        76
+      ],
+      [
+        55,
+        76
+      ],
+      [
+        56,
+        76
+      ],
+      [
+        57,
+        76
+      ],
+      [
+        58,
+        76
+      ],
+      [
+        59,
+        76
+      ],
+      [
+        60,
+        76
+      ],
+      [
+        61,
+        76
+      ],
+      [
+        62,
+        76
+      ],
+      [
+        63,
+        76
+      ],
+      [
+        64,
+        76
+      ],
+      [
+        65,
+        76
+      ],
+      [
+        66,
+        76
+      ],
+      [
+        67,
+        76
+      ],
+      [
+        53,
+        77
+      ],
+      [
+        54,
+        77
+      ],
+      [
+        55,
+        77
+      ],
+      [
+        56,
+        77
+      ],
+      [
+        57,
+        77
+      ],
+      [
+        58,
+        77
+      ],
+      [
+        59,
+        77
+      ],
+      [
+        60,
+        77
+      ],
+      [
+        61,
+        77
+      ],
+      [
+        62,
+        77
+      ],
+      [
+        63,
+        77
+      ],
+      [
+        64,
+        77
+      ],
+      [
+        65,
+        77
+      ],
+      [
+        66,
+        77
+      ],
+      [
+        67,
+        77
+      ]
+    ],
+    "key_items": [
+      "ship_passage",
+      "thornwood_map",
+      "mine_key",
+      "ashenmoor_seal",
+      "crypt_amulet",
+      "pale_coast_access",
+      "pale_coast_cleared",
+      "spire_key",
+      "throne_key"
+    ],
+    "seed": 42,
+    "travel": {
+      "has_horse": false,
+      "has_boat": false,
+      "has_carpet": false,
+      "travel_mode": "walk",
+      "boat_location": null,
+      "attuned_circles": [],
+      "rail_unlocked": false
+    }
+  },
+  "dungeon_explored": {
+    "valdris_spire": {
+      "1": {
+        "discovered": [
+          [
+            9,
+            5
+          ],
+          [
+            10,
+            5
+          ],
+          [
+            11,
+            5
+          ],
+          [
+            12,
+            5
+          ],
+          [
+            6,
+            6
+          ],
+          [
+            8,
+            6
+          ],
+          [
+            9,
+            6
+          ],
+          [
+            10,
+            6
+          ],
+          [
+            11,
+            6
+          ],
+          [
+            12,
+            6
+          ],
+          [
+            13,
+            6
+          ],
+          [
+            7,
+            7
+          ],
+          [
+            8,
+            7
+          ],
+          [
+            9,
+            7
+          ],
+          [
+            10,
+            7
+          ],
+          [
+            11,
+            7
+          ],
+          [
+            12,
+            7
+          ],
+          [
+            13,
+            7
+          ],
+          [
+            14,
+            7
+          ],
+          [
+            15,
+            7
+          ],
+          [
+            16,
+            7
+          ],
+          [
+            17,
+            7
+          ],
+          [
+            18,
+            7
+          ],
+          [
+            19,
+            7
+          ],
+          [
+            7,
+            8
+          ],
+          [
+            8,
+            8
+          ],
+          [
+            9,
+            8
+          ],
+          [
+            10,
+            8
+          ],
+          [
+            11,
+            8
+          ],
+          [
+            12,
+            8
+          ],
+          [
+            13,
+            8
+          ],
+          [
+            14,
+            8
+          ],
+          [
+            15,
+            8
+          ],
+          [
+            16,
+            8
+          ],
+          [
+            17,
+            8
+          ],
+          [
+            18,
+            8
+          ],
+          [
+            19,
+            8
+          ],
+          [
+            20,
+            8
+          ],
+          [
+            6,
+            9
+          ],
+          [
+            7,
+            9
+          ],
+          [
+            8,
+            9
+          ],
+          [
+            9,
+            9
+          ],
+          [
+            10,
+            9
+          ],
+          [
+            11,
+            9
+          ],
+          [
+            12,
+            9
+          ],
+          [
+            13,
+            9
+          ],
+          [
+            14,
+            9
+          ],
+          [
+            15,
+            9
+          ],
+          [
+            16,
+            9
+          ],
+          [
+            17,
+            9
+          ],
+          [
+            18,
+            9
+          ],
+          [
+            19,
+            9
+          ],
+          [
+            20,
+            9
+          ],
+          [
+            6,
+            10
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            9,
+            10
+          ],
+          [
+            10,
+            10
+          ],
+          [
+            11,
+            10
+          ],
+          [
+            12,
+            10
+          ],
+          [
+            13,
+            10
+          ],
+          [
+            14,
+            10
+          ],
+          [
+            15,
+            10
+          ],
+          [
+            16,
+            10
+          ],
+          [
+            17,
+            10
+          ],
+          [
+            18,
+            10
+          ],
+          [
+            19,
+            10
+          ],
+          [
+            20,
+            10
+          ],
+          [
+            9,
+            11
+          ],
+          [
+            10,
+            11
+          ],
+          [
+            11,
+            11
+          ],
+          [
+            12,
+            11
+          ],
+          [
+            14,
+            11
+          ],
+          [
+            15,
+            11
+          ],
+          [
+            16,
+            11
+          ],
+          [
+            17,
+            11
+          ],
+          [
+            18,
+            11
+          ],
+          [
+            19,
+            11
+          ],
+          [
+            20,
+            11
+          ],
+          [
+            14,
+            12
+          ],
+          [
+            15,
+            12
+          ],
+          [
+            16,
+            12
+          ],
+          [
+            17,
+            12
+          ],
+          [
+            18,
+            12
+          ],
+          [
+            19,
+            12
+          ],
+          [
+            20,
+            12
+          ],
+          [
+            15,
+            13
+          ],
+          [
+            16,
+            13
+          ],
+          [
+            17,
+            13
+          ]
+        ],
+        "trap_states": [
+          [
+            11,
+            7,
+            true,
+            false,
+            true
+          ],
+          [
+            17,
+            11,
+            true,
+            false,
+            true
+          ]
+        ]
+      },
+      "2": {
+        "discovered": [
+          [
+            4,
+            6
+          ],
+          [
+            5,
+            6
+          ],
+          [
+            6,
+            6
+          ],
+          [
+            1,
+            7
+          ],
+          [
+            3,
+            7
+          ],
+          [
+            4,
+            7
+          ],
+          [
+            5,
+            7
+          ],
+          [
+            6,
+            7
+          ],
+          [
+            7,
+            7
+          ],
+          [
+            2,
+            8
+          ],
+          [
+            3,
+            8
+          ],
+          [
+            4,
+            8
+          ],
+          [
+            5,
+            8
+          ],
+          [
+            6,
+            8
+          ],
+          [
+            7,
+            8
+          ],
+          [
+            9,
+            8
+          ],
+          [
+            10,
+            8
+          ],
+          [
+            11,
+            8
+          ],
+          [
+            12,
+            8
+          ],
+          [
+            2,
+            9
+          ],
+          [
+            3,
+            9
+          ],
+          [
+            4,
+            9
+          ],
+          [
+            5,
+            9
+          ],
+          [
+            6,
+            9
+          ],
+          [
+            7,
+            9
+          ],
+          [
+            8,
+            9
+          ],
+          [
+            9,
+            9
+          ],
+          [
+            10,
+            9
+          ],
+          [
+            11,
+            9
+          ],
+          [
+            12,
+            9
+          ],
+          [
+            13,
+            9
+          ],
+          [
+            14,
+            9
+          ],
+          [
+            15,
+            9
+          ],
+          [
+            1,
+            10
+          ],
+          [
+            2,
+            10
+          ],
+          [
+            3,
+            10
+          ],
+          [
+            4,
+            10
+          ],
+          [
+            5,
+            10
+          ],
+          [
+            6,
+            10
+          ],
+          [
+            7,
+            10
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            9,
+            10
+          ],
+          [
+            10,
+            10
+          ],
+          [
+            11,
+            10
+          ],
+          [
+            12,
+            10
+          ],
+          [
+            13,
+            10
+          ],
+          [
+            14,
+            10
+          ],
+          [
+            15,
+            10
+          ],
+          [
+            1,
+            11
+          ],
+          [
+            3,
+            11
+          ],
+          [
+            4,
+            11
+          ],
+          [
+            5,
+            11
+          ],
+          [
+            6,
+            11
+          ],
+          [
+            7,
+            11
+          ],
+          [
+            8,
+            11
+          ],
+          [
+            9,
+            11
+          ],
+          [
+            10,
+            11
+          ],
+          [
+            11,
+            11
+          ],
+          [
+            12,
+            11
+          ],
+          [
+            13,
+            11
+          ],
+          [
+            14,
+            11
+          ],
+          [
+            15,
+            11
+          ],
+          [
+            4,
+            12
+          ],
+          [
+            5,
+            12
+          ],
+          [
+            6,
+            12
+          ],
+          [
+            7,
+            12
+          ],
+          [
+            8,
+            12
+          ],
+          [
+            9,
+            12
+          ],
+          [
+            10,
+            12
+          ],
+          [
+            11,
+            12
+          ],
+          [
+            12,
+            12
+          ],
+          [
+            13,
+            12
+          ],
+          [
+            14,
+            12
+          ],
+          [
+            15,
+            12
+          ],
+          [
+            4,
+            13
+          ],
+          [
+            5,
+            13
+          ],
+          [
+            6,
+            13
+          ],
+          [
+            8,
+            13
+          ],
+          [
+            9,
+            13
+          ],
+          [
+            10,
+            13
+          ],
+          [
+            11,
+            13
+          ],
+          [
+            12,
+            13
+          ],
+          [
+            13,
+            13
+          ],
+          [
+            14,
+            13
+          ],
+          [
+            15,
+            13
+          ],
+          [
+            9,
+            14
+          ],
+          [
+            10,
+            14
+          ],
+          [
+            11,
+            14
+          ],
+          [
+            12,
+            14
+          ]
+        ],
+        "trap_states": [
+          [
+            5,
+            8,
+            false,
+            false,
+            true
+          ],
+          [
+            4,
+            10,
+            false,
+            false,
+            true
+          ]
+        ]
+      },
+      "3": {
+        "discovered": [
+          [
+            8,
+            4
+          ],
+          [
+            9,
+            4
+          ],
+          [
+            10,
+            4
+          ],
+          [
+            11,
+            4
+          ],
+          [
+            5,
+            5
+          ],
+          [
+            7,
+            5
+          ],
+          [
+            8,
+            5
+          ],
+          [
+            9,
+            5
+          ],
+          [
+            10,
+            5
+          ],
+          [
+            11,
+            5
+          ],
+          [
+            12,
+            5
+          ],
+          [
+            5,
+            6
+          ],
+          [
+            6,
+            6
+          ],
+          [
+            7,
+            6
+          ],
+          [
+            8,
+            6
+          ],
+          [
+            9,
+            6
+          ],
+          [
+            10,
+            6
+          ],
+          [
+            11,
+            6
+          ],
+          [
+            12,
+            6
+          ],
+          [
+            13,
+            6
+          ],
+          [
+            14,
+            6
+          ],
+          [
+            15,
+            6
+          ],
+          [
+            16,
+            6
+          ],
+          [
+            17,
+            6
+          ],
+          [
+            18,
+            6
+          ],
+          [
+            4,
+            7
+          ],
+          [
+            5,
+            7
+          ],
+          [
+            6,
+            7
+          ],
+          [
+            7,
+            7
+          ],
+          [
+            8,
+            7
+          ],
+          [
+            9,
+            7
+          ],
+          [
+            10,
+            7
+          ],
+          [
+            11,
+            7
+          ],
+          [
+            12,
+            7
+          ],
+          [
+            13,
+            7
+          ],
+          [
+            14,
+            7
+          ],
+          [
+            15,
+            7
+          ],
+          [
+            16,
+            7
+          ],
+          [
+            17,
+            7
+          ],
+          [
+            18,
+            7
+          ],
+          [
+            19,
+            7
+          ],
+          [
+            5,
+            8
+          ],
+          [
+            6,
+            8
+          ],
+          [
+            7,
+            8
+          ],
+          [
+            8,
+            8
+          ],
+          [
+            9,
+            8
+          ],
+          [
+            10,
+            8
+          ],
+          [
+            11,
+            8
+          ],
+          [
+            12,
+            8
+          ],
+          [
+            13,
+            8
+          ],
+          [
+            14,
+            8
+          ],
+          [
+            15,
+            8
+          ],
+          [
+            16,
+            8
+          ],
+          [
+            17,
+            8
+          ],
+          [
+            18,
+            8
+          ],
+          [
+            19,
+            8
+          ],
+          [
+            5,
+            9
+          ],
+          [
+            7,
+            9
+          ],
+          [
+            8,
+            9
+          ],
+          [
+            9,
+            9
+          ],
+          [
+            10,
+            9
+          ],
+          [
+            11,
+            9
+          ],
+          [
+            12,
+            9
+          ],
+          [
+            13,
+            9
+          ],
+          [
+            14,
+            9
+          ],
+          [
+            15,
+            9
+          ],
+          [
+            16,
+            9
+          ],
+          [
+            17,
+            9
+          ],
+          [
+            18,
+            9
+          ],
+          [
+            19,
+            9
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            9,
+            10
+          ],
+          [
+            10,
+            10
+          ],
+          [
+            11,
+            10
+          ],
+          [
+            13,
+            10
+          ],
+          [
+            14,
+            10
+          ],
+          [
+            15,
+            10
+          ],
+          [
+            16,
+            10
+          ],
+          [
+            17,
+            10
+          ],
+          [
+            18,
+            10
+          ],
+          [
+            19,
+            10
+          ],
+          [
+            13,
+            11
+          ],
+          [
+            14,
+            11
+          ],
+          [
+            15,
+            11
+          ],
+          [
+            16,
+            11
+          ],
+          [
+            17,
+            11
+          ],
+          [
+            18,
+            11
+          ],
+          [
+            19,
+            11
+          ],
+          [
+            14,
+            12
+          ],
+          [
+            15,
+            12
+          ],
+          [
+            16,
+            12
+          ],
+          [
+            17,
+            12
+          ],
+          [
+            18,
+            12
+          ],
+          [
+            14,
+            13
+          ],
+          [
+            15,
+            13
+          ],
+          [
+            16,
+            13
+          ],
+          [
+            17,
+            13
+          ],
+          [
+            18,
+            13
+          ],
+          [
+            14,
+            14
+          ],
+          [
+            17,
+            14
+          ],
+          [
+            18,
+            14
+          ]
+        ],
+        "trap_states": [
+          [
+            11,
+            6,
+            true,
+            false,
+            true
+          ],
+          [
+            16,
+            7,
+            true,
+            false,
+            true
+          ],
+          [
+            6,
+            8,
+            false,
+            false,
+            true
+          ],
+          [
+            15,
+            11,
+            false,
+            false,
+            true
+          ],
+          [
+            15,
+            13,
+            false,
+            false,
+            true
+          ]
+        ]
+      },
+      "4": {
+        "discovered": [
+          [
+            5,
+            5
+          ],
+          [
+            3,
+            6
+          ],
+          [
+            4,
+            6
+          ],
+          [
+            5,
+            6
+          ],
+          [
+            6,
+            6
+          ],
+          [
+            7,
+            6
+          ],
+          [
+            9,
+            6
+          ],
+          [
+            10,
+            6
+          ],
+          [
+            11,
+            6
+          ],
+          [
+            12,
+            6
+          ],
+          [
+            13,
+            6
+          ],
+          [
+            2,
+            7
+          ],
+          [
+            4,
+            7
+          ],
+          [
+            5,
+            7
+          ],
+          [
+            6,
+            7
+          ],
+          [
+            7,
+            7
+          ],
+          [
+            8,
+            7
+          ],
+          [
+            9,
+            7
+          ],
+          [
+            10,
+            7
+          ],
+          [
+            11,
+            7
+          ],
+          [
+            12,
+            7
+          ],
+          [
+            13,
+            7
+          ],
+          [
+            14,
+            7
+          ],
+          [
+            15,
+            7
+          ],
+          [
+            16,
+            7
+          ],
+          [
+            3,
+            8
+          ],
+          [
+            4,
+            8
+          ],
+          [
+            5,
+            8
+          ],
+          [
+            6,
+            8
+          ],
+          [
+            7,
+            8
+          ],
+          [
+            8,
+            8
+          ],
+          [
+            9,
+            8
+          ],
+          [
+            10,
+            8
+          ],
+          [
+            11,
+            8
+          ],
+          [
+            12,
+            8
+          ],
+          [
+            13,
+            8
+          ],
+          [
+            14,
+            8
+          ],
+          [
+            15,
+            8
+          ],
+          [
+            16,
+            8
+          ],
+          [
+            3,
+            9
+          ],
+          [
+            4,
+            9
+          ],
+          [
+            5,
+            9
+          ],
+          [
+            6,
+            9
+          ],
+          [
+            7,
+            9
+          ],
+          [
+            8,
+            9
+          ],
+          [
+            9,
+            9
+          ],
+          [
+            10,
+            9
+          ],
+          [
+            11,
+            9
+          ],
+          [
+            12,
+            9
+          ],
+          [
+            13,
+            9
+          ],
+          [
+            14,
+            9
+          ],
+          [
+            15,
+            9
+          ],
+          [
+            16,
+            9
+          ],
+          [
+            17,
+            9
+          ],
+          [
+            2,
+            10
+          ],
+          [
+            3,
+            10
+          ],
+          [
+            4,
+            10
+          ],
+          [
+            5,
+            10
+          ],
+          [
+            6,
+            10
+          ],
+          [
+            7,
+            10
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            9,
+            10
+          ],
+          [
+            10,
+            10
+          ],
+          [
+            11,
+            10
+          ],
+          [
+            12,
+            10
+          ],
+          [
+            13,
+            10
+          ],
+          [
+            14,
+            10
+          ],
+          [
+            15,
+            10
+          ],
+          [
+            16,
+            10
+          ],
+          [
+            2,
+            11
+          ],
+          [
+            4,
+            11
+          ],
+          [
+            5,
+            11
+          ],
+          [
+            6,
+            11
+          ],
+          [
+            7,
+            11
+          ],
+          [
+            8,
+            11
+          ],
+          [
+            9,
+            11
+          ],
+          [
+            10,
+            11
+          ],
+          [
+            11,
+            11
+          ],
+          [
+            12,
+            11
+          ],
+          [
+            13,
+            11
+          ],
+          [
+            14,
+            11
+          ],
+          [
+            15,
+            11
+          ],
+          [
+            16,
+            11
+          ],
+          [
+            5,
+            12
+          ],
+          [
+            6,
+            12
+          ],
+          [
+            7,
+            12
+          ],
+          [
+            9,
+            12
+          ],
+          [
+            10,
+            12
+          ],
+          [
+            11,
+            12
+          ],
+          [
+            12,
+            12
+          ],
+          [
+            13,
+            12
+          ]
+        ],
+        "opened_chests": [
+          [
+            5,
+            8
+          ]
+        ],
+        "trap_states": [
+          [
+            6,
+            7,
+            false,
+            false,
+            true
+          ],
+          [
+            3,
+            8,
+            false,
+            false,
+            true
+          ],
+          [
+            5,
+            9,
+            false,
+            true,
+            false
+          ],
+          [
+            15,
+            9,
+            false,
+            false,
+            true
+          ],
+          [
+            5,
+            10,
+            true,
+            false,
+            true
+          ],
+          [
+            10,
+            10,
+            true,
+            false,
+            true
+          ]
+        ]
+      },
+      "5": {
+        "discovered": [
+          [
+            13,
+            5
+          ],
+          [
+            14,
+            5
+          ],
+          [
+            15,
+            5
+          ],
+          [
+            16,
+            5
+          ],
+          [
+            12,
+            6
+          ],
+          [
+            13,
+            6
+          ],
+          [
+            14,
+            6
+          ],
+          [
+            15,
+            6
+          ],
+          [
+            16,
+            6
+          ],
+          [
+            17,
+            6
+          ],
+          [
+            18,
+            6
+          ],
+          [
+            19,
+            6
+          ],
+          [
+            12,
+            7
+          ],
+          [
+            13,
+            7
+          ],
+          [
+            14,
+            7
+          ],
+          [
+            15,
+            7
+          ],
+          [
+            16,
+            7
+          ],
+          [
+            17,
+            7
+          ],
+          [
+            18,
+            7
+          ],
+          [
+            9,
+            8
+          ],
+          [
+            10,
+            8
+          ],
+          [
+            11,
+            8
+          ],
+          [
+            12,
+            8
+          ],
+          [
+            13,
+            8
+          ],
+          [
+            14,
+            8
+          ],
+          [
+            15,
+            8
+          ],
+          [
+            16,
+            8
+          ],
+          [
+            17,
+            8
+          ],
+          [
+            18,
+            8
+          ],
+          [
+            6,
+            9
+          ],
+          [
+            8,
+            9
+          ],
+          [
+            9,
+            9
+          ],
+          [
+            10,
+            9
+          ],
+          [
+            11,
+            9
+          ],
+          [
+            12,
+            9
+          ],
+          [
+            13,
+            9
+          ],
+          [
+            14,
+            9
+          ],
+          [
+            15,
+            9
+          ],
+          [
+            16,
+            9
+          ],
+          [
+            17,
+            9
+          ],
+          [
+            18,
+            9
+          ],
+          [
+            19,
+            9
+          ],
+          [
+            6,
+            10
+          ],
+          [
+            7,
+            10
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            9,
+            10
+          ],
+          [
+            10,
+            10
+          ],
+          [
+            11,
+            10
+          ],
+          [
+            12,
+            10
+          ],
+          [
+            13,
+            10
+          ],
+          [
+            14,
+            10
+          ],
+          [
+            15,
+            10
+          ],
+          [
+            16,
+            10
+          ],
+          [
+            17,
+            10
+          ],
+          [
+            18,
+            10
+          ],
+          [
+            19,
+            10
+          ],
+          [
+            6,
+            11
+          ],
+          [
+            7,
+            11
+          ],
+          [
+            8,
+            11
+          ],
+          [
+            9,
+            11
+          ],
+          [
+            10,
+            11
+          ],
+          [
+            11,
+            11
+          ],
+          [
+            12,
+            11
+          ],
+          [
+            13,
+            11
+          ],
+          [
+            14,
+            11
+          ],
+          [
+            15,
+            11
+          ],
+          [
+            16,
+            11
+          ],
+          [
+            17,
+            11
+          ],
+          [
+            6,
+            12
+          ],
+          [
+            7,
+            12
+          ],
+          [
+            8,
+            12
+          ],
+          [
+            9,
+            12
+          ],
+          [
+            10,
+            12
+          ],
+          [
+            11,
+            12
+          ],
+          [
+            12,
+            12
+          ],
+          [
+            13,
+            12
+          ],
+          [
+            14,
+            12
+          ],
+          [
+            15,
+            12
+          ],
+          [
+            16,
+            12
+          ],
+          [
+            17,
+            12
+          ],
+          [
+            6,
+            13
+          ],
+          [
+            8,
+            13
+          ],
+          [
+            9,
+            13
+          ],
+          [
+            10,
+            13
+          ],
+          [
+            11,
+            13
+          ],
+          [
+            12,
+            13
+          ],
+          [
+            9,
+            14
+          ],
+          [
+            10,
+            14
+          ],
+          [
+            11,
+            14
+          ]
+        ],
+        "trap_states": [
+          [
+            13,
+            9,
+            true,
+            false,
+            true
+          ],
+          [
+            14,
+            9,
+            true,
+            false,
+            true
+          ],
+          [
+            7,
+            10,
+            false,
+            false,
+            true
+          ],
+          [
+            10,
+            11,
+            true,
+            false,
+            true
+          ],
+          [
+            9,
+            12,
+            true,
+            false,
+            true
+          ]
+        ]
+      },
+      "6": {
+        "discovered": [
+          [
+            16,
+            1
+          ],
+          [
+            14,
+            2
+          ],
+          [
+            15,
+            2
+          ],
+          [
+            16,
+            2
+          ],
+          [
+            17,
+            2
+          ],
+          [
+            18,
+            2
+          ],
+          [
+            15,
+            3
+          ],
+          [
+            16,
+            3
+          ],
+          [
+            17,
+            3
+          ],
+          [
+            14,
+            4
+          ],
+          [
+            15,
+            4
+          ],
+          [
+            16,
+            4
+          ],
+          [
+            17,
+            4
+          ],
+          [
+            18,
+            4
+          ],
+          [
+            13,
+            5
+          ],
+          [
+            14,
+            5
+          ],
+          [
+            15,
+            5
+          ],
+          [
+            16,
+            5
+          ],
+          [
+            17,
+            5
+          ],
+          [
+            18,
+            5
+          ],
+          [
+            19,
+            5
+          ],
+          [
+            13,
+            6
+          ],
+          [
+            14,
+            6
+          ],
+          [
+            15,
+            6
+          ],
+          [
+            16,
+            6
+          ],
+          [
+            17,
+            6
+          ],
+          [
+            18,
+            6
+          ],
+          [
+            19,
+            6
+          ],
+          [
+            5,
+            7
+          ],
+          [
+            6,
+            7
+          ],
+          [
+            7,
+            7
+          ],
+          [
+            8,
+            7
+          ],
+          [
+            9,
+            7
+          ],
+          [
+            10,
+            7
+          ],
+          [
+            13,
+            7
+          ],
+          [
+            14,
+            7
+          ],
+          [
+            15,
+            7
+          ],
+          [
+            16,
+            7
+          ],
+          [
+            17,
+            7
+          ],
+          [
+            18,
+            7
+          ],
+          [
+            19,
+            7
+          ],
+          [
+            3,
+            8
+          ],
+          [
+            4,
+            8
+          ],
+          [
+            5,
+            8
+          ],
+          [
+            6,
+            8
+          ],
+          [
+            7,
+            8
+          ],
+          [
+            8,
+            8
+          ],
+          [
+            9,
+            8
+          ],
+          [
+            10,
+            8
+          ],
+          [
+            11,
+            8
+          ],
+          [
+            14,
+            8
+          ],
+          [
+            15,
+            8
+          ],
+          [
+            16,
+            8
+          ],
+          [
+            17,
+            8
+          ],
+          [
+            18,
+            8
+          ],
+          [
+            3,
+            9
+          ],
+          [
+            4,
+            9
+          ],
+          [
+            5,
+            9
+          ],
+          [
+            6,
+            9
+          ],
+          [
+            7,
+            9
+          ],
+          [
+            8,
+            9
+          ],
+          [
+            9,
+            9
+          ],
+          [
+            10,
+            9
+          ],
+          [
+            11,
+            9
+          ],
+          [
+            12,
+            9
+          ],
+          [
+            13,
+            9
+          ],
+          [
+            14,
+            9
+          ],
+          [
+            15,
+            9
+          ],
+          [
+            16,
+            9
+          ],
+          [
+            17,
+            9
+          ],
+          [
+            2,
+            10
+          ],
+          [
+            3,
+            10
+          ],
+          [
+            4,
+            10
+          ],
+          [
+            5,
+            10
+          ],
+          [
+            6,
+            10
+          ],
+          [
+            7,
+            10
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            9,
+            10
+          ],
+          [
+            10,
+            10
+          ],
+          [
+            11,
+            10
+          ],
+          [
+            12,
+            10
+          ],
+          [
+            13,
+            10
+          ],
+          [
+            14,
+            10
+          ],
+          [
+            15,
+            10
+          ],
+          [
+            16,
+            10
+          ],
+          [
+            17,
+            10
+          ],
+          [
+            3,
+            11
+          ],
+          [
+            4,
+            11
+          ],
+          [
+            5,
+            11
+          ],
+          [
+            6,
+            11
+          ],
+          [
+            7,
+            11
+          ],
+          [
+            8,
+            11
+          ],
+          [
+            9,
+            11
+          ],
+          [
+            10,
+            11
+          ],
+          [
+            11,
+            11
+          ],
+          [
+            12,
+            11
+          ],
+          [
+            13,
+            11
+          ],
+          [
+            14,
+            11
+          ],
+          [
+            15,
+            11
+          ],
+          [
+            16,
+            11
+          ],
+          [
+            17,
+            11
+          ],
+          [
+            3,
+            12
+          ],
+          [
+            4,
+            12
+          ],
+          [
+            5,
+            12
+          ],
+          [
+            6,
+            12
+          ],
+          [
+            7,
+            12
+          ],
+          [
+            8,
+            12
+          ],
+          [
+            9,
+            12
+          ],
+          [
+            10,
+            12
+          ],
+          [
+            11,
+            12
+          ],
+          [
+            5,
+            13
+          ],
+          [
+            6,
+            13
+          ],
+          [
+            7,
+            13
+          ],
+          [
+            8,
+            13
+          ],
+          [
+            9,
+            13
+          ],
+          [
+            10,
+            13
+          ]
+        ],
+        "trap_states": [
+          [
+            17,
+            5,
+            true,
+            false,
+            true
+          ],
+          [
+            15,
+            7,
+            true,
+            false,
+            true
+          ],
+          [
+            9,
+            9,
+            true,
+            false,
+            true
+          ],
+          [
+            10,
+            9,
+            true,
+            false,
+            true
+          ],
+          [
+            8,
+            10,
+            true,
+            false,
+            true
+          ],
+          [
+            7,
+            11,
+            false,
+            false,
+            true
+          ]
+        ]
+      }
+    }
+  },
+  "dungeon_position": {
+    "dungeon_id": "shadow_throne",
+    "current_floor": 3,
+    "party_x": 4,
+    "party_y": 15
+  }
 }

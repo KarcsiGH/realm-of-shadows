@@ -876,9 +876,17 @@ class Game:
                     result = self.post_combat_ui.handle_click(mx, my)
                     if result == "continue":
                         self.party_scroll = 0
-                        # Special routing: after Spire, descend to Shadow Throne
+                        # Special routing: after Shadow Throne, trigger ending
                         from core.story_flags import get_flag, set_flag
-                        if get_flag("spire.descend_to_throne"):
+                        if get_flag("throne.ending_pending"):
+                            set_flag("throne.ending_pending", False)
+                            # Clear dungeon state so it doesn't try to render
+                            # behind the ending screen.
+                            self.dungeon_state = None
+                            self.dungeon_ui = None
+                            self._trigger_ending()
+                        # Special routing: after Spire, descend to Shadow Throne
+                        elif get_flag("spire.descend_to_throne"):
                             set_flag("spire.descend_to_throne", False)
                             # Enter Shadow Throne dungeon
                             from data.dungeon import DungeonState
@@ -1025,6 +1033,24 @@ class Game:
                                        (80, 200, 120))
                         # Sync world keys from story flags immediately after load
                         self._sync_flag_keys()
+
+                        # ── Stuck-ending recovery ──
+                        # If the save shows Valdris defeated but the ending
+                        # was never seen (because the old code had the ending
+                        # trigger overwritten by the post-boss cutscene), the
+                        # migration set a flag to queue the ending now.
+                        from core.story_flags import get_flag as _gf_end, set_flag as _sf_end
+                        if _gf_end("throne.ending_pending_on_load"):
+                            _sf_end("throne.ending_pending_on_load", False)
+                            # Clear any dungeon state — we're ending the game,
+                            # not returning to the throne room.
+                            self.dungeon_state = None
+                            self.dungeon_ui    = None
+                            self.add_toast("The world finally catches up with you...",
+                                           (200, 180, 120))
+                            self._trigger_ending()
+                            return
+
                         # ── Restore dungeon position if save was made inside one ──
                         if dungeon_position:
                             try:
@@ -4213,13 +4239,14 @@ class Game:
         # Spire: fight the Lingering Will — Valdris' shadow-projected anchor
         #        at the top of the tower. Clearing it breaks the binding on
         #        the Shadow Throne and unlocks the descent.
-        # Throne: fight Valdris himself. Clearing triggers the ending.
+        # Throne: fight Valdris himself. The ending is triggered from the
+        #         combat-victory routing below (NOT here), after the XP
+        #         screen and the post-boss cutscene have had their say.
         # Note: a two-phase fight at the Throne was originally planned but
         # the phase-queue code was never wired up; Throne is single-phase
         # for now. Revisit if we add a proper multi-encounter boss system.
         if dungeon_id == "shadow_throne":
             set_flag("boss_defeated.shadow_valdris", True)
-            self._trigger_ending()
 
     def _sync_flag_keys(self):
         """Sync story-flag-based world keys.
@@ -4280,7 +4307,10 @@ class Game:
 
     def _trigger_ending(self):
         """Fire after Valdris is defeated. Transition to the epilogue sequence."""
-        from core.story_flags import hearthstone_count, get_flag
+        from core.story_flags import hearthstone_count, get_flag, set_flag
+        # Mark ending as seen — prevents the stuck-ending recovery from
+        # re-triggering on every subsequent load.
+        set_flag("ending.shown", True)
         self._ending_timer  = 0.0
         self._ending_phase  = "fade_in"   # fade_in → text → credits → done
         self._ending_hs     = hearthstone_count()
@@ -5906,6 +5936,17 @@ class Game:
                                 self.start_post_combat()
                         self._show_post_boss_dialogue(
                             _dungeon_id, peaceful=False, callback=_spire_done
+                        )
+                    # Special: after Shadow Throne, cutscene → XP screen → ending.
+                    # We set a flag so post-combat's "Continue" button triggers
+                    # the ending epilogue instead of dropping the party back
+                    # into the (now-empty) throne room.
+                    elif _dungeon_id == "shadow_throne":
+                        from core.story_flags import set_flag as _sf_end
+                        _sf_end("throne.ending_pending", True)
+                        self._show_post_boss_dialogue(
+                            _dungeon_id, peaceful=False,
+                            callback=lambda _: self.start_post_combat()
                         )
                     else:
                         self._show_post_boss_dialogue(

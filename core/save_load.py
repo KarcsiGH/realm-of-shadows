@@ -273,6 +273,19 @@ def _migrate_save(world_state):
     except Exception:
         pass
 
+    # Patch B: Shadow Throne victory used to trigger the ending inline from
+    # _grant_boss_rewards, which got overwritten by the subsequent post-boss
+    # dialogue transition (leaving the game stuck in the throne room with
+    # Valdris dead and no ending shown). If the save has the boss-defeated
+    # flag but no ending-seen marker, queue the ending on the next load.
+    try:
+        from core.story_flags import set_flag as _sf_mig
+        if (get_flag("boss_defeated.shadow_valdris")
+                and not get_flag("ending.shown")):
+            _sf_mig("throne.ending_pending_on_load", True)
+    except Exception:
+        pass
+
 
 def deserialize_world_state(data, party):
     """Reconstruct a WorldState from saved dict. Returns None on failure."""
