@@ -1021,8 +1021,9 @@ class WorldState:
                 "abandoned_mine": "The mine entrance is padlocked. The Spider Queen carries the key.",
                 "ruins_ashenmoor":"The road east is blocked by Fading corruption. Clear the Abandoned Mine first.",
                 "sunken_crypt":   "The entrance is sealed with old Order ward-magic. You need a Crypt Amulet — last recorded in the Ruins of Ashenmoor. Clear Ashenmoor first.",
-                "dragons_tooth":  "No ship will sail this route. Clear the Sunken Crypt — the passage opens after.",
-                "pale_coast":     "The coastal road is impassable. Clear Dragon's Tooth first.",
+                "dragons_tooth":  "No ship will sail this route. Clear the Sunken Crypt — Dockhand Riv at Saltmere Docks will grant passage after.",
+                "pale_coast":     "The Pale Coast Catacombs are sealed. The passage lies south of Saltmere on the peninsula. You need a Pale Coast Pass — it's granted after Dragon's Tooth falls.",
+                "windswept_isle": "The Windswept Isle's storms won't let your ship approach. You need to clear the Pale Coast Catacombs first — a Warden there holds what's needed. Speak with Guild Commander Varek in Thornhaven for the approach.",
                 "valdris_spire":  "The Spire's approach is warded. You need all five Hearthstones.",
                 "shadow_throne":  "The gate is sealed. Clear Valdris' Spire first.",
             }

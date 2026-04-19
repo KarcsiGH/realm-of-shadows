@@ -1270,6 +1270,30 @@ NPC_DIALOGUES = {
                 }
             }
         },
+        # Windswept Isle is active but Pale Coast not yet cleared — send them to Pale Coast first.
+        # (windswept_isle requires pale_coast_cleared key internally.)
+        {
+            "conditions": [
+                {"flag": "quest.main_windswept_isle.state", "op": ">=", "value": 1},
+                {"flag": "quest.main_windswept_isle.state", "op": "!=", "value": -2},
+                {"flag": "boss_defeated.pale_coast",        "op": "not_exists"},
+            ],
+            "tree": {
+                "id": "hint_windswept_isle_blocked",
+                "nodes": {
+                    "start": {
+                        "speaker": "Warden Liaison",
+                        "text": "The Windswept Isle is out there, yes — but the storms "
+                                "around it won't let a ship through. Not yet.\n"
+                                "The Pale Coast Catacombs have to fall first. A Warden "
+                                "sealed inside holds what calms the storms.\n"
+                                "South of Saltmere, on the peninsula. Guild Commander "
+                                "Varek in Thornhaven has the approach charts.",
+                        "choices": [{"text": "Pale Coast first. Got it.", "next": None}]
+                    }
+                }
+            }
+        },
         {
             "conditions": [
                 {"flag": "quest.main_windswept_isle.state", "op": ">=", "value": 1},
@@ -1281,11 +1305,10 @@ NPC_DIALOGUES = {
                 "nodes": {
                     "start": {
                         "speaker": "Warden Liaison",
-                        "text": "The fifth Hearthstone lies on the Windswept Isle — "
-                                "storm-battered ruins out in the ocean.\n"
-                                "Sail from Briarhollow Docks, Saltmere Docks, "
-                                "or Pale Coast Dock. Guild Commander Varek in "
-                                "Thornhaven has the charts if you need them.",
+                        "text": "With the Pale Coast cleared, the storms around the "
+                                "Windswept Isle will calm enough for a ship to land.\n"
+                                "Sail from Briarhollow Docks, Saltmere Docks, or Pale "
+                                "Coast Dock. The fifth Hearthstone is in the ruins there.",
                         "choices": [{"text": "Understood.", "next": None}]
                     }
                 }
@@ -1302,11 +1325,15 @@ NPC_DIALOGUES = {
                 "nodes": {
                     "start": {
                         "speaker": "Warden Liaison",
-                        "text": "The Pale Coast Catacombs hold the fourth Hearthstone. "
-                                "Cross the peninsula west of Saltmere — Pale Coast Dock "
-                                "is the jumping-off point.\n"
-                                "Guild Commander Varek in Thornhaven can brief you further.",
-                        "choices": [{"text": "We'll head there.", "next": None}]
+                        "text": "The Pale Coast Catacombs hold the fourth Hearthstone.\n"
+                                "South of Saltmere, out on the peninsula. "
+                                "Pale Coast Dock is the jumping-off point — "
+                                "reachable from any of the three main ports by sea.\n"
+                                "A Warden sealed herself in there decades ago to "
+                                "guard the stone. Approach carefully. Guild "
+                                "Commander Varek in Thornhaven knows more if you "
+                                "want the full briefing.",
+                        "choices": [{"text": "South of Saltmere. Understood.", "next": None}]
                     }
                 }
             }
