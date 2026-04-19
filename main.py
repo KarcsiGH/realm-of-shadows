@@ -3617,6 +3617,14 @@ class Game:
                 set_flag("maren.left", True)
 
         if callback:
+            # Apply return_state FIRST so the callback runs with a known state.
+            # Previously this was `if callback: ... elif return_state:` which
+            # meant callbacks that didn't transition state themselves (like
+            # _spire_done, which just sets a modal attribute) left the game
+            # stuck in S_DIALOGUE with a nulled dialogue_ui and frozen screen.
+            # Callbacks are free to override the state afterwards if needed.
+            if return_state is not None:
+                self.go(return_state)
             callback(result)
         elif return_state is not None:
             self.go(return_state)
@@ -4188,25 +4196,16 @@ class Game:
         if dungeon_id == "pale_coast" and get_flag("sentinel.yielded"):
             set_flag("boss_defeated.pale_coast", True)  # already set by dialogue, ensure consistency
 
-        # Valdris Phase 1 → trigger Phase 2 immediately
+        # ── Valdris flow ─────────────────────────────────────────
+        # Spire: fight the Lingering Will — Valdris' shadow-projected anchor
+        #        at the top of the tower. Clearing it breaks the binding on
+        #        the Shadow Throne and unlocks the descent.
+        # Throne: fight Valdris himself. Clearing triggers the ending.
+        # Note: a two-phase fight at the Throne was originally planned but
+        # the phase-queue code was never wired up; Throne is single-phase
+        # for now. Revisit if we add a proper multi-encounter boss system.
         if dungeon_id == "shadow_throne":
-            phase1_enc = "boss_valdris_phase1"
-            current_enc = getattr(self, "_last_boss_encounter", None)
-            if current_enc == phase1_enc and not get_flag("valdris.phase2_done"):
-                # Queue phase 2 combat
-                set_flag("valdris.phase2_triggered", True)
-                from data.bestiary_m9 import NEW_ENCOUNTERS
-                phase2 = NEW_ENCOUNTERS.get("boss_valdris_phase2", {})
-                if phase2:
-                    self._queue_phase2_boss = phase2
-                    return  # don't fire ending yet
-
-        # Valdris Phase 2 done → trigger ending
-        if dungeon_id == "shadow_throne" and get_flag("valdris.phase2_triggered"):
-            set_flag("valdris.phase2_done", True)
             set_flag("boss_defeated.shadow_valdris", True)
-            self._trigger_ending()
-        elif dungeon_id == "shadow_throne":
             self._trigger_ending()
 
     def _sync_flag_keys(self):

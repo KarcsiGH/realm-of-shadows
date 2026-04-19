@@ -10543,6 +10543,67 @@ BOSS_POST_DIALOGUES = {
             ],
         },
     },
+
+    # Valdris' Spire — the Lingering Will (Valdris' shadow avatar) breaks here.
+    # The fight is hard-won but it is NOT the end: the real Valdris waits at
+    # the Shadow Throne, stripped of this projected power.
+    "valdris_spire": {
+        "fight": {
+            "id": "lingering_will_aftermath",
+            "speaker": "",
+            "lines": [
+                "The shadow that called itself Valdris shudders, hollow. "
+                "The shape you fought — vast, wreathed in grey-green light, "
+                "wearing a face you last saw across a campfire — comes apart like "
+                "smoke parting for a lamp.",
+                "What sinks to the tower floor is not a body. It is a memory "
+                "of one, grey and weightless, collapsing inward to nothing.",
+                "From the stairwell behind you, footsteps. Maren, bloodied at the "
+                "temple but alive, carrying a warding-iron she didn't have before.\n"
+                "\"That wasn't him. Not really. He anchored a piece of himself here — "
+                "the hungriest piece — and let it run the Fading for him while "
+                "he... diminished. Elsewhere.\"",
+                "She looks at you a long time.\n"
+                "\"He's at the Throne. Whatever's left of him. I've sealed the anchor "
+                "points — the wards will hold as long as the Throne isn't contested. "
+                "If you want to end this, you go down. Now. I can't go further with you.\"",
+                "Outside the tower window, for the first time in years, the Ashlands "
+                "horizon shows a thin line of clean sky.\n"
+                "The Lingering Will is broken.\nThe man who made it is still waiting.",
+            ],
+        },
+    },
+
+    # The Shadow Throne — Valdris himself. This is the true ending lead-in.
+    # _trigger_ending fires after this dialogue so the epilogue can follow.
+    "shadow_throne": {
+        "fight": {
+            "id": "valdris_throne_aftermath",
+            "speaker": "",
+            "lines": [
+                "The shadow Valdris has wrapped around himself for decades finally "
+                "comes apart. What falls to its knees at the centre of the Throne "
+                "Room is not the monster you fought — it is a man in his seventies. "
+                "Thin. Grey. Old the way the Wardens were never supposed to get old.",
+                "He does not reach for a weapon. He looks at you, and through you, "
+                "at something that is not in the room.",
+                "\"I thought... if we pulled the stones carefully enough... we could "
+                "use them instead of being bound by them. The network was starving us "
+                "and we were its keepers. I thought I was saving us.\"\n"
+                "He coughs. Something dark comes up.",
+                "\"Maren tried to stop me. I should have listened. I was the teacher. "
+                "I was supposed to listen.\"",
+                "He looks at the stones you carry. For a moment his eyes are clear — "
+                "not the grey-green of the Fading, just tired, human eyes.\n"
+                "\"Put them back. All of them. The network remembers. It will "
+                "remember you, too, when your turn comes to set something down.\"",
+                "The light in the Throne Room changes. Not brighter — truer. "
+                "The Fading's pull on the air loosens, the way a held breath "
+                "finally lets go.",
+                "Valdris closes his eyes.\nHe does not open them again.",
+            ],
+        },
+    },
 }
 
 
